@@ -1,3 +1,3 @@
-# gdmarmerola.github.io
+# Py2AI.github.io
 
 My webpage drawing inspiration from the Sleek theme: https://github.com/janczizikow/sleek
