@@ -1,21 +1,16 @@
 ---
 layout: page
-title: About me
+title: About Py2ai
 permalink: /about/
 ---
+Welcome to Python to AI a.k.a Py2ai – a complete online magazine and weblog founded in 2018 aimed to deliver useful, contemporary, innovative and comprehensive information to machine learning students and developers. Py2ai is always driven by an enthusiastic spirit of responsibility to inform our readers about the latest trends and techniques in Artificial Intelligence, Application design and other areas. Since inception, we have been known as an independent community by our readers because of high quality of information and not with the quantity of the information we present.
 
-<!--- (<img align="center" src="https://github.com/gdmarmerola/gdmarmerola.github.io/blob/master/assets/img/gdmarmerola-profile.jpg" width="150"> -->
+Py2ai provides a solid platform for thousands of talented and hard-working professionals to share their new insight from their work in different areas. We always welcome creative people who come up with brilliant ideas and want to share their valuable industry experience with fellow readers.
 
-![profile]({{ "assets/img/gdmarmerola-profile-50p.jpg" | absolute_url }})
- 
-Hi! My name is **Guilherme Duarte Marmerola**, and I'm a Data Scientist from Brazil. I'm passionate about machine learning, and the power it gives us to solve real problems in business and science. I graduated in Electrical Engineering from the University of Campinas and had the fortune of discovering ML in my early undergraduate years, totally by chance, during an internship at NICTA, in Syndey, Australia. Since then, I’ve literally fallen in love with the discipline, and built many successful advanced analytics initiatives in the media, mining, insurance, retail, consumer goods and banking industries.
+We are dedicated to obsessively deliver current news and development useful for our respective readers especially Python application developers. The content published on Py2ai are objective to present noteworthy tips, useful guidelines, excellent tutorials, helpful tools, modern AI applications, design and development resources.
 
-I hold a special interest about some specific topics:
+Sponsors
 
-1. **Reinforcement learning:** particurlarly, I'm interested in the exporation-exploitation dilemma, and how to solve it with (bayesian) models that capture uncertainty. I'm devoting a lot of time to the study of bandit problems, and how to use them as frameworks to fundamental problems in industry (pricing, applying treatments, deciding which data to collect, etc.).
+Special thanks go to our ad partners:
 
-2. **Dimensionality reduction and clustering:** how can we visualize and interpret structure in our data, aiming to explain it to business stakeholders? Can we do better than simple K-Means clustering? What similarity measures, algorithms and representations would make this possible?
-
-3. **Management, and data science in a business context:** doing data science in industry is far from trivial as we need to balance time for experimentation with deadlines, data is oftentimes messy and stakeholders may not have a clear understanding of our work and challenges. How can you navigate this and deliver real value from ML, while maintaining the best people motivated?
-
-I hope I can bring useful insights about these topics and others. Feel free to [contact me](https://gdmarmerola.github.io/contact), and also add me on [LinkedIn](https://www.linkedin.com/in/gdmarmerola/)! 
+To connect with Py2ai simply mark a mail to python2ai@gmail.com
