@@ -65,16 +65,6 @@ Note: Enter password of your Mac OS account in the popup window.
             
 
 
-<!--
-{% highlight ruby %}
-def print_hi(name)
-  puts "Hi, #{name}"
-end
-print_hi('Tom')
-#=> prints 'Hi, Tom' to STDOUT.
-{% endhighlight %}
-
--->
 
 
 [protobuf releases]:https://github.com/google/protobuf/releases
