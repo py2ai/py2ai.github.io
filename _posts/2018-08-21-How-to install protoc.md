@@ -3,7 +3,7 @@ layout: post
 title: How to install protobuf on Mac OS
 author: Hussain A.
 categories: [tutorial]
-
+featured-img: first_kaggle_cover
 summary: A quick tutorial to install protoc for tensorflow
 
 published: true
@@ -11,7 +11,7 @@ disqus: true
 ---
 
 
-![]({{ "assets/img/my_first_kaggle/kaggle-img-1.png" | absolute_url }})
+
 
 Hi everybody, today i show you a way to install Google Protocol Buffers on MAC OS. You might already have tried:
 
