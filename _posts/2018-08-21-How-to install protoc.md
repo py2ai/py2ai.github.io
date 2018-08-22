@@ -11,7 +11,7 @@ disqus: true
 ---
 
 
-![]({{ "assets/img/my_first_kaggle/kaggle-img-1.png" | absolute_url }})->put image 
+![]({{ "assets/img/my_first_kaggle/kaggle-img-1.png" | absolute_url }})
 
 Hi everybody, today i show you a way to install Google Protocol Buffers on MAC OS. You might already have tried:
 
