@@ -3,7 +3,7 @@ layout: post
 title: How to install protobuf on Mac OS
 author: Hussain A.
 categories: [tutorial]
-featured-img: first_kaggle_cover
+featured-img: forest_embeddings_cover
 mathjax: true
 summary: A quick tutorial to install protoc for tensorflow
 ---
