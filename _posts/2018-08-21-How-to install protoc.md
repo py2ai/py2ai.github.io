@@ -68,4 +68,4 @@ Note: Enter password of your Mac OS account in the popup window.
 [protobuf releases]:https://github.com/google/protobuf/releases
 [32 bit]:https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-osx-x86_32.zip
 [64 bit]:https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-osx-x86_64.zip
-[tutorial]:https://github.com/py2ai/py2ai.github.io/blob/master/blog/index.html
+[tutorial]:https://github.com/py2ai/py2ai.github.io/blob/master/blog/index.html 
