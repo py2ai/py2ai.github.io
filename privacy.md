@@ -39,4 +39,4 @@ Also, check our Disclaimer page for limitations of liability governing the use o
 CONTACT US
 For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at python2ai@gmail.com.
 
-[disclaimer]:https://py2ai.github.io/disclaimer.md
+[disclaimer]:https://py2ai.github.io/disclaimer
