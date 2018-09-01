@@ -7,7 +7,6 @@ featured-img: first_kaggle_cover
 summary: A quick tutorial to install protoc for tensorflow
 
 published: true
-disqus: true 
 ---
 
 
