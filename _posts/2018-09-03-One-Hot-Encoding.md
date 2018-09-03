@@ -7,17 +7,17 @@ mathjax: true
 summary: Why One Hot Encoding is important for Neural Netwoks
 ---
 
-#What is ONE HOT ENCODING?
+# What is ONE HOT ENCODING?
 
 An efficient method of encoding the classes to train a network.
 
-###One Hot Encoding
+### One Hot Encoding
 
 [1,0,0]: Class A
 [0,1,0]: Class B
 [0,0,1]: Class C
 
-###Efficient Encoding
+### Efficient Encoding
 
 0: Class A
 1: Class B
