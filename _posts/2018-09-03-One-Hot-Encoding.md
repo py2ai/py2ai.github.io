@@ -12,17 +12,18 @@ summary: Why One Hot Encoding is important for Neural Netwoks
 An efficient method of encoding the classes to train a network.
 
 ### One Hot Encoding
-
+```python
 [1,0,0]: Class A
 [0,1,0]: Class B
 [0,0,1]: Class C
+```
 
 ### Efficient Encoding
-
+```python
 0: Class A
 1: Class B
 2: Class C
-
+```
 In neural networks when we need pick a class from classes, we have output nodes equal to the number of classes. 
 Each node shows the probability that it may matches classA, classB or classC.
 It may look like this:
