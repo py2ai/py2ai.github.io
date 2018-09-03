@@ -7,7 +7,7 @@ mathjax: true
 summary: Why One Hot Encoding is important for Neural Netwoks
 ---
 
-# What is ONE HOT ENCODING?
+## What is ONE HOT ENCODING?
 
 An efficient method of encoding the classes to train a network.
 
@@ -25,11 +25,11 @@ An efficient method of encoding the classes to train a network.
 2: Class C
 ```
 In neural networks when we need pick a class from classes, we have output nodes equal to the number of classes. 
-Each node shows the probability that it may matches classA, classB or classC.
+Each node shows the probability that it may matches Class A, Class B or Class C.
 It may look like this:
-ClassA has probability equal to 0.1
-ClassB has probability equal to 0.2
-ClassZc has probability equal to 0.7
+Class A has probability equal to 0.1
+Class B has probability equal to 0.2
+Class C has probability equal to 0.7
 
 Although it looks inefficient from the storage perspective, but it is very efficient for the training. 
 Moreover, it complements argmax function, that saves us writing a lot of code.
