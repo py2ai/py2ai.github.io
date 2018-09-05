@@ -24,7 +24,7 @@ An efficient method of encoding the classes to train a network.
 1: Class B
 2: Class C
 ```
-In neural networks when we need pick a class from classes, we have output nodes equal to the number of classes. 
+In neural networks when we need to pick a class from classes, we have output nodes equal to the number of classes. 
 Each node shows the probability that it may matches Class A, Class B or Class C.
 It may look like this:
 Class A has probability equal to 0.1
