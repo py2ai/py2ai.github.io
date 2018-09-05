@@ -8,12 +8,12 @@ summary: A fastest way to install PyTorch in Windows without Conda
 ---
 
 Hello there, today i am going to show you an easy way to install PyTorch in Windows 10 or Windows 7. Typical methods available for 
-its installation are based on conda. However, there also exist an easy way to install PyTorch. It is assumed that you already
-have installed Python 3.6 in windows 7 or 10. If not then please google for the python 3.6 installation and then 
-Follow the setps 
+its installation are based on Conda. However, there also exist an easy way to install PyTorch. It is assumed that you already have installed Python 3.6 in windows 7 or 10. If not then please google for the python 3.6 installation and then 
+follow these setps:
 
 *1.* First, we need to install Shapely. For this download [Shapely](http://www.xavierdupre.fr/enseignement/setup/Shapely-1.6.3-cp36-cp36m-win_amd64.whl) as Shapely-1.6.3-cp36-cp36m-win_amd64.whl
-Now go to the directory where, you have downloaded the whl file and then press SHIFT and right click and select open command prompt here
+
+Then go to the directory where, you have downloaded the whl file and then press SHIFT and right click and select open command prompt here
 execute this 
 
 `pip install Shapely-1.6.3-cp36-cp36m-win_amd64.whl`
