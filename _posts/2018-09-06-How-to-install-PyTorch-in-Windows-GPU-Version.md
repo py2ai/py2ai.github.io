@@ -52,8 +52,11 @@ Environment: CUDA_VERSION=91, PYTHON_VERSION=3.5, TORCH_CUDA_ARCH_LIST=Kepler
  
 Eventhough i have Python 3.6.5 but i will still work for any python 3.6 version. My card is Pascal based and my CUDA toolkit
 version is 9.0 which is interpreted as 90. After click this option you will land to anther page, scroll down and you will see
-these options: **JOBS CONSOLE MESSAGES  TESTS  ARTIFACTS**
-Click on the ** ARTIFACTS** option. After this scroll down and you will find the whl file. For my case the [whl file](https://ci.appveyor.com/api/buildjobs/qva8hdw9i353j50i/artifacts/output%2Ftorch-0.4.0a0%2B38aaa63-cp36-cp36m-win_amd64.whl)
+these options: 
+
+**JOBS CONSOLE MESSAGES  TESTS  ARTIFACTS**
+
+Click on the **ARTIFACTS** option. After this scroll down and you will find the whl file. For my case the [whl file](https://ci.appveyor.com/api/buildjobs/qva8hdw9i353j50i/artifacts/output%2Ftorch-0.4.0a0%2B38aaa63-cp36-cp36m-win_amd64.whl)
 is here. Download it and then pip install the whl file. For example:
 
 `pip install torch-0.4.0a0+38aaa63-cp36-cp36m-win_amd64.whl`
@@ -70,8 +73,7 @@ If no error occurs, it means PyTorch is installed, now lets check the cuda suppo
 ```python
 torch.cuda.is_available()
 ```
-If you get `True` then it means that you have succesfully installed the PyTorch. If any problems you can ask me in the comments
-section. Have a nice day!
+If you get `True` then it means that you have succesfully installed the PyTorch. If any problems you can ask me in the comments section. Have a nice day!
 
 
 
