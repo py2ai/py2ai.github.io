@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Installing Pytorch in Windows
+title: Installing Pytorch in Windows (CPU version)
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
@@ -28,4 +28,4 @@ Then execute this command:
 
 `pip install torch-0.3.0b0+591e73e-py3-none-any.whl`
 
-Congratulations you have PyTorch ready!!.
+Congratulations you have PyTorch (CPU version) ready!!. If you want to install PyTorch GPU version then follow my next blog.
