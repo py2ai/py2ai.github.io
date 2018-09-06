@@ -49,7 +49,7 @@ Environment: CUDA_VERSION=91, PYTHON_VERSION=3.5, TORCH_CUDA_ARCH_LIST=Kepler
  
  Go ahead and click on the relevant option. In my case i choose this option:
  `Environment: CUDA_VERSION=90, PYTHON_VERSION=3.6.2, TORCH_CUDA_ARCH_LIST=Pascal`
- `
+ 
 Eventhough i have Python 3.6.5 but i will still work for any python 3.6 version. My card is Pascal based and my CUDA toolkit
 version is 9.0 which is interpreted as 90. After click this option you will land to anther page, scroll down and you will see
 these options: **JOBS CONSOLE MESSAGES  TESTS  ARTIFACTS**
