@@ -63,18 +63,14 @@ After succesfull installation we need to check if all things working fine?
 For this open up python by typing python in command prompt.
 
 ```python
-
 import torch
-
-
 ```
 If no error occurs, it means PyTorch is installed, now lets check the cuda support. For this type
 
 ```python
 torch.cuda.is_available()
-
 ```
-And you get `True` then it means that you have succesfully installed the PyTorch. If any problems you can ask me in the comments
+If you get `True` then it means that you have succesfully installed the PyTorch. If any problems you can ask me in the comments
 section. Have a nice day!
 
 
