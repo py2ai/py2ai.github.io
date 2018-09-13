@@ -3,7 +3,7 @@ layout: post
 title: TensorFlow Basics
 author: Hussain A.
 categories: [tutorial]
-featured-img: protoc-3.6.1
+featured-img: TensorFlow
 mathjax: true
 summary: A quick tutorial about tensorflow
 ---
@@ -16,7 +16,10 @@ Tensor can be considered as an N dimensional array. Tensors are defined by the u
 
 ### Data Types in TensorFlow
 
-Mulitple datatypes are supported by tensorflow such as; `tf.float32, tf.float64, tf.int8, tf.int16, tf.int32, tf.int64, tf.uint8, tf.string, tf.bool`
+Mulitple datatypes are supported by tensorflow such as; 
+
+`tf.float32, tf.float64, tf.int8, tf.int16, tf.int32, tf.int64, tf.uint8, tf.string, tf.bool`
+
 In common TensorFlow automatically, manages the data types and we don’t need to specify the data type, unless there is a special requirement of memory utilization. For example if you only need 32 bit data type then there is no need to use the 64 bit, which will save the memory.
 
  
@@ -65,8 +68,8 @@ Another way to launch the session , and automatically close the session when it 
 
 ```python
 with tf.Session() as less:
-	output = sess.run([Neuron1,Neuron2])
-	print(output)
+  output = sess.run([Neuron1,Neuron2])
+  print(output)
 ```
 
 
