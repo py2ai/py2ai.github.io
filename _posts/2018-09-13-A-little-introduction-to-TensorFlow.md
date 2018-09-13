@@ -23,7 +23,7 @@ Mulitple datatypes are supported by tensorflow such as;
 In common TensorFlow automatically, manages the data types and we don’t need to specify the data type, unless there is a special requirement of memory utilization. For example if you only need 32 bit data type then there is no need to use the 64 bit, which will save the memory.
 
  
-##How to build a deep learning Model?
+## How to build a deep learning Model?
 
 Well building a deep learning model requires following steps:
 
@@ -41,7 +41,7 @@ Well building a deep learning model requires following steps:
 
 ## Tensorflow Code
 
-###1) Buid a computational graph
+### 1) Buid a computational graph
 
 ```python
 
@@ -53,7 +53,7 @@ print(Neuron1,Neuron2)
 ```
 
 
-###2) Run the computational graph
+### 2) Run the computational graph
 
 Session places the graph operations on the devices such as CPUs and GPUs . Session provides methods to execute those graph operations.
 
@@ -73,7 +73,7 @@ with tf.Session() as less:
 ```
 
 
-##Example
+## Example
 
 ```python
 import Tensorflow as tf
