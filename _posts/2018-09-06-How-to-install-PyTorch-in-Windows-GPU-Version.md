@@ -7,20 +7,18 @@ mathjax: true
 summary: A fastest way to install PyTorch in Windows without Conda
 ---
 
-Hi there, today we are installing PyTorch in Windows. It is assumed that you already have installed NVidia GPU card installed. 
-The installation also requires the correct version of CUDA toolkit installed and the nature of GPU card. For example if your 
-GPU is GTX 1060 6G, then its Pascal based. Also check your version accordingly from the Nvidia official website. 
+Hi there, today we are installing PyTorch in Windows. It is assumed that you already have installed NVidia GPU card. 
+The installation also requires the correct version of CUDA toolkit and the type of graphics card. For example if your 
+GPU is GTX 1060 6G, then its a Pascal based graphics card. Also check your version accordingly from the Nvidia official website. 
 
-Now come to the CUDA tool kit version. If you want to know which version of CUDA tool kit is installed in your windows. Open up 
-the command prompt and enter this
+Now come to the CUDA tool kit version. If you want to know which version of CUDA tool kit is installed in your windows. Open up the command prompt and enter this
 
 `nvcc --version`
 
 In my case it shows, the release 9.0, V9.0.176 CUDA compilation Tools. Your Python version should also be known. For my PC it is 
 python 3.6.5. Now jump to [peterjc123](https://github.com/peterjc123/pytorch-scripts) and click Windows GPU (0.4.0). It will 
 take you to another page where you have a variety of options available.
-`
-JOB NAME TESTS DURATION
+`JOB NAME TESTS DURATION
 Environment: CUDA_VERSION=90, PYTHON_VERSION=3.6, TORCH_CUDA_ARCH_LIST=Maxwell
 1 hr 15 min
 Environment: CUDA_VERSION=90, PYTHON_VERSION=3.5, TORCH_CUDA_ARCH_LIST=Maxwell
@@ -44,14 +42,13 @@ Environment: CUDA_VERSION=90, PYTHON_VERSION=3.5, TORCH_CUDA_ARCH_LIST=Kepler
 Environment: CUDA_VERSION=91, PYTHON_VERSION=3.6.2, TORCH_CUDA_ARCH_LIST=Kepler
 1 hr 14 min
 Environment: CUDA_VERSION=91, PYTHON_VERSION=3.5, TORCH_CUDA_ARCH_LIST=Kepler
-1 hr 10 min
- `
+1 hr 10 min`
  
  Go ahead and click on the relevant option. In my case i choose this option:
  `Environment: CUDA_VERSION=90, PYTHON_VERSION=3.6.2, TORCH_CUDA_ARCH_LIST=Pascal`
  
-Eventhough i have Python 3.6.5 but i will still work for any python 3.6 version. My card is Pascal based and my CUDA toolkit
-version is 9.0 which is interpreted as 90. After click this option you will land to anther page, scroll down and you will see
+Eventhough i have Python 3.6.5 but it will still work for any python 3.6.x version. My card is Pascal based and my CUDA toolkit
+version is 9.0 which is interpreted as 90. After clicking this option you will land to anther page, scroll down and you will see
 these options: 
 
 **JOBS CONSOLE MESSAGES  TESTS  ARTIFACTS**
