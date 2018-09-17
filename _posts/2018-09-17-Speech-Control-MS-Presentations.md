@@ -19,15 +19,15 @@ and `bingo` will move back the presentation.
 Ok now lets start the first step, for this we need PySide. Go to [Gohlke](https://www.lfd.uci.edu/~gohlke/pythonlibs/#p=PySide) and download the relevant .whl file that suits your Python version.
 Here is the list of available .whl files 
 
-`PySide‑1.2.4‑cp27‑cp27m‑win32.whl
-PySide‑1.2.4‑cp27‑cp27m‑win_amd64.whl
-PySide‑1.2.4‑cp34‑cp34m‑win32.whl
-PySide‑1.2.4‑cp34‑cp34m‑win_amd64.whl
-PySide‑1.2.4‑cp35‑cp35m‑win32.whl
-PySide‑1.2.4‑cp35‑cp35m‑win_amd64.whl
-PySide‑1.2.4‑cp36‑cp36m‑win32.whl
-PySide‑1.2.4‑cp36‑cp36m‑win_amd64.whl
-PySide‑1.2.4‑vc14‑x64.zip`
+`   PySide‑1.2.4‑cp27‑cp27m‑win32.whl
+    PySide‑1.2.4‑cp27‑cp27m‑win_amd64.whl
+    PySide‑1.2.4‑cp34‑cp34m‑win32.whl
+    PySide‑1.2.4‑cp34‑cp34m‑win_amd64.whl
+    PySide‑1.2.4‑cp35‑cp35m‑win32.whl
+    PySide‑1.2.4‑cp35‑cp35m‑win_amd64.whl
+    PySide‑1.2.4‑cp36‑cp36m‑win32.whl
+    PySide‑1.2.4‑cp36‑cp36m‑win_amd64.whl
+    PySide‑1.2.4‑vc14‑x64.zip`
 
 Lets take the example if you have Python 3.6 installed then download `PySide‑1.2.4‑cp36‑cp36m‑win_amd64.whl` and then go the download directory of .whl file and hold the shift button and right click to choose open command window here option. And in command prompt write the following and hit enter.
 `pip install PySide‑1.2.4‑cp36‑cp36m‑win_amd64.whl`
