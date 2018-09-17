@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Speech controling the MS Power Point Presentation
+title: With Speech control the MS Power Point Presentation
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
