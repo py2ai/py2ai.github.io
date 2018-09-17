@@ -3,7 +3,6 @@ layout: post
 title: Speech controling the MS Power Point Presentation
 author: Hussain A.
 categories: [tutorial]
-]
 mathjax: true
 summary: A simple AI application tutorial to control PPTX slides with speech using python
 ---
@@ -17,4 +16,4 @@ You can definetly choose your own magic words to move the slide. In my case sayi
 and `bingo` will move back the presentation.
 4) For the speech recognition i am using SpeechRecognition API. 
 
-Ok now lets start the first step, for this we need PySide.
+Ok now lets start the first step, for this we need PySide. Go to [Gohlke](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyside) and download the relevant .whl file that suits your Python version. 
