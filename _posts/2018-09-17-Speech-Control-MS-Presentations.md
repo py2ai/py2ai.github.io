@@ -148,7 +148,7 @@ class Ui_Dialog(object):
                         pass
                     
                 except:
-                    print('errrorrrrrrrrrr')
+                    print('error')
 
             
          
@@ -162,7 +162,7 @@ class Ui_Dialog(object):
    
         projectName = QFileDialog.getOpenFileName(filter="Data (*.pptx)")
         
-        print("0000000",projectName[0])
+        print("project name: ",projectName[0])
         self.projectName = projectName[0]
         self.lineEdit_2.setText(self.projectName)
       
@@ -197,3 +197,21 @@ if __name__ == "__main__":
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
+```
+    
+##ScreenShots:
+Save all the code in a app.py file and run using `python app.py`. You will see the application GUI that will look like this:
+![]({{ "assets/img/posts/voice-controlled-pptx.png" | absolute_url }})
+
+Now chose the .pptx file and hit OK button. After this the ppt will launch in full screen mode. You can say next slide, or next, in this portion of the code the text is scanned for next word and if it is detected correctly, the slide will turn to 
+the next page and similarly, if the word is bingo then it will go back one page. 
+```python
+if text.find('next')!=-1:
+    presentation.SlideShowWindow.View.Next()
+    print('sliding....')
+elif text.find('bingo')!=-1:
+    presentation.SlideShowWindow.View.Previous()
+```
+Even though it is a simple app but it can be enchance with different options. Have a nice day! Leave comments if you have question regarding this post.
+
+
