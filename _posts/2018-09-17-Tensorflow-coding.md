@@ -16,4 +16,15 @@ Lets launch python and import tensorflow as tf.
 
 ```python 
 import tensorflow as tf
+```
+Lets initialize a constant string name 'Hello TF World'
+
+```python
+text=tf.constant('Hello TF World')
+```
+Now just type `text` in the console and hit enter, which will result in 
+`>>> text
+<tf.Tensor 'Const:0' shape=() dtype=string>`
+This means that we have initialized a constant of string datatype.
+
 
