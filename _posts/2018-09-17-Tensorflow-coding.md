@@ -145,7 +145,7 @@ with tf.Session() as sess:
 	plt.plot(v,pdf) # including h here is crucial)
 	plt.show()
 ```
-The Weights tensor looks like this with values ranging nearly between 2.5 and -2.5
+The Weights tensor looks like this with values with standard deviation of 
 
 ![]({{ "assets/img/tensor flow/tensor_values.png" | absolute_url }})
 
