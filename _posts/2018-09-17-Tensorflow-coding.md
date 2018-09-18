@@ -54,8 +54,9 @@ mySess.run(multiplication)
 ```
 and we get a result: 
 
-`>>> mySess.run(multiplication)
-8`
+`>>> mySess.run(multiplication)`
+
+`8`
 
 ## Floating point Data Type
 
@@ -80,8 +81,9 @@ And now
 
 It will not generate an error, lets run this new floating point graph with `mySession`.
 
-`>>> mySess.run(multiplication)
-4.4`
+`>>> mySess.run(multiplication)`
+
+`4.4`
 
 
 
