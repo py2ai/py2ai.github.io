@@ -58,8 +58,8 @@ Next we need to point the OS towards the Documents folder by default for this we
 buf= ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
 ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, buf)
 if not os.path.exists((buf.value)+'\\'):
-            os.makedirs((buf.value)+'\\')
-pathProjects = (buf.value)+'\\'
+   os.makedirs((buf.value)+'\\')
+   pathProjects = (buf.value)+'\\'
 ```
 Now lets define our first function to get the name of the .pptx file from the full path.
 
