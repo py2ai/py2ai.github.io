@@ -19,7 +19,7 @@ and `bingo` will move back the presentation.
 Ok now lets start the first step, for this we need PySide. Go to [Gohlke](https://www.lfd.uci.edu/~gohlke/pythonlibs/#p=PySide) and download the relevant .whl file that suits your Python version.
 Here is the list of available .whl files 
 
-`   PySide‑1.2.4‑cp27‑cp27m‑win32.whl
+   `PySide‑1.2.4‑cp27‑cp27m‑win32.whl
     PySide‑1.2.4‑cp27‑cp27m‑win_amd64.whl
     PySide‑1.2.4‑cp34‑cp34m‑win32.whl
     PySide‑1.2.4‑cp34‑cp34m‑win_amd64.whl
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 ```
     
-##ScreenShots:
+## ScreenShot:
 Save all the code in a app.py file and run using `python app.py`. You will see the application GUI that will look like this:
 ![]({{ "assets/img/posts/voice-controlled-pptx.png" | absolute_url }})
 
