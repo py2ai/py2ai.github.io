@@ -88,7 +88,7 @@ sess.close()
 
 Tensor board is used to visualize the computation graph. For this we need to create a FileWriter. 
 
-`FileWriter = tf.summary.FileWriter(‘log_simple_graph’,sess.graph)` 
+`FileWriter = tf.summary.FileWriter('log_simple_graph',sess.graph)` 
 `sess.graph` is used to create the graph object.
 
 Here the first argument `'log_simple_graph'` is the output directory name. 
