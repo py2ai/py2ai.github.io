@@ -149,6 +149,7 @@ The Weights tensor looks like this with values with standard deviation of
 
 ![]({{ "assets/img/tensor flow/tensor_values.png" | absolute_url }})
 Here find loc: [here](../master/assets/img/map2.html)
+<a href="../master/assets/img/map2.html" title="About Me">About Me</a>
 
 The distribution of values in the tensor looks like this, obviously, the standard
 deviation is 0.5.
