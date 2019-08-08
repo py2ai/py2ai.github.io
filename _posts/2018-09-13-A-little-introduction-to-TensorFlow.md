@@ -3,7 +3,6 @@ layout: post
 title: TensorFlow Basics
 author: Hussain A.
 categories: [tutorial]
-featured-img: TensorFlow
 mathjax: true
 summary: A quick tutorial about tensorflow
 ---
