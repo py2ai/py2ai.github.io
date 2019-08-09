@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Lab1: Keras Basic Model
+title: Lab1 Keras Basic Model
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
