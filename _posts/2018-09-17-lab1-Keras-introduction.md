@@ -10,7 +10,7 @@ summary: A quick tutorial Keras model
 
 
 
-Today i am going to start a tutorial series about Keras library. Lets visit website of this Deep learning library https://keras.io. Keras is a high-level neural networks API. What is API: Its Application Program Interface. API is a set of routines, protocols, and tools for building software applications. Good thing about keras is that it is written in Python and its open source. So we can have a deeper look into different learning networks. It is built on top of different libraries such as TensorFlow, CNTK, or Theano.
+Today i am going to start a tutorial series about Keras library. Lets visit website of this Deep learning library https://keras.io. Keras is a high-level neural networks API. What is API? Its Application Program Interface. API is a set of routines, protocols, and tools for building software applications. It is written in Python and its open source. We can have a deeper look into different learning networks. It is built on top of different libraries such as TensorFlow, CNTK, or Theano.
 
 ## What is a Tensor and its flow
 
