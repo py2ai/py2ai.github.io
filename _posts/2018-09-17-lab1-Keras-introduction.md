@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Keras Basic Model
+title: Lab1: Keras Basic Model
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
@@ -10,13 +10,12 @@ summary: A quick tutorial Keras model
 
 
 
-Today i am going to start a tutorial series about Keras library. Lets visit website of this Deep learning library https://keras.io. Keras is a high-level neural networks API. What is API: Its Application Program Interface. API is a set of routines, protocols, and tools for building software applications. Good thing about keras is that it is written in Python and its open source. So we can have a deeper look into different learning networks. It is built on top of these TensorFlow, CNTK, or Theano which are also deep learning libraries. 
-
+Today i am going to start a tutorial series about Keras library. Lets visit website of this Deep learning library https://keras.io. Keras is a high-level neural networks API. What is API: Its Application Program Interface. API is a set of routines, protocols, and tools for building software applications. Good thing about keras is that it is written in Python and its open source. So we can have a deeper look into different learning networks. It is built on top of different libraries such as TensorFlow, CNTK, or Theano.
 
 ## What is a Tensor and its flow
 
-The term Tensor is used for an N dimensional array, where N can be any number and in Neural Networks we have layers as shown here
-input -> first hidden layer-> second hidden layer->...output
+The term Tensor is used for an N dimensional array, where N can be any number and in Neural Networks we have layers as shown here:
+input -> first hidden layer-> second hidden layer->...output.
 So tensors flow from input to these layers from one layer to another thats why it is called tensor flow. Just like we pass a matrix to one layer and it is multiplied by weights and then passed to another.
  
 
