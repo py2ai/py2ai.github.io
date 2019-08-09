@@ -21,7 +21,7 @@ So tensors flow from input to these layers from one layer to another thats why i
 
 ## Keras simple Sequential Model
 
-Simplest type of model is the Sequential() model. Lets make a model in Keras. Lets make a new folder named lab1 and make an empty python file named basic.py. First we need to import the an empty Sequential model so put this code in basic.py.
+Simplest type of model is the Sequential() model. Lets make a new folder named lab1 and make an empty python file named basic.py. First we need to import the an empty Sequential model so put this code in basic.py.
 ```python
 from keras.models import Sequential
 ```
