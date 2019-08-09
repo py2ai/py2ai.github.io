@@ -1,10 +1,10 @@
 ---
 layout: post
-title: Keras Basics
+title: Keras Basic Model
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
-summary: Lab1: A little introduction to Keras
+summary: A quick tutorial Keras model
 ---
 
 
