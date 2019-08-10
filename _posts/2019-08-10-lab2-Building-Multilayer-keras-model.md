@@ -37,4 +37,4 @@ plot_model(model,to_file='mymodel.png',show_shapes=True)
 ```
 
 
-Thats all for this lab 2. In the next lab 3 we will learn about training the model with some data. Code for the lab can be found [here](https://github.com/py2ai/Keras-Labs). I hope this lab will be helpful for the beginners. 
+Thats all for this lab 2. In the next lab 3 we will learn about training the model with some data. Code is [Available](https://github.com/py2ai/Keras-Labs). I hope this lab will be helpful for the beginners. 
