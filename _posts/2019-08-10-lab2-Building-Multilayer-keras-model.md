@@ -29,7 +29,6 @@ from keras.utils import plot_model
 
 ```python
 model = Sequential([Dense(32, input_shape=(100,)),Activation('relu'),Dense(1), Activation('softmax')])
-#model.compile(loss='categorical_crossentropy',optimizer='sgd',metrics=['accuracy'])  
 plot_model(model,to_file='mymodel.png',show_shapes=True)
 
 ```
