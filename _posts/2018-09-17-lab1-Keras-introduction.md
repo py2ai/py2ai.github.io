@@ -43,6 +43,6 @@ plot_model(model, to_file='mymodel.png', show_shapes=True)
 ```
 ![]({{ "assets/img/posts/basic_keras_model.png" | absolute_url }})
 
-Thats all for this lab 1. In the next lab 2 we will learn about passing input data to this model and get output. Thanks for reading. I hope this will be helpful for the beginners. 
+Thats all for this lab 1. In the next lab 2 we will learn about more layers to a model. Thanks for reading. I hope this will be helpful for the beginners. 
 
 
