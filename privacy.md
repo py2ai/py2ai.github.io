@@ -31,7 +31,7 @@ We also update our privacy policy. you can get to know about our latest updates 
 
 Last updated: 10/8/2018
 
-If you want to know about the author and https://py2ai.github.io you can visit About Us page.
+If you want to know about the author and https://pyshine.com you can visit About Us page.
 
 Also, check our Disclaimer page for limitations of liability governing the use of our website at [disclaimer]
 
