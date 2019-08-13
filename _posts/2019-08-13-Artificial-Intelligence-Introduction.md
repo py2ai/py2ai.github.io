@@ -15,7 +15,7 @@ Hi there! Artificial Intelligence can be described as the study of intelligent a
 
 
 
-![]({{ "assets/img/posts/AI.jpg" | absolute_url }}). 
+![]({{ "assets/img/posts/AI.png" | absolute_url }}). 
 
 
 ## Swarm intelligence
