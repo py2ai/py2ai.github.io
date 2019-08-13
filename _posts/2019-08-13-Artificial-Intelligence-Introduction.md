@@ -9,7 +9,7 @@ summary: Branches of Artificial Intelligence
 
 
 
-## A quick and easy multilayer model for Keras
+## Branches of Artificial Intelligence
 
 Hi there! Artificial Intelligence can be described as the study of intelligent agents. The field of AI research was started from 1956 at Dartmouth college \cite{AIstart}. AI has been widely applied by modern machines for applications such as competing at the highest level in strategic games (e.g. Go, Chess), understanding human speech, autonomous vehicles, and intelligent network routing in content delivery networks etc. Figure below gives an overview of the terms and techniques within the AI research area. Some of the most widely used AI techniques are: Heuristic Techniques, Robotics, Swarm Intelligence, Expert Systems, Turning Test, Logical AI, Planning, Schedule and Optimization, Natural Language Processing, Game Theoretic Learning, Evolutionary Algorithms, Inference, Fuzzy Logic, and Machine Learning etc. We will briefly discuss these techniques in the next subsections.
 
