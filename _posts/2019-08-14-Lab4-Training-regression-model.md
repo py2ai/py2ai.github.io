@@ -85,7 +85,21 @@ Thats all for this lab 4.
 
 ![]({{ "assets/img/posts/Spring-epochs-100.jpg" | absolute_url }})
 
+![]({{ "assets/img/posts/Spring-epochs-150.jpg" | absolute_url }})
 
+![]({{ "assets/img/posts/Spring-epochs-200.jpg" | absolute_url }})
 
+![]({{ "assets/img/posts/Spring-epochs-250.jpg" | absolute_url }})
 
+![]({{ "assets/img/posts/Spring-epochs-300.jpg" | absolute_url }})
+
+![]({{ "assets/img/posts/Spring-epochs-350.jpg" | absolute_url }})
+
+![]({{ "assets/img/posts/Spring-epochs-400.jpg" | absolute_url }})
+
+![]({{ "assets/img/posts/Spring-epochs-450.jpg" | absolute_url }})
+
+![]({{ "assets/img/posts/Spring-epochs-500.jpg" | absolute_url }})
+
+![]({{ "assets/img/posts/Spring-epochs-550.jpg" | absolute_url }})
 In the next lab 5 we will learn about training the model for Classification. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).
