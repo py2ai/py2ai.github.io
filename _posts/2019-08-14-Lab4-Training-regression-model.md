@@ -81,4 +81,11 @@ for i in range(10):
 	pyplot.close()
 ```	
 Here are some results.
-Thats all for this lab 4. In the next lab 5 we will learn about training the model for Classification. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).
+Thats all for this lab 4. 
+
+![]({{ "assets/img/posts/Spring-epochs-100.jpg" | absolute_url }})
+
+
+
+
+In the next lab 5 we will learn about training the model for Classification. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).
