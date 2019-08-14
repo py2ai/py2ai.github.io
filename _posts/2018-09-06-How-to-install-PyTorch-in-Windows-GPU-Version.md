@@ -11,7 +11,7 @@ Hi there, today we are installing PyTorch in Windows. It is assumed that you alr
 The installation also requires the correct version of CUDA toolkit and the type of graphics card. For example if your 
 GPU is GTX 1060 6G, then its a Pascal based graphics card. Also check your version accordingly from the Nvidia official website. 
 
-Now come to the CUDA tool kit version. If you want to know which version of CUDA tool kit is installed in your windows. Open up the command prompt and enter this
+Now come to the CUDA tool kit version. If you want to know which version of CUDA tool kit is installed in windows. Open up the command prompt and enter this
 
 `nvcc --version`
 
@@ -70,7 +70,7 @@ If no error occurs, it means PyTorch is installed, now lets check the cuda suppo
 ```python
 torch.cuda.is_available()
 ```
-If you get `True` then it means that you have succesfully installed the PyTorch. If any problems you can ask me in the comments section. Have a nice day!
+If you get `True` it means you have succesfully installed the PyTorch. If any problems you can ask me in the comments section. Have a nice day!
 
 
 
