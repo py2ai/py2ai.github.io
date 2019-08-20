@@ -24,8 +24,8 @@ Then execute this command:
 
 `pip install Fiona‑1.7.13‑cp36‑cp36m‑win_amd64.whl`
 
-*3.* Third and final step is to download [PyTorch](http://www.xavierdupre.fr/enseignement/setup/torch-0.3.0b0+591e73e-py3-none-any.whl). Again just as before execute this in command prompt:
+*3.* Third and final step is to download [PyTorch](http://www.xavierdupre.fr/enseignement/setup/torch-0.4.0-cp36-cp36m-win_amd64.whl). Again just as before execute this in command prompt:
 
-`pip install torch-0.3.0b0+591e73e-py3-none-any.whl`
+`pip install torch-0.4.0-cp36-cp36m-win_amd64.whl`
 
 Congratulations! you have PyTorch (CPU version) ready!!. If you want to install PyTorch GPU version then follow my next tutorial.
