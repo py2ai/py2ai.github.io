@@ -14,7 +14,7 @@ summary: A quick tutorial on Keras model
 
 ## A quick and easy multilayer model for Keras
 
-Hi there! today we will build a multilayer model that should look like this figure:
+Hi there! today we will build a multilayer model that should looks like this figure:
 ![]({{ "assets/img/posts/lab2_keras_model.png" | absolute_url }}). 
 ```python
 from keras.models import Sequential
