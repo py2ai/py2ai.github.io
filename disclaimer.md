@@ -20,4 +20,4 @@ Brand Disclaimer
 
 We respect brands and their reputation in the market. All the reviews and opinions are based on our experiences and our individual opinions. We post unbiased posts and reviews. Everything we post related to any brand or company is for educational purposes only.
 
-for any concern or any issue related to privacy policies and disclaimer you can contact us at python2ai@github.io
+for any concern or any issue related to privacy policies and disclaimer you can contact us at python2ai@gmail.com
