@@ -14,7 +14,7 @@ summary: A quick tutorial on Keras Regression
 
 ## A quick and easy multilayer Regression model
 
-Hi there! today we will build a multilayer model that should looks like this figure:
+Hi there! today we will build a multilayer model that should be like this figure:
 ![]({{ "assets/img/posts/lab4_keras_model.png" | absolute_url }}). Lets import the necessary components. 
 ```python
 from keras.models import Sequential
