@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Lab5 Training Classification model and Epochs
+title: Lab4 Training Classification model and Epochs
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
@@ -67,6 +67,8 @@ Ok now we have our input samples and their target class vectors. Before training
 ```python
 print(X.shape,y.shape)
 ```
+The shapes will be like (3, 4) (3, 3).
+
 
 Lets create the model. Our loss function is categorical_crossentropy, the optimizer is Adam and the metrics to monitor accuracy is categorical_accuracy.
 The input_dim of model is 4 because each data sample has four elements. The output of first fully connected Dense layer is 50 units. The output of next 
@@ -112,22 +114,55 @@ for i in range(10):
 ```
 
 
-Well! its time to predict. How about checking for a data sample let say X = [1,1,1,1]. Its shape is (4,). So X.shape[0]= 4. And our model expects an input of 
+Well! its time to predict. How about checking for a data sample let say u = [1,1,1,1]. Its shape is (4,). So u.shape[0]= 4. And our model expects an input of 
 4 elements, so lets reshape it as 1x4.
 
 ```python
-X=np.array([1,1,1,1])
-if X.shape[0]==4:
-	X=np.reshape(X,(1,4))
+u=np.array([1,1,1,1])
+if u.shape[0]==4:
+	u=np.reshape(u,(1,4))
 ```	
 Lets predict its class. The output of model should be nearly or equal to [0,0,1]. I am using numpy round function to keep it vivid upto 2 decimal points instead of 
 showing a very long fractional number.
 
 ```python
+u=np.array([1,1,1,1])
+if u.shape[0]==4:
+	u=np.reshape(u,(1,4))
+	
+out = np.round_(model.predict(u),2)
+print("Prediction of ", u, " is: ")
+print(out)
+
+```
+Result is:
+
+Prediction of  [[1 1 1 1]]  is:
+[[0. 0. 1.]]
+
+
+Lets input the full 3x4 matrix X to this model. 
+
+
+
+```python
 out = np.round_(model.predict(X),2)
+print("Prediction of ", X, " is: ")
 print(out)
 ```
 
+Result is: 
+
+Prediction of  
+[[1 1 1 1]
+ [2 2 2 2]
+ [3 3 3 3]]  is:
+[[0. 0. 1.]
+ [0. 1. 0.]
+ [1. 0. 0.]]
+
+
+We observe that model has done good classification for each input data sample.
 
 
 Here are the results of training process.
@@ -146,4 +181,3 @@ Here are the results of training process.
 
 
 Thats all for this lab 5. In the next lab 6 we will learn about training the CNN model for detection of Apple and Orange. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).
-
