@@ -145,4 +145,5 @@ Here are the results of training process.
 
 
 
-Thats all for this lab 5. In the next lab 6 we will learn about training the CNN model. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).
+Thats all for this lab 5. In the next lab 6 we will learn about training the CNN model for detection of Apple and Orange. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).
+
