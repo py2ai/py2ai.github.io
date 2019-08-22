@@ -11,7 +11,7 @@ summary: A quick tutorial series on Keras
 
 ## A quick and easy multilayer model for Keras
 
-Hi there! today we will build a multilayer model that should looks like this figure:
+Hi there! today we will build a multilayer model that should be like this:
 ![]({{ "assets/img/posts/lab3_keras_model.png" | absolute_url }}). 
 
 The multilayer perceptron model will be fed with input data of shape 3 rows and 4 columns. Then we will evaluate or predict the model by giving an input to it. This process is quite simple but that is very important before moving towards complex data handling. Lets import the essential items
