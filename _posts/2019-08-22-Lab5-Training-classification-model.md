@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Lab4 Training Classification model and Epochs
+title: Lab5 Training Classification model and Epochs
 author: Hussain A.
 categories: [tutorial]
 mathjax: true
