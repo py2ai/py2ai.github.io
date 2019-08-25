@@ -2,7 +2,7 @@
 layout: post
 title: Lab1 Keras Basic Model
 author: Hussain A.
-categories: [Keras tutorial]
+categories: [Keras tutorial series]
 mathjax: true
 summary: A quick tutorial Keras model
 ---
