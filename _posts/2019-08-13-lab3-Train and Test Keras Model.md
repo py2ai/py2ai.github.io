@@ -2,7 +2,7 @@
 layout: post
 title: Lab3 Train and Test Keras Model
 author: Hussain A.
-categories: [tutorial]
+categories: [Keras tutorial series]
 mathjax: true
 summary: A quick tutorial series on Keras
 ---
