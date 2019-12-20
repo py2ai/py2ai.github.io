@@ -53,10 +53,10 @@ these options:
 
 **JOBS CONSOLE MESSAGES  TESTS  ARTIFACTS**
 
-Click on the **ARTIFACTS** option. After this scroll down and you will find the whl file. For my case the [whl file](https://ci.appveyor.com/api/buildjobs/qva8hdw9i353j50i/artifacts/output%2Ftorch-0.4.0a0%2B38aaa63-cp36-cp36m-win_amd64.whl)
+Click on the **ARTIFACTS** option. After this scroll down and you will find the whl file. For my case the [PyTorch](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pytorch)
 is here. Download it and then pip install the whl file. For example:
 
-`pip install torch-0.4.0a0+38aaa63-cp36-cp36m-win_amd64.whl`
+`pip install torch‑1.0.1‑cp36‑cp36m‑win_amd64.whl`
 
 After succesfull installation we need to check if all things working fine?
 
