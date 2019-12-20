@@ -18,12 +18,7 @@ Then go to the directory where you have downloaded the whl file and then press S
 
 *2.*  Secondly, execute the following for intel openmp
 
-pip install intel-openmp
-
-Then execute this command:
-
-
-`pip install Fiona‑1.7.13‑cp36‑cp36m‑win_amd64.whl`
+`pip install intel-openmp`
 
 *3.* Third and final step is to download [PyTorch](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pytorch), currently the version available is torch‑1.0.1‑cp36‑cp36m‑win_amd64.whl, so download it. Again just as before execute this in command prompt:
 
