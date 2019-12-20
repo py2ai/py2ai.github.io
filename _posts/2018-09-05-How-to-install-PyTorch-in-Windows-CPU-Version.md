@@ -16,8 +16,9 @@ Then go to the directory where you have downloaded the whl file and then press S
 
 `pip install Shapely-1.6.3-cp36-cp36m-win_amd64.whl`
 
-*2.*  Secondly, we need to install Fiona. For this download [Fiona](https://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona) and download 
-Fiona‑1.7.13‑cp36‑cp36m‑win_amd64.whl
+*2.*  Secondly, execute the following for intel openmp
+
+pip install intel-openmp
 
 Then execute this command:
 
