@@ -24,4 +24,4 @@ Then go to the directory where you have downloaded the whl file and then press S
 
 `pip install torch‑1.0.1‑cp36‑cp36m‑win_amd64.whl`
 
-Congratulations! you have PyTorch (CPU version) ready!!. If you want to install PyTorch GPU version then follow my next tutorial.
+Congratulations! you have PyTorch (CPU version) ready!! If you like to install PyTorch GPU version, please follow my next tutorial.
