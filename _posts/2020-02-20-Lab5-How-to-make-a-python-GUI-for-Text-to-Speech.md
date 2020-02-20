@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Lab5 Training Classification model and Epochs
+title: Lab6 Making Python GUI for the Text to Speech
 author: Hussain A.
 categories: [Keras tutorial series]
 mathjax: true
