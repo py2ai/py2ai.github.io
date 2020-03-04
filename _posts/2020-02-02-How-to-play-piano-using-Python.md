@@ -18,7 +18,7 @@ By using the wav files for each note of the Piano
 I have a folder of wave files 
 You may easily find the folder from the link below
 https://freesound.org/people/TEDAgame/packs/25405/
-I will also put them on www.pyshine.com
+
 
 Ok so lets start the coding
 First we require the list of notes so
