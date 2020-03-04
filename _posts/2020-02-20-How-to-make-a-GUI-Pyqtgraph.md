@@ -189,18 +189,8 @@ if __name__ == "__main__":
 ```
 	
 That ends the required coding, lets run it 
-As we can see that currently there is no color or even text at the cross hair
-Lets fix this first
-Lets run again!
-Ok so the text is appearing now however the colors of plots need a fix
-Lets try again!
-Ok so that is working now
-Lets change the colors its now taking colors from the index positions 2,3
-Lets change the sine wave x axis from -2pi to +2pi
-Lets reduce the number of samples in the sine wave to 8
-
 Thats all for today, I hope you will learn and enjoy from this video
-Thanks and have a nice day!  Code is  [available](https://github.com/py2ai/PyQt-GUI).
+Thanks and have a nice day! 
 	
 
 
