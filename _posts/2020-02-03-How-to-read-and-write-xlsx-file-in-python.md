@@ -94,9 +94,11 @@ xw.Range('B1').value = np.array(list(sumDictOf.values())).reshape(len(list(sumDi
 wb.save(r'output.xlsx')
 ``` 
 Lets see , run it, close the .xlsx 
-We see that the output file now has all selected keywords and their values
-Thats all for today
+We see that the output file now has all selected keywords and their values.
+Thats all for today.
 Take care of yourself
+
+
 
 	
 
