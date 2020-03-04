@@ -20,7 +20,7 @@ import numpy as np
 ```
 xlwings can be installed using pip3 install xlwings
 
-Lets have a look at the .xlsx file we are going to read
+Lets have a look at the .xlsx [file](https://github.com/py2ai/Keras-Labs/blob/master/demodata.xlsx) we are going to read
 we can read and assign it to the workbook
 ```python
 workbook = xw.Book(r'demodata.xlsx',"utf8")
