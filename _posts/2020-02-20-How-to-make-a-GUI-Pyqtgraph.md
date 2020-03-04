@@ -186,6 +186,8 @@ def main():
 if __name__ == "__main__":
 	main()
 	
+
+	
 That ends the required coding, lets run it 
 As we can see that currently there is no color or even text at the cross hair
 Lets fix this first
