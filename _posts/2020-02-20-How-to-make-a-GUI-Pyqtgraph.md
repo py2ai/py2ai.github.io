@@ -10,13 +10,9 @@ summary: A quick tutorial on pyqtgraph GUI
 
 
 
-
-
-## A quick and easy Classification model
-
 Hi there! 
 
-##PyShine GUI series Lab-1
+PyShine GUI series Lab-1
 Lets import the required libraries
 ```
 import sys
