@@ -2,7 +2,7 @@
 layout: post
 title: Making Python GUI for sine and cosine
 author: Hussain A.
-categories: [Keras tutorial series]
+categories: [GUI tutorial series]
 mathjax: true
 summary: A quick tutorial on pyqtgraph GUI
 ---
@@ -14,14 +14,14 @@ Hi there!
 
 PyShine GUI series Lab-1
 Lets import the required libraries
-```
+```python
 import sys
 from PyQt5 import QtGui, QtGui
 import numpy as np
 import pyqtgraph as pg
 ```
 Lets make the initialization variables
-```
+```python
 region = pg.LinearRegionItem()
 minX=0
 maxX=0
@@ -31,25 +31,25 @@ data2=0
 dataPosX=0
 ```
 Cross hair generation in terms of verticle and horizontal lines
-```
+```python
 vLine=pg.InfiniteLine(angle=90,movable=False)
 hLine=pg.InfiniteLine(angle=0,movable=False)
 ```
 Ok so lets put some colors R,G,B values to a List
-```
+```python
 Colors_Set = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),(44, 160, 44), (152, 223, 138)]
 ```
 Lets name the curves some in majors Legend
-```
+```python
 majors = ["Sine","Cosine"]
 ```
 It would be awesome to let us control the background colors
 Lets choose as white w
-```
+```python
 pg.setConfigOption("background","w")
 ```
 Its time to make the major Class , lets call it pyshine_plot
-```
+```python
 class pyshine_plot(QtGui.QWidget):
 	def __init__(self):
 		global dataPosX
@@ -175,7 +175,7 @@ class pyshine_plot(QtGui.QWidget):
 		self.updateplot()
 ```
 Alright so the functions are done and now we can make the main function to run the app
-```
+```python
 def main():
 	import sys
 	app = QtGui.QApplication(sys.argv)
@@ -186,7 +186,7 @@ def main():
 if __name__ == "__main__":
 	main()
 	
-
+```
 	
 That ends the required coding, lets run it 
 As we can see that currently there is no color or even text at the cross hair
@@ -200,7 +200,7 @@ Lets change the sine wave x axis from -2pi to +2pi
 Lets reduce the number of samples in the sine wave to 8
 
 Thats all for today, I hope you will learn and enjoy from this video
-Thanks and have a nice day!
+Thanks and have a nice day!  Code is  [available](https://github.com/py2ai/PyQt-GUI).
 	
 
 
