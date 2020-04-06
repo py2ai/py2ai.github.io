@@ -8,7 +8,9 @@ summary: Making a matplot live audio plot
 ---
 
 Alright friends welcome back, lets plot some sound on the matplotlib.
+
 [![Everything Is AWESOME](https://i9.ytimg.com/vi/9kL8bmfj-YQ/mqdefault.jpg?time=1586144433815&sqp=CJDJqvQF&rs=AOn4CLBTRQF3dR3zqRG9O2XukY6zTLT-qg)](https://youtu.be/9kL8bmfj-YQ "Everything Is AWESOME")
+
 
 ```python 
 # Quickly import essential libraries
