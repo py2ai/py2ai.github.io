@@ -11,16 +11,16 @@ Hi there!
 
 Welcome to Pyshine and today we will play a poem
 By using the wav files for each note of the Piano
-# I have a folder of wave files 
-# You may easily find the folder from the link below
-# https://freesound.org/people/TEDAgame/packs/25405/
-# I will also put them on www.pyshine.com
+I have a folder of wave files 
+You may easily find the folder from the link below
+https://freesound.org/people/TEDAgame/packs/25405/
+I will also put them on www.pyshine.com
 
-# Ok so lets start the coding
+Ok so lets start the coding
 
-# First we require the list of notes so
+First we require the list of notes so
 
-
+```python
 Twinkle_List = ['c4','c4','g4','g4','a4','a4','g4',\
 				'f4','f4','e4','e4','d4','d4','c4',\
 				'g5','g5','f4','f4','e4','e4','d4',\
@@ -113,7 +113,7 @@ for t in Twinkle_List:
 
 	
 	
-
+```
 
 
 
