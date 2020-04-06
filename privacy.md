@@ -1,4 +1,4 @@
-Python2ai Privacy Policy
+PyShine Privacy Policy
 
 
 What information or data we collect?
