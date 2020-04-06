@@ -108,6 +108,7 @@ with stream:
 ```
 
 
-# color to the plot. Simply we set the face color of ax.
+
+
 	
 
