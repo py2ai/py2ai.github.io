@@ -200,8 +200,7 @@ if __name__ == "__main__":
 ```
     
 ## ScreenShot:
-Save all the code in a app.py file and run using `python app.py`. You will see the application GUI that will look like this:
-![]({{ "assets/img/posts/voice-controlled-pptx.png" | absolute_url }})
+Save all the code in a app.py file and run using `python app.py`. 
 
 Now chose the .pptx file and hit OK button. After this the ppt will launch in full screen mode. You can say next slide, or next, in this portion of the code the text is scanned for next word and if it is detected correctly, the slide will turn to 
 the next page and similarly, if the word is bingo then it will go back one page. 
