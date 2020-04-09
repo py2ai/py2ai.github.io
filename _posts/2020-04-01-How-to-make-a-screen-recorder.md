@@ -9,7 +9,7 @@ summary: Making of an audio and video screen recorder in Python
 
 Alright friends welcome back, lets make a very flexible screen recorder today. The target platform for this GUI is Windows 10.
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/screenreo.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
 
 
 ```python 
@@ -296,6 +296,9 @@ if __name__ == "__main__":
 
 
 ```
+
+
+
 
 
 
