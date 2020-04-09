@@ -7,7 +7,7 @@ mathjax: true
 summary: Making of an audio and video screen recorder in Python
 ---
 
-Alright friends welcome back, lets make a very flexible screen recorder today. Target platform for this GUI is Windows 10.
+Alright friends welcome back, lets make a very flexible screen recorder today. The target platform for this GUI is Windows 10.
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/A95D78AF-A81D-4A5E-AAA2-3A4F66B09EA8.png?raw=true)](https://youtu.be/9kL8bmfj-YQ "Everything Is AWESOME")
 
@@ -15,7 +15,6 @@ Alright friends welcome back, lets make a very flexible screen recorder today. T
 ```python 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Visit: www.pyshine.com
 # Subscribe to pyshine youtube channel for more learning videos.
 # Its an Audio Video Screen Recoder in Python 3.
 # -*- coding: utf-8 -*-
@@ -25,7 +24,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets # pip install pyqt5
 from PyQt5.QtWidgets import QFileDialog
 import os 
 import pyautogui # pip install pyautogui
-import cv2 # pip inst
+import cv2 
 import numpy as np 
 import pygetwindow as gw
 import _thread
@@ -289,8 +288,7 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Visit: www.pyshine.com
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # Subscribe to pyshine youtube channel for more learning videos.
 # Its an Audio Video Screen Recoder in Python 3.
 # -*- coding: utf-8 -*-
