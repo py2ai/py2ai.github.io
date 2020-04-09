@@ -7,7 +7,7 @@ mathjax: true
 summary: Making of an audio and video screen recorder in Python
 ---
 
-Alright friends welcome back, lets make a very flexible screen recorder today.
+Alright friends welcome back, lets make a very flexible screen recorder today. Target platform for this GUI is Windows 10.
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/A95D78AF-A81D-4A5E-AAA2-3A4F66B09EA8.png?raw=true)](https://youtu.be/9kL8bmfj-YQ "Everything Is AWESOME")
 
