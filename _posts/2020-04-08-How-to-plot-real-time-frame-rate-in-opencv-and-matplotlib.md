@@ -7,6 +7,8 @@ mathjax: true
 summary: Making of an OpenCV and Matplotlib data processing and visualization in Python
 ---
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/tN5YbXmLGIE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. Today we will learn, how to detect a Human face using Open CV library in Python, from a real-time web camera. We will also learn, how to plot the real-time frame rate of the camera.
 
 Basically, the real-time video consists of the image frames that are shown multiple times in a second. The number of frames shown per second is known as frame rate. Artificial Intelligence techniques have their own processing time. The performance of and AI algorithm highly depends on its processing duration. Some Algorithms provide a very impressive short duration to process a video frame. For example, today we will use one such algorithm in the Open CV. The trained model is in the X M L file format. The name of the model is Haar cascade frontal face default.xml
@@ -89,7 +91,7 @@ Generate the 'file.csv' with labels time, FPS: Frame Per Second
 # So lets start the code, by importing the required libraries
 #################################### Face.py  Starts ################################################
 
-#################################### Plot.py  Starts ################################################
+
 import cv2
 import time
 import imutils
@@ -155,6 +157,7 @@ cv2.destroyAllWindows()
 # Please comment to provide feedback, if you have questions please ask, and
 # Share and like , do subscribe to PyShine Youtube Channel.
 #################################### Face.py  Ends ################################################
+#################################### Plot.py  Starts ################################################
 
 # Subscribe to PyShine Youtube channel for the upcoming educational videos
 # Lets write the face detection code
