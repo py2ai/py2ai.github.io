@@ -7,7 +7,6 @@ mathjax: true
 summary: Making of an OpenCV and Matplotlib data processing and visualization in Python
 ---
 
-[<iframe width="560" height="315" src="https://www.youtube.com/embed/tN5YbXmLGIE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>]
 
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. Today we will learn, how to detect a Human face using Open CV library in Python, from a real-time web camera. We will also learn, how to plot the real-time frame rate of the camera.
 
