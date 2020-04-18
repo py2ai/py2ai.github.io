@@ -21,7 +21,7 @@ Object Detection using Haar feature-based cascade classifiers is an effective ob
 
 Initially, the algorithm needs a lot of positive images (images of faces) and negative images (images without faces) to train the classifier. Then we need to extract features from it. For this, Haar features shown in the image are used. They are just like our convolutional kernel. Each feature is a single value obtained by subtracting the sum of pixels, under the white rectangle from the sum of pixels under the black rectangle.
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/tN5YbXmLGIE "Everything Is AWESOME")
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/face_youtube.png?raw=true)](https://youtu.be/tN5YbXmLGIE "Everything Is AWESOME")
 
 The top row shows two good features. The first feature selected seems to focus on the property that the region of the eyes is often darker than the region of the nose and cheeks. The second feature selected relies on the property that the eyes are darker than the bridge of the nose. But the same windows applied to cheeks or any other place is irrelevant. 
 
