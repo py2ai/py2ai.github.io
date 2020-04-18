@@ -7,7 +7,7 @@ mathjax: true
 summary: Making of an OpenCV and Matplotlib data processing and visualization in Python
 ---
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/tN5YbXmLGIE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[<iframe width="560" height="315" src="https://www.youtube.com/embed/tN5YbXmLGIE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>]
 
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. Today we will learn, how to detect a Human face using Open CV library in Python, from a real-time web camera. We will also learn, how to plot the real-time frame rate of the camera.
 
@@ -22,6 +22,7 @@ Object Detection using Haar feature-based cascade classifiers is an effective ob
 
 Initially, the algorithm needs a lot of positive images (images of faces) and negative images (images without faces) to train the classifier. Then we need to extract features from it. For this, Haar features shown in the image are used. They are just like our convolutional kernel. Each feature is a single value obtained by subtracting the sum of pixels, under the white rectangle from the sum of pixels under the black rectangle.
 
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/tN5YbXmLGIE "Everything Is AWESOME")
 
 The top row shows two good features. The first feature selected seems to focus on the property that the region of the eyes is often darker than the region of the nose and cheeks. The second feature selected relies on the property that the eyes are darker than the bridge of the nose. But the same windows applied to cheeks or any other place is irrelevant. 
 
@@ -75,7 +76,7 @@ Generate the 'file.csv' with labels time, FPS: Frame Per Second
 
 
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
+
 
 
 ```python 
