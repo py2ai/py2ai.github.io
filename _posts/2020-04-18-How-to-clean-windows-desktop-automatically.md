@@ -46,13 +46,18 @@ list = file_list
 
 
 ```
+Now that we have both folder list and files list, we dont change the folders (for those who want to put these folders in antother folder can do more enhancements). On the other hand for the files we will find the extension of each file using the function:
+
 ```python
 
 def file_extension(path): 
 	return os.path.splitext(path)[1] 
-	# return os.path.splitext(path) # ('C:\\py\\wxPython', '.gif')
+	
 
+```
+This function will take input a list of files and generate a Dictionary as an output. This output key_dict will have keys as the extension name and values as the list that will contain paths of all files that belong to this extension key of the key_dict.
 
+```python
 def getGroupsDict(Files):
 	key_dict = {}
 	for file in Files:
@@ -63,15 +68,20 @@ def getGroupsDict(Files):
 	
 dict = getGroupsDict(list)
 print("dict",dict)
+```
+Once we get the dict from getGroupsDict() function, we will iterate over the dictionary items to make new folders with name as the Upper case of keys of the dict. If a folder already exists we can skip it.
 
-
+```python
 for key,value in dict.items():
 	Key = key.upper()
 	try:
 		os.mkdir(path+'/'+Key)
 	except:
 		pass
-	
+```
+Now that all folders are created, its time to clean up the Desktop. The following loop will move all files to their respective new folders.
+
+```python
 for key,value in dict.items():
 	for file in dict[key]:
 		try:
@@ -79,9 +89,11 @@ for key,value in dict.items():
 		except:
 			pass
 		
-		# os.rename(file,path+'/'+Key.upper())
+
 
 ```
+Thats it, hopefully you will like this tiny but fruitful code. 
+
 
 
 
