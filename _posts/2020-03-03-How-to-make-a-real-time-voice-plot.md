@@ -1,7 +1,6 @@
 ---
 layout: post
 title: How to make a real time voice plot
-author: Hussain A.
 categories: [GUI tutorial series]
 mathjax: true
 summary: Making a matplot live audio plot
