@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Lab2 How to make a basic multilayer Keras model
-author: Hussain A.
 categories: [Keras tutorial series]
 mathjax: true
 summary: A quick tutorial on Keras model
