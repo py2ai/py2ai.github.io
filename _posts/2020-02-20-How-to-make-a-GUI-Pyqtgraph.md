@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Making Python GUI for sine and cosine
-author: Hussain A.
 categories: [GUI tutorial series]
 mathjax: true
 summary: A quick tutorial on pyqtgraph GUI
