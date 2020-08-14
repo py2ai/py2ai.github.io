@@ -1,7 +1,6 @@
 ---
 layout: post
 title: How to make a piano in Python
-author: Hussain A.
 categories: [GUI tutorial series]
 mathjax: true
 summary: Making a piano in pyqt5
