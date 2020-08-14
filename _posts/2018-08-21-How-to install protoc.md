@@ -1,7 +1,6 @@
 ---
 layout: post
 title: How to install protobuf on Mac OS
-author: Hussain A.
 categories: [tutorial]
 
 mathjax: true
