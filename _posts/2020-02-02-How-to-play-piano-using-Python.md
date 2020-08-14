@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Playing piano with Python
-author: Hussain A.
 categories: [Python tutorial series]
 mathjax: true
 summary: A quick tutorial on multi threading in python to play twinkle twinkle little start poem
