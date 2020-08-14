@@ -1,7 +1,6 @@
 ---
 layout: post
 title: With Speech, control the MS Power Point Presentation
-author: Hussain A.
 categories: [tutorial]
 mathjax: true
 summary: A simple AI application tutorial to control PPTX slides with speech using python
