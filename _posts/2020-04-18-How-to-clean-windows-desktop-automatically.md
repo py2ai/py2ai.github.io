@@ -1,7 +1,6 @@
 ---
 layout: post
 title: How to automatically arrange the desktop icons
-author: Hussain A.
 categories: [GUI tutorial series]
 mathjax: true
 summary: This code will arrange files in folders according to their extension to keep windows desktop nice and tidy
