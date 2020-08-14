@@ -1,7 +1,6 @@
 ---
 layout: post
 title: How to make screen recorder in PyQt5
-author: Hussain A.
 categories: [GUI tutorial series]
 mathjax: true
 summary: Making of an audio and video screen recorder in Python
