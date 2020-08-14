@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Installing Pytorch in Windows (GPU version)
-author: Hussain A.
 categories: [tutorial]
 mathjax: true
 summary: A fastest way to install PyTorch in Windows without Conda
