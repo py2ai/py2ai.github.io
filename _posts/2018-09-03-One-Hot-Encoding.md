@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Importance of One Hot Encoding
-author: Hussain A.
 categories: [tutorial]
 mathjax: true
 summary: Why One Hot Encoding is important for Neural Netwoks
