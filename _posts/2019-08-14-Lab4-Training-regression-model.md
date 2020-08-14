@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Lab4 Training regression model and Epochs
-author: Hussain A.
 categories: [Keras tutorial series]
 mathjax: true
 summary: A quick tutorial on Keras Regression
