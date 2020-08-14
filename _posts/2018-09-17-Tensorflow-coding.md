@@ -1,7 +1,6 @@
 ---
 layout: post
 title: Basic Coding in TensorFlow
-author: Hussain A.
 categories: [tutorial]
 
 mathjax: true
