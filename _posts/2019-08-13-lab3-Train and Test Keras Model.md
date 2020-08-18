@@ -27,9 +27,16 @@ We also need numpy library to stack vertically the data. Lets import numpy as np
 import numpy as np
 ```
 
-Its to build the model. The input of each sample fed to this model consists of 4 elements. So the input_shape will be (4,). It is used for single dimension. To make things very simple and easy to understand, I have made three samples i.e. [1,1,1,1], [2,2,2,2], and [3,3,3,3]. The output for each of them respectively is 1,2,3. It means that the model will take a sample [1,1,1,1] and it should output a value nearly or equal to 1, because our target is 1. Similarly for the input [2,2,2,2] the output should be nearly or equal to 2. Lets plot the model to have a look and compile it using SGD and our loss function is mean squared error. The metrics to monitor the performance of training process is accuracy.
+Its time to build the model. The input of each sample fed to this model consists of 4 elements. So the input_shape will be (4,). It is used for single dimension. To make things very simple and easy to understand, I have made three samples i.e. [1,1,1,1], [2,2,2,2], and [3,3,3,3]. The output for each of them respectively is 1,2,3. It means that the model will take a sample [1,1,1,1] and it should output a value nearly or equal to 1, because our target is 1. Similarly for the input [2,2,2,2] the output should be nearly or equal to 2. Lets plot the model to have a look and compile it using SGD and our loss function is mean squared error. The metrics to monitor the performance of training process is accuracy.
 
 ```python
+model = Sequential()
+model.add(Dense(10, input_shape=(4,)))
+model.add(Activation('relu'))
+model.add(Dense(20))
+model.add(Activation('relu'))
+model.add(Dense(1))
+model.add(Activation('relu'))
 
 plot_model(model, to_file='mymodel.png', show_shapes=True)
 model.compile(loss='mean_squared_error',optimizer='sgd',metrics=['accuracy'])
