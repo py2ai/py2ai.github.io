@@ -5,6 +5,13 @@ categories: [GUI tutorial series]
 mathjax: true
 summary: This code will demonstrate the key differences between yield and return statements in python
 ---
+yield keyword means: 
+Provide output and continue
+
+return keyword means: 
+Provide output and stop
+
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/yield.png?raw=true)](https://youtu.be/TODMGIezMpE "Everything Is AWESOME")
 ```python
 import time
 Lets try to make a list using a function
