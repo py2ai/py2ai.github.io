@@ -1,6 +1,6 @@
 ---
 layout: post
-title: What is yield and return statements in Python
+title: What are yield and return statements in Python
 categories: [GUI tutorial series]
 mathjax: true
 summary: This code will demonstrate the key differences between yield and return statements in python
