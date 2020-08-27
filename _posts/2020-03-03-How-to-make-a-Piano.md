@@ -3,13 +3,14 @@ layout: post
 title: How to make a piano in Python
 categories: [GUI tutorial series]
 mathjax: true
-featured-img:piano
+featured-img: piano
 summary: Making a piano in pyqt5
 ---
 
 Hi there! Today we will make a basic piano application. Below is the complete tutorial video which consists of four parts. 
 
-[![IMAGE ALT TEXT HERE](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/piano.jpg?raw=true)](https://youtu.be/b61PU170_4k)
+[![IMAGE ALT TEXT HERE](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/piano.jpg?raw=true)](https://youtu.be/b61PU170_4k "Everything Is AWESOME")
+
 
 Here is the complete code with description.
 
