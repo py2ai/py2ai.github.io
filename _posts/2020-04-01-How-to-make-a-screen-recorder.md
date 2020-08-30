@@ -9,9 +9,12 @@ summary: Making of an audio and video screen recorder in Python
 
 Alright friends welcome back, lets make a very flexible screen recorder today. The target platform for this GUI is Windows 10. For direct installation to windows 10, please download these three parts in a folder and then extract the PyShine Recorder setup.zip file:
 
-[PyShine Recorder setup.zip]
-[PyShine Recorder setup.z02]
-[PyShine Recorder setup.z01]
+1. [PyShine Recorder setup.zip]
+
+2. [PyShine Recorder setup.z02]
+
+3. [PyShine Recorder setup.z01]
+
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
 
