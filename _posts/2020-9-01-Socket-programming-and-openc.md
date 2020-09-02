@@ -7,7 +7,7 @@ featured-img: server
 summary: This code will demonstrate the server client modules to transmit and receive video over wifi
 ---
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/serve.jpg?raw=true)](https://youtu.be/7-O7yeO3hNQ "Everything Is AWESOME")
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/server.jpg?raw=true)](https://youtu.be/7-O7yeO3hNQ "Everything Is AWESOME")
 # server.py
 ```python
 # Welcome to PyShine
