@@ -32,14 +32,25 @@ sample=['1234','abcd', '0x12cd']
 print(sample,'CONVERTED TO:',get_value(sample))
 ```
 # RESULTS
+
 BEFORE:    col1  col2     col3
+
 0  1234  abcd   0x12cd
+
 1  1234  abcd   0x12cd
+
 2  1234  abcd   0x12cd
+
 3  1234  abcd   0x12cd
+
 AFTER:    col1 col2  col3
+
 0  1234    1  4813
+
 1  1234    1  4813
+
 2  1234    1  4813
+
 3  1234    1  4813
+
 ['1234', 'abcd', '0x12cd'] CONVERTED TO: [1234, 1, 4813]
