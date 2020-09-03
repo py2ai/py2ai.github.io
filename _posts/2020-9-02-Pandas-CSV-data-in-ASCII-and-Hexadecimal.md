@@ -57,4 +57,4 @@ AFTER:    col1 col2  col3
 
 ['1234', 'abcd', '0x12cd'] CONVERTED TO: [1234, 1, 4813]
 
-[download]:(https://drive.google.com/file/d/1nELxf5DpHsOR6OSFQT6NapZBpOhJ_hn8/view?usp=sharing)
+[download]:https://drive.google.com/file/d/1nELxf5DpHsOR6OSFQT6NapZBpOhJ_hn8/view?usp=sharing
