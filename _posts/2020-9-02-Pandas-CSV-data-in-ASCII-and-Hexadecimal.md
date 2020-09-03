@@ -3,6 +3,7 @@ layout: post
 title: Pandas dataframe with hexadecimal and ascii values
 categories: [tutorial series]
 mathjax: true
+featured-img:pandas
 summary: This code will demonstrate how to convert pandas data to numeric form 
 ---
 ```python
