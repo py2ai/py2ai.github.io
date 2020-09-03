@@ -3,9 +3,10 @@ layout: post
 title: Pandas dataframe with hexadecimal and ascii values
 categories: [tutorial series]
 mathjax: true
-featured-img:pandas
+featured-img: pandas
 summary: This code will demonstrate how to convert pandas data to numeric form 
 ---
+Source code and sample csv data file are available:[download]
 ```python
 import pandas as pd
 import struct
@@ -55,3 +56,5 @@ AFTER:    col1 col2  col3
 3  1234    1  4813
 
 ['1234', 'abcd', '0x12cd'] CONVERTED TO: [1234, 1, 4813]
+
+[download](https://drive.google.com/file/d/1nELxf5DpHsOR6OSFQT6NapZBpOhJ_hn8/view?usp=sharing)
