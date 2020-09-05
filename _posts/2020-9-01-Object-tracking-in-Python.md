@@ -22,7 +22,7 @@ summary: This code will demonstrate opencv based object tracking using the CSRT
 # Lets start 
 import cv2, imutils
 tracker = cv2.TrackerCSRT_create()
-camera=False # Set it to True for webcam, else its video
+camera=True # Set it to True for webcam, else its video
 if camera: 
 	video  = cv2.VideoCapture(0)
 else:
