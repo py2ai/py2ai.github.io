@@ -6,7 +6,7 @@ mathjax: true
 featured-img: Slide1
 summary: This code will demonstrate opencv based object tracking using the CSRT 
 ---
-
+[![object tracking](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/tr.png?raw=true)](https://youtu.be/kFPDNYOz1EM "object tracking")
 ```python
 # Welcome to PyShine
 # First we require cv2 versionn 3.4.5.20
