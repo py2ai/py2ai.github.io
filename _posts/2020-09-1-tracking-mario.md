@@ -7,7 +7,7 @@ featured-img: mario
 summary: This code will track Mario game character using opencv and python
 ---
 
-[Video and code link]
+
 ```python
 # Welcome to PyShine
 # First we require cv2 versionn 3.4.5.20
@@ -52,4 +52,5 @@ video.release()
 cv2.destroyAllWindows()
 
 ```
-[Video and code link]:https://drive.google.com/file/d/1VYaLU69NjXRg0TNVSfANVO4A6_Ij8GgI/view?usp=sharing
+[Download source code with video]
+[Download source code with video]:https://drive.google.com/file/d/1VYaLU69NjXRg0TNVSfANVO4A6_Ij8GgI/view?usp=sharing
