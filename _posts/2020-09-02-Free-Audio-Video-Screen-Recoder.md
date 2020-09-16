@@ -16,6 +16,6 @@ For installation to windows 10, please download these three parts in a folder an
 
 
 
-[PyShine Recorder setup.Part1.rar]:https://drive.google.com/file/d/1Nkr-ZiZ6Mhtv2KCzXM3XYZ9bVmrAOB_o/view?usp=sharing
-[PyShine Recorder setup.Part2.rar]:https://drive.google.com/file/d/1ssD4chnFWzQkUmZ27DE8edjgJhdS6LoB/view?usp=sharing
-[PyShine Recorder setup.Part3.rar]:https://drive.google.com/file/d/14JUlF-D0nxsfwHZhvr4Y7c31VEanzhei/view?usp=sharing
+[PyShine Recorder setup.Part1.rar]
+[PyShine Recorder setup.Part2.rar]
+[PyShine Recorder setup.Part3.rar]
