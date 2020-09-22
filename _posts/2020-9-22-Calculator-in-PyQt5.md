@@ -3,7 +3,7 @@ layout: post
 title: How to make a calculator GUI in python with PyQt5
 categories: [GUI tutorial series]
 mathjax: true
-featured-img: calc
+featured-img: pyqt5_01
 summary: Making a simple calculator
 ---
 
