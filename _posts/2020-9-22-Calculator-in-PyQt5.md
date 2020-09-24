@@ -7,6 +7,8 @@ featured-img: calc
 summary: Making a simple calculator
 ---
 
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ycalc.jpg?raw=true)](https://youtu.be/c29ejbtzM3c "Everything Is AWESOME")
+
 ```python
 
 # -*- coding: utf-8 -*-
