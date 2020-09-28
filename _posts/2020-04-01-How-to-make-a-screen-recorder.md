@@ -43,7 +43,7 @@ import shlex
 import psutil
 import subprocess
 from subprocess import Popen
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # Install it via: pip install python-dateutil
 try: 
 	os.remove("output_video.mp4")
 except:
