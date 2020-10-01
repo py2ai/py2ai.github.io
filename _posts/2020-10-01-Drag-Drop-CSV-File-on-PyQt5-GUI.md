@@ -234,7 +234,7 @@ if op_sys == 'Darwin':
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 	def __init__(self):
 		"""
-		Tthis function initializes our main window from the main.py, set its title 
+		This function initializes our main window from the main.py, set its title 
 		and also allow the drops on it.
 		"""
 		super().__init__()
