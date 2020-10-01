@@ -1,10 +1,10 @@
 ---
 layout: post
-title: How to make a Matplotlib and PyQt5 based GUI
+title: How to make a Matplotlib and PyQt5 based GUI with drag and drop the CSV file
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt7
-summary: Making a matplotlib GUI with multiple themes
+summary: Making a drag drop CSV file based matplotlib GUI with multiple themes
 ---
 
 Hello friends, here is the code for the drag and drop enabled matplotlib GUI in PyQt5. Save the first main.py and the second drag_drop.py and run it. Enjoy, and do 
