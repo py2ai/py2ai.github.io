@@ -11,7 +11,7 @@ Hello friends, The tutorial is part 05 of PyQt5 GUI learning series. This video 
 The concept of MVC or Model View Controller is implemented with explanation. Enjoy, and do 
 give back your feedback and suggestions. For more detail visit pyshine youtube channel.
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt5.jpg?raw=true)](https://youtu.be/DLJM7o0B8zk "Everything Is AWESOME")
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt5.png?raw=true)](https://youtu.be/DLJM7o0B8zk "Everything Is AWESOME")
 
 
 ```python
