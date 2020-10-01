@@ -10,7 +10,7 @@ summary: Making a drag drop CSV file based matplotlib GUI with multiple themes
 Hello friends, here is the code for the drag and drop enabled matplotlib GUI in PyQt5. Save the first main.py and the second drag_drop.py and run it. Enjoy, and do 
 give back your feedback and suggestions. For more detail visit pyshine youtube channel.
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ypyqt6.png?raw=true)](https://youtu.be/LStHozI2aDo "Everything Is AWESOME")
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt7.png?raw=true)](https://youtu.be/LStHozI2aDo "Everything Is AWESOME")
 
 ## main.py
 
