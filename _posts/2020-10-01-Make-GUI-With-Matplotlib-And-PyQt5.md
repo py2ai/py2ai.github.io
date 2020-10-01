@@ -23,8 +23,7 @@ give back your feedback and suggestions. For more detail visit pyshine youtube c
 # WARNING! All changes made in this file will be lost!
 #
 # WEBSITE: www.pyshine.com
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 import matplotlib.pyplot as plt
