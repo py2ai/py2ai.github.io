@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Add text with transparent on an image
+title: Add text with transparent rectangle on an image
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: putBText
