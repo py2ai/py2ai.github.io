@@ -11,7 +11,7 @@ summary: How to add transparent box behind text in an open cv image
 
 Hello friends, today we will put some text with a background box behind it. It looks awesome and conveys to the point information on the image as well. It can be used 
 in various outputs of computer vision applications e.g. object detection results, office or school auto-attendence system. You can use it for Python3.
-pip install opencv-contrib-python
+
 ## Requirements
 cv2
 pyshine
@@ -22,6 +22,7 @@ pip3 install opencv-contrib-python
 pip3 install pyshine
 pip3 install numpy
 ```
+To detect face, we require a [cascasdeClassifier](https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_default.xml) file.
 
 ## main.py
 ```python3
