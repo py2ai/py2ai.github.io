@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Add text with transparent rectangle on an image
+title: Transfer video over sockets from multiple clients
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: putBText
-summary: How to add transparent box behind text in an open cv image
+summary: Socket programming with multiple clients and OpenCV in Python
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/mclients.png?raw=true)](https://youtu.be/1skHb3IjOr4 "GIF")
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/mclients.jpg?raw=true)](https://youtu.be/1skHb3IjOr4 "GIF")
 
 Hello friends, today we will do socket programming for multiple clients and single server. Its about creating multiple client sockets and transmitting their 
 videos to a server in Python. The client.py utilizes OpenCv to access the video frames either from the live webcam or from the MP4 video. The server side code 
