@@ -7,7 +7,7 @@ featured-img: pso2
 summary: Using Matplotlib drag the target of PSO and let the particles optimize their movements to find it.
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pso2.jpg?raw=true)](https://youtu.be/xEQv9YdvRiA "GIF")
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ypso2.png?raw=true)](https://youtu.be/xEQv9YdvRiA "GIF")
 
 Hello friends, today we will use Matplotlib in Python to make an interactive PSO environment, where you can change the target as well as 
 the number of particles including their various parameters.
