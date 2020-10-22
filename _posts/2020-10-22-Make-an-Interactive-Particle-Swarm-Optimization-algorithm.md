@@ -4,7 +4,7 @@ title: How to make an interactive PSO algorithm in Python
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pso2
-summary: Using Matplotlib drag the target of PSO and let the particles optimize their position to find it.
+summary: Using Matplotlib drag the target of PSO and let the particles optimize their movements to find it.
 ---
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pso2.jpg?raw=true)](https://youtu.be/xEQv9YdvRiA "GIF")
