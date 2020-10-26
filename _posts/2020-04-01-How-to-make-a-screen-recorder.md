@@ -295,7 +295,7 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # Subscribe to pyshine youtube channel for more learning videos.
 # Its an Audio Video Screen Recoder in Python 3.
 # -*- coding: utf-8 -*-
