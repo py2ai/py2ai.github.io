@@ -44,5 +44,3 @@ plot_model(model, to_file='mymodel.png', show_shapes=True)
 
 Thats all for this lab 1. In the next lab 2 we will learn about more layers to a model. Thanks for reading. Code is [available](https://github.com/py2ai/Keras-Labs). I hope this will be helpful for the beginners. 
 
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ZyFYBawiA24" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
