@@ -60,7 +60,6 @@ Here are the respective codes:
 # www.pyshine.com
 import socket, cv2, pickle, struct
 import imutils
-import threading
 import cv2
 
 
@@ -76,7 +75,7 @@ print("Listening at",socket_address)
 
 def start_video_stream():
 	client_socket,addr = server_socket.accept()
-	camera = False
+	camera = True
 	if camera == True:
 		vid = cv2.VideoCapture(0)
 	else:
