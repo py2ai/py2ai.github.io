@@ -7,7 +7,7 @@ featured-img: drone
 summary: How to broadcast drone video to multiple clients using a cache-server in Python
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/drone.jpg?raw=true)](https://youtu.be/ZyFYBawiA24 "GIF")
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ydrone.png?raw=true)](https://youtu.be/ZyFYBawiA24 "GIF")
 
 Hello friends, today we will write three codes as described in the above video:
 1. drone.py
