@@ -23,6 +23,7 @@ pip3 install opencv-contrib-python
 pip3 install pyshine
 pip3 install numpy
 pip3 install PyQt5
+pip3 install imutils
 ```
 To detect face, we require a [cascasdeClassifier](https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_default.xml) xml file.
 The main Python code is here, by default it will use the webcam of your pc to process video. For a video file, set the cam = False, and
