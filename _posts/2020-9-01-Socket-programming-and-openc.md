@@ -8,6 +8,43 @@ summary: This code will demonstrate the server client modules to transmit and re
 ---
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/j.png?raw=true)](https://youtu.be/7-O7yeO3hNQ "Everything Is AWESOME")
+
+
+Depending on the operating system, you can easily find the IP address of your machine as follows:
+
+### MAC OS users
+
+Go to the terminal window and run this command:
+
+```
+ipconfig getifaddr en0
+
+```
+That will show your LAN IP address. Note that en0 is commonly used for ethernet interface, and en1 is for the Airport interface. Make sure that your IP address is not starting from 127.x.x.x because that is your local host, and if you only want to check server client for the same pc then it is fine. Otherwise, consider use the command above and write the correct ip address for video transfer over different machines. 
+
+
+### Linux/Ubuntu OS users
+
+From the terminal window run this command:
+
+```
+ifconfig
+```
+The require IP address will be for Wifi LAN (inet)
+
+### Windows OS users
+
+From the cmd window run this command:
+
+```
+ipconfig
+```
+
+The require IP address will show against IPv4 Address
+
+
+
+
 # server.py
 ```python
 # Welcome to PyShine
