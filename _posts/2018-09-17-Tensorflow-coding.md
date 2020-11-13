@@ -2,7 +2,7 @@
 layout: post
 title: Basic Coding in TensorFlow
 categories: [tutorial]
-
+featured-img: TensorFlow
 mathjax: true
 summary: Lets code in TensorFlow
 ---
