@@ -3,6 +3,7 @@ layout: post
 title: TensorFlow Basics
 categories: [tutorial]
 mathjax: true
+featured-img: TensorFlow
 summary: A quick tutorial about tensorflow
 ---
 
