@@ -3,6 +3,7 @@ layout: post
 title: Lab1 Keras Basic Model
 categories: [Keras tutorial series]
 mathjax: true
+featured-img: keras
 summary: A quick tutorial Keras model
 ---
 
