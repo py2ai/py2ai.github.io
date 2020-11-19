@@ -7,7 +7,7 @@ featured-img: audiolive2
 summary: How to stop a thread in managed by the QThreadPool in PyQt5
 ---
 
----[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/audiolive2.jpg?raw=true)](https://youtu.be/v-aDi1B50gQ "GIF")
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/audiolive2.jpg?raw=true)](https://youtu.be/v-aDi1B50gQ "GIF")
 
 Hello friends, this tutorial is an update of the previous tutorial No. 10. Like before, we will get data from the live audio stream through the computer's microphone. We have another button named "Stop" added to this GUI. This button will stop the current worker and let the user update the parameters in the GUI. The GUI remains responsive and acts according to the input parameters. In the upcoming tutorial, we will use a different approach to run several threads. The .ui and .py files are available below. Please make a new folder and save both of them as separate files.
 
