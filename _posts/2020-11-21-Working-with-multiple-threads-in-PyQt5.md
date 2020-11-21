@@ -3,11 +3,11 @@ layout: post
 title: Working with multiple threads in PyQt5
 categories: [GUI tutorial series]
 mathjax: true
-featured-img: audiolive2
+featured-img: threadspy
 summary: How to start and stop QThread in PyQt5
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/audiolive2.jpg?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
+
 
 Hello friends! Today we will design a relatively simple GUI. It contains six buttons, three for starting three threads and three for stopping them. 
 The code below is kept as simple as possible to understand the basic concept in handling the Qthread. We used progress bars because they can easily show a counter's progress, 
