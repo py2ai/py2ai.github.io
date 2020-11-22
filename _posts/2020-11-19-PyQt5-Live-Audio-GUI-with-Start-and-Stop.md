@@ -14,6 +14,7 @@ Hello friends, this tutorial is an update of the previous tutorial No. 10. Like 
 ### main.ui
 
 ```python
+
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
@@ -102,7 +103,7 @@ Hello friends, this tutorial is an update of the previous tutorial No. 10. Like 
              <item row="1" column="0">
               <widget class="QLabel" name="label_6">
                <property name="text">
-                <string>Update Interval (ms)</string>
+                <string>Update Interval (1 to 100 ms)</string>
                </property>
               </widget>
              </item>
@@ -214,7 +215,7 @@ from PyQt5 import QtCore, QtWidgets,QtGui
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtMultimedia import QAudioDeviceInfo,QAudio,QCameraInfo
-
+import time
 input_audio_deviceInfos = QAudioDeviceInfo.availableDevices(QAudio.AudioInput)
 
 class MplCanvas(FigureCanvas):
@@ -233,6 +234,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 		icon.addPixmap(QtGui.QPixmap("PyShine.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 		self.setWindowIcon(icon)
 		self.threadpool = QtCore.QThreadPool()	
+		self.threadpool.setMaxThreadCount(1)
 		self.devices_list= []
 		for device in input_audio_deviceInfos:
 			self.devices_list.append(device.deviceName())
@@ -271,46 +273,35 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 		self.pushButton_2.clicked.connect(self.stop_worker)
 		self.worker = None
 		self.go_on = False
+	
 		
 	def getAudio(self):
 		try:
-			
+			QtWidgets.QApplication.processEvents()	
 			def audio_callback(indata,frames,time,status):
 				self.q.put(indata[::self.downsample,[0]])
 			stream  = sd.InputStream( device = self.device, channels = max(self.channels), samplerate =self.samplerate, callback  = audio_callback)
 			with stream:
-				while True:
-					if self.go_on:
-						break
 				
-			
-			self.go_on = False
+				while True:
+					QtWidgets.QApplication.processEvents()
+					if self.go_on:
+						
+						break
+						
+				
 			self.pushButton.setEnabled(True)
 			self.lineEdit.setEnabled(True)
 			self.lineEdit_2.setEnabled(True)
 			self.lineEdit_3.setEnabled(True)
 			self.lineEdit_4.setEnabled(True)
-			self.comboBox.setEnabled(True)
-			
+			self.comboBox.setEnabled(True)	
 			
 		except Exception as e:
 			print("ERROR: ",e)
 			pass
 
 	def start_worker(self):
-		self.worker = Worker(self.start_stream, )
-		self.threadpool.start(self.worker)	
-		self.reference_plot = None
-
-		
-		
-	def stop_worker(self):
-		self.go_on=True
-		with self.q.mutex:
-			self.q.queue.clear()
-		print('ACTIVE THREADS:',self.threadpool.activeThreadCount(),end=" \r")
-		
-	def start_stream(self):
 		
 		self.lineEdit.setEnabled(False)
 		self.lineEdit_2.setEnabled(False)
@@ -319,7 +310,29 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 		self.comboBox.setEnabled(False)
 		self.pushButton.setEnabled(False)
 		self.canvas.axes.clear()
+		
+		self.go_on = False
+		self.worker = Worker(self.start_stream, )
+		self.threadpool.start(self.worker)	
+		self.reference_plot = None
+		self.timer.setInterval(self.interval) #msec
+		
+
+
+	def stop_worker(self):
+		
+		self.go_on=True
+		with self.q.mutex:
+			self.q.queue.clear()
+		
+		#self.timer.stop()
+		
+		
+		
+	def start_stream(self):
+		
 		self.getAudio()
+		
 		
 		
 	def update_now(self,value):
@@ -347,15 +360,19 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 
 	def update_interval(self,value):
 		self.interval = int(value)
-		self.timer.setInterval(self.interval) #msec
+		
 		
 
 	def update_plot(self):
 		try:
+			
+			
 			print('ACTIVE THREADS:',self.threadpool.activeThreadCount(),end=" \r")
-			while not self.go_on:
+			while  self.go_on is False:
+				QtWidgets.QApplication.processEvents()	
 				try: 
 					self.data = self.q.get_nowait()
+					
 				except queue.Empty:
 					break
 				
@@ -369,9 +386,9 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 				if self.reference_plot is None:
 					plot_refs = self.canvas.axes.plot( self.ydata, color=(0,1,0.29))
 					self.reference_plot = plot_refs[0]	
-					
 				else:
 					self.reference_plot.set_ydata(self.ydata)
+					
 
 			
 			self.canvas.axes.yaxis.grid(True,linestyle='--')
@@ -381,7 +398,8 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 			self.canvas.axes.set_ylim( ymin=-0.5, ymax=0.5)		
 
 			self.canvas.draw()
-		except:
+		except Exception as e:
+			print("Error:",e)
 			pass
 
 
@@ -405,7 +423,6 @@ app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_LIVE_PLOT_APP()
 mainWindow.show()
 sys.exit(app.exec_())
-
 
 ```
 
