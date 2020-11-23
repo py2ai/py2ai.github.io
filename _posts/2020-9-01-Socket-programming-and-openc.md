@@ -20,8 +20,9 @@ Go to the terminal window and run this command:
 ipconfig getifaddr en0
 
 ```
-That will show your LAN IP address. Note that en0 is commonly used for ethernet interface, and en1 is for the Airport interface. Make sure that your IP address is not starting from 127.x.x.x because that is your local host, and if you only want to check server client for the same pc then it is fine. Otherwise, consider use the command above and write the correct ip address for video transfer over different machines. 
+That will show your LAN IP address. Note that en0 is commonly used for ethernet interface, and en1 is for the Airport interface. Make sure that your IP address is not starting from 127.x.x.x because that is your local host, and if you only want to check server client for the same pc then it is fine. Otherwise, consider using the command above and write the correct ip address for video transfer over different machines. 
 
+Depending on different OS settings:
 
 ### Linux/Ubuntu OS users
 
