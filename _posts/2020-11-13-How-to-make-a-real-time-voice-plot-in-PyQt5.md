@@ -14,6 +14,22 @@ We will use the Matplotlib figure and update the canvas according to the set int
 you can plot temperature, counts of vehicles, peoples, and much more. The basic idea is to use the QTimer and QThread to run the Audio stream, put the stream data to a queue, and get the queue data to display it to the Matplotlib canvas. The functionality of the different modules used in the code below are explained
 in the video above.
 
+### Installation of sounddevice
+
+Installing sounddevice in Linux/Ubuntu requires following two steps:
+
+```
+sudo apt-get install libportaudio2
+pip3 install sounddevice
+```
+On Windows and Mac OS
+
+```
+pip3 install sounddevice
+```
+
+Other included libraries can also be installed using pip3 install.
+
 Alright, to run the GUI, we actually require two files:
 
 1) gui.py
