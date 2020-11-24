@@ -14,8 +14,7 @@ the number of particles including their various parameters.
 
 ## IMPORTANT 
 
-The files below are intended for Python 3, not for Python2.
-So we will use two python files: 
+Please note that the files below are intended for Python 3, and not for Python2.
 
 1) Draggable.py
 2) main.py
