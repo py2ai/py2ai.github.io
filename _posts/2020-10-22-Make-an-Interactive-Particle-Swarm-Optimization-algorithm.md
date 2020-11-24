@@ -12,6 +12,9 @@ summary: Using Matplotlib drag the target of PSO and let the particles optimize 
 Hello friends, today we will use Matplotlib in Python to make an interactive PSO environment, where you can change the target as well as 
 the number of particles including their various parameters.
 
+## IMPORTANT 
+
+The files below are intended for Python 3, not for Python2.
 So we will use two python files: 
 
 1) Draggable.py
