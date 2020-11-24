@@ -195,8 +195,9 @@ Tested on Mac OS and Windows.
 
 ```
 
+(Updated) Added QtWidgets.QApplication.processEvents(), runs well for Windows and Mac Os, please share your experiences below.
 
-### gui.py  (Updated) Added QtWidgets.QApplication.processEvents(), runs well for Windows and Mac Os, please share your experiences below.
+### gui.py  
 
 ```python
 
