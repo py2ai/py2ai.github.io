@@ -49,7 +49,7 @@ class Draggable_Target:
 		return self.ID
 		
 	def connect(self):
-		'connect to all the events we need'
+		#'connect to all the events we need'
 		self.cidpress = self.point.figure.canvas.mpl_connect('button_press_event', self.on_press)
 		self.cidrelease = self.point.figure.canvas.mpl_connect('button_release_event', self.on_release)
 		self.cidmotion = self.point.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
@@ -85,7 +85,7 @@ class Draggable_Target:
 		canvas.blit(axes.bbox)
 
 	def on_release(self, event):
-		'on release we reset the press data'
+		#'on release we reset the press data'
 		if Draggable_Target.lock is not self:
 			return
 
@@ -96,7 +96,7 @@ class Draggable_Target:
 		self.point.figure.canvas.draw()
 
 	def disconnect(self):
-		'disconnect all the stored connection ids'
+		#'disconnect all the stored connection ids'
 		self.point.figure.canvas.mpl_disconnect(self.cidpress)
 		self.point.figure.canvas.mpl_disconnect(self.cidrelease)
 		self.point.figure.canvas.mpl_disconnect(self.cidmotion)
