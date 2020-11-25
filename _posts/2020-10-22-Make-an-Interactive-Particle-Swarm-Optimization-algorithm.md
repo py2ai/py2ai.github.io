@@ -14,7 +14,7 @@ the number of particles including their various parameters.
 
 ## IMPORTANT 
 
-Please note that the files below are intended for Python 3, and not for Python2.
+Please note that the files below are intended for Python 3, and not for Python2. Use Matplotlib version 2.2.4
 
 1) Draggable.py
 2) main.py
@@ -295,7 +295,7 @@ class Interactive_PSO():
 		print( 'Best Error:',global_best_error)
 
 		
-Interactive_PSO(fitness_function,initial,bounds,num_particles=1)# let say 2 particles and 50 iterations
+Interactive_PSO(fitness_function,initial,bounds,num_particles=16)# let say 2 particles and 50 iterations
 if __name__ == "__Interactive_PSO__":
     main()
 
