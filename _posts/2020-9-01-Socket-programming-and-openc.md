@@ -52,7 +52,7 @@ The require IP address will show against IPv4 Address
 
 # This code is for the server 
 # Lets import the libraries
-import socket, cv2, pickle,struct
+import socket, cv2, pickle,struct,imutils
 
 # Socket Create
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -78,6 +78,7 @@ while True:
 		
 		while(vid.isOpened()):
 			img,frame = vid.read()
+			frame = imutils.resize(frame,width=320)
 			a = pickle.dumps(frame)
 			message = struct.pack("Q",len(a))+a
 			client_socket.sendall(message)
