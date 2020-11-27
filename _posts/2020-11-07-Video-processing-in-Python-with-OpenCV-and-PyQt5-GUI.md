@@ -31,7 +31,7 @@ put a video file in the same folder as the Python code below. Also the xml file 
 
 
 
-Updated version with Start/Stop toggle button is added based on the suggestion from Ilker. This one is updated proces_version2.py.
+Updated version with Start/Stop toggle button is added based on the suggestion from Ilker. This is the updated version 2.
 
 ### proces_version2.py
 
@@ -287,7 +287,7 @@ if __name__ == "__main__":
 ```
 
 
-This is the old version 1.
+Following is the old version 1.
 
 
 ### proces_version1.py
