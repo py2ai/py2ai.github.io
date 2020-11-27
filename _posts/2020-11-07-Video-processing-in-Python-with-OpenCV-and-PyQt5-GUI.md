@@ -272,7 +272,7 @@ if __name__ == "__main__":
 
 ```
 
-Updated version with Start/Stop toggle is added based on the suggestion from Ilker. Instead of the above process.py, you can try the process_1.py as well. 
+Updated version with Start/Stop toggle button is added based on the suggestion from Ilker. Instead of the above process.py, you can try the process_1.py as well. 
 
 ### proces_1.py
 
