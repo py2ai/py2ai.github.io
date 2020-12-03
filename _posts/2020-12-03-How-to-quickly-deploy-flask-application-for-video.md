@@ -14,6 +14,7 @@ input parameters. These parameters are Brightness value, and Blur value. Followi
 the PythonAnywhere.com service. Its basic plan is free, for more details please visit the website. Follow the above video tutorial for deployment on the wifi local
 area network as per your server's IP address.
 
+## Files for deployment on the internet
 
 ### process.py
 
@@ -188,6 +189,7 @@ if __name__ == "__main__":
 
 ```
 
+## Files for deployment on the wifi LAN
 
 Following is the code set for the local wifi based deployment. Please note that '192.168.1.104' is the IP address on our computer, please change it according
 to your computer's IP address against the Wirless LAN. If you dont know your IP address, then please follow our tutorial about socket programming. The process.py 
