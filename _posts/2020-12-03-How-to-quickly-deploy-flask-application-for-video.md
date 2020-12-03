@@ -8,7 +8,7 @@ summary: We will use OpenCv to change blur and brightness of the video and serve
 ---
 # VIDEO IS IN THE UPLOADING PROCESS PLEASE WAIT FOR A FEW HOURS!
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/flask.jpg?raw=true)](https://youtu.be/2Nw4WQj4isA "Everything Is AWESOME")
+[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/flaskpng.png?raw=true)](https://youtu.be/2Nw4WQj4isA "Everything Is AWESOME")
 
 Hello friends! Today we will design a web application using Flask framework. We will use opencv to process the video frames. The user will submit a form containing 
 input parameters. These parameters are Brightness value, and Blur value. Following is the code for the deployment of application on the internet especially using
