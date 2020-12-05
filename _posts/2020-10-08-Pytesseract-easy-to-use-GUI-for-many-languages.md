@@ -26,9 +26,9 @@ Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
 Link to Free PyShine (audio + video) Screen Recorder: https://youtu.be/jLzLNRK72KI
 
 <br>
-<div align="center"></div>
+<div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/lGeM3lSdwRM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-<div align="center"></div>
+</div>
 <br>
 
 ### To run this application, you require python 3. Copy the below main.ui file and save it in a new directory  as main.ui
