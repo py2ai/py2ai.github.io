@@ -30,8 +30,6 @@ pip3 install numpy
 To detect face, we require a [cascasdeClassifier](https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_default.xml) file.
 The input image lena.jpg is here.
 
-[![GIF2](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ytext.png?raw=true)](https://youtu.be/3ziYX5aOiUg "GIF2")
-
 ## Run the code
 To run the code make a new folder, save the main.py below, the lena.jpg and the 'haarcascade_frontalface_default.xml' files.
 ```
