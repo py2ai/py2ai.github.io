@@ -6,9 +6,7 @@ mathjax: true
 featured-img: calc
 summary: Making a simple calculator
 ---
-
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ycalc.jpg?raw=true)](https://youtu.be/c29ejbtzM3c "Everything Is AWESOME")
-
+<div align="center"><iframe width="560" height="315" src="https://www.youtube.com/embed/c29ejbtzM3c" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
 ```python
 
 # -*- coding: utf-8 -*-
