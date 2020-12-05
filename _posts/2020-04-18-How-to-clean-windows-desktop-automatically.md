@@ -7,6 +7,11 @@ featured-img: desktop
 summary: This code will arrange files in folders according to their extension to keep windows desktop nice and tidy
 ---
 
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/G6mRODrE6YY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
 
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. I hope you guys will be staying at home and healthy. I was thinking that the majority of PC users do some much work every day, yet just like me they often come across the stuffy desktop. Yes, a Windows PC desktop that gets full of icons here and there, in fact everywhere. For those who regularly manage and put their files and folders carefully, it is a habit to them and salutes to them. But for others who still find it hard to put the files appropriately, it really becomes a huge pile of icons on the desktop. So I was thinking about how Python can be useful in arranging the desktop icons. For the time being, I have this idea that maybe we can find files and folders on the desktop and then make groups of files according to their extensions and then put them to their types in their respective new Type folders.
 
