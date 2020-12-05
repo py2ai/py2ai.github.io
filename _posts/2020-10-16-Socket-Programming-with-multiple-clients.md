@@ -7,7 +7,12 @@ featured-img: mclients
 summary: Socket programming with multiple clients and OpenCV in Python
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/mclients.jpg?raw=true)](https://youtu.be/1skHb3IjOr4 "GIF")
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/1skHb3IjOr4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
+
 
 Hello friends, today we will do socket programming for multiple clients and a single server. It's about creating multiple client sockets and transmitting their 
 videos to a server in Python. The client.py utilizes OpenCv to access the video frames either from the live webcam or through the MP4 video. The server side code 
