@@ -7,6 +7,7 @@ featured-img: flask
 summary: We will use OpenCv to change blur and brightness of the video and serve it on the network
 ---
 
+<br>
 <div align="center">
 <iframe width="560" height="315" 
 src="https://www.youtube.com/embed/2Nw4WQj4isA" 
@@ -15,6 +16,7 @@ allow="accelerometer; autoplay; clipboard-write;
 encrypted-media; gyroscope; picture-in-picture" 
 allowfullscreen></iframe>
 </div>
+<br>
 
 Hello friends! Today we will design a web application using Flask framework. We will use opencv to process the video frames. The user will submit a form containing 
 input parameters. These parameters are Brightness value, and Blur value. Following is the code for the deployment of application on the internet especially using
