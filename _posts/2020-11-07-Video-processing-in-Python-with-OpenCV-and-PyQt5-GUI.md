@@ -7,7 +7,11 @@ featured-img: pyqt509
 summary: How to make a GUI in PyQt5 for video processing applications
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt509.jpg?raw=true)](https://youtu.be/UWxWcSxymHs "GIF")
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/UWxWcSxymHs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
 
 Hello friends, today we will design a very basic GUI that will use the Model-View-Controller approach for the video processing applications.
 The user can change blur and brightness of the video frames and take pictures to save images. Additional text labels are also
