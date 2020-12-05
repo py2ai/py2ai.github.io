@@ -12,7 +12,13 @@ Provide output and continue
 return keyword means: 
 Provide output and stop
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/yield.png?raw=true)](https://youtu.be/TODMGIezMpE "Everything Is AWESOME")
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/TODMGIezMpE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
+
+
 ```python
 import time
 Lets try to make a list using a function
