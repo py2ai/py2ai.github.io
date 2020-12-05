@@ -7,7 +7,12 @@ featured-img: server
 summary: This code will demonstrate the server client modules to transmit and receive video over wifi
 ---
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/j.png?raw=true)](https://youtu.be/7-O7yeO3hNQ "Everything Is AWESOME")
+
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/7-O7yeO3hNQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+</iframe>
+</div>
+
 
 
 Depending on the operating system, you can easily find the IP address of your machine as follows:
