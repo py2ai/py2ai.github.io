@@ -7,6 +7,12 @@ featured-img: mario
 summary: This code will track Mario game character using opencv and python
 ---
 
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/6Try-DIfCMU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
+
 
 ```python
 # Welcome to PyShine
