@@ -25,7 +25,11 @@ How to make use of .ui file without converting it to .py file?
 Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
 Link to Free PyShine (audio + video) Screen Recorder: https://youtu.be/jLzLNRK72KI
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/ypyqt8.png?raw=true)](https://youtu.be/lGeM3lSdwRM "Everything Is AWESOME")
+<br>
+<div align="center"></div>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/lGeM3lSdwRM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<div align="center"></div>
+<br>
 
 ### To run this application, you require python 3. Copy the below main.ui file and save it in a new directory  as main.ui
 
@@ -292,6 +296,10 @@ sys.exit(app.exec_())
 ```
 
 After saving both files, follow the video tutorial above to run the GUI
-### python gui.py
+
+```
+python gui.py
+```
+
 
 
