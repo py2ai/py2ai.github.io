@@ -7,7 +7,11 @@ featured-img: audiolive
 summary: How to make a GUI using PyQt5 and Matplotlib to plot real-time data
 ---
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/audiolive.jpg?raw=true)](https://youtu.be/Ng00Mj5Tt8o "GIF")
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Ng00Mj5Tt8o" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
 
 Hello friends, today we will design a simple but beneficial GUI in PyQt5. We will plot live audio data that is sampled from your computer's audio device.
 We will use the Matplotlib figure and update the canvas according to the set interval in the GUI. This kind of application is useful in your projects; for example, 
