@@ -28,6 +28,8 @@ Some friends have asked about the possibility of saving the image as an output i
 [![Bird2](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVthree.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
 
 
+### process.py
+
 ```python
 
 # -*- coding: utf-8 -*-
@@ -217,3 +219,8 @@ if __name__ == "__main__":
 
 ```
 
+To run the code in Python 3
+
+```
+python3 process.py
+```
