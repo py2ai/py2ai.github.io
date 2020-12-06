@@ -17,6 +17,7 @@ give back your feedback and suggestions. For more detail visit pyshine youtube c
 </div>
 <br>
 
+Some friends have asked about the possibility of saving the image as an output instead of overwriting the input image. Yes, it is of course possible
 
 ```python
 
@@ -164,7 +165,12 @@ class Ui_MainWindow(object):
 	
 	def savePhoto(self):
 		""" This function will save the image"""
-		cv2.imwrite(self.filename,self.tmp)
+		# here provide the output file name
+		# lets say we want to save the output as a time stamp
+		import time
+		filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
+		# Or we can give any name such as output.jpg or output.png as well
+		cv2.imwrite(filename,self.tmp)
 		print('Image saved as:',self.filename)
 	
 	
