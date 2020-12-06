@@ -19,14 +19,15 @@ give back your feedback and suggestions. For more detail visit pyshine youtube c
 
 Some friends have asked about the possibility of saving the image as an output instead of overwriting the input image. Yes, it is of course possible. In the savePhoto function simply change the self.filename to filename. Then provide the desired name such as a time stamp or filename = 'output.jpg' or filename = 'output.png' etc. The code below is already updated. Thanks for your great suggestions!
 
+### Sample Images 
 
-![]({{ "assets/img/posts/PyOpenCVone.png | absolute_url }})
+[![Bird1](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVone.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird1")
 
-![]({{ "assets/img/posts/PyOpenCVtwo.png | absolute_url }})
+[![Cat](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVtwo.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Cat")
 
-![]({{ "assets/img/posts/PyOpenCVthree.png | absolute_url }})
+[![Bird2](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVthree.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
 
-_-
+
 ```python
 
 # -*- coding: utf-8 -*-
