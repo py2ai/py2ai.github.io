@@ -21,11 +21,11 @@ Some friends have asked about the possibility of saving the image as an output i
 
 ### Sample Images 
 
-[![Bird1](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVone.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird1")
+[![Bird1](https://github.com/py2ai/pyqt5images/PyOpenCVone.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird1")
 
-[![Cat](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVtwo.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Cat")
+[![Cat](https://github.com/py2ai/pyqt5images/PyOpenCVtwo.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Cat")
 
-[![Bird2](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyOpenCVthree.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
+[![Bird2](https://github.com/py2ai/pyqt5images/PyOpenCVthree.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
 
 
 ### process.py
