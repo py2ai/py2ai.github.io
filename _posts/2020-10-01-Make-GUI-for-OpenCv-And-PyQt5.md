@@ -26,7 +26,7 @@ Some friends have asked about the possibility of saving the image as an output i
 
 ![]({{ "assets/img/posts/PyOpenCVthree.png | absolute_url }})
 
-_
+_-
 ```python
 
 # -*- coding: utf-8 -*-
