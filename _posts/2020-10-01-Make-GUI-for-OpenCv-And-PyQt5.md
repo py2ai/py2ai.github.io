@@ -171,9 +171,19 @@ class Ui_MainWindow(object):
 		""" This function will save the image"""
 		# here provide the output file name
 		# lets say we want to save the output as a time stamp
-		import time
-		filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
+		# uncomment the two lines below
+		
+		# import time
+		# filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
+		
 		# Or we can give any name such as output.jpg or output.png as well
+		# filename = 'Snapshot.png'	
+	
+		# Or a much better option is to let user decide the location and the extension
+          	# using a file dialog.
+		
+		filename = QFileDialog.getSaveFileName(filter="JPG(*.jpg);;PNG(*.png);;TIFF(*.tiff);;BMP(*.bmp)")[0]
+		
 		cv2.imwrite(filename,self.tmp)
 		print('Image saved as:',self.filename)
 	
