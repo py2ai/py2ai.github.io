@@ -3,6 +3,7 @@ layout: post
 title: How to install OpenCV and Python in windows 
 categories: [tutorial]
 mathjax: true
+featured-img: opencvandpythoninstall
 summary: A quick tutorial to install python and opencv in windows7
 ---
 
