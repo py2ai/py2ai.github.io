@@ -121,7 +121,7 @@ plt.show()
 
 ```
 
-And here is the main.py
+And here is the main.py, it will use the thread to call the above Draggable.py file. So please make sure to name the above file as Draggable, otherwise change the name accordingly in the code below under the start_drag function.
 
 ### main.py
 
@@ -136,7 +136,7 @@ import csv, os
 import _thread
 import matplotlib.pyplot as plt
 
-
+print(str(0)+','+str( 0),file = open('target.csv','w'))
 def start_drag():
 	os.system('python Draggable.py')
 _thread.start_new_thread(start_drag,())
