@@ -10,9 +10,9 @@ Hi friends! Install pyshine version 0.0.6 in Windows OS as:
 
 ```
 pip3 install 
-
 ```
 
+### audio.py
 
 ```python
 
