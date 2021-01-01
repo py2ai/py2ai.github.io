@@ -50,7 +50,7 @@ import cv2,imutils
 import zmq
 import base64,time
 import queue,threading
-
+# www.pyshine.com
 context = zmq.Context()
 server_socket = context.socket(zmq.PUB)
 server_socket.bind("tcp://192.168.1.105:5555")
@@ -63,24 +63,24 @@ else:
 def pyshine_video_queue(vid):
 	
 	frame = [0]
-	audio = queue.Queue(maxsize=10)
+	q = queue.Queue(maxsize=10)
 	def getAudio():
 		while (vid.isOpened()):
 			try:
 				img, frame = vid.read()
 				frame = imutils.resize(frame,width=640)
-				audio.put(frame)
+				q.put(frame)
 			except:
 				pass
 			
 	thread = threading.Thread(target=getAudio, args=())
 	thread.start()
-	return queue
+	return q
 
-queue = pyshine_video_queue(vid)
+q = pyshine_video_queue(vid)
 
 while True:
-	frame = audio.get()
+	frame = q.get()
 	encoded, buffer = cv2.imencode('.jpg', frame,[cv2.IMWRITE_JPEG_QUALITY,80])
 	data = base64.b64encode(buffer)
 	print(server_socket.send(data))
@@ -101,21 +101,12 @@ following the similar way as in server.py code.
 
 ### client.py
 ```python
-import socket,cv2, pickle,struct
-import pyshine as ps
-
-mode =  'get'
-name = 'CLIENT RECEIVING AUDIO'
-audio,context = ps.audioCapture(mode=mode)
-ps.showPlot(context,name)
-
-# create socket
 import cv2
 import zmq
 import base64
 import numpy as np,time
 import pyshine as ps
-
+# www.pyshine.com
 context = zmq.Context()
 client_socket = context.socket(zmq.SUB)
 client_socket.connect("tcp://192.168.1.105:5555")
