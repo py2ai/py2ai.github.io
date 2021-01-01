@@ -141,11 +141,13 @@ cv2.destroyAllWindows()
 
 
 ```
+Unlike our previous tutorials about socket programming, in this tutorial you can run either of the server and client.py as the first code. A server will send frames to non-existent peers; no errors will be generated; instead, they'll queue up in socket buffers based on the configuration.
+
 To run the code, on server side:
 ```
 python3 server.py
 ```
-Once the server starts listening
+The client starts like this:
 
 ```
 python3 client.py
