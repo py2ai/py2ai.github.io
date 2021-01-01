@@ -36,7 +36,7 @@ pip3 install pyshine==0.0.6
 pip3 install zmq
 ```
 
-In the server.py code, please change the address in server_socket.bind("tcp://192.168.1.105:5555") to server_socket.bind("tcp://your_computer_ip:5555")
+In the server.py code, please change the address in server_socket.bind("tcp://192.168.1.105:5555") to server_socket.bind("tcp://your_computer_ip:5555").
 The default mode is set to Camera. To transmit video place a folder named videos in the same directory as the server.py and give the path
 of the .mp4 file accordingly.
 
