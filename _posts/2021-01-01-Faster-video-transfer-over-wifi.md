@@ -19,11 +19,9 @@ programming.
 Today, we will use a rather simple way to transfer video over wifi using Publish/Subscribe mode by leveraging sockets from the ZMQ library. The frame rate
 will be displayed on the client window, and a server will transmit (publish) the video. Similar to our previous videos, we assume that you 
 will find your computer's IP address for the wifi. Both server and client computers should be connected to the same wifi router.
-<br>
-<div align="center">
+
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pubsubmario.gif?raw=true)](https://youtu.be/2Nw4WQj4isA "GIF")
-</div>
-<br>
+
 
 
 ### ZMQ
