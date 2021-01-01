@@ -6,7 +6,7 @@ mathjax: true
 featured-img: pubsub
 summary: This tutorial is short and simple implementation of server client modules in Publish/Subscribe mode to transfer video frames
 ---
-Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
+Hi friends HAPPY NEW YEAR 2021! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
 programming.
 
 <br>
