@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How to send and receive video using socket programming in Python
+title: How to publish-subscribe video using socket programming in Python
 categories: [Socket programming tutorial series]
 mathjax: true
 featured-img: pubsub
