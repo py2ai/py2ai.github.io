@@ -36,7 +36,7 @@ From the cmd window run this command:
 ipconfig
 ```
 
-The require IP address will show against IPv4 Address
+The required IP address will be shown against IPv4 Address
 
 Here is the server side code. First, please change the IP address: '192.168.1.105' to yours, otherwise your server will not start.
 
