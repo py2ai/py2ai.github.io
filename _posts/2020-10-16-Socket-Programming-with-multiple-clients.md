@@ -47,7 +47,7 @@ From the terminal window run this command:
 ```
 ifconfig
 ```
-The require IP address will be for Wifi LAN (inet)
+The required IP address will be for Wifi LAN (inet)
 
 ### Windows OS users
 
@@ -57,7 +57,7 @@ From the cmd window run this command:
 ipconfig
 ```
 
-The require IP address will show against IPv4 Address
+The required IP address will be shown against IPv4 Address
 
 
 
