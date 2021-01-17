@@ -6,8 +6,7 @@ mathjax: true
 featured-img: ctos
 summary: This tutorial is about using socket programming to send audio data from Microphone of client to the server.
 ---
-Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
-programming.
+Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket programming.
 
 <br>
 <div align="center">
@@ -151,4 +150,4 @@ On the client computer the Microphone should be working and run this code:
 ```
 python client.py
 ```
-
+Once successfully connected the server computer will play back the client audio.
