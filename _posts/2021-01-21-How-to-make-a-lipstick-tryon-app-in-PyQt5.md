@@ -34,7 +34,8 @@ In the main project directory 13-Lipstick color picker GUI in PyQt5 we have:
  
   1. images directory: that contains colored tiles. The center point of each color tile will be used as the input R,G,B color. Moreover, at the start, this images
   directory will be process to generate the dropdown list. If you want to add more colors simply make small size solid tiles of 60x80 size in MS paint. Give this 
-  tile a name so that this name will be displayed in the dropdown list.
+  tile a name so that this name will be displayed in the dropdown list. The images directory can be downloaded from here: 
+  https://drive.google.com/file/d/12cby1Njphwl2361tSsVA7RrmA1n-METo/view?usp=sharing
   
   2. process.py file: that contains the main code. 
   
