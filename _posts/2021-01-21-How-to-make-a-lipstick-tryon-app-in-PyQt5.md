@@ -360,7 +360,8 @@ Here is complete main code:
 ### process.py
   
   ```python
-  # -*- coding: utf-8 -*-
+
+# -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'process.ui'
 #
@@ -506,6 +507,7 @@ class Ui_MainWindow(object):
 		self.lipstick_RGB=[227,38,54] # 227,38,54
 		self.mode='cam'
 		self.color_selected_text= 'Default'
+		self.readBefore = False
 
 	
 	def imageMode(self):
@@ -564,7 +566,10 @@ class Ui_MainWindow(object):
 				if ext in video_file_ext:
 					_, self.image = vid.read()
 				elif ext in image_file_ext:
-					self.image = cv2.imread(self.filename,cv2.IMREAD_COLOR)
+					if self.readBefore == False:
+						self.image = cv2.imread(self.filename,cv2.IMREAD_COLOR)
+						self.image = imutils.resize(self.image,height=480)
+						self.readBefore	= True
 
 			
 			self.update()
@@ -573,6 +578,7 @@ class Ui_MainWindow(object):
 			if self.started==False:
 				self.radioButton.setEnabled(True)
 				self.radioButton2.setEnabled(True)
+				self.readBefore	= False
 				break
 				print('Loop break')
 			QtWidgets.QApplication.processEvents()	
@@ -597,7 +603,6 @@ class Ui_MainWindow(object):
 			for the brightness from 0 to 99
 		"""
 		self.brightness_value_now = value
-		print('Brightness: ',value)
 		self.update()
 		
 		
@@ -605,7 +610,6 @@ class Ui_MainWindow(object):
 		""" This function will take value from the slider 
 			for the blur from 0 to 99 """
 		self.blur_value_now = value
-		print('Blur: ',value)
 		self.update()
 	
 	def lipStick_value(self,value):
@@ -656,7 +660,7 @@ class Ui_MainWindow(object):
 			kernel_size = (6+value,6+value) # +1 is to avoid 0
 			
 			weight = self.brightness_value_now
-			weight = 0.4 + (weight)/600
+			weight = 0.4 + (weight)/200
 			imgColorLips = cv2.GaussianBlur(imgColorLips,kernel_size,10)
 			imgColorLips = cv2.addWeighted(imgOriginal,1,imgColorLips,weight,0)
 			
@@ -712,6 +716,9 @@ if __name__ == "__main__":
 	ui.setupUi(MainWindow)
 	MainWindow.show()
 	sys.exit(app.exec_())
+
+
+
 
   ```
   
