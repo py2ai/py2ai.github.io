@@ -360,8 +360,8 @@ Here is complete main code:
 ### process.py
   
   ```python
-
-# -*- coding: utf-8 -*-
+  
+  # -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'process.ui'
 #
@@ -378,7 +378,7 @@ Here is complete main code:
 # Usage: python process.py
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QColorDialog
 from PyQt5.QtGui import QImage
 import cv2, imutils
 import time
@@ -454,12 +454,11 @@ class Ui_MainWindow(object):
 			self.comboBox.addItem(icon,k)
 		
 		self.horizontalLayout_2.addWidget(self.comboBox)
-
-		self.horizontalLayout_2.addWidget(self.pushButton)
 		self.horizontalLayout_2.addWidget(self.pushButton)
 		self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
 		self.pushButton_2.setObjectName("pushButton_2")
-
+		self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
+		self.pushButton_3.setObjectName("pushButton_3")
 
 		self.radioButton = QtWidgets.QRadioButton(self.centralwidget)
 		self.radioButton.setObjectName("radioButton")
@@ -468,6 +467,7 @@ class Ui_MainWindow(object):
 		self.radioButton.setText("Image/Video")
 		self.radioButton2.setText("Web Camera")
 
+		self.horizontalLayout_2.addWidget(self.pushButton_3)
 		self.horizontalLayout_2.addWidget(self.pushButton_2)
 		self.horizontalLayout_2.addWidget(self.radioButton)
 		self.horizontalLayout_2.addWidget(self.radioButton2)
@@ -487,11 +487,13 @@ class Ui_MainWindow(object):
 		self.comboBox.currentIndexChanged[str].connect(self.lipStick_value)
 		self.comboBox.setEnabled(False)
 		self.pushButton.setEnabled(False)
+		self.pushButton_3.setEnabled(False)
 		self.radioButton2.setChecked(True)
 		self.retranslateUi(MainWindow)
 		self.verticalSlider.valueChanged['int'].connect(self.brightness_value)
 		self.verticalSlider_2.valueChanged['int'].connect(self.blur_value)
 		self.pushButton_2.clicked.connect(self.load)
+		self.pushButton_3.clicked.connect(self.colorPicker)
 		self.pushButton.clicked.connect(self.savePhoto)
 		self.radioButton.clicked.connect(self.imageMode)
 		self.radioButton2.clicked.connect(self.videoMode)
@@ -508,7 +510,27 @@ class Ui_MainWindow(object):
 		self.mode='cam'
 		self.color_selected_text= 'Default'
 		self.readBefore = False
+	
+	def colorPicker(self):
+		""" Open up the color picker dialog"""
+		self.openColorDialog()
+	
+	def openColorDialog(self):
+		"""  This function will open the color dialog and let user choose either from it or from anywhere in the 
+			screen
+		"""
 
+		color = QColorDialog.getColor()
+		if color.isValid():
+			print(color.getRgb())
+			(R,G,B,_)=color.getRgb()
+			try:
+				self.lipstick_RGB = [R,G,B]
+				self.color_selected_text = 'COLOR PICKED'
+				self.update()
+			except Exception as e:
+				print(e)
+				pass
 	
 	def imageMode(self):
 		""" This function willl select the image mode"""
@@ -557,6 +579,7 @@ class Ui_MainWindow(object):
 		fps=0
 		self.comboBox.setEnabled(True)
 		self.pushButton.setEnabled(True)
+		self.pushButton_3.setEnabled(True)
 		self.radioButton.setEnabled(False)
 		self.radioButton2.setEnabled(False)
 		while(True):
@@ -685,7 +708,7 @@ class Ui_MainWindow(object):
 			kernel_size = (6+value,6+value) # +1 is to avoid 0
 			
 			weight = self.brightness_value_now
-			weight = 0.4 + (weight)/200
+			weight = 0.4 + (weight)/400
 			imgColorLips = cv2.GaussianBlur(imgColorLips,kernel_size,10)
 			imgColorLips = cv2.addWeighted(imgOriginal,1,imgColorLips,weight,0)
 			
@@ -728,6 +751,7 @@ class Ui_MainWindow(object):
 		self.label_2.setText(_translate("MainWindow", "Brightness"))
 		self.label_3.setText(_translate("MainWindow", "Blur"))
 		self.pushButton.setText(_translate("MainWindow", "Take picture"))
+		self.pushButton_3.setText(_translate("MainWindow", "Color"))
 
 # Subscribe to PyShine Youtube channel for more detail! 
 
