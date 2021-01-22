@@ -12,7 +12,7 @@ used as input and the GUI will display the face with colored lips. The color of 
 
 Here is final look of this simple GUI:
 
-[![lipstickgui](https://github.com/py2ai/pyqt5images/lipstickgui.png?raw=true)]
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/lipstick.gif?raw=true)](https://www.youtube.com/embed/UWxWcSxymHs "GIF")
 
 We will proceed in several steps to finish this GUI project.
 
