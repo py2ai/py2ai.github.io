@@ -22,13 +22,17 @@ In the main project directory 13-Lipstick color picker GUI in PyQt5 we have:
 13-Lipstick color picker GUI in PyQt5/
  
  ── images/
+ 
     ── Air Force Blue (Raf).png
     ── Air Force Blue (Usaf).png
     ...
     ── Zaffre.png
     ── Zinnwaldite Brown.png
+    
  ── lena.jpg
+ 
  ── process.py
+ 
  ── shape_predictor_68_face_landmarks.dat
  
  
