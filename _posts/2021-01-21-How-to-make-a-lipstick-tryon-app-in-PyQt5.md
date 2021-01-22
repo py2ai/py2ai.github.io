@@ -39,7 +39,7 @@ In the main project directory 13-Lipstick color picker GUI in PyQt5 we have:
   
   2. process.py file: that contains the main code. 
   
-  3. lena.jpg file: A sample input image.
+  3. lena.jpg file: A sample input image. Can be downloaded from here: https://drive.google.com/file/d/1BSNyxmqIjK8YKdIEmwZfK8xS8Q0dRoCb/view?usp=sharing
   
   4. shape_predictor_68_face_landmarks.dat: A dlib trained model which will be used to detect 68 facial landmarks. We will only use the points related to lips.
   You download it freely from https://github.com/davisking/dlib-models/blob/master/shape_predictor_68_face_landmarks.dat.bz2
