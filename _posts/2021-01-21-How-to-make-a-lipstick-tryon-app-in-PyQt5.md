@@ -562,26 +562,39 @@ class Ui_MainWindow(object):
 		while(True):
 			if self.mode == 'cam':
 				_, self.image = vid.read()
+				self.image = imutils.resize(self.image,height=480)
 			else:
 				if ext in video_file_ext:
-					_, self.image = vid.read()
+					try:
+						_, self.image = vid.read()
+						self.image = imutils.resize(self.image,width=480)
+					except Exception as e:
+						print(e)
+						pass
 				elif ext in image_file_ext:
 					if self.readBefore == False:
 						self.image = cv2.imread(self.filename,cv2.IMREAD_COLOR)
 						self.image = imutils.resize(self.image,height=480)
 						self.readBefore	= True
 
+			try:
+				self.update()
+			except Exception as e:
+				print(e)
+				self.started=False
+				self.pushButton_2.setText('Start')
+				
 			
-			self.update()
 			key = cv2.waitKey(1) & 0xFF
-			time.sleep(0.033)
+			time.sleep(0.01)
+		
 			if self.started==False:
 				self.radioButton.setEnabled(True)
 				self.radioButton2.setEnabled(True)
 				self.readBefore	= False
 				break
 				print('Loop break')
-			QtWidgets.QApplication.processEvents()	
+			#QtWidgets.QApplication.processEvents()	
 
 	def setPhoto(self,image):
 		""" This function will take image input and resize it 
@@ -602,23 +615,35 @@ class Ui_MainWindow(object):
 		""" This function will take value from the slider
 			for the brightness from 0 to 99
 		"""
-		self.brightness_value_now = value
-		self.update()
+		try:
+			self.brightness_value_now = value
+			self.update()
+		except Exception as e:
+			print(e)
+			pass
 		
 		
 	def blur_value(self,value):
 		""" This function will take value from the slider 
 			for the blur from 0 to 99 """
-		self.blur_value_now = value
-		self.update()
+		try:
+			self.blur_value_now = value
+			self.update()
+		except Exception as e:
+			print(e)
+			pass
 	
 	def lipStick_value(self,value):
 		"""  This function will take the RGB color selected from dropdown list
 			then update
 		"""
-		self.lipstick_RGB = RGB_dict[value]
-		self.color_selected_text = str(value)
-		self.update()
+		try:
+			self.lipstick_RGB = RGB_dict[value]
+			self.color_selected_text = str(value)
+			self.update()
+		except Exception as e:
+			print(e)
+			pass
 
 
 	
@@ -663,6 +688,7 @@ class Ui_MainWindow(object):
 			weight = 0.4 + (weight)/200
 			imgColorLips = cv2.GaussianBlur(imgColorLips,kernel_size,10)
 			imgColorLips = cv2.addWeighted(imgOriginal,1,imgColorLips,weight,0)
+			
 			
 
 	
@@ -716,8 +742,6 @@ if __name__ == "__main__":
 	ui.setupUi(MainWindow)
 	MainWindow.show()
 	sys.exit(app.exec_())
-
-
 
 
   ```
