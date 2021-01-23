@@ -6,6 +6,13 @@ mathjax: true
 featured-img: howtomakelipstickgui
 summary: This tutorial is about making a GUI in PyQt5 using Dlib and OpenCV for changing color of lips.
 ---
+
+ <br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/q6qHIsZ6V8s" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
+
 Hi and welcome! This is part 13 of the PyQt5 learning series. Previously, in Part 9 we have developed a video processing GUI. Today we will use that GUI in a more advanced
 level. Recently, some friends have requested to make a tutorial in which a user can tryon lipstick colors. So, in this tutorial an image, video or webcam video can be 
 used as input and the GUI will display the face with colored lips. The color of lips will be selected from a drop down list. So lets do it!
