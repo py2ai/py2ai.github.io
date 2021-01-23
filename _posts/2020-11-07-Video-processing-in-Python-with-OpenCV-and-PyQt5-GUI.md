@@ -536,3 +536,10 @@ if __name__ == "__main__":
 
 
 ```
+You may also like the following extension of the above GUI:
+
+ <br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/q6qHIsZ6V8s" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
