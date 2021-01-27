@@ -57,13 +57,6 @@ Note: Enter password of your Mac OS account in the popup window.
 10) You will see this `libprotoc 3.6.1`, Congratulations! you have now protobuff ready!.
 
 
-TESTING...
-
-<div id="text"></div>
- 
-<script>
-document.getElementById("text").innerHTML = "Text added by JavaScript code";
-</script>
 
             
             
