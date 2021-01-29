@@ -372,7 +372,7 @@ if __name__ == "__main__":
 
 ```
   
-### 5. COMPLETE CODE
+### COMPLETE CODE
 Here is complete main code:
   
 ### process.py
