@@ -26,21 +26,32 @@ We will proceed in several steps to finish this GUI project.
 ### 1. Structure of project directory 
 In the main project directory 13-Lipstick color picker GUI in PyQt5 we have:
 
-13-Lipstick color picker GUI in PyQt5/
+ ```
+ 13-Lipstick color picker GUI in PyQt5/
+├── images/
+│   ├── Air Force Blue (Raf).png
+│   ├── Air Force Blue (Usaf).png
+│   ├── Air Superiority Blue.png
+│   ├── Alabama Crimson.png
+│   ├── Alice Blue.png
+│   ├── Alizarin Crimson.png
+│   ├── Wood Brown.png
+│   ├── Xanadu.png
+│   ├── Yale Blue.png
+│   ├── Yellow (Munsell).png
+│   ├── Yellow (Ncs).png
+│   ├── Yellow (Process).png
+│   ├── Yellow (Ryb).png
+│   ├── Yellow Orange.png
+│   ├── Yellow-Green.png
+│   ├── Yellow.png
+│   ├── Zaffre.png
+│   └── Zinnwaldite Brown.png
+├── lena.jpg
+├── process.py
+└── shape_predictor_68_face_landmarks.dat
  
- ── images/
- 
-    ── Air Force Blue (Raf).png
-    ── Air Force Blue (Usaf).png
-    ...
-    ── Zaffre.png
-    ── Zinnwaldite Brown.png
-    
- ── lena.jpg
- 
- ── process.py
- 
- ── shape_predictor_68_face_landmarks.dat
+ ```
  
  
   1. images directory: that contains colored tiles. The center point of each color tile will be used as the input R,G,B color. Moreover, at the start, this images
