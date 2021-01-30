@@ -812,7 +812,7 @@ class Ui_MainWindow(object):
 		self.cam = True 
 		self.samples = self.lineEdit.text()
 		self.label_name = self.lineEdit_2.text()
-		self.EPOCHS = 10
+		self.EPOCHS = 1000
 
 
 		self.CLASS_DICT = {
