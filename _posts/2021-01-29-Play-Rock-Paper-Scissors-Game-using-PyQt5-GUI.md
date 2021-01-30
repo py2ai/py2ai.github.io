@@ -99,7 +99,9 @@ In the main project directory ```14-Play Rock Paper Scissors Game using PyQt5 GU
   
   4. ```RPS.h5```: A keras trained model to predict the shape in an input image.
   
-  5. ```RPS.py```: Our main code that will run all things in the GUI.
+  The ```images```, ```out.avi``` and ```RPS.h5``` are available here: https://drive.google.com/file/d/1-nxrMplXegj91ls6XLjqcwA7LeJhKP50/view?usp=sharing
+  
+  5. ```RPS.py```: Our main code that will run all things in the GUI (availble at the end).
   
   In a project directory to run the GUI simply use:
   ```
