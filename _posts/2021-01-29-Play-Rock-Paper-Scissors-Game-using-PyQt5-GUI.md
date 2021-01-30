@@ -25,7 +25,7 @@ select and decide the winner by knowing both preferences (from computer and huma
 The critical points of this GUI include:
 
 1. Acquire the images from a user webcam using OpenCV; the amount of images data belonging to each class is given by the user besides the label's name.
-2. Train a deep neural network model using Keras and generate an output .h5 model file.
+2. Train a deep neural network model using Keras and generate an output .h5 model file. The accuracy of prediction depends on various factors such as a clean dataset, number of Epochs, etc.
 3. Load the trained .h5 model and start playing the game. Notice that this model's purpose is only to classify the image as Rock, Paper, Scissors, or None.
 
 Here is final look of this simple GUI:
@@ -86,9 +86,9 @@ In the main project directory ```14-Play Rock Paper Scissors Game using PyQt5 GU
  
   1. ```dataset``` directory: This will be generated automatically, once we press the Acquire data button on the GUI. Simply
   provide the label and the number of samples for each label. The label will be used to generate a subdirectory with the 
-  same name as label. So please use it accordingly. The ```dataset``` should contain the acquired data (>100 files) each in separate subdirectories as: 
+  same name as label. So please use it accordingly. The ```dataset``` should contain the acquired data (>100 files) each in separate subdirectory as: 
     
-    (a) ```None```: any blank image image except the possible shapes like rock paper or scissors. 
+    (a) ```None```: any blank image except the possible shapes like rock paper or scissors. 
     
     (b) ```Paper```: The images containing paper shaped hand with a plane background.
     
