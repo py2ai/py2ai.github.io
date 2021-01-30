@@ -7,6 +7,7 @@ featured-img: pyqtRPS
 summary: This tutorial is about making a GUI in PyQt5 using OpenCV and Keras to play Rock Paper Scissors Game.
 ---
 
+
 Hi and welcome! It is part 14 of the PyQt5 learning series. Today we will design a GUI to play Rock Paper Scissors (RPS) game. Most of you already have known or played this game. 
 But let's make it straightforward for those who are new to this game. It is a priority-based hand playing game between
 two people, where each player simultaneously makes three shapes with a hand. These shapes include a rock (or stone with a closed fist), a paper (with all fingers stretched),
@@ -31,8 +32,11 @@ Here is final look of this simple GUI:
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/rpsgui.gif?raw=true)](https://www.youtube.com/embed/UWxWcSxymHs "GIF")
 
+Please install latest version 0.0.7 of pyshine as: 
+```pip3 install pyshine==0.0.7```
 
 We will proceed in several steps to finish this GUI project. First let's have look at the structure of this GUI project.
+
 
 ### 1. Structure of project directory 
 In the main project directory ```14-Play Rock Paper Scissors Game using PyQt5 GUI``` we have these items:
@@ -113,7 +117,6 @@ In the main project directory ```14-Play Rock Paper Scissors Game using PyQt5 GU
 
 ### 2. Importing essentials
 We can install them using pip install and then import them as:
-
 ```python
 from random import choice
 from PyQt5 import QtCore, QtGui, QtWidgets
