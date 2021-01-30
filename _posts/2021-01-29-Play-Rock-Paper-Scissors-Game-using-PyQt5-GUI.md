@@ -129,18 +129,8 @@ import cv2,os
 import pyshine as ps
 from threading import Thread 
 from keras.models import load_model
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers.convolutional import Conv2D
-from keras.layers.convolutional import MaxPooling2D
-from keras.layers.core import Activation
-from keras.layers.core import Flatten
-from keras.layers.core import Dense
-from keras import backend as K
 from keras.utils import np_utils
-from keras.optimizers import Adam
-from keras.callbacks import ReduceLROnPlateau, Callback
-import keras
+from keras.callbacks import Callback
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
@@ -188,32 +178,32 @@ previous PyQt5 tutorials on pyshine.com.
 
 ```python
 def selectCam(self):
-  """ This function will set the camera mode to True
-    so that webcam frames can be played
-  """
-  self.cam = True
+	""" This function will set the camera mode to True
+	so that webcam frames can be played
+	"""
+	self.cam = True
 
 def selectVideo(self):
-  """ This function will set the camera mode to False
-    so that video file can be played
-  """
-  self.cam = False
+	""" This function will set the camera mode to False
+	so that video file can be played
+	"""
+	self.cam = False
 ```
-The above two functions wil be used to select the mode, either video input or camera input.
+The above two functions will be used to select the mode, either video input or camera input.
 
 ### 7. Start the Training
 
 ```python
 def start_training(self):
-  """
-  This function will initiate two threads once the training is required
-  1. run the train_model function
-  2. run the progress bar which will display the epochs in terms of percentage
-  """
-  global epoch_cnt
-  self.th = Thread(target = self.train_model,args = ())
-  self.th.start()	
-  self.update_train_progress()
+	"""
+	This function will initiate two threads once the training is required
+	1. run the train_model function
+	2. run the progress bar which will display the epochs in terms of percentage
+	"""
+	global epoch_cnt
+	self.th = Thread(target = self.train_model,args = ())
+	self.th.start()	
+	self.update_train_progress()
 ```
 The above function will start the training process.
 
@@ -221,21 +211,21 @@ The above function will start the training process.
 
 ```python
 def loadModel(self):
-  """
-  This function will open a file dialog to let user load the model (.h5 file only)
-  after that set the status message
-  """
-  model_filename = QFileDialog.getOpenFileName(filter="Keras (*.h5)")[0]
-  try:
-    self.loaded_model = load_model(model_filename)
-    self.test = True
-    self.pushButton_4.setEnabled(True)
-    self.radioButton.setEnabled(True)
-    self.label_3.setText("STATUS: Model loaded! Press Start")
-  except Exception as e:
-    pass
-    print(e)
-    self.label_3.setText("STATUS: {}".format(e))
+	"""
+	This function will open a file dialog to let user load the model (.h5 file only)
+	after that set the status message
+	"""
+	model_filename = QFileDialog.getOpenFileName(filter="Keras (*.h5)")[0]
+	try:
+	self.loaded_model = load_model(model_filename)
+	self.test = True
+	self.pushButton_4.setEnabled(True)
+	self.radioButton.setEnabled(True)
+	self.label_3.setText("STATUS: Model loaded! Press Start")
+	except Exception as e:
+	pass
+	print(e)
+	self.label_3.setText("STATUS: {}".format(e))
 
 ```
 The above function will be used to load the .h5 file using a file dialog. This step is important before starting the game.
@@ -244,31 +234,31 @@ The above function will be used to load the .h5 file using a file dialog. This s
 
 ```python
 def find_winner(self,predicted_name, pc_selected_name):
-  """
-  This function will input the predicted_name (user image predicted by the model) and
-  pc_selected_name (random guess of the pc) and then decided by returning the winner based on
-  standard priority of the Rock Paper Scissors Game :)
-  """
-  if predicted_name == pc_selected_name:
-    return "Tie"
+	"""
+	This function will input the predicted_name (user image predicted by the model) and
+	pc_selected_name (random guess of the pc) and then decided by returning the winner based on
+	standard priority of the Rock Paper Scissors Game :)
+	"""
+	if predicted_name == pc_selected_name:
+	return "Tie"
 
-  if predicted_name == "Rock":
-    if pc_selected_name == "Scissors":
-      return "User"
-    if pc_selected_name == "Paper":
-      return "Computer"
+	if predicted_name == "Rock":
+	if pc_selected_name == "Scissors":
+	return "User"
+	if pc_selected_name == "Paper":
+	return "Computer"
 
-  if predicted_name == "Paper":
-    if pc_selected_name == "Rock":
-      return "User"
-    if pc_selected_name == "Scissors":
-      return "Computer"
+	if predicted_name == "Paper":
+	if pc_selected_name == "Rock":
+	return "User"
+	if pc_selected_name == "Scissors":
+	return "Computer"
 
-  if predicted_name == "Scissors":
-    if pc_selected_name == "Paper":
-      return "User"
-    if pc_selected_name == "Rock":
-      return "Computer"
+	if predicted_name == "Scissors":
+	if pc_selected_name == "Paper":
+	return "User"
+	if pc_selected_name == "Rock":
+	return "Computer"
 ```
 Once both players have made a choice, the human choice will be obtained via trained model and we will call it ```predicted_name```.
 The above function will use another ```pc_selected_name``` to return the winner or a Tie.
@@ -277,22 +267,22 @@ The above function will use another ```pc_selected_name``` to return the winner 
 ### 10. Update the progress bar to show training progress
 ```python
 def update_train_progress(self):
-  """ This function is responsible to update the progress bar to show training percentage """
+	""" This function is responsible to update the progress bar to show training percentage """
 
-  print('Training started...')
-  global epoch_cnt
+	print('Training started...')
+	global epoch_cnt
 
-  prev=0
+	prev=0
 
-  while True:
-    if epoch_cnt>prev:
-      value = int((epoch_cnt/self.EPOCHS)*100)
-      self.progressBar_2.setValue(value)
-      prev = epoch_cnt
-    QtWidgets.QApplication.processEvents()	
-    if epoch_cnt==self.EPOCHS:
-      self.progressBar_2.setValue(100)
-      break
+	while True:
+	if epoch_cnt>prev:
+	value = int((epoch_cnt/self.EPOCHS)*100)
+	self.progressBar_2.setValue(value)
+	prev = epoch_cnt
+	QtWidgets.QApplication.processEvents()	
+	if epoch_cnt==self.EPOCHS:
+	self.progressBar_2.setValue(100)
+	break
 ```
 The above function will update the progress bar 2 once the epoch is incremented. Notice how we map the EPOCHS to a percentage.
 
@@ -300,15 +290,15 @@ The above function will update the progress bar 2 once the epoch is incremented.
 ### 11. Mapping and Demapping the labels 
 
 ```python
-	def mapper(self,labels):
-		""" This function will map the string labels in self.CLASS_DICT
-			to their corresponding integer values """
-		return self.CLASS_DICT[labels]
+def mapper(self,labels):
+	""" This function will map the string labels in self.CLASS_DICT
+		to their corresponding integer values """
+	return self.CLASS_DICT[labels]
 
-	def demapper(self,val):
-		""" This function will map the integer values in self.REV_CLASS_DICT
-		to their corresponding string labels """
-		return self.REV_CLASS_DICT[val]
+def demapper(self,val):
+	""" This function will map the integer values in self.REV_CLASS_DICT
+	to their corresponding string labels """
+	return self.REV_CLASS_DICT[val]
 ```
 The above two functions will perform mapping to let the machine learn the repective integer for a label. After training,
 the demapper will be used to represent the predicted integer to its respective label such as Rock, Paper, Scissors, None.
@@ -317,66 +307,66 @@ the demapper will be used to represent the predicted integer to its respective l
 
 ```python
 def train_model(self):
-  """ This function will call the Keras model and 
-    map the data and labels, provide itto the model,
-    compile and train to generate a .h5 file
-  """
+	""" This function will call the Keras model and 
+	map the data and labels, provide itto the model,
+	compile and train to generate a .h5 file
+	"""
 
-  self.label_3.setText("STATUS: Training in progress, please wait!")
-  NUM_CLASSES = len(self.CLASS_DICT)
+	self.label_3.setText("STATUS: Training in progress, please wait!")
+	NUM_CLASSES = len(self.CLASS_DICT)
 
-  dataset = []
-  for directory in os.listdir(self.IMAGES_DATASET):
-    path = os.path.join(self.IMAGES_DATASET, directory)
-    if not os.path.isdir(path):
-      continue
-    for item in os.listdir(path):
-      if item.startswith("."):
-        continue
-      img = cv2.imread(os.path.join(path, item))
-      img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-      img = cv2.resize(img, (self.W, self.H))
-      img = img.astype('float32')
-      img = img/255
-      dataset.append([img, directory])
+	dataset = []
+	for directory in os.listdir(self.IMAGES_DATASET):
+	path = os.path.join(self.IMAGES_DATASET, directory)
+	if not os.path.isdir(path):
+	continue
+	for item in os.listdir(path):
+	if item.startswith("."):
+	continue
+	img = cv2.imread(os.path.join(path, item))
+	img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+	img = cv2.resize(img, (self.W, self.H))
+	img = img.astype('float32')
+	img = img/255
+	dataset.append([img, directory])
 
-  data, labels = zip(*dataset)
-  labels = list(map(self.mapper, labels))
-  labels = np_utils.to_categorical(labels)
-
-
-  (trainX, testX, trainY, testY) = train_test_split(np.array(data), np.array(labels), test_size=0.25, random_state=42)
-
-  # construct the image generator for data augmentation
-  aug = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
-  height_shift_range=0.1, shear_range=0.2, zoom_range=0.2,
-  horizontal_flip=True, fill_mode="nearest")
+	data, labels = zip(*dataset)
+	labels = list(map(self.mapper, labels))
+	labels = np_utils.to_categorical(labels)
 
 
-  INIT_LR = 1e-3
-  opt = Adam(lr=INIT_LR, decay=INIT_LR / self.EPOCHS)
-  sgd = keras.optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+	(trainX, testX, trainY, testY) = train_test_split(np.array(data), np.array(labels), test_size=0.25, random_state=42)
+
+	# construct the image generator for data augmentation
+	aug = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
+	height_shift_range=0.1, shear_range=0.2, zoom_range=0.2,
+	horizontal_flip=True, fill_mode="nearest")
 
 
-  model =ps.RPSNET.build(width=self.W, height=self.H, depth=3, classes=NUM_CLASSES)
-  model.compile(
-  optimizer=opt,
-  loss='categorical_crossentropy',
-  metrics=['accuracy']
-  )
-
-  cl = PyShine_Callback() 	
-  BS = 32
+	INIT_LR = 1e-3
+	opt = Adam(lr=INIT_LR, decay=INIT_LR / self.EPOCHS)
+	sgd = keras.optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 
 
-  H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BS),
-  validation_data=(testX, testY), steps_per_epoch=len(trainX) // BS,
-  epochs=self.EPOCHS, verbose=1,callbacks=[cl])
-  print("Training network...")
+	model =ps.RPSNET.build(width=self.W, height=self.H, depth=3, classes=NUM_CLASSES)
+	model.compile(
+	optimizer=opt,
+	loss='categorical_crossentropy',
+	metrics=['accuracy']
+	)
 
-  model.save("RPS.h5")
-  K.clear_session()
-  self.label_3.setText("STATUS: Training finished! Press Load Model")
+	cl = PyShine_Callback() 	
+	BS = 32
+
+
+	H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BS),
+	validation_data=(testX, testY), steps_per_epoch=len(trainX) // BS,
+	epochs=self.EPOCHS, verbose=1,callbacks=[cl])
+	print("Training network...")
+
+	model.save("RPS.h5")
+	K.clear_session()
+	self.label_3.setText("STATUS: Training finished! Press Load Model")
 ```
 The above function will scan the dataset directory and make the dataset and labels so that it can be used to 
 train the model which has CNN architecture especially configured for the Rock Paper Scissors Network (RPSNET). 
@@ -385,126 +375,126 @@ train the model which has CNN architecture especially configured for the Rock Pa
 
 ```python
 def loadImage(self):
-  """ This function will load the camera device, obtain the image
-    and set it to label using the setPhoto function
-  """
+	""" This function will load the camera device, obtain the image
+	and set it to label using the setPhoto function
+	"""
 
-  if self.started:
-    self.started=False
-    self.pushButton_4.setText('Start')	
-    self.pushButton_2.setEnabled(True)
-    self.pushButton_3.setEnabled(True)
+	if self.started:
+	self.started=False
+	self.pushButton_4.setText('Start')	
+	self.pushButton_2.setEnabled(True)
+	self.pushButton_3.setEnabled(True)
 
-  else:
-    self.started=True
-    self.pushButton_4.setText('Stop')
-    self.pushButton_2.setEnabled(False)
-    self.pushButton_3.setEnabled(False)
-
-
-  if self.cam:
-    vid = cv2.VideoCapture(0)
-
-  else:
-
-    video_filename =  'out.avi'
-    vid = cv2.VideoCapture(video_filename)
+	else:
+	self.started=True
+	self.pushButton_4.setText('Stop')
+	self.pushButton_2.setEnabled(False)
+	self.pushButton_3.setEnabled(False)
 
 
-  cnt=0
-  frames_to_count=20
-  st = 0
-  fps=0
-  sample_count=0
-  prev_move = None
-  while(vid.isOpened()):
+	if self.cam:
+	vid = cv2.VideoCapture(0)
 
-    _, self.image = vid.read()
-    try:
-      self.image  = imutils.resize(self.image ,height = 480 )
-    except:
-      break
+	else:
+
+	video_filename =  'out.avi'
+	vid = cv2.VideoCapture(video_filename)
 
 
+	cnt=0
+	frames_to_count=20
+	st = 0
+	fps=0
+	sample_count=0
+	prev_move = None
+	while(vid.isOpened()):
 
-    if cnt == frames_to_count:
-      try: # To avoid divide by 0 we put it in try except
-        self.fps = round(frames_to_count/(time.time()-st)) 						
-        st = time.time()
-        cnt=0
-      except:
-        pass
-
-    cnt+=1
-    if self.acquire:
-
-      roi = self.image[80:310, 80:310]
-      save_path = os.path.join(self.IMG_CLASS_PATH, '{}.jpg'.format(sample_count + 1))
-      sample_count+=1
-      Total = int(self.samples)
-      value = (sample_count/Total)*100
-      self.progressBar.setValue(value)
-      cv2.imwrite(save_path, roi)
-
-      if sample_count == int(self.samples):
-        self.acquire = False
-        sample_count = 0
-        self.pushButton_3.setEnabled(True)
-        self.pushButton_2.setEnabled(True)
-
-    if self.test:
-      roi = self.image[80:310, 80:310]
-      time.sleep(0.033)
-      img = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
-      img = cv2.resize(img, (self.W, self.H))
-
-      img = img.astype('float32')
-
-
-      img = img/255
-      pred = self.loaded_model.predict(np.array([img]))
-
-      pred_key = np.argmax(pred[0])
-      predicted_name = self.demapper(pred_key)
-
-      self.image = ps.putBText(self.image,predicted_name.upper(),text_offset_x=80,text_offset_y=10,font_scale=1.5,text_RGB=(220,0,0))
-
-      # Find who is the winner
-      if prev_move != predicted_name:
-        if predicted_name != "None":
-          pc_selected_name = choice(['Rock', 'Paper', 'Scissors'])
-          self.winner = self.find_winner(predicted_name, pc_selected_name)
-          if self.winner == 'Computer':
-            self.groupBox.setStyleSheet("background-color: rgb(255, 255, 255);")
-            self.groupBox_2.setStyleSheet("background-color: rgb(0, 255, 127);")
-          elif self.winner == 'User':
-            self.groupBox_2.setStyleSheet("background-color: rgb(255, 255, 255);")
-            self.groupBox.setStyleSheet("background-color: rgb(0, 255, 127);")
-          else:
-            self.groupBox_2.setStyleSheet("background-color: rgb(0, 255, 127);")
-            self.groupBox.setStyleSheet("background-color: rgb(0, 255, 127);")
-
-        else:
-          pc_selected_name = "None"
-          self.winner = "Waiting..."
-      prev_move = predicted_name
-      self.label_3.setText("STATUS: {}".format(self.winner).upper())
-
-      if pc_selected_name =='Rock':
-        self.DETECTED_IMAGE = self.ROCK_IMAGE
-      elif pc_selected_name =='Paper':
-        self.DETECTED_IMAGE = self.PAPER_IMAGE
-      elif pc_selected_name =='Scissors':
-        self.DETECTED_IMAGE = self.SCISSORS_IMAGE
-      else:
-        self.DETECTED_IMAGE = self.NONE_IMAGE
+	_, self.image = vid.read()
+	try:
+	self.image  = imutils.resize(self.image ,height = 480 )
+	except:
+	break
 
 
 
-    self.update()
-    key = cv2.waitKey(1) & 0xFF
-    if self.started==False:
-      break
+	if cnt == frames_to_count:
+	try: # To avoid divide by 0 we put it in try except
+	self.fps = round(frames_to_count/(time.time()-st)) 						
+	st = time.time()
+	cnt=0
+	except:
+	pass
+
+	cnt+=1
+	if self.acquire:
+
+	roi = self.image[80:310, 80:310]
+	save_path = os.path.join(self.IMG_CLASS_PATH, '{}.jpg'.format(sample_count + 1))
+	sample_count+=1
+	Total = int(self.samples)
+	value = (sample_count/Total)*100
+	self.progressBar.setValue(value)
+	cv2.imwrite(save_path, roi)
+
+	if sample_count == int(self.samples):
+	self.acquire = False
+	sample_count = 0
+	self.pushButton_3.setEnabled(True)
+	self.pushButton_2.setEnabled(True)
+
+	if self.test:
+	roi = self.image[80:310, 80:310]
+	time.sleep(0.033)
+	img = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+	img = cv2.resize(img, (self.W, self.H))
+
+	img = img.astype('float32')
+
+
+	img = img/255
+	pred = self.loaded_model.predict(np.array([img]))
+
+	pred_key = np.argmax(pred[0])
+	predicted_name = self.demapper(pred_key)
+
+	self.image = ps.putBText(self.image,predicted_name.upper(),text_offset_x=80,text_offset_y=10,font_scale=1.5,text_RGB=(220,0,0))
+
+	# Find who is the winner
+	if prev_move != predicted_name:
+	if predicted_name != "None":
+	  pc_selected_name = choice(['Rock', 'Paper', 'Scissors'])
+	  self.winner = self.find_winner(predicted_name, pc_selected_name)
+	  if self.winner == 'Computer':
+	    self.groupBox.setStyleSheet("background-color: rgb(255, 255, 255);")
+	    self.groupBox_2.setStyleSheet("background-color: rgb(0, 255, 127);")
+	  elif self.winner == 'User':
+	    self.groupBox_2.setStyleSheet("background-color: rgb(255, 255, 255);")
+	    self.groupBox.setStyleSheet("background-color: rgb(0, 255, 127);")
+	  else:
+	    self.groupBox_2.setStyleSheet("background-color: rgb(0, 255, 127);")
+	    self.groupBox.setStyleSheet("background-color: rgb(0, 255, 127);")
+
+	else:
+	  pc_selected_name = "None"
+	  self.winner = "Waiting..."
+	prev_move = predicted_name
+	self.label_3.setText("STATUS: {}".format(self.winner).upper())
+
+	if pc_selected_name =='Rock':
+	self.DETECTED_IMAGE = self.ROCK_IMAGE
+	elif pc_selected_name =='Paper':
+	self.DETECTED_IMAGE = self.PAPER_IMAGE
+	elif pc_selected_name =='Scissors':
+	self.DETECTED_IMAGE = self.SCISSORS_IMAGE
+	else:
+	self.DETECTED_IMAGE = self.NONE_IMAGE
+
+
+
+	self.update()
+	key = cv2.waitKey(1) & 0xFF
+	if self.started==False:
+	break
 ```
 This function is self explanatory, once the user hits the Start button, this function will be called. Based on the input type
 the while loop will continue to call the update function. The inference of input image is performed via the loaded model
@@ -514,22 +504,22 @@ and the winner is displayed in the status.
 
 ```python
 
-  def setPhoto(self,image):
-    """ This function will take image input and resize it 
-      only for display purpose and convert it to QImage
-      to set at the label.
-    """
-    self.tmp = image
-    self.tmp = cv2.rectangle(self.tmp, (80, 80), (310, 310), (0, 20, 200), 2)
+def setPhoto(self,image):
+	""" This function will take image input and resize it 
+	only for display purpose and convert it to QImage
+	to set at the label.
+	"""
+	self.tmp = image
+	self.tmp = cv2.rectangle(self.tmp, (80, 80), (310, 310), (0, 20, 200), 2)
 
-    image = imutils.resize(image,height=480)
-    frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = QImage(frame, frame.shape[1],frame.shape[0],frame.strides[0],QImage.Format_RGB888)
-    self.label.setPixmap(QtGui.QPixmap.fromImage(image))
+	image = imutils.resize(image,height=480)
+	frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+	image = QImage(frame, frame.shape[1],frame.shape[0],frame.strides[0],QImage.Format_RGB888)
+	self.label.setPixmap(QtGui.QPixmap.fromImage(image))
 
-    frame = cv2.cvtColor(self.DETECTED_IMAGE, cv2.COLOR_BGR2RGB)
-    image = QImage(frame, frame.shape[1],frame.shape[0],frame.strides[0],QImage.Format_RGB888)
-    self.label_2.setPixmap(QtGui.QPixmap.fromImage(image))
+	frame = cv2.cvtColor(self.DETECTED_IMAGE, cv2.COLOR_BGR2RGB)
+	image = QImage(frame, frame.shape[1],frame.shape[0],frame.strides[0],QImage.Format_RGB888)
+	self.label_2.setPixmap(QtGui.QPixmap.fromImage(image))
 
 ```
 Above function will display the image on the GUI with a red color rectangle of the region of interest (roi). 
@@ -537,30 +527,30 @@ Above function will display the image on the GUI with a red color rectangle of t
 ### 15. Acquire the data
 ```python
 def acquireData(self):
-		""" This funciton will acquire the image data into the respective label directory """
-		self.label_3.setText("STATUS: ")
-		self.samples = self.lineEdit.text()
-		self.label_name = self.lineEdit_2.text()
-		self.generateDirs()
-		self.acquire = True
-		self.pushButton_4.setEnabled(True)
-		self.pushButton_3.setEnabled(False)
-		self.pushButton_2.setEnabled(False)
-		self.radioButton.setEnabled(False)
+	""" This funciton will acquire the image data into the respective label directory """
+	self.label_3.setText("STATUS: ")
+	self.samples = self.lineEdit.text()
+	self.label_name = self.lineEdit_2.text()
+	self.generateDirs()
+	self.acquire = True
+	self.pushButton_4.setEnabled(True)
+	self.pushButton_3.setEnabled(False)
+	self.pushButton_2.setEnabled(False)
+	self.radioButton.setEnabled(False)
     
  def generateDirs(self):
-    """ This function will generate the Directorys for each label images data """
+	""" This function will generate the Directorys for each label images data """
 
-    self.IMG_CLASS_PATH = os.path.join(self.IMAGES_DATASET, self.label_name)
+	self.IMG_CLASS_PATH = os.path.join(self.IMAGES_DATASET, self.label_name)
 
-    try:
-      os.mkdir(self.IMAGES_DATASET)
-    except FileExistsError:
-      pass
-    try:
-      os.mkdir(self.IMG_CLASS_PATH)
-    except FileExistsError:
-      print("{} FOLDER ALREADY EXISTS!".format(self.IMG_CLASS_PATH))
+	try:
+	os.mkdir(self.IMAGES_DATASET)
+	except FileExistsError:
+	pass
+	try:
+	os.mkdir(self.IMG_CLASS_PATH)
+	except FileExistsError:
+	print("{} FOLDER ALREADY EXISTS!".format(self.IMG_CLASS_PATH))
  ```
  Above function will set the flag ```self.acquire``` to True which initiate the process of acquiring data in the generated
  subdirectory once the user hit Start.
@@ -568,12 +558,12 @@ def acquireData(self):
 ### 16. Update the photo on the label
  ```python
  
- 	def update(self):
-		""" This function will update the photo according to the 
-			current values of blur and brightness and set it to photo label.
-		"""
-		img = self.image
-		self.setPhoto(img)		
+def update(self):
+	""" This function will update the photo according to the 
+		current values of blur and brightness and set it to photo label.
+	"""
+	img = self.image
+	self.setPhoto(img)		
  
  ```
 Above function will simply call the setPhoto function with the image img.
@@ -582,24 +572,24 @@ Above function will simply call the setPhoto function with the image img.
 ```python
 
 def retranslateUi(self, MainWindow):
-		_translate = QtCore.QCoreApplication.translate
-		MainWindow.setWindowTitle(_translate("MainWindow", "PyShine RPS Application"))
-		self.label_4.setText(_translate("MainWindow", "ROCK PAPER SCISSORS"))
-		self.groupBox.setTitle(_translate("MainWindow", "User"))
-		self.label.setText(_translate("MainWindow", "User Video"))
-		self.groupBox_2.setTitle(_translate("MainWindow", "Computer"))
-		self.label_2.setText(_translate("MainWindow", "Computer Video"))
-		self.label_3.setText(_translate("MainWindow", "Please Load the Model (.h5) file..."))
-		self.label_5.setText(_translate("MainWindow", "Enter Samples:"))
-		self.lineEdit.setText(_translate("MainWindow", "400"))
-		self.label_6.setText(_translate("MainWindow", "Enter Class Label:"))
-		self.lineEdit_2.setText(_translate("MainWindow", "Paper"))
-		self.pushButton.setText(_translate("MainWindow", "Acquire Data"))
-		self.pushButton_2.setText(_translate("MainWindow", "Train Model"))
-		self.pushButton_3.setText(_translate("MainWindow", "Load Model"))
-		self.radioButton.setText(_translate("MainWindow", "Video input"))
-		self.radioButton_2.setText(_translate("MainWindow", "Camera input"))
-		self.pushButton_4.setText(_translate("MainWindow", "Start"))
+	_translate = QtCore.QCoreApplication.translate
+	MainWindow.setWindowTitle(_translate("MainWindow", "PyShine RPS Application"))
+	self.label_4.setText(_translate("MainWindow", "ROCK PAPER SCISSORS"))
+	self.groupBox.setTitle(_translate("MainWindow", "User"))
+	self.label.setText(_translate("MainWindow", "User Video"))
+	self.groupBox_2.setTitle(_translate("MainWindow", "Computer"))
+	self.label_2.setText(_translate("MainWindow", "Computer Video"))
+	self.label_3.setText(_translate("MainWindow", "Please Load the Model (.h5) file..."))
+	self.label_5.setText(_translate("MainWindow", "Enter Samples:"))
+	self.lineEdit.setText(_translate("MainWindow", "400"))
+	self.label_6.setText(_translate("MainWindow", "Enter Class Label:"))
+	self.lineEdit_2.setText(_translate("MainWindow", "Paper"))
+	self.pushButton.setText(_translate("MainWindow", "Acquire Data"))
+	self.pushButton_2.setText(_translate("MainWindow", "Train Model"))
+	self.pushButton_3.setText(_translate("MainWindow", "Load Model"))
+	self.radioButton.setText(_translate("MainWindow", "Video input"))
+	self.radioButton_2.setText(_translate("MainWindow", "Camera input"))
+	self.pushButton_4.setText(_translate("MainWindow", "Start"))
 ```
   
 ### 18. Run the application
@@ -655,18 +645,8 @@ import cv2,os
 import pyshine as ps
 from threading import Thread 
 from keras.models import load_model
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers.convolutional import Conv2D
-from keras.layers.convolutional import MaxPooling2D
-from keras.layers.core import Activation
-from keras.layers.core import Flatten
-from keras.layers.core import Dense
-from keras import backend as K
 from keras.utils import np_utils
-from keras.optimizers import Adam
-from keras.callbacks import ReduceLROnPlateau, Callback
-import keras
+from keras.callbacks import Callback
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
