@@ -240,25 +240,25 @@ def find_winner(self,predicted_name, pc_selected_name):
 	standard priority of the Rock Paper Scissors Game :)
 	"""
 	if predicted_name == pc_selected_name:
-	return "Tie"
+		return "Tie"
 
 	if predicted_name == "Rock":
-	if pc_selected_name == "Scissors":
-	return "User"
-	if pc_selected_name == "Paper":
-	return "Computer"
+		if pc_selected_name == "Scissors":
+			return "User"
+		if pc_selected_name == "Paper":
+			return "Computer"
 
 	if predicted_name == "Paper":
-	if pc_selected_name == "Rock":
-	return "User"
-	if pc_selected_name == "Scissors":
-	return "Computer"
+		if pc_selected_name == "Rock":
+			return "User"
+		if pc_selected_name == "Scissors":
+			return "Computer"
 
 	if predicted_name == "Scissors":
-	if pc_selected_name == "Paper":
-	return "User"
-	if pc_selected_name == "Rock":
-	return "Computer"
+		if pc_selected_name == "Paper":
+			return "User"
+		if pc_selected_name == "Rock":
+			return "Computer"
 ```
 Once both players have made a choice, the human choice will be obtained via trained model and we will call it ```predicted_name```.
 The above function will use another ```pc_selected_name``` to return the winner or a Tie.
