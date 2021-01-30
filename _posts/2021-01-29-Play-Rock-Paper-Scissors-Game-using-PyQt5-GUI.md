@@ -574,11 +574,13 @@ def acquireData(self):
 		"""
 		img = self.image
 		self.setPhoto(img)		
-  ```
+ 
+ ```
 Above function will simply call the setPhoto function with the image img.
 
 ### 17. Retranslate the User Interface of GUI
 ```python
+
 def retranslateUi(self, MainWindow):
 		_translate = QtCore.QCoreApplication.translate
 		MainWindow.setWindowTitle(_translate("MainWindow", "PyShine RPS Application"))
@@ -598,7 +600,7 @@ def retranslateUi(self, MainWindow):
 		self.radioButton.setText(_translate("MainWindow", "Video input"))
 		self.radioButton_2.setText(_translate("MainWindow", "Camera input"))
 		self.pushButton_4.setText(_translate("MainWindow", "Start"))
-	```
+```
   
 ### 18. Run the application
 ```python
