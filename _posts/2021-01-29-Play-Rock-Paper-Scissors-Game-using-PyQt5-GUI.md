@@ -30,7 +30,7 @@ The critical points of this GUI include:
 
 Here is final look of this simple GUI:
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/rpsgui.gif?raw=true)](https://www.youtube.com/embed/UWxWcSxymHs "GIF")
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/rpsgui.gif?raw=true)](https://youtu.be/7EVbHgp9yDg "GIF")
 
 Please install latest version 0.0.7 of pyshine as: 
 ```pip3 install pyshine==0.0.7```
