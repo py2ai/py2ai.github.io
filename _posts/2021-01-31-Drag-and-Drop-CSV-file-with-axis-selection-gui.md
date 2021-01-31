@@ -8,7 +8,7 @@ summary: Making a drag drop CSV file based matplotlib GUI with multiple themes a
 ---
 
 
-Hello friends! This is part 15 of the PyQt5 GUI learning series. Recently, some friends have given us some interesting and fruitful suggestions related to part 07. In
+Hello friends! This is part 15 of the PyQt5 GUI learning series. Recently, some friends have given interesting suggestions related to part 07. In
 that tutorial we designed a GUI to drag and drop the csv file to show data. Today's tutorial is an extension to the previous one. So lets have a look at the 
 suggestions:
 
@@ -458,7 +458,7 @@ Variance score,Mean Absolute Error,Mean Square Error,Root Mean Square Error,R2
 
 
 ```
-Important: 
+Important in the main.py: 
       ```
       time_format = '%Y-%m-%d %H:%M:%S.%f' # Please use this format for time_series-data_2.csv kind of time stamp
       time_format = '%d/%m/%Y %H:%M%f'     # Please use this format for time_series-data_1.csv kind of time stamp
