@@ -4,9 +4,7 @@
 <head>
 <title>ACE in Action</title>
 <meta charset="utf-8">
-<script type="text/javascript"
-    src="https://cdn.jsdelivr.net/npm/brython@3.9.1/brython.min.js">
-</script>
+
 <script type="text/javascript" src="https://pyshine.com/brython.js"></script>
 <script type="text/javascript" src="https://pyshine.com/brython_stdlib.js"></script>
 
