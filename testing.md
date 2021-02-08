@@ -5,37 +5,33 @@
 
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script>
-$(document).ready(function(){
-  $("#btn1").click(function(){
-    $("p").append(" <b>Appended text</b>.");
-  });
-
-  $("#btn2").click(function(){
-    $("ol").append("<li>Appended item</li>");
-  });
-});
-</script>
+<title>ACE in Action</title>
+<style type="text/css" media="screen">
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+</style>
 </head>
 <body>
 
-<p>This is a paragraph.</p>
-<p>This is another paragraph.</p>
-
-<ol>
-  <li>List item 1</li>
-  <li>List item 2</li>
-  <li>List item 3</li>
-</ol>
-
-<button id="btn1">Append text</button>
-<button id="btn2">Append list items</button>
-
+<div id="editor">function foo(items) {
+    var x = "All this is syntax highlighted";
+    return x;
+}</div>
+    
+<script src="https://pagecdn.io/lib/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+</script>
 </body>
 </html>
-
 
 </div> 
