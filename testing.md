@@ -48,7 +48,7 @@
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
   <script type="text/python3" >
 
-  print(3,2)
+  print(3,2,'a')
   </script>
 
   <input id="zone"><button id="mybutton">click !</button>
