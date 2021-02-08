@@ -1,11 +1,4 @@
----
-layout: post
-title: Adding custom JavaScript for a specific post
-category: posts
-customjs:
- - https://pyshine.com/brython.js
- - https://pyshine.com/brython_stdlib.js
----
+
 <div id="html" markdown="0">
 <h1>HTML part</h1>
 
