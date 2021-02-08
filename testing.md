@@ -7,6 +7,8 @@
 <script type="text/javascript"
     src="https://cdn.jsdelivr.net/npm/brython@3.9.1/brython.min.js">
 </script>
+<script type="text/javascript" src="https://pyshine.com/brython.js"></script>
+<script type="text/javascript" src="https://pyshine.com/brython_stdlib.js"></script>
 
 <style type="text/css" media="screen">
     #editor { 
@@ -44,12 +46,12 @@
     editor.session.setMode("ace/mode/javascript");
 </script>
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-      <script type="text/python3" >
+  <script type="text/python3" >
 
-      print(3,2)
-      </script>
+  print(3,2)
+  </script>
 
-      <input id="zone"><button id="mybutton">click !</button>
+  <input id="zone"><button id="mybutton">click !</button>
 </body>
 
 
