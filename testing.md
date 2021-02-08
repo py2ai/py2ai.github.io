@@ -2,10 +2,6 @@
 <div id="html" markdown="0">
 <h1>HTML part</h1>
 
-
-
-<!DOCTYPE html>
-<html lang="en">
 <head>
 <title>ACE in Action</title>
 <style type="text/css" media="screen">
@@ -32,6 +28,6 @@
     editor.session.setMode("ace/mode/javascript");
 </script>
 </body>
-</html>
+
 
 </div> 
