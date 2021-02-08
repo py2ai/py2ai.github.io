@@ -1,17 +1,17 @@
-
-<section id="categories" markdown="0">
 <div id="html" markdown="0">
-<h1>HTML part</h1>
-
+    
+<html lang="en">
 <head>
 <title>ACE in Action</title>
+
 <style type="text/css" media="screen">
     #editor { 
         position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
+        top: 200px;
+    
+        left: 200px;
+        width: 640px;
+        height:480px;
     }
 </style>
 </head>
@@ -22,19 +22,20 @@
     return x;
 }</div>
     
-<script src="https://pagecdn.io/lib/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.5/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/monokai");
+
     editor.session.setMode("ace/mode/javascript");
 </script>
 </body>
-
+</html>
 
 </div> 
 
 
 
-</section>
+
 
 
