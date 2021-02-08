@@ -1,4 +1,5 @@
 
+<section id="categories" markdown="0">
 <div id="html" markdown="0">
 <h1>HTML part</h1>
 
@@ -31,3 +32,9 @@
 
 
 </div> 
+
+
+
+</section>
+
+
