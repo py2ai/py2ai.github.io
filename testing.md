@@ -45,11 +45,8 @@
 </script>
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
       <script type="text/python3" >
-      from browser import document, alert #<br />
-      def echo(event):#<br />
-          alert(document["zone"].value) #<br />
 
-      document["mybutton"].bind("click", echo) #<br />
+      print(3,2)
       </script>
 
       <input id="zone"><button id="mybutton">click !</button>
