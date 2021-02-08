@@ -6,7 +6,32 @@ customjs:
  - https://pyshine.com/brython.js
  - https://pyshine.com/brython_stdlib.js
 ---
-# PyShine Course
+<div id="html" markdown="0">
+<h1>HTML part</h1>
 
-<button id="alert-button">Alert & Insert</button><script type="text/python" id="script0"\>from browser import document,console,alert def show(e): console.log('Hello',e); alert('Hello world!'); import sys print("Here==>",sys.executable) a=2 import numpy as np print(a,np.__version__) document['alert-button'].bind('click',show)
+
+
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+  $("button").click(function(){
+    $("p").hide();
+  });
+});
 </script>
+</head>
+<body>
+
+<h2>This is a heading</h2>
+
+<p>This is a paragraph.</p>
+<p>This is another paragraph.</p>
+
+<button>Click me</button>
+
+</body>
+</html>
+
+</div> 
