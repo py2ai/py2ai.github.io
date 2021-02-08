@@ -24,13 +24,18 @@
 
 
 
-<body onload="brython()">
+<body onload="brython({debug:1})">
 
 <div id="editor">function foo(items) {
     var x = "All this is syntax highlighted";
     return x;
 }</div>
-    
+
+
+
+
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.5/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
     var editor = ace.edit("editor");
@@ -39,16 +44,16 @@
     editor.session.setMode("ace/mode/javascript");
 </script>
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-            <script type="text/python">
-            from browser import document, alert
+      <script type="text/python3" >
+      from browser import document, alert
 
-            def echo(event):
-                alert(document["zone"].value)
+      def echo(event):
+          alert(document["zone"].value)
 
-            document["mybutton"].bind("click", echo)
-            </script>
+      document["mybutton"].bind("click", echo)
+      </script>
 
-            <input id="zone"><button id="mybutton">click !</button>
+      <input id="zone"><button id="mybutton">click !</button>
 </body>
 
 
