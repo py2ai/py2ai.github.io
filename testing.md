@@ -1,14 +1,13 @@
 <div id="html" markdown="0">
     
-<html lang="en">
+
 <head>
 <title>ACE in Action</title>
 
 <style type="text/css" media="screen">
     #editor { 
         position: absolute;
-        top: 200px;
-    
+        top: 400px;
         left: 200px;
         width: 640px;
         height:480px;
