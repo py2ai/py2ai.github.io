@@ -33,41 +33,6 @@ Again you may have tried `brew link protobuf` which could probably lead to this:
 
 
 
-Note: Enter password of your Mac OS account in the popup window.
-
-5) Add these two lines to the file and save it.
-
-`PATH="/Library/protoc-3/bin:${PATH}"`
-`PATH="/Library/protoc-3/include:${PATH}"`
-
-6) Close the terminal to refresh the settings and reopen it using `command` + `Space` key.
-
-7) Now check the update PATH by using this command.
-
-`echo $PATH`
-
-8) If nothing happend wrong, you will see this added to your PATH:
-
-`/Library/protoc-3/include:/Library/protoc-3/bin:`
-
-9) Now check the installed version and execute:
-
-`protoc --version`
-
-10) You will see this `libprotoc 3.6.1`, Congratulations! you have now protobuff ready!.
-
-
-
-            
-<section id="categories" markdown="1">
-
-A list of categories:
-
-- foo
-- bar
-
-</section>
-
 <div id="html" markdown="0">
 <h1>HTML part</h1>
 
@@ -100,7 +65,40 @@ $(document).ready(function(){
 
 
 
-</div>            
+</div> 
+
+
+
+
+Note: Enter password of your Mac OS account in the popup window.
+
+5) Add these two lines to the file and save it.
+
+`PATH="/Library/protoc-3/bin:${PATH}"`
+`PATH="/Library/protoc-3/include:${PATH}"`
+
+6) Close the terminal to refresh the settings and reopen it using `command` + `Space` key.
+
+7) Now check the update PATH by using this command.
+
+`echo $PATH`
+
+8) If nothing happend wrong, you will see this added to your PATH:
+
+`/Library/protoc-3/include:/Library/protoc-3/bin:`
+
+9) Now check the installed version and execute:
+
+`protoc --version`
+
+10) You will see this `libprotoc 3.6.1`, Congratulations! you have now protobuff ready!.
+
+
+
+            
+
+
+           
 
 
 
