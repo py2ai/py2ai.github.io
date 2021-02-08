@@ -59,7 +59,59 @@ Note: Enter password of your Mac OS account in the popup window.
 
 
             
-            
+<section id="categories" markdown="1">
+
+A list of categories:
+
+- foo
+- bar
+
+</section>
+
+<div id="html" markdown="0">
+<h1>HTML part</h1>
+
+
+
+
+
+
+
+    <script src="https://pyshine.com/brython.js"> </script>
+
+    <script src="https://pyshine.com/brython_stdlib.js" ></script>
+
+<body onload="brython()">
+    <h1>PyShine Course</h1>
+    <h2 id="hello"></h2>
+    <button id="alert-button">Alert & Insert</button>
+
+    <script type="text/python" id="script0">
+        
+        from browser import document,console,alert
+
+        def show(e):
+            console.log('Hello',e);
+            alert('Hello world!');
+            import sys
+            print("Here==>",sys.executable)
+            a=2
+            import numpy as np
+
+            print(a,np.__version__)
+        document['alert-button'].bind('click',show)
+
+    </script>
+
+
+
+
+</body>
+
+
+
+
+</div>            
 
 
 
