@@ -3,6 +3,10 @@
 
 <head>
 <title>ACE in Action</title>
+<meta charset="utf-8">
+<script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/brython@3.9.0/brython.min.js">
+</script>
 
 <style type="text/css" media="screen">
     #editor { 
@@ -14,7 +18,13 @@
     }
 </style>
 </head>
-<body>
+
+
+
+
+
+
+<body onload="brython()">
 
 <div id="editor">function foo(items) {
     var x = "All this is syntax highlighted";
@@ -28,6 +38,11 @@
 
     editor.session.setMode("ace/mode/javascript");
 </script>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<script type="text/python">
+from browser import document
+
+document <= "Hello !"</script>
 </body>
 
 
