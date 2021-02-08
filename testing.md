@@ -40,9 +40,12 @@
 </script>
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 <script type="text/python">
+  
 from browser import document
 
-document <= "Hello !"</script>
+document <= "Hello !"
+
+</script>
 </body>
 
 
