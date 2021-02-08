@@ -44,16 +44,20 @@
     editor.session.setMode("ace/mode/javascript");
 </script>
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-      <script type="text/python3" >
-      from browser import document, alert
 
-      def echo(event):
-          alert(document["zone"].value)
+  <script type="text/python3">
+    
+  from browser import document, alert
 
-      document["mybutton"].bind("click", echo)
-      </script>
+  def echo(event):
+      alert(document["zone"].value);
 
-      <input id="zone"><button id="mybutton">click !</button>
+  document["mybutton"].bind("click", echo);
+
+  </script>
+  <input id="zone">
+  <button id="mybutton">click !</button>
+  
 </body>
 
 
