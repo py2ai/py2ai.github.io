@@ -16,6 +16,7 @@
         width: 640px;
         height:480px;
     }
+
 </style>
 </head>
 
@@ -47,6 +48,7 @@
     <script type="text/python3" >
 
   exec('from browser import document, alert \ndef echo(event):\n    alert(document["zone"].value) \ndocument["mybutton"].bind("click", echo)')
+  
   </script>
 
 
