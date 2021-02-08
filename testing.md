@@ -49,8 +49,7 @@
   exec('from browser import document, alert \ndef echo(event):\n    alert(document["zone"].value) \ndocument["mybutton"].bind("click", echo)')
   </script>
 
-  print(3,2,'c')
-  </script>
+
 
   <input id="zone"><button id="mybutton">click !</button>
 </body>
