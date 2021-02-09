@@ -18,11 +18,9 @@ suggestions:
 Based on these fantastic suggestions we have made two changes to the previous part 07 gui of the PyQt5 learning series. Thanks to the modular approach, all changes were made 
 to the main.py and the drag_drop.py file remains intact.
 
-<br>
-<div id="html" align="center" markdown="0">
+
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif?raw=true)](https://www.youtube.com/embed/1q3Z2clyIEQ "GIF")
-</div>
-<br>
+
 
 Enjoy, and do give your feedback and suggestions. Also please make sure that you are using Matplotlib version 3.2.1 or above. For more detail visit pyshine youtube channel.
 Below is the tutorial of previous part 07 (in case you have missed it):
@@ -494,9 +492,9 @@ for ft in formats:
     print("Format",ft,": ", time)
 ```
 You can try the above code: 
-
+<br>
 <form action="https://pyshine.com/sww/fun/simpl.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
-
+<br>
 
 
 
