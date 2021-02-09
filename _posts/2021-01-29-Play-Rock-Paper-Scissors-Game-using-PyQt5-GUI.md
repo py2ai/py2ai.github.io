@@ -29,8 +29,9 @@ The critical points of this GUI include:
 3. Load the trained .h5 model and start playing the game. Notice that this model's purpose is only to classify the image as Rock, Paper, Scissors, or None.
 
 Here is final look of this simple GUI:
-
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/rpsgui.gif?raw=true)](https://youtu.be/7EVbHgp9yDg "GIF")
+<p align="center">
+  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/rpsgui.gif" alt="animated" />
+</p>
 
 Please install latest version 0.0.7 of pyshine as: 
 ```pip3 install pyshine==0.0.7```
