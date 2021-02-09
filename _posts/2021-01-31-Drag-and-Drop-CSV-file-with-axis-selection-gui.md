@@ -18,9 +18,6 @@ suggestions:
 Based on these fantastic suggestions we have made two changes to the previous part 07 gui of the PyQt5 learning series. Thanks to the modular approach, all changes were made 
 to the main.py and the drag_drop.py file remains intact.
 
-
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif?raw=true)](https://www.youtube.com/embed/1q3Z2clyIEQ "GIF")
-
 <p align="center">
   <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif" alt="animated" />
 </p>
