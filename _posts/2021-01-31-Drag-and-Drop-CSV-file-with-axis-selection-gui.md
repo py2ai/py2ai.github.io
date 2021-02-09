@@ -489,8 +489,10 @@ for ft in formats:
     time = time.strftime(ft)
     print("Format",ft,": ", time)
 ```
-You can try the above code: <form action="https://pyshine.com/sww/fun/simpl.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
- 
+You can try the above code: 
+
+<form action="https://pyshine.com/sww/fun/simpl.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
+
 
 
 
