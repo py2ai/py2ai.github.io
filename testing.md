@@ -1,4 +1,4 @@
 
 
-<button name="button" onclick="http://www.google.com">Click</button>
+{{<button name="button" onclick="http://www.google.com">Click</button>}}
 
