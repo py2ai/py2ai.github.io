@@ -19,7 +19,7 @@ Based on these fantastic suggestions we have made two changes to the previous pa
 to the main.py and the drag_drop.py file remains intact.
 
 <br>
-<div align="center">
+<div id="html" align="center" markdown="0">
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif?raw=true)](https://www.youtube.com/embed/1q3Z2clyIEQ "GIF")
 </div>
 <br>
