@@ -31,7 +31,6 @@ Again you may have tried `brew link protobuf` which could probably lead to this:
 4) Now execute this: 
 `open ~/.bash_profile`
 
- <form action="https://pyshine.com/sww/fun/simpl.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
 Note: Enter password of your Mac OS account in the popup window.
 
 5) Add these two lines to the file and save it.
