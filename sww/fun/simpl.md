@@ -1,6 +1,6 @@
 <div id="html" markdown="0">
-<!DOCTYPE html>
-<html>
+
+
 <head>
 <meta charset="utf-8">
 <title>PyShine Tutotial</title>
@@ -93,6 +93,6 @@ doc['run'].bind('click',lambda *args: editor.run())
 </body>
 
 
-</html>
+
 
 </div> 
