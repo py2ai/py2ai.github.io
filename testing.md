@@ -1,4 +1,4 @@
 
-
-{{<button name="button" onclick="http://www.google.com">Click</button>}}
-
+ <button onclick="window.location.href='https://w3docs.com';">
+      Click Here
+    </button>
