@@ -465,6 +465,35 @@ Important in the main.py:
       time_format = '%Y-%m-%d %H:%M:%S.%f' # Please use this format for time_series-data_2.csv kind of time stamp
       time_format = '%d/%m/%Y %H:%M%f'     # Please use this format for time_series-data_1.csv kind of time stamp
       ```
+### Date Time formats
+
+To understand the various formats that can be used for the date time formatting, please have a look at this code:
+
+```python
+import datetime
+
+formats=["%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y %H:%M%f",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%m/%d/%Y",
+        "%d/%m/%Y",
+        "%m-%d-%Y",
+        "%d-%m-%Y",
+        "%H:%M:%S",
+        "%M:%SA"
+        ] 
+
+
+for ft in formats:
+    time = datetime.datetime.now()
+    time = time.strftime(ft)
+    print("Format",ft,": ", time)
+```
+You can try the above code: <form action="https://pyshine.com/sww/fun/simpl.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
+ 
+
+
+
 ### time_series-data_2.csv
 
 ```csv
