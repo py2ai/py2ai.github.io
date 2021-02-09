@@ -16,7 +16,7 @@ _s.style.height = '%spx' % int(_height * 0.85)
 has_ace = True
 try:
     editor = window.ace.edit("editor")
-    editor.setTheme("ace/theme/solarized_light")
+    editor.setTheme("ace/theme/monokai")
     editor.session.setMode("ace/mode/python")
     editor.focus()
 
