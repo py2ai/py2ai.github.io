@@ -21,6 +21,9 @@ to the main.py and the drag_drop.py file remains intact.
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif?raw=true)](https://www.youtube.com/embed/1q3Z2clyIEQ "GIF")
 
+<p align="center">
+  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif" alt="animated" />
+</p>
 
 Enjoy, and do give your feedback and suggestions. Also please make sure that you are using Matplotlib version 3.2.1 or above. For more detail visit pyshine youtube channel.
 Below is the tutorial of previous part 07 (in case you have missed it):
