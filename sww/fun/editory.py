@@ -18,11 +18,14 @@ try:
     editor = window.ace.edit("editor")
     editor.setTheme("ace/theme/monokai")
     editor.session.setMode("ace/mode/python")
+    #editor.setReadOnly("true"); 
+	
     editor.focus()
 
     editor.setOptions({
      'enableLiveAutocompletion': True,
      'highlightActiveLine': False,
+	
      'highlightSelectedWord': True
     })
 except:
@@ -43,6 +46,10 @@ else:
 if 'set_debug' in doc:
     __BRYTHON__.debug = int(doc['set_debug'].checked)
 
+
+
+filename='import datetime \n \nformats=["%d/%m/%Y %H:%M:%S", \n        "%d/%m/%Y %H:%M%f", \n        "%Y-%m-%d %H:%M:%S.%f", \n        "%m/%d/%Y", \n        "%d/%m/%Y", \n        "%m-%d-%Y", \n        "%d-%m-%Y", \n        "%H:%M:%S", \n        "%M:%SA" \n        ]  \n \n \nfor ft in formats: \n    time = datetime.datetime.now() \n    time = time.strftime(ft) \n    print("Format",ft,": ", time)'
+
 def reset_src():
     if "code" in doc.query:
         code = doc.query.getlist("code")[0]
@@ -51,7 +58,7 @@ def reset_src():
         if storage is not None and "py_src" in storage:
             editor.setValue(storage["py_src"])
         else:
-            editor.setValue('for i in range(10):\n\tprint(i)')
+            editor.setValue(filename)
     editor.scrollToRow(0)
     editor.gotoLine(0)
 
@@ -59,7 +66,8 @@ def reset_src_area():
     if storage and "py_src" in storage:
         editor.value = storage["py_src"]
     else:
-        editor.value = 'for i in range(10):\n\tprint(i)'
+        editor.value =filename #'import math \nfor i in range(10): \n\tprint(i)'
+
 
 
 class cOutput:
@@ -116,6 +124,7 @@ def run(*args):
     t0 = time.perf_counter()
     try:
         ns = {'__name__':'__main__'}
+		# print(src)
         exec(src, ns)
         state = 1
     except Exception as exc:
@@ -168,3 +177,4 @@ if has_ace:
     reset_src()
 else:
     reset_src_area()
+
