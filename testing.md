@@ -1,6 +1,6 @@
 
  <style>
-.button {
+.submit {
   background-color: #4CAF50;
   border: none;
   color: white;
