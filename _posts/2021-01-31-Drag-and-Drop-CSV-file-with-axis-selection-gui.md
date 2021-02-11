@@ -493,7 +493,7 @@ for ft in formats:
 ```
 You can try the above code: 
 <br>
-<form action="https://pyshine.com/sww/fun/simpl.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
+<form action="https://pyshine.com/sww/configure/date_time_formats.html" method="get" target="_blank"><button type="submit">Try code Yourself!</button></form>
 <br>
 
 
