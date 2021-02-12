@@ -2,11 +2,11 @@ const video = document.getElementById("video");
 let predictedAges = [];
 
 Promise.all([
-  faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
-  faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-  faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-  faceapi.nets.faceExpressionNet.loadFromUri("/models"),
-  faceapi.nets.ageGenderNet.loadFromUri("/models")
+  faceapi.nets.tinyFaceDetector.loadFromUri("https://pyshine.com/tfworks/models"),
+  faceapi.nets.faceLandmark68Net.loadFromUri("https://pyshine.com/tfworks/models"),
+  faceapi.nets.faceRecognitionNet.loadFromUri("https://pyshine.com/tfworks/models"),
+  faceapi.nets.faceExpressionNet.loadFromUri("https://pyshine.com/tfworks/models"),
+  faceapi.nets.ageGenderNet.loadFromUri("https://pyshine.com/tfworks/models")
 ]).then(startVideo);
 
 function startVideo() {
