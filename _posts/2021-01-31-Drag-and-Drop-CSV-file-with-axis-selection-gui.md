@@ -384,7 +384,7 @@ if op_sys == 'Darwin':
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 	def __init__(self):
 		"""
-		Tthis function initializes our main window from the main.py, set its title 
+		This function initializes our main window from the main.py, set its title 
 		and also allow the drops on it.
 		"""
 		super().__init__()
@@ -416,10 +416,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 			e.setDropAction(QtCore.Qt.CopyAction)
 			e.accept()
 			for url in e.mimeData().urls():
-				if op_sys == 'Darwin':
-					fname = str(NSURL.URLWithString_(str(url.toString())).filePathURL().path())
-				else:
-					fname = str(url.toLocalFile())
+				#if op_sys == 'Darwin':
+				#	fname = str(NSURL.URLWithString_(str(url.toString())).filePathURL().path())
+				#else:
+				#	fname = str(url.toLocalFile())
+				fname = str(url.toLocalFile())
 			self.filename = fname
 			print("GOT ADDRESS:",self.filename)
 			self.readData()
