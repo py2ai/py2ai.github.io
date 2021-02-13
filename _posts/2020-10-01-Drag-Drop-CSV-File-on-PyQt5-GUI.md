@@ -271,10 +271,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 			e.setDropAction(QtCore.Qt.CopyAction)
 			e.accept()
 			for url in e.mimeData().urls():
-				if op_sys == 'Darwin':
-					fname = str(NSURL.URLWithString_(str(url.toString())).filePathURL().path())
-				else:
-					fname = str(url.toLocalFile())
+				#if op_sys == 'Darwin':
+				#	fname = str(NSURL.URLWithString_(str(url.toString())).filePathURL().path())
+				#else:
+				#	fname = str(url.toLocalFile())
+				fname = str(url.toLocalFile())
 			self.filename = fname
 			print("GOT ADDRESS:",self.filename)
 			self.readData()
