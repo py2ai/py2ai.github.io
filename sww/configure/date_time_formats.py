@@ -48,7 +48,7 @@ if 'set_debug' in doc:
 
 
 
-filename='import datetime \n \nformats=["%d/%m/%Y %H:%M:%S", \n        "%d/%m/%Y %H:%M%f", \n        "%Y-%m-%d %H:%M:%S.%f", \n        "%m/%d/%Y", \n        "%d/%m/%Y", \n        "%m-%d-%Y", \n        "%d-%m-%Y", \n        "%H:%M:%S", \n        "%M:%SA" \n        ]  \n \n \nfor ft in formats: \n    time = datetime.datetime.now() \n    time = time.strftime(ft) \n    print("Format",ft,": ", time)'
+filename='import datetime \n \nformats=["%d/%m/%Y %H:%M:%S", \n        "%d/%m/%Y %H:%M%f", \n        "%Y-%m-%d %H:%M:%S.%f", \n        "%m/%d/%Y", \n        "%d/%m/%Y", \n        "%m-%d-%Y", \n        "%d-%m-%Y", \n        "%H:%M:%S", \n        "%M:%S" \n        ]  \n \n \nfor ft in formats: \n    time = datetime.datetime.now() \n    time = time.strftime(ft) \n    print("Format",ft,": ", time)'
 
 def reset_src():
     if "code" in doc.query:
