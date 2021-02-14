@@ -74,12 +74,7 @@ import pandas as pd
 import sip # can be installed : pip install sip
 from datetime import datetime
 # We require a canvas class
-import platform
 
-# Use NSURL as a workaround to pyside/Qt4 behaviour for dragging and dropping on OSx
-op_sys = platform.system()
-if op_sys == 'Darwin':
-    from Foundation import NSURL
 
 class MatplotlibCanvas(FigureCanvasQTAgg):
 	def __init__(self,parent=None, dpi = 120):
@@ -123,9 +118,6 @@ class Ui_MainWindow(object):
 		self.comboBox_2 = QtWidgets.QComboBox(self.centralwidget)
 		self.comboBox_2.setObjectName("comboBox_2")
 		
-		
-
-
 
 		self.pushButton = QtWidgets.QPushButton(self.centralwidget)
 		self.pushButton.setObjectName("pushButton")
@@ -142,14 +134,7 @@ class Ui_MainWindow(object):
 		self.spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
 		self.verticalLayout.addItem(self.spacerItem1)
 
-		
-		
-
-
-		self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
-
-		
-		
+		self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)	
 		MainWindow.setCentralWidget(self.centralwidget)
 		self.menubar = QtWidgets.QMenuBar(MainWindow)
 		self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
@@ -257,7 +242,7 @@ class Ui_MainWindow(object):
 			ax.set_xlabel(self.x_axis_slt)
 			ax.set_ylabel(self.y_axis_slt)
 			ax.set_title(self.Title)
-			#plt.setp(ax.xaxis.get_majorticklabels(), rotation=25)  # uncomment if you want the x-axis to tilt 25 degree
+			plt.setp(ax.xaxis.get_majorticklabels(), rotation=25)  # uncomment if you want the x-axis to tilt 25 degree
 			
 		except Exception as e:
 			print('==>',e)
@@ -296,7 +281,7 @@ class Ui_MainWindow(object):
 		df = pd.read_csv(csvfilename,encoding='utf-8').fillna(0)
 		LIST_OF_COLUMNS = df.columns.tolist()
 		dataset={}
-		time_format = '%Y-%m-%d %H:%M:%S.%f' # Please use this format for time_series-data_2.csv kind of time stamp
+		#time_format = '%Y-%m-%d %H:%M:%S.%f' # Please use this format for time_series-data_2.csv kind of time stamp
 		time_format = '%d/%m/%Y %H:%M%f'     # Please use this format for time_series-data_1.csv kind of time stamp
 		
 		for col in LIST_OF_COLUMNS:
@@ -360,6 +345,7 @@ if __name__ == "__main__":
 	MainWindow.show()
 	sys.exit(app.exec_())
 
+
 ```
 
 ## drag_drop.py
@@ -373,12 +359,6 @@ from main import Ui_MainWindow
 import sys
 from PyQt5 import QtCore, QtWidgets
 import platform
-
-op_sys = platform.system()
-if op_sys == 'Darwin':
-	from Foundation import  NSURL
-# We use NSURL as a workaround to PySide/ Qt4 for drag/drop
-# on OSx
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -416,10 +396,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 			e.setDropAction(QtCore.Qt.CopyAction)
 			e.accept()
 			for url in e.mimeData().urls():
-				#if op_sys == 'Darwin':
-				#	fname = str(NSURL.URLWithString_(str(url.toString())).filePathURL().path())
-				#else:
-				#	fname = str(url.toLocalFile())
 				fname = str(url.toLocalFile())
 			self.filename = fname
 			print("GOT ADDRESS:",self.filename)
@@ -483,7 +459,7 @@ formats=["%d/%m/%Y %H:%M:%S",
         "%m-%d-%Y",
         "%d-%m-%Y",
         "%H:%M:%S",
-        "%M:%SA"
+        "%M:%S"
         ] 
 
 
