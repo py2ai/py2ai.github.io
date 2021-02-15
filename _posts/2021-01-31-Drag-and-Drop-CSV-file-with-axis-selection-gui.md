@@ -749,7 +749,7 @@ on the y-axis. In that case we have to add another checkbox, which is also known
 <p align="center">
   <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt5vsall.gif" alt="animated" />
 </p>
-[![IMAGE ALT TEXT HERE](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt5vsall.gif)](https://youtu.be/KPJ-jslxfa0)
+
 
 ### main_vsall.py
 
