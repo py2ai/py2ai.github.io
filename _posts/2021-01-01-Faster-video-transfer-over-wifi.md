@@ -20,11 +20,6 @@ Today, we will use a rather simple way to transfer video over wifi using Publish
 will be displayed on the client window, and a server will transmit (publish) the video. Similar to our previous videos, we assume that you 
 will find your computer's IP address for the wifi. Both server and client computers should be connected to the same wifi router.
 
-
-<p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pubsubmario.gif" alt="animated" />
-</p>
-
 ### ZMQ
 ZeroMQ (also known as ØMQ, 0MQ, or zmq) is like an embeddable networking library but it acts like a concurrency framework. It gives us sockets
 that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. We can connect sockets N-to-N with patterns 
