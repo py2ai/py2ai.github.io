@@ -28,10 +28,7 @@ The critical points of this GUI include:
 2. Train a deep neural network model using Keras and generate an output .h5 model file. The accuracy of prediction depends on various factors such as a clean dataset, number of Epochs, etc.
 3. Load the trained .h5 model and start playing the game. Notice that this model's purpose is only to classify the image as Rock, Paper, Scissors, or None.
 
-Here is final look of this simple GUI:
-<p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/rpsgui.gif" alt="animated" />
-</p>
+
 
 Please install latest version 0.0.7 of pyshine as: 
 ```pip3 install pyshine==0.0.7```
