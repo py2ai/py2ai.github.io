@@ -18,9 +18,7 @@ suggestions:
 Based on these fantastic suggestions we have made two changes to the previous part 07 gui of the PyQt5 learning series. Thanks to the modular approach, all changes were made 
 to the main.py and the drag_drop.py file remains intact.
 
-<p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt515gui.gif" alt="animated" />
-</p>
+
 
 Enjoy, and do give your feedback and suggestions. Also please make sure that you are using Matplotlib version 3.2.1 or above. For more detail visit pyshine youtube channel.
 Below is the tutorial of previous part 07 (in case you have missed it):
@@ -739,16 +737,9 @@ or
 python drag_drop.py
 ```
 
-[Download sample csv data files](https://drive.google.com/file/d/10gvk-A0orWWktIaHkw7WMAGzYcoMkB9t/view?usp=sharing)
-	
-	
 	
 Wait a minute, would it be a good idea to plot all others vs the selected x-axis. It means what if you want to plot x-axis as time stamp data and all others
 on the y-axis. In that case we have to add another checkbox, which is also known as radio button. We can call it versus all or (vs all). If you want this functionality, please use the main_vsall.py instead of main.py. 
-
-<p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pyqt5vsall.gif" alt="animated" />
-</p>
 
 
 ### main_vsall.py
