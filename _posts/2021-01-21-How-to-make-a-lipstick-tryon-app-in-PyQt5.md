@@ -17,11 +17,7 @@ Hi and welcome! This is part 13 of the PyQt5 learning series. Previously, in Par
 level. Recently, some friends have requested to make a tutorial in which a user can tryon lipstick colors. So, in this tutorial an image, video or webcam video can be 
 used as input and the GUI will display the face with colored lips. The color of lips will be selected from a drop down list. So lets do it!
 
-Here is final look of this simple GUI:
 
-<p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/lipstick.gif" alt="animated" />
-</p>
 
 
 We will proceed in several steps to finish this GUI project.
