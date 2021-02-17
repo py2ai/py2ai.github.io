@@ -64,7 +64,8 @@ while True:
 
 ### client.py
 
-```
+```python
+
 # This is client code to receive video frames over UDP
 import cv2, imutils, socket
 import numpy as np
