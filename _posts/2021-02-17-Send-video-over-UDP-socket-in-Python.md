@@ -8,7 +8,7 @@ summary: This tutorial is about using OpenCv and UDP sockets for server-client v
 ---
 
 
-Hello friends! Previously, we have seen how TCP sockets works. In this tutorial we will use UDP sockets to send video from a server machine to a client machine.
+Hello friends! Previously, we have seen how TCP sockets work. In this tutorial we will use UDP sockets to send video from a server machine to a client machine.
 Details are available on the PyShine Youtube channel.
 
 ### server.py
