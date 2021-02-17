@@ -1,5 +1,5 @@
 ---
-
+layout: post
 title: How to send video using UDP socket in Python
 categories: [GUI tutorial series]
 mathjax: true
