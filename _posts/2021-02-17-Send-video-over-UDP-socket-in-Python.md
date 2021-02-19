@@ -9,7 +9,7 @@ summary: This tutorial is about using OpenCv and UDP sockets for server-client v
 
 
 Hello friends! Previously, we have seen how TCP sockets work. In this tutorial we will use UDP sockets to send video from a server machine to a client machine.
-Details are available on the PyShine Youtube channel.
+Details are available on the PyShine Youtube channel. 
 
 ### server.py
 
@@ -104,3 +104,8 @@ while True:
 	cnt+=1
 
 ```
+Please note that for MacOS we require:
+```
+sudo sysctl -w net.inet.udp.maxdgram=65535
+```
+If restart computer the above UDP max buffer size will shrink to 9216. So please run the above command again if required.
