@@ -20,7 +20,7 @@ the opencv videos. These variations are caused by the fact that, when we display
 consider it to play from the perspective delay given in the waitKey() function. The delay in waitKey() function is very important to properly render
 the video at its correct frame rate. So the question is how to keep the inherent frame rate of video while rendering?
 The probable answer is to stablize the rendering sample time (TS) in the loop, by checking if the current frame rate is higher or
-lower than the desired inherent frame rate. Accordingly, increment or decrment the sampling time.
+lower than the desired inherent frame rate. Accordingly, increment or decrement the sampling time.
 
 The block of code below shows how to obtain the inherent frames per second (FPS) of an MP4 file.
 ```python
@@ -49,7 +49,7 @@ executor.submit(video_stream) # to obtain and send video stream, with a synchron
 Here is the complete server.py code, please follow our previous tutorials about UDP and TCP sockets for more 
 details on finding and running the code properly. Replace the ```filename =  'count.mp4'``` with your MP4 file,
 and also change the ```host_ip = '192.168.1.21'``` with yours. At the start, the audio will be extracted from this
-file and save as 'temp.wav'. Also note that ffmpeg should be installed in your system path.
+file and save as 'temp.wav'. Also note that ffmpeg should be installed in your system path. 
 
 ### server.py
 
@@ -187,8 +187,8 @@ python server.py
 ```
 
 After running the server.py, a queue of frames will store 10 frames, halt the execution of code and wait for
-the first frame to be taken out of the queue and then the process of adding and removing frames of queue goes on.
-Please note that windows of imshow are placed at predefined locations, if we drag these windows, the operation of 
+the first frame to be taken out of the queue and then the process of adding and removing frames in queue goes on.
+Please note that windows of imshow() are placed at predefined locations, if we drag these windows, the operation of 
 displaying frames will affect the synchronization. If the codes are running, please keep the window showing images
 at their original locations. This is just the proof of concept that video and audio data can be sent from sockets
 using Python. At any time if you want to quit, click on the image and press q. Below is the client side code.
