@@ -50,7 +50,19 @@ Here is the complete server.py code, please follow our previous tutorials about 
 details on finding and running the code properly. Replace the ```filename =  'count.mp4'``` with your MP4 file,
 and also change the ```host_ip = '192.168.1.21'``` with yours. At the start, the audio will be extracted from this
 file and save as 'temp.wav'. Also note that FFMPEG should be installed in your system path. You may follow https://youtu.be/D_-caeiYMAE
-for installation of FFMPEG.
+for installation of FFMPEG. After installing FFMPEG, you can confirm the installation by writing this in terminal:
+```
+ffmpeg
+```
+and you will see this output like this:
+
+```
+ffmpeg version 3.4.1 Copyright (c) 2000-2017 the FFmpeg developers
+  built with Apple LLVM version 9.0.0 (clang-900.0.39.2)
+ ...
+ ...
+```
+
 
 ### server.py
 
