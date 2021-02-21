@@ -107,7 +107,7 @@ d=vid.get(cv2.CAP_PROP_POS_MSEC)
 print(durationInSeconds,d)
 
 def video_stream_gen():
-    global TS
+   
     WIDTH=400
     while(vid.isOpened()):
         try:
