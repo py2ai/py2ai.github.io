@@ -62,6 +62,13 @@ ffmpeg version 3.4.1 Copyright (c) 2000-2017 the FFmpeg developers
  ...
  ...
 ```
+You also need PyAudio, if you can't install it using pip installer, then please go this [link](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) and download the ```.whl``` according to your Python version. For instance if you are
+using Python 3.6 then you need to download this ```PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl ```. After that go to the location of this download
+and open up the power shell or terminal and use the command below:
+
+```
+pip3.6 install PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl
+```
 
 ## Windows OS 
 
