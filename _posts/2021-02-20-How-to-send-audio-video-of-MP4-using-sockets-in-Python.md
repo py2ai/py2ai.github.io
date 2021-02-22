@@ -49,7 +49,7 @@ executor.submit(video_stream) # to obtain and send video stream, with a synchron
 Here is the complete server.py code, please follow our previous tutorials about UDP and TCP sockets for more 
 details on finding and running the code properly. Replace the ```filename =  'count.mp4'``` with your MP4 file,
 and also change the ```host_ip = '192.168.1.21'``` with yours. At the start, the audio will be extracted from this
-file and save as 'temp.wav'. Also note that FFMPEG should be installed in your system path. You may follow https://youtu.be/D_-caeiYMAE
+file and save as 'temp.wav'. Also note that FFMPEG should be installed in your system path. You may follow [this](https://youtu.be/D_-caeiYMAE) 
 for installation of FFMPEG. After installing FFMPEG, you can confirm the installation by writing this in terminal:
 ```
 ffmpeg
@@ -63,6 +63,7 @@ ffmpeg version 3.4.1 Copyright (c) 2000-2017 the FFmpeg developers
  ...
 ```
 
+## Windows OS 
 
 ### server.py
 
@@ -322,4 +323,6 @@ with ThreadPoolExecutor(max_workers=2) as executor:
 ```
 python client.py
 ```
+
+
 
