@@ -325,7 +325,11 @@ python client.py
 ```
 
 ## MAC OS
-
+MAC OS users please increase the size of UDP datagram using below in the terminal:
+```
+ $sudo sysctl -w net.inet.udp.maxdgram=65535
+ 
+```
 If the above code does not work for MAC OS users, please use the code below:
 
 ### server.py
