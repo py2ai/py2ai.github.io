@@ -10,7 +10,16 @@ summary: This tutorial is about using OpenCV, UDP and TCP sockets for server-cli
 Hi! Let's say we have an audio file (.wav), and we want to send it to the client so that the client can listen
 the stream as a playback in real-time. For this purpose we require PyAudio and socket programming. PyAudio enriches
 Python bindings for PortAudio, the cross-platform audio I/O library. With PyAudio, we can easily use Python to 
-play and record audio on a variety of platforms, such as GNU/Linux, Microsoft Windows, and Apple Mac OS X / macOS.
+play and record audio on a variety of platforms, such as GNU/Linux, Microsoft Windows, and Apple Mac OS X / macOS. 
+
+If you can't install it using pip installer, then please go this [link](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) and download the ```.whl``` according to your Python version. For instance if you are
+using Python 3.6 then you need to download this ```PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl ```. After that go to the location of this download
+and open up the power shell or terminal and use the command below:
+
+```
+pip3.6 install PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl
+```
+
 The audio data normally consists of 2 channels, which means the data array will be of shape (CHUNK,2), where CHUNK is
 the number of data samples representing the digital sound. We commonly put CHUNK as 1024. Below are the TCP based
 server client codes to provide these data CHUNKS from a server to a client. For more details on socket programming
