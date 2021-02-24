@@ -1,7 +1,7 @@
 ---
 layout: post
 title: How to send audio and video using socket programming in Python
-categories: [GUI tutorial series]
+categories: [Socket Programming Series]
 mathjax: true
 featured-img: pythonudpaudiovideo
 summary: This tutorial is about using OpenCV, UDP and TCP sockets for server-client transfer of audio-video streams
