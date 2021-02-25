@@ -154,7 +154,7 @@ If everything goes well you will listen the good quality sound at the client sid
 
 ## UDP SOCKET VERSION 
 
-Alright, lets do the same things as above but this time using UDP socket. Here is the server side code:
+Alright, lets do the same things as above but this time using UDP socket. The process of reading audio data should be streamed smoothly, in case of UDP. The ```wf.readframes(CHUNK)``` returns at most CHUNK frames of audio, as a bytes object. These bytes are then sent to the client address using ```server_socket.sendto(data,client_addr) ```. If we don't put enough wait, the receiver will overload and the reliability that all samples are properly sent, will be highly compromised and could even result in no sound or exceptin raised. We need to put a wait using ```time.sleep()```, before sending the next CHUNK of audio data. Since we know that the sample rate of audio is 44100 samples per second, so it means that the time for one sample to send is ``` 1/sample_rate``` . In this context, all the samples in a CHUNK would require a time of ```CHUNK/sample_rate ```. Therefore, after sending a CHUNK we will put a ```time.sleep(CHUNK/sample_rate)```. Here is the server side code:
 
 ### server.py
 
@@ -179,7 +179,7 @@ def audio_stream_UDP():
 
     server_socket.bind((host_ip, (port)))
     CHUNK = 10*1024
-    wf = wave.open("song.wav")
+    wf = wave.open("temp.wav")
     p = pyaudio.PyAudio()
     print('server listening at',(host_ip, (port)),wf.getframerate())
     stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
@@ -247,7 +247,7 @@ def audio_stream_UDP():
 		while True:
 			frame,_= client_socket.recvfrom(BUFF_SIZE)
 			q.put(frame)
-			print('Please wait...Queue size',q.qsize())
+			print('Queue size...',q.qsize())
 	t1 = threading.Thread(target=getAudioData, args=())
 	t1.start()
 	time.sleep(5)
