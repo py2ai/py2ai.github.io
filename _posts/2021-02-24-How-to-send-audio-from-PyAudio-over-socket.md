@@ -9,10 +9,8 @@ summary: This tutorial is about using PyAudio and TCP sockets for server-client 
 
 Hi! Let's say we have an audio file (.wav), and we want to send it to the client so that the client can listen
 the stream as a playback in real-time. For this purpose we require PyAudio and socket programming. PyAudio enriches
-Python bindings for PortAudio, the cross-platform audio I/O library. With PyAudio, we can easily use Python to 
-play and record audio on a variety of platforms, such as GNU/Linux, Microsoft Windows, and Apple Mac OS X / macOS. 
-
-If you can't install it using pip installer, then please go this [link](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) and download the ```.whl``` according to your Python version. For instance if you are
+Python bindings for PortAudio, the cross-platform audio I/O library. We will first make codes for the TCP and then go on with the UDP. But before that, please
+install PyAudio. If you can't install it using pip installer, then please go this [link](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) and download the ```.whl``` according to your Python version. For instance if you are
 using Python 3.6 then you need to download this ```PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl ```. After that go to the location of this download
 and open up the power shell or terminal and use the command below:
 
@@ -27,14 +25,13 @@ please visit our previous tutorials.
 
 Here is the server side code, we assume that you already have wave (.wav) audio file in the same directory as this 
 server.py file. Please run the server.py at one computer and accordingly provide your host_ip to it. 
-```
-python server.py
-```
+
+# TCP SOCKET VERSION 
 
 ### server.py
 
 ```python
-# This is server code to send video and audio frames over UDP/TCP
+# This is server code to send video and audio frames over TCP
 
 import socket
 import threading, wave, pyaudio,pickle,struct
@@ -79,10 +76,16 @@ def audio_stream():
 t1 = threading.Thread(target=audio_stream, args=())
 t1.start()
 
+```
 
+Usage:
+
+```
+python server.py
 ```
 
 On the same or second computer please run the code below as:
+
 ```
 python client.py
 ```
@@ -91,7 +94,7 @@ python client.py
 
 ```python
 # Welcome to PyShine
-# This is client code to receive video and audio frames over UDP/TCP
+# This is client code to receive video and audio frames over TCP
 
 import socket,os
 import threading, wave, pyaudio, pickle,struct
@@ -149,4 +152,119 @@ t1.start()
 
 If everything goes well you will listen the good quality sound at the client side.
 
+# UDP SOCKET VERSION 
 
+Alright, lets do the same things as above but this time using UDP socket. Here is the server side code:
+
+### server.py
+
+```python
+
+# This is server code to send video and audio frames over UDP
+
+import socket
+import threading, wave, pyaudio, time
+
+host_name = socket.gethostname()
+host_ip = '192.168.1.102'#  socket.gethostbyname(host_name)
+print(host_ip)
+port = 9633
+# For details visit: www.pyshine.com
+
+def audio_stream_UDP():
+
+    BUFF_SIZE = 65536
+    server_socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,BUFF_SIZE)
+
+    server_socket.bind((host_ip, (port)))
+    CHUNK = 10*1024
+    wf = wave.open("song.wav")
+    p = pyaudio.PyAudio()
+    print('server listening at',(host_ip, (port)),wf.getframerate())
+    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                    channels=wf.getnchannels(),
+                    rate=wf.getframerate(),
+                    input=True,
+                    frames_per_buffer=CHUNK)
+
+    data = None
+    sample_rate = wf.getframerate()
+    while True:
+        msg,client_addr = server_socket.recvfrom(BUFF_SIZE)
+        print('GOT connection from ',client_addr,msg)
+        
+        while True:
+            data = wf.readframes(CHUNK)
+            server_socket.sendto(data,client_addr)
+            time.sleep(CHUNK/sample_rate)
+            
+           
+                
+
+t1 = threading.Thread(target=audio_stream_UDP, args=())
+t1.start()
+
+```
+Since in UDP there is no handshake, so at the receiver side, we have to store each received datagram in a queue. For this purpose our queue will serve
+as a buffer of some size (let's say 100). On a thread we will continue to receive the UDP datagram of audio data. On the other hand, in a while loop
+we will playback the sound. A time.sleep(5), will provide 5 second delay at the receiver side to fill the buffer, you can change it according to your requirements.
+
+### client.py
+
+```python
+# Welcome to PyShine
+# This is client code to receive video and audio frames over UDP
+
+import socket
+import threading, wave, pyaudio, time, queue
+
+host_name = socket.gethostname()
+host_ip = '192.168.1.102'#  socket.gethostbyname(host_name)
+print(host_ip)
+port = 9633
+# For details visit: www.pyshine.com
+q = queue.Queue(maxsize=100)
+
+def audio_stream_UDP():
+	BUFF_SIZE = 65536
+	client_socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+	client_socket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,BUFF_SIZE)
+	p = pyaudio.PyAudio()
+	CHUNK = 10*1024
+	stream = p.open(format=p.get_format_from_width(2),
+					channels=2,
+					rate=44100,
+					output=True,
+					frames_per_buffer=CHUNK)
+					
+	# create socket
+	message = b'Hello'
+	client_socket.sendto(message,(host_ip,port))
+	socket_address = (host_ip,port)
+	
+	def getAudioData():
+		while True:
+			frame,_= client_socket.recvfrom(BUFF_SIZE)
+			q.put(frame)
+			print('Please wait...Queue size',q.qsize())
+	t1 = threading.Thread(target=getAudioData, args=())
+	t1.start()
+	time.sleep(5)
+	print('Now Playing...')
+	while True:
+		frame = q.get()
+		stream.write(frame)
+
+	client_socket.close()
+	print('Audio closed')
+	os._exit(1)
+
+
+
+t1 = threading.Thread(target=audio_stream_UDP, args=())
+t1.start()
+
+```
+
+Usage is similar to the TCP case. 
