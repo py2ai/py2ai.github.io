@@ -267,4 +267,11 @@ t1.start()
 
 ```
 
-Usage is similar to the TCP case. 
+Usage: on the server side run:
+```
+python server.py
+```
+On the client side please run:
+```
+python client.py
+```
