@@ -26,7 +26,7 @@ please visit our previous tutorials.
 Here is the server side code, we assume that you already have wave (.wav) audio file in the same directory as this 
 server.py file. Please run the server.py at one computer and accordingly provide your host_ip to it. 
 
-# TCP SOCKET VERSION 
+## TCP SOCKET VERSION 
 
 ### server.py
 
@@ -152,7 +152,7 @@ t1.start()
 
 If everything goes well you will listen the good quality sound at the client side.
 
-# UDP SOCKET VERSION 
+## UDP SOCKET VERSION 
 
 Alright, lets do the same things as above but this time using UDP socket. Here is the server side code:
 
