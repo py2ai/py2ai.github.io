@@ -266,7 +266,11 @@ t1 = threading.Thread(target=audio_stream_UDP, args=())
 t1.start()
 
 ```
-
+Please checkl that your MacOS is configured with maximum datagram size as:
+```
+sudo sysctl -w net.inet.udp.maxdgram=65535
+```
+The above UDP max buffer size may reduce back to 9216 upon restart. So please run the above above command again if required.
 Usage: on the server side run:
 ```
 python server.py
