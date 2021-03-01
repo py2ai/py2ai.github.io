@@ -197,7 +197,7 @@ def audio_stream_UDP():
         while True:
             data = wf.readframes(CHUNK)
             server_socket.sendto(data,client_addr)
-            time.sleep(0.9*CHUNK/sample_rate)
+            time.sleep(0.8*CHUNK/sample_rate)
             
            
                 
@@ -280,7 +280,14 @@ On the client side please run:
 python client.py
 ```
 
-## A little bit advanced UDP method.
+## A little bit advanced UDP method
+
+Thanks to Ethan Chocron, who tested the above code and commented that "regarding the UDP audio stream, the code works perfectly as long as the queue size is greater than 1. I understood why. I think it has to do with the quality and power of the computer but the rate that the data is sent and received is slower than the rate at which it is written on the stream, thus when the queue is 1, it plays, waits (no sound is heard) and then plays again, the difference between the rates is very small, but makes a big difference in the quality of the sound". The main problem is that how to maintain the queue size greater than 1.
+
+Well, there are multiple solutions to this problem: the first is simple yet sub-optimal to overload the receiver queue, i.e., ```time.sleep(0.8*CHUNK/sample_rate)```, at the server side, and it will ensure that the queue, at the receiver will not be over-utilized and get emptied, instead it will continue to increase at a much lower rate, and keeping the max size of queue to 2000 or above. The second solution is to have a feedback from the receiver, this feedback will correct the transmission rate. The third is prior knowledge of data to allocate the queue size accordingly, just like the streaming media players do, as a buffering mechanism. The ```print(wf.getnframes())```  will show the total number of frames in the audio file, and the respective queue size will be ```print(wf.getnframes()/CHUNK)```. In the codes below, we will use the third solution, which seems much better and suits well for multiple machines. The idea is to send the size of audio frames to the client, so that the client can decide its maximum qsize, and then go on loading the buffer at the
+client size. 
+
+
 
 ### server.py
 
