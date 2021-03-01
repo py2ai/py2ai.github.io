@@ -311,7 +311,7 @@ def audio_stream_UDP():
 
 	server_socket.bind((host_ip, (port)))
 	CHUNK = 10*1024
-	wf = wave.open("human-voice.wav")
+	wf = wave.open("temp.wav.wav")
 	p = pyaudio.PyAudio()
 	print('server listening at',(host_ip, (port)),wf.getframerate())
 	stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
@@ -334,7 +334,7 @@ def audio_stream_UDP():
 			
 			data = wf.readframes(CHUNK)
 			server_socket.sendto(data,client_addr)
-			time.sleep(0.001)
+			time.sleep(0.001) # Here you can adjust it according to how fast you want to send data keep it > 0
 			print(cnt)
 			if cnt >(wf.getnframes()/CHUNK):
 				break
