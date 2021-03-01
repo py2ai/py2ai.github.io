@@ -197,7 +197,7 @@ def audio_stream_UDP():
         while True:
             data = wf.readframes(CHUNK)
             server_socket.sendto(data,client_addr)
-            time.sleep(CHUNK/sample_rate)
+            time.sleep(0.98*CHUNK/sample_rate)
             
            
                 
