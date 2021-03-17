@@ -36,7 +36,7 @@ You may skip this step, if you already have an accessible Rasbperry Pi to SSH.
 Our Raspberry Pi board is now configured for the SSH access and its Network device is ready. We can now use two ways to access it:
 1. By installing Putty software: https://www.putty.org/
 2. By installing Bitvise client software: https://www.bitvise.com/ssh-client-download
-3. We recommend Bitvise anyway, but in both cases we require the Host, Port, Username and the Password to access the PI.
+3. We recommend Bitvise anyway, but in both cases we require the Host, Port, Username and the Password to access the Pi.
 4. By default: Host is ```raspberrypi.local```, Port is ```22```, Username is ```pi```, and Password is ```raspberry```, enter these values in the GUI and hit Login.
 5. Once login, you can now visualize ```pi@raspberrypi:~ $``` in the Command or Terminal window, enter ```ls``` to view your files. Now that we are able to access the PI, the next step is to enable its wifi so that we can download the opencv using a pip installer.
 
@@ -68,14 +68,16 @@ Again you may skip this step if you can access the PI using SSH and your wifi is
 │                 S7 Splash Screen     Choose graphical splash screen or text boot                 │
 │                 S8 Power LED         Set behaviour of power LED                                  |
 ```
-This will enable the Wifi access of Raspberry PI board to the internet. 
+This will enable the Wifi access of Raspberry Pi board to the internet. 
 
 4. Once the wifi access is enable, after the ```pi@raspberrypi:~ $``` in the Terminal window, we need to update the system by using following commands:
 
 ```sudo apt-get update && sudo apt-get upgrade```
+
 5. It may take a while depending on your speed of the internet.
 
-Please note that in the latest PI OS systems the Python2 and Python3 are already installed.
+Please note that in the latest Pi operating systems the Python2 and Python3 are already installed.
+
 ### Using pip easily install the OpenCV
 
 1. Although this method is way too simple, yet it still requires some dependencies to install as shown below.
@@ -85,12 +87,15 @@ Please note that in the latest PI OS systems the Python2 and Python3 are already
 ```sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5```
 ```sudo apt-get install libatlas-base-dev```
 ```sudo apt-get install libjasper-dev```
+
 2. Now simply install the opencv using Python3 as below:
 
 ```sudo pip3 install opencv-contrib-python==3.4.4.19```
 
 3. To check if OpenCV is correctly installed, simply type ``` python3``` in the terminal window and then
+
 ``` import cv2```
+
 If no error appears, that means your cv2 is ready to be used. If you have any questions or suggestions, please ask in the comments below. Cheers and have a nice day!
 
 
