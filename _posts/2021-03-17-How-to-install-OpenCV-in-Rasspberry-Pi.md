@@ -44,7 +44,7 @@ Again you may skip this step if you can access the PI using SSH and your wifi is
 
 ### Update the Raspberry Pi OS 
 
-1. After the ```pi@raspberrypi:~ $``` in the Terminal window, we can write ```sudo raspi-config``` and hit enter to open the configuration window.
+1. After the ```pi@raspberrypi:~ $``` in the Terminal window, we can write ```sudo raspi-config``` and hit enter to open the configuration window as below:
 
 ```
 │                 1 System Options       Configure system settings                                 │
@@ -56,6 +56,7 @@ Again you may skip this step if you can access the PI using SSH and your wifi is
 │                 8 Update               Update this tool to the latest version                    │
 │                 9 About raspi-config   Information about this configuration tool                 |
 ```
+Note that you can go back in this window by pressing ```Esc``` key.
 2. Select  ```1 System Options``` using the arrow keys and press Enter
 3. Now select the Wireless LAN, and Enter the Wifi SSID and the Password and press Enter
 ```
