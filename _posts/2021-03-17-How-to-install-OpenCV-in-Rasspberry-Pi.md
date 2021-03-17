@@ -29,5 +29,49 @@ You may skip this step, if you already have an accessible Rasbperry PI to SSH.
 13. After that you can view in the device in the Network and Sharing connections. The device is ready to SSH!
 
 
+### Acess Raspberry Pi OS using SSH
 
+Our Raspberry Pi board is now configured for the SSH access and its Network device is available. We can now use two ways to access it:
+1. By installing Putty software: https://www.putty.org/
+2. By installing Bitvise client software: https://www.bitvise.com/ssh-client-download
+3. We recommend Bitvise anyway, but in both cases we require the Host, Port, Username and the Password to access the PI.
+4. By default: Host is ```raspberrypi.local```, Port is ```22```, Username is ```pi```, and Password is ```raspberry```, enter these values in the GUI and hit Login.
+5. Once login, you can now visualize ```pi@raspberrypi:~ $``` in the Command or Terminal window, enter ```ls``` to view your files. Now that we are able to access the PI, the next step is to enable its wifi so that we can download the opencv using a pip installer.
+
+Again you may skip this step if you can access the PI using SSH and your wifi is enabled.
+### Update the Raspberry Pi OS 
+
+
+1. After the ```pi@raspberrypi:~ $``` in the Terminal window, we can write ```sudo raspi-config``` and hit enter to open the configuration window.
+
+```
+│                 1 System Options       Configure system settings                                 │
+│                 2 Display Options      Configure display settings                                │
+│                 3 Interface Options    Configure connections to peripherals                      │
+│                 4 Performance Options  Configure performance settings                            │
+│                 5 Localisation Options Configure language and regional settings                  │
+│                 6 Advanced Options     Configure advanced settings                               │
+│                 8 Update               Update this tool to the latest version                    │
+│                 9 About raspi-config   Information about this configuration tool                 |
+```
+2. Select  ```1 System Options``` using the arrow keys and press Enter
+3. Now select the Wireless LAN, and Enter the Wifi SSID and the Password and press Enter
+```
+|                 S1 Wireless LAN      Enter SSID and passphrase                                   │
+│                 S2 Audio             Select audio out through HDMI or 3.5mm jack                 │
+│                 S3 Password          Change password for the 'pi' user                           │
+│                 S4 Hostname          Set name for this computer on a network                     │
+│                 S5 Boot / Auto Login Select boot into desktop or to command line                 │
+│                 S6 Network at Boot   Select wait for network connection on boot                  │
+│                 S7 Splash Screen     Choose graphical splash screen or text boot                 │
+│                 S8 Power LED         Set behaviour of power LED                                  |
+```
+This will enable the Wifi access of Raspberry PI board to the internet. 
+
+4. Once the wifi access is enable, after the ```pi@raspberrypi:~ $``` in the Terminal window, we need to update the system by using following commands:
+
+```sudo apt-get update && sudo apt-get upgrade```
+5. It may take a while depending on your speed of the internet.
+
+### Update the Raspberry Pi OS 
 
