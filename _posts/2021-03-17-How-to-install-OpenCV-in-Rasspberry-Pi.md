@@ -7,9 +7,9 @@ featured-img: None
 summary: This tutorial is about installing Open CV library in Raspberry Pi 
 ---
 
-Hi! friends, Raspberry Pi is not only a small but also comes with a lot of powerful
+Hi! friends, Raspberry Pi boards come with a lot of powerful
 features like an 8MP camera with video streaming capabilities. OpenCv can help us alot in properly utilizing these capabilities for a plethora of amazing applications.
-So, if you have just bought your Raspberry bi board especially the Raspberry Pi Zero then all you need is to first set it up.
+So, if you have just bought your Raspberry Pi board especially the Raspberry Pi Zero then all you need is to first set it up.
 You may skip this step, if you already have an accessible Rasbperry PI to SSH.
 
 ### Fresh installation of Raspberry Pi OS
