@@ -178,26 +178,6 @@ if __name__ == "__main__":
 
 ### results.html
 
-
-```html
-
-<!DOCTYPE html>
-
-<html>
-  <head>
-    <title>PyShine Streaming Video Application </title>
-  </head>
-  <body>
-    <h1>PyShine streaming processed video... </h1>
- <br>
-  <img src=`{{` url_for('video_feed') `}}`">
-	<br>
-	 <input type="button" value="Go back!" onclick="history.back()">
-  </body>
-
-</html>
-
-```
 ![]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
 
 ## Files for deployment on the wifi LAN
@@ -362,26 +342,6 @@ if __name__ == "__main__":
 
 ### results.html
 
-
-```html
-
-<!DOCTYPE html>
-
-<html>
-	<head>
-	<title>PyShine Streaming Video Application </title>
-	</head>
-	<body>
-		<h1>PyShine streaming processed video... </h1>
-		<br>
-		<img src="`{{` url_for('video_feed') `}}`">
-		<br>
-		<input type="button" value="Go back!" onclick="history.back()">  
-	</body>
-	
-</html>
-
-```
 ![]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
 
 Please do comment, if you like this tutorial, also if have question or suggestions. 
