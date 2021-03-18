@@ -136,7 +136,7 @@ if __name__ == "__main__":
 ### index.html
 
 
-```html
+```
 
 <!DOCTYPE html>
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```html
+```
 
 <!DOCTYPE html>
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
   <body>
     <h1>PyShine streaming processed video... </h1>
  <br>
-  <img src='{{ url_for('video_feed') }}'>
+  <img src="{{ url_for('video_feed') }}">
 	<br>
 	 <input type="button" value="Go back!" onclick="history.back()">
   </body>
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 ### index.html
 
 
-```html
+```
 
 <!DOCTYPE html>
 
@@ -362,7 +362,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```html
+```
 
 <!DOCTYPE html>
 
