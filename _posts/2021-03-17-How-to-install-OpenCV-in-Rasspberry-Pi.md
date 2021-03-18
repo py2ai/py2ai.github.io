@@ -84,9 +84,13 @@ Please note that in the latest Pi operating systems the Python2 and Python3 are 
 1. Although this method is way too simple, yet it still requires some dependencies to install as shown below.
 
 ```sudo apt-get install libhdf5-dev libhdf5-serial-dev```
+
 ```sudo apt-get install python3-h5py```
+
 ```sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5```
+
 ```sudo apt-get install libatlas-base-dev```
+
 ```sudo apt-get install libjasper-dev```
 
 2. Now simply install the opencv using Python3 as below:
