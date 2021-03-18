@@ -362,7 +362,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```python
+```js
 
 <!DOCTYPE html>
 
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 	<body>
 		<h1>PyShine streaming processed video... </h1>
 		<br>
-		<img src="\{\{ url_for('video_feed') \}\}">
+		<img src="{{ url_for('video_feed') }}">
 		<br>
 		<input type="button" value="Go back!" onclick="history.back()">  
 	</body>
