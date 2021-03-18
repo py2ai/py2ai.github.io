@@ -362,7 +362,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```js
+<blockquotes>
 
 <!DOCTYPE html>
 
@@ -380,8 +380,8 @@ if __name__ == "__main__":
 	
 </html>
 
+</blockquotes>
 
-```
 Please do comment, if you like this tutorial, also if have question or suggestions. 
 
 
