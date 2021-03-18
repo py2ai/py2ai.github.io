@@ -1099,4 +1099,21 @@ if __name__ == "__main__":
 ```
 	
 
+If you are experiencing this kind of error:
 
+```
+from matplotlib import ft2font: “ImportError: DLL load failed: The specified procedure could not be found.”
+```
+
+Then first uninstall the matplotlib using:
+
+```
+pip3 uninstall matplotlib
+```
+Install the Microsoft Visual C Runtime:
+
+``` pip3 install msvc-runtime ```
+
+Then install the matplotlib:
+
+```pip3 install --upgrade matplotlib```
