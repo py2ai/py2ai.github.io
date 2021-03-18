@@ -136,7 +136,7 @@ if __name__ == "__main__":
 ### index.html
 
 
-```
+```python
 
 <!DOCTYPE html>
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```
+```python
 
 <!DOCTYPE html>
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 ### index.html
 
 
-```
+```python
 
 <!DOCTYPE html>
 
@@ -362,7 +362,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```
+```python
 
 <!DOCTYPE html>
 
