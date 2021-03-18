@@ -136,7 +136,7 @@ if __name__ == "__main__":
 ### index.html
 
 
-```
+```html
 
 <!DOCTYPE html>
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 ### results.html
 
 
-```
+```html
 
 <!DOCTYPE html>
 
@@ -198,6 +198,7 @@ if __name__ == "__main__":
 </html>
 
 ```
+![]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
 
 ## Files for deployment on the wifi LAN
 
@@ -326,7 +327,7 @@ if __name__ == "__main__":
 ### index.html
 
 
-```python
+```html
 
 <!DOCTYPE html>
 
@@ -381,6 +382,7 @@ if __name__ == "__main__":
 </html>
 
 ```
+![]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
 
 Please do comment, if you like this tutorial, also if have question or suggestions. 
 
