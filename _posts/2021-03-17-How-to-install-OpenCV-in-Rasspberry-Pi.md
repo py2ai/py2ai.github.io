@@ -1,11 +1,12 @@
 ---
 layout: post
 title: How to easily install OpenCv in Raspberry Pi boards
-categories: [Socket Programming Series]
+categories: [Raspberry Pi Programming Series]
 mathjax: true
-featured-img: None
 summary: This tutorial is about installing Open CV library in Raspberry Pi 
 ---
+
+
 
 Hi! friends, Raspberry Pi boards come with a lot of powerful
 features like an 8MP camera with video streaming capabilities. OpenCv can help us alot in properly utilizing these capabilities for a plethora of amazing applications.
