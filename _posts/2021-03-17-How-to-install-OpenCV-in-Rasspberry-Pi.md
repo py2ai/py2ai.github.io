@@ -82,7 +82,7 @@ Please note that in the latest Pi operating systems the Python2 and Python3 are 
 
 ### Using pip easily install the OpenCV
 
-1. Although this method is way too simple, yet it still requires some dependencies to install as shown below.
+Although this method is way too simple, yet it still requires some dependencies to install as shown below.
 
 ```sudo apt-get install libhdf5-dev libhdf5-serial-dev```
 
@@ -93,12 +93,11 @@ Please note that in the latest Pi operating systems the Python2 and Python3 are 
 ```sudo apt-get install libatlas-base-dev```
 
 ```sudo apt-get install libjasper-dev```
-
-2. Now simply install the opencv using Python3 as below:
+Now simply install the opencv using Python3 as below:
 
 ```sudo pip3 install opencv-contrib-python==3.4.4.19```
 
-3. To check if OpenCV is correctly installed, simply type ``` python3``` in the terminal window and then
+To check if OpenCV is correctly installed, simply type ``` python3``` in the terminal window and then
 
 ``` import cv2```
 
