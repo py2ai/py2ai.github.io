@@ -8,8 +8,7 @@ summary: Extract full text of various languages by using the trained model of th
 
 
 Hello friends, first of all thanks for your appreciations, comments and suggestions. One interesting suggestion was recently asked as the possibility of 
-adding an additional button to the GUI of from our previous tutorial related to the PyQt5 tesseract. This button should let user extract the whole text instead of
-some part of it. Moreover, the crop function also be there just like before. 
+adding an additional button to the GUI of from our previous tutorial related to the PyQt5 tesseract. This button should let user extract the whole text instead of some part of it. Moreover, the crop function should also be there just like before. 
 
 So yes, we can add such button to the UI in the PyQt5 designer. If you haven't installed the designer tool or PyQt5 then use the following in PowerShell or Terminal: 
 
@@ -22,6 +21,9 @@ After that simply run the command below in Terminal:
 ```
 qt5-tools designer
 ```
+
+Before reading further it is highly recommended that you read this tutorial: https://pyshine.com/Pytesseract-easy-to-use-GUI-for-many-languages/ for basic installation of Tesseract.
+
 Once the desginer window is launched please open up the ```main.ui``` file below:
 
 ### main.ui
@@ -165,7 +167,7 @@ named ```Full Scan``` in the GUI. We will connect this button to another functio
 self.ui.pushButton_2.clicked.connect(self.full_scan_text)
 ```
 
-The full text can be scanned easilty with this little funciton which will get the text and set it to the text Edit window below as:
+The full text can be scanned easily with this little funciton which will get the text and set it to the text Edit window below as:
 
 ```
     def full_scan_text(self):
@@ -175,7 +177,7 @@ The full text can be scanned easilty with this little funciton which will get th
 ```
  
  And finally here is the gui.py complete code. Please watch our PyQt5 tutorial for basics about more information about the following code:
- Follow this tutorial: https://pyshine.com/Pytesseract-easy-to-use-GUI-for-many-languages/
+
 
 ### gui.py
 
