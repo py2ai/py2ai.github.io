@@ -23,7 +23,7 @@ How to use Dock widget and Q Rubber band in PyQt5?
 How to Perform OCR on multiple languages?
 How to make use of .ui file without converting it to .py file?
 Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
-Link to Free PyShine (audio + video) Screen Recorder: https://youtu.be/jLzLNRK72KI
+
 
 <br>
 <div align="center">
