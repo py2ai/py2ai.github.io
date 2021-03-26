@@ -24,7 +24,7 @@ numpy
 
 ```
 pip3 install opencv-contrib-python
-pip3 install pyshine
+pip3 install pyshine==0.0.6
 pip3 install numpy
 pip3 install PyQt5
 pip3 install imutils
