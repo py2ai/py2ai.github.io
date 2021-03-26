@@ -3,7 +3,6 @@ layout: post
 title: How to make an image to full text GUI in Python
 categories: [GUI tutorial series]
 mathjax: true
-featured-img: pyqt8
 summary: Extract full text of various languages by using the trained model of the specific language
 ---
 
