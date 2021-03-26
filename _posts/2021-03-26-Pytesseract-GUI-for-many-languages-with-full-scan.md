@@ -159,8 +159,8 @@ Once the desginer window is launched please open up the ```main.ui``` file below
 </ui>
 
 ```
-This will be the GUI that our gui.py code will load using the ```self.ui = uic.loadUi('main.ui',self)``` function. To scan the full text we have a new button
-named ```Full Scan``` in the GUI. We will connect this button to another functions using the following:
+This will be the GUI that our ```gui.py``` code will use to load it ```self.ui = uic.loadUi('main.ui',self)```. To scan the full text we have a new button
+named ```Full Scan``` in the GUI. We will connect this button to another function using the following:
 
 
 ```
