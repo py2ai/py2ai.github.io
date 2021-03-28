@@ -57,7 +57,7 @@ class MatplotlibCanvas(FigureCanvasQTAgg):
 		fig = Figure(dpi = dpi)
 		self.axes = fig.add_subplot(111)
 		super(MatplotlibCanvas,self).__init__(fig)
-		fig.tight_layout()
+		#fig.tight_layout() #  uncomment for tight layout
 		
 		
 
