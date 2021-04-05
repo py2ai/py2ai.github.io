@@ -7,7 +7,7 @@ featured-img: datacursor
 summary:  Matplotlib GUI with data cursors showing values where you click
 ---
 
-Hello friends! I hope you are doing great with the PyQt5 learning series at PyShine. Thank you for your valuable comments and appreciation. Alright, let's discuss today's GUI, which is a continuation of our previous Matplotlib based GUI series. Today we will use the GUI of part 15 and integrate the exciting yet straightforward feature of the data cursor. It means that whenever the user clicks on the plot, a small label window will popup on the canvas showing the x and y data.
+Hello friends! I hope you are doing great with the PyQt5 learning series. Thank you for your valuable comments and appreciation. Alright, let's discuss today's GUI, which is a continuation of our previous Matplotlib based GUI series. Today we will use the GUI of part 15 and integrate the exciting yet straightforward feature of the data cursor. It means that whenever the user clicks on the plot, a small label window will popup on the canvas showing the x and y data.
 Alright, so all the changes only need to be made in the main.py. The rest of the code is the same as before. We will use ```mpldatacursor```
 library, which provides interactive data cursors (that are clickable annotation boxes) for Matplotlib. However, currently, it is only supported for the Matplotlib version 3.1.2. It would not work for the latest version of Matplotlib. However, you are free to give it a try.
 
