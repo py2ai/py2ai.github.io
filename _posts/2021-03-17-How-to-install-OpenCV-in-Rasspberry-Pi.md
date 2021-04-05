@@ -3,7 +3,7 @@ layout: post
 title: How to easily install OpenCv in Raspberry Pi boards
 categories: [Raspberry Pi Programming Series]
 mathjax: true
-featured-img: rpi_image
+featured-img: raspberrypisetup
 summary: This tutorial is about installing Open CV library in Raspberry Pi 
 ---
 
