@@ -3,6 +3,7 @@ layout: post
 title: Interactive Matplotlib GUI with data cursors
 categories: [GUI tutorial series]
 mathjax: true
+featured-img: datacursor
 summary:  Matplotlib GUI with data cursors showing values where you click
 ---
 
