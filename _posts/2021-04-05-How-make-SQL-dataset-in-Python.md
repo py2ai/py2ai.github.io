@@ -15,6 +15,7 @@ create a connection object which will represent the database and the all data wi
 try to create a ```test.db``` database for a company. It will then insert the data into the table. After that it will print the table and then we can add more data
 to update it. Finally we will print the whole database. 
 
+### sql.py
 
 ```python
 import sqlite3
@@ -61,7 +62,7 @@ for row in cursor:
    print ("SCORE = ", row[4], "\n")
 print("Records created successfully")
 conn.close()
-
+# visit pyshine.com for more detail
 """ UPDATE TABLE """
 
 conn = sqlite3.connect('test.db')
@@ -86,3 +87,6 @@ conn.close()
 
 
 ```
+You can run the above code as:
+
+``` python3 sql.py```
