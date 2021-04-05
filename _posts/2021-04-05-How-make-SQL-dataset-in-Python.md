@@ -6,7 +6,7 @@ mathjax: true
 summary:  This tutorial is about using sqlite3 to create, insert data and update SQL table
 ---
 
-Hi friends! SQLite is basically a C library which gives us a lightweight disk-based database. It does not require a separate server process. On the other hand it allowsus to access the database using a nonstandard variant of the SQL query 
+Hi friends! SQLite is basically a C library which gives us a lightweight disk-based database. It does not require a separate server process. On the other hand it allows us to access the database using a nonstandard variant of the SQL query 
 language. We can use SQLite in various applications for internal storage. Prototyping an application using SQLite is possible so that we can port the code to a
 much larger database such as PostgreSQL or even Oracle.
 
