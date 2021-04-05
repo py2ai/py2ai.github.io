@@ -3,6 +3,7 @@ layout: post
 title: Basics about SQL database in Python
 categories: [GUI tutorial series]
 mathjax: true
+featured-img: sqlite3
 summary:  This tutorial is about using sqlite3 to create, insert data and update SQL table
 ---
 
