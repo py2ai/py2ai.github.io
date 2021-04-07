@@ -18,7 +18,12 @@ Alright friends welcome back, lets make a very flexible screen recorder today. T
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
 
+### IMPORTANT
 
+Please run the code below only from PowerShell and not use any IDE, such as PyCharm or others, because it will not work in them properly.
+
+
+### main.py 
 ```python 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
