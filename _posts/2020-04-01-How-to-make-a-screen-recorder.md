@@ -21,6 +21,13 @@ Alright friends welcome back, lets make a very flexible screen recorder today. T
 ### IMPORTANT
 
 Please run the code below only from PowerShell and not use any IDE, such as PyCharm or others, because it will not work in them properly.
+Copy the code below in a Python file as main.py and save it to a location. Then go to that location open up the Windows PowerShell as Shift+ Right click 
+"open PowerShell window here" then run it as:
+
+```
+python3 main.py
+```
+
 
 
 ### main.py 
