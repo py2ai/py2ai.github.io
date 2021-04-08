@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
 ```
 
-### Details 
+### Details of above code
 
 We will have two functions in the above code connected to the PUSH buttons
 
@@ -192,5 +192,26 @@ This will load everything from the `COMPANY` database in a query as shown below:
         query = "SELECT * FROM COMPANY"		
 ```
 
+Then we will start the cursor for this query and populate a list as shown:
 
+```python
+cursor = self.conn.execute(query)
+row_len = []
+for i in cursor:
+    row_len.append(len(i))
+```
+Finally the table widget is populated in the rest of the code:
+
+```python
+self.col_num = max(row_len)
+self.tableWidget.setRowCount(0)	
+self.tableWidget.setColumnCount(int(self.col_num))
+
+cursor = self.conn.execute(query)
+for row, row_data in enumerate(cursor):
+    self.tableWidget.insertRow(row)
+    for col, col_data in enumerate(row_data):
+	self.tableWidget.setItem(row, col, QtWidgets.QTableWidgetItem(str(col_data)))
+
+```
 
