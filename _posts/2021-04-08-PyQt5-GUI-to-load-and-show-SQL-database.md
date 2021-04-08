@@ -3,7 +3,7 @@ layout: post
 title: How to open and show the SQL database file in a PyQt5 GUI
 categories: [GUI tutorial series]
 mathjax: true
-featured-img: sqlite3
+featured-img: sqlite3gui
 summary:  This tutorial is about using sqlite3 to open, and show the data inside db file
 ---
 
