@@ -12,7 +12,9 @@ Hi friends! Today's tutorial is Part 01 of the Raspberry Pi learning series. You
 ### Installation 
 1) cv2 
 You can easily install opencv as cv2 by following the tutorial here:
+
 `https://pyshine.com/How-to-install-OpenCV-in-Rasspberry-Pi/`
+
 2) pyshine
 pyshine is required to enable the streaming features in this tutorial. So you can use the latest version 0.0.9 as:
 
