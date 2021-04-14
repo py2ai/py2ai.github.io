@@ -15,6 +15,7 @@ You can easily install opencv as cv2 by following the tutorial here:
 `https://pyshine.com/How-to-install-OpenCV-in-Rasspberry-Pi/`
 2) pyshine
 pyshine is required to enable the streaming features in this tutorial. So you can use the latest version 0.0.9 as:
+
 ```pip3 install pyshine==0.0.9```
 
 Please note that you can easily observe the current IP address of the Raspberry Pi. Although the code below will work on any PC connected to the same wifi router, we recommend using RPi for its numerous advantages in daily life applications. 
