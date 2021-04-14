@@ -1,7 +1,7 @@
 ---
 layout: post
 title: How to easily stream webcam video over wifi with Raspberry Pi
-categories: [RPi tutorial series]
+categories: [Raspberry Pi Programming Series]
 mathjax: true
 featured-img: jeep01
 summary:  This tutorial is about streaming webcam video to an HTML page without Flask
