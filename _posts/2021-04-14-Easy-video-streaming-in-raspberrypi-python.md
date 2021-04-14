@@ -90,7 +90,7 @@ paste it to the browser of your pc or mobile device that is on the same wifi net
 your RPi is providing to you.
 
 But wait a minute, what if you don't have a wifi router and you want to connect RPi in Ad Hoc mode. The whole idea is to configure RPI's wifi interface in Adhoc mode, so that it can be connected to a PC/Mobile device without any wifi router. Yes, in this mode we can enjoy First Person View (FPV) capabilities of RPi.  By simply writing an auto run script in Python that will be called once the RPi is ever booted up, we can run the above code in it. In this way, you can also enjoy point to point FPV link, where the video from RPi is transmitted straight to your mobile device.
-The RPi zero is only 9g in weight, which means you can use it with drones as well. The frame size is kept 320x240 to reduce the latency, which is essential for FPV based vehicles/drones. To configure the Raspberry pi in Adhoc mode please follow our upcoming tutorial.
+The RPi zero is only 9g in weight, which means you can use it with drones as well. The frame size is kept 320x240 to reduce the latency, which is essential for FPV based vehicles/drones. To configure the Raspberry pi in Adhoc mode please follow our upcoming tutorial here https://pyshine.com/How-to-configure-Raspberry-Pi-in-Ad-hoc-wifi-mode/
 
 Have a nice day!
 
