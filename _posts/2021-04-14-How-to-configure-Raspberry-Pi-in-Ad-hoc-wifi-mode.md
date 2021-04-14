@@ -3,7 +3,7 @@ layout: post
 title: How to configure Raspberry Pi in Ad hoc wifi mode
 categories: [GUI tutorial series]
 mathjax: true
-featured-img: jeep01
+featured-img: jeep02
 summary:  This tutorial is about configuring RPi in Ad hoc interface
 ---
 
