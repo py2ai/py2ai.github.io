@@ -3,7 +3,7 @@ layout: post
 title: How to easily stream picamera video over wifi with Raspberry Pi
 categories: [Raspberry Pi Programming Series]
 mathjax: true
-featured-img: jeep01
+featured-img: jeep03
 summary:  This tutorial is about streaming RPi pi camera video to an HTML page without Flask
 ---
 
