@@ -42,7 +42,7 @@ From our previous tutorials, you may already have known the idea to get the IP a
 
 ### main.py
 ```python
-# Part 01 using opencv access webcam and transmit the video in HTML
+# Part 03 using opencv access webcam and transmit the video in HTML
 import picamera
 import  pyshine as ps #  pip3 install pyshine==0.0.9
 HTML="""
