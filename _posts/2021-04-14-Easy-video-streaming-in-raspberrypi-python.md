@@ -11,7 +11,7 @@ Hi friends! Today's tutorial is Part 01 of the Raspberry Pi learning series. You
 
 <br>
 <div align="center">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/WJO_oHA75M0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vt6Fu-Rp-h0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <br>
 
