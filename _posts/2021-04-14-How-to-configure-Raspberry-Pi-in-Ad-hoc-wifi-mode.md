@@ -9,6 +9,12 @@ summary:  This tutorial is about configuring RPi in Ad hoc interface
 
 Hi friends! Today's tutorial is Part 02 of the Raspberry Pi (RPi) learning series. In this, you will learn how to configure your RPi device in Ad hoc mode or infrastructure-less mode. Yes, that means without any requirement of a wifi router.  That is a significant advantage of Ad hoc mode because it gives us the wifi-router freedom, and a dedicated point-to-point link provides lower latency, which is the best choice for the FPV systems.
 
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/L0PaW55ZLmw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
+
 By default, the RPi devices connect to the wifi router upon providing the SSID to them. However, in Ad hoc mode, we have to assign our SSID and the IP address to the device. So, instead of searching and connecting to other wireless networks, the RPi will create its network, which is, of course, ad hoc in nature. We can name this network `RPitest.`
 
 The first thing to do is to SSH to the RPi, just like we did in the previous tutorial. Then use the following to cd to the network directory:
