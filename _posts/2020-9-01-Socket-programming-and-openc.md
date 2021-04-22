@@ -51,7 +51,7 @@ ipconfig
 The required IP address will show against IPv4 Address
 
 
-# Block diagram 
+### Block diagram explaining server/client Python modules
 
 ![]({{ "assets/img/posts/serverclienttcp.png" | absolute_url }}). 
 
