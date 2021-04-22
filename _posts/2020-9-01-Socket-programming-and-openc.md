@@ -47,9 +47,13 @@ From the cmd window run this command:
 ipconfig
 ```
 
+
 The required IP address will show against IPv4 Address
 
 
+# Block diagram 
+
+![]({{ "assets/img/posts/serverclienttcp.png" | absolute_url }}). 
 
 
 # server.py
