@@ -283,3 +283,12 @@ t2.start()
 t3.start()
 ```
 
+Usage:
+
+First run the server code in a terminal: ```python3 server.py```
+
+Then run the client code in another terminal: ```python3 client.py```
+
+You can enter text to send from the client and server terminal windows to continue the chatting. Replace the
+input() with your own control/text data accordingly. Hope you got the idea! Cheers and have a nice day!
+
