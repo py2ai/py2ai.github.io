@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How to stream video and bidirection text in socket programming
+title: How to stream video and bidirectional text in socket programming
 categories: [Socket Programming Series]
 mathjax: true
 featured-img: serverclientvidtext
