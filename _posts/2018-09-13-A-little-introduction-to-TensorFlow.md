@@ -93,7 +93,7 @@ Tensor board is used to visualize the computation graph. For this we need to cre
 Here the first argument `'log_simple_graph'` is the output directory name. 
 After that the graph can be visualized by the command `tensorboard --logdir “log_simple_graph/”`
 
-Launching this command will start a local web app on port 6006. 
+Launching this command will start a local web app on port 6006, so open up at this address ```http://localhost:6006/```
 The reason for choosing this port number is that it is inverted goog of the google:P.
 
 In next tutorials I will write about building a deep learning model from scratch using tensorflow API. Have a nice day!
