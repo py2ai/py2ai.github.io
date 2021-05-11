@@ -91,7 +91,7 @@ Tensor board is used to visualize the computation graph. For this we need to cre
 `sess.graph` is used to create the graph object.
 
 Here the first argument `'log_simple_graph'` is the output directory name. 
-After that the graph can be visualized by the command `tensorboard —logdir = “path/to/the/log_simple_graph”`
+After that the graph can be visualized by the command `tensorboard --logdir “log_simple_graph/”`
 
 Launching this command will start a local web app on port 6006. 
 The reason for choosing this port number is that it is inverted goog of the google:P.
