@@ -66,7 +66,7 @@ Another way to launch the session , and automatically close the session when it 
 
 
 ```python
-with tf.Session() as less:
+with tf.Session() as sess:
   output = sess.run([Neuron1,Neuron2])
   print(output)
 ```
@@ -75,7 +75,7 @@ with tf.Session() as less:
 ## Example
 
 ```python
-import Tensorflow as tf
+import tensorflow as tf
 a = tf.constant(8.0)
 b = tf.constant(3.0)
 c = a*b
