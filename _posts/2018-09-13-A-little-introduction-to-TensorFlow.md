@@ -96,7 +96,7 @@ After that the graph can be visualized by the command `tensorboard --logdir “l
 Launching this command will start a local web app on port 6006. 
 The reason for choosing this port number is that it is inverted goog of the google:P.
 
-In next tutorials i will write about building a deep learning model from scratch using tensorflow API. Have a nice day!
+In next tutorials I will write about building a deep learning model from scratch using tensorflow API. Have a nice day!
 
 
 
