@@ -11,11 +11,9 @@ This tutorial is about streaming multiple videos on a webpage. As an example, fo
 1) First video feed (either webcam or mp4 file), 
 2) Second video feed, either webcam or mp4 file).
 3) 
-<br>
-<div align="center">
+
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/multiwebpagevideos.gif?raw=true)](https://youtu.be/vt6Fu-Rp-h0 "GIF")
-</div>
-<br>
+
 You will need to install pyshine and opencv libraries. Pyshine can be installed as as:
 pip3 install pyshine==0.0.9
 
