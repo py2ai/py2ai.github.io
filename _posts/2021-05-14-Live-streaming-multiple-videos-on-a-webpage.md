@@ -3,6 +3,7 @@ layout: post
 title: How to stream multiple videos on an HTML webpage
 categories: [Tutorial Series]
 mathjax: true
+featured-img: livehtmlpagetwo
 summary:  This tutorial is about streaming multiple videos on a webpage using PyShine server
 ---
 
