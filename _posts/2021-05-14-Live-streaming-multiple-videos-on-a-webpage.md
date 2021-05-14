@@ -6,12 +6,12 @@ mathjax: true
 featured-img: livehtmlpagetwo
 summary:  This tutorial is about streaming multiple videos on a webpage using PyShine server
 ---
-
-This tutorial is about streaming multiple videos on a webpage. As an example, for demonstration purposes, we will use two .mp4 files. We will use various processes to stream each video feed. In the following code, we will use two functions: 
+<br>
+Hi friends, hope your are doing great. This tutorial is about streaming multiple videos on a webpage. As an example, we will use two .mp4 files. We will use two processes to stream each video feed. In the following code, we will use two functions: 
 
 1) First video feed (either webcam or mp4 file), 
 2) Second video feed, either webcam or mp4 file).
-3) 
+
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/multiwebpagevideos.gif?raw=true)](https://youtu.be/vt6Fu-Rp-h0 "GIF")
 
@@ -24,9 +24,8 @@ instead of threads. The multiprocessing module allows us to fully leverage multi
 It runs on multiple Operating systems including Windows. Our PyShine streamer will server each video on a given IP address and ports. 
 The key idea here is to route the video feeds on the same server's same IP but with different port numbers. 
 
-So let say if you want to stream four videos from four 
-webcams connected to your server PC, you need to run four functions, each on a different port number. 
-To further explain this concept, let's look at the complete code for two video feeds.
+So let say if you want to stream four videos from four webcams connected to your server PC, you need to run four functions, each on a different port number. 
+To further explain this concept, let's look at the complete code for two video case.
 
 ### run.py
 
@@ -101,12 +100,12 @@ if __name__=='__main__':
     p2.start()
 ```    
 
-In the above code all you need to change is first of all your PC/server IP's address:
+In the above code, please change your PC/server IP's address:
 
-1. In the HTML docstring section please change the first ```src="http://10.211.55.27:9000/stream.mjpg"``` to ```src="http://your.ip.address.please:port_number/stream.mjpg"```
-2. Again for the second video feed, we need to change the HTML docstring address ```src="http://10.211.55.27:9001/stream.mjpg"``` to ```src="http://your.ip.address.please:port_number+1/stream.mjpg"```
-3. In the ```main1()``` and ```main2()``` function replace your path of capturing device id or video file accordingly and of course the IP address.
-4. Thats it! now execute the code as ```python3 run.py``` and after that in a browser enter the address as ```http://10.211.55.27:9000```, you will see the output webpage showing both streams at the same time.
+1. In the HTML docstring section change the first source link ```src="http://10.211.55.27:9000/stream.mjpg"``` to ```src="http://your.ip.address.please:port_number/stream.mjpg"```
+2. Again for the second video feed, you need to change the HTML docstring address ```src="http://10.211.55.27:9001/stream.mjpg"``` to ```src="http://your.ip.address.please:port_number+1/stream.mjpg"```
+3. In the ```main1()``` and ```main2()``` function replace your path of video file or capturing device id accordingly, and of course the IP address.
+4. Thats it! now execute the code as ```python3 run.py``` and after that in a browser enter the address as ```http://10.211.55.27:9000``` (again in your case this address will be printed differently so please paste that in the browser), you will see the output webpage showing both streams at the same time.
 
 
 
