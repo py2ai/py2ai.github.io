@@ -104,7 +104,7 @@ In the above code all you need to change is first of all your PC/server IP's add
 
 1. In the HTML docstring section please change the first ```src="http://10.211.55.27:9000/stream.mjpg"``` to ```src="http://your.ip.address.please:port_number/stream.mjpg"```
 2. Again for the second video feed, we need to change the HTML docstring address ```src="http://10.211.55.27:9001/stream.mjpg"``` to ```src="http://your.ip.address.please:port_number+1/stream.mjpg"```
-3. In the ```main1()``` and ```main2()``` function replace your path of capturing device id or video file accordingly.
+3. In the ```main1()``` and ```main2()``` function replace your path of capturing device id or video file accordingly and of course the IP address.
 4. Thats it! now execute the code as ```python3 run.py``` and after that in a browser enter the address as ```http://10.211.55.27:9000```, you will see the output webpage showing both streams at the same time.
 
 
