@@ -11,6 +11,8 @@ This tutorial is about streaming multiple videos on a webpage. As an example, fo
 1) First video feed (either webcam or mp4 file), 
 2) Second video feed, either webcam or mp4 file).
 
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/multiwebpagevideos.gif?raw=true)](https://youtu.be/vt6Fu-Rp-h0 "GIF")
+
 You will need to install pyshine and opencv libraries. Pyshine can be installed as as:
 pip3 install pyshine==0.0.9
 
@@ -52,7 +54,7 @@ def main1():
     address = ('10.211.55.27',9000) # Enter your IP address 
     try:
         StreamProps.set_Mode(StreamProps,'cv2')
-        capture = cv2.VideoCapture('rocket.mp4') # replace 0 (webcam id) with the path of your .mp4 video file
+        capture = cv2.VideoCapture(0) # replace 0 (webcam id) with the path of your .mp4 video file
         capture.set(cv2.CAP_PROP_BUFFERSIZE,4)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH,320)
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT,240)
@@ -74,7 +76,7 @@ def main2():
     address = ('10.211.55.27',9001) # Enter your IP address 
     try:
         StreamProps.set_Mode(StreamProps,'cv2')
-        capture = cv2.VideoCapture('butterflies.mp4') # replace 1 (webcam id) with the path of your .mp4 for video file
+        capture = cv2.VideoCapture(1) # replace 1 (webcam id) with the path of your .mp4 for video file
         capture.set(cv2.CAP_PROP_BUFFERSIZE,4)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH,320)
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT,240)
