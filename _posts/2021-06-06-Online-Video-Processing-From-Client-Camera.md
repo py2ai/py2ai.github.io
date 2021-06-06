@@ -14,6 +14,8 @@ latencies. In most applications the camera of a client (smart phone) is used to 
 devices the frames are also processed at the client side to provide extremely low latency. A simple example is an app where a user face is replaced by a funny cartoon
 on a smart phone.
 
+[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/flasklipsonlinegif.gif?raw=true)](https://youtu.be/q6qHIsZ6V8s "GIF")
+
 However, there are still some areas that require processing only at the server side, and where latency is not a major concern. One of such cases is where a server
 side processing is cost consuming and the client have to pay for the services of the server. e.g., sending a client face to tryon glasses or facial recognition from
 a huge data base, etc.
