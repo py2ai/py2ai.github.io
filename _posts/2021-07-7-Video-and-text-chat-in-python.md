@@ -399,3 +399,74 @@ it might be different let say `host_ip = '192.168.1.10'` or else. But the questi
 ```python3 server.py```
 ```python3 client.py```
 
+Below are outputs observed on our side, let's see how it runs on your side :)
+
+### Output on server.py side
+
+```
+PS C:\PyShine> python .\server.py
+10.211.55.27
+Listening at: ('10.211.55.27', 9699)
+GOT connection from  ('10.211.55.27', 64774)
+SERVER TEXT ENTER BELOW:
+Hello client I am server!
+SERVER TEXT ENTER BELOW:
+
+CLIENT TEXT RECEIVED: Hi server, nice to meet you!
+SERVER TEXT ENTER BELOW:
+
+CLIENT TEXT RECEIVED: Can you receive my video?
+SERVER TEXT ENTER BELOW:
+Yes
+SERVER TEXT ENTER BELOW:
+See you next time
+SERVER TEXT ENTER BELOW:
+
+CLIENT TEXT RECEIVED: see you
+SERVER TEXT ENTER BELOW:
+
+CLIENT TEXT RECEIVED: and have a nice day
+SERVER TEXT ENTER BELOW:
+you too
+SERVER TEXT ENTER BELOW:
+Bye Bye !
+SERVER TEXT ENTER BELOW:
+
+```
+
+### Output on client.py side
+
+```
+PS C:\PyShine> python client.py
+10.211.55.27
+server listening at ('10.211.55.27', 9698)
+CLIENT CONNECTED TO ('10.211.55.27', 9698)
+server listening at ('10.211.55.27', 9697)
+msg send CLIENT CONNECTED TO ('10.211.55.27', 9697)
+CLIENT TEXT ENTER BELOW:
+server listening at ('10.211.55.27', 9696)
+
+SERVER TEXT RECEIVED: Hello client I am server!
+CLIENT TEXT ENTER BELOW:
+Hi server, nice to meet you!
+CLIENT TEXT ENTER BELOW:
+Can you receive my video?
+CLIENT TEXT ENTER BELOW:
+
+SERVER TEXT RECEIVED: Yes
+CLIENT TEXT ENTER BELOW:
+
+SERVER TEXT RECEIVED: See you next time
+CLIENT TEXT ENTER BELOW:
+see you
+CLIENT TEXT ENTER BELOW:
+and have a nice day
+CLIENT TEXT ENTER BELOW:
+
+SERVER TEXT RECEIVED: you too
+CLIENT TEXT ENTER BELOW:
+
+SERVER TEXT RECEIVED: Bye Bye !
+CLIENT TEXT ENTER BELOW:
+
+```
