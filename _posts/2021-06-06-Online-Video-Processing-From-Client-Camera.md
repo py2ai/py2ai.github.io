@@ -3,6 +3,7 @@ layout: post
 title: How to perform online video processing from the client's camera
 categories: [Tutorial Series]
 mathjax: true
+featured-img: flasklipsonlinelogo
 summary:  This tutorial is about obtaining live frames of a client's camera, process it and provide result back to the client
 ---
 
