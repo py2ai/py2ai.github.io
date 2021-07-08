@@ -9,7 +9,7 @@ summary: A quick tutorial to make server-client video and text chat
 Hi friends, today's tutorial is rather more interesting than the previous ones. We will use a UDP socket connection for the real-time video transfer between the server and the client. So it will be a bidirectional video transfer, which means the server can watch the client's video and vice versa. 
 At the same time, it will enable users at the server and client to chat via messages to each other. Two important things to consider:
 
-First, to test the server.py and client.py on the same computer, you can use two USB cameras. One will have the id of 0 as in `vid = cv2.VideoCapture(1)` in the server.py. The other cam will have the id of 1 in the client.py, but you can change them according to available cams on your pc.
+First, to test the server.py and client.py on the same computer, you can use two USB cameras. One will have the id of 0 as in `vid = cv2.VideoCapture(0)` in the server.py. The other cam will have the id of 1 in the client.py, but you can change them according to available cams on your pc.
 
 Second, to test both Python codes on separate computers, you can keep the id the same as 0 for both. 
 
