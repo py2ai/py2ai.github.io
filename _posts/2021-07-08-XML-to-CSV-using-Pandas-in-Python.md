@@ -99,7 +99,7 @@ Run the `main.py` as
 
 ### output
 
-A csv file will be generated at the same location or folder as main.py file and you will see this output:
+A csv file will be generated (songs.csv) at the same location or folder as main.py file and you will see this output:
 
 ```csv
 
