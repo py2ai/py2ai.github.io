@@ -8,6 +8,8 @@ summary: A quick tutorial to parse XML files using XML Element Tree
 
 Hi there, let's say we have an XML file like this:
 
+### songs.xml
+
 ```xml
 <?xml version="1.0"?>
 <genre catalogue="Pop">
@@ -30,15 +32,6 @@ Hi there, let's say we have an XML file like this:
 
 ```
 
-We want to parse its every information and get the csv data like this:
-
-```csv
-
-                  genre                 song    artist  year    album
-0  {'catalogue': 'Pop'}  {'title': 'Song 1'}  Artist 1  2000  Album 1
-1                    -1  {'title': 'Song 2'}  Artist 2  2010  Album 2
-2                    -1  {'title': 'Song 3'}  Artist 3  2015  Album 3
-```
 
 So all we need to provide the name of the xml file in the Python script below:
 
@@ -99,5 +92,24 @@ And output a dictionary with unknown information replaced by the placeholder lik
 ```
 {'genre': [{'catalogue': 'Pop'}, -1, -1], 'song': [{'title': 'Song 1'}, {'title': 'Song 2'}, {'title': 'Song 3'}], 'artist': ['Artist 1', 'Artist 2', 'Artist 3'], 'year': ['2000', '2010', '2015'], 'album': ['Album 1', 'Album 2', 'Album 3']}
 ```
+
+### output of main.py
+
+Run the `main.py` as 
+
+``` python3 main.py```
+
+### output
+
+A csv file will be generated at the same location or folder as main.py file and you will see this output:
+
+```csv
+
+                  genre                 song    artist  year    album
+0  {'catalogue': 'Pop'}  {'title': 'Song 1'}  Artist 1  2000  Album 1
+1                    -1  {'title': 'Song 2'}  Artist 2  2010  Album 2
+2                    -1  {'title': 'Song 3'}  Artist 3  2015  Album 3
+```
+
 
 So, next time no matter how complex is your XML file, you can still get the data out of it, and use it for the applications of Artificial Intelligence.
