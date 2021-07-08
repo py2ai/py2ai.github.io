@@ -57,9 +57,7 @@ for elem in root.iter():
         element_dict[elem.tag].append(elem.attrib)
     else:        
         element_dict[elem.tag].append(elem.text)
-   
-    print('---->',elem.text=='\n')
-    
+      
     
 def make_list(dict_list, placeholder):
     
