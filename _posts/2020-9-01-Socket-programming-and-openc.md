@@ -99,7 +99,7 @@ while True:
 				client_socket.close()
 				
 ```
-After running the server.py, copy paste the host_ip of that to client.py
+After running the server.py, copy paste the `host_ip` of that to client.py, let's say if it is `192.168.1.20` then our client code would be:
 
 # client.py
 
