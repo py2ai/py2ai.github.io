@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Test your audible frequence range in Python
+title: Test your audible frequency range in Python
 categories: [tutorial]
 mathjax: true
 summary: A quick tutorial to generate audio tones of various frequencies and plot FFT
