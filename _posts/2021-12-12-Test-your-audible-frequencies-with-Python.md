@@ -30,7 +30,6 @@ import pygame
 import wave, os
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft
-import pdb
 sampleRate = 44100
 pygame.mixer.init(44100,-16,2,512)
 duration_sec = 1
