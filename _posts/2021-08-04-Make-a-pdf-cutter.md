@@ -2,6 +2,7 @@
 layout: post
 title: How to split a pdf into pages in Python
 categories: [tutorial]
+featured-img: 2021-12-24-pdf-paper
 mathjax: true
 summary: A quick tutorial to divide your pdf file into multiple pages in a folder
 ---
