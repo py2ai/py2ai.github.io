@@ -2,6 +2,7 @@
 layout: post
 title: Test your audible frequency range in Python
 categories: [tutorial]
+featured-img: 2021-12-24-20000Hz
 mathjax: true
 summary: A quick tutorial to generate audio tones of various frequencies and plot FFT
 ---
