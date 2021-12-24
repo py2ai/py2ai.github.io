@@ -2,6 +2,7 @@
 layout: post
 title: How to parse XML file and save the data as CSV
 categories: [tutorial]
+featured-img: 2021-12-24-xml-files
 mathjax: true
 summary: A quick tutorial to parse XML files using XML Element Tree
 ---
