@@ -34,6 +34,7 @@ sampleRate = 44100
 pygame.mixer.init(44100,-16,2,512)
 duration_sec = 1
 frequency_list=[x*100 for x in range(10)]+[x*1000 for x in range(1,21,1)]
+# for details visis: www.pyshine.com
 for freq in frequency_list:
 	
     arr = numpy.array([4096 * numpy.sin(2.0 * numpy.pi * freq * x / sampleRate) for x in range(0, duration_sec*sampleRate)]).astype(numpy.int16)
