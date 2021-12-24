@@ -2,6 +2,7 @@
 layout: post
 title: Video and Text chat in Python
 categories: [tutorial]
+featured-img: 2021-12-24-chat-text
 mathjax: true
 summary: A quick tutorial to make server-client video and text chat
 ---
