@@ -93,7 +93,7 @@ Finally, every time you want to update some parameters to the adhoc interface, y
 
 That's it for this tutorial, enjoy :)
 
-##TIP
+## TIP
 We can run any Python code automatically by giving the path to profile, once the RPi is booted.
 Open up profile
 ```
