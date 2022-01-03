@@ -92,3 +92,18 @@ That's it if you have switched to `adhoc-interface`, then after reboot, you can 
 Finally, every time you want to update some parameters to the adhoc interface, you must switch to wifi interface and then again switch to adhoc interface to get the results back. 
 
 That's it for this tutorial, enjoy :)
+
+##TIP
+We can run any Python code automatically by giving the path to profile, once the RPi is booted.
+Open up profile
+```
+sudo nano /etc/profile
+```
+Now put the path to `/home/pi/Documents/main.py` the profile page as the last line with python version.
+
+`python3 /home/pi/Documents/main.py &`
+
+
+
+
+
