@@ -103,6 +103,8 @@ Now put the path to `/home/pi/Documents/main.py` the profile page as the last li
 
 `python3 /home/pi/Documents/main.py &`
 
+Save it and reboot, the code main.py will run automatically once booted.
+
 
 
 
