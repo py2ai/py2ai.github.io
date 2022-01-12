@@ -245,7 +245,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 		self.devices_list= []
 		for device in input_audio_deviceInfos:
 			self.devices_list.append(device.deviceName())
-
+		
 		self.comboBox.addItems(self.devices_list)
 		self.comboBox.currentIndexChanged['QString'].connect(self.update_now)
 		self.comboBox.setCurrentIndex(0)
@@ -255,13 +255,14 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 		self.reference_plot = None
 		self.q = queue.Queue(maxsize=20)
 
-		self.device = 0 
+		self.device = self.devices_list
 		self.window_length = 1000
 		self.downsample = 1
 		self.channels = [1]
 		self.interval = 30 
 		
 		device_info =  sd.query_devices(self.device, 'input')
+		
 		self.samplerate = device_info['default_samplerate']
 		length  = int(self.window_length*self.samplerate/(1000*self.downsample))
 		sd.default.samplerate = self.samplerate
@@ -430,7 +431,6 @@ app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_LIVE_PLOT_APP()
 mainWindow.show()
 sys.exit(app.exec_())
-
 ```
 
 
