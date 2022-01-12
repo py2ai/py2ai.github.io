@@ -243,7 +243,7 @@ import matplotlib.ticker as ticker
 import queue
 import numpy as np
 import sounddevice as sd
-
+import pdb
 from PyQt5 import QtCore, QtWidgets,QtGui
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSlot
@@ -280,7 +280,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 		self.reference_plot = None
 		self.q = queue.Queue(maxsize=20)
 
-		self.device = 0 
+		self.device = self.devices_list[0]
 		self.window_length = 1000
 		self.downsample = 1
 		self.channels = [1]
@@ -409,7 +409,6 @@ app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_LIVE_PLOT_APP()
 mainWindow.show()
 sys.exit(app.exec_())
-
 ```
 
 Please do comment, and give your valuable suggestions. Have a nice day!
