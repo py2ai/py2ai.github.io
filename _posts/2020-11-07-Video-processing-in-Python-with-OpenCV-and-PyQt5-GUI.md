@@ -35,7 +35,7 @@ put a video file in the same folder as the Python code below. Also the xml file 
 
 
 
-Updated version with Start/Stop toggle button is added based on the suggestion from Ilker. This is the updated version 2.
+Updated version with **Start/Stop** toggle button is added based on the suggestion from Ilker. This is the updated version 2.
 
 ### process_version2.py
 
@@ -399,7 +399,7 @@ class Ui_MainWindow(object):
 		fps=0
 		
 		while(vid.isOpened()):
-	
+			QtWidgets.QApplication.processEvents()	
 			img, self.image = vid.read()
 			self.image  = imutils.resize(self.image ,height = 480 )
 			
@@ -531,7 +531,6 @@ if __name__ == "__main__":
 	ui.setupUi(MainWindow)
 	MainWindow.show()
 	sys.exit(app.exec_())
-
 
 
 ```
