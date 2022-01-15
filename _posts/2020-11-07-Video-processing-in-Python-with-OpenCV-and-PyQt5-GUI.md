@@ -152,7 +152,7 @@ class Ui_MainWindow(object):
 		fps=0
 		
 		while(vid.isOpened()):
-			
+			QtWidgets.QApplication.processEvents()	
 			img, self.image = vid.read()
 			self.image  = imutils.resize(self.image ,height = 480 )
 			
@@ -285,7 +285,6 @@ if __name__ == "__main__":
 	ui.setupUi(MainWindow)
 	MainWindow.show()
 	sys.exit(app.exec_())
-
 
 
 ```
