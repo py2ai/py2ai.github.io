@@ -35,7 +35,7 @@ put a video file in the same folder as the Python code below. Also the xml file 
 
 
 
-Updated version with <span style="color:blue">*blue* Start/Stop</span>. toggle button is added based on the suggestion from Ilker. This is the updated version 2.
+Updated version with <span style="color:red">**Start/Stop**</span> toggle button is added based on the suggestion from Ilker. This is the updated version 2.
 
 ### process_version2.py
 
