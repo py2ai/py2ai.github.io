@@ -3,6 +3,7 @@ layout: post
 title: PytQt5 terminal console
 categories: [GUI tutorial series]
 mathjax: true
+featured-img: pexels-negative-space-97077
 summary: A simple PyQt5 terminal
 ---
 Hi friends, this quick intro is about the Terminal console using PyQt5. The code is self explanatory. We will use two Widgets as small windows in the main gui namely,
