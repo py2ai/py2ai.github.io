@@ -40,15 +40,27 @@ mkdir build
 cp cmake/config.cmake build
 ```
 ### Step 5
-We need to edit edit build/config.cmake to customize the compilation options, so we can directly set set(USE_LLVM ON) and let cmake search for a usable version of LLVM.
+We need to edit edit build/config.cmake file to customize the compilation options, so we can directly add `set(USE_LLVM ON)` and let cmake search for a usable version of LLVM. After that we will build and make tvm.
+
 ```
+cd build
+cmake ..
+make -j4
+```
+### Step 6
+
+Once all make is finished successfully, we need to install Python package for this tvm, so that we can use it in Python codes.
+
+```
+export MACOSX_DEPLOYMENT_TARGET=10.9 
+cd python; python setup.py install --user; cd ..
 
 ```
 
 
 
 Below are some useful links about TVM:
-Links
+
 [1] Tutorials: https://tvm.apache.org/docs/tutorials/index.html#autoscheduler-template-free-auto-scheduling
 
 [2] Benchmark repo: https://github.com/tlc-pack/TLCBench
