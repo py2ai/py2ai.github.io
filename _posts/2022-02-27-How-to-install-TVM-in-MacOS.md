@@ -6,12 +6,7 @@ mathjax: true
 summary: A quick tutorial for beginners to build from source the TVM in Mac OS
 ---
 
-Hello there, today's tutorial is about installing Apache TVM on your Mac OS. There are some steps that are required for the beginners to successfully install it. Apached TVM is an open source ML compiler framework for GPUS, CPUs and deep learning accelerators. The goal of TVM is to enable deep learning
-community to optimize and then run computations efficiently on a hardware. TVM has a diverse community of hardware vendors, compiler engineers and ML researchers
-. This community has build a unified, programmable software stack to enrich the entire ML technology ecosystem and made it available to everyone. As a result
-of this collective effort, the performance goes up. We require the following steps to successfully install TVM on MacOS. Please note that Homebrew is
-required for either Intel or Apple's M1 chip processors. We need cmake, llvm and Python3.8, please note that currently Python3.9 have some issues so I will
-higly recommend Python3.8
+Hello, today’s tutorial is about installing Apache TVM on your Mac OS. Some steps are required for beginners to install it successfully. Friends, Apache TVM is an open-source ML compiler framework for GPUS, CPUs, and deep learning accelerators. The goal of TVM is to enable the deep learning community to optimize and then run computations efficiently on hardware. TVM has a diverse community of hardware vendors, compiler engineers, and ML researchers. This community has built a unified, programmable software stack to enrich the ML technology ecosystem and make it available to everyone. As a result of this collective effort, the performance goes up. We require the following steps to install TVM on MacOS successfully. Please note that Homebrew is required for either Intel or Apple’s M1 chip processors. We need cmake, llvm and Python3.8; please note that currently, Python3.9 have some issues, so I will highly recommend Python3.8
 
 ### Step 1
 ```
