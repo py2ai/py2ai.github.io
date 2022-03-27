@@ -19,6 +19,9 @@ higly recommend Python3.8
 ```
 brew install gcc git cmake
 brew install llvm
+```
+If Python3.8 is not installed then either use virtualenv or conda env to install it, otherwise use 
+```
 brew install python@3.8
 ```
 ### Step 2
