@@ -14,6 +14,12 @@ summary: Save videos from multiple clients at server side
 <br>
 
 
+<br>
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/zZ6pdZ-_1XE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<br>
+
 Hello friends, today we will again do socket programming for multiple clients and a single server. Just like before, it's about creating multiple client sockets and transmitting their 
 videos to a server in Python. The new thing is to save each client's frames as a separate video. The client.py utilizes OpenCv to access the video frames either from the live webcam or through the MP4 video. The server side code 
 runs multi-threading to display video frame which is optional from each of the connected client. 
