@@ -3,7 +3,6 @@ layout: post
 title: Issue and solutions related to PyQt5
 categories: [GUI tutorial series]
 mathjax: true
-featured-img: mclients
 summary: You can find important issues and their solutions related to PyQt5 here
 ---
 
