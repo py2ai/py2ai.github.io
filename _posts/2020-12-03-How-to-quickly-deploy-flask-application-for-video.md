@@ -4,7 +4,7 @@ title: How to deploy Python video processing application on the server
 categories: [Web development tutorial series]
 mathjax: true
 featured-img: flask
-summary: We will use OpenCv to change blur and brightness of the video and serve it on the network
+summary: We will use Flask and OpenCv to change blur and brightness of the video and serve it on the network
 ---
 
 <br>
