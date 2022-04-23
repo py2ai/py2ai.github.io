@@ -15,7 +15,7 @@ _I found this Traceback (most recent call last): ImportError: cannot import name
 Highly recommended version is earlier not the latest if you find above trace back 'QtWebEngineWidgets'. Simply install exactly  `pip3 install PyQt5==5.15.2`
 
 ### Question: 
-_I can't find the Qt designer app in windows? I just typed designer in cmd but have this error:
+_I can't find the Qt designer app in windows? I just typed designer in cmd but have this error:_
 ```
 designer : The term 'designer' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify 
 that the path is correct and try again.
@@ -24,7 +24,7 @@ At line:1 char:1
 + ~~~~~~~~
     + CategoryInfo          : ObjectNotFound: (designer:String) [], CommandNotFoundException
     + FullyQualifiedErrorId : CommandNotFoundException
-```_
+```
 ### Answer:
 Unfortunatley, in newer versions, the PyQt5 wheels do not provide tools such as Qt Designer that were included in the old binary installers. But the good news is that you can install it via 
 
@@ -111,12 +111,12 @@ Hi! Please copy the code from https://pyshine.com/Make-GUI-With-Matplotlib-And-P
 Also it is highly recommended to install matplotlib version 3.2.1
 
 ### Question: 
-_ImportError: cannot import name 'Qtcore' from 'PyQt5' I am getting this error.  I've already install pyqt5
+_ImportError: cannot import name 'Qtcore' from 'PyQt5' I am getting this error.  I've already install pyqt5_
 ```Traceback (most recent call last):
   File "C:\Users\Ketan\Desktop\Kedarnath\maingui.py", line 17, in <module>
     from PyQt5 import Qtcore, QtWidgets
 ImportError: cannot import name 'Qtcore' from 'PyQt5' (C:\Users\Ketan\AppData\Local\Programs\Python\Python39\lib\site-packages\PyQt5\__init__.py)
-```_
+```
 ### Answer:
 You are using Python3.9, there might be some issue with it. Try using Python 3.6.5 with PyQt5.  `pip3 install PyQt5==5.15.2`
 
@@ -166,11 +166,11 @@ _How to make it possible to change the window and other parameters in real time,
 Excellent question! Since functions are running under various threads with their own parameters. We can use seprate queue based variables to safely provide the parameter value a thread running a function. In that fuction the parameter value can be applied before the next time step.
 
 ### Question: 
-_I completely copied your code, but Im getting this error:
+_I completely copied your code, but Im getting this error:_
 ```QObject::killTimer: Timers cannot be stopped from another thread
 QObject::startTimer: Timers cannot be started from another thread
 QObject::setParent: Cannot set parent, new parent is in a different thread
-```_
+```
 
 ### Answer: 
 Hi, Please use this for stopping https://pyshine.com/PyQt5-Live-Audio-GUI-with-Start-and-Stop/
