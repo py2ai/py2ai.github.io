@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How to video over UDP socket and save as MP4 at client side
+title: How to send video over UDP socket and save it as MP4 at client side
 categories: [Socket Programming Series]
 mathjax: true
 featured-img: pythonudp1
