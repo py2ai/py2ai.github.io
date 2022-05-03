@@ -192,6 +192,8 @@ Following is the index.html containing javascript
 
 ## Running Video Streamer and Flask App in Raspberry Pi Zero W
 
+You can skip the above code and use the following code only for the Raspberry Pi 
+
 ### main.py
 
 ```python
