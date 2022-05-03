@@ -192,7 +192,185 @@ Following is the index.html containing javascript
 
 ## Running Video Streamer and Flask App in Raspberry Pi Zero W
 
-Comming soon!
+### main.py
+
+```python
+import  pyshine as ps #  pip3 install pyshine==0.0.9
+import threading
+import RPi.GPIO as io
+import picamera
+from flask import Flask, render_template, request
+app = Flask(__name__)
+
+FORWARD = 6
+BACK = 26
+LEFT = 27
+RIGHT = 22
+
+server_ip = '192.168.10.1'
+port = 9000
+
+map_motion =  {FORWARD: "FORWARD",
+        BACK : "BACK",
+        LEFT : "LEFT",
+        RIGHT : "RIGHT"}
+
+HTML="""
+<html>
+<head>
+<title>PyShine Live Streaming</title>
+</head>
+
+<body>
+<center><h1> PyShine Live Streaming using OpenCV </h1></center>
+<center><img src="stream.mjpg" width='640' height='480' autoplay playsinline></center>
+</body>
+</html>
+"""
+
+def main():
+    
+    StreamProps = ps.StreamProps
+    StreamProps.set_Page(StreamProps,HTML)
+    address = (server_ip,port) # Enter your IP address 
+    StreamProps.set_Mode(StreamProps,'picamera')    
+    with picamera.PiCamera(resolution='320x240', framerate=30) as camera:
+        output = ps.StreamOut()
+        StreamProps.set_Output(StreamProps,output)
+        camera.rotation = 90
+        camera.start_recording(output, format='mjpeg')
+        try:
+            server = ps.Streamer(address, StreamProps)
+            print('Server started at','http://'+address[0]+':'+str(address[1]))
+            server.serve_forever()
+        finally:
+            camera.stop_recording()
+
+
+my_list =[FORWARD,BACK,LEFT,RIGHT]
+
+
+def run_for (pin):
+    print(f"action-- {map_motion[pin]}")
+    io.cleanup()
+    io.setmode(io.BCM)
+    io.setup(pin, io.OUT)
+    io.output(pin, True)
+    for x in my_list:
+        if x != pin:
+            io.output(pin, False)
+
+
+def init():
+    io.setmode(io.BCM)              
+    io.setup(FORWARD,io.OUT)  
+    io.setup(BACK,io.OUT)
+    io.setup(LEFT,io.OUT)
+    io.setup(RIGHT,io.OUT)
+    for x in my_list:
+        io.output(pin, False)
+    io.cleanup()
+
+global pin 
+pin = FORWARD
+init()
+@app.route("/", methods=['GET', 'POST'])
+
+def index():
+    
+    global pin
+    data= 'stop'
+    if request.method == 'POST':
+        data = request.form.get("data")
+        
+        if data == 'forward':
+            # print('forward')
+            run_for(FORWARD)
+            pin = FORWARD
+        elif  data == 'back':
+            # print("back")
+            run_for(BACK)
+            pin = BACK
+        elif data == 'left':
+            # print('left')
+            run_for(LEFT)
+            pin = LEFT
+        elif data == 'right':
+            # print('right')          
+            run_for(RIGHT)
+            pin = RIGHT
+        elif data == 'stop':
+            # print('STOP')
+            io.setmode(io.BCM)
+            io.setup(pin, io.OUT)
+            io.output(pin, False)
+            io.cleanup()
+
+        else:
+            return render_template("index.html")
+    elif request.method == 'GET':
+        print("NO POST ...")
+    return render_template("index.html")
+
+
+if __name__ == '__main__':
+    
+    t1 = threading.Thread(target=main, args=())
+    t1.start()
+    app.run(debug=True, host=server_ip,port=port+1,threaded=True)
+    
+```
+
+### index.html
+
+```html
+<html>
+    <body>
+		<center><h1>PyShine Live Streaming and Control Car with Sockets</h1></center>
+		<center><img src="http://192.168.10.1:9000/stream.mjpg" width="640" height="480" autoplay playsinline class="rotateimg0"></center>
+	
+        <script src="/static/scripts/jquery-3.5.1.js"
+                crossorigin="anonymous">
+        </script>
+        <script type="text/javascript">
+        // forward function 
+        function forward_func(element, color,action) {
+            if(!color) {
+            color = element.dataset.normalColor;
+            $.ajax({
+                type: "POST", url: "/",data:{data:'stop'},
+                success: function(result) {
+                    console.log('stop');
+                },
+                error: function(result) {
+                    alert('error');
+                }
+            });
+            } else {
+            element.dataset.normalColor = element.style.backgroundColor;
+            $.ajax({type: "POST", url: "/", data:{data:action},
+                success: function(result) {
+                    console.log(action);
+                },
+                error: function(result) {
+                    alert('error');
+                }
+            });
+            }
+            element.style.backgroundColor = color;
+        }
+        </script>
+        &nbsp; 
+        <center>
+        <button onpointerdown="forward_func(this,'blue','forward')" onpointerup="forward_func(this)" style="height:120px;width:120px">Forward</button>
+        <button onpointerdown="forward_func(this,'blue','back')" onpointerup="forward_func(this)" style="height:120px;width:120px">Back</button>
+        <button onpointerdown="forward_func(this,'blue','left')" onpointerup="forward_func(this)" style="height:120px;width:120px">Left</button>
+        <button onpointerdown="forward_func(this,'blue','right')" onpointerup="forward_func(this)" style="height:120px;width:120px">Right</button>
+        
+        </center>
+    </body>
+</html>
+```
 
 ### Setting up Raspberry Pi in Ad hoc mode
 If you want to run this code at a place with no wifi router, than you can configure RPi in Adhoc mode. However, this is optional. Previously, we have discussed how to configure your RPi device in Ad hoc mode or infrastructure-less mode. Yes, that means without any requirement of a wifi router.  That is a significant advantage of Ad hoc mode because it gives us the wifi-router freedom, and a dedicated point-to-point link provides lower latency, which is the best choice for the FPV systems. You can visit https://pyshine.com/How-to-configure-Raspberry-Pi-in-Ad-hoc-wifi-mode/
