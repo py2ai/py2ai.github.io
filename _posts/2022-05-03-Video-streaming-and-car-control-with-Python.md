@@ -13,7 +13,7 @@ RPi makes it perfect candidate for the control of toy cars or small drones. Plea
 
 <br>
 <div align="center">
-<iframe width="560" height="315" src="https://youtu.be/uJagCes4bzA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uJagCes4bzA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <br>
 
