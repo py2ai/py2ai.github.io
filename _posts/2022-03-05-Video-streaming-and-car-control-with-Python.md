@@ -20,6 +20,13 @@ RPi makes it perfect candidate for the control of toy cars or small drones. Plea
 
 ## Running Video Streamer and Flask App in PC
 
+Project view:
+```
+Project_Directory/
+├── templates/
+│   ├── index.html
+└── main.py
+```
 Here is the Python code for the Flask application running at local machine and no control pins are activated:
 
 ### main.py
@@ -192,7 +199,19 @@ Following is the index.html containing javascript
 
 ## Running Video Streamer and Flask App in Raspberry Pi Zero W
 
-You can skip the above code and use the following code only for the Raspberry Pi 
+You can skip the above code and use the following code only for the Raspberry Pi.
+
+Project view:
+
+```
+Project_Directory/
+├── templates/
+│   ├── index.html
+├── staic/
+│   │   ├── scripts/
+│   │   │   ├── jquery-3.5.1.js
+└── main.py
+```
 
 ### main.py
 
@@ -324,6 +343,9 @@ if __name__ == '__main__':
 ```
 
 ### index.html
+
+Please note that, in the following script we are accessing `jquery-3.5.1.js` from the `/static/scripts/` location instead of `https://code.jquery.com/jquery-3.5.1.js`, because if you want to run in Ad hoc mode, then you would not have the choice to access this js file from
+the internet. In that case you can download and save it in the `/static/scripts/` location
 
 ```html
 <html>
