@@ -37,6 +37,7 @@ I hope rest of the libraries in the code are already installed in your pc, other
 
 The import section of the Python code contains the PySide QtCore and Gui classes which will be used for making the Dialog
 to open the .pptx file.
+{% include codeHeader.html %}
 ```python 
 from PySide import QtCore, QtGui
 from PySide.QtGui import (QApplication, QMainWindow, QAction, QWidget,
@@ -52,7 +53,7 @@ import speech_recognition as sr
 ```
 
 Next we need to point the OS towards the Documents folder by default for this we will use the code below:
-
+{% include codeHeader.html %}
 ```python
 buf= ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
 ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, buf)
@@ -62,14 +63,14 @@ if not os.path.exists((buf.value)+'\\'):
    pathProjects = (buf.value)+'\\'
 ```
 Now lets define our first function to get the name of the .pptx file from the full path.
-
+{% include codeHeader.html %}
 ```python
 def path_leaf(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
 ```
 After this we need to define the Class for the Dialog, buttons and the functions.
-
+{% include codeHeader.html %}
 ```python
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -188,6 +189,7 @@ class Ui_Dialog(object):
 ```
 
 And in the last section we need to call this class and run the app
+{% include codeHeader.html %}
 ```python
 if __name__ == "__main__":
     import sys
@@ -204,6 +206,7 @@ Save all the code in a app.py file and run using `python app.py`.
 
 Now chose the .pptx file and hit OK button. After this the ppt will launch in full screen mode. You can say next slide, or next, in this portion of the code the text is scanned for next word and if it is detected correctly, the slide will turn to 
 the next page and similarly, if the word is bingo then it will go back one page. 
+{% include codeHeader.html %}
 ```python
 if text.find('next')!=-1:
     presentation.SlideShowWindow.View.Next()
