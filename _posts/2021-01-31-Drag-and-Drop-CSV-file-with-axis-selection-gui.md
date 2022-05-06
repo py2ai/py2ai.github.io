@@ -44,7 +44,7 @@ In a project directory (in our case ```15-Drag Drop CSV matplotlib GUI with sele
 
 
 ## main.py
-
+{% include codeHeader.html %}
 ```python
 
 # -*- coding: utf-8 -*-
@@ -347,7 +347,7 @@ if __name__ == "__main__":
 ```
 
 ## drag_drop.py
-
+{% include codeHeader.html %}
 ```python
 
 # Lets make the main window class
@@ -743,7 +743,7 @@ on the y-axis. In that case we have to add another checkbox, which is also known
 
 
 ### main_vsall.py
-
+{% include codeHeader.html %}
 ```python
 
 # -*- coding: utf-8 -*-
