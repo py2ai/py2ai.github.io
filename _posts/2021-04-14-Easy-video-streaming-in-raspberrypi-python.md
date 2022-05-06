@@ -35,6 +35,7 @@ For this purpose, we need a `main.py` code as shown below, which will use the do
 From our previous tutorials, you may already have known the idea to get the IP address of your device. Let's say your IP address is `192.168.1.1`, then the following code is all we need to observe the video stream in another device's webbrowser.
 
 ### main.py
+{% include codeHeader.html %}
 ```python
 # Part 01 using opencv access webcam and transmit the video in HTML
 import cv2
