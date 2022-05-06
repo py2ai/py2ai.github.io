@@ -29,7 +29,7 @@ server.py file. Please run the server.py at one computer and accordingly provide
 ## TCP SOCKET VERSION 
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 # This is server code to send video and audio frames over TCP
 
@@ -91,7 +91,7 @@ python client.py
 ```
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is client code to receive video and audio frames over TCP
@@ -157,7 +157,7 @@ If everything goes well you will listen the good quality sound at the client sid
 Alright, lets do the same things as above but this time using UDP socket. The process of reading audio data should be streamed smoothly, in case of UDP. The ```wf.readframes(CHUNK)``` returns at most CHUNK frames of audio, as a bytes object. These bytes are then sent to the client address using ```server_socket.sendto(data,client_addr) ```. If we don't put enough wait, the receiver will overload and the reliability that all samples are properly sent, will be highly compromised and could even result in no sound or exceptin raised. We need to put a wait using ```time.sleep()```, before sending the next CHUNK of audio data. Since we know that the sample rate of audio is 44100 samples per second, so it means that the time for one sample to send is ``` 1/sample_rate``` . In this context, all the samples in a CHUNK would require a time of ```CHUNK/sample_rate ```. Therefore, after sending a CHUNK we will put a ```time.sleep(CHUNK/sample_rate)```. Here is the server side code:
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 
 # This is server code to send video and audio frames over UDP
@@ -211,7 +211,7 @@ as a buffer of some size (let's say 100). On a thread we will continue to receiv
 we will playback the sound. A time.sleep(5), will provide 5 second delay at the receiver side to fill the buffer, you can change it according to your requirements.
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is client code to receive video and audio frames over UDP
@@ -290,7 +290,7 @@ client size.
 
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 # This is server code to send video and audio frames over UDP
 
@@ -350,7 +350,7 @@ t1.start()
 
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is client code to receive video and audio frames over UDP
