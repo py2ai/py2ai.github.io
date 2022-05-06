@@ -63,7 +63,7 @@ The required IP address will be shown against IPv4 Address
 
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
@@ -104,7 +104,7 @@ if client_socket:
 And the server.py is available here
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
