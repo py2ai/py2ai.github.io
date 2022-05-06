@@ -15,7 +15,7 @@ Copy the `main.py` code and run in Python3 as:
 `python3 main.py`
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 from PyQt5.QtCore import QProcess, QStandardPaths, Qt, QEvent, QSettings, QPoint, QSize
 from PyQt5.QtWidgets import QWidget, QApplication, QPlainTextEdit, QVBoxLayout, QMainWindow
