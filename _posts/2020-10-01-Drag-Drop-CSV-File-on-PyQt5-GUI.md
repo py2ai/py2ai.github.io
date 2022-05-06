@@ -18,7 +18,7 @@ give your feedback and suggestions. Also please make sure that you are using Mat
 <br>
 
 ## main.py
-
+{% include codeHeader.html %}
 ```python
 
 # -*- coding: utf-8 -*-
@@ -218,7 +218,7 @@ if __name__ == "__main__":
 ```
 
 ## drag_drop.py
-
+{% include codeHeader.html %}
 ```python
 
 # Lets make the main window class
