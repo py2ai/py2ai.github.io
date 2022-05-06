@@ -16,7 +16,7 @@ Just a reminder to change the ip address `192.168.1.1` according to your server 
 So here is the server side code:
 
 ### server.py 
-
+{% include codeHeader.html %}
 ```python
 # This is server code to send video (over UDP) and message frames (over TCP)
 
@@ -157,7 +157,7 @@ t4.start()
 and the client needs this code:
 
 ### client.py 
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is client code to receive video (over UDP) and message frames (over TCP)
