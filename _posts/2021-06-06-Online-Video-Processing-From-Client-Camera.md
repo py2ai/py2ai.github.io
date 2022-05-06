@@ -44,7 +44,7 @@ In a project folder we require following files:
 4. ngrok: can be downloaded from https://ngrok.com/download for port forwarding, so that your localhost (or server address) is availble to the public on the internet.
 
 ### index.html
-
+{% include codeHeader.html %}
 ```html
 
 <!DOCTYPE html>
@@ -130,7 +130,7 @@ In a project folder we require following files:
 ```
 
 ### process.py
-
+{% include codeHeader.html %}
 ```python
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
