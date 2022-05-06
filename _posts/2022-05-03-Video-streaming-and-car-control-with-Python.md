@@ -30,7 +30,7 @@ Project_Directory/
 Here is the Python code for the Flask application running at local machine and no control pins are activated:
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine, this code is for demonstration on PC
 # Client can send control commands to server, and also can view live
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 Following is the index.html containing javascript
 
 ### index.html
-
+{% include codeHeader.html %}
 ```html
 <html>
     <body>
@@ -214,7 +214,7 @@ Project_Directory/
 ```
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 import  pyshine as ps #  pip3 install pyshine==0.0.9
 import threading
@@ -346,7 +346,7 @@ if __name__ == '__main__':
 
 Please note that, in the following script we are accessing `jquery-3.5.1.js` from the `/static/scripts/` location instead of `https://code.jquery.com/jquery-3.5.1.js`, because if you want to run in Ad hoc mode, then you would not have the choice to access this js file from
 the internet. In that case you can download and save it in the `/static/scripts/` location
-
+{% include codeHeader.html %}
 ```html
 <html>
     <body>
