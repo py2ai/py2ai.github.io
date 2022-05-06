@@ -12,7 +12,7 @@ Hello friends! Previously, we have seen how TCP and UDP sockets work. This tutor
 at the client side as .MP4 file. 
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 
 # This is server code to send video frames over UDP so that client can save it
@@ -62,7 +62,7 @@ while True:
 ```
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 
 # This is client code to receive video frames over UDP and save as .MP4 file
