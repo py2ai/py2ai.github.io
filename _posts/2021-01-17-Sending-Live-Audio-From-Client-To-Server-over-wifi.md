@@ -45,7 +45,7 @@ The required IP address will be shown against IPv4 Address, or inet in MAC OS
 Here is the server side code. First, please change the IP address: '192.168.1.104' to yours, otherwise your server will not start.
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 
 import socket,pickle,struct,time
@@ -104,7 +104,7 @@ while True:
 
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 import socket, pickle,struct
 import pyshine as ps
@@ -161,7 +161,7 @@ pip3 install soundfile
 Then instead of above server.py use this one:
 
 ### server_with_record.py
-
+{% include codeHeader.html %}
 ```python
 
 import socket,pickle,struct,time
