@@ -24,7 +24,7 @@ The use of f-string will help us to dynamically generate name (string) as `plt.s
 the sound object and give a delay of 300ms (which will pause for a given number of milliseconds). The `pygame.time.delay(300)` function will use the processor (rather than sleeping) in order to make the delay
 more accurate than `pygame.time.wait()`. The final portion of our code is to save the sound raw data to a .wav file for each frequency.
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 import numpy
 import pygame
