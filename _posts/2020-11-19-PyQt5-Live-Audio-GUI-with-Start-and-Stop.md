@@ -18,7 +18,7 @@ Tested on Mac OS and Windows.
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
 
 ### main.ui
-
+{% include codeHeader.html %}
 ```python
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -200,7 +200,7 @@ Tested on Mac OS and Windows.
 (Updated) Added QtWidgets.QApplication.processEvents(), runs well for Windows and Mac Os, please share your experiences below.
 
 ### gui.py  
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
