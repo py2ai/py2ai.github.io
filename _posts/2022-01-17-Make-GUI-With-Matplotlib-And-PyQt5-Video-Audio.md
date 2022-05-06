@@ -14,7 +14,7 @@ run `python3 gui.py`
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
 
 ### main.ui
-
+{% include codeHeader.html %}
 ```python
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -230,7 +230,7 @@ run `python3 gui.py`
 (Updated) Added QtWidgets.QApplication.processEvents(), runs well for Windows and Mac Os, please share your experiences below.
 
 ### gui.py  
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is part 16 of the PyQt5 learning series
