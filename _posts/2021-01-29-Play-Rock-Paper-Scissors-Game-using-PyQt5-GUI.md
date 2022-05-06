@@ -606,7 +606,7 @@ if __name__ == "__main__":
 Here is complete main code:
   
 ### RPS.py
-  
+{% include codeHeader.html %}
   ```python
   
 # -*- coding: utf-8 -*-
