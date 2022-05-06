@@ -11,7 +11,7 @@ Alright friends welcome back, lets plot some sound on the matplotlib.
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/A95D78AF-A81D-4A5E-AAA2-3A4F66B09EA8.png?raw=true)](https://youtu.be/9kL8bmfj-YQ "Everything Is AWESOME")
 
-
+{% include codeHeader.html %}
 ```python 
 # Quickly import essential libraries
 import queue
