@@ -7,6 +7,7 @@ featured-img: pandas
 summary: This code will demonstrate how to convert pandas data to numeric form 
 ---
 Source code and sample csv data file are available:[download]
+
 {% include codeHeader.html %}
 ```python
 import pandas as pd
