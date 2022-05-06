@@ -10,7 +10,7 @@ summary: A quick tutorial to parse XML files using XML Element Tree
 Hi there, let's say we have an XML file like this:
 
 ### songs.xml
-
+{% include codeHeader.html %}
 ```xml
 <?xml version="1.0"?>
 <genre catalogue="Pop">
@@ -37,7 +37,7 @@ Hi there, let's say we have an XML file like this:
 So all we need to provide the name of the xml file in the Python script below:
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 import pandas as pd
 import xml.etree.ElementTree as ET
