@@ -28,7 +28,7 @@ Before reading further it is highly recommended that you read this tutorial: htt
 Once the desginer window is launched please open up the ```main.ui``` file below:
 
 ### main.ui
-
+{% include codeHeader.html %}
 ```python
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
@@ -181,7 +181,7 @@ The full text can be scanned easily with this little funciton which will get the
 
 
 ### gui.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
