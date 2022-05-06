@@ -17,6 +17,7 @@ Second, to test both Python codes on separate computers, you can keep the id the
 
 
 ### server.py
+{% include codeHeader.html %}
 ```python
 # This is server code to send video (over UDP) and message frames (over TCP)
 
@@ -205,6 +206,7 @@ t5.start()
 ```
 
 ### client.py
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is client code to receive video (over UDP) and message frames (over TCP)
