@@ -14,6 +14,7 @@ Hi there!
 
 PyShine GUI series Lab-1
 Lets import the required libraries
+{% include codeHeader.html %}
 ```python
 import sys
 from PyQt5 import QtGui, QtGui
@@ -21,6 +22,7 @@ import numpy as np
 import pyqtgraph as pg
 ```
 Lets make the initialization variables
+{% include codeHeader.html %}
 ```python
 region = pg.LinearRegionItem()
 minX=0
@@ -31,24 +33,29 @@ data2=0
 dataPosX=0
 ```
 Cross hair generation in terms of verticle and horizontal lines
+{% include codeHeader.html %}
 ```python
 vLine=pg.InfiniteLine(angle=90,movable=False)
 hLine=pg.InfiniteLine(angle=0,movable=False)
 ```
 Ok so lets put some colors R,G,B values to a List
+{% include codeHeader.html %}
 ```python
 Colors_Set = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),(44, 160, 44), (152, 223, 138)]
 ```
 Lets name the curves some in majors Legend
+{% include codeHeader.html %}
 ```python
 majors = ["Sine","Cosine"]
 ```
 It would be awesome to let us control the background colors
 Lets choose as white w
+{% include codeHeader.html %}
 ```python
 pg.setConfigOption("background","w")
 ```
 Its time to make the major Class , lets call it pyshine_plot
+{% include codeHeader.html %}
 ```python
 class pyshine_plot(QtGui.QWidget):
 	def __init__(self):
@@ -175,6 +182,7 @@ class pyshine_plot(QtGui.QWidget):
 		self.updateplot()
 ```
 Alright so the functions are done and now we can make the main function to run the app
+{% include codeHeader.html %}
 ```python
 def main():
 	import sys
