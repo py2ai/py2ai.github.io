@@ -44,7 +44,7 @@ We will use pyshine_video_queue(vid) function to obtain a queue of size 10. This
 in a separate thread. Then a separate while loop is used to obtain and send each frame from this queue. 
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 import cv2,imutils
 import zmq
@@ -100,6 +100,7 @@ Here is code for the client. Please give the IP address of your server according
 following the similar way as in server.py code.
 
 ### client.py
+{% include codeHeader.html %}
 ```python
 import cv2
 import zmq
