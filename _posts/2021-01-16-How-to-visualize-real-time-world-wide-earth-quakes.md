@@ -11,7 +11,7 @@ above 5 magnitude and Green balloon for less than 5. You can tweak the icon_anch
 No more wait and here is the code:
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 # Welcome to Pyshine Earthquake visualization tutorial
 """ Essentials
