@@ -27,7 +27,7 @@ Please note that the files below are intended for Python 3, and not for Python2.
 Just make a new directory and place both these .py files. Then simply run the main.py. Lets see what's inside the Draggable.py
 
 ### Draggable.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
@@ -124,7 +124,7 @@ plt.show()
 And here is the main.py, it will use the thread to call the above Draggable.py file. So please make sure to name the above file as Draggable, otherwise change the name accordingly in the code below under the start_drag function.
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
