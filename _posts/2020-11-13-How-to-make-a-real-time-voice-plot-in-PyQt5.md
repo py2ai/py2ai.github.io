@@ -51,7 +51,7 @@ python3 gui.py
 Here is the main.ui file, you can open it in the PyQt5 designer as a main.ui file. To save time, you can add more changes to it according to your requirements.
 
 ### main.ui
-
+{% include codeHeader.html %}
 ```xml
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -226,7 +226,7 @@ Here is the main.ui file, you can open it in the PyQt5 designer as a main.ui fil
 
 
 ### gui.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
