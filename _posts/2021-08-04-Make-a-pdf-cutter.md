@@ -11,7 +11,7 @@ Hi friends, let's say in a folder you have a pdf file which has 6 pages, and now
 So, for this all we need is to install pypdf using `pip3 install pypdf2`, and then in the same folder run the python script below:
 
 ### cut.py
-
+{% include codeHeader.html %}
 ```python
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import argparse
