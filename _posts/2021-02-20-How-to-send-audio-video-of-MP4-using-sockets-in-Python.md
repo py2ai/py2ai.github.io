@@ -72,7 +72,7 @@ pip3.6 install PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl
 ## Windows OS 
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 # This is server code to send video and audio frames over UDP/TCP
 
@@ -216,7 +216,7 @@ Once the the server is setup, then run the client code below and you will see ho
 and keeping the synchronization of audio and video.
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 
 # Welcome to PyShine
@@ -339,6 +339,7 @@ MAC OS users please increase the size of UDP datagram using below in the termina
 If the above code does not work for MAC OS users, please use the code below:
 
 ### server.py
+{% include codeHeader.html %}
 ```python
 # This is server code to send video and audio frames over UDP/TCP
 
@@ -468,6 +469,7 @@ while True:
 
 ```
 ### client.py
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 # This is client code to receive video and audio frames over UDP/TCP
