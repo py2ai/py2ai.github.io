@@ -12,7 +12,7 @@ Hello friends! Previously, we have seen how TCP sockets work. In this tutorial w
 Details are available on the PyShine Youtube channel. 
 
 ### server.py
-
+{% include codeHeader.html %}
 ```python
 
 # This is server code to send video frames over UDP
@@ -63,7 +63,7 @@ while True:
 ```
 
 ### client.py
-
+{% include codeHeader.html %}
 ```python
 
 # This is client code to receive video frames over UDP
