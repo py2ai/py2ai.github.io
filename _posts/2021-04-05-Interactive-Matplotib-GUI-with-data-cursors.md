@@ -22,7 +22,7 @@ The next step is to check if the mpldatacursor is working fine or not.
 ### Testing mpldatacursor
 
 The following code will plot seven lines and you can click on each line to see the cursor.
-
+{% include codeHeader.html %}
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,7 +44,7 @@ The most important three steps in the above code are:
 So lets use the above three steps in our main.py code as folows:
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 # -*- coding: utf-8 -*-
 # Subscribe to PyShine Youtube channel for more detail! 
