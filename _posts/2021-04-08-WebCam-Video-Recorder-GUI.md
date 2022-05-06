@@ -10,7 +10,7 @@ Hi friends! This GUI is dead simple because it will only capture the frames of v
 Below is the code:
 
 ### main.py
-
+{% include codeHeader.html %}
 ```python
 
 # Pyshine.com
