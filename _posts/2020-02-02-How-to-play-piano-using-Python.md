@@ -22,6 +22,8 @@ https://freesound.org/people/TEDAgame/packs/25405/
 
 Ok so lets start the coding
 First we require the list of notes so
+
+{% include codeHeader.html %}
 ```python
 
 Twinkle_List = ['c4','c4','g4','g4','a4','a4','g4',\
@@ -41,12 +43,15 @@ Between each note we will give a 0.3 second pause
 
 Lets import the required Libraries
 
+{% include codeHeader.html %}
 ```python
 from threading import Thread
 import pygame as pg 
 import time 
 ```
 First we initialize the mixer of pygame pg
+
+{% include codeHeader.html %}
 ```python
 pg.mixer.init()
 pg.init()
@@ -54,10 +59,14 @@ pg.init()
 To be on safe side we will make the number of mixer 
 channels to be equal to the number of elements in the 
 Twinkle_List	
+
+{% include codeHeader.html %}
 ```python
 pg.mixer.set_num_channels(len(Twinkle_List))
 ```
 Now its time to make the function 
+
+{% include codeHeader.html %}
 ```python
 def play_notes(notePath,duration):
 	time.sleep(duration) # make a pause 
@@ -67,6 +76,8 @@ def play_notes(notePath,duration):
 ```
 Next is to make the path , all wav files are in Sounds folder
 A total of 88 wav files
+
+{% include codeHeader.html %}
 ```python
 path  = 'Sounds/'
 
@@ -74,11 +85,15 @@ cnt =1	# A counter to delay once a line is finished as there
 # are 6 total lines
 ```
 We now make a dictionary for each thread th
+
+{% include codeHeader.html %}
 ```python
 th = {}
 ```
 Lets iterate the Twinkle_List and launch each thread to
 Play the note
+
+{% include codeHeader.html %}
 ```python
 for t in Twinkle_List:
 	th[t] = Thread(target = play_notes,args = (path+'{}.wav'.format(t),0.3))
