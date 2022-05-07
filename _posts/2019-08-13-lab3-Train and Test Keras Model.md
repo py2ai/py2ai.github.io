@@ -16,6 +16,7 @@ Hi there! today we will build a multilayer model that should be like this:
 
 The multilayer perceptron model will be fed with input data of shape 3 rows and 4 columns. Then we will evaluate or predict the model by giving an input to it. This process is quite simple but that is very important before moving towards complex data handling. Lets import the essential items
 
+{% include codeHeader.html %}
 ```python
 from keras.models import Sequential
 from keras.layers import Dense, Activation
@@ -24,12 +25,15 @@ from keras.layers import Dense, Dropout
 from keras.optimizers import SGD
 ```
 We also need numpy library to stack vertically the data. Lets import numpy as np.
+
+{% include codeHeader.html %}
 ```python
 import numpy as np
 ```
 
 Its time to build the model. The input of each sample fed to this model consists of 4 elements. So the input_shape will be (4,). It is used for single dimension. To make things very simple and easy to understand, I have made three samples i.e. [1,1,1,1], [2,2,2,2], and [3,3,3,3]. The output for each of them respectively is 1,2,3. It means that the model will take a sample [1,1,1,1] and it should output a value nearly or equal to 1, because our target is 1. Similarly for the input [2,2,2,2] the output should be nearly or equal to 2. Lets plot the model to have a look and compile it using SGD and our loss function is mean squared error. The metrics to monitor the performance of training process is accuracy.
 
+{% include codeHeader.html %}
 ```python
 model = Sequential()
 model.add(Dense(10, input_shape=(4,)))
@@ -44,7 +48,7 @@ model.compile(loss='mean_squared_error',optimizer='sgd',metrics=['accuracy'])
 ```
 As said earlier lets create the input data.
 
-
+{% include codeHeader.html %}
 ```python
 sample1 = np.array([1,1,1,1])
 sample2 = np.array([2,2,2,2])
@@ -52,13 +56,14 @@ sample3 = np.array([3,3,3,3])
 ```
 To feed this data lets stack them vertically.
 
+{% include codeHeader.html %}
 ```python
 data = np.vstack((sample1,sample2,sample3))
 
 ```
 Now we need to define the target data in a similar way for the input data.
 
-
+{% include codeHeader.html %}
 ```python
 label1 = np.array([1])
 label2 = np.array([2])
@@ -68,12 +73,13 @@ labels = np.vstack((label1,label2,label3))
 
 Its time to train the model using fit function. The number of epochs is set to 10, batch size is 3 which means 3 samples will be fed per epoch. 
 
+{% include codeHeader.html %}
 ```python
 model.fit(data, labels, epochs=10, batch_size=3)
 ```
 Alright so far so good. Lets predict the trained model using .predict function on the same input data. 
 
-
+{% include codeHeader.html %}
 ```python
 out = model.predict(data)
 print("Target is:", labels)
