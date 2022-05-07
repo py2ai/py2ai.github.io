@@ -12,6 +12,8 @@ Welcome to Pyshine
 I wish and hope that you guyz are fine and enjoying good health
 
 Lets import the required libraries
+
+{% include codeHeader.html %}
 ```python
 import xlwings as xw
 import pandas as pd
@@ -22,14 +24,20 @@ xlwings can be installed using pip3 install xlwings
 
 Lets have a look at the .xlsx [file](https://github.com/py2ai/Keras-Labs/blob/master/demodata.xlsx) we are going to read
 we can read and assign it to the workbook
+
+{% include codeHeader.html %}
 ```python
 workbook = xw.Book(r'demodata.xlsx',"utf8")
 ```
 Lets make sheet sht
+
+{% include codeHeader.html %}
 ```python
 sht = workbook.sheets('demodata')
 ```
 Get the table in the Pandas data frame
+
+{% include codeHeader.html %}
 ```python
 df = sht.range('A1').options(pd.Series,expand='table').value
 ```
@@ -43,6 +51,8 @@ keyword and put those values to a dict whose keys are the keyword,index of keywo
 and the value is value found in the target column 
 Things will become much clear as we proceed
 So lets make it
+
+{% include codeHeader.html %}
 ```python
 def getDataForKeyWord(keyword, keyword_column,target_column):
 	INFO = df.iloc[:,keyword_column:1+keyword_column].values
@@ -79,6 +89,8 @@ sumDictOf,nameList = getDataForKeyWord('Fri',1,3)
 
 So above I just enter Fri for the input column 1:2 [weekdays] and the target column 3:4 [prices]
 so lets see how the values are obtained 
+
+{% include codeHeader.html %}
 ```python
 print(sumDictOf)
 print(nameList)
@@ -86,6 +98,8 @@ print(nameList)
 Let me close the .xlsx file and again run , it will auto open it
 Lets change the keyword to search	
 Good enough next we make a new .xlsx file to put two columns
+
+{% include codeHeader.html %}
 ```python
 wb = xw.Book()
 xw.Range('A1').value = np.array(nameList).reshape(len(nameList),1) # first col
