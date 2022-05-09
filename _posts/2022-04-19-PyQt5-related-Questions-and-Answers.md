@@ -2,6 +2,7 @@
 layout: post
 title: FAQs about PyQt5
 categories: [GUI tutorial series]
+featured-img: pyqt5logo
 mathjax: true
 summary: You can find important issues and their solutions related to PyQt5 here
 ---
