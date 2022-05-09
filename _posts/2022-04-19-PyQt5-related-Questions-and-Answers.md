@@ -113,7 +113,8 @@ Also it is highly recommended to install matplotlib version 3.2.1
 
 ### Question: 
 _ImportError: cannot import name 'Qtcore' from 'PyQt5' I am getting this error.  I've already install pyqt5_
-```Traceback (most recent call last):
+```
+Traceback (most recent call last):
   File "C:\Users\Ketan\Desktop\Kedarnath\maingui.py", line 17, in <module>
     from PyQt5 import Qtcore, QtWidgets
 ImportError: cannot import name 'Qtcore' from 'PyQt5' (C:\Users\Ketan\AppData\Local\Programs\Python\Python39\lib\site-packages\PyQt5\__init__.py)
@@ -127,7 +128,9 @@ _How would you keep the internal dimensions the same as a sheet of paper? An A4 
 ### Answer: 
 Hi, good question. If you want to save figure in terms of pixels, let's say 800 pixels by 480 pixles then simply change the main window size of the gui. For example: MainWindow.resize(800*1000/964, 480*1000/817) , 800x480 approximately.
 In general the Matplotlib figure can be saved in pixels as well:
-```px = 1/plt.rcParams['figure.dpi']  # pixel in inches
+
+```
+px = 1/plt.rcParams['figure.dpi']  # pixel in inches
 plt.subplots(figsize=(600*px, 200*px))
 ```
 ### Question: 
