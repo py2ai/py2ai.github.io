@@ -35,7 +35,7 @@ socket_address = (host_ip,port)
 server_socket.bind(socket_address)
 print('Listening at:',socket_address)
 
-vid = cv2.VideoCapture(0) #  replace 'rocket.mp4' with 0 for webcam
+vid = cv2.VideoCapture(0) #  replace 'rocket.mp4' with 0 for videos
 RUNF[str(socket_address)] = False
 
 def video_stream_gen():
