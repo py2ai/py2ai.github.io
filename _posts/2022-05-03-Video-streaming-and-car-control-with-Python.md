@@ -201,6 +201,8 @@ Following is the index.html containing javascript
 
 You can skip the above code and use the following code only for the Raspberry Pi.
 
+![]({{ "assets/img/posts/car_pi_2022_05_09.jpg" | absolute_url }})
+
 Project view:
 
 ```
