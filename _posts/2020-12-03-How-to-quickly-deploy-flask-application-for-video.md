@@ -23,6 +23,22 @@ input parameters. These parameters are Brightness value, and Blur value. Followi
 the PythonAnywhere.com service. Its basic plan is free, for more details please visit the website. Follow the above video tutorial for deployment on the wifi local
 area network as per your server's IP address.
 
+### Important installation steps to aviod any issues
+
+We need to install the proper working version of Werkzeug i.e. (Werkzeug-0.10.2.dev0dev-20220510) . In addition install the following versions 
+
+`pip3 install Flask-SocketIO==4.3.1`
+
+`pip3 install python-engineio==3.13.2`
+
+`pip3 install python-socketio==4.6.0`
+
+`pip3 install git+https://github.com/untitaker/werkzeug.git@reloader-perf`
+
+Please note that the above installations will resolve following issues:
+- ImportError: cannot import name 'run_with_reloader' from 'werkzeug.serving'
+- The client is using an unsupported version of the Socket.IO or Engine.IO protocols (further occurrences of this error will be logged with level INFO)
+- "GET /socket.io/?EIO=3&transport=polling&t=O2j_BJX HTTP/1.1" 400 
 
 ## Files for deployment on the internet
 
