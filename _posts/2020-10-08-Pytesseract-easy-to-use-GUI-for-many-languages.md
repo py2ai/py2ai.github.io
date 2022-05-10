@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How to make an image to text GUI in Python
+title: How to make an image to text converter GUI in Python
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt8
