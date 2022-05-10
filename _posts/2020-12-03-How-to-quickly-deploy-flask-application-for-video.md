@@ -28,7 +28,7 @@ area network as per your server's IP address.
 
 ### process.py
 
-
+{% include codeHeader.html %}
 ```python
 from flask import Flask, render_template, request,Response
 import cv2,imutils,time
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
 ### index.html
 
-
+{% include codeHeader.html %}
 ```html
 
 <!DOCTYPE html>
@@ -198,7 +198,7 @@ It can be a smart phone, table, etc.
 
 ### process.py
 
-
+{% include codeHeader.html %}
 ```python
 
 from flask import Flask, render_template, request,Response
@@ -306,7 +306,7 @@ if __name__ == "__main__":
 
 ### index.html
 
-
+{% include codeHeader.html %}
 ```html
 
 <!DOCTYPE html>
