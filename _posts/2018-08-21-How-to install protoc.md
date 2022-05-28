@@ -10,7 +10,7 @@ summary: A quick tutorial to install protoc for tensorflow
 
 
 
-Hi everybody, today i show you a way to install Google Protocol Buffers on MAC OS. You might already have tried:
+Hi everybody, today I show you a way to install Google Protocol Buffers on MAC OS. You might already have tried:
 
 `brew install protobuf` and hit by an error like this:
 
