@@ -47,7 +47,7 @@ If the implementation is hard to explain, it's a bad idea.
 If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
-Let's do the same thing by writing the following code in a new file named `main.py` in any location or path in your computer. Open up a new Terminal and cd to the path. Then type `python main.py`
+Let's do the same thing by writing the following code in a new file named `main.py` in any location or path in your computer. Open up a new Terminal and cd to the path.
 
 ### main.py
 {% include codeHeader.html %}
@@ -55,6 +55,8 @@ Let's do the same thing by writing the following code in a new file named `main.
 import this
 print (this)
 ```
+Then type `python main.py` in the Terminal and hit Enter to get following output.
+
 Output:
 ```text
 The Zen of Python, by Tim Peters
@@ -80,9 +82,7 @@ If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
 
+
 ### Summary
 
 We saw that we can either run Python script via interpretor or using python file. Throughout this course we will continue to use anyone of them.
-
-
-
