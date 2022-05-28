@@ -20,7 +20,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 Let's start by importing `this` in Python to print the Golden Rules of Software Engineering.
 
 ```python
-import this
+>>> import this
 ```
 
 Output:
