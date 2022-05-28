@@ -1,13 +1,11 @@
 ---
 layout: post
-title: Learn Python Tips and Trick Part 01
+title: Learn Python Tips and Tricks Part 01
 mathjax: true
 summary:  Learn Python with Examples
 ---
 
-Python Golden Rules
-
-### rules.py
+Hi friends let's start by importing `this` in Python to print the Golden Rules of software engineering
 
 {% include codeHeader.html %}
 
@@ -18,7 +16,7 @@ print (this)
 
 Output:
 
-```
+```text
 The Zen of Python, by Tim Peters
 
 Beautiful is better than ugly.
