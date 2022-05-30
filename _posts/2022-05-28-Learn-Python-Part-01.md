@@ -7,7 +7,7 @@ summary:  Learn Python with Examples
 
 Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. Go ahead and download Python from here https://www.python.org/downloads/ according to your Operating System, i.e., Windows, Mac OS or Linux, etc. We will use Python 3.8.5 version. 
 
-Once installed, open up a new Terminal and write 'python' and hit `Enter` key. You will see the following Python interactive interpreter 
+Once installed, open up a new Terminal and write `python` and hit `Enter` key. You will see the following Python interactive interpreter 
 
 ```python
 Python 3.8.5 (v3.8.5:580fbb018f, Jul 20 2020, 12:11:27) 
