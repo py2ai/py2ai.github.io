@@ -85,4 +85,4 @@ Namespaces are one honking great idea -- let's do more of those!
 
 ### Summary
 
-We saw that we can either run Python script via interpretor or using python file. Throughout this course we will continue to use anyone of them.
+We saw that we can either run Python script via interpretor or using python file. Throughout this course we will continue to use anyone of them...
