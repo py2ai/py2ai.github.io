@@ -128,14 +128,28 @@ How to access last element of string variable in Python?
 
 How to reverse a string variable in Python?
 
+Method 1 - Using Slice notation (Fastest way)
+
 ```python
 >>> a[::-1]
 'olleh'
 ```
 
+Method 2 - Using join
 
+```python
+>>> ''.join(reversed(a))
+'olleh'
+```
 
+Method 3 - Using a function
 
+```python
+>>> def reverse(a): return a[0] if len(a)==1 else a[len(a)-1] + reverse(a[0:len(a)-1])
+... 
+>>> reverse(a)
+'olleh'
+```
 
 
 ### Summary
