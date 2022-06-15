@@ -82,6 +82,61 @@ If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
 
+### Variables and Data types in Python
+
+Everything in Python is object including the variables and data types. The basic data types in Python are:
+* strings - 'hello'
+* integers -  234
+* floats - 2.34
+* booleans - `True` or `False`
+
+Let's check a variable that contains string data type
+
+```python
+>>> a = 'hello'
+>>> type(a)
+<class 'str'>
+```
+Variable `a` contains a string of five elements `hello` as `h` `e` `l` `l` `o`. So its length or `len` is 5
+
+```python
+>>> len(a)
+5
+```
+
+Lets play with string variable.
+
+How to add two strings in Python?
+
+```python
+>>> a + a
+'hellohello'
+```
+
+How to access first element of string variable in Python?
+
+```python
+>>> a[0]
+'h'
+```
+How to access last element of string variable in Python?
+
+```python
+>>> a[-1]
+'o'
+```
+
+How to reverse a string variable in Python?
+
+```python
+>>> a[::-1]
+'olleh'
+```
+
+
+
+
+
 
 ### Summary
 
