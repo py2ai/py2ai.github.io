@@ -106,27 +106,27 @@ Variable `a` contains a string of five elements `hello` as `h` `e` `l` `l` `o`. 
 
 Lets play with string variable.
 
-How to add two strings in Python?
+#### How to add two strings in Python?
 
 ```python
 >>> a + a
 'hellohello'
 ```
 
-How to access first element of string variable in Python?
+#### How to access first element of string variable in Python?
 
 ```python
 >>> a[0]
 'h'
 ```
-How to access last element of string variable in Python?
+#### How to access last element of string variable in Python?
 
 ```python
 >>> a[-1]
 'o'
 ```
 
-How to reverse a string variable in Python?
+#### How to reverse a string variable in Python?
 
 Method 1 - Using Slice notation (Fastest way)
 
@@ -150,6 +150,35 @@ Method 3 - Using a function
 >>> reverse(a)
 'olleh'
 ```
+
+#### How to print a string multiple times by using integer?
+
+```python
+>>> a
+'hello'
+>>> a*2
+'hellohello'
+>>> a*4
+'hellohellohellohello'
+>>> a*6
+'hellohellohellohellohellohello'
+>>> a*8
+'hellohellohellohellohellohellohellohello'
+```
+
+#### How to find a string in a string in Python?
+
+```python
+>>> a
+'hello'
+>>> a.find('e')
+1
+>>> a.find('o')
+4
+>>> a.find('u')
+-1
+```
+As `u` is not inside string `hello`, the find function will return `-1`
 
 
 ### Summary
