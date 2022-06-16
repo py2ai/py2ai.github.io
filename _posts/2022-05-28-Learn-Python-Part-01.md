@@ -109,6 +109,8 @@ Lets play with string variable.
 #### How to add two strings in Python?
 
 ```python
+>>> a
+'hello'
 >>> a + a
 'hellohello'
 ```
@@ -116,12 +118,16 @@ Lets play with string variable.
 #### How to access first element of string variable in Python?
 
 ```python
+>>> a
+'hello'
 >>> a[0]
 'h'
 ```
 #### How to access last element of string variable in Python?
 
 ```python
+>>> a
+'hello'
 >>> a[-1]
 'o'
 ```
@@ -131,6 +137,8 @@ Lets play with string variable.
 Method 1 - Using Slice notation (Fastest way)
 
 ```python
+>>> a
+'hello'
 >>> a[::-1]
 'olleh'
 ```
@@ -138,6 +146,8 @@ Method 1 - Using Slice notation (Fastest way)
 Method 2 - Using join
 
 ```python
+>>> a
+'hello'
 >>> ''.join(reversed(a))
 'olleh'
 ```
@@ -145,6 +155,8 @@ Method 2 - Using join
 Method 3 - Using a function
 
 ```python
+>>> a
+'hello'
 >>> def reverse(a): return a[0] if len(a)==1 else a[len(a)-1] + reverse(a[0:len(a)-1])
 ... 
 >>> reverse(a)
