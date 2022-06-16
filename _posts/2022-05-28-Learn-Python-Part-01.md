@@ -5,7 +5,28 @@ mathjax: true
 summary:  Learn Python with Examples
 ---
 
-Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. Go ahead and download Python from here https://www.python.org/downloads/ according to your Operating System, i.e., Windows, Mac OS or Linux, etc. We will use Python 3.8.5 version. 
+Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. 
+
+* [Python Installation](#python-installation)
+* [Run basic python](#run-basic-python)
+* [Run basic python through file](#run-basic-python-through-file)
+    * [main.py](#main.py)
+* [Variables and Data types in Python](#variables-and-data-types-in-python)
+    * [Strings](#strings)
+    * [Let's play with string](#let's-play-with-string)
+        * [How to add two strings in Python?](#how-to-add-two-strings-in-python)
+        * [How to access first element of string variable in Python?](#how-to-access-first-element-of-string-variable-in-python)
+        * [How to access last element of string variable in Python?](#how-to-access-last-element-of-string-variable-in-python)
+        * [How to reverse a string variable in Python?](#how-to-reverse-a-string-variable-in-python)
+        * [How to print a string multiple times by using integer?](#how-to-print-a-string-multiple-times-by-using-integer)
+        * [How to find a string in a string in Python?](#how-to-find-a-string-in-a-string-in-python)
+* [Summary](#summary)
+
+# Python Installation
+
+Go ahead and download Python from here https://www.python.org/downloads/ according to your Operating System, i.e., Windows, Mac OS or Linux, etc. We will use Python 3.8.5 version. 
+
+# Run basic python
 
 Once installed, open up a new Terminal and write `python` and hit `Enter` key. You will see the following Python interactive interpreter 
 
@@ -47,9 +68,14 @@ If the implementation is hard to explain, it's a bad idea.
 If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
+
+# Run basic python through file
+
 Let's do the same thing by writing the following code in a new file named `main.py` in any location or path in your computer. Open up a new Terminal and cd to the path.
 
-### main.py
+
+
+## main.py
 {% include codeHeader.html %}
 ```python
 import this
@@ -82,7 +108,7 @@ If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
 
-### Variables and Data types in Python
+# Variables and Data types in Python
 
 Everything in Python is object including the variables and data types. The basic data types in Python are:
 * strings - 'hello'
@@ -90,6 +116,7 @@ Everything in Python is object including the variables and data types. The basic
 * floats - 2.34
 * booleans - `True` or `False`
 
+## Strings
 Let's check a variable that contains string data type
 
 ```python
@@ -104,9 +131,11 @@ Variable `a` contains a string of five elements `hello` as `h` `e` `l` `l` `o`. 
 5
 ```
 
+## Let's play with string
+
 Lets play with string variable.
 
-#### How to add two strings in Python?
+### How to add two strings in Python?
 
 ```python
 >>> a
@@ -115,7 +144,7 @@ Lets play with string variable.
 'hellohello'
 ```
 
-#### How to access first element of string variable in Python?
+### How to access first element of string variable in Python?
 
 ```python
 >>> a
@@ -123,7 +152,7 @@ Lets play with string variable.
 >>> a[0]
 'h'
 ```
-#### How to access last element of string variable in Python?
+### How to access last element of string variable in Python?
 
 ```python
 >>> a
@@ -132,7 +161,7 @@ Lets play with string variable.
 'o'
 ```
 
-#### How to reverse a string variable in Python?
+### How to reverse a string variable in Python?
 
 Method 1 - Using Slice notation (Fastest way)
 
@@ -163,7 +192,7 @@ Method 3 - Using a function
 'olleh'
 ```
 
-#### How to print a string multiple times by using integer?
+### How to print a string multiple times by using integer?
 
 ```python
 >>> a
@@ -178,7 +207,7 @@ Method 3 - Using a function
 'hellohellohellohellohellohellohellohello'
 ```
 
-#### How to find a string in a string in Python?
+### How to find a string in a string in Python?
 
 ```python
 >>> a
@@ -193,6 +222,6 @@ Method 3 - Using a function
 As `u` is not inside string `hello`, the find function will return `-1`
 
 
-### Summary
+# Summary
 
 We saw that we can either run Python script via interpretor or using python file. Throughout this course we will continue to use anyone of them...
