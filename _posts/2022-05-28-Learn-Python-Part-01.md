@@ -20,6 +20,17 @@ Hi friends! We are starting free Python learning course. If you are new to Pytho
         * [How to reverse a string variable in Python?](#how-to-reverse-a-string-variable-in-python)
         * [How to print a string multiple times by using integer?](#how-to-print-a-string-multiple-times-by-using-integer)
         * [How to find a string in a string in Python?](#how-to-find-a-string-in-a-string-in-python)
+        * [How to replace a letter in string with another letter in Python?](#how-to-replace-a-letter-in-string-with-another-letter-in-python)
+        * [How to set upper case of a string in Python?](#how-to-set-upper-case-of-a-string-in-python)
+        * [How to set lower case of a string in Python?](#how-to-set-lower-case-of-a-string-in-python)
+        * [How to check if a string starts with some letter in Python?](#how-to-check-if-a-string-starts-with-some-letter-in-python)
+        * [How to check if a string ends with some letter in Python?](#how-to-check-if-a-string-ends-with-some-letter-in-python)
+        * [How to find the highest index of occurence of a letter in a string in Python?](#how-to-find-the-highest-index-of-occurence-of-a-letter-in-a-string-in-python)
+        * [How to count occurences of a letter in string in Python?](#how-to-count-occurences-of-a-letter-in-string-in-python)
+        * [How to convert other data types to string in Python?](#how-to-convert-other-data-types-to-string-in-python)
+    * [integers](#integers)
+    * [floats - 2.34](#floats---2.34)
+    * [booleans - `True` or `False`](#booleans---`true`-or-`false`)
 * [Summary](#summary)
 
 # Python Installation
@@ -219,7 +230,148 @@ Method 3 - Using a function
 >>> a.find('u')
 -1
 ```
-As `u` is not inside string `hello`, the find function will return `-1`
+As `u` is not inside string `hello`, the `find` function will return `-1`
+
+### How to replace a letter in string with another letter in Python?
+
+```python
+>>> a
+'hello'
+>>> a.replace('o', 'O')
+'hellO'
+```
+
+### How to set upper case of a string in Python?
+
+```python
+>>> a
+'hello'
+>>> a.upper()
+'HELLO'
+>>> a
+'hello'
+```
+Note that calling `.upper()` returns the caps but did not change the value of `a`.
+
+### How to set lower case of a string in Python?
+
+```python
+>>> a
+'hello'
+>>> b=a.upper()
+>>> b
+'HELLO'
+>>> b=b.lower()
+>>> b
+'hello'
+```
+
+### How to check if a string starts with some letter in Python?
+
+```python
+>>> a
+'hello'
+>>> a.startswith('h')
+True
+>>> a.startswith('w')
+False
+>>> a.startswith('hel')
+True
+```
+
+### How to check if a string ends with some letter in Python?
+
+```python
+>>> a
+'hello'
+>>> a.endswith('o')
+True
+>>> a.endswith('llo')
+True
+>>> a.endswith('hello')
+True
+>>> a.endswith('z')
+False
+```
+
+### How to find the highest index of occurence of a letter in a string in Python?
+
+To find the last occurence or highest index of a sub-string in a string.
+
+```python
+>>> a ='a quick brown fox jumps over the lazy dog'
+>>> a.find('a')
+0
+>>> a.rfind('a')
+34
+>>> a.find('o')
+10
+>>> a.rfind('o')
+39
+```
+
+### How to count occurences of a letter in string in Python?
+
+```python
+>>> a
+'a quick brown fox jumps over the lazy dog'
+>>> a.count('a')
+2
+>>> a.count('o')
+4
+>>> a.count('z')
+1
+```
+
+### How to convert other data types to string in Python?
+
+```python
+>>> num =2
+>>> type(num)
+<class 'int'>
+>>> str(num)
+'2'
+>>> num =2.4
+>>> type(num)
+<class 'float'>
+>>> str(num)
+'2.4'
+>>> num = True
+>>> type(num)
+<class 'bool'>
+>>> str(num)
+'True'
+```
+
+## integers
+
+```python
+>>> num = 2
+>>> type(num)
+<class 'int'>
+```
+
+## floats - 2.34
+
+```python
+>>> num = 2
+>>> b= float(num)
+>>> b
+2.0
+>>> type(b)
+<class 'float'>
+
+```
+## booleans - `True` or `False`
+
+```python
+>>> a = True
+>>> type(a)
+<class 'bool'>
+>>> a = False
+>>> type(a)
+<class 'bool'>
+```
 
 
 # Summary
