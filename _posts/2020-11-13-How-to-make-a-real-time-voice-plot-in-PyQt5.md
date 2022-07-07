@@ -53,7 +53,6 @@ Here is the main.ui file, you can open it in the PyQt5 designer as a main.ui fil
 ### main.ui
 {% include codeHeader.html %}
 ```xml
-
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
