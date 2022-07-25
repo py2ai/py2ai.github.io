@@ -2,6 +2,7 @@
 layout: post
 title: Learn Python Tips and Tricks Part 02
 mathjax: true
+featured-img: 26072022-python-logo
 summary:  Find all files with any extension and rename them
 ---
 
