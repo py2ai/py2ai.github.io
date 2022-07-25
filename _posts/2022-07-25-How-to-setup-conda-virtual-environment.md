@@ -2,6 +2,7 @@
 layout: post
 title: Learn Python Tips and Tricks Part 03
 mathjax: true
+featured-img: 26072022-python-logo
 summary:  Setting up Conda environment for Python
 ---
 
