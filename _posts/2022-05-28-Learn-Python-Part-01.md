@@ -2,6 +2,7 @@
 layout: post
 title: Learn Python Tips and Tricks Part 01
 mathjax: true
+featured-img: 26072022-python-logo
 summary:  Learn Python with Examples
 ---
 
