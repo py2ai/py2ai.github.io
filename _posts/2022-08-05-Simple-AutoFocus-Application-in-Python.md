@@ -9,8 +9,8 @@ Hello friends! This tutorial is about using raspberry pi to control the focus le
 
 To answer this question we will use an image processing algorithm in PC. This algo. will receive the video frames from camera via usb and find the Laplacian variance in video frames. Note that the blur image has less edges and hence less variance so it will be of low focus level. The sharper image has more edges and hence larger value of laplacian variance. The algo. will act as an agent and take the laplacian variance of current frame and the previous frame. The agent will take an initial forward action and check after this action the current variance is higher than previous, if yes then this action will be given a score +=1 otherwise it will be a score of -=1. 
 
-The block diagram shows main procedure.
-
+The block diagram shows main setup.
+![]({{ "assets/img/posts/lego-diagram.png" | absolute_url }})
 
 
 Here is the server.py code that will run on raspberry pi zero w.
