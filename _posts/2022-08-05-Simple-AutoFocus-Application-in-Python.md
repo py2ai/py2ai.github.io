@@ -18,6 +18,7 @@ Here is the server.py code that will run on raspberry pi zero w.
 
 server.py
 
+{% include codeHeader.html %}
 ```python
 
 import  time
@@ -171,6 +172,7 @@ Once the server starts listening at its socker address, we can run the client.py
 
 Here is the client.py code:
 
+{% include codeHeader.html %}
 ```python
 # Autofocus application with Python
 import cv2, os
@@ -287,6 +289,7 @@ Just keep the  plot.py in the same PC and same directory as client.py code.
 
 Here is the plot.py code.
 
+{% include codeHeader.html %}
 ```python
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
