@@ -2,6 +2,7 @@
 layout: post
 title: A simple autofocus application in Python
 mathjax: true
+featured-img: lego
 summary:  This tutorial is about using socket programming to set focus of a webcam
 ---
 
