@@ -41,7 +41,6 @@ No more wait! Here is the ui file:
 ## main.ui
 {% include codeHeader.html %}
 ```python
-
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
