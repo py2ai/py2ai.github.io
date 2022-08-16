@@ -39,7 +39,7 @@ Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
 No more wait! Here is the ui file:
 
 ## main.ui
-
+{% include codeHeader.html %}
 ```python
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -163,7 +163,7 @@ No more wait! Here is the ui file:
 
 ```
 ## gui.py
-
+{% include codeHeader.html %}
 ```python
 # Welcome to PyShine
 import pytesseract
