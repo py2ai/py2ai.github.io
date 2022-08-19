@@ -74,4 +74,4 @@ vid.release()
 cv2.destroyAllWindows()
 ```
 
-Wait for the frames to get appear after some messages!
+Wait for the frames to get appear (may take up 10 seconds) after some messages!
