@@ -44,4 +44,7 @@ The general syntax of rtsp stream for IP cameras are like:
 
 rtsp://UserName:Password@IpAdress:Port/Streaming/Channels/ChannelID
 
-According to your settings, give the parameters in the link and use in your opencv projects. 
+According to your settings, give the parameters in the link and use in your opencv projects.
+
+
+# Experiment of live webcam stream on webcam
