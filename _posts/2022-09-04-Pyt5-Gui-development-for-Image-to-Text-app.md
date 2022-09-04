@@ -157,7 +157,7 @@ Hi friends following is the code for Part 18 of the PyQt5 learning series.
 </ui>
 ```
 
-#gui.py
+# gui.py
 {% include codeHeader.html %}
 ```python
 # Welcome to PyShine
