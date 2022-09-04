@@ -2,6 +2,7 @@
 layout: post
 title: How to extract text from image in Python
 mathjax: true
+featured-img: pyqt5-ocr-aug-2022
 summary:  This tutorial is about gui development with PyQt5 and Pytesseract
 ---
 Hi friends following is the code for Part 18 of the PyQt5 learning series.
