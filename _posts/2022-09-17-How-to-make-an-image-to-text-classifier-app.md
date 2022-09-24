@@ -13,9 +13,9 @@ Hi friends following is the code for Part 19 of the PyQt5 learning series. For d
 </div>
 <br>
 
-# How to improve accuracty of tesseract
+# How to improve accuracy of tesseract
 
-The default Page segmentation method (psm) in tesseract is page page of text. It means that tesseract expects a page of text when it segments an image. If you’re going to crop small region for OCR, try a different segmentation mode, using the --psm argument. Note that adding a white border to text which is too tightly cropped may also help. We can see a list of available psm modes using `tesseract --help-psm`.
+The default Page segmentation method (psm) in tesseract is page of text. It means that tesseract expects a page of text when it segments an image. If you’re going to crop small region for OCR, try a different segmentation mode, using the --psm argument. Note that adding a white border to text which is too tightly cropped may also help. We have see a list of available psm modes using `tesseract --help-psm`.
 
 ```
 (base) PS C:\Users\ps\Desktop> tesseract --help-psm
@@ -41,6 +41,7 @@ Page segmentation modes:
 ```
 
 There are a number of other factors that can help in increasing the accuracy of tesseract
+
 * Rotation / Deskewing - rotating image to align the text horizontally and deskewing to make better orientation of characters
 * Rescaling - resizing the image
 * Binarisation - convert an image to black and white
