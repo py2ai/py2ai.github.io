@@ -13,6 +13,44 @@ Hi friends following is the code for Part 19 of the PyQt5 learning series. For d
 </div>
 <br>
 
+# How to improve accuracty of tesseract
+
+The default Page segmentation method (psm) in tesseract is page page of text. It means that tesseract expects a page of text when it segments an image. If you’re going to crop small region for OCR, try a different segmentation mode, using the --psm argument. Note that adding a white border to text which is too tightly cropped may also help. We can see a list of available psm modes using `tesseract --help-psm`.
+
+`(base) PS C:\Users\ps\Desktop> tesseract --help-psm`
+
+```
+Page segmentation modes:
+  0    Orientation and script detection (OSD) only.
+  1    Automatic page segmentation with OSD.
+  2    Automatic page segmentation, but no OSD, or OCR. (not implemented)
+  3    Fully automatic page segmentation, but no OSD. (Default)
+  4    Assume a single column of text of variable sizes.
+  5    Assume a single uniform block of vertically aligned text.
+  6    Assume a single uniform block of text.
+  7    Treat the image as a single text line.
+  8    Treat the image as a single word.
+  9    Treat the image as a single word in a circle.
+ 10    Treat the image as a single character.
+ 11    Sparse text. Find as much text as possible in no particular order.
+ 12    Sparse text with OSD.
+ 13    Raw line. Treat the image as a single text line,
+       bypassing hacks that are Tesseract-specific.
+```
+
+There are a number of other factors that can help in increasing the accuracy of tesseract.
+* Rotation / Deskewing - rotating image to align the text horizontally and deskewing to make better orientation of characters
+* Rescaling - resizing the image
+* Binarisation - convert an image to black and white
+* Dilation and Erosion - fixing image artifacts via image processing
+* Borders - removing dark borders
+* Transparency / Alpha channel - removing the alpha channel from image before ocr 
+* Noise Removal - removing noise like salt and pepper etc. before binarization
+* Inverting images - using dark text on lighter background helps in improving accuracy
+
+
+
+
 # main.ui
 {% include codeHeader.html %}
 ```python
