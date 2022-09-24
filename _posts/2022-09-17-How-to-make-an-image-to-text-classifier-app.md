@@ -17,7 +17,9 @@ Hi friends following is the code for Part 19 of the PyQt5 learning series. For d
 
 The default Page segmentation method (psm) in tesseract is page page of text. It means that tesseract expects a page of text when it segments an image. If you’re going to crop small region for OCR, try a different segmentation mode, using the --psm argument. Note that adding a white border to text which is too tightly cropped may also help. We can see a list of available psm modes using `tesseract --help-psm`.
 
-`(base) PS C:\Users\ps\Desktop> tesseract --help-psm`
+```
+(base) PS C:\Users\ps\Desktop> tesseract --help-psm
+```
 
 ```
 Page segmentation modes:
@@ -38,7 +40,7 @@ Page segmentation modes:
        bypassing hacks that are Tesseract-specific.
 ```
 
-There are a number of other factors that can help in increasing the accuracy of tesseract.
+There are a number of other factors that can help in increasing the accuracy of tesseract
 * Rotation / Deskewing - rotating image to align the text horizontally and deskewing to make better orientation of characters
 * Rescaling - resizing the image
 * Binarisation - convert an image to black and white
@@ -47,7 +49,34 @@ There are a number of other factors that can help in increasing the accuracy of 
 * Transparency / Alpha channel - removing the alpha channel from image before ocr 
 * Noise Removal - removing noise like salt and pepper etc. before binarization
 * Inverting images - using dark text on lighter background helps in improving accuracy
+* oem - OCR Engine Mode
 
+The available oem engines can be found via `tesseract --help-oem`:
+
+```
+(py38) PS C:\Users\ps\Desktop\ocr-19> tesseract --help-oem
+``
+
+```
+OCR Engine modes:
+  0    Legacy engine only.
+  1    Neural nets LSTM engine only.
+  2    Legacy + LSTM engines.
+  3    Default, based on what is available.
+```
+Tesseract 4 contains LSTM neural net mode which mostly works best, but you are free to try.
+
+
+
+
+
+
+
+
+
+```custom_oem_psm_config = r'--oem 3 --psm 6'
+pytesseract.image_to_string(image, config=custom_oem_psm_config)
+```
 
 
 
@@ -217,7 +246,7 @@ from tesserocr import PyTessBaseAPI
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
-
+custom_oem_psm_config = r'--oem 3 --psm 6' # Assume a single uniform block of text.
 
 language_names_list = []
 
@@ -392,7 +421,8 @@ class PyShine_OCR_APP(QtWidgets.QMainWindow):
         self.language = languages[index]
         self.comboBox.setCurrentIndex(languages.index(self.language))
         
-        text = pytesseract.image_to_string(crop,lang = self.language)
+        #text = pytesseract.image_to_string(crop,lang = self.language)
+	text = pytesseract.image_to_string(crop,lang = self.language, config=custom_oem_psm_config)
         print('Text:',text)
         return text
 
