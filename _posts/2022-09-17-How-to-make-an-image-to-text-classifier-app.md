@@ -66,7 +66,7 @@ OCR Engine modes:
 ```
 Tesseract 4 contains LSTM neural net mode which mostly works best, but you are free to try.
 
-In the following gui.py code we will use following configurations `custom_oem_psm_config = r'--oem 3 --psm 6' and then use like this `pytesseract.image_to_string(image, config=custom_oem_psm_config)`.
+In the following gui.py code we will use following configurations `custom_oem_psm_config = r'--oem 3 --psm 6'` and then use like this `pytesseract.image_to_string(image, config=custom_oem_psm_config)`
 
 
 # main.ui
