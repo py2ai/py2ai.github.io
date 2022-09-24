@@ -65,7 +65,7 @@ OCR Engine modes:
   2    Legacy + LSTM engines.
   3    Default, based on what is available.
 ```
-Tesseract 4 contains LSTM neural net mode which mostly works best, but you are free to try.
+Tesseract 4 contains LSTM neural net mode which mostly works best, but you are free to try. It is highly recommended to read this [document](https://tesseract-ocr.github.io/tessdoc/ImproveQuality.html) for more details.
 
 In the following gui.py code we will use following configurations `custom_oem_psm_config = r'--oem 3 --psm 6'` and then use like this `pytesseract.image_to_string(image, config=custom_oem_psm_config)`
 
