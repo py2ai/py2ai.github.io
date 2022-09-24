@@ -55,7 +55,7 @@ The available oem engines can be found via `tesseract --help-oem`:
 
 ```
 (py38) PS C:\Users\ps\Desktop\ocr-19> tesseract --help-oem
-``
+```
 
 ```
 OCR Engine modes:
@@ -66,18 +66,11 @@ OCR Engine modes:
 ```
 Tesseract 4 contains LSTM neural net mode which mostly works best, but you are free to try.
 
-
-
-
-
-
-
-
+In the following gui.py code we will use following configurations
 
 ```custom_oem_psm_config = r'--oem 3 --psm 6'
 pytesseract.image_to_string(image, config=custom_oem_psm_config)
 ```
-
 
 
 # main.ui
