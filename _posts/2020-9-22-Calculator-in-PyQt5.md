@@ -6,13 +6,16 @@ mathjax: true
 featured-img: calc
 summary: Making a simple calculator
 ---
+Hi friends! this tutorial is about making a calculator application in PyQt5. The calc.ui file contains information about the gui and main.py is all about the calculator functionality. Copy both the calc.ui and main.py files in a directory and open the terminal and cd to the directory containing both files.
+Run `python3 main.py` and calc application will start.
+
 <br>
 <div align="center">
 	<iframe width="560" height="315" src="https://www.youtube.com/embed/c29ejbtzM3c" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <br>
 
-calc.ui
+# calc.ui
 
 {% include codeHeader.html %}
 ```python
@@ -244,6 +247,7 @@ calc.ui
  <connections/>
 </ui>
 ````
+# main.py
 
 {% include codeHeader.html %}
 ```python
