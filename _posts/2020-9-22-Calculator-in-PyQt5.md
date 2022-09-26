@@ -247,7 +247,7 @@ Run `python3 main.py` and calc application will start.
  <connections/>
 </ui>
 ````
-# main.py
+# calc.py
 
 {% include codeHeader.html %}
 ```python
