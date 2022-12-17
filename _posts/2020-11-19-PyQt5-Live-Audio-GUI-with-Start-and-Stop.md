@@ -282,7 +282,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
         self.pushButton_2.clicked.connect(self.stop_worker)
         self.worker = None
         self.go_on = False
-        self.update_now(self.device)
+        
 
         
     def getAudio(self):
