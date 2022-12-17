@@ -304,7 +304,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
         self.lineEdit_3.textChanged['QString'].connect(self.update_down_sample)
         self.lineEdit_4.textChanged['QString'].connect(self.update_interval)
         self.pushButton.clicked.connect(self.start_worker)
-        self.update_now(self.device)
+        #self.update_now(self.device)
         
     def getAudio(self):
         try:
