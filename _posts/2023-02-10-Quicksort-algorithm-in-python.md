@@ -6,7 +6,29 @@ featured-img: 26072022-python-logo
 summary:  Making functions to sort 
 ---
 
-Hello friends! This implementation uses the Lomuto partition scheme, which is a common partition scheme used in the QuickSort algorithm. 
+Hello friends! There are several variations of the quicksort algorithm, each with its own approach to choosing the pivot element, partitioning the data, and optimizing performance. Some of the most common quicksort schemes include:
+
+* Classic Quicksort: In this version, the pivot is usually chosen as the first, last, or middle element of the array.
+
+* Hoare Partition Scheme: This version of quicksort uses a two-pointer approach to partition the data and was developed by Tony Hoare.
+
+* Lomuto Partition Scheme: Named after Nico Lomuto, this version of quicksort uses a single-pointer approach to partition the data and is simpler to implement than the Hoare scheme.
+
+* Tail Recursive Quicksort: This version of quicksort uses tail recursion optimization to reduce the call stack and improve performance.
+
+* Randomized Quicksort: In this version, the pivot is chosen randomly to improve the performance of the algorithm and avoid worst-case scenarios.
+
+So, there are at least 5 different quicksort schemes. However, there could be more variations or modifications of the quicksort algorithm that have been developed and used in specific contexts.
+
+
+
+
+
+
+
+
+
+This implementation uses the Lomuto partition scheme, which is a common partition scheme used in the QuickSort algorithm. 
 The quick_sort function is the main function that implements the QuickSort algorithm, while the partition function is used to partition the array around the pivot element. 
 The pivot element is the last element in the array, in this implementation.
 
