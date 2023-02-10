@@ -1,9 +1,9 @@
 ---
 layout: post
-title: How to sort a list using Quicksort
+title: How to sort a list using Quicksort algorithms
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Making functions to sort 
+summary:  Different functions to sort numbers
 ---
 
 Hello friends! There are several variations of the quicksort algorithm, each with its own approach to choosing the pivot element, partitioning the data, and optimizing performance. Some of the most common quicksort schemes include:
@@ -20,14 +20,29 @@ Hello friends! There are several variations of the quicksort algorithm, each wit
 
 So, there are at least 5 different quicksort schemes. However, there could be more variations or modifications of the quicksort algorithm that have been developed and used in specific contexts.
 
+# Classic Quicksort Scheme
+Here is a Python implementation of the classic QuickSort algorithm:
+```python
+def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[0]
+    less = [x for x in arr[1:] if x <= pivot]
+    greater = [x for x in arr[1:] if x > pivot]
+    return quick_sort(less) + [pivot] + quick_sort(greater)
 
+numbers = [114, 70, 2, -8, 1, 3, 5, 6]
+n = len(numbers)
+print("Sorted numbers: ", quick_sort(numbers))
+```
+output:
+```
+Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
+```
 
+The quick_sort function takes a list arr as input and returns the sorted list. The function uses the first element of the list as the pivot and splits the rest of the list into two sublists: less and greater. The less list contains all elements that are less than or equal to the pivot, and the greater list contains all elements that are greater than the pivot. The function then recursively calls itself on each of these sublists until the base case is reached, when the list has only one element. The base case returns the input list as it is already sorted. The sorted sublists are then combined and returned as the result of the function.
 
-
-
-
-
-
+# Lomuto Partition Scheme
 This implementation uses the Lomuto partition scheme, which is a common partition scheme used in the QuickSort algorithm. 
 The quick_sort function is the main function that implements the QuickSort algorithm, while the partition function is used to partition the array around the pivot element. 
 The pivot element is the last element in the array, in this implementation.
