@@ -70,11 +70,11 @@ def quick_sort(arr, low, high):
 numbers = [114, 70, 2, -8, 1, 3, 5, 6]
 n = len(numbers)
 quick_sort(numbers, 0, n-1)
-print ("Sorted array is:", numbers)
+print("Sorted numbers: ", numbers)
 ```
 output:
 ```
-Sorted array is: [-8, 1, 2, 3, 5, 6, 70, 114]
+Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 ```
 
 # Lomuto Partition Scheme
