@@ -111,3 +111,38 @@ output:
 ```
 Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 ```
+
+# Tail Recursive Quicksort
+Tail Recursion is a technique where the last statement in a function is a recursive call, allowing the function to return immediately, without having to keep the current function's state in memory. This can be particularly useful for sorting algorithms, such as QuickSort, which can have a large number of recursive calls. Here's a python implementation of Tail Recursive QuickSort:
+
+```python
+def tail_recursive_quicksort(arr, low, high):
+    while low < high:
+        pivot = partition(arr, low, high)
+        tail_recursive_quicksort(arr, low, pivot-1)
+        low = pivot + 1
+
+def partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i = i + 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i+1], arr[high] = arr[high], arr[i+1]
+    return i + 1
+
+numbers = [114, 70, 2, -8, 1, 3, 5, 6]
+n = len(numbers)
+tail_recursive_quicksort(numbers, 0, n - 1)
+print("Sorted numbers: ", numbers)
+```
+output:
+```
+Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
+```
+In this implementation, the tail_recursive_quicksort function uses a while loop to handle the recursion, and the partition function is used to find the pivot element. The partition function is the same as in a traditional QuickSort implementation, and it rearranges the elements in the array so that all elements less than or equal to the pivot are to the left of the pivot, and all elements greater than the pivot are to the right. The pivot is then returned, so that the tail_recursive_quicksort function knows where to split the array for the next iteration.
+
+The tail_recursive_quicksort function sorts the array arr between indices low and high. To sort the entire array, you would call tail_recursive_quicksort(arr, 0, len(arr) - 1).
+
+
