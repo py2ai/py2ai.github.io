@@ -42,12 +42,46 @@ Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 
 The quick_sort function takes a list arr as input and returns the sorted list. The function uses the first element of the list as the pivot and splits the rest of the list into two sublists: less and greater. The less list contains all elements that are less than or equal to the pivot, and the greater list contains all elements that are greater than the pivot. The function then recursively calls itself on each of these sublists until the base case is reached, when the list has only one element. The base case returns the input list as it is already sorted. The sorted sublists are then combined and returned as the result of the function.
 
+
+#  Hoare Partition Scheme
+The Hoare Partition Scheme is a popular algorithm used for quick sort. It works by selecting a pivot element, and then partitioning the elements into two groups such that all elements less than the pivot are in one group and all elements greater than the pivot are in another. Here's the code to implement Hoare Partition Scheme in Python:
+```python
+def hoare_partition(arr, low, high):
+    pivot = arr[low]
+    i = low - 1
+    j = high + 1
+    while True:
+        i = i + 1
+        while arr[i] < pivot:
+            i = i + 1
+        j = j - 1
+        while arr[j] > pivot:
+            j = j - 1
+        if i >= j:
+            return j
+        arr[i], arr[j] = arr[j], arr[i]
+
+def quick_sort(arr, low, high):
+    if low < high:
+        p = hoare_partition(arr, low, high)
+        quick_sort(arr, low, p)
+        quick_sort(arr, p+1, high)
+
+numbers = [114, 70, 2, -8, 1, 3, 5, 6]
+n = len(numbers)
+quick_sort(numbers, 0, n-1)
+print ("Sorted array is:", numbers)
+```
+output:
+```
+Sorted array is: [-8, 1, 2, 3, 5, 6, 70, 114]
+```
+
 # Lomuto Partition Scheme
 This implementation uses the Lomuto partition scheme, which is a common partition scheme used in the QuickSort algorithm. 
 The quick_sort function is the main function that implements the QuickSort algorithm, while the partition function is used to partition the array around the pivot element. 
 The pivot element is the last element in the array, in this implementation.
 
-{% include codeHeader.html %}
 ```python
 def quick_sort(array, low, high):
     if low < high:
