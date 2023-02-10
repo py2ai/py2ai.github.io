@@ -180,23 +180,23 @@ Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 
 # Runtime comparison
 
-* Classic Quicksort
+* Classic Quicksort:
 
 0.02s user 0.01s system 88% cpu 0.037 total
 
-* Hoare Partition Scheme
+* Hoare Partition Scheme:
 
 0.03s user 0.01s system 79% cpu 0.049 total
 
-* Lomuto Partition Scheme
+* Lomuto Partition Scheme:
 
 0.03s user 0.01s system 92% cpu 0.040 total
 
-* Tail Recursive Quicksort 
+* Tail Recursive Quicksort:
 
 0.03s user 0.01s system 51% cpu 0.075 total
 
-* Randomized Quicksort 
+* Randomized Quicksort: 
 
 0.03s user 0.01s system 64% cpu 0.060 total
 
