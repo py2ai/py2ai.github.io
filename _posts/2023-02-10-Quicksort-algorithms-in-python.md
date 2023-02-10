@@ -18,7 +18,7 @@ Hello friends! There are several variations of the quicksort algorithm, each wit
 
 * Randomized Quicksort: In this version, the pivot is chosen randomly to improve the performance of the algorithm and avoid worst-case scenarios.
 
-So, there are at least 5 different quicksort schemes. However, there could be more variations or modifications of the quicksort algorithm that have been developed and used in specific contexts.
+We can look at 5 different quicksort schemes. However, there could be more variations or modifications of the quicksort algorithm that have been developed and used in specific contexts.
 
 # Classic Quicksort Scheme
 Here is a Python implementation of the classic QuickSort algorithm:
@@ -145,4 +145,36 @@ In this implementation, the tail_recursive_quicksort function uses a while loop 
 
 The tail_recursive_quicksort function sorts the array arr between indices low and high. To sort the entire array, you would call tail_recursive_quicksort(arr, 0, len(arr) - 1).
 
+# Randomized Quicksort
+Here's an implementation of randomized quicksort in Python:
+
+```python
+import random
+
+def partition(arr, low, high):
+    pivot_index = random.randint(low, high)
+    pivot = arr[pivot_index]
+    arr[pivot_index], arr[high] = arr[high], arr[pivot_index]
+    i = low - 1
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i = i + 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1
+
+def randomized_quicksort(arr, low, high):
+    if low < high:
+        pivot_index = partition(arr, low, high)
+        randomized_quicksort(arr, low, pivot_index - 1)
+        randomized_quicksort(arr, pivot_index + 1, high)
+
+numbers = [114, 70, 2, -8, 1, 3, 5, 6]
+randomized_quicksort(numbers, 0, len(numbers) - 1)
+print("Sorted numbers: ", numbers)
+```
+output:
+```
+Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
+```
 
