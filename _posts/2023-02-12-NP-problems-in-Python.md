@@ -58,7 +58,7 @@ def get_total_distance(cities, solution):
         distance += dist(cities[solution[i]], cities[solution[i + 1]])
     return distance
 
-points = [(random.randint(0, 10), random.randint(0, 10)) for i in range(50)]
+points = [(random.randint(0, 10), random.randint(0, 10)) for i in range(10)]
 
 print('=== Heuristic algorithm to solve TSP ===')
 print('Our points are:', points)
@@ -71,12 +71,14 @@ print("Total distance:", get_total_distance(points, solution))
 output:
 ```
 === Heuristic algorithm to solve TSP ===
-Our points are: [(2, 9), (1, 4), (1, 7), (7, 7), (10, 6), (3, 1), (7, 0), (6, 6), (9, 0), (7, 4), (3, 9), (1, 5), (0, 0), (0, 10), (8, 0), (6, 10), (3, 6), (0, 8), (3, 7), (7, 8), (3, 5), (3, 10), (3, 7), (4, 0), (6, 8), (10, 1), (2, 10), (4, 1), (5, 8), (6, 8), (10, 3), (4, 4), (9, 7), (8, 6), (9, 0), (7, 3), (6, 6), (10, 2), (5, 8), (10, 5), (1, 7), (10, 8), (1, 2), (8, 6), (5, 7), (0, 7), (0, 4), (9, 9), (9, 6), (10, 2)]
-Total points are: 50
-Solution: [0, 10, 21, 26, 13, 17, 45, 2, 40, 11, 1, 46, 42, 5, 27, 23, 6, 14, 8, 34, 25, 37, 49, 30, 39, 4, 48, 32, 33, 43, 3, 19, 24, 29, 28, 38, 44, 7, 36, 9, 35, 31, 20, 16, 18, 22, 15, 47, 41, 12]
-Total solution points: 50
-Total distance: 72.56692978905966
+Our points are: [(2, 9), (1, 4), (1, 7), (7, 7), (10, 6), (3, 1), (7, 0), (6, 6), (9, 0), (7, 4)]
+Total points are: 10
+Solution: [0, 2, 1, 5, 6, 8, 9, 7, 3, 4]
+Total solution points: 10
+Total distance: 26.249420033622282
 ```
+Time: 0.03s user 0.01s system 80% cpu 0.052 total
+
 The solve_tsp function implements a greedy algorithm to solve the TSP. It starts at a random point and chooses the nearest unvisited point as the next point to visit. This process is repeated until all points have been visited. The dist function calculates the Euclidean distance between two points.
 
 This is just one example of a heuristic solution to the TSP. There are many other algorithms that can be used, such as simulated annealing, genetic algorithms, and ant colony optimization. The choice of algorithm will depend on the specific problem and the desired trade-off between solution quality and computation time.
@@ -118,7 +120,7 @@ def generate_random_solution(n):
     return random.sample(range(n), n)
 
 
-points = [(random.randint(0, 10), random.randint(0, 10)) for i in range(50)]
+points = [(random.randint(0, 10), random.randint(0, 10)) for i in range(10)]
 print('=== Local search algorithm to solve TSP ===')
 print('Our points are:', points)
 print('Total points are:', len(points))
@@ -127,13 +129,89 @@ best_solution = local_search_tsp(points, initial_solution)
 print("Best solution:", best_solution)
 print('Total solution points:', len(best_solution))
 print("Total distance:", get_total_distance(points, best_solution))
-
 ```
 ```output
 === Local search algorithm to solve TSP ===
-Our points are: [(2, 9), (1, 4), (1, 7), (7, 7), (10, 6), (3, 1), (7, 0), (6, 6), (9, 0), (7, 4), (3, 9), (1, 5), (0, 0), (0, 10), (8, 0), (6, 10), (3, 6), (0, 8), (3, 7), (7, 8), (3, 5), (3, 10), (3, 7), (4, 0), (6, 8), (10, 1), (2, 10), (4, 1), (5, 8), (6, 8), (10, 3), (4, 4), (9, 7), (8, 6), (9, 0), (7, 3), (6, 6), (10, 2), (5, 8), (10, 5), (1, 7), (10, 8), (1, 2), (8, 6), (5, 7), (0, 7), (0, 4), (9, 9), (9, 6), (10, 2)]
-Total points are: 50
-Best solution: [21, 10, 28, 38, 14, 34, 8, 25, 39, 4, 32, 3, 15, 45, 17, 13, 26, 0, 2, 40, 11, 1, 46, 42, 12, 23, 6, 27, 5, 20, 31, 35, 9, 16, 22, 18, 44, 33, 43, 48, 30, 37, 49, 36, 7, 24, 29, 19, 47, 41]
-Total solution points: 50
-Total distance: 98.02978032014208
+Our points are: [(2, 9), (1, 4), (1, 7), (7, 7), (10, 6), (3, 1), (7, 0), (6, 6), (9, 0), (7, 4)]
+Total points are: 10
+Best solution: [0, 2, 1, 5, 7, 3, 4, 9, 6, 8]
+Total solution points: 10
+Total distance: 28.854613645814542
 ```
+Time: 0.03s user 0.01s system 83% cpu 0.051 total
+
+### A simple branch and bound algorithm to solve TSP
+
+```python
+import numpy as np
+import random, math
+random.seed(1)
+def TSP(cities, start, currDist, bound, path, visited):
+    if len(path) == len(cities):
+        return currDist + cities[start][path[0]], path + [start]
+    minDist = math.inf
+    bestPath = None
+    for city in range(len(cities)):
+        if city not in visited:
+            if currDist + cities[start][city] + bound(cities, city, visited) < minDist:
+                newDist, newPath = TSP(cities, city, currDist + cities[start][city], bound, path + [city], visited + [city])
+                if newDist < minDist:
+                    minDist = newDist
+                    bestPath = newPath
+    return minDist, bestPath
+
+def lowerBound(cities, start, visited):
+    remaining = [city for city in range(len(cities)) if city not in visited]
+    if not remaining:
+        return 0
+    minDist = math.inf
+    for city in remaining:
+        minDist = min(minDist, cities[start][city])
+    return minDist * len(remaining)
+
+def dist(city1, city2):
+    x1, y1 = city1
+    x2, y2 = city2
+    return math.sqrt((x1-x2)**2 + (y1-y2)**2)
+
+def get_distance_matrix(cities):
+    n = len(cities)
+    dist_matrix = np.zeros((n,n))
+    for i in range(n):
+        for j in range(n):
+            dist_matrix[i][j] = dist(cities[i], cities[j])
+
+    return dist_matrix
+
+def get_total_distance(cities, solution):
+    distance = 0
+    for i in range(len(solution) - 1):
+        distance += dist(cities[solution[i]], cities[solution[i + 1]])
+    return distance
+
+
+path = []
+visited = []
+start = 0
+points = [(random.randint(0, 10), random.randint(0, 10)) for i in range(10)]
+print('=== Branch and Bound algorithm to solve TSP ===')
+print('Our points are:', points)
+print('Total points are:', len(points))
+cities = get_distance_matrix(points)
+min_best_distance, best_solution = TSP(cities, start, 0, lowerBound, path, visited)
+best_solution = best_solution[0:-1]
+print("Best solution:", best_solution)
+print('Total solution points:', len(best_solution))
+print("Total distance:", get_total_distance(points, best_solution))
+```
+output:
+```
+=== Branch and Bound algorithm to solve TSP ===
+Our points are: [(2, 9), (1, 4), (1, 7), (7, 7), (10, 6), (3, 1), (7, 0), (6, 6), (9, 0), (7, 4)]
+Total points are: 10
+Best solution: [0, 2, 1, 5, 6, 8, 9, 4, 3, 7]
+Total solution points: 10
+Total distance: 27.61890333158648
+```
+Time:  39.61s user 0.11s system 100% cpu 39.394 total
+
