@@ -27,6 +27,9 @@ In other words, the problem involves finding the minimum-distance round-trip pat
 
 The TSP is an NP-hard problem, meaning that it is computationally difficult to find an exact solution for large sets of cities. As a result, various approximate algorithms have been developed to find near-optimal solutions to the TSP, such as heuristics, local search algorithms, and branch-and-bound algorithms. Let's check them one by one.
 
+### A simple heuristic algorithm
+
+Let's try to solve the Traveling Salesman Problem (TSP) using Python:
 ```python
 import random
 
@@ -58,4 +61,6 @@ output:
 Our points are: [(2, 3), (5, 9), (9, 3), (7, 3), (6, 4), (10, 5), (9, 10), (6, 5), (3, 2), (1, 8), (8, 1), (8, 7), (6, 7), (1, 4), (4, 0), (0, 5), (7, 8), (10, 5), (5, 4), (0, 2), (5, 0), (3, 6), (8, 2), (3, 4), (1, 3), (8, 3), (1, 1), (7, 10), (10, 6), (10, 6), (10, 10), (5, 3), (8, 4), (5, 7), (9, 8), (1, 4), (1, 10), (4, 1), (4, 3), (2, 3), (1, 4), (10, 5), (9, 10), (6, 1), (7, 8), (7, 3), (9, 6), (5, 9), (1, 4), (6, 2)]
 Solution: [0, 39, 24, 13, 35, 40, 48, 15, 19, 26, 8, 37, 14, 20, 43, 49, 3, 45, 25, 2, 22, 10, 32, 4, 7, 18, 31, 38, 23, 21, 33, 12, 16, 44, 11, 34, 6, 42, 30, 27, 1, 47, 9, 36, 46, 28, 29, 5, 17, 41]
 ```
+The solve_tsp function implements a greedy algorithm to solve the TSP. It starts at a random point and chooses the nearest unvisited point as the next point to visit. This process is repeated until all points have been visited. The dist function calculates the Euclidean distance between two points.
 
+This is just one example of a heuristic solution to the TSP. There are many other algorithms that can be used, such as simulated annealing, genetic algorithms, and ant colony optimization. The choice of algorithm will depend on the specific problem and the desired trade-off between solution quality and computation time.
