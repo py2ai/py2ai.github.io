@@ -229,8 +229,56 @@ Branch and bound is a complete search algorithm that can be used to find optimal
 
 In conclusion, the best TSP algorithm will depend on the specific problem at hand and the requirements for the solution, but in general, local search and heuristic algorithms can be a good starting point for finding good solutions to TSP problems.
 
+## knapsack problem 
+The knapsack problem is a combinatorial optimization problem that involves finding the combination of items to include in a knapsack so that the total weight is less than or equal to a given weight limit and the total value is maximized. The problem can be solved using dynamic programming, which involves creating a table to store the solutions to subproblems and using those solutions to build up the solution to the original problem.
 
+Here is a python code to solve the knapsack problem:
 
+```python
+def knapsack(items, max_weight):
+    n = len(items)
+    dp = [[0 for j in range(max_weight + 1)] for i in range(n + 1)]
+    
+    for i in range(1, n + 1):
+        for j in range(1, max_weight + 1):
+            if items[i - 1][1] > j:
+                dp[i][j] = dp[i - 1][j]
+            else:
+                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - items[i - 1][1]] + items[i - 1][0])
+    
+    res = dp[n][max_weight]
+    w = max_weight
+    selected = []
+    for i in range(n, 0, -1):
+        if res <= 0:
+            break
+        if res == dp[i - 1][w]:
+            continue
+        else:
+            selected.append(i - 1)
+            res = res - items[i - 1][0]
+            w = w - items[i - 1][1]
+    
+    return res, selected
+
+# example usage
+items = [(60, 10), (100, 20), (120, 30)]
+max_weight = 50
+print(knapsack(items, max_weight))
+
+```
+output
+```
+(0, [2, 1])
+```
+This code returns a tuple of two values, the first value is the maximum value that can be obtained by choosing items and the second value is a list of indices of the items that should be included in the knapsack to obtain the maximum value.
+The return res, selected statement at the end of the knapsack function returns a tuple of two values:
+
+res: The maximum value that can be obtained by choosing items from the items list with a weight limit of max_weight. This value is stored in the last cell of the dp table and is calculated through the dynamic programming algorithm.
+
+selected: A list of indices of the items that should be included in the knapsack to obtain the maximum value. This list is constructed by tracing back the dp table from the last cell to the first cell and keeping track of the items that are selected along the way. The indices are relative to the original items list.
+
+The tuple of these two values is returned from the knapsack function so that it can be used in the calling code.
 
 
 
