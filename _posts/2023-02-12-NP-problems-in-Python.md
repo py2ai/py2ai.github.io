@@ -84,6 +84,7 @@ This is just one example of a heuristic solution to the TSP. There are many othe
 ### A simple local search algorithm to solve TSP
 
 Here we will do a local search algorithm for solving the Traveling Salesman Problem (TSP) in Python:
+
 ```python
 import random
 random.seed(1)
@@ -120,15 +121,18 @@ def generate_random_solution(n):
 points = [(random.randint(0, 10), random.randint(0, 10)) for i in range(50)]
 print('=== Local search algorithm to solve TSP ===')
 print('Our points are:', points)
+print('Total points are:', len(points))
 initial_solution = generate_random_solution(len(points))
 best_solution = local_search_tsp(points, initial_solution)
 print("Best solution:", best_solution)
 print('Total solution points:', len(best_solution))
 print("Total distance:", get_total_distance(points, best_solution))
+
 ```
 ```output
 === Local search algorithm to solve TSP ===
 Our points are: [(2, 9), (1, 4), (1, 7), (7, 7), (10, 6), (3, 1), (7, 0), (6, 6), (9, 0), (7, 4), (3, 9), (1, 5), (0, 0), (0, 10), (8, 0), (6, 10), (3, 6), (0, 8), (3, 7), (7, 8), (3, 5), (3, 10), (3, 7), (4, 0), (6, 8), (10, 1), (2, 10), (4, 1), (5, 8), (6, 8), (10, 3), (4, 4), (9, 7), (8, 6), (9, 0), (7, 3), (6, 6), (10, 2), (5, 8), (10, 5), (1, 7), (10, 8), (1, 2), (8, 6), (5, 7), (0, 7), (0, 4), (9, 9), (9, 6), (10, 2)]
+Total points are: 50
 Best solution: [21, 10, 28, 38, 14, 34, 8, 25, 39, 4, 32, 3, 15, 45, 17, 13, 26, 0, 2, 40, 11, 1, 46, 42, 12, 23, 6, 27, 5, 20, 31, 35, 9, 16, 22, 18, 44, 33, 43, 48, 30, 37, 49, 36, 7, 24, 29, 19, 47, 41]
 Total solution points: 50
 Total distance: 98.02978032014208
