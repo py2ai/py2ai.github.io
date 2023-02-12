@@ -142,6 +142,8 @@ Time: 0.03s user 0.01s system 83% cpu 0.051 total
 
 ### A simple branch and bound algorithm to solve TSP
 
+The following code returns the minimum distance to visit all cities and the path that achieves this minimum distance. The function TSP implements the main logic of the algorithm and returns both the minimum distance and the path that achieves this distance. The function lowerBound calculates a lower bound on the minimum distance by considering the closest city to start and multiplying it by the number of unvisited cities. The algorithm continues by branching out to all unvisited cities and updating the minimum distance and the best path if a better solution is found.
+
 ```python
 import numpy as np
 import random, math
