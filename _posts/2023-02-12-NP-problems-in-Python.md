@@ -217,3 +217,20 @@ Total distance: 27.61890333158648
 ```
 Time:  39.61s user 0.11s system 100% cpu 39.394 total
 
+### Conclusion
+
+The best TSP algorithm depends on several factors such as the size of the problem, the complexity of the cost function, and the desired accuracy of the solution. In general, it can be difficult to determine which algorithm is "best" without considering the specific context of a given problem.
+
+Local search algorithms, such as simulated annealing or iterated local search, can be effective for finding good solutions to small and medium-sized TSP problems. These algorithms typically involve randomly generating a starting solution and then making small, local modifications to try and improve the solution.
+
+Heuristic algorithms, such as the nearest neighbor or the Christofides algorithm, can also be used to find good solutions to TSP problems. These algorithms work by making intelligent choices about which cities to visit next based on some heuristic rules, rather than performing a comprehensive search of all possible solutions.
+
+Branch and bound is a complete search algorithm that can be used to find optimal solutions to TSP problems, but it can be very time-consuming for large problems. The algorithm works by systematically exploring the solution space and eliminating large portions of it that cannot contain the optimal solution. This helps to reduce the size of the search space, but it can still be slow for large problems.
+
+In conclusion, the best TSP algorithm will depend on the specific problem at hand and the requirements for the solution, but in general, local search and heuristic algorithms can be a good starting point for finding good solutions to TSP problems.
+
+
+
+
+
+
