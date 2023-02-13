@@ -26,3 +26,26 @@ Hello friends! Here are some tips and tricks to write faster code in Python:
 
 * Profile your code: Use the cProfile or profile modules to profile your code and identify bottlenecks. This can help you find the areas of your code that are taking the most time, so you can focus your optimization efforts there.
 
+# Best Practices for coding in Python
+
+* Write readable code: Use meaningful names for variables, functions, and modules, and write documentation for your code to make it easier for others (or yourself) to understand it.
+
+* Use version control: Use a version control system (such as Git) to keep track of changes to your code, collaborate with others, and revert to previous versions if needed.
+
+* Write tests: Write unit tests to validate that your code works as intended and to ensure that future changes don't break existing functionality.
+
+* Follow the PEP 8 style guide: PEP 8 is the official Python style guide, and following its conventions will make your code easier for others to read and understand.
+
+* Use exceptions: Use exceptions to handle error conditions and to separate normal processing from error handling code.
+
+* Avoid global variables: Use local variables and function arguments instead of global variables, to make your code more modular and easier to maintain.
+
+* Use meaningful return values: Return meaningful values from functions and methods, rather than using print statements or modifying global state.
+
+* Avoid using a single leading underscore (_) for non-public members: Use a double leading underscore (__) instead to indicate that the member is intended to be private.
+
+* Use the with statement for managing resources: Use the with statement to manage resources, such as file handles or database connections, in a clean and efficient manner.
+
+* Optimize for readability: Optimize your code for readability, as it will be much easier to maintain in the long term than code that is just written to be fast.
+
+
