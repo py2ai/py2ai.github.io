@@ -280,5 +280,46 @@ selected: A list of indices of the items that should be included in the knapsack
 
 The tuple of these two values is returned from the knapsack function so that it can be used in the calling code.
 
+## SAT Problem
 
+The Boolean Satisfiability Problem (SAT) is a classical NP-complete problem, which means that it's a problem for which no known efficient solution exists, but its solutions can be verified quickly.
+
+Here's a simple python code to solve the SAT problem using the brute-force method of trying out all possible combinations of truth values for the variables:
+
+```python
+from itertools import product
+
+def solve_sat(clauses, variables):
+    for assignment in product([True, False], repeat=variables):
+        satisfied = True
+        for clause in clauses:
+            clause_satisfied = False
+            for literal in clause:
+                if literal > 0 and assignment[abs(literal) - 1]:
+                    clause_satisfied = True
+                    break
+                elif literal < 0 and not assignment[abs(literal) - 1]:
+                    clause_satisfied = True
+                    break
+            if not clause_satisfied:
+                satisfied = False
+                break
+        if satisfied:
+            return assignment
+    return None
+    
+clauses = [[1, -2, 3], [1, 2, -3]]
+variables = 3
+assignment = solve_sat(clauses, variables)
+if assignment is None:
+    print("The SAT problem is not satisfiable")
+else:
+    print("The SAT problem is satisfiable:", assignment)
+
+```
+output:
+```
+The SAT problem is satisfiable: (True, True, True)
+```
+Note: This implementation is not efficient for large instances of the SAT problem, but it serves as a simple demonstration of how the problem can be solved.
 
