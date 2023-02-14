@@ -47,7 +47,7 @@ with open("file.txt", "r") as file:
     # do something with the file data
 ```
 
-5. Avoid using a single leading underscore (_) to indicate a weak “internal use” variable. Use double leading underscores to avoid naming collisions in subclasses.
+### 5. Avoid using a single leading underscore `(_)` to indicate a weak “internal use” variable. Use double leading underscores to avoid naming collisions in subclasses.
 
 ```python
 # Good
@@ -62,7 +62,7 @@ class MyClass:
 
 ```
 
-6. Use list comprehensions instead of map and filter when possible:
+### 6. Use list comprehensions instead of map and filter when possible:
 
 ```python
 # Good
@@ -73,7 +73,7 @@ squared_numbers = map(lambda x: x**2, numbers)
 
 ```
 
-7. Use the built-in Python functions and libraries before writing your own implementation:
+### 7. Use the built-in Python functions and libraries before writing your own implementation:
 
 ```python
 # Good
@@ -86,7 +86,7 @@ shutil.rmtree("file.txt")
 
 ```
 
-8. Use PEP 8 style guide for writing code:
+### 8. Use PEP 8 style guide for writing code:
 
 ```python
 # Good
@@ -99,7 +99,7 @@ def greetPerson(personName):
 
 ```
 
-9. Use is and is not instead of equality (==) and inequality (!=) when comparing objects to None:
+### 9. Use is and is not instead of equality (==) and inequality (!=) when comparing objects to None:
 
 ```python
 # Good
@@ -112,7 +112,7 @@ if value == None:
 
 ```
 
-10. Use context managers (with statement) when working with resources like files, sockets, and databases to ensure that they are properly cleaned up when done:
+### 10. Use context managers (with statement) when working with resources like files, sockets, and databases to ensure that they are properly cleaned up when done:
 
 ```python
 # Good
@@ -125,7 +125,7 @@ file.write("Hello, World!")
 file.close()
 
 ```
-11. Use Python’s built-in logging module instead of print statements for logging and debugging:
+### 11. Use Python’s built-in logging module instead of print statements for logging and debugging:
 
 ```python
 # Good
@@ -139,7 +139,7 @@ print("Debug message")
 
 ```
 
-12. Use functions to extract complex logic and make code reusable:
+### 12. Use functions to extract complex logic and make code reusable:
 
 ```python
 # Good
@@ -153,7 +153,7 @@ result = 2 + 3
 
 ```
 
-13. Use the with statement when working with databases to ensure that database connections are properly closed:
+### 13. Use the with statement when working with databases to ensure that database connections are properly closed:
 
 ```python
 # Good
@@ -175,7 +175,7 @@ conn.close()
 
 ```
 
-14. Use list comprehensions instead of for loops for simple data manipulations:
+### 14. Use list comprehensions instead of for loops for simple data manipulations:
 
 ```python
 # Good
@@ -188,7 +188,7 @@ for x in range(1, 10):
 
 ```
 
-15. Use the if __name__ == "__main__" statement when writing script files:
+### 15. Use the if __name__ == "__main__" statement when writing script files:
 
 ```python
 def main():
@@ -200,7 +200,7 @@ if __name__ == "__main__":
 ```
 This ensures that the code in the script file is only executed when the file is run as the main program, and not when it is imported as a module.
 
-16. Use the with statement when working with locks to ensure that the lock is properly released:
+### 16. Use the with statement when working with locks to ensure that the lock is properly released:
 
 ```python
 import threading
@@ -220,7 +220,7 @@ finally:
 
 ```
 
-17. Use Python’s built-in unittest module for writing and running tests:
+### 17. Use Python’s built-in unittest module for writing and running tests:
 ```python
 
 import unittest
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
 ```
 
-18. Use the enum module to define named constants:
+### 18. Use the enum module to define named constants:
 
 ```python
 import enum
@@ -254,7 +254,7 @@ if color == 1:
 
 ```
 
-19. Use the collections module for working with data structures such as defaultdict, Counter, and namedtuple:
+### 19. Use the collections module for working with data structures such as defaultdict, Counter, and namedtuple:
 
 ```python
 from collections import defaultdict
@@ -274,7 +274,7 @@ for word in words:
 
 ```
 
-20. Use the itertools module for working with iterators and generators:
+### 20. Use the itertools module for working with iterators and generators:
 
 ```python
 import itertools
@@ -290,7 +290,7 @@ for x in range(1, 10):
 
 ```
 
-21. Use try-except blocks to handle exceptions:
+### 21. Use try-except blocks to handle exceptions:
 
 ```python
 # Good
@@ -307,7 +307,7 @@ except:
 
 ```
 
-22. Use the with statement to automatically close files:
+### 22. Use the with statement to automatically close files:
 
 ```python
 # Good
@@ -323,7 +323,7 @@ finally:
 
 ```
 
-23. Use the os module to interact with the operating system:
+### 23. Use the os module to interact with the operating system:
 
 ```python 
 import os
@@ -338,7 +338,7 @@ if os.path.exists("file.txt"):
     # do something
 
 ```
-24. Use the shutil module to manipulate files and directories:
+### 24. Use the shutil module to manipulate files and directories:
 
 ```python
 import shutil
@@ -352,7 +352,7 @@ os.system("cp src.txt dst.txt")
 
 ```
 
-25. Use the re module to work with regular expressions:
+### 25. Use the re module to work with regular expressions:
 
 ```python
 import re
@@ -365,7 +365,7 @@ import string
 match = string.find("Number: 42", "42")
 ```
 
-26. Use the datetime module to work with dates and times:
+### 26. Use the datetime module to work with dates and times:
 
 ```python
 import datetime
@@ -379,7 +379,7 @@ now = time.localtime()
 
 ```
 
-27. Use the math module to perform mathematical operations:
+### 27. Use the math module to perform mathematical operations:
 
 ```python
 import math
@@ -392,7 +392,7 @@ result = 16**0.5
 
 ```
 
-28. Use the random module to generate random numbers:
+### 28. Use the random module to generate random numbers:
 
 ```python
 import random
@@ -406,7 +406,7 @@ random_number = int(time.time() % 100)
 
 ```
 
-29. Use str.format() method for string formatting:
+### 29. Use str.format() method for string formatting:
 
 ```python
 # Good
@@ -419,7 +419,7 @@ print("Hello, " + name + "!")
 
 ```
 
-30. Use list comprehensions instead of loops for simple operations:
+### 30. Use list comprehensions instead of loops for simple operations:
 
 ```python
 # Good
@@ -434,7 +434,7 @@ for n in numbers:
 
 ```
 
-31. Use generators instead of lists when working with large data sets:
+### 31. Use generators instead of lists when working with large data sets:
 
 ```python
 # Good
@@ -451,7 +451,7 @@ def squares(n):
 
 ```
 
-32. Use the enum module to define named constants:
+### 32. Use the enum module to define named constants:
 
 ```python
 import enum
@@ -469,7 +469,7 @@ BLUE = 3
 
 ```
 
-33. Use the collections module for working with collections:
+### 33. Use the collections module for working with collections:
 
 ```python
 import collections
@@ -487,14 +487,14 @@ for c in "hello world":
 
 ```
 
-34. Use the functools module for working with functions:
+### 34. Use the functools module for working with functions:
 
 ```python
 Use the functools module for working with functions:
 
 ```
 
-35. Use the itertools module for working with iterators:
+### 35. Use the itertools module for working with iterators:
 
 ```python
 import itertools
@@ -509,7 +509,7 @@ for i in range(0, 10, 2):
 
 ```
 
-36. Use the logging module for logging messages:
+### 36. Use the logging module for logging messages:
 
 ```python
 import logging
@@ -526,7 +526,7 @@ print("Info message")
 
 ```
 
-37. Use with statement when working with files or other resources:
+### 37. Use with statement when working with files or other resources:
 
 ```python
 # Good
@@ -540,7 +540,7 @@ f.close()
 
 ```
 
-38. Use the unittest module for writing unit tests:
+### 38. Use the unittest module for writing unit tests:
 
 ```python
 import unittest
@@ -556,7 +556,7 @@ def test_upper():
 
 ```
 
-39. Use assert statements to check for preconditions and postconditions:
+### 39. Use assert statements to check for preconditions and postconditions:
 
 ```python
 # Good
@@ -572,7 +572,7 @@ def divide(a, b):
 
 ```
 
-40. Use the os and shutil modules for working with files and directories:
+### 40. Use the os and shutil modules for working with files and directories:
 
 ```python
 import os
@@ -590,7 +590,7 @@ os.system("cp file1.txt directory")
 
 ```
 
-41. Use the contextlib module for creating context managers:
+### 41. Use the contextlib module for creating context managers:
 
 ```python
 import contextlib
@@ -613,7 +613,7 @@ finally:
 
 ```
 
-42. Use the argparse module for parsing command line arguments:
+### 42. Use the argparse module for parsing command line arguments:
 
 
 ```python
@@ -636,7 +636,7 @@ if sys.argv[1] == "-n":
 
 ```
 
-43. Use the collections module for working with data structures:
+### 43. Use the collections module for working with data structures:
 
 ```python
 import collections
@@ -656,7 +656,7 @@ print(counter)
 
 ```
 
-44. Use the re module for working with regular expressions:
+### 44. Use the re module for working with regular expressions:
 
 ```python
 import re
@@ -673,7 +673,7 @@ print(string[start:end])
 
 ```
 
-45. Use the datetime module for working with dates and times:
+### 45. Use the datetime module for working with dates and times:
 
 ```python
 import datetime
@@ -688,7 +688,7 @@ print(strftime("%Y-%m-%d", gmtime()))
 
 ```
 
-46. Use the bisect module for working with sorted lists:
+### 46. Use the bisect module for working with sorted lists:
 
 ```python
 import bisect
@@ -709,7 +709,7 @@ print(index)
 
 ```
 
-47. Use the itertools module for working with iterators:
+### 47. Use the itertools module for working with iterators:
 
 ```python
 import itertools
@@ -729,7 +729,7 @@ print(result)
 
 ```
 
-48. Use the functools module for working with functions:
+### 48. Use the functools module for working with functions:
 
 ```python
 import functools
@@ -747,7 +747,7 @@ print(add(5))
 
 ```
 
-49. Use the threading module for working with threads:
+### 49. Use the threading module for working with threads:
 
 ```python
 import threading
@@ -761,7 +761,7 @@ thread.start()
 thread.join()
 ```
 
-50. Use the os module for working with the operating system:
+### 50. Use the os module for working with the operating system:
 
 ```python
 import os
@@ -774,7 +774,7 @@ print("data" + os.sep + "input.txt")
 
 ```
 
-51. Use the shutil module for working with file objects:
+### 51. Use the shutil module for working with file objects:
 
 ```python
 import shutil
