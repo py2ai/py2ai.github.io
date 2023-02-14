@@ -9,16 +9,20 @@ summary:  Some good tips to use while writing python codes
 Hello friends! Below are some examples that you can use to write better codes.
 
 1. Use meaningful variable names:
+
 ```python
+
 # Good
 name = "John Doe"
 
 # Bad
 n = "John Doe"
+
 ```
 
 2. Write descriptive docstrings for functions and modules:
 ```python
+
 def greet(name):
     """This function greets the person passed in as a parameter"""
     print("Hello, " + name + ". How are you today?")
