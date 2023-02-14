@@ -8,7 +8,7 @@ summary:  Some good tips to use while writing python codes
 
 Hello friends! Below are some examples that you can use to write better codes.
 
-1. Use meaningful variable names:
+### 1. Use meaningful variable names:
 
 ```python
 
@@ -20,7 +20,7 @@ n = "John Doe"
 
 ```
 
-2. Write descriptive docstrings for functions and modules:
+### 2. Write descriptive docstrings for functions and modules:
 
 ```python
 
@@ -30,7 +30,7 @@ def greet(name):
 
 ```
 
-3. Use try-except blocks to handle exceptions:
+### 3. Use try-except blocks to handle exceptions:
 
 ```python
 try:
@@ -39,7 +39,7 @@ except Exception as e:
     # handle exception here
 ```
 
-4. Use the ‘with’ statement when working with files:
+### 4. Use the ‘with’ statement when working with files:
 
 ```python
 with open("file.txt", "r") as file:
