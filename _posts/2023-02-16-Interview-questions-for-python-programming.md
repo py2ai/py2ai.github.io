@@ -1,6 +1,6 @@
 ---
 layout: post
-title: One hundred interview questions for job interviews
+title: Interview questions for job interviews
 mathjax: true
 featured-img: 26072022-python-logo
 summary:  How to answer job interviews for Python related questions
@@ -140,8 +140,80 @@ Answer: A list comprehension creates a new list by evaluating an expression for 
 
 Answer: You can profile your Python code using the built-in cProfile module. This module provides a way to measure the execution time of each function in your code, and can help you identify performance bottlenecks.
 
+### How do you read a CSV file in Python?
+
+Answer: You can read a CSV file in Python using the built-in csv module. Here is an example:
+
+```pythonimport csv
+
+with open('my_file.csv') as csvfile:
+    reader = csv.reader(csvfile)
+    for row in reader:
+        print(row)
 
 
+```
 
+### How can you create a thread in Python?
+
+Answer: You can create a thread in Python by creating an instance of the Thread class from the threading module, and passing it a target function to execute. Here is an example:
+
+```python
+import threading
+
+def my_function():
+    print('Hello, world!')
+
+my_thread = threading.Thread(target=my_function)
+my_thread.start()
+
+```
+
+### What is a context manager in Python?
+
+Answer: You can handle exceptions in Python using the try-except statement. The try block contains the code that may raise an exception, and the except block contains the code that is executed if an exception is raised. Here is an example:
+
+```python
+try:
+    # some code that may raise an exception
+except SomeException as e:
+    # handle the exception
+
+```
+
+### How can you make a Python script executable on Linux?
+Answer: You can make a Python script executable on Linux by adding a shebang line at the beginning of the file that specifies the path to the Python interpreter. Here is an example:
+
+```python
+#!/usr/bin/env python
+
+# your Python code here
+
+```
+You also need to make the script file executable using the chmod command:
+
+```python
+$ chmod +x my_script.py
+
+```
+### How do you sort a dictionary by value in Python?
+
+Answer: You can sort a dictionary by value in Python using the sorted() function and a lambda function that returns the value of each key-value pair. Here is an example:
+
+```python
+my_dict = {'Alice': 25, 'Bob': 30, 'Charlie': 20}
+sorted_dict = {k: v for k, v in sorted(my_dict.items(), key=lambda item: item[1])}
+
+```
+
+### How can you debug a Python program?
+
+Answer: You can debug a Python program using the built-in pdb module, which provides a command-line debugger for Python. You can set breakpoints in your code, step through it line by line, inspect variables and expressions, and more. To use pdb, you simply import it and call the set_trace() function at the point in your code where you want to start debugging:
+
+```python
+import pdb
+
+pdb.set_trace()
+```
 
 
