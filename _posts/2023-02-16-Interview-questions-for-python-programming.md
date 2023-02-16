@@ -216,4 +216,42 @@ import pdb
 pdb.set_trace()
 ```
 
+### What is the difference between local and global variables in Python?
 
+Answer: A local variable is a variable that is defined inside a function and can only be accessed within that function. A global variable is a variable that is defined outside of any function and can be accessed from anywhere in the code. If a local variable and a global variable have the same name, the local variable takes precedence within the function.
+
+
+### How do you read and write to a file in Python?
+
+Answer: In Python, files can be opened using the built-in open function. To read from a file, you can use the read or readlines method of the file object. To write to a file, you can use the write or writelines method of the file object. After reading or writing, the file must be closed using the close method.
+
+### What is the difference between the is and == operators in Python?
+
+Answer: The is operator checks if two objects are the same object in memory, whereas the == operator checks if two objects have the same value. In other words, is compares object identity, and == compares object equality.
+
+### What is the difference between a set and a frozenset in Python?
+
+Answer: A set and a frozenset are both built-in data types in Python for storing a collection of unique elements. The key difference between them is that a set is mutable, while a frozenset is immutable.
+
+This means that a set can be modified by adding or removing elements, while a frozenset cannot be modified once it is created. To create a set, you can use curly braces {} or the set() function, and to create a frozenset, you can use the frozenset() function.
+
+Here is an example to illustrate the difference:
+
+```python
+# create a set
+my_set = {1, 2, 3}
+
+# add an element to the set
+my_set.add(4)
+
+# remove an element from the set
+my_set.remove(1)
+
+# create a frozenset
+my_frozenset = frozenset([1, 2, 3])
+
+# try to add an element to the frozenset (this will raise an error)
+my_frozenset.add(4)
+
+```
+In this example, we create a set my_set and add an element to it using the add() method. We also remove an element from the set using the remove() method. On the other hand, we create a frozenset my_frozenset using the frozenset() function, and then we try to add an element to it using the add() method, which raises an error because a frozenset is immutable and cannot be modified.
