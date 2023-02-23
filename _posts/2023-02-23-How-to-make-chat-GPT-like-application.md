@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How to compress GPT models
+title: How to make a chatGPT like application
 mathjax: true
 featured-img: 26072022-python-logo
 summary:  In this tutorial we will learn to compress GPT and make a working chat GPT app
