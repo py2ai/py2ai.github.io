@@ -39,7 +39,7 @@ There are various approaches to compressing GPT models, including:
 
 * Low-rank factorization: This involves decomposing the weight matrices of the model into lower-rank matrices, which reduces the number of parameters and computations required. This can be achieved using techniques such as singular value decomposition (SVD) or tensor decomposition.
 
-Grouped convolutions: This involves grouping the input and output channels of convolutional layers, which can reduce the number of parameters and computations required while preserving the spatial relationships between the features.
+* Grouped convolutions: This involves grouping the input and output channels of convolutional layers, which can reduce the number of parameters and computations required while preserving the spatial relationships between the features.
 
 Overall, model compression techniques can help reduce the computational and memory requirements of GPT models, making them more efficient and practical for deployment in resource-constrained environments.
 
@@ -150,7 +150,7 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 
 # Step 4 Run the app. on flask
 
-We will see in future
+Follow the Flask tutorial as a reference to deploy your chat app
 
 
 
