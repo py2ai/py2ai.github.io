@@ -128,11 +128,11 @@ opt-175b
 ```
 Each model has been trained on a large corpus of optimization problems and can be used to solve a wide range of optimization problems. The models vary in size and complexity, with opt-30b being the largest and most complex model with 175 billion parameters.
 
-# Step 3 Run the app.
+## Step 3 Run the app.
 
 `python3 apps/chatbot.py --model facebook/opt-1.3b`
 
-# output
+### output
 
 ```
 Human: Hello! What can you do?
@@ -144,9 +144,25 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 
 ```
 
-# Step 4 Run the app. on flask
+## Step 4 Run the app. on flask
 
 Follow the Flask tutorial as a reference to deploy your chat app
+
+# Major advantages of ChatGPT
+
+* Improved customer service: Companies can use ChatGPT to provide automated chatbot-based customer service, which can help them to quickly and efficiently handle customer inquiries, provide solutions to common issues, and improve the overall customer experience.
+
+* Enhanced customer engagement: By using ChatGPT, companies can engage with their customers in a more personalized and interactive way, which can help to build customer loyalty and improve brand recognition.
+
+* Increased efficiency: ChatGPT can help automate a wide range of tasks, including customer service, scheduling, and data entry. By automating these tasks, companies can free up valuable time and resources, which can help to improve overall productivity and efficiency.
+
+* Cost savings: By automating tasks and improving efficiency, ChatGPT can help companies reduce labor costs and improve overall profitability.
+
+* Better insights: ChatGPT can help companies analyze customer interactions and conversations to gain insights into customer behavior, preferences, and needs. This information can be used to improve products and services, as well as to develop more targeted marketing campaigns.
+
+
+
+
 
 
 
