@@ -49,13 +49,9 @@ Overall, model compression techniques can help reduce the computational and memo
 
 FlexGen is a method for compressing GPT (Generative Pre-trained Transformer) models, which was proposed in a research paper published by Facebook AI in 2021. The goal of FlexGen is to reduce the computational cost and memory footprint of GPT models without significantly affecting their performance.
 
-FlexGen is based on the idea of dynamically adjusting the model's architecture during inference based on the input sequence length. In traditional GPT models, the maximum sequence length is fixed during training and inference, which can lead to high computational and memory costs for long sequences. FlexGen addresses this issue by dividing the model into multiple stages, each optimized for a specific range of sequence lengths.
+FlexGen is based on the idea of dynamically adjusting the model's architecture during inference based on the input sequence length. In traditional GPT models, the maximum sequence length is fixed during training and inference, which can lead to high computational and memory costs for long sequences. FlexGen addresses this issue by dividing the model into multiple stages, each optimized for a specific range of sequence lengths. During inference, FlexGen selects the appropriate stage based on the length of the input sequence, and only computes the necessary layers for that stage. This reduces the computational and memory cost compared to a traditional GPT model that computes all layers for every input sequence.
 
-During inference, FlexGen selects the appropriate stage based on the length of the input sequence, and only computes the necessary layers for that stage. This reduces the computational and memory cost compared to a traditional GPT model that computes all layers for every input sequence.
-
-FlexGen also incorporates other model compression techniques such as weight pruning, quantization, and knowledge distillation to further reduce the size and computational cost of the model.
-
-Experimental results show that FlexGen can achieve significant speedup and memory savings compared to traditional GPT models, while maintaining similar or slightly improved performance on various language modeling benchmarks.
+FlexGen also incorporates other model compression techniques such as weight pruning, quantization, and knowledge distillation to further reduce the size and computational cost of the model. Experimental results show that FlexGen can achieve significant speedup and memory savings compared to traditional GPT models, while maintaining similar or slightly improved performance on various language modeling benchmarks.
 
 # Make the simple chat GPT like application
 
