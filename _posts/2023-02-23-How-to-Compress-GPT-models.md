@@ -130,7 +130,7 @@ Each model has been trained on a large corpus of optimization problems and can b
 
 # Step 3 Run the app.
 
-`python3 chatbot.py --model facebook/opt-1.3b`
+`python3 apps/chatbot.py --model facebook/opt-1.3b`
 
 # output
 
