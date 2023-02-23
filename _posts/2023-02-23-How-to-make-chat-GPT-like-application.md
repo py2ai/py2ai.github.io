@@ -7,7 +7,7 @@ summary:  In this tutorial we will learn to compress GPT and make a working chat
 ---
 
  
-Hello friends! Yes, it is possible to compress GPT models to reduce their size and computational complexity. Model compression techniques can be used to reduce the number of parameters and operations required by the model without significantly impacting its performance. But before that let's see what is GPT?
+Hello friends! Yes, it is possible to make a chat GPT like application by compressing the GPT models to reduce their size and computational complexity. Model compression techniques can be used to reduce the number of parameters and operations required by the model without significantly impacting its performance. But before that let's see what is GPT?
 
 # GPT (Generative Pre-trained Transformer)
 
