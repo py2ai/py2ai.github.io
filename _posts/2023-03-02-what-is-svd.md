@@ -128,3 +128,11 @@ Reconstructed matrix:
  [[2. 3.]
  [4. 1.]]
 ```
+
+Wait a minute so what is `@` operator doing there in python? Well, the @ symbol in `A_reconstructed = U @ Sigma @ Vt` is the matrix multiplication operator in Python. It was introduced in Python 3.5 as an infix operator for matrix multiplication.
+
+In the context of the SVD reconstruction, we use `@` to multiply the left-singular vectors matrix `U`, diagonal singular values matrix `Σ`, and right-singular vectors matrix `V^T` together to reconstruct the original matrix `A`.
+
+The @ operator is different from the `*` operator in Python, which performs element-wise multiplication for arrays and matrices. For example, if we have two NumPy arrays `A` and `B`, `A*B` will perform element-wise multiplication of the corresponding elements in `A` and `B`, whereas `A@B` will perform matrix multiplication of `A` and `B`. The `@` operator makes it easier and more intuitive to perform matrix multiplication in Python.
+
+
