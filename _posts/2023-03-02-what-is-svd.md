@@ -65,3 +65,5 @@ Reconstructed matrix:
  [[2.32163066 2.33739295]
  [3.60230401 1.47310253]]
 ```
+
+This code defines a 2x2 matrix A and then uses the np.linalg.svd() function from the NumPy library to perform the SVD on A. The resulting left-singular vectors U, singular values s, and right-singular vectors Vt are then used to reconstruct the original matrix A using the formula A = UΣV^T. The reconstructed matrix is then printed along with the original matrix and the SVD components.
