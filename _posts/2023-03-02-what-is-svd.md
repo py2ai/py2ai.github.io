@@ -79,7 +79,7 @@ In the example code above, the reconstructed matrix A_reconstructed might not be
 
 In summary, the reconstructed matrix A_reconstructed might not be exactly the same as the original matrix A due to the truncation of singular values. However, the reconstructed matrix should still capture the most important features of the original matrix.
 
-# How to get the better resconstruction of matrix A
+# How to get the better resconstruction of matrix A?
 
 To get a better reconstruction result, we can include more singular values in the reconstruction. Here's an example Python code that uses the first two singular values to reconstruct the matrix A:
 
