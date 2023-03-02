@@ -157,3 +157,19 @@ The Singular Value Decomposition (SVD) is a powerful tool in linear algebra that
 * Matrix approximation: SVD can be used to approximate a matrix by truncating the singular value decomposition at a certain rank, which can be useful in machine learning applications like matrix completion or recommender systems.
 
 So, the SVD is a powerful tool that has a wide range of applications in linear algebra, signal processing, machine learning, and many other fields. It is an essential tool for data analysts and researchers who need to analyze and manipulate high-dimensional data.
+
+# What are the disadvantages of SVD?
+
+While the Singular Value Decomposition (SVD) has many advantages, it also has some disadvantages, including:
+
+* Computational complexity: SVD can be computationally expensive for large matrices, especially for those with high dimensions. The time complexity of SVD is O(n^3), which can make it impractical for large-scale problems.
+
+* Memory requirements: SVD requires storing the entire input matrix, which can be a problem for very large matrices. This can limit the applicability of SVD in some cases.
+
+* Interpretability: While SVD can be used to reduce the dimensionality of data, the resulting reduced-dimension representation may not be easy to interpret or understand. This can be a problem for some applications where interpretability is important.
+
+* Sensitivity to outliers: SVD can be sensitive to outliers in the input data. This is because outliers can cause the singular values to be inflated, which can distort the results of the decomposition.
+
+* Lack of uniqueness: The SVD decomposition is not unique, which means that different decompositions can result in different left and right singular vectors and singular values. This can make it difficult to compare results across different decompositions.
+
+While SVD is a powerful tool with many applications, it is not without its limitations. It is important to carefully consider these limitations when deciding whether to use SVD for a particular problem or application.
