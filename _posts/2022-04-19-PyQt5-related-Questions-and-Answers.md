@@ -14,6 +14,7 @@ We will continue to update this page accordingly.
 _I found this Traceback (most recent call last): ImportError: cannot import name 'QtWebEngineWidgets'_
 ### Answer: 
 Highly recommended version is earlier not the latest if you find above trace back 'QtWebEngineWidgets'. Simply install exactly  `pip3 install PyQt5==5.15.2`
+`pip install pyqtwebengine`
 
 ### Question: 
 _I can't find the Qt designer app in windows? I just typed designer in cmd but have this error:_
