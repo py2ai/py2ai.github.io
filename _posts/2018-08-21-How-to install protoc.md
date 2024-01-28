@@ -34,22 +34,6 @@ Again you may have tried `brew link protobuf` which could probably lead to this:
 Note: Enter password of your Mac OS account in the popup window.
 
 
-<div id="html" markdown="0">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Face Detection API</title>
-    <link rel="stylesheet" href="css/styles.css" />
-  </head>
-  <body>
-    <video id="video" height="320" width="480" autoplay muted></video>
-
-    <script src="js/face-api.min.js"></script>
-    <script src="js/main.js"></script>
-  </body>
-</div>
-
-
 5) Add these two lines to the file and save it.
 
 `PATH="/Library/protoc-3/bin:${PATH}"`
