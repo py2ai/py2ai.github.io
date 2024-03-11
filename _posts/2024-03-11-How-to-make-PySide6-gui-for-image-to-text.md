@@ -7,6 +7,7 @@ summary:  Making an Image to Text based GUI with PySide6
 ---
 
 The Importance of PySide6: Transitioning from PyQt5
+
 In the realm of Python GUI (Graphical User Interface) development, libraries play a pivotal role in simplifying the creation of visually appealing and interactive applications. Among the various options available, PyQt5 and PySide6 stand out as two prominent choices. However, recent developments have underscored the significance of transitioning from PyQt5 to PySide6. In this blog post, we delve into the importance of PySide6 and guide developers through the process of migrating their codebase from PyQt5 to PySide6.
 
 
