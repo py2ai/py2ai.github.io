@@ -6,7 +6,7 @@ featured-img: 26072022-python-logo
 summary:  Making an Image to Text based GUI with PySide6
 ---
 
-The Importance of PySide6: Transitioning from PyQt5
+# The Importance of PySide6: Transitioning from PyQt5
 
 In the realm of Python GUI (Graphical User Interface) development, libraries play a pivotal role in simplifying the creation of visually appealing and interactive applications. Among the various options available, PyQt5 and PySide6 stand out as two prominent choices. However, recent developments have underscored the significance of transitioning from PyQt5 to PySide6. In this blog post, we delve into the importance of PySide6 and guide developers through the process of migrating their codebase from PyQt5 to PySide6.
 
@@ -313,7 +313,8 @@ sys.exit(app.exec())
 ```
 
 
-Why PySide6?
+# Why PySide6?
+
 1. Licensing Issues:
 PyQt5 is released under the GPL (General Public License) which mandates certain obligations if the software is used in proprietary applications. This has posed challenges for commercial projects. PySide6, on the other hand, is distributed under the more permissive LGPL (Lesser General Public License) and Apache 2.0, making it a preferred choice for commercial development.
 
