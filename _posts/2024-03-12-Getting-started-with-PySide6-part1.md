@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Getting Started with PySide6: Building Your First Simple GUI (Part 1)
+title: Building Your First Simple GUI (Part 1)
 mathjax: true
 featured-img: 26072022-python-logo
 summary: Learning PySide6 for GUI development
