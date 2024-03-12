@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Learn how to make PySide6 based GUI from PyQt5
+title: How to make PySide6 based GUI
 mathjax: true
 featured-img: 26072022-python-logo
 summary:  Making an Image to Text based GUI with PySide6
