@@ -69,7 +69,7 @@ Let's break down the code step by step:
 
 To run the application, save the code to a file (e.g., simple_gui.py) and execute it using Python:
 
-`python simple_gui.py`
+`python lab1.py`
 
 You should see a window with a button labeled "Click Me!". Clicking the button will display a message box with the text "Hello, PySide6!".
 
