@@ -9,13 +9,6 @@ summary:  Guess a country name
 In this tutorial, we'll create a graphical user interface (GUI) application using PySide6, a Python binding for the Qt toolkit. Our application will display flags of random countries, and the user will have to guess the name of the country. We'll utilize the flagpy library to fetch flag images and country names. Let's dive into the step-by-step process of building this game.
 
 
-<br>
-<div align="center">
-<iframe src="https://youtube.com/shorts/SiFrxOY2KqU?si=rNDUGf8Nbihedw73" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-</iframe>
-</div>
-<br>
-
 # Prerequisites
 
 Before starting, ensure you have the following installed:
@@ -44,7 +37,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QV
 from PySide6.QtGui import QPixmap, QImage, Qt
 from flagpy import get_country_list, get_flag_img
 import numpy as np
-
+np.random.seed(1)
 class RandomCountryFlagApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -77,6 +70,8 @@ class RandomCountryFlagApp(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+        self.checked_in = []
+        self.display_random_flag()
 
 ```
 
@@ -89,24 +84,25 @@ Next, let's implement the functionality to display random flags when the applica
 {% include codeHeader.html %}
 ```python
     def display_random_flag(self):
-        countries = get_country_list()
+            countries = get_country_list()
+            while True:
+                random_index = np.random.randint(0, len(countries))
+                if (random_index not in self.checked_in):
+                    self.checked_in.append(random_index)
+                    break
+                if len(self.checked_in) == len(countries):
+                    
+                    break
+                    
+            
+            
+            self.current_country = countries[random_index]
+            flag_image = get_flag_img(self.current_country)
+            qt_image = QImage(flag_image.tobytes(), flag_image.width, flag_image.height, flag_image.width * 3, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(qt_image)
+            self.flag_label.setPixmap(pixmap)
+            self.name_label.clear()
 
-        while True:
-            random_index = np.random.randint(0, len(countries))
-            if random_index not in self.checked_in:
-                self.checked_in.append(random_index)
-                break
-            if len(self.checked_in) == len(countries):
-                # Reset checked_in list if all flags have been shown
-                self.checked_in = []
-                break
-        
-        self.current_country = countries[random_index]
-        flag_image = get_flag_img(self.current_country)
-        qt_image = QImage(flag_image.tobytes(), flag_image.width, flag_image.height, flag_image.width * 3, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qt_image)
-        self.flag_label.setPixmap(pixmap)
-        self.name_label.clear()
 
 ```
 
