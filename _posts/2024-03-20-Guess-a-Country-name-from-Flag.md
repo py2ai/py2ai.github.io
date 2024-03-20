@@ -11,7 +11,7 @@ In this tutorial, we'll create a graphical user interface (GUI) application usin
 
 <br>
 <div align="center">
-<iframe width="315" height="560" src="https://youtube.com/shorts/SiFrxOY2KqU?si=rNDUGf8Nbihedw73" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+<iframe src="https://youtube.com/shorts/SiFrxOY2KqU?si=rNDUGf8Nbihedw73" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
 </iframe>
 </div>
 <br>
