@@ -21,6 +21,7 @@ print(phrase[::-1])
 !dlrow ,eybdooG
 """
 ```
+
 Python indexing allows users to access a subset of a sequence. The index represents the position of an element in the sequence. While mutable sequences allow slicing for data extraction and modification, attempting to modify slices of immutable sequences raises a TypeError.
 
 The slicing format in Python is sequence`[start:stop:step]`. If no values are specified for start, stop, and step, the sequence defaults to:
@@ -50,6 +51,7 @@ print(f"Swapped: {x, y}")
 Swapped: (5, 12)
 """
 ```
+
 In Python, unpacking iterables into variables via automatic unpacking enables simultaneous assignment in a single line. Similarly, using the * operator allows collecting multiple values into a single variable, known as packing. The combination of automatic packing and unpacking gives rise to simultaneous assignment, streamlining the process of assigning values to multiple variables.
 
 # 3. Set vs. List
@@ -67,8 +69,9 @@ print(f"List size: {sys.getsizeof(list_)} bytes")
 Set size: 232 bytes
 List size: 144 bytes
 """
-While both sets and lists in Python are iterable and permit indexing, tuples offer distinct advantages over lists. Lists are mutable, allowing modifications, while tuples are immutable, preventing alterations and making them more memory-efficient. Tuples also offer faster performance compared to lists, making them preferable in scenarios where data immutability is desired.
 ```
+While both sets and lists in Python are iterable and permit indexing, tuples offer distinct advantages over lists. Lists are mutable, allowing modifications, while tuples are immutable, preventing alterations and making them more memory-efficient. Tuples also offer faster performance compared to lists, making them preferable in scenarios where data immutability is desired.
+
 
 # 4. Generator Functions
 {% include codeHeader.html %}
@@ -83,8 +86,9 @@ print(b)
 [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
 <generator object <genexpr> at 0x7f61f8808b50>
 """
-List comprehensions serve as a pythonic way of generating lists from iterables, offering faster performance than traditional for loops. However, substituting square brackets [ ] with parentheses ( ) inadvertently creates a generator object, leveraging lazy evaluation to generate elements upon request, thereby conserving memory.
 ```
+List comprehensions serve as a pythonic way of generating lists from iterables, offering faster performance than traditional for loops. However, substituting square brackets [ ] with parentheses ( ) inadvertently creates a generator object, leveraging lazy evaluation to generate elements upon request, thereby conserving memory.
+
 
 # 5. Object Aliasing
 {% include codeHeader.html %}
