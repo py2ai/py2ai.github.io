@@ -96,6 +96,47 @@ def computer_move(board):
 Finally, we'll combine everything into the main function that handles the game flow, alternating turns between the user and the computer.
 {% include codeHeader.html %}
 ```python
+import random
+
+def print_board(board):
+    for row in board:
+        print(" | ".join(row))
+        print("-" * 5)
+
+def check_win(board, player):
+    # Check rows
+    for row in board:
+        if all([spot == player for spot in row]):
+            return True
+
+    # Check columns
+    for col in range(3):
+        if all([board[row][col] == player for row in range(3)]):
+            return True
+
+    # Check diagonals
+    if all([board[i][i] == player for i in range(3)]):
+        return True
+    if all([board[i][2 - i] == player for i in range(3)]):
+        return True
+
+    return False
+
+def check_draw(board):
+    return all([spot in ['X', 'O'] for row in board for spot in row])
+
+def get_empty_positions(board):
+    empty_positions = []
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] == " ":
+                empty_positions.append((row, col))
+    return empty_positions
+
+def computer_move(board):
+    empty_positions = get_empty_positions(board)
+    return random.choice(empty_positions)
+
 def tic_tac_toe():
     board = [[" " for _ in range(3)] for _ in range(3)]
     current_player = "X"  # User is 'X', computer is 'O'
@@ -132,6 +173,7 @@ def tic_tac_toe():
 
 if __name__ == "__main__":
     tic_tac_toe()
+
 ```
 
 Running the Game
