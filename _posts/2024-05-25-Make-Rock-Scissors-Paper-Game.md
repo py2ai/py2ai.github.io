@@ -53,22 +53,22 @@ if __name__ == "__main__":
 
 # Explanation
 
-Import the random module:
-
+### Import the random module:
 This module is used to generate random choices for the computer.
-Define the rock_paper_scissors function:
 
+### Define the rock_paper_scissors function:
 This function contains the logic of the game.
-Welcome Message:
 
+### Welcome Message:
 Print a welcome message and instructions for the user.
-Define Possible Choices:
 
+### Define Possible Choices:
 Create a list choices containing the valid choices: 'rock', 'paper', and 'scissors'.
-Main Game Loop:
 
+### Main Game Loop:
 Use a while True loop to continuously prompt the user for their choice.
-Inside the loop:
+
+### Inside the loop:
 Get the user's choice and convert it to lowercase for consistency.
 If the user enters 'quit', exit the game.
 If the user enters an invalid choice, prompt them again.
@@ -76,13 +76,15 @@ Generate the computer's choice using random.choice(choices).
 Print the computer's choice.
 Determine the winner using conditional statements.
 Print the result (win, lose, or tie).
-Exit Condition:
 
+### Exit Condition:
 The loop exits when the user types 'quit'.
-Check if the Script is Running Directly:
+
+### Check if the Script is Running Directly:
 
 Use if `__name__ == "__main__"`: to ensure the game runs when the script is executed directly.
-Running the Game
+
+# Running the Game
 To play the game, simply run the script in a Python environment.
 The user will be prompted to enter their choice of 'rock', 'paper', or 'scissors'. The computer will then randomly select one of the three options, and the game will determine and display the result.
 The game will continue until the user types 'quit' to exit.
