@@ -205,6 +205,178 @@ We add logic to restart the game when the 'R' key is pressed:
         game_over = False
 ```
 
+### Complete code:
+Here we have the full code with updated key and mouse click functionality.
+{% include codeHeader.html %}
+```python
+import pygame
+import random
+import os
+# Initialize Pygame
+pygame.init()
+
+# Constants
+WIDTH, HEIGHT = 800, 600
+FPS = 60
+GRAVITY = 0.5
+FLAP_STRENGTH = -10
+OBSTACLE_WIDTH = 70
+OBSTACLE_GAP = 200
+OBSTACLE_SPEED = 5
+UPWARD_SPEED = -5
+DOWNWARD_SPEED = 5
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+SKY_BLUE = (135, 206, 235)  # Define sky blue color
+GREY = (169, 169, 169)
+
+# Set up the display
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Copter Game")
+
+# Game variables
+helicopter_rect = pygame.Rect(100, HEIGHT // 2, 42, 28)  # Reduce size to 70%
+velocity = 0
+obstacles = []
+score = 0
+game_over = False
+
+# Fonts
+font = pygame.font.Font(None, 36)
+
+def draw_helicopter(rect):
+    pygame.draw.ellipse(screen, WHITE, rect)
+    cockpit_rect = pygame.Rect(rect.x + 24, rect.y + 7, 16, 7)
+    pygame.draw.ellipse(screen, BLUE, cockpit_rect)
+    top_rotor_rect = pygame.Rect(rect.x - 33, rect.y - 8, rect.width + 66, 6)
+    pygame.draw.ellipse(screen, SKY_BLUE, top_rotor_rect)
+    rotor_block_rect = pygame.Rect(rect.x + rect.width // 2 - 2, rect.y, 4, 4)
+    pygame.draw.rect(screen, SKY_BLUE, rotor_block_rect)
+    pygame.draw.rect(screen, GREY, (rect.x - 28, rect.y + rect.height // 4, 28, 7))
+    pygame.draw.rect(screen, SKY_BLUE, (rect.x - 35, rect.y + rect.height // 4 - 4, 7, 14))
+    pygame.draw.rect(screen, SKY_BLUE, (rect.x + 7, rect.y + rect.height - 3, rect.width - 14, 3))
+    pygame.draw.rect(screen, SKY_BLUE, (rect.x + 3, rect.y + rect.height, 3, 6))
+    pygame.draw.rect(screen, SKY_BLUE, (rect.x + rect.width - 7, rect.y + rect.height, 3, 6))
+    pygame.draw.rect(screen, SKY_BLUE, (rect.x - 3, rect.y + rect.height + 5, rect.width + 5, 3))
+
+
+# Function to create new obstacles
+def create_obstacle():
+    y = random.randint(100, HEIGHT - 100 - OBSTACLE_GAP)
+    top_rect = pygame.Rect(WIDTH, 0, OBSTACLE_WIDTH, y)
+    bottom_rect = pygame.Rect(WIDTH, y + OBSTACLE_GAP, OBSTACLE_WIDTH, HEIGHT - (y + OBSTACLE_GAP))
+    return top_rect, bottom_rect
+
+def draw_obstacles(obstacles):
+    for top_rect, bottom_rect in obstacles:
+        pygame.draw.rect(screen, GREEN, top_rect)
+        pygame.draw.rect(screen, GREEN, bottom_rect)
+
+def reset_game():
+    global helicopter_rect, velocity, obstacles, score, game_over
+    helicopter_rect.y = HEIGHT // 2
+    velocity = 0
+    obstacles.clear()
+    score = 0
+    game_over = False
+    
+# Function to load top score from file
+def load_top_score():
+    if os.path.exists('top_score.txt'):
+        with open('top_score.txt', 'r') as file:
+            return int(file.read().strip())
+    else:
+        return 0
+
+# Function to save top score to file
+def save_top_score(score):
+    with open('top_score.txt', 'w') as file:
+        file.write(str(score))
+
+
+# Load top score at the start of the game
+top_score = load_top_score()
+# Main game loop
+clock = pygame.time.Clock()
+click_flag = False
+while True:
+    clock.tick(FPS)
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+    
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Check if left mouse button clicked
+                click_flag = True
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:  # Check if left mouse button released
+                click_flag = False
+
+    keys = pygame.key.get_pressed()
+    if not game_over:
+        if keys[pygame.K_UP] or click_flag==True:
+            velocity = 0.5 * UPWARD_SPEED
+            
+        elif keys[pygame.K_DOWN]:
+            velocity = DOWNWARD_SPEED
+            
+        else:
+            velocity += GRAVITY
+            
+
+        # Apply gravity and control
+        helicopter_rect.y += velocity
+        
+        # Check for collisions with screen boundaries
+        if helicopter_rect.top < 0 or helicopter_rect.bottom > HEIGHT:
+            game_over = True
+        
+        # Move and create obstacles
+        for obstacle in obstacles:
+            obstacle[0].x -= OBSTACLE_SPEED
+            obstacle[1].x -= OBSTACLE_SPEED
+        if len(obstacles) == 0 or obstacles[-1][0].x < WIDTH - 300:
+            obstacles.append(create_obstacle())
+        if obstacles[0][0].x < -OBSTACLE_WIDTH:
+            obstacles.pop(0)
+            score += 1
+        
+        # Check for collisions with obstacles
+        for top_rect, bottom_rect in obstacles:
+            if helicopter_rect.colliderect(top_rect) or helicopter_rect.colliderect(bottom_rect):
+                game_over = True
+    
+    # Draw everything
+    screen.fill(BLACK)
+    draw_helicopter(helicopter_rect)
+    draw_obstacles(obstacles)
+    
+    if score>top_score:
+        top_score = score
+        save_top_score(top_score)
+    # Display score
+    score_text = font.render(f"Score: {score}", True, SKY_BLUE)
+    screen.blit(score_text, (10, 10))
+    top_score_text = font.render(f"Top Score: {top_score}", True, SKY_BLUE)
+    screen.blit(top_score_text, (10, 40))
+    
+    if game_over:
+        game_over_text = font.render("Game Over! Click to Restart!", True, WHITE)
+        screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
+        
+        if keys[pygame.K_UP] or  click_flag==True:
+            reset_game()
+    
+    pygame.display.flip()
+
+```
 # Conclusion
 Congratulations! You have created a simple helicopter game using Pygame. This tutorial covered the basics of setting up a game window, handling user input, rendering graphics, and managing game states. With these foundations, you can further enhance the game by adding new features such as sound effects, advanced graphics, and more complex obstacle patterns.
 
