@@ -4,7 +4,7 @@ title: Transfer video over sockets from multiple clients and save at server side
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: mclients
-summary: Save videos from multiple clients at server side
+description: Save videos from multiple clients at server side
 ---
 
 <br>
