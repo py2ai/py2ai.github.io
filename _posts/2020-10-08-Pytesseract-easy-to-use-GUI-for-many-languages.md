@@ -4,7 +4,7 @@ title: How to make an image to text converter GUI in Python
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt8
-summary: Making a GUI to extract text of various languages by using the trained model of the specific language
+description: Making a GUI to extract text of various languages by using the trained model of the specific language
 ---
 
 
