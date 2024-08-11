@@ -4,7 +4,7 @@ title: Socket programming to send and receive webcam video
 categories: [tutorial series]
 mathjax: true
 featured-img: server
-summary: This code will demonstrate the server client modules to transmit and receive video over wifi
+description: This code will demonstrate the server client modules to transmit and receive video over wifi
 ---
 
 <br>
