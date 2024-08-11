@@ -3,7 +3,7 @@ layout: post
 title: Learn Python Tips and Tricks Part 01
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Learn Python with Examples
+description:  Learn Python with Examples
 ---
 
 Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. 
