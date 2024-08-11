@@ -3,7 +3,7 @@ layout: post
 title: How to stream two videos in PyQt5 GUI
 mathjax: true
 featured-img: pyqt5-two-video-gui2
-summary:  This tutorial is about gui development with PyQt5 and OpenCV
+description:  This tutorial is about gui development with PyQt5 and OpenCV
 ---
 Hi friends following is the code for Part 17 of the PyQt5 learning series.
 
