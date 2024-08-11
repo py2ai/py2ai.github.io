@@ -3,7 +3,7 @@ layout: post
 title: Let's build a simple "word game inspired by Scrabble"
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  make a scrabble game in python
+description:  make a scrabble game in python
 ---
 
 In this tutorial, we'll create a simple word game inspired by Scrabble that you can play via the command line. The game will allow two players to take turns forming words from a set of randomly chosen letters. The goal is to score the highest points by creating valid words.
