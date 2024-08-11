@@ -4,7 +4,7 @@ title: How to track Mario in Python
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: mario
-summary: This code will track Mario game character using opencv and python
+description: This code will track Mario game character using opencv and python
 ---
 
 <br>
