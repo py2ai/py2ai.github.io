@@ -4,7 +4,7 @@ title: How to send audio from a client computer to a server over the wifi
 categories: [Python learning series]
 mathjax: true
 featured-img: ctos
-summary: This tutorial is about using socket programming to send audio data from Microphone of client to the server.
+description: This tutorial is about using socket programming to send audio data from Microphone of client to the server.
 ---
 Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket programming.
 
