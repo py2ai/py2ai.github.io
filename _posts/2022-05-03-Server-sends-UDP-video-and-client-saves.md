@@ -4,7 +4,7 @@ title: How to send video over UDP socket and save it as MP4 at client side
 categories: [Socket Programming Series]
 mathjax: true
 featured-img: pythonudp1
-summary: This tutorial is about using OpenCv and UDP sockets for server-client video transfer and saving MP4 at client
+description: This tutorial is about using OpenCv and UDP sockets for server-client video transfer and saving MP4 at client
 ---
 
 
