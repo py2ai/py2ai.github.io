@@ -3,7 +3,7 @@ layout: post
 title:  Building a Tic-Tac-Toe Game in Python!
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Learn python with fun!
+description:  Learn python with fun!
 ---
 
 # Building a Tic-Tac-Toe Game in Python
