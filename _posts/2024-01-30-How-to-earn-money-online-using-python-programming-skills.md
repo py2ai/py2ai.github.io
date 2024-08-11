@@ -3,7 +3,7 @@ layout: post
 title: How to earn money online using python programming 
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Quick tips for online earning
+description:  Quick tips for online earning
 ---
 
 
