@@ -4,7 +4,7 @@ title: How to install protobuf on Mac OS
 categories: [tutorial]
 featured-img: protobufinstalll
 mathjax: true
-summary: A quick tutorial to install protoc for tensorflow
+description: A quick tutorial to install protoc for tensorflow
 ---
 
 
