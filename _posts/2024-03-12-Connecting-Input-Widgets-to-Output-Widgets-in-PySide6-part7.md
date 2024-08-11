@@ -3,7 +3,7 @@ layout: post
 title: Interacting with Output Widgets Using Input Widgets in PySide6 (Part 7)
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Control the Progress bar with Slider widget and more
+description:  Control the Progress bar with Slider widget and more
 ---
 
 
