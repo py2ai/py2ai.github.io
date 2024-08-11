@@ -3,7 +3,7 @@ layout: post
 title: Python tips and tricks you must know!
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Python tips and tricks
+description:  Python tips and tricks
 ---
 
 Python programming skills have seen a surge in demand lately. To assist you in honing your Python coding prowess, we've compiled some nifty Python techniques you can employ to enhance your code. Consider learning one new trick each day for the next month, and peruse our guide on Python best practices to ensure your code stands out.
