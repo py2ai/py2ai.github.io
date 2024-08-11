@@ -3,7 +3,7 @@ layout: post
 title: Python Application Frameworks That Boost Your Job Prospects
 mathjax: true
 featured-img: 26072022-python-logo
-summary: Good for Job prospects
+description: Good for Job prospects
 ---
 
 # Python Application Frameworks That Boost Your Job Prospects
