@@ -3,7 +3,7 @@ layout: post
 title: Fourty important tips to write better python code
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Quick tips for better python codes.
+description:  Quick tips for better python codes.
 ---
 
 # Tips to write better python codes
