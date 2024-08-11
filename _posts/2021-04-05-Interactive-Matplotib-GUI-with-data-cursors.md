@@ -4,7 +4,7 @@ title: Interactive Matplotlib GUI with data cursors
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: datacursor
-summary:  Matplotlib GUI with data cursors showing values where you click
+description:  Matplotlib GUI with data cursors showing values where you click
 ---
 
 Hello friends! I hope you are doing great with the PyQt5 learning series. Thank you for your valuable comments and appreciation. Alright, let's discuss today's GUI, which is a continuation of our previous Matplotlib based GUI series. Today we will use the GUI of part 15 and integrate the exciting yet straightforward feature of the data cursor. It means that whenever the user clicks on the plot, a small label window will popup on the canvas showing the x and y data.
