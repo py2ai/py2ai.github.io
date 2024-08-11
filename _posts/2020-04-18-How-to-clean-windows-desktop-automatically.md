@@ -4,7 +4,7 @@ title: How to automatically arrange the desktop icons
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: desktop
-summary: This code will arrange files in folders according to their extension to keep windows desktop nice and tidy
+description: This code will arrange files in folders according to their extension to keep windows desktop nice and tidy
 ---
 
 <br>
