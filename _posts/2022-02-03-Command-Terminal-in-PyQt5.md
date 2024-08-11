@@ -4,7 +4,7 @@ title: PytQt5 terminal console
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pexels-negative-space-97077
-summary: A simple PyQt5 terminal
+description: A simple PyQt5 terminal
 ---
 Hi friends, this quick intro is about the Terminal console using PyQt5. The code is self explanatory. We will use two Widgets as small windows in the main gui namely,
 `self.cmdWindow` and `self.textWindow`. The former is responsible for entering the commands and the later is for displaying the output as the user will press Enter key.
