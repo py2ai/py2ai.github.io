@@ -4,7 +4,7 @@ title: UDP Single server to multiple clients
 featured-img: udp_single_s_multiple_c
 mathjax: true
 toc: true
-summary:  This tutorial is about streaming real-time video to multiple clients over UDP
+description:  This tutorial is about streaming real-time video to multiple clients over UDP
 ---
 
 Hi friends! Here is the UDP based single server and multiple clients. For more details visit UDP basic server client tutorial at pyshine.com
