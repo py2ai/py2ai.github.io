@@ -4,7 +4,7 @@ title: PytQt5 GUI design to plot Live audio data from Microphone
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: audiolive
-summary: How to make a GUI using PyQt5 and Matplotlib to plot real-time data
+description: How to make a GUI using PyQt5 and Matplotlib to plot real-time data
 ---
 
 <br>
