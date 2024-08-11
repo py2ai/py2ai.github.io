@@ -4,7 +4,7 @@ title: How to read and write in xlsx file using python
 categories: [Python tutorial series]
 mathjax: true
 featured-img: xls
-summary: A quick tutorial on Microsoft Excel .xlsx file operations in python
+description: A quick tutorial on Microsoft Excel .xlsx file operations in python
 ---
 
 
