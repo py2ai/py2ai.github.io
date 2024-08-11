@@ -3,7 +3,7 @@ layout: post
 title: Exploring Tab Widgets in PySide6 (Part 4)
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Playing with Tab widgets 
+description:  Playing with Tab widgets 
 ---
 
 In this tutorial, we'll delve into the usage of tab widgets in PySide6 to create a multi-tabbed graphical user interface (GUI). Tab widgets allow us to organize content into multiple tabs, making it easier for users to navigate between different sections of an application. We'll build a simple example application to demonstrate how to create and customize tab widgets in PySide6.
