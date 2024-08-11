@@ -3,7 +3,7 @@ layout: post
 title: What are NP problems
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Can we solve NP problems?
+description:  Can we solve NP problems?
 ---
 
 Hello friends! Lets first talk about NP problems and then get to the coding part.
