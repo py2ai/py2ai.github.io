@@ -3,7 +3,7 @@ layout: post
 title: Building a Calculator Application with PySide6 (Part 2)
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Beyond the Basics
+description:  Beyond the Basics
 ---
 
 
