@@ -3,7 +3,7 @@ layout: post
 title: Importance of One Hot Encoding
 categories: [tutorial]
 mathjax: true
-summary: Why One Hot Encoding is important for Neural Netwoks
+description: Why One Hot Encoding is important for Neural Netwoks
 ---
 
 ## What is ONE HOT ENCODING?
