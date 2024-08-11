@@ -4,7 +4,7 @@ title: How to make a calculator GUI in python with PyQt5
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: calc
-summary: Making a simple calculator
+description: Making a simple calculator
 ---
 Hi friends! this tutorial is about making a calculator application in PyQt5. The calc.ui file contains information about the gui and main.py is all about the calculator functionality. Copy both the calc.ui and main.py files in a directory and open the terminal and cd to the directory containing both files.
 Run `python3 main.py` and calc application will start.
