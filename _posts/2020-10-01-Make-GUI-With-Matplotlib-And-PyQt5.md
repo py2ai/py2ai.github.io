@@ -4,7 +4,7 @@ title: How to make a Matplotlib and PyQt5 based GUI
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt6
-summary: Making a matplotlib GUI with multiple themes
+description: Making a matplotlib GUI with multiple themes
 ---
 
 Hello friends, here is the code for the simple matplotlib GUI. Save it as main.py and run it to load the csv files. Enjoy, and do 
