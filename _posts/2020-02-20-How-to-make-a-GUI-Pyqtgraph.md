@@ -4,7 +4,7 @@ title: Making Python GUI for sine and cosine
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: gui
-summary: A quick tutorial on pyqtgraph GUI
+description: A quick tutorial on pyqtgraph GUI
 ---
 
 
