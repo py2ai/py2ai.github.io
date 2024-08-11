@@ -4,7 +4,7 @@ title: How to make a Matplotlib and PyQt5 based GUI with drag and drop the CSV f
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt7
-summary: Making a drag drop CSV file based matplotlib GUI with multiple themes
+description: Making a drag drop CSV file based matplotlib GUI with multiple themes
 ---
 
 
