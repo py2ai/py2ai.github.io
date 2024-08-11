@@ -4,7 +4,7 @@ title: Faster and accurate object tracking in Python
 categories: [tutorial series]
 mathjax: true
 featured-img: Slide1
-summary: This code will demonstrate opencv based object tracking using the CSRT 
+description: This code will demonstrate opencv based object tracking using the CSRT 
 ---
 <br>
 <div align="center">
