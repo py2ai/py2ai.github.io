@@ -3,7 +3,7 @@ layout: post
 title: Let's build a simple "Battleship" game
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  make a battleship game in python
+description:  make a battleship game in python
 ---
 
 In this tutorial, we'll create a simple Battleship game that you can play via the command line. Battleship is a classic two-player game where players take turns guessing the locations of the opponent's ships on a grid.
