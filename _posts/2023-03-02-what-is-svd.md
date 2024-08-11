@@ -3,7 +3,7 @@ layout: post
 title: What is SVD 
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  In this tutorial we will learn what is Singular Value Decomposition (SVD) and run it in python
+description:  In this tutorial we will learn what is Singular Value Decomposition (SVD) and run it in python
 ---
 
 # Singular Value Decomposition
