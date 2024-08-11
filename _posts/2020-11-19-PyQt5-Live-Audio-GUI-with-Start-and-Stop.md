@@ -4,7 +4,7 @@ title: PytQt5 Live Audio GUI with start and stop buttons
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: audiolive2
-summary: How to stop a thread in managed by the QThreadPool in PyQt5
+description: How to stop a thread in managed by the QThreadPool in PyQt5
 ---
 <br>
 <div align="center">
