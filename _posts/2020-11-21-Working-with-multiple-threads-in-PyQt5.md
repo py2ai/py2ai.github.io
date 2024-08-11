@@ -4,7 +4,7 @@ title: Working with multiple threads in PyQt5
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: threadspy
-summary: How to start and stop QThread in PyQt5
+description: How to start and stop QThread in PyQt5
 ---
 
 <br>
