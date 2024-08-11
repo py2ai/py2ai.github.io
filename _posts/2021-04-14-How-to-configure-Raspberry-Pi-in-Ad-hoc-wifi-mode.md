@@ -4,7 +4,7 @@ title: How to configure Raspberry Pi in Ad hoc wifi mode
 categories: [Raspberry Pi Programming Series]
 mathjax: true
 featured-img: jeep02
-summary:  This tutorial is about configuring RPi in Ad hoc interface
+description:  This tutorial is about configuring RPi in Ad hoc interface
 ---
 
 Hi friends! Today's tutorial is Part 02 of the Raspberry Pi (RPi) learning series. In this, you will learn how to configure your RPi device in Ad hoc mode or infrastructure-less mode. Yes, that means without any requirement of a wifi router.  That is a significant advantage of Ad hoc mode because it gives us the wifi-router freedom, and a dedicated point-to-point link provides lower latency, which is the best choice for the FPV systems.
