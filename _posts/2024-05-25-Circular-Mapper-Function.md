@@ -3,7 +3,7 @@ layout: post
 title: What is a Circular or Ring mapper function
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  make a circular list in python
+description:  make a circular list in python
 ---
 
 The `circular_mapper` function is a utility designed to generate a list of numbers based on a given index (`idx`) within a circular range (`N`). This function is particularly useful in scenarios where cyclic or circular data structures are used, such as in circular buffers, ring networks, or any system where wrap-around behavior is essential. Here's a detailed explanation of its importance and how it works.
