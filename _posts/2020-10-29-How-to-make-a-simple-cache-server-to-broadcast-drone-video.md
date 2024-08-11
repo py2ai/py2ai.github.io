@@ -4,7 +4,7 @@ title: A simple cache-server to broadcast video to clients
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: drone
-summary: How to broadcast drone video to multiple clients using a cache-server in Python
+description: How to broadcast drone video to multiple clients using a cache-server in Python
 ---
 
 <br>
