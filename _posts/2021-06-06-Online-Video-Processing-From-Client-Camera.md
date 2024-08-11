@@ -4,7 +4,7 @@ title: How to perform online video processing from the client's camera
 categories: [Tutorial Series]
 mathjax: true
 featured-img: flasklipsonlinelogo
-summary:  This tutorial is about obtaining live frames of a client's camera, process it and provide result back to the client
+description:  This tutorial is about obtaining live frames of a client's camera, process it and provide result back to the client
 ---
 
 Hi friends, hope you are doing great! Today's tutorial is about using Flask, Socket.io and JavaScript, to obtain frames from a client's camera, then process it
