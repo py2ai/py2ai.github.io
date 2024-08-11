@@ -4,7 +4,7 @@ title: Transfer video over sockets from multiple clients
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: mclients
-summary: Socket programming with multiple clients and OpenCV in Python
+description: Socket programming with multiple clients and OpenCV in Python
 ---
 
 <br>
