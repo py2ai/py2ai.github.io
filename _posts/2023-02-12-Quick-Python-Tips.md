@@ -3,7 +3,7 @@ layout: post
 title: Good python coding examples for the software development
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Some good tips to use while writing python codes
+description:  Some good tips to use while writing python codes
 ---
 
 Hello friends! Below are some examples that you can use to write better codes.
