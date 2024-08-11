@@ -4,7 +4,7 @@ title: Lab4 Training regression model and Epochs
 categories: [Keras tutorial series]
 mathjax: true
 featured-img: keras
-summary: A quick tutorial on Keras Regression
+description: A quick tutorial on Keras Regression
 ---
 
 
