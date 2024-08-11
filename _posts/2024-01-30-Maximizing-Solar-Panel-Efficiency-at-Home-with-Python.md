@@ -3,7 +3,7 @@ layout: post
 title: Maximizing Solar Panel Efficiency at Home with Python
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Maximizing Solar Panel Efficiency at Home with Python
+description:  Maximizing Solar Panel Efficiency at Home with Python
 ---
 # Maximizing Solar Panel Efficiency at Home with Python: A Money-Saving Approach
 
