@@ -4,7 +4,7 @@ title: Basic Coding in TensorFlow
 categories: [tutorial]
 featured-img: TensorFlow
 mathjax: true
-summary: Lets code in TensorFlow
+description: Lets code in TensorFlow
 ---
 
 Before we proceed the basic coding, please note that according to the tensorflow 1.0.0 release notes,
