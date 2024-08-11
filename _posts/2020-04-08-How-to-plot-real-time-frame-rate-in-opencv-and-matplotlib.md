@@ -4,7 +4,7 @@ title: How to plot realtime frame rate of a web camera
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: face_youtube
-summary: Making of an OpenCV and Matplotlib data processing and visualization in Python
+description: Making of an OpenCV and Matplotlib data processing and visualization in Python
 ---
 
 
