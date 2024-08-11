@@ -3,7 +3,7 @@ layout: post
 title: Creating a Guess Country from Flag Game in Python (Part 7)
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Guess a country name
+description:  Guess a country name
 ---
 
 In this tutorial, we'll create a graphical user interface (GUI) application using PySide6, a Python binding for the Qt toolkit. Our application will display flags of random countries, and the user will have to guess the name of the country. We'll utilize the flagpy library to fetch flag images and country names. Let's dive into the step-by-step process of building this game.
