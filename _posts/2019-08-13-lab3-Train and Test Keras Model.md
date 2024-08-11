@@ -4,7 +4,7 @@ title: Lab3 Train and Test Keras Model
 categories: [Keras tutorial series]
 mathjax: true
 featured-img: keras
-summary: A quick tutorial series on Keras
+description: A quick tutorial series on Keras
 ---
 
 
