@@ -4,7 +4,7 @@ title: How to make screen recorder in PyQt5
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: screen
-summary: Making of an audio and video screen recorder in Python
+description: Making of an audio and video screen recorder in Python
 ---
 
 Alright friends welcome back, lets make a very flexible screen recorder today. The target platform for this GUI is Windows 10. For direct installation to windows 10, please download these three parts in a folder and then extract (using winRAR) the PyShine Recorder setup.zip file:
