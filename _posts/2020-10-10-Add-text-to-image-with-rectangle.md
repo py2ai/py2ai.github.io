@@ -4,7 +4,7 @@ title: Add text with transparent rectangle on an image
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: putBText
-summary: How to add transparent box behind text in an open cv image
+description: How to add transparent box behind text in an open cv image
 ---
 
 <br>
