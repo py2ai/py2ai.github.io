@@ -3,7 +3,7 @@ layout: post
 title: Exploring Output Widgets in PySide6 (Part 6)
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  Output widgets
+description:  Output widgets
 ---
 
 In this tutorial, we'll delve into the usage of various output widgets in PySide6 to display information to users in graphical user interface (GUI) applications. Output widgets allow us to present data in different formats, such as progress bars, digital segment displays, and text labels. We'll build a simple example application to demonstrate how to incorporate different output widgets in PySide6.
