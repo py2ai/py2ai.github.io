@@ -4,7 +4,7 @@ title: How to visualize Earthquakes in Python
 categories: [Python learning series]
 mathjax: true
 featured-img: earthquakes
-summary: This tutorial is about visualization of the most recent earthquakes on the planet Earth.
+description: This tutorial is about visualization of the most recent earthquakes on the planet Earth.
 ---
 Hi friends! today we will use two libraries in Python 3 to plot the balloons to represent the earthquakes. We will use a Red balloon for an earthquake 
 above 5 magnitude and Green balloon for less than 5. You can tweak the icon_anchor=(9,25) for (horizontal, vertical) adjustments of the text over balloon. 
