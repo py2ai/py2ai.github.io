@@ -4,7 +4,7 @@ title: How to send video using UDP socket in Python
 categories: [Socket Programming Series]
 mathjax: true
 featured-img: pythonudp1
-summary: This tutorial is about using OpenCv and UDP sockets for server-client video transfer
+description: This tutorial is about using OpenCv and UDP sockets for server-client video transfer
 ---
 
 
