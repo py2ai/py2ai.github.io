@@ -4,7 +4,7 @@ title: Playing piano with Python
 categories: [Python tutorial series]
 mathjax: true
 featured-img: piano
-summary: A quick tutorial on multi threading in python to play twinkle twinkle little start poem
+description: A quick tutorial on multi threading in python to play twinkle twinkle little start poem
 ---
 
 
