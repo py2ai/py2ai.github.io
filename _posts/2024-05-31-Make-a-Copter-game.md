@@ -3,7 +3,7 @@ layout: post
 title: Let's build a copter game 
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  make a copter flying game in Python and PyGame
+description:  make a copter flying game in Python and PyGame
 ---
 
 # Introduction
