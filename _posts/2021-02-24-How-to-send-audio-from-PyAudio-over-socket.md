@@ -4,7 +4,7 @@ title: How to send audio data using socket programming in Python
 categories: [Socket Programming Series]
 mathjax: true
 featured-img: matthiasgroeneveld
-summary: This tutorial is about using PyAudio and TCP sockets for server-client transfer of audio stream
+description: This tutorial is about using PyAudio and TCP sockets for server-client transfer of audio stream
 ---
 
 Hi! Let's say we have an audio file (.wav), and we want to send it to the client so that the client can listen
