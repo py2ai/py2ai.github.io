@@ -4,7 +4,7 @@ title: Basics about SQL database in Python
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: sqlite3
-summary:  This tutorial is about using sqlite3 to create, insert data and update SQL table
+description:  This tutorial is about using sqlite3 to create, insert data and update SQL table
 ---
 
 Hi friends! SQLite is basically a C library which gives us a lightweight disk-based database. It does not require a separate server process. On the other hand it allows us to access the database using a nonstandard variant of the SQL query 
