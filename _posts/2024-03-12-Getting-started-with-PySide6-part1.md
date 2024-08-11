@@ -3,7 +3,7 @@ layout: post
 title: Building Your First Simple GUI (Part 1)
 mathjax: true
 featured-img: 26072022-python-logo
-summary: Learning PySide6 for GUI development
+description: Learning PySide6 for GUI development
 ---
 
 Welcome to the world of PySide6! PySide6 is a powerful Python module that allows you to create cross-platform graphical user interfaces (GUIs) with ease. Whether you're a beginner or an experienced developer, PySide6 provides a straightforward way to build interactive applications for desktop and mobile platforms.
