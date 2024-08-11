@@ -4,7 +4,7 @@ title: How to make a Matplotlib and PyQt5 based GUI to plot a CSV file data
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt15datatime
-summary: Making a drag drop CSV file based matplotlib GUI with multiple themes and adding axis selection options
+description: Making a drag drop CSV file based matplotlib GUI with multiple themes and adding axis selection options
 ---
 
 
