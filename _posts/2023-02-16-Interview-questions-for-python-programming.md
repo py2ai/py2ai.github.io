@@ -3,7 +3,7 @@ layout: post
 title: Interview questions for python programming jobs
 mathjax: true
 featured-img: 26072022-python-logo
-summary:  How to answer job interviews for Python related questions
+description:  How to answer job interviews for Python related questions
 ---
 
 Hello friends! Here are some tips and tricks to prepare for the Python programming related jobs.
