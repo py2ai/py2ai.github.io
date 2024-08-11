@@ -4,7 +4,7 @@ title: Lipstick color picker GUI in PyQt5
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: howtomakelipstickgui
-summary: This tutorial is about making a GUI in PyQt5 using Dlib and OpenCV for changing color of lips.
+description: This tutorial is about making a GUI in PyQt5 using Dlib and OpenCV for changing color of lips.
 ---
 
  <br>
