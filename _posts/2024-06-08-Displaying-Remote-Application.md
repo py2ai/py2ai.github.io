@@ -119,7 +119,7 @@ plt.show()
 Sometimes, simply restarting XQuartz can resolve connection issues.
 
 # Conclusion
-By following these steps, you can run graphical applications on a remote server and display them on your local machine using X11 forwarding. This setup is particularly useful for remote development, running graphical applications, and visualizing data plots from a remote server.
+By following these steps, you can run graphical applications on a remote server and display them on your local machine using X11 forwarding. This setup is particularly useful for remote development, running graphical applications, and visualizing data plots from a remote server. Thanks
 
 
 
