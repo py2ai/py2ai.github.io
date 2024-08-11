@@ -4,7 +4,7 @@ title: How to send and receive live audio using socket programming in Python
 categories: [GUI tutorial series]
 mathjax: true
 featured-img: audio_socket
-summary: This tutorial is about sending and receiving audio data over wifi between server and client.
+description: This tutorial is about sending and receiving audio data over wifi between server and client.
 ---
 Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
 programming.
