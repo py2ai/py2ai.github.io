@@ -4,6 +4,8 @@ title: Learn Python Tips and Tricks Part 02
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Find all files with any extension and rename them
+keywords: [Python, File Handling, Renaming Files, glob, os]
+tags: [Python, File Handling, glob, os]
 ---
 
 Hi friends! In this part we will learn how to get a list of files in a directory. How to rename the extensions of specific type of files. Imagine you have a directory of thousands files and you have to rename only a particular type of files. Manually doing such stuff would require lots of time and energy. But thanks to Python we can do this job quickly.
