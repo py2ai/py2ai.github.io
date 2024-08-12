@@ -4,6 +4,23 @@ title: What is SVD
 mathjax: true
 featured-img: 26072022-python-logo
 description:  In this tutorial we will learn what is Singular Value Decomposition (SVD) and run it in python
+tags:
+  - SVD
+  - Linear Algebra
+  - Python
+  - Data Analysis
+  - Matrix Decomposition
+  - Machine Learning
+keywords:
+  - Singular Value Decomposition
+  - SVD in Python
+  - Matrix factorization
+  - Python SVD tutorial
+  - Linear algebra
+  - Data compression
+  - Dimensionality reduction
+  - Matrix approximation
+  - NumPy SVD
 ---
 
 # Singular Value Decomposition
