@@ -4,6 +4,8 @@ title: How to make an image to text classifier application
 mathjax: true
 featured-img: ocr1917092022
 description:  This tutorial is about language classification based gui development with PyQt5 and Pytesseract
+keywords: [OCR, PyQt5, Pytesseract, text classification, image processing]
+tags: [OCR, PyQt5, Pytesseract, image processing, text classification]
 ---
 Hi friends following is the code for Part 19 of the PyQt5 learning series. For details visit the pyshine channel below.
 
