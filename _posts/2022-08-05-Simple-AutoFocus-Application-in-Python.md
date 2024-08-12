@@ -4,6 +4,8 @@ title: A simple autofocus application in Python
 mathjax: true
 featured-img: lego
 description:  This tutorial is about using socket programming to set focus of a webcam
+keywords: [Python, Raspberry Pi, Autofocus, Socket Programming, Image Processing]
+tags: [Python, Raspberry Pi, Autofocus, Socket Programming, Image Processing]
 ---
 
 Hello friends! This tutorial is about using raspberry pi to control the focus level of a webcam. Now the question is how to do that? We are using a normal webcam which has manual turning option to adjust is focus level. We can convert this webcam to a useful application to inspect Printed Circuit Boards PCBs or even for chat. To do this we will use the Lego gears to rotate the lense of the webcam. The motor attached to this Lego gears is controlled by Raspberrypi via an interface. The motor can send control signals like Stop, Forward and Back. The next question is how to know when to rotate the lens clockwise, counter-clockwise and when to stop?
