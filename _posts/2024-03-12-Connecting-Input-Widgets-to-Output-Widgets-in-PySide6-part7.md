@@ -4,6 +4,25 @@ title: Interacting with Output Widgets Using Input Widgets in PySide6 (Part 7)
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Control the Progress bar with Slider widget and more
+tags:
+  - Python
+  - PySide6
+  - GUI Development
+  - PySide6 Tutorial
+  - Application Development
+  - Programming
+  - Qt
+keywords:
+  - PySide6 tutorial
+  - Input widgets PySide6
+  - Output widgets PySide6
+  - Slider and Progress bar
+  - Spin Box and LCD Display
+  - Dynamic GUI updates
+  - PySide6 interactions
+  - Python GUI widgets
+  - PySide6 example
+  - GUI programming with PySide6
 ---
 
 
