@@ -4,6 +4,27 @@ title: Fourty important tips to write better python code
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Quick tips for better python codes.
+tags:
+  - Python
+  - Coding Tips
+  - Best Practices
+  - Python Programming
+  - Code Quality
+  - Python IDEs
+  - Python Modules
+  - Code Optimization
+  - Debugging
+keywords:
+  - Python coding tips
+  - Improve Python code
+  - Python best practices
+  - Python IDE
+  - Python linter
+  - Python virtual environment
+  - Python data structures
+  - Python functions
+  - Python performance
+  - Python debugging tools
 ---
 
 # Tips to write better python codes
