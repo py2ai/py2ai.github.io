@@ -4,6 +4,8 @@ title: What are NP problems
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Can we solve NP problems?
+tags: [NP problems, computational theory, algorithms]
+keywords: NP problems, Traveling Salesman Problem, Knapsack Problem, SAT Problem
 ---
 
 Hello friends! Lets first talk about NP problems and then get to the coding part.
