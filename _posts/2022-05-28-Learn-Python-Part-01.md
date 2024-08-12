@@ -4,6 +4,8 @@ title: Learn Python Tips and Tricks Part 01
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Learn Python with Examples
+keywords: [Python, Basics, Installation, Variables, Data Types, Strings]
+tags: [Python, Basics, Strings, Data Types]
 ---
 
 Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. 
