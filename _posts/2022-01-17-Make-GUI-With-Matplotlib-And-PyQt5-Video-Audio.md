@@ -5,6 +5,24 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: 2022-01-17-plot-vi
 description: How to plot audio and video from opencv matplotlib and PyQt5
+tags:
+  - PyQt5
+  - GUI
+  - Audio
+  - Video
+  - OpenCV
+  - Matplotlib
+  - Tutorial
+  - Python
+keywords:
+  - PyQt5 video GUI
+  - PyQt5 audio plot
+  - OpenCV video display
+  - Matplotlib audio visualization
+  - Python GUI tutorial
+  - Start and stop buttons PyQt5
+  - Live audio plotting PyQt5
+  - Video playback PyQt5
 ---
 
 Hello friends, this tutorial is about displaying mp4 video and its audio plot on the same GUI. This is part 16 of the PyQt5 learning series. More details about making the
