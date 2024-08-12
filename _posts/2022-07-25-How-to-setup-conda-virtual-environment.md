@@ -4,6 +4,8 @@ title: Learn Python Tips and Tricks Part 03
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Setting up Conda environment for Python
+keywords: [Python, Conda, Miniconda, Virtual Environments, Cross-Platform Development]
+tags: [Python, Conda, Miniconda, Virtual Environments, Development Tips]
 ---
 
 Hello friends! Installing any version of Python on any platform is easy. But this easy task becomes cumbersome when you need to work on cross-platforms, for example, MacOs, Linux/Ubuntu/RedHat, Windows, etc. The situation gets even more worse when you have to work on multiple versions of Python. Now imagine a quick and easy way to work on virtual environments for any platform OS and any version of Python. Today we will walk through the installation steps and quote working tips about Miniconda.
