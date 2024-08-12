@@ -4,6 +4,9 @@ title: Displaying Remote Application Windows Locally Using SSH and X11 Forwardin
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Display remote Matplotlib window in localhost
+keywords: ["X11 forwarding", "SSH", "XQuartz", "remote GUI applications", "Matplotlib", "Ubuntu", "macOS"]
+tags: ["X11", "SSH", "XQuartz", "remote applications", "GUI", "Matplotlib", "Ubuntu", "macOS"]
+
 ---
 
 In this tutorial, we'll walk you through the steps to display graphical applications running on a remote server on your local machine. This is especially useful for visualizing plots or running GUI-based applications from a remote server.
