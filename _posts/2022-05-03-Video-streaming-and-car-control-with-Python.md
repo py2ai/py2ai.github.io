@@ -5,6 +5,8 @@ categories: [Raspberry Pi Programming Series]
 featured-img: raspberrypicarcontrol
 mathjax: true
 description:  This tutorial is about running Flask Application and Controlling car from Clients' webpage
+keywords: [Raspberry Pi, Flask, Video Streaming, Car Control, Python]
+tags: [Raspberry Pi, Flask, Video Streaming, Car Control]
 ---
 
 Hi friends! Today's tutorial is Part 04 of the Raspberry Pi (RPi) learning series. Raspberry Pi zero W has limited resources in terms of compute power as compare 
