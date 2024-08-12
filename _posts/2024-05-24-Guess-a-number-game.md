@@ -4,6 +4,20 @@ title: How to make a simple guess a number game
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Guess a number
+tags:
+  - Python
+  - Programming
+  - Game Development
+  - User Interaction
+  - Random Number Generation
+  - Coding Tutorial
+keywords:
+  - Guess the number game
+  - Python guess game
+  - Random number game Python
+  - Python user input
+  - Number guessing game
+  - Python programming tutorial
 ---
 
 Let's create a simple game where the user and the computer can play "Guess the Number". The computer will randomly select a number within a given range, and the user will have to guess it. The computer will provide feedback whether the guess is too high, too low, or correct.
