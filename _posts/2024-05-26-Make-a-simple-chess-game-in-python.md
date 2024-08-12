@@ -4,6 +4,14 @@ title: Building a Simple Chess Game in Python
 mathjax: true
 featured-img: 26072022-python-logo
 description:  make a chess game in python
+tags:
+  - Python
+  - Chess
+  - Game Development
+keywords:
+  - Python chess game
+  - text-based chess
+  - coding tutorial
 ---
 
 In this tutorial, we'll create a basic chess game using Python. The game will have a simple text-based interface where players can input their moves. We'll explain the code step by step, focusing on how the ChessBoard class works and how the game logic is implemented.
