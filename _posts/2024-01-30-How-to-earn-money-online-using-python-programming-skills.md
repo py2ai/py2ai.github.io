@@ -4,6 +4,28 @@ title: How to earn money online using python programming
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Quick tips for online earning
+tags:
+  - Python
+  - Online Earning
+  - Freelancing
+  - Web Development
+  - Mobile App Development
+  - Data Analysis
+  - Machine Learning
+  - AI Solutions
+  - Teaching Python
+  - Software Development
+keywords:
+  - Earn money with Python
+  - Python programming for income
+  - Online jobs for Python developers
+  - Freelance Python projects
+  - Python web development opportunities
+  - Mobile apps with Python
+  - Data analysis services
+  - Machine learning consulting
+  - Teaching Python online
+  - Python-based software products
 ---
 
 
