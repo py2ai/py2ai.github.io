@@ -4,6 +4,19 @@ title: Let's build a simple "Rock, Paper, Scissors" game
 mathjax: true
 featured-img: 26072022-python-logo
 description:  make a game in python
+tags:
+  - Python
+  - Programming
+  - Game Development
+  - Beginner Projects
+  - Coding Tutorial
+keywords:
+  - Rock Paper Scissors game
+  - Python game tutorial
+  - Random choice Python
+  - Conditional statements Python
+  - User input Python
+  - Python beginner projects
 ---
 
 Let's create a simple "Rock, Paper, Scissors" game where the user can play against the computer. This is a classic game that demonstrates user input, random choices by the computer, and conditional statements to determine the winner.
