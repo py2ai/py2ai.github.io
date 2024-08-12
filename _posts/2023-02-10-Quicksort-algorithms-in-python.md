@@ -4,6 +4,8 @@ title: How to sort a list using Quicksort algorithms
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Different functions to sort numbers
+tags: [algorithms, quicksort, sorting, python]
+keywords: [quicksort, sorting algorithms, Python]
 ---
 
 Hello friends! There are several variations of the quicksort algorithm, each with its own approach to choosing the pivot element, partitioning the data, and optimizing performance. Some of the most common quicksort schemes include:
