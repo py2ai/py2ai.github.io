@@ -4,6 +4,24 @@ title: How to make a chatGPT like application
 mathjax: true
 featured-img: 26072022-python-logo
 description:  In this tutorial we will learn to compress GPT and make a working chat GPT app
+tags:
+  - ChatGPT
+  - GPT
+  - Model Compression
+  - FlexGen
+  - Python
+  - Machine Learning
+  - NLP
+keywords:
+  - ChatGPT-like application
+  - GPT model compression
+  - FlexGen
+  - Build ChatGPT app
+  - Model optimization
+  - Python chat application
+  - Transformer models
+  - AI chatbot
+  - NLP models
 ---
 
  
