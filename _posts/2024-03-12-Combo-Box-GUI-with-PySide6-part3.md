@@ -4,6 +4,26 @@ title: Creating a ComboBox-Based GUI with PySide6 (Part 3)
 mathjax: true
 featured-img: 26072022-python-logo
 summary:  Understanding ComboBox based GUI
+tags:
+  - Python
+  - PySide6
+  - GUI Development
+  - PySide6 Tutorial
+  - ComboBox
+  - Dropdown Menu
+  - Application Development
+  - Programming
+keywords:
+  - PySide6 tutorial
+  - ComboBox PySide6
+  - Dropdown menu PySide6
+  - GUI with ComboBox
+  - PySide6 example
+  - Python GUI widgets
+  - ComboBox based application
+  - PySide6 GUI components
+  - Programming with PySide6
+  - GUI programming
 ---
 
 
