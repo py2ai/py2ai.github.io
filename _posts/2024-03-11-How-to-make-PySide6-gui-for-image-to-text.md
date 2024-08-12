@@ -4,6 +4,26 @@ title: How to make PySide6 based GUI
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Making an Image to Text based GUI with PySide6
+tags:
+  - Python
+  - PySide6
+  - GUI Development
+  - OCR
+  - Tesseract
+  - PySide6 Tutorial
+  - Image Processing
+  - Multi-language OCR
+keywords:
+  - PySide6 GUI tutorial
+  - Image to text PySide6
+  - PySide6 OCR application
+  - Multi-language OCR with PySide6
+  - Tesseract OCR PySide6
+  - Python GUI development
+  - PySide6 code example
+  - GUI with PySide6
+  - Optical Character Recognition PySide6
+  - PySide6 tutorial for beginners
 ---
 
 # The Importance of PySide6: Transitioning from PyQt5
