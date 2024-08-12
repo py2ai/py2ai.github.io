@@ -4,6 +4,25 @@ title: Building a Calculator Application with PySide6 (Part 2)
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Beyond the Basics
+tags:
+  - Python
+  - PySide6
+  - GUI Development
+  - Calculator Application
+  - PySide6 Tutorial
+  - Application Design
+  - Programming
+  - Qt
+keywords:
+  - PySide6 calculator
+  - Calculator app PySide6
+  - PySide6 GUI tutorial
+  - Python calculator example
+  - Qt calculator application
+  - PySide6 widgets
+  - GUI design Python
+  - Building calculator with PySide6
+  - Advanced PySide6 tutorial
 ---
 
 
