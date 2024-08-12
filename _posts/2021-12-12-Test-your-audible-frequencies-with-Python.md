@@ -5,6 +5,24 @@ categories: [tutorial]
 featured-img: 2021-12-24-20000Hz
 mathjax: true
 description: A quick tutorial to generate audio tones of various frequencies and plot FFT
+tags:
+  - Python
+  - Pygame
+  - FFT
+  - Audio Processing
+  - Frequency Range
+  - Sound Generation
+  - Signal Processing
+  - Tutorial
+keywords:
+  - Python audio frequency
+  - Generate audio tones Python
+  - Pygame sound generation
+  - FFT plot in Python
+  - Frequency range test Python
+  - Signal processing tutorial
+  - Audio tone generation
+  - FFT audio visualization
 ---
 
 Hi friends, this tutorial is about generating audio tones of various frequencies and saving the FFT plots for each frequency. We will use `pygame` library to generate our
