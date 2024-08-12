@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 featured-img: pyqt5logo
 mathjax: true
 description: You can find important issues and their solutions related to PyQt5 here
+keywords: [PyQt5, FAQ, GUI Programming, Python, Qt Designer]
+tags: [PyQt5, GUI, Python, Qt Designer]
 ---
 
 Hi friends, we are going to start a Q and A about PyQt5 here. This page will be dedicated to only Questions that are frequently asked by you and their answers.
