@@ -4,6 +4,21 @@ title:  Building a Tic-Tac-Toe Game in Python!
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Learn python with fun!
+tags:
+  - Python
+  - Game Development
+  - Tic-Tac-Toe
+  - Programming Tutorial
+  - Computer Science
+  - Coding Challenges
+keywords:
+  - Tic-Tac-Toe game
+  - Python game development
+  - Python Tic-Tac-Toe
+  - Build a Tic-Tac-Toe game
+  - Python programming tutorial
+  - Simple Python games
+  - Game development with Python
 ---
 
 # Building a Tic-Tac-Toe Game in Python
