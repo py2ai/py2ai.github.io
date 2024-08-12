@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: mclients
 description: Save videos from multiple clients at server side
+keywords: [Socket Programming, Video Streaming, Python, OpenCV, Multi-Client, Server-Side Saving]
+tags: [Socket Programming, Video Streaming, Python, OpenCV, Multi-Client]
 ---
 
 <br>
