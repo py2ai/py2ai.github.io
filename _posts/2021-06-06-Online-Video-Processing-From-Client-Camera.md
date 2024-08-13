@@ -5,6 +5,9 @@ categories: [Tutorial Series]
 mathjax: true
 featured-img: flasklipsonlinelogo
 description:  This tutorial is about obtaining live frames of a client's camera, process it and provide result back to the client
+tags: [Flask, Socket.IO, JavaScript, Video Processing, Real-time Communication, Online Services, Deep Learning, Tutorial]
+keywords: [Flask video processing, Socket.IO real-time communication, online video processing tutorial, client-server video processing, Flask tutorial, deep learning services, real-time video processing]
+
 ---
 
 Hi friends, hope you are doing great! Today's tutorial is about using Flask, Socket.io and JavaScript, to obtain frames from a client's camera, then process it
