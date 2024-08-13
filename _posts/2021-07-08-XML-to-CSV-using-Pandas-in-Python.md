@@ -5,6 +5,8 @@ categories: [tutorial]
 featured-img: 2021-12-24-xml-files
 mathjax: true
 description: A quick tutorial to parse XML files using XML Element Tree
+tags: [Python, XML parsing, CSV conversion, ElementTree, tutorial]
+keywords: [Python XML to CSV, XML file parsing, convert XML to CSV, Python ElementTree tutorial, CSV from XML data]
 ---
 
 Hi there, let's say we have an XML file like this:
@@ -112,3 +114,5 @@ A csv file will be generated (songs.csv) at the same location or folder as main.
 
 
 So, next time no matter how complex is your XML file, you can still get the data out of it, and use it for the applications of Artificial Intelligence.
+
+
