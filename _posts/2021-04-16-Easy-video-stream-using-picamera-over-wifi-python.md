@@ -5,6 +5,8 @@ categories: [Raspberry Pi Programming Series]
 mathjax: true
 featured-img: jeep03
 description:  This tutorial is about streaming RPi pi camera video to an HTML page without Flask
+tags: [Raspberry Pi, PiCamera, WiFi Streaming, Python, HTML, Video Transmission, PyShine, Tutorial]
+keywords: [PiCamera video streaming, Raspberry Pi WiFi video, Python video streaming, Raspberry Pi tutorial, HTML video stream, PiCamera without Flask, Raspberry Pi camera streaming]
 ---
 
 Hi friends! Today's tutorial is Part 03 of the Raspberry Pi learning series. You will learn how to transmit video that from PiCamera library over the wifi. This video stream can be received on any mobile device connected to wifi and can open up an HTML webpage. 
