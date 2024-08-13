@@ -5,6 +5,8 @@ categories: [Tutorial Series]
 mathjax: true
 featured-img: livehtmlpagetwo
 description:  This tutorial is about streaming multiple videos on a webpage using PyShine server
+tags: [Streaming, HTML, PyShine, OpenCV, Multiprocessing, Video Streaming, Web Development, Tutorial]
+keywords: [stream multiple videos on HTML, PyShine video streaming, OpenCV video streaming, Python multiprocessing, HTML video streaming tutorial, web development with video, PyShine server tutorial]
 ---
 <br>
 Hi friends, hope your are doing great. This tutorial is about streaming multiple videos on a webpage. As an example, we will use two .mp4 files. We will use two processes to stream each video feed. In the following code, we will use two functions: 
