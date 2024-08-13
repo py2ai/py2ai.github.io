@@ -5,6 +5,8 @@ categories: [Socket Programming Series]
 mathjax: true
 featured-img: serverclientvidtext
 description:  This tutorial is about streaming video over UDP and text messages over TCP between server and client
+tags: [Socket Programming, Video Streaming, UDP, TCP, Bidirectional Communication, Python, Networking, Tutorial]
+keywords: [socket programming video stream, bidirectional text communication, UDP video streaming, TCP text messaging, Python socket programming, client-server communication, networking tutorial]
 ---
 
 Hi friends! Today's tutorial is about socket programming for the server and client. The server will send video over the UDP socket and text over the TCP sockets to the client. In contrast to previous tutorials, the client will receive the video and text and send the text messages to the server. Imagine if you have a robot in which the server.py code is running, and it is providing you (the client) the video feed and data in the form of text messages. But if you want to control the robot or server, you need to send the control commands or text messages to the robot. So this tutorial is precisely about achieving the same imagination. 
