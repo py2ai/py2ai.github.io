@@ -5,6 +5,8 @@ categories: [tutorial]
 featured-img: 2021-12-24-chat-text
 mathjax: true
 description: A quick tutorial to make server-client video and text chat
+tags: [Python, video chat, text chat, UDP, socket programming, tutorial]
+keywords: [Python video chat, Python text chat, server-client chat, UDP video transfer, Python socket programming, real-time chat tutorial]
 ---
 
 Hi friends, today's tutorial is rather more interesting than the previous ones. We will use a UDP socket connection for the real-time video transfer between the server and the client. So it will be a bidirectional video transfer, which means the server can watch the client's video and vice versa. 
