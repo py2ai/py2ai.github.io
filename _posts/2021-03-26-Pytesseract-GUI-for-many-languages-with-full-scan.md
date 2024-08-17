@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: pytessgui
 description: Extract full text of various languages by using the trained model of the specific language
+tags: [Python, PyQt5, Tesseract, OCR, GUI]
+keywords: [Image-to-Text, PyQt5, Tesseract OCR, GUI Tutorial, Python]
 ---
 
 
