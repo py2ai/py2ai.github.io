@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: audiolive2
 description: How to stop a thread in managed by the QThreadPool in PyQt5
+keywords: [PyQt5, Live Audio, QThread, GUI, Audio Stream, Thread Management]
+tags: [PyQt5, Audio, QThread, GUI, Thread Management]
 ---
 <br>
 <div align="center">
