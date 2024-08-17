@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt15datatime
 description: Making a drag drop CSV file based matplotlib GUI with multiple themes and adding axis selection options
+keywords: [PyQt5, Matplotlib, GUI, CSV, Python, Data Visualization, Tutorial]
+tags: [PyQt5, Matplotlib, GUI, Data Visualization]
 ---
 
 
