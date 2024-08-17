@@ -5,6 +5,8 @@ categories: [Raspberry Pi Programming Series]
 mathjax: true
 featured-img: jeep01
 description:  This tutorial is about streaming webcam video to an HTML page without Flask
+tags: [Raspberry Pi, OpenCV, WiFi Streaming, Python, Video Streaming, Raspberry Pi Projects, Networking, Tutorial]
+keywords: [Raspberry Pi video streaming, OpenCV streaming Raspberry Pi, Raspberry Pi WiFi streaming, stream webcam Raspberry Pi, Raspberry Pi FPV, Raspberry Pi OpenCV, Raspberry Pi projects]
 ---
 
 Hi friends! Today's tutorial is Part 01 of the Raspberry Pi learning series. You will learn how to transmit video that from OpenCV library over the wifi. This video stream can be received on any mobile device connected to wifi and can open up an HTML webpage. Interestingly, in this tutorial, we do not require Flask or Django. All we need are two libraries; 1) cv2 and 2) pyshine.
