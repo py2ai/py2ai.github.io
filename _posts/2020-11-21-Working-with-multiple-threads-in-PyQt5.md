@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: threadspy
 description: How to start and stop QThread in PyQt5
+keywords: [PyQt5, QThread, Multi-threading, GUI Development]
+tags: [PyQt5, QThread, Multi-threading, GUI Development]
 ---
 
 <br>
