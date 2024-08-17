@@ -5,6 +5,8 @@ categories: [Raspberry Pi Programming Series]
 mathjax: true
 featured-img: raspberrypisetup
 description: This tutorial is about installing Open CV library in Raspberry Pi 
+tags: [Raspberry Pi, OpenCV, Installation, Python, Programming]
+keywords: [OpenCV, Raspberry Pi, Installation Guide, Python, Computer Vision]
 ---
 
 
