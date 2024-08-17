@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqtRPS
 description: This tutorial is about making a GUI in PyQt5 using OpenCV and Keras to play Rock Paper Scissors Game.
+keywords: [PyQt5, OpenCV, Keras, Rock Paper Scissors, GUI, Machine Learning, Deep Learning]
+tags: [PyQt5, OpenCV, Keras, Machine Learning, GUI]
 ---
 
 
