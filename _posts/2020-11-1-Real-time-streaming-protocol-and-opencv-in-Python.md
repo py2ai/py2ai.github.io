@@ -5,6 +5,8 @@ categories: [Networking tutorials]
 mathjax: true
 featured-img: rtsp
 description: How to obtain video frames from an RTSP stream of video
+keywords: [OpenCV, RTSP, Real-Time Streaming, IP Cameras, Video Processing]
+tags: [OpenCV, RTSP, Video Streaming, IP Cameras, Python]
 ---
 
 Hello friends, this tutorial is about RTSP stream basics, how to process it, and obtain frames in Python. In general, OpenCV is used with webcams connected to computers or also embedded inside them. However, for the surveillance purpose, we commonly use IP cameras that generate video streams using
