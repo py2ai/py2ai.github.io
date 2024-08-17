@@ -5,6 +5,8 @@ categories: [Socket Programming Series]
 mathjax: true
 featured-img: pythonudp1
 description: This tutorial is about using OpenCv and UDP sockets for server-client video transfer
+tags: [Python, UDP, Socket Programming, Video Streaming, OpenCV]
+keywords: [Python, UDP, video streaming, socket programming, OpenCV]
 ---
 
 
