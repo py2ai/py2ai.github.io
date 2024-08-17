@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: audio_in_five_lines
 description: How to get audio data from the microphone 
+keywords: [Audio Frames, Microphone, Pyshine, Python, Audio Capture]
+tags: [Audio Frames, Microphone, Pyshine, Python, Audio Capture]
 ---
 Hi friends! Install pyshine version 0.0.6 in Windows OS as:
 
