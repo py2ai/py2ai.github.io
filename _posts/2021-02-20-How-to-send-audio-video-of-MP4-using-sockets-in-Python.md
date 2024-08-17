@@ -5,6 +5,8 @@ categories: [Socket Programming Series]
 mathjax: true
 featured-img: pythonudpaudiovideo
 description: This tutorial is about using OpenCV, UDP and TCP sockets for server-client transfer of audio-video streams
+tags: [Python, Socket Programming, Audio, Video, UDP, TCP, OpenCV]
+keywords: [Python, socket programming, audio streaming, video streaming, UDP, TCP, OpenCV]
 ---
 
 
