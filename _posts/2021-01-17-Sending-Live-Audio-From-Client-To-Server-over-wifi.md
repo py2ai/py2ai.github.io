@@ -5,6 +5,8 @@ categories: [Python learning series]
 mathjax: true
 featured-img: ctos
 description: This tutorial is about using socket programming to send audio data from Microphone of client to the server.
+keywords: [Python, Socket Programming, Audio Transmission, Pyshine, Wifi, Network Programming]
+tags: [Python, Socket Programming, Audio Transmission, Pyshine]
 ---
 Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket programming.
 
