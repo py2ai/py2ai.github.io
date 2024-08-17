@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: howtomakelipstickgui
 description: This tutorial is about making a GUI in PyQt5 using Dlib and OpenCV for changing color of lips.
+keywords: [PyQt5, Dlib, OpenCV, Lipstick Color Picker, GUI, Image Processing]
+tags: [PyQt5, Dlib, OpenCV, GUI, Image Processing]
 ---
 
  <br>
