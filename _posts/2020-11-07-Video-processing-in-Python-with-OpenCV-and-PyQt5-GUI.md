@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: pyqt509
 description: How to make a GUI in PyQt5 for video processing applications
+keywords: [PyQt5, OpenCV, Video Processing, GUI Design, Python]
+tags: [PyQt5, OpenCV, Video Processing, GUI Design, Python]
 ---
 
 <br>
