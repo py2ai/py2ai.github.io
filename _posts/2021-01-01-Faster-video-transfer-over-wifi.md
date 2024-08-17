@@ -5,6 +5,8 @@ categories: [Socket programming tutorial series]
 mathjax: true
 featured-img: pubsub
 description: This tutorial is short and simple implementation of server client modules in Publish/Subscribe mode to transfer video frames
+keywords: [Python, Socket Programming, Publish-Subscribe, ZeroMQ, Video Streaming]
+tags: [Python, Socket Programming, Publish-Subscribe, ZeroMQ, Video Streaming]
 ---
 Hi friends HAPPY NEW YEAR 2021! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
 programming.
