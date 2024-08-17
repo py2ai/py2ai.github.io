@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: audiolive
 description: How to make a GUI using PyQt5 and Matplotlib to plot real-time data
+keywords: [PyQt5, Matplotlib, Live Audio, GUI, Real-time Data, Audio Plotting]
+tags: [PyQt5, Matplotlib, Audio, GUI, Real-time Data]
 ---
 
 <br>
