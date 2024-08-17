@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: webcamgui
 description:  This tutorial is about using opencv to capture video of webcam in Python
+tags: [PyQt5, GUI, Python, OpenCV, Video Recording, Webcam, PyQt5 Projects, Python GUI, Tutorial]
+keywords: [PyQt5 video recorder, Python GUI webcam, OpenCV PyQt5 tutorial, simple webcam GUI, PyQt5 video capture, Python webcam recording, Python projects]
 ---
 Hi friends! This GUI is dead simple because it will only capture the frames of video from the webcam to record it as mp4.
 Below is the code:
