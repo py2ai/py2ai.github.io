@@ -5,6 +5,8 @@ categories: [tutorial series]
 mathjax: true
 featured-img: Slide1
 description: This code will demonstrate opencv based object tracking using the CSRT 
+keywords: [Object Tracking, CSRT, OpenCV, Python, Video Processing]
+tags: [Object Tracking, CSRT, OpenCV, Python, Video Processing]
 ---
 <br>
 <div align="center">
