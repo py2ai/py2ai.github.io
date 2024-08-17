@@ -5,6 +5,8 @@ categories: [tutorial series]
 mathjax: true
 featured-img: pandas
 description: This code will demonstrate how to convert pandas data to numeric form 
+keywords: [Pandas, Dataframe, Hexadecimal, ASCII, Python]
+tags: [Pandas, Dataframe, Hexadecimal, ASCII, Python]
 ---
 Source code and sample csv data file are available:[download]
 
