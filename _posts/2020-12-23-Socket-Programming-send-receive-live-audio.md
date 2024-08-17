@@ -5,6 +5,8 @@ categories: [GUI tutorial series]
 mathjax: true
 featured-img: audio_socket
 description: This tutorial is about sending and receiving audio data over wifi between server and client.
+keywords: [Socket Programming, Audio Streaming, Pyshine, Python, WiFi Communication]
+tags: [Socket Programming, Audio Streaming, Pyshine, Python, WiFi Communication]
 ---
 Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
 programming.
