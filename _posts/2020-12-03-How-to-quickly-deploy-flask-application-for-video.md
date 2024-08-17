@@ -5,6 +5,8 @@ categories: [Web development tutorial series]
 mathjax: true
 featured-img: flask
 description: We will use Flask and OpenCv to change blur and brightness of the video and serve it on the network
+keywords: [Flask, OpenCV, Video Processing, PythonAnywhere, Web Deployment]
+tags: [Flask, OpenCV, Video Processing, PythonAnywhere, Web Deployment]
 ---
 
 <br>
