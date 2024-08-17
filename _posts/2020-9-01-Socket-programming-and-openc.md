@@ -5,6 +5,8 @@ categories: [tutorial series]
 mathjax: true
 featured-img: server
 description: This code will demonstrate the server client modules to transmit and receive video over wifi
+keywords: [Socket Programming, Webcam Video, Server-Client, Python, WiFi]
+tags: [Socket Programming, Webcam Video, Server-Client, Python, WiFi]
 ---
 
 <br>
