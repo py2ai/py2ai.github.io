@@ -5,6 +5,8 @@ categories: [Socket Programming Series]
 mathjax: true
 featured-img: matthiasgroeneveld
 description: This tutorial is about using PyAudio and TCP sockets for server-client transfer of audio stream
+tags: [Socket Programming, Python, PyAudio, Audio Streaming, TCP, UDP]
+keywords: [Audio Streaming, PyAudio, Socket Programming, Python, TCP, UDP]
 ---
 
 Hi! Let's say we have an audio file (.wav), and we want to send it to the client so that the client can listen
