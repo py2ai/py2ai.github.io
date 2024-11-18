@@ -3,3 +3,5 @@
 source "https://rubygems.org"
 gemspec
 gem "jekyll-sleek"
+gem 'jekyll-seo-tag' 
+gem 'jekyll-sitemap'
