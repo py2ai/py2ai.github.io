@@ -108,6 +108,56 @@ Now put the path to `/home/pi/Documents/main.py` the profile page as the last li
 
 Save it and reboot, the code main.py will run automatically once booted.
 
+## Optional case for Raspberrypi 3
+
+### Configure Ad Hoc Mode in Raspberry Pi 3 Model B
+
+
+Some friends, recently attempted to configure Raspberry Pi 3 Model B to operate in ad hoc mode, but ran into issues. Initially, the configuration seemed to work correctly, but after a reboot, the `wlan0` interface reverted to the default managed mode. 
+
+### The Goal
+The objective was to set the `wlan0` interface to ad hoc mode with the following configuration:
+
+- **Static IP for Raspberry Pi 1**: `192.168.1.6/24`
+- **Static IP for Raspberry Pi 2**: `192.168.1.7/24`
+- **Shared SSID, Channel, and Frequency**  
+
+The goal was to enable communication between the two Raspberry Pis by following the above tutorial.
+
+Despite following these steps, the configuration didn’t persist after rebooting. The solution to this issue is below:
+
+---
+
+### Solution Suggestion
+
+A likely culprit is the **`dhcpcd` service**, which can interfere with configurations made using the Debian-standard `/etc/network/interfaces` file.
+
+To prevent `dhcpcd` from managing the `wlan0` interface, follow these steps:
+
+1. Open the `dhcpcd.conf` file:
+   
+   ```
+   sudo nano /etc/dhcpcd.conf
+   ```
+
+2. Add the following line at the bottom of the file:
+   
+```
+denyinterfaces wlan0
+```
+
+3. Save the changes and exit the editor.
+
+4. Reboot your Raspberry Pi:
+```
+sudo reboot
+```
+This should prevent dhcpcd from overriding your ad hoc mode configuration on the wlan0 interface.
+
+
+
+
+
 
 
 
