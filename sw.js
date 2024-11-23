@@ -207,6 +207,23 @@ self.addEventListener('activate', function(event) {
 });
 
 
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Skip caching or interference for /converter.html
+  if (url.pathname === '/converter.html') {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});
+
+
+
 self.addEventListener('fetch', function(event) {
   if (event.request.method === 'GET') {
     // Should we call event.respondWith() inside this fetch event handler?
