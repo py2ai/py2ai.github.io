@@ -36,7 +36,11 @@ Collision and Scoring: Whenever a bullet hits a zombie, the zombie and bullet ar
 
 Game Over and Restart: If the game is over, the player can press "R" to restart the game, resetting everything to its initial state.
 
+For more details:
+<iframe width="560" height="315" src="https://www.youtube.com/embed/c_aLPUfAaxo?si=WnFz4Ej35mGKDN3u" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+
+Source code :
 {% include codeHeader.html %}
 ```python
 import pygame
