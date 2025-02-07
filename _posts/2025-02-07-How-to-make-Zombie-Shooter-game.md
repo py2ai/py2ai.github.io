@@ -4,7 +4,7 @@ title: How to make a zombie shooter game
 mathjax: true
 featured-img: 26072022-python-logo
 description:  Display remote Matplotlib window in localhost
-keywords: ["X11 forwarding", "SSH", "XQuartz", "remote GUI applications", "Matplotlib", "Ubuntu", "macOS"]
+keywords: ["zombie shooter game", "pygame tutorial", "pygame basic tutorial"]
 tags: ["X11", "SSH", "XQuartz", "remote applications", "GUI", "Matplotlib", "Ubuntu", "macOS"]
 
 ---
