@@ -6,7 +6,6 @@ featured-img: 26072022-python-logo
 description:  Display remote Matplotlib window in localhost
 keywords: ["pygame", "game development"]
 tags:["pygame", "game development"]
-
 ---
 
 Welcome to this tutorial where we’ll be building a simple "Zombie Shooter" game using Pygame! This game involves a player controlling a shooter at the bottom of the screen, shooting bullets upwards to eliminate incoming zombies. The goal is to survive as long as possible while accumulating points by shooting zombies. We'll break down the code into several sections to make it easy to understand:
