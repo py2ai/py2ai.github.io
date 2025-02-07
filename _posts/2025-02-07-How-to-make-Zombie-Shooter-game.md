@@ -5,7 +5,7 @@ mathjax: true
 featured-img: 26072022-python-logo
 description:  Display remote Matplotlib window in localhost
 keywords: ["zombie shooter game", "pygame tutorial", "pygame basic tutorial"]
-tags: ["X11", "SSH", "XQuartz", "remote applications", "GUI", "Matplotlib", "Ubuntu", "macOS"]
+tags: ["zombie shooter game", "pygame tutorial", "pygame basic tutorial"]
 
 ---
 
