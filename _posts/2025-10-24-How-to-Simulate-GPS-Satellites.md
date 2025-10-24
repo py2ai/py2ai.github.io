@@ -17,13 +17,13 @@ For more details:
 
 **A detailed, step-by-step tutorial and annotated markdown blog** that explains a VPython script which renders a 3D visualization of the GPS satellite constellation (24 operational satellites shown across 6 orbital planes). This tutorial covers setup, math, per-line code explanation, optimization tips, debugging, and suggested extensions.
 
----
+
 
 ## Overview
 
 The script creates a **3D animation of GPS satellites** orbiting Earth using VPython. It models the **real GPS constellation** with six orbital planes, each containing four satellites, at an altitude of about 20,180 km. The satellites orbit with a 55° inclination and leave colorful trails to show their paths.
 
----
+
 
 ## Requirements
 
@@ -40,7 +40,7 @@ pip install vpython
 
 > VPython runs in a browser or a standalone window depending on your setup.
 
----
+
 
 ## Full Source Code
 
@@ -170,7 +170,7 @@ while True:
             sat.clear_trail()
 ```
 
----
+
 
 ## Detailed Explanation
 
@@ -218,7 +218,7 @@ earth.rotate(angle=0.001, axis=vector(0,1,0))
 ```
 This simulates Earth’s spin and adds realism.
 
----
+
 
 ## Mathematical Summary
 
@@ -229,7 +229,7 @@ This simulates Earth’s spin and adds realism.
 
 `Ω` (RAAN) shifts the orbital plane around Earth’s z-axis. `i` (inclination) tilts the plane.
 
----
+
 
 ## Performance Tips
 
@@ -238,7 +238,7 @@ This simulates Earth’s spin and adds realism.
 - Decrease number of satellites for testing.
 - Avoid frequent creation/deletion of VPython objects inside the loop.
 
----
+
 
 ## Enhancements You Can Try
 
@@ -247,7 +247,7 @@ This simulates Earth’s spin and adds realism.
 3. **Add ground stations:** show visible satellites from a chosen location.
 4. **Add camera animation:** orbit camera around Earth.
 
----
+
 
 ## Summary
 
@@ -258,6 +258,6 @@ This VPython project demonstrates how to visualize satellite constellations in 3
 
 It’s a powerful educational example for both orbital mechanics and real-time 3D visualization in Python.
 
----
+
 
 
