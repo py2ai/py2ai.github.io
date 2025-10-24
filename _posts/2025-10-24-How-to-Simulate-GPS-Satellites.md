@@ -11,7 +11,14 @@ tags: ["gps satellites", "vpython tutorial", "gps satellites basic tutorial"]
 
 
 For more details:
-<iframe width="560" height="315" src="[https://youtube.com/shorts/-LxLf4hZzHY](https://youtube.com/shorts/-LxLf4hZzHY)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+### Check out our YouTube Short!
+
+<iframe width="320" height="568" 
+    src="https://www.youtube.com/embed/-LxLf4hZzHY?rel=0&autoplay=0" 
+    title="YouTube Short" frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+</iframe>
 
 # 3D Visualization of a GPS Satellite Constellation
 
