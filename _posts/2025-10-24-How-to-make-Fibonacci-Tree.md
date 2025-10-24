@@ -63,18 +63,10 @@ python fibonacci_tree_parallel.py
 
 
 
-## 4. Full original code 
+## 4. Simple code 
 
 
 ```python
-
-"""make the tree growth in parallel using mutithreading: 
-This program simulates a Fibonacci-based tree growth.
-Each branch length and spread follow Fibonacci ratios,
-creating a natural fractal pattern. The tree grows
-wider and fuller without branches pointing toward the ground.
-
-"""
 import pygame, sys, math, random
 
 # INITIAL SETUP 
