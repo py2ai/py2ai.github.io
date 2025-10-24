@@ -63,15 +63,142 @@ python fibonacci_tree_parallel.py
 
 
 
-## 4. Full original code (annotated)
+## 4. Full original code 
 
-> The original code is the one you provided. Below is an annotated version highlighting the key blocks.
 
 ```python
-# (original source provided by you — explained below)
+
+"""make the tree growth in parallel using mutithreading: 
+This program simulates a Fibonacci-based tree growth.
+Each branch length and spread follow Fibonacci ratios,
+creating a natural fractal pattern. The tree grows
+wider and fuller without branches pointing toward the ground.
+
+"""
+import pygame, sys, math, random
+
+# INITIAL SETUP 
+pygame.init()
+
+WIN_WIDTH, WIN_HEIGHT = 1200, 600
+screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+pygame.display.set_caption("Fibonacci Tree Growth")
+
+# COLOR DEFINITIONS 
+SKY_COLOR   = (135, 206, 235)
+BROWN_COLOR = (139, 69, 19)
+GREEN_COLOR = (34, 139, 34)
+
+# TREE PARAMETERS 
+GROUND_HEIGHT   = 50
+TREE_DEPTH      = 10
+BRANCH_WIDTH    = 20
+SPREAD_BASE     = 25
+SPREAD_FACTOR   = 70         # slightly larger spread for wider crown
+LENGTH_DECAY    = 0.75
+LENGTH_VARIANCE = 0.1
+BRANCH_STEP     = 3
+FPS             = 60
+
+# FONT 
+font = pygame.font.SysFont(None, 28, bold=True)
+
+# GLOBALS 
+branches = []
+draw_step = 0
+started = False
+
+# FIBONACCI FUNCTION 
+def fib(n):
+    """Return the nth Fibonacci number."""
+    a, b = 1, 1
+    for _ in range(n - 1):
+        a, b = b, a + b
+    return a
+
+# TREE GENERATION 
+def grow(x, y, length, angle, depth, width):
+    """
+    Recursive Fibonacci-based branching function.
+    Ensures branches stay mostly above the horizon and spread outward naturally.
+    """
+    if depth <= 0 or length < 4:
+        return
+
+    rad = math.radians(angle)
+    end_x = x + math.sin(rad) * length
+    end_y = y - math.cos(rad) * length
+
+    # prevent branches from going below the ground
+    if end_y > WIN_HEIGHT - GROUND_HEIGHT:
+        end_y = WIN_HEIGHT - GROUND_HEIGHT
+
+    # add this branch
+    branches.append(((x, y), (end_x, end_y), width, depth))
+
+    # Fibonacci ratio scaling
+    f_ratio = fib(depth + 2) / fib(TREE_DEPTH + 2)
+    spread = SPREAD_BASE + SPREAD_FACTOR * f_ratio
+
+    # number of child branches
+    sub_branches = 2 + fib(depth) % 3
+
+    # nonlinear upward bias — keeps branches from pointing downward
+    for _ in range(sub_branches):
+        new_length = length * (LENGTH_DECAY + LENGTH_VARIANCE * f_ratio)
+        
+        # bias the angle upwards: restrict below horizontal (no downward growth)
+        bias = random.uniform(-spread, spread)
+        new_angle = angle + bias
+
+        # Clamp angles: ensure they stay above -90 (horizontal) and below 90
+        new_angle = max(-70, min(70, new_angle))
+
+        new_width = max(3, int(width * 0.75))
+        grow(end_x, end_y, new_length, new_angle, depth - 1, new_width)
+
+# INITIAL TREE CREATION 
+INITIAL_LENGTH = (WIN_HEIGHT - 120) // (TREE_DEPTH * 0.8)
+grow(WIN_WIDTH // 2, WIN_HEIGHT - GROUND_HEIGHT, INITIAL_LENGTH * 2, 0, TREE_DEPTH, BRANCH_WIDTH)
+
+# CLOCK 
+clock = pygame.time.Clock()
+
+# MAIN LOOP 
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            started = True
+
+    screen.fill(SKY_COLOR)
+    pygame.draw.rect(screen, GREEN_COLOR, (0, WIN_HEIGHT - GROUND_HEIGHT, WIN_WIDTH, GROUND_HEIGHT))
+
+    if not started:
+        msg = font.render("CLICK TO START", True, GREEN_COLOR)
+        screen.blit(msg, (WIN_WIDTH // 2 - msg.get_width() // 2, WIN_HEIGHT // 2))
+    else:
+        draw_step = min(draw_step + BRANCH_STEP, len(branches))
+        for (start, end, width, depth) in branches[:draw_step]:
+            if depth > 4:
+                color = BROWN_COLOR
+            else:
+                color = tuple(
+                    int(BROWN_COLOR[i] * ((depth - 1) / 4) + GREEN_COLOR[i] * (1 - (depth - 1) / 4))
+                    for i in range(3)
+                )
+            pygame.draw.line(screen, color, start, end, width)
+
+        text = font.render(f"BRANCH COUNT: {draw_step}", True, GREEN_COLOR)
+        screen.blit(text, (WIN_WIDTH - text.get_width() - 20, 10))
+
+    pygame.display.flip()
+    clock.tick(FPS)
 ```
 
-> _Note: The original code will be broken down in the next section—this placeholder avoids duplicating the entire code block here. In the multithreaded example later, the full runnable code is included._
+
 
 
 
