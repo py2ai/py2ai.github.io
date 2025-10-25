@@ -234,8 +234,8 @@ This simulates Earth’s spin and adds realism.
 
 | Step | Rotation Axis | Formula | Purpose |
 |------|----------------|----------|----------|
-| 1 | X-axis | `y' = y*cos(i) - z*sin(i)` | Inclination rotation |
-| 2 | Z-axis | `x'' = x'*cos(Ω) - y'*sin(Ω)` | RAAN rotation |
+| 1 | X-axis | y' = y*cos(i) - z*sin(i) | Inclination rotation |
+| 2 | Z-axis | x'' = x'*cos(Ω) - y'*sin(Ω) | RAAN rotation |
 
 `Ω` (RAAN) shifts the orbital plane around Earth’s z-axis. `i` (inclination) tilts the plane.
 
