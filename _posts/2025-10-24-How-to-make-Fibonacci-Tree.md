@@ -55,7 +55,7 @@ The tutorial ends with a complete multithreaded version ready to copy and run.
 
 ## 3. Project structure
 
-Single file: `fibonacci_tree_parallel.py` (the `.md` you download contains the full code examples). Run it with:
+Single file: `fibonacci_tree_parallel.py` . Run it with:
 
 ```bash
 python fibonacci_tree_parallel.py
