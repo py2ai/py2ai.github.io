@@ -17,19 +17,18 @@ tags: ["fibonacci", "draw tree", "random tree"]
 
 ## Table of contents
 
-1. Introduction
-2. Prerequisites
-3. Project structure
-4. Full original code (annotated)
-5. Deep explanation — line by line and concept by concept
-6. Why and when to parallelize
-7. Design choices for multithreading
-8. Multithreaded implementation — full code
-9. How to run and test
-10. Performance considerations & debugging tips
-11. FAQ and closing notes
-
-
+## Table of Contents
+- [Introduction](#1-introduction)
+- [Prerequisites](#2-prerequisites)
+- [Project Structure](#3-project-structure)
+- [Full Original Code](#4-simple-code)
+- [Deep Explanation — Line by Line and Concept by Concept](#5-deep-explanation--line-by-line-and-concept-by-concept)
+- [Why and When to Parallelize](#6-why-and-when-to-parallelize)
+- [Design Choices for Multithreading](#7-design-choices-for-multithreading)
+- [Multithreaded Implementation — Full Code](#8-multithreaded-implementation--full-code)
+- [How to Run and Test](#9-how-to-run-and-test)
+- [Performance Considerations & Debugging Tips](#10-performance-considerations--debugging-tips)
+- [FAQ and Closing Notes](#11-faq-and-closing-notes)
 
 ## 1. Introduction
 
