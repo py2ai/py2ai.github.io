@@ -15,21 +15,21 @@ tags: ["ad-to-dc", "full-wave-bridge", "ac dc rectifier simulation"]
 This tutorial walks through building a **Full Wave Bridge Rectifier Simulation** using **Python and Pygame**. The simulation visually demonstrates how **AC (Alternating Current)** is converted into **DC (Direct Current)** using **four diodes** arranged in a bridge circuit.
 
 
-## 📘 Table of Contents
-## 🧠 Overview {#overview}
-## ⚡ Circuit Concept {#circuit-concept}
-## 🧩 Pygame Setup {#pygame-setup}
-## 🖼 Drawing the Circuit {#drawing-the-circuit}
-## 🌊 Waveform Animation {#waveform-animation}
-## 🔁 Current Flow Visualization {#current-flow-visualization}
-## 🧾 Complete Python Code {#complete-python-code}
-## ▶️ How to Run {#how-to-run}
-## 💡 Key Learnings {#key-learnings}
-## 🚀 Further Ideas {#further-ideas}
+## Table of Contents
+## Overview {#overview}
+## Circuit Concept {#circuit-concept}
+## Pygame Setup {#pygame-setup}
+## Drawing the Circuit {#drawing-the-circuit}
+## Waveform Animation {#waveform-animation}
+## Current Flow Visualization {#current-flow-visualization}
+## Complete Python Code {#complete-python-code}
+## How to Run {#how-to-run}
+## Key Learnings {#key-learnings}
+## Further Ideas {#further-ideas}
 
 
 
-## 🧠 Overview
+## Overview
 
 This simulation provides an interactive, animated look at how a **bridge rectifier** converts alternating current into pulsating direct current. The display shows:
 
@@ -41,7 +41,7 @@ The current flow alternates between two paths during positive and negative half-
 
 
 
-## ⚡ Circuit Concept
+## Circuit Concept
 
 A **full wave bridge rectifier** uses **four diodes (D1–D4)** arranged in a diamond shape. During each half-cycle:
 
@@ -56,7 +56,7 @@ Thus, both halves of the AC waveform are converted into unidirectional current, 
 
 
 
-## 🧩 Pygame Setup
+## Pygame Setup
 
 We start by setting up a **650×900 portrait window** to allow space for the waveforms and the circuit diagram.
 
@@ -90,7 +90,7 @@ C = {
 
 
 
-## 🖼 Drawing the Circuit
+## Drawing the Circuit
 
 We build a diamond-shaped layout for the diodes:
 
@@ -108,7 +108,7 @@ Active diodes (the ones conducting in the current half-cycle) are highlighted in
 
 
 
-## 🌊 Waveform Animation
+## Waveform Animation
 
 Two waveforms are drawn to represent **input AC** and **output DC** signals:
 
@@ -125,7 +125,7 @@ for x in range(280):
 
 
 
-## 🔁 Current Flow Visualization
+## Current Flow Visualization
 
 To make the current path more interactive, small **moving dots** simulate the direction of electron flow through the active diodes and load resistor. The animation updates continuously using a changing `phase` variable.
 
@@ -138,7 +138,7 @@ This helps students visually understand how current always flows in the same dir
 
 
 
-## 🧾 Complete Python Code
+## Complete Python Code
 
 Below is the complete code that combines everything explained above.
 
@@ -433,7 +433,7 @@ while True:
 ```
 
 
-## ▶️ How to Run
+## How to Run
 
 1. Install **Pygame** if you haven’t already:
    ```bash
@@ -448,7 +448,7 @@ while True:
 
 
 
-## 💡 Key Learnings
+## Key Learnings
 
 - How a **Full Wave Bridge Rectifier** works.
 - How to **simulate electric circuits visually** using Python.
@@ -457,7 +457,7 @@ while True:
 
 
 
-## 🚀 Further Ideas
+## Further Ideas
 
 Here are some fun ways to extend the project:
 
@@ -468,11 +468,11 @@ Here are some fun ways to extend the project:
 
 
 
-## ❤️ Credits
+## Credits
 
 Developed by **PyShine** — bringing electronics and Python to life through visual learning!
 
-If you found this helpful, consider subscribing to [PyShine on YouTube](www.youtube.com/@pyshine_official) for more fun Python projects.
+If you found this helpful, consider subscribing to [PyShine on YouTube](https://www.youtube.com/@pyshine_official)  for more fun Python projects.
 
 
 
