@@ -6,27 +6,26 @@ featured-img: 26072022-python-logo
 description:  Full Bridge AC/DC four Diodes based Rectifier
 keywords: ["simulaiton", "PyGame"]
 tags: ["ad-to-dc", "full-wave-bridge", "ac dc rectifier simulation"]
-
 ---
 
 # Full Wave Bridge Rectifier Simulation with Pygame
 
-### 🎓 Educational Python Project – Visualize AC to DC Conversion
+### Educational Python Project – Visualize AC to DC Conversion
 
 This tutorial walks through building a **Full Wave Bridge Rectifier Simulation** using **Python and Pygame**. The simulation visually demonstrates how **AC (Alternating Current)** is converted into **DC (Direct Current)** using **four diodes** arranged in a bridge circuit.
 
 
 ## 📘 Table of Contents
-1. [Overview](#overview)
-2. [Circuit Concept](#circuit-concept)
-3. [Pygame Setup](#pygame-setup)
-4. [Drawing the Circuit](#drawing-the-circuit)
-5. [Waveform Animation](#waveform-animation)
-6. [Current Flow Visualization](#current-flow-visualization)
-7. [Complete Python Code](#complete-python-code)
-8. [How to Run](#how-to-run)
-9. [Key Learnings](#key-learnings)
-10. [Further Ideas](#further-ideas)
+## 🧠 Overview {#overview}
+## ⚡ Circuit Concept {#circuit-concept}
+## 🧩 Pygame Setup {#pygame-setup}
+## 🖼 Drawing the Circuit {#drawing-the-circuit}
+## 🌊 Waveform Animation {#waveform-animation}
+## 🔁 Current Flow Visualization {#current-flow-visualization}
+## 🧾 Complete Python Code {#complete-python-code}
+## ▶️ How to Run {#how-to-run}
+## 💡 Key Learnings {#key-learnings}
+## 🚀 Further Ideas {#further-ideas}
 
 
 
