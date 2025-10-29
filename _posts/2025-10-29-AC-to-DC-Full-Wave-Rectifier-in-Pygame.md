@@ -141,27 +141,18 @@ This helps students visually understand how current always flows in the same dir
 Below is the complete code that combines everything explained above.
 
 ```python
-"""
-Full Wave Bridge Rectifier Simulation - Pygame
-----------------------------------------------
-How AC is converted into DC using 
-four diodes arranged in a bridge circuit.
-
-Controls:
-  [ESC] → Quit
-"""
 
 import pygame, sys, math
 pygame.init()
 
-# --- Setup - Portrait Mode ---
+# Setup 
 W, H = 650, 900  # Portrait orientation
 S = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Full Wave Bridge Rectifier")
 F = pygame.font.SysFont("Arial", 18, bold=True)
 clk = pygame.time.Clock()
 
-# --- Colors ---
+# Colors
 C = {
     "BG": (0, 0, 0),
     "GRID": (50, 50, 50),
@@ -176,7 +167,7 @@ C = {
     "NEGATIVE_HALF": (255, 50, 50)   # RED for negative half (swapped)
 }
 
-# --- Wave and Animation ---
+# Wave and Animation
 amp, freq, speed, phase = 50, 0.15, .04, 0
 draw = pygame.draw
 txt = lambda t, p, c: S.blit(F.render(t, 1, c),
@@ -243,7 +234,7 @@ def waves(p):
     grid()
     cx, cy = W//2, H//2
     
-    # --- Input Wave (AC) - TOP (moved 40px down) ---
+    # Input Wave (AC) - TOP (moved 40px down) 
     box_y = 160  # Was 120, now 160 (40px down)
     draw.rect(S, C["DIODE"], (cx - 150, box_y - 55, 300, 115), 2)
     
@@ -258,7 +249,7 @@ def waves(p):
     # txt("Live", (cx - 50, box_y + 80), C["IN"])
     # txt("Neutral", (cx + 50, box_y + 80), C["IN"])
 
-    # --- Output Wave (Full-Wave DC) - BOTTOM (moved 40px up) ---
+    # Output Wave (Full-Wave DC) - BOTTOM (moved 40px up) 
     box_y = H - 160  # Was H - 120, now H - 160 (40px up)
     draw.rect(S, C["DIODE"], (cx - 150, box_y - 70, 300, 115), 2)
     
@@ -273,7 +264,7 @@ def waves(p):
     txt("-", (cx - 50, box_y + 80), C["OUT"])
     txt("+", (cx + 50, box_y + 80), C["OUT"])
 
-    # --- Bridge Rectifier Circuit - CENTER ---
+    # Bridge Rectifier Circuit - CENTER 
     center_x, center_y = cx, H//2
     radius = 120
     
@@ -416,7 +407,7 @@ def waves(p):
         path_text = "Current Path (Red): Neutral → D3 → (+) → Load → (-) → D2 → Live"
     txt(path_text, (cx, H - 50), active_color)
 
-# --- Main Loop ---
+# Main Loop
 while True:
     for e in pygame.event.get():
         if e.type == pygame.QUIT or \
