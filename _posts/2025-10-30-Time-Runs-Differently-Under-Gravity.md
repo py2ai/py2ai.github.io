@@ -35,9 +35,9 @@ This project simulates **gravitational time dilation** using Python. You can int
 
 According to general relativity, **time passes differently under different gravitational potentials**. A clock closer to a massive object ticks slower than a clock further away. The simulation uses the formula:
 
-\[
-\text{time factor} = \frac{1}{\sqrt{1 - \frac{2 G M}{r c^2}}}
-\]
+```math
+ \text{time factor} = \frac{1}{\sqrt{1 - \frac{2 G M}{r c^2}}} 
+```
 
 Where:
 - \(G\) is the gravitational constant
