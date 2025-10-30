@@ -34,14 +34,14 @@ This project simulates **gravitational time dilation** using Python. You can int
 ## Theory: Gravitational Time Dilation
 
 According to general relativity, **time passes differently under different gravitational potentials**. A clock closer to a massive object ticks slower than a clock further away. The simulation uses the formula:
-```math
+
 \[
 \text{time factor} = \frac{1}{\sqrt{1 - \frac{2 G M}{r c^2}}}
 \]
-```
 
 
-Where:
+
+Where:-
 - \(G\) is the gravitational constant
 - \(M\) is the mass of the object (Earth)
 - \(r\) is the distance from the center of the mass
