@@ -2,7 +2,7 @@
 layout: post
 title: Gravitational Time Dilation Simulation in Python
 mathjax: true
-featured-img: gravitational-time-dilation
+featured-img: 26072022-python-logo
 description: Interactive simulation showing Earth Clock vs Gravity Clock and how gravity affects time.
 keywords: ["simulation", "PyGame", "gravity", "time dilation"]
 tags: ["gravitational-time-dilation", "relativity", "python-simulation", "interactive"]
