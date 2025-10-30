@@ -279,7 +279,7 @@ pip install pygame matplotlib
 python gravitational_time_dilation.py
 ```
 
-3. Use **UP/DOWN arrow keys** to change gravity interactively.
+3. Clikc on the PyGame window and then Use **UP/DOWN arrow keys** to change gravity interactively.
 
 ## Key Learnings
 
