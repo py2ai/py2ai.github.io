@@ -1,0 +1,2 @@
+# Disclaimer
+Please note that all posts containing any sort of information completely represent individual opinions and have no intension to harm or mislead. We will never spam any email and its our best trust with you. Some of the links that we post may include affliate links from Google Adsense. In such case if you go to that link or buy that product, then we may receive a small commission from it. For any concern or any issue related to privacy policies and disclaimer you can contact us at python2ai@gmail.com
