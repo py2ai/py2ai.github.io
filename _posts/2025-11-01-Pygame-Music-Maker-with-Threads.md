@@ -2,7 +2,7 @@
 layout: post
 title: Music Maker with Save Load Clear & Slider
 mathjax: false
-featured-img: 01112025-pyshine-logo
+featured-img: 26072022-python-logo
 description: A deeply detailed beginner-friendly guide to building a complete interactive music maker in Python with Pygame, featuring waveform visualization, save/load, clear button, threading, and loop control slider.
 keywords: ["Pygame", "Python", "music maker", "synth piano", "save load", "slider", "waveform", "tutorial"]
 tags: ["pygame", "music", "interactive", "beginner", "python"]
