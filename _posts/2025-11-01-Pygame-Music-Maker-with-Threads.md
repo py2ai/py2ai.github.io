@@ -1,6 +1,6 @@
 ---
 layout: post
-title: PyShine Music Maker with Save/Load, Clear & Slider (Fully Expanded Tutorial)
+title:Music Maker with Save Load Clear & Slider
 mathjax: false
 featured-img: 01112025-pyshine-logo
 description: A deeply detailed beginner-friendly guide to building a complete interactive music maker in Python with Pygame, featuring waveform visualization, save/load, clear button, threading, and loop control slider.
