@@ -65,6 +65,48 @@ int main() {
 
 Here, the **C++ code is stored as a string** that will later be written to a temporary file.
 
+
+---
+
+## Setting Up `g++` on Your System
+
+You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps below depending on your OS.
+
+### 🪟 Windows
+1. Install **MinGW-w64** (Minimalist GNU for Windows):
+   - Visit: [https://winlibs.com/](https://winlibs.com/) or [https://sourceforge.net/projects/mingw-w64/](https://sourceforge.net/projects/mingw-w64/)
+   - Download and install it.
+2. Add the **`bin` directory** (e.g., `C:\mingw64\bin`) to your **PATH environment variable**.
+3. Open Command Prompt and type:
+   ```bash
+   g++ --version
+   ```
+   If it prints version info, you’re ready to go!
+
+### 🍎 macOS
+1. Install **Xcode Command Line Tools** by running:
+   ```bash
+   xcode-select --install
+   ```
+2. Verify installation with:
+   ```bash
+   g++ --version
+   ```
+   You should see Apple’s `clang` compiler, which works for this tutorial.
+
+### 🐧 Linux (Ubuntu/Debian)
+1. Open Terminal and install `g++`:
+   ```bash
+   sudo apt update
+   sudo apt install g++
+   ```
+2. Verify installation:
+   ```bash
+   g++ --version
+   ```
+---
+
+
 ## Step 2: Compiling C++ Code
 
 We create a temporary `.cpp` file and compile it using the **g++ compiler**.
