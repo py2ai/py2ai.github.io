@@ -72,7 +72,7 @@ Here, the **C++ code is stored as a string** that will later be written to a tem
 
 You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps below depending on your OS.
 
-### 🪟 Windows
+### Windows
 1. Install **MinGW-w64** (Minimalist GNU for Windows):
    - Visit: [https://winlibs.com/](https://winlibs.com/) or [https://sourceforge.net/projects/mingw-w64/](https://sourceforge.net/projects/mingw-w64/)
    - Download and install it.
@@ -83,7 +83,7 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```
    If it prints version info, you’re ready to go!
 
-### 🍎 macOS
+### macOS
 1. Install **Xcode Command Line Tools** by running:
    ```bash
    xcode-select --install
@@ -94,7 +94,7 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```
    You should see Apple’s `clang` compiler, which works for this tutorial.
 
-### 🐧 Linux (Ubuntu/Debian)
+### Linux (Ubuntu/Debian)
 1. Open Terminal and install `g++`:
    ```bash
    sudo apt update
