@@ -183,7 +183,7 @@ def param_gen():
 def turtle_tree():
     screen = turtle.Screen()
     screen.setup(W, H)
-    screen.title("🌸 Falling Cherry Blossom Tree")
+    screen.title("Turtle Tree with Falling Flowers")
     screen.bgcolor("black")
     screen.tracer(0, 0)
 
