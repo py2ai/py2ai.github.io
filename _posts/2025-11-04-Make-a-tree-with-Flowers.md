@@ -1,6 +1,13 @@
-# 🌸 Turtle Tree with Blossoms — Python Turtle Graphics Tutorial
+---
+layout: post
+title: Make a Tree with Blossoms in Python
+mathjax: false
+featured-img: 26072022-python-logo
+description: Python Turtle Graphics Tutorial to quickly draw a Tree
+keywords: ["Python", "Turtle", "Fractal Tree", "Recursion", "Graphics"]
+tags: ["python", "turtle", "recursion", "graphics", "fractal"]
+---
 
-**Date:** 2025-11-04
 
 ---
 
