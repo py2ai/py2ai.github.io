@@ -56,7 +56,7 @@ This ensures consistent structure each time the script runs (because we fixed th
 ```python
 branch_params = []
 
-def record_params(length, depth, level=0):
+def record_my_params(length, depth, level=0):
     if depth == 0:
         return
     a1 = uniform(BA - 10, BA + 10)
@@ -64,10 +64,10 @@ def record_params(length, depth, level=0):
     l1 = length * uniform(0.6, 0.8)
     l2 = length * uniform(0.6, 0.8)
     branch_params.append((a1, a2, l1, l2, level))
-    record_params(l1, depth - 1, level + 1)
-    record_params(l2, depth - 1, level + 1)
+    record_my_params(l1, depth - 1, level + 1)
+    record_my_params(l2, depth - 1, level + 1)
 
-record_params(LENGTH, DEPTH)
+record_my_params(LENGTH, DEPTH)
 
 def param_gen():
     for p in branch_params:
@@ -155,7 +155,7 @@ seed(192)
 
 branch_params = []
 
-def record_params(length, depth, level=0):
+def record_my_params(length, depth, level=0):
     if depth == 0:
         return
     a1 = uniform(BA - 10, BA + 10)
@@ -163,10 +163,10 @@ def record_params(length, depth, level=0):
     l1 = length * uniform(0.6, 0.8)
     l2 = length * uniform(0.6, 0.8)
     branch_params.append((a1, a2, l1, l2, level))
-    record_params(l1, depth - 1, level + 1)
-    record_params(l2, depth - 1, level + 1)
+    record_my_params(l1, depth - 1, level + 1)
+    record_my_params(l2, depth - 1, level + 1)
 
-record_params(LENGTH, DEPTH)
+record_my_params(LENGTH, DEPTH)
 
 def param_gen():
     for p in branch_params:
