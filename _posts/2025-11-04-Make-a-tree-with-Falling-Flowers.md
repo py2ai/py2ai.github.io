@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Make a Falling Cherry Blossom Tree in Python
+title: Make a Tree with falling Flowers
 mathjax: false
 featured-img: 26072022-python-logo
 description: Python Turtle Graphics Tutorial to animate falling cherry blossoms
@@ -281,7 +281,7 @@ def turtle_tree():
         tree_pen.backward(length)
 
     add_flowers(LENGTH, DEPTH)
-    print(f"Tree complete with {len(flowers)} blossoms 🌸")
+    print(f"Tree complete with {len(flowers)} blossoms")
 
     velocities = {}
     rotations = {}
@@ -349,7 +349,7 @@ def turtle_tree():
         if all_fallen and frame_count > 60:
             break
 
-    print(f"✅ All {fallen_count} blossoms have fallen 🌸✨")
+    print(f"All {fallen_count} flowers have fallen!")
     turtle.done()
 
 
