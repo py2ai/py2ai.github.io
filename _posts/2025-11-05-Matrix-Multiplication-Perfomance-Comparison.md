@@ -97,6 +97,7 @@ We can speed things up using **C++**, a compiled language. We'll:
 2. Compile it using `g++`.
 3. Run the executable and capture the runtime.
 
+{% raw %} 
 ```python
 cpp_code = f"""
 #include <iostream>
@@ -105,7 +106,7 @@ cpp_code = f"""
 #include <ctime>
 using namespace std;
 int main(){{
-    int N = {{N}};
+    int N = {N};
     vector<vector<int>> A(N, vector<int>(N));
     vector<vector<int>> B(N, vector<int>(N));
     vector<vector<long long>> C(N, vector<long long>(N, 0));
@@ -145,6 +146,7 @@ else:
 ios.remove(cpp_file)
 if os.path.exists(exe_file): os.remove(exe_file)
 ```
+{% endraw %}
 
 **Explanation:**
 - We generate the matrices inside C++ with `rand()`.
@@ -213,12 +215,13 @@ The speed differences are due to how the code is executed:
 python matrix_comparison.py
 ```
 
+{% raw %} 
 ```python
 import time, subprocess, tempfile, os
 import numpy as np # Highly optimized C/Fortran based
 
 # Matrix Size
-N = 600 # Adjust bigger N shows bigger speed difference
+N = 100 # Adjust bigger N shows bigger speed difference
 # Generate Matrices
 A,B = np.random.randint(0,11,(2,N,N))
 
@@ -240,7 +243,7 @@ cpp_code = f"""
 #include <ctime>
 using namespace std;
 int main(){{
-    int N = {{N}};
+    int N = {N};
     vector<vector<int> > A(N, vector<int>(N));
     vector<vector<int> > B(N, vector<int>(N));
     vector<vector<long long> >
@@ -303,8 +306,8 @@ print("\n=== Performance Comparison ===")
 print(f"Python: {python_time:.4f} s")
 print(f"C++: {cpp_time:.4f} s")
 print(f"Numpy: {numpy_time:.4f} s")
-                            
 ```
+{% endraw %}
 
 You’ll see execution times for Python, C++, and NumPy.
 
