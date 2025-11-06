@@ -28,6 +28,7 @@ We'll compare the execution times and understand why optimized libraries like Nu
 - [Performance Comparison](#performance-comparison)
 - [Key Takeaways](#key-takeaways)
 - [Running the Code](#running-the-code)
+- [Why Some Are Faster](#why-some-are-faster)
 
 ## Introduction
 
@@ -199,7 +200,13 @@ for execution speed, with NumPy being the fastest.
 2. Ensure you have **NumPy** and **g++ compiler** installed.
 3. Run the Python script:
 
+## Why Some Are Faster
 
+The speed differences are due to how the code is executed:
+
+- **Python**: Slower because it interprets loops at runtime in a high-level language, which adds overhead for each iteration.
+- **C++**: Faster because it is compiled into machine code, reducing runtime overhead. The `-O2` flag also optimizes loops.
+- **NumPy**: Fastest because it is written in C and Fortran under the hood and uses highly optimized, vectorized operations that leverage CPU features.
 
 
 ```bash
