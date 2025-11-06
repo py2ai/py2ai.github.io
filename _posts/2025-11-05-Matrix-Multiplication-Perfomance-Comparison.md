@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Matrix Multiplication Performance Comparison: Python vs C++ vs NumPy
+title: Matrix Multiplication Performance Comparison Python vs C++ vs NumPy
 description: Learn how to compare matrix multiplication speeds using naive Python, compiled C++, and optimized NumPy.
 featured-img: 26072022-python-logo
 keywords: ["matrix multiplication", "Python", "C++", "NumPy", "performance"]
