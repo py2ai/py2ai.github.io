@@ -105,7 +105,7 @@ cpp_code = f"""
 #include <ctime>
 using namespace std;
 int main(){{
-    int N = {N};
+    int N = {{N}};
     vector<vector<int>> A(N, vector<int>(N));
     vector<vector<int>> B(N, vector<int>(N));
     vector<vector<long long>> C(N, vector<long long>(N, 0));
@@ -240,7 +240,7 @@ cpp_code = f"""
 #include <ctime>
 using namespace std;
 int main(){{
-    int N = {N};
+    int N = {{N}};
     vector<vector<int> > A(N, vector<int>(N));
     vector<vector<int> > B(N, vector<int>(N));
     vector<vector<long long> >
