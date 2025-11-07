@@ -1,22 +1,25 @@
 ---
 layout: page
-title: Categories
+title: All Posts
 permalink: /categories/
 ---
 
-<div>
-{% for category in site.categories %}
-  <div class="archive-group">
-    {% capture category_name %}{{ category | first }}{% endcapture %}
-    <div id="#{{ category_name | slugize }}"></div>
-    <p></p>
-    <h3 class="category-head">{{ category_name }}</h3>
-    <a name="{{ category_name | slugize }}"></a>
-    {% for post in site.categories[category_name] %}
-    <article class="archive-item">
-      <h4><a href="{{ site.baseurl }}{{ post.url }}">{{post.title}}</a></h4>
-    </article>
-    {% endfor %}
-  </div>
-{% endfor %}
-</div>
+<h2 style="margin-bottom: 20px;">All Blog Posts</h2>
+
+<ul style="list-style: none; padding-left: 0;">
+  {% assign all_posts = site.posts | sort: "date" | reverse %}
+  {% for post in all_posts %}
+    <li style="margin-bottom: 12px;">
+      <a href="{{ site.baseurl }}{{ post.url }}" style="font-size: 1.1rem; color: #007acc; text-decoration: none;">
+        {{ post.title }}
+      </a>
+      <br>
+      <small style="color: #777;">
+        📅 {{ post.date | date: "%B %d, %Y" }}
+      </small>
+      {% if post.description %}
+        <p style="margin: 5px 0 0; color: #555;">{{ post.description }}</p>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
