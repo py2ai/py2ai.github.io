@@ -702,17 +702,17 @@ if __name__ == "__main__":
 
 ## Key Learnings
 
-Recursive Algorithms: Perfect for tree-like structures and branching patterns
+* Recursive Algorithms: Perfect for tree-like structures and branching patterns
 
-Turtle Graphics: Advanced techniques beyond basic shapes
+* Turtle Graphics: Advanced techniques beyond basic shapes
 
-Animation Principles: Gradual growth, smooth transitions, frame control
+* Animation Principles: Gradual growth, smooth transitions, frame control
 
-Physics Simulation: Gravity, wind, rotation, and collision detection
+* Physics Simulation: Gravity, wind, rotation, and collision detection
 
-Color Theory: Natural color blending and RGB manipulation
+* Color Theory: Natural color blending and RGB manipulation
 
-Data Structures: Using dictionaries to track multiple animated objects
+* Data Structures: Using dictionaries to track multiple animated objects
 
 ---
 
