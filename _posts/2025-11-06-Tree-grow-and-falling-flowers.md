@@ -80,13 +80,10 @@ branch_params = []
 
 Key Settings Explained:
 
-`DEPTH` Controls how detailed the tree is (higher = more branches)
-
-`LENGTH` Starting branch length in pixels
-
-`GRAVITY/WIND` Physics parameters for falling animation
-
-`seed(192)` Ensures the same tree generates every time
+* `DEPTH` Controls how detailed the tree is (higher = more branches)
+* `LENGTH` Starting branch length in pixels
+* `GRAVITY/WIND` Physics parameters for falling animation
+* `seed(192)` Ensures the same tree generates every time
 
 ---
 
@@ -124,11 +121,8 @@ def param_gen():
 How Recursion Works:
 
 * Each branch splits into two sub-branches
-
 * Sub-branches have randomized angles and lengths
-
 * Process continues until depth reaches 0
-
 * Parameters are stored for consistent drawing
 
 ---
@@ -157,9 +151,7 @@ r, g, b = blend(brown, green, t)
 ### Color Theory:
 
 * Brown trunk: (139/255, 69/255, 19/255) - earthy, strong
-
 * Green tips: (34/255, 139/255, 34/255) - vibrant, leafy
-
 * Linear interpolation: Creates smooth color transitions
 
 ---
@@ -225,11 +217,8 @@ def animate_flower_growth(screen, tree_pen, flower_positions):
 ### Growth Animation Features:
 
 * 20 growth stages for smooth appearance
-
 * Size scaling from 0% to 100%
-
 * Separate turtle for flowers vs tree
-
 * Controlled frame rate for smooth animation
 
 ---
@@ -307,15 +296,10 @@ def make_flowers_fall(screen, tree_pen, flower_pen, flower_positions):
 ### Physics Simulation Elements:
 
 * Gravity: Constant downward acceleration
-
 * Wind: Random horizontal movement
-
 * Rotation: Flowers spin as they fall
-
 * Air resistance: Velocity gradually decreases
-
 * Ground collision: Realistic bouncing and stopping
-
 * Random variations: Natural, non-uniform movement
 
 ---
@@ -675,13 +659,9 @@ if __name__ == "__main__":
 ## How It Works
 
 * Tree Generation: Recursive algorithm builds tree structure with random variations
-
 * Flower Placement: Flowers are positioned at branch endpoints during tree drawing
-
 * Growth Animation: Flowers appear gradually over 20 animation frames
-
 * Physics Simulation: Each flower gets velocity and rotation properties
-
 * Natural Falling: Random detachment with gravity, wind, and collision detection
 
 ---
@@ -689,13 +669,9 @@ if __name__ == "__main__":
 ## Customization Ideas
 
 * Seasonal Colors: Change flower colors for different seasons
-
 * Different Tree Types: Modify branching patterns for various tree species
-
 * Weather Effects: Add rain, snow, or stronger wind
-
 * Interactive Elements: Click to make flowers fall or grow new ones
-
 * Background: Add sky, ground, or other landscape elements
 
 ---
@@ -703,15 +679,10 @@ if __name__ == "__main__":
 ## Key Learnings
 
 * Recursive Algorithms: Perfect for tree-like structures and branching patterns
-
 * Turtle Graphics: Advanced techniques beyond basic shapes
-
 * Animation Principles: Gradual growth, smooth transitions, frame control
-
 * Physics Simulation: Gravity, wind, rotation, and collision detection
-
 * Color Theory: Natural color blending and RGB manipulation
-
 * Data Structures: Using dictionaries to track multiple animated objects
 
 ---
