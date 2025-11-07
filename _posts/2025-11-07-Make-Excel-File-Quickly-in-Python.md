@@ -2,7 +2,7 @@
 layout: post
 title: Create Excel Files with Python – Complete Beginner's Guide
 mathjax: false
-featured-img: 26072022-python-excel
+featured-img: 26072022-python-logo
 description: Learn how to create Excel workbooks with multiple sheets using Python's openpyxl library. Step-by-step tutorial for absolute beginners.
 keywords: ["Python", "Excel", "openpyxl", "spreadsheet", "beginner", "tutorial"]
 tags: ["python", "excel", "openpyxl", "beginner", "data-processing", "tutorial"]
