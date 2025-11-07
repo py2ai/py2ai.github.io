@@ -41,3 +41,5 @@ gem "webrick", "~> 1.8"        # Required for local serve in Ruby 3.x
 # ======================================
 # This setup is designed for GitHub Actions, not GitHub Pages’ limited environment.
 # Remove 'github-pages' gem to unlock full control over Jekyll version and plugins.
+
+gem "jekyll-paginate-v2", "~> 3.0"
