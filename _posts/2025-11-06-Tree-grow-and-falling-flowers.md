@@ -14,6 +14,8 @@ tags: ["python", "turtle-graphics", "animation", "recursion", "physics", "tutori
 
 Python's Turtle graphics module isn't just for simple shapes – it can create beautiful, complex animations with physics simulations! This tutorial shows you how to build an **animated flowering tree** where blossoms gradually grow on branches and then gently fall with realistic physics. You'll learn recursive tree generation, color blending, growth animation, and basic physics simulation – all with pure Python.
 
+---
+
 ## Table of Contents
 - [Overview](#overview)
 - [What You'll Learn](#what-youll-learn)
@@ -27,6 +29,8 @@ Python's Turtle graphics module isn't just for simple shapes – it can create b
 - [Customization Ideas](#customization-ideas)
 - [Key Learnings](#key-learnings)
 
+---
+
 ## Overview
 
 This project creates a **procedurally generated tree** with these animated features:
@@ -37,6 +41,8 @@ This project creates a **procedurally generated tree** with these animated featu
 4. **Realistic flower falling** with gravity and wind physics
 5. **Natural swaying motion** for attached flowers
 
+---
+
 ## What You'll Learn
 
 - **Recursive algorithms** for tree generation
@@ -45,6 +51,8 @@ This project creates a **procedurally generated tree** with these animated featu
 - **Animation principles** with growth stages
 - **Basic physics simulation** (gravity, wind, rotation)
 - **Object-oriented thinking** with flower data structures
+
+---
 
 ## Step 1: Setting Up the Environment
 
@@ -79,6 +87,8 @@ Key Settings Explained:
 `GRAVITY/WIND` Physics parameters for falling animation
 
 `seed(192)` Ensures the same tree generates every time
+
+---
 
 ## Step 2: Generating the Tree Structure
 
@@ -121,6 +131,8 @@ How Recursion Works:
 
 * Parameters are stored for consistent drawing
 
+---
+
 ## Step 3: Color Blending for Natural Look
 
 We blend colors from brown (trunk) to green (branches) based on branch level.
@@ -149,6 +161,8 @@ r, g, b = blend(brown, green, t)
 * Green tips: (34/255, 139/255, 34/255) - vibrant, leafy
 
 * Linear interpolation: Creates smooth color transitions
+
+---
 
 ## Step 4: Drawing Flowers with Growth Animation
 
@@ -217,6 +231,8 @@ def animate_flower_growth(screen, tree_pen, flower_positions):
 * Separate turtle for flowers vs tree
 
 * Controlled frame rate for smooth animation
+
+---
 
 ### Step 5: Physics for Falling Flowers
 
@@ -301,6 +317,8 @@ def make_flowers_fall(screen, tree_pen, flower_pen, flower_positions):
 * Ground collision: Realistic bouncing and stopping
 
 * Random variations: Natural, non-uniform movement
+
+---
 
 ## Complete Code
 
@@ -652,6 +670,8 @@ if __name__ == "__main__":
     draw_tree_with_flowers()
 ```
 
+---
+
 ## How It Works
 
 * Tree Generation: Recursive algorithm builds tree structure with random variations
@@ -664,6 +684,8 @@ if __name__ == "__main__":
 
 * Natural Falling: Random detachment with gravity, wind, and collision detection
 
+---
+
 ## Customization Ideas
 
 * Seasonal Colors: Change flower colors for different seasons
@@ -675,6 +697,8 @@ if __name__ == "__main__":
 * Interactive Elements: Click to make flowers fall or grow new ones
 
 * Background: Add sky, ground, or other landscape elements
+
+---
 
 ## Key Learnings
 

@@ -18,6 +18,8 @@ This tutorial will walk you through performing **matrix multiplication** using t
 
 We'll compare the execution times and understand why optimized libraries like NumPy are much faster.
 
+---
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Setup and Imports](#setup-and-imports)
@@ -30,11 +32,15 @@ We'll compare the execution times and understand why optimized libraries like Nu
 - [Running the Code](#running-the-code)
 - [Why Some Are Faster](#why-some-are-faster)
 
+---
+
 ## Introduction
 
 Matrix multiplication is a fundamental operation in mathematics, computer science, and data science. However, **naive implementations in Python** are slow for large matrices because Python loops are interpreted at runtime.
 
 Optimized libraries like **NumPy** and compiled languages like **C++** can significantly reduce computation time.
+
+---
 
 ## Setup and Imports
 
@@ -53,6 +59,7 @@ Make sure you have **NumPy** installed. You can install it using:
 ```bash
 pip install numpy
 ```
+---
 
 ## Generate Random Matrices
 
@@ -67,6 +74,8 @@ A, B = np.random.randint(0, 11, (2, N, N))
 ```
 
 > Tip: For beginners, start with smaller values like `N=100` to test the code faster.
+
+---
 
 ## Naive Python Multiplication
 
@@ -89,6 +98,8 @@ python_time = end_py - start_py
 - Time is recorded using `time.time()`.
 
 **Note:** This is extremely slow for large matrices due to Python's interpreted loops.
+
+---
 
 ## C++ Multiplication from Python
 
@@ -154,6 +165,8 @@ if os.path.exists(exe_file): os.remove(exe_file)
 - Capture execution time using `clock()`.
 - Compile with `-O2` optimization flag.
 
+---
+
 ## NumPy Multiplication
 
 NumPy provides optimized matrix multiplication using highly efficient C/Fortran libraries under the hood.
@@ -167,11 +180,12 @@ C_np = np.dot(A_np, B_np)
 end_np = time.time()
 numpy_time = end_np - start_np
 ```
-
 ### Why NumPy is Fast
 - NumPy leverages **vectorized operations**.
 - Internal loops are compiled in **C/Fortran**, avoiding Python overhead.
 - Utilizes CPU cache and SIMD instructions for speed.
+
+---
 
 ## Performance Comparison
 
@@ -190,17 +204,23 @@ Python >> C++ >> NumPy
 ```
 for execution speed, with NumPy being the fastest.
 
+---
+
 ## Key Takeaways
 - Naive Python loops are slow for large matrices.
 - C++ is faster due to compilation, but requires more setup.
 - NumPy is both **fast** and **easy to use** in Python.
 - Optimized libraries are crucial for performance-critical applications.
 
+---
+
 ## Running the Code
 
 1. Copy the code into a `.py` file.
 2. Ensure you have **NumPy** and **g++ compiler** installed.
 3. Run the Python script:
+
+---
 
 ## Why Some Are Faster
 
