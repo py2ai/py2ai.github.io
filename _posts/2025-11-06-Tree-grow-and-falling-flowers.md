@@ -2,7 +2,7 @@
 layout: post
 title: Animated Flower Tree with Python Turtle – Growing & Falling Flowers
 mathjax: false
-featured-img: 26072022-python-turtle-tree
+featured-img: 26072022-python-logo
 description: Learn how to create a beautiful animated tree with growing and falling flowers using Python's Turtle graphics module. Step-by-step tutorial with physics simulation.
 keywords: ["Python", "Turtle Graphics", "Animation", "Recursive Tree", "Flower Animation", "Physics Simulation"]
 tags: ["python", "turtle-graphics", "animation", "recursion", "physics", "tutorial"]
