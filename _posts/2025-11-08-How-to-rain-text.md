@@ -193,6 +193,63 @@ except KeyboardInterrupt:
 python3 matrix_rain.py
 ```
 
+```python
+# Tutorial and Source code at www.pyshine.com
+from random import randint, choice
+import shutil, time
+# Your Terminal window Size
+columns, rows = shutil.get_terminal_size()
+# Characters to display
+chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+# Initialize streams
+streams = []
+for _ in range(columns):
+    streams.append({
+        "pos": randint(0, rows-1), # head pos
+        "length": randint(5, rows//2), # tail length
+        "tail": [] # list of tail characters
+    })
+# Function to generate the lime Green with Intensity
+def lime_color(intensity):
+    green = int(255*intensity)
+    return f"\033[38;2;0;{green};0m"
+# Hide cursor for better effect
+print("\033[?25l",end="")
+try:
+    while True:
+        # Create empty screen buffer
+        screen_buffer = [[" " for _ in range(columns)]
+                         for _ in range(rows)]
+        for col, stream in enumerate(streams):
+            head = stream["pos"]
+            length = stream["length"]
+            # Add a new random character at the head
+            char = choice(chars)
+            stream["tail"].insert(0, char)
+            # Keep tail at fixed length
+            if len(stream["tail"])> length:
+                stream["tail"].pop()
+            # Draw tail characters in the screen buffer
+            for i, c in enumerate(stream["tail"]):
+                y = (head - i) % rows
+                intensity = max(0.2, 1 -i /length)
+                screen_buffer[y][col]=\
+                f"{lime_color(intensity)}{c}\033[0m"
+            # Move head down
+            stream["pos"] = (head + 1) % rows
+        # Move cursor to the top-left
+        print("\033[H", end="")
+        # Print all rows
+        for row in screen_buffer:
+            print("".join(row))
+        # Small delay for smooth animation
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    print("\033[0m\033[?25h") # Reset color show cursor
+    print("\nMatrix rain stopped.")
+
+```
+
 4. Watch the Matrix rain animation in action.
 5. Stop the animation with `Ctrl+C`.
 
