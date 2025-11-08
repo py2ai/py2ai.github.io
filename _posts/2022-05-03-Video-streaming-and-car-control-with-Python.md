@@ -1,13 +1,25 @@
 ---
-layout: post
-title: Video streaming and Car Control in Python
-categories: [Raspberry Pi Programming Series]
+categories:
+- Raspberry Pi Programming Series
+description: This tutorial is about running Flask Application and Controlling car from Clients' webpage
 featured-img: raspberrypicarcontrol
+keywords:
+- Raspberry Pi
+- Flask
+- Video Streaming
+- Car Control
+- Python
+layout: post
 mathjax: true
-description:  This tutorial is about running Flask Application and Controlling car from Clients' webpage
-keywords: [Raspberry Pi, Flask, Video Streaming, Car Control, Python]
-tags: [Raspberry Pi, Flask, Video Streaming, Car Control]
+tags:
+- Raspberry Pi
+- Flask
+- Video Streaming
+- Car Control
+title: Video streaming and Car Control in Python
 ---
+
+
 
 Hi friends! Today's tutorial is Part 04 of the Raspberry Pi (RPi) learning series. Raspberry Pi zero W has limited resources in terms of compute power as compare 
 to higher versions such as Raspberry Pi 3 and 4. The aim of this tutorial is to do optimized video transfer and client control all inside the tiny little 
@@ -21,7 +33,7 @@ RPi makes it perfect candidate for the control of toy cars or small drones. Plea
 <br>
 
 
-## Running Video Streamer and Flask App in PC
+# Running Video Streamer and Flask App in PC
 
 Project view:
 ```
@@ -32,18 +44,18 @@ Project_Directory/
 ```
 Here is the Python code for the Flask application running at local machine and no control pins are activated:
 
-### main.py
+## main.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine, this code is for demonstration on PC
-# Client can send control commands to server, and also can view live
-# video stream on the same webpage.
-# We can easily extend this code for Raspberry Pi Zero W and other versions of Pi 
+## Welcome to PyShine, this code is for demonstration on PC
+## Client can send control commands to server, and also can view live
+## video stream on the same webpage.
+## We can easily extend this code for Raspberry Pi Zero W and other versions of Pi 
 
 import cv2
 import  pyshine as ps #  pip3 install pyshine==0.0.9
 import threading
-# import RPi.GPIO as io
+## import RPi.GPIO as io
 from flask import Flask, render_template, request
 app = Flask(__name__)
 
@@ -204,7 +216,7 @@ Following is the index.html containing javascript
 
 You can skip the above code and use the following code only for the Raspberry Pi.
 
-![]({{ "assets/img/posts/car_pi_2022_05_09.jpg" | absolute_url }})
+!![car pi 2022 05 09]({{ "assets/img/posts/car_pi_2022_05_09.jpg" | absolute_url }})
 
 Project view:
 
@@ -310,23 +322,23 @@ def index():
         data = request.form.get("data")
         
         if data == 'forward':
-            # print('forward')
+            ## print('forward')
             run_for(FORWARD)
             pin = FORWARD
         elif  data == 'back':
-            # print("back")
+            ## print("back")
             run_for(BACK)
             pin = BACK
         elif data == 'left':
-            # print('left')
+            ## print('left')
             run_for(LEFT)
             pin = LEFT
         elif data == 'right':
-            # print('right')          
+            ## print('right')          
             run_for(RIGHT)
             pin = RIGHT
         elif data == 'stop':
-            # print('STOP')
+            ## print('STOP')
             io.setmode(io.BCM)
             io.setup(pin, io.OUT)
             io.output(pin, False)

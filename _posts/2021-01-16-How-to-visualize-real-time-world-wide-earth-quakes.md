@@ -1,21 +1,33 @@
 ---
-layout: post
-title: How to visualize Earthquakes in Python
-categories: [Python learning series]
-mathjax: true
-featured-img: earthquakes
+categories:
+- Python learning series
 description: This tutorial is about visualization of the most recent earthquakes on the planet Earth.
-keywords: [Python, Earthquake Visualization, QuakeFeed, Folium, Data Visualization]
-tags: [Python, Earthquake Visualization, QuakeFeed, Folium]
+featured-img: earthquakes
+keywords:
+- Python
+- Earthquake Visualization
+- QuakeFeed
+- Folium
+- Data Visualization
+layout: post
+mathjax: true
+tags:
+- Python
+- Earthquake Visualization
+- QuakeFeed
+- Folium
+title: How to visualize Earthquakes in Python
 ---
+
+
 Hi friends! today we will use two libraries in Python 3 to plot the balloons to represent the earthquakes. We will use a Red balloon for an earthquake 
 above 5 magnitude and Green balloon for less than 5. You can tweak the icon_anchor=(9,25) for (horizontal, vertical) adjustments of the text over balloon. 
 No more wait and here is the code:
 
-### main.py
+# main.py
 {% include codeHeader.html %}
 ```python
-# Welcome to Pyshine Earthquake visualization tutorial
+## Welcome to Pyshine Earthquake visualization tutorial
 """ Essentials
 	pip install quakefeeds
 	pip install folium

@@ -1,11 +1,21 @@
 ---
-layout: post
-title: How to track Mario in Python
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: mario
+categories:
+- GUI tutorial series
 description: This code will track Mario game character using opencv and python
+featured-img: mario
+keywords:
+- mario
+- development
+- track
+- code
+- programming
+- tutorial
+- python
+layout: post
+mathjax: true
+title: How to track Mario in Python
 ---
+
 
 <br>
 <div align="center">
@@ -16,17 +26,17 @@ description: This code will track Mario game character using opencv and python
 {% include codeHeader.html %}
 ```python
 # Welcome to PyShine
-# First we require cv2 versionn 3.4.5.20
-# Lets make sure we have the right version installed
-# Lets uninstall the previous 
-# UNINSTALL :
-# pip uninstall opencv-contrib-python
-# pip uninstall opencv-python
-# INSTALL
-# pip install opencv-contrib-python==3.4.5.20
-# pip install imutils
+## First we require cv2 versionn 3.4.5.20
+## Lets make sure we have the right version installed
+## Lets uninstall the previous 
+## UNINSTALL :
+## pip uninstall opencv-contrib-python
+## pip uninstall opencv-python
+## INSTALL
+## pip install opencv-contrib-python==3.4.5.20
+## pip install imutils
 
-# Lets start 
+## Lets start 
 import cv2, imutils
 import time
 import numpy as np

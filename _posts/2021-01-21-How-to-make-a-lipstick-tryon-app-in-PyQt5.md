@@ -1,13 +1,28 @@
 ---
-layout: post
-title: Lipstick color picker GUI in PyQt5
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: howtomakelipstickgui
+categories:
+- GUI tutorial series
 description: This tutorial is about making a GUI in PyQt5 using Dlib and OpenCV for changing color of lips.
-keywords: [PyQt5, Dlib, OpenCV, Lipstick Color Picker, GUI, Image Processing]
-tags: [PyQt5, Dlib, OpenCV, GUI, Image Processing]
+featured-img: howtomakelipstickgui
+keywords:
+- PyQt5
+- Dlib
+- OpenCV
+- Lipstick Color Picker
+- GUI
+- Image Processing
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- Dlib
+- OpenCV
+- GUI
+- Image Processing
+title: Lipstick color picker GUI in PyQt5
 ---
+
+
+
 
  <br>
 <div align="center">
@@ -24,7 +39,7 @@ used as input and the GUI will display the face with colored lips. The color of 
 
 We will proceed in several steps to finish this GUI project.
 
-### 1. Structure of project directory 
+# 1. Structure of project directory 
 In the main project directory 13-Lipstick color picker GUI in PyQt5 we have:
 
  ```
@@ -82,7 +97,7 @@ In the main project directory 13-Lipstick color picker GUI in PyQt5 we have:
 Let's begin the code details
 
 
-### 2. Importing essentials
+## # 2. Importing essentials
 
 We can install them using pip install and then import them as:
 
@@ -98,7 +113,7 @@ import dlib
 import pyshine as ps
 
 ```
-### 3. Loading the Dlib facial landmarks detector model
+## # 3. Loading the Dlib facial landmarks detector model
 
 ```python
 detector = dlib.get_frontal_face_detector()
@@ -106,7 +121,7 @@ predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 ```
 Here we have the detector to detect face and a predictor to predict the facial landmarks on that detected face
 
-### 4. Loading the images directory to generate an RGB dictionary
+## # 4. Loading the images directory to generate an RGB dictionary
 
 ```python
 path ="images"
@@ -127,7 +142,7 @@ Here we will give the path of images and then scan this path to get all the path
 take the shape of image img and then take the b,g,r of the center point h//2, w//2. The key to RGB_dict is the base name of that color tile image, and the 
 value is a list [r,g,b].
 
-### 5. Main window class
+## # 5. Main window class
 
 ```python
 class Ui_MainWindow(object):
@@ -137,7 +152,7 @@ class Ui_MainWindow(object):
 		...
 		...
 		...
-		# Added code here
+## #	# Added code here
 		self.filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png' # Will hold the image address location
 		self.tmp = None # Will hold the temporary image for display
 		self.brightness_value_now = 0 # Updated brightness value
@@ -152,7 +167,7 @@ Here after initializing the setupUi for the MainWindow just like before in Part 
 is used for either 'cam' or 'image' selection. The self.color_selected_text will be used for the printing color value on the image. A user can tryon color
 and then press the take photo button and that saved image will have a watermark on it to show the reference color name. 
 
-### 6. Input modes functions
+## # 6. Input modes functions
 We have added two radio buttons to the GUI, that will take user selection either image/video or webcam as the input
 
 ```python
@@ -166,7 +181,7 @@ def videoMode(self):
 	self.mode='cam'
 	print(self.mode)
 ```
-### 7. Load the input 
+## # 7. Load the input 
 This function will have two lists: one for the detection of video file extension, the other for the image file extension such as .jpg etc.
 Based on the type it will operate to provide us the input image.
 
@@ -229,7 +244,7 @@ def load(self):
 		QtWidgets.QApplication.processEvents()	
 
 ```
-### 8. Several functions for the User inputs
+## # 8. Several functions for the User inputs
 These functions are mostly similar to Part 9 tutorial. We will set photo, change brightness, blur and color values for the lips instead.
 
 ```python
@@ -276,7 +291,7 @@ def lipStick_value(self,value):
 
 ```
 
-### 9. Apply the lip color
+## # 9. Apply the lip color
 
 Here we will apply the color value to the input image img. Only at the lips part. We will iterate over the 68 points, take the ones belonging to lips and then
 mask a binary image. After that we will merge the lips color image with the input image to output the desired image. The brightness and blur values will be 
@@ -339,7 +354,7 @@ def getMaskOfLips(self,img,points):
 
 ```
 
-### 10. Save the photo
+## # 10. Save the photo
 Here will save the photo and apply a watermark on it. After that we can run the main application just like before.
 
 ```python
@@ -373,28 +388,28 @@ if __name__ == "__main__":
 
 ```
   
-### COMPLETE CODE
+## # COMPLETE CODE
 Here is complete main code:
   
-### process.py
+## # process.py
 {% include codeHeader.html %}
   ```python
   
-  # -*- coding: utf-8 -*-
+  ## -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'process.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# Subscribe to PyShine Youtube channel for more detail! 
-# 
-# This code will let user to input 1) image 2) video 3) webcam and apply lip color 
-#
-# Essentials can be installed through pip install: dlib, cv2, PyQt5, numpy, imutils, pyshine 
-#
-# Usage: python process.py
+## # Form implementation generated from reading ui file 'process.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # Subscribe to PyShine Youtube channel for more detail! 
+## # 
+## # This code will let user to input 1) image 2) video 3) webcam and apply lip color 
+##
+## # Essentials can be installed through pip install: dlib, cv2, PyQt5, numpy, imutils, pyshine 
+##
+## # Usage: python process.py
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QColorDialog
@@ -518,7 +533,7 @@ class Ui_MainWindow(object):
 		self.radioButton2.clicked.connect(self.videoMode)
 		QtCore.QMetaObject.connectSlotsByName(MainWindow)
 		
-		# Added code here
+## #	# Added code here
 		self.filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png' # Will hold the image address location
 		self.tmp = None # Will hold the temporary image for display
 		self.brightness_value_now = 0 # Updated brightness value
@@ -772,9 +787,9 @@ class Ui_MainWindow(object):
 		self.pushButton.setText(_translate("MainWindow", "Take picture"))
 		self.pushButton_3.setText(_translate("MainWindow", "Color"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 
 if __name__ == "__main__":

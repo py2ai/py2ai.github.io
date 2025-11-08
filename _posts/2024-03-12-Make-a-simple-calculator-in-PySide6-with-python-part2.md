@@ -1,29 +1,30 @@
 ---
-layout: post
-title: Building a Calculator Application with PySide6 (Part 2)
-mathjax: true
+description: Welcome back to our PySide6 tutorial series! In the previous tutorial, we explored the fundamentals of PySide6 by creating a simple Todo List application. No...
 featured-img: 26072022-python-logo
-description:  Beyond the Basics
-tags:
-  - Python
-  - PySide6
-  - GUI Development
-  - Calculator Application
-  - PySide6 Tutorial
-  - Application Design
-  - Programming
-  - Qt
 keywords:
-  - PySide6 calculator
-  - Calculator app PySide6
-  - PySide6 GUI tutorial
-  - Python calculator example
-  - Qt calculator application
-  - PySide6 widgets
-  - GUI design Python
-  - Building calculator with PySide6
-  - Advanced PySide6 tutorial
+- PySide6 calculator
+- Calculator app PySide6
+- PySide6 GUI tutorial
+- Python calculator example
+- Qt calculator application
+- PySide6 widgets
+- GUI design Python
+- Building calculator with PySide6
+- Advanced PySide6 tutorial
+layout: post
+mathjax: true
+tags:
+- Python
+- PySide6
+- GUI Development
+- Calculator Application
+- PySide6 Tutorial
+- Application Design
+- Programming
+- Qt
+title: Building a Calculator Application with PySide6 (Part 2)
 ---
+
 
 
 Welcome back to our PySide6 tutorial series! In the previous tutorial, we explored the fundamentals of PySide6 by creating a simple Todo List application. Now, let's take our PySide6 skills to the next level by building a calculator application. A calculator is a classic example of a GUI application that involves handling user input and performing calculations.
@@ -32,7 +33,7 @@ Welcome back to our PySide6 tutorial series! In the previous tutorial, we explor
 
 Before we dive into building the calculator application, make sure you have Python and PySide6 installed on your system. If you haven't done this yet, please refer to the instructions in Part 1 of this tutorial series.
 
-# Designing the Calculator Application
+## Designing the Calculator Application
 
 Our calculator application will consist of a main window with a display area to show the input and output of calculations, and buttons for numeric input, arithmetic operations, and special functions like clearing the display. Let's start by designing the layout:
 
@@ -110,7 +111,7 @@ if __name__ == '__main__':
 
 ```
 
-# Understanding the Code
+## Understanding the Code
 
 * We create a class CalculatorApp inheriting from QWidget.
 * In the initUI method, we set up the calculator's layout, including the display area and buttons for numeric input, arithmetic operations, clearing, and calculation.
@@ -125,7 +126,7 @@ if __name__ == '__main__':
 
 You should see the calculator application window with the numeric input buttons, arithmetic operation buttons, and the display area. You can now start performing calculations using your PySide6 calculator!
 
-# Conclusion
+## Conclusion
 
 In this tutorial, we built a simple calculator application using PySide6. We designed the UI layout and added functionality to handle user input and perform calculations. You can further customize and enhance this application by adding more features such as support for parentheses, memory functions, or scientific operations. Experiment with the code and explore the possibilities of PySide6 to create even more advanced GUI applications!
 

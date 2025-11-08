@@ -1,11 +1,23 @@
 ---
-layout: post
-title: How to make an interactive PSO algorithm in Python
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pso2
+categories:
+- GUI tutorial series
 description: Using Matplotlib drag the target of PSO and let the particles optimize their movements to find it.
+featured-img: pso2
+keywords:
+- algorithm
+- interactive
+- development
+- code
+- programming
+- pso
+- tutorial
+- python
+layout: post
+mathjax: true
+title: How to make an interactive PSO algorithm in Python
 ---
+
+
 
 <br>
 <div align="center">
@@ -17,7 +29,7 @@ description: Using Matplotlib drag the target of PSO and let the particles optim
 Hello friends, today we will use Matplotlib in Python to make an interactive PSO environment, where you can change the target as well as 
 the number of particles including their various parameters.
 
-## IMPORTANT 
+# IMPORTANT 
 
 Please note that the files below are intended for Python 3, and not for Python2. Use Matplotlib version 2.2.4
 
@@ -26,11 +38,11 @@ Please note that the files below are intended for Python 3, and not for Python2.
 
 Just make a new directory and place both these .py files. Then simply run the main.py. Lets see what's inside the Draggable.py
 
-### Draggable.py
+## Draggable.py
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
+## Welcome to PyShine
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -123,11 +135,11 @@ plt.show()
 
 And here is the main.py, it will use the thread to call the above Draggable.py file. So please make sure to name the above file as Draggable, otherwise change the name accordingly in the code below under the start_drag function.
 
-### main.py
+## main.py
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
+## Welcome to PyShine
 
 import random
 import math

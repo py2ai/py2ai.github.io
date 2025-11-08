@@ -1,16 +1,28 @@
 ---
-layout: post
-title: Make a Tree with falling Flowers
-mathjax: false
-featured-img: 26072022-python-logo
 description: Python Turtle Graphics Tutorial to animate falling cherry blossoms
-keywords: ["Python", "Turtle", "Cherry Blossom", "Animation", "Graphics"]
-tags: ["python", "turtle", "animation", "graphics", "nature"]
+featured-img: 26072022-python-logo
+keywords:
+- Python
+- Turtle
+- Cherry Blossom
+- Animation
+- Graphics
+layout: post
+mathjax: false
+tags:
+- python
+- turtle
+- animation
+- graphics
+- nature
+title: Make a Tree with falling Flowers
 ---
+
+
 
 ---
 
-## Table of Contents
+# Table of Contents
 1. [Overview](#overview)
 2. [Setup and Imports](#setup-and-imports)
 3. [Generating Branch Parameters](#generating-branch-parameters)
@@ -36,7 +48,7 @@ import turtle
 from random import random, uniform, seed
 import math
 
-# === Settings ===
+## === Settings ===
 W, H = 420, 420
 DEPTH = 8
 LENGTH = 80
@@ -115,7 +127,7 @@ Each blossom is drawn using a **five-petal shape** with subtle pink tones.
 After building the tree, we animate petals detaching, swaying in the wind, and landing softly.
 
 ```python
-# Main animation loop
+## Main animation loop
 while True:
     frame_count += 1
     tree_pen.clear()
@@ -125,7 +137,7 @@ while True:
     breeze_phase += breeze_frequency
     current_breeze = math.sin(breeze_phase) * breeze_strength
 
-    # Detach blossoms randomly
+    ## Detach blossoms randomly
     for f in flowers:
         if f[4] and frame_count > 10 and random() < 0.04:
             f[4] = False
@@ -137,7 +149,7 @@ while True:
             fallen_count += 1
             print(f"🌸 dropped! Total fallen: {fallen_count}/{len(flowers)}")
 
-    # Move and draw each blossom
+    ## Move and draw each blossom
     ...
 ```
 The simulation uses **gravity and sinusoidal wind motion** for realistic drifting.
@@ -151,7 +163,7 @@ import turtle
 from random import random, uniform, seed
 import math
 
-# === Settings ===
+## === Settings ===
 W, H = 420, 420
 DEPTH = 8
 LENGTH = 80
@@ -161,7 +173,7 @@ WIND = 2.0
 FPS = 0.02
 seed(192)
 
-# === Pre-generate random branch params ===
+## === Pre-generate random branch params ===
 branch_params = []
 def record_my_params(length, depth, level=0):
     if depth == 0:
@@ -252,7 +264,7 @@ def turtle_tree():
 
         draw_branch(LENGTH, DEPTH)
 
-    # === Build tree & record flower positions ===
+    ## === Build tree & record flower positions ===
     tree_pen.penup()
     tree_pen.goto(0, -H//2 + 30)
     tree_pen.setheading(90)
@@ -299,7 +311,7 @@ def turtle_tree():
         breeze_phase += breeze_frequency
         current_breeze = math.sin(breeze_phase) * breeze_strength
 
-        # Detach blossoms
+        ## Detach blossoms
         for f in flowers:
             if f[4] and frame_count > 10 and random() < 0.04:
                 f[4] = False
@@ -345,7 +357,7 @@ def turtle_tree():
                     all_fallen = False
 
         screen.update()
-        # time.sleep(FPS)
+        ## time.sleep(FPS)
         if all_fallen and frame_count > 60:
             break
 

@@ -1,11 +1,24 @@
 ---
-layout: post
-title: How to plot realtime frame rate of a web camera 
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: face_youtube
+categories:
+- GUI tutorial series
 description: Making of an OpenCV and Matplotlib data processing and visualization in Python
+featured-img: face_youtube
+keywords:
+- plot
+- rate
+- camera
+- frame
+- development
+- code
+- programming
+- python
+layout: post
+mathjax: true
+title: How to plot realtime frame rate of a web camera
 ---
+
+
+
 
 
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. Today we will learn, how to detect a Human face using Open CV library in Python, from a real-time web camera. We will also learn, how to plot the real-time frame rate of the camera.
@@ -84,16 +97,16 @@ Generate the 'file.csv' with labels time, FPS: Frame Per Second
 {% include codeHeader.html %}
 ```python 
 
-# Subscribe to PyShine Youtube channel for the upcoming educational videos
-# PyShine presents Matplotlib integration with Open CV to output the frame rate
-# Lets write the face detection code
-# This code has two parts: 1) Face.py 2) Plot.py
-# Face.py will open Webcam and detect face in video stream
-# Also it will generate a csv file which will have the current frame rate
-# Plot.py will read the csv file and update the plot of frame rate
-# The Face.py will run the Plot.py in a thread
-# So lets start the code, by importing the required libraries
-#################################### Face.py  Starts ################################################
+## Subscribe to PyShine Youtube channel for the upcoming educational videos
+## PyShine presents Matplotlib integration with Open CV to output the frame rate
+## Lets write the face detection code
+## This code has two parts: 1) Face.py 2) Plot.py
+## Face.py will open Webcam and detect face in video stream
+## Also it will generate a csv file which will have the current frame rate
+## Plot.py will read the csv file and update the plot of frame rate
+## The Face.py will run the Plot.py in a thread
+## So lets start the code, by importing the required libraries
+### Face.py  Starts ################################################
 
 
 import cv2
@@ -102,20 +115,20 @@ import imutils
 import _thread
 import numpy as np
 import os
-# Put the .xml file in the current folder together with Face.py and Plot.py
+## Put the .xml file in the current folder together with Face.py and Plot.py
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-# Initiate the Webcam device with default id of 0
+## Initiate the Webcam device with default id of 0
 video_capture = cv2.VideoCapture(0)
-# Generate the 'file.csv' with labels time, FPS: Frame Per Second
+## Generate the 'file.csv' with labels time, FPS: Frame Per Second
 print('time,FPS',  file=open('file.csv', 'w'))
-# This function will run camera 
+## This function will run camera 
 def camRun():
-	# A counter to count the frames
+### A counter to count the frames
 	cnt=0
-	# Number of frames to count after which the frame rate is obtained
+### Number of frames to count after which the frame rate is obtained
 	frames_to_count = 20
-	# So we will count 20 frames and also note the time duration for these 20 frames 
-	# And then simply divide frames by the duration in seconds to get frame rate
+### So we will count 20 frames and also note the time duration for these 20 frames 
+### And then simply divide frames by the duration in seconds to get frame rate
 	st=0 # Start time st  = 0 seconds
 	i=0 # This is a counter for the time samples for each FPS value
 	while True:
@@ -135,7 +148,7 @@ def camRun():
 		k = cv2.waitKey(1) 
 		if k == 27: # If click on video frame and press Esc, it will quit
 			break
-		# Frame rate calculation
+##	# Frame rate calculation
 		if cnt == frames_to_count:
 			try: # To avoid divide by 0 we put it in try except
 				print(frames_to_count/(time.time()-st),'FPS') 
@@ -145,33 +158,33 @@ def camRun():
 				cnt=0
 			except:
 				pass
-		# Counters are incremented here
+##	# Counters are incremented here
 		cnt+=1
 		i+=1
-# Lets call the Plot.py in a function plot
+## Lets call the Plot.py in a function plot
 def plot():
 	os.system('python Plot.py')
-# Start the thread for the plot function
+## Start the thread for the plot function
 _thread.start_new_thread(plot,())
-# Now run the camRun() function to generate the file.csv 
+## Now run the camRun() function to generate the file.csv 
 camRun()
-# Relase the capture and windows
+## Relase the capture and windows
 video_capture.release()
 cv2.destroyAllWindows() 
-# Please comment to provide feedback, if you have questions please ask, and
-# Share and like , do subscribe to PyShine Youtube Channel.
-#################################### Face.py  Ends ################################################
-#################################### Plot.py  Starts ################################################
+## Please comment to provide feedback, if you have questions please ask, and
+## Share and like , do subscribe to PyShine Youtube Channel.
+### Face.py  Ends ################################################
+#### Plot.py  Starts ################################################
 
-# Subscribe to PyShine Youtube channel for the upcoming educational videos
-# Lets write the face detection code
+## Subscribe to PyShine Youtube channel for the upcoming educational videos
+## Lets write the face detection code
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-# Get the Figure
+## Get the Figure
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 ax.set_facecolor((0,0,0)) # Set the background to black
-# 
+## 
 def animate(i):
 	ax.clear()
 	xs = []
@@ -184,7 +197,7 @@ def animate(i):
 			xs.append(float(x))
 			ys.append(float(y))
 			print(xs,ys)
-	# Lets add these lists xs, ys to the plot		
+### Lets add these lists xs, ys to the plot		
 	ax.clear()
 	ax.plot(xs, ys,'-o', color = (0,1,0.25))
 	ax.set_xlabel("Samples")
@@ -192,7 +205,7 @@ def animate(i):
 	ax.set_title("Live Plot of Camera Frame Rate")
 	fig.tight_layout() # To remove outside borders
 	ax.yaxis.grid(True)
-# Lets call the animation function 	
+## Lets call the animation function 	
 ani = animation.FuncAnimation(fig, animate, interval=100)
 plt.show()
 #################################### Plot.py  Ends ################################################

@@ -1,11 +1,23 @@
 ---
-layout: post
-title: How to make a Matplotlib and PyQt5 based GUI with drag and drop the CSV file
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pyqt7
+categories:
+- GUI tutorial series
 description: Making a drag drop CSV file based matplotlib GUI with multiple themes
+featured-img: pyqt7
+keywords:
+- based
+- development
+- matplotlib
+- code
+- gui
+- drag
+- programming
+- tutorial
+layout: post
+mathjax: true
+title: How to make a Matplotlib and PyQt5 based GUI with drag...
 ---
+
+# PyQt5 and Matplotlib
 
 
 Hello friends, here is the code for the drag and drop enabled matplotlib GUI in PyQt5. Save the first main.py and the second drag_drop.py and run it. Enjoy, and do 
@@ -21,16 +33,16 @@ give your feedback and suggestions. Also please make sure that you are using Mat
 {% include codeHeader.html %}
 ```python
 
-# -*- coding: utf-8 -*-
-# Subscribe to PyShine Youtube channel for more detail! 
-#
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# WEBSITE: www.pyshine.com
+## # # -*- coding: utf-8 -*-
+## # # Subscribe to PyShine Youtube channel for more detail! 
+##
+## # # Form implementation generated from reading ui file 'main.ui'
+##
+## # # Created by: PyQt5 UI code generator 5.11.3
+##
+## # # WARNING! All changes made in this file will be lost!
+##
+## # # WEBSITE: www.pyshine.com
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
@@ -44,10 +56,10 @@ import seaborn as sns
 import pandas as pd
 import sip # can be installed : pip install sip
 
-# We require a canvas class
+## # # We require a canvas class
 import platform
 
-# Use NSURL as a workaround to pyside/Qt4 behaviour for dragging and dropping on OSx
+## # # Use NSURL as a workaround to pyside/Qt4 behaviour for dragging and dropping on OSx
 op_sys = platform.system()
 if op_sys == 'Darwin':
     from Foundation import NSURL
@@ -200,9 +212,9 @@ class Ui_MainWindow(object):
 		self.actionOpen_csv_file.setText(_translate("MainWindow", "Open csv file"))
 		self.actionExit.setText(_translate("MainWindow", "Exit"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # # WEBSITE: www.pyshine.com
 
 if __name__ == "__main__":
 	import sys
@@ -217,13 +229,13 @@ if __name__ == "__main__":
 
 ```
 
-## drag_drop.py
+## # # drag_drop.py
 {% include codeHeader.html %}
 ```python
 
-# Lets make the main window class
-# Subscribe to PyShine Youtube channel for more detail! 
-# WEBSITE: www.pyshine.com
+## # # Lets make the main window class
+## # # Subscribe to PyShine Youtube channel for more detail! 
+## # # WEBSITE: www.pyshine.com
 from main import Ui_MainWindow
 import sys
 from PyQt5 import QtCore, QtWidgets
@@ -232,8 +244,8 @@ import platform
 op_sys = platform.system()
 if op_sys == 'Darwin':
 	from Foundation import  NSURL
-# We use NSURL as a workaround to PySide/ Qt4 for drag/drop
-# on OSx
+## # # We use NSURL as a workaround to PySide/ Qt4 for drag/drop
+## # # on OSx
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -281,8 +293,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 			self.readData()
 		else:
 			e.ignore() # just like above functions	
-# Subscribe to PyShine Youtube channel for more detail! 
-# WEBSITE: www.pyshine.com		
+## # # Subscribe to PyShine Youtube channel for more detail! 
+## # # WEBSITE: www.pyshine.com		
 if __name__ == '__main__':
 	app = QtWidgets.QApplication(sys.argv)
 	window = MainWindow()

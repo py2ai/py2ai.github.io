@@ -1,23 +1,31 @@
 ---
-layout: post
-title: Good python coding examples for the software development
-mathjax: true
+description: Hello friends! Below are some examples that you can use to write better codes.
 featured-img: 26072022-python-logo
-description:  Some good tips to use while writing python codes
-tags: [Python, Coding, Best Practices]
-keywords: [Python, Coding, Software Development]
+keywords:
+- Python
+- Coding
+- Software Development
+layout: post
+mathjax: true
+tags:
+- Python
+- Coding
+- Best Practices
+title: Good python coding examples for the software development
 ---
+
+
 
 Hello friends! Below are some examples that you can use to write better codes.
 
-### 1. Use meaningful variable names:
+# 1. Use meaningful variable names:
 
 ```python
 
-# Good
+## Good
 name = "John Doe"
 
-# Bad
+## Bad
 n = "John Doe"
 
 ```
@@ -36,9 +44,9 @@ def greet(name):
 
 ```python
 try:
-    # some code here
+    ## some code here
 except Exception as e:
-    # handle exception here
+    ## handle exception here
 ```
 
 ### 4. Use the ‘with’ statement when working with files:
@@ -46,18 +54,18 @@ except Exception as e:
 ```python
 with open("file.txt", "r") as file:
     data = file.read()
-    # do something with the file data
+    ## do something with the file data
 ```
 
 ### 5. Avoid using a single leading underscore `(_)` to indicate a weak “internal use” variable. Use double leading underscores to avoid naming collisions in subclasses.
 
 ```python
-# Good
+## Good
 class MyClass:
     def __init__(self):
         self.__variable = 42
 
-# Bad
+## Bad
 class MyClass:
     def __init__(self):
         self._variable = 42
@@ -67,10 +75,10 @@ class MyClass:
 ### 6. Use list comprehensions instead of map and filter when possible:
 
 ```python
-# Good
+## Good
 squared_numbers = [x**2 for x in numbers]
 
-# Bad
+## Bad
 squared_numbers = map(lambda x: x**2, numbers)
 
 ```
@@ -78,11 +86,11 @@ squared_numbers = map(lambda x: x**2, numbers)
 ### 7. Use the built-in Python functions and libraries before writing your own implementation:
 
 ```python
-# Good
+## Good
 import os
 os.remove("file.txt")
 
-# Bad
+## Bad
 import shutil
 shutil.rmtree("file.txt")
 
@@ -91,11 +99,11 @@ shutil.rmtree("file.txt")
 ### 8. Use PEP 8 style guide for writing code:
 
 ```python
-# Good
+## Good
 def greet_person(person_name):
     print("Hello, " + person_name + "!")
 
-# Bad
+## Bad
 def greetPerson(personName):
     print("Hello, " + personName + "!")
 
@@ -104,24 +112,24 @@ def greetPerson(personName):
 ### 9. Use is and is not instead of equality (==) and inequality (!=) when comparing objects to None:
 
 ```python
-# Good
+## Good
 if value is None:
-    # do something
+    ## do something
 
-# Bad
+## Bad
 if value == None:
-    # do something
+    ## do something
 
 ```
 
 ### 10. Use context managers (with statement) when working with resources like files, sockets, and databases to ensure that they are properly cleaned up when done:
 
 ```python
-# Good
+## Good
 with open("file.txt", "w") as file:
     file.write("Hello, World!")
 
-# Bad
+## Bad
 file = open("file.txt", "w")
 file.write("Hello, World!")
 file.close()
@@ -130,13 +138,13 @@ file.close()
 ### 11. Use Python’s built-in logging module instead of print statements for logging and debugging:
 
 ```python
-# Good
+## Good
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logging.debug("Debug message")
 
-# Bad
+## Bad
 print("Debug message")
 
 ```
@@ -144,13 +152,13 @@ print("Debug message")
 ### 12. Use functions to extract complex logic and make code reusable:
 
 ```python
-# Good
+## Good
 def calculate_sum(a, b):
     return a + b
 
 result = calculate_sum(2, 3)
 
-# Bad
+## Bad
 result = 2 + 3
 
 ```
@@ -158,7 +166,7 @@ result = 2 + 3
 ### 13. Use the with statement when working with databases to ensure that database connections are properly closed:
 
 ```python
-# Good
+## Good
 import sqlite3
 
 with sqlite3.connect("database.db") as conn:
@@ -166,7 +174,7 @@ with sqlite3.connect("database.db") as conn:
     cursor.execute("SELECT * FROM users")
     rows = cursor.fetchall()
 
-# Bad
+## Bad
 import sqlite3
 
 conn = sqlite3.connect("database.db")
@@ -180,10 +188,10 @@ conn.close()
 ### 14. Use list comprehensions instead of for loops for simple data manipulations:
 
 ```python
-# Good
+## Good
 squared_numbers = [x**2 for x in range(1, 10)]
 
-# Bad
+## Bad
 squared_numbers = []
 for x in range(1, 10):
     squared_numbers.append(x**2)
@@ -194,7 +202,7 @@ for x in range(1, 10):
 
 ```python
 def main():
-    # Main code here
+    ## Main code here
 
 if __name__ == "__main__":
     main()
@@ -209,14 +217,14 @@ import threading
 
 lock = threading.Lock()
 
-# Good
+## Good
 with lock:
-    # Critical section
+    ## Critical section
 
-# Bad
+## Bad
 lock.acquire()
 try:
-    # Critical section
+    ## Critical section
 finally:
     lock.release()
 
@@ -246,13 +254,13 @@ class Color(enum.Enum):
     GREEN = 2
     BLUE = 3
 
-# Good
+## Good
 if color == Color.RED:
-    # do something
+    ## do something
 
-# Bad
+## Bad
 if color == 1:
-    # do something
+    ## do something
 
 ```
 
@@ -261,12 +269,12 @@ if color == 1:
 ```python
 from collections import defaultdict
 
-# Good
+## Good
 word_count = defaultdict(int)
 for word in words:
     word_count[word] += 1
 
-# Bad
+## Bad
 word_count = {}
 for word in words:
     if word in word_count:
@@ -281,10 +289,10 @@ for word in words:
 ```python
 import itertools
 
-# Good
+## Good
 squared_numbers = list(map(lambda x: x**2, range(1, 10)))
 
-# Bad
+## Bad
 squared_numbers = []
 for x in range(1, 10):
     squared_numbers.append(x**2)
@@ -295,31 +303,31 @@ for x in range(1, 10):
 ### 21. Use try-except blocks to handle exceptions:
 
 ```python
-# Good
+## Good
 try:
-    # code that may raise an exception
+    ## code that may raise an exception
 except Exception as e:
-    # handle the exception
+    ## handle the exception
 
-# Bad
+## Bad
 try:
-    # code that may raise an exception
+    ## code that may raise an exception
 except:
-    # handle the exception
+    ## handle the exception
 
 ```
 
 ### 22. Use the with statement to automatically close files:
 
 ```python
-# Good
+## Good
 with open("file.txt", "r") as f:
-    # read from file
+    ## read from file
 
-# Bad
+## Bad
 f = open("file.txt", "r")
 try:
-    # read from file
+    ## read from file
 finally:
     f.close()
 
@@ -330,14 +338,14 @@ finally:
 ```python 
 import os
 
-# Good
+## Good
 if os.path.exists("file.txt"):
-    # do something
+    ## do something
 
-# Bad
+## Bad
 import os.path
 if os.path.exists("file.txt"):
-    # do something
+    ## do something
 
 ```
 ### 24. Use the shutil module to manipulate files and directories:
@@ -345,10 +353,10 @@ if os.path.exists("file.txt"):
 ```python
 import shutil
 
-# Good
+## Good
 shutil.copyfile("src.txt", "dst.txt")
 
-# Bad
+## Bad
 import os
 os.system("cp src.txt dst.txt")
 
@@ -359,10 +367,10 @@ os.system("cp src.txt dst.txt")
 ```python
 import re
 
-# Good
+## Good
 match = re.search(r"\d+", "Number: 42")
 
-# Bad
+## Bad
 import string
 match = string.find("Number: 42", "42")
 ```
@@ -372,10 +380,10 @@ match = string.find("Number: 42", "42")
 ```python
 import datetime
 
-# Good
+## Good
 now = datetime.datetime.now()
 
-# Bad
+## Bad
 import time
 now = time.localtime()
 
@@ -386,10 +394,10 @@ now = time.localtime()
 ```python
 import math
 
-# Good
+## Good
 result = math.sqrt(16)
 
-# Bad
+## Bad
 result = 16**0.5
 
 ```
@@ -399,10 +407,10 @@ result = 16**0.5
 ```python
 import random
 
-# Good
+## Good
 random_number = random.randint(1, 100)
 
-# Bad
+## Bad
 import time
 random_number = int(time.time() % 100)
 
@@ -411,11 +419,11 @@ random_number = int(time.time() % 100)
 ### 29. Use str.format() method for string formatting:
 
 ```python
-# Good
+## Good
 name = "John"
 print("Hello, {}!".format(name))
 
-# Bad
+## Bad
 name = "John"
 print("Hello, " + name + "!")
 
@@ -424,11 +432,11 @@ print("Hello, " + name + "!")
 ### 30. Use list comprehensions instead of loops for simple operations:
 
 ```python
-# Good
+## Good
 numbers = [1, 2, 3, 4, 5]
 squared_numbers = [n**2 for n in numbers]
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 squared_numbers = []
 for n in numbers:
@@ -439,12 +447,12 @@ for n in numbers:
 ### 31. Use generators instead of lists when working with large data sets:
 
 ```python
-# Good
+## Good
 def squares(n):
     for i in range(n):
         yield i**2
 
-# Bad
+## Bad
 def squares(n):
     squares = []
     for i in range(n):
@@ -458,13 +466,13 @@ def squares(n):
 ```python
 import enum
 
-# Good
+## Good
 class Color(enum.Enum):
     RED = 1
     GREEN = 2
     BLUE = 3
 
-# Bad
+## Bad
 RED = 1
 GREEN = 2
 BLUE = 3
@@ -476,10 +484,10 @@ BLUE = 3
 ```python
 import collections
 
-# Good
+## Good
 counter = collections.Counter("hello world")
 
-# Bad
+## Bad
 counter = {}
 for c in "hello world":
     if c in counter:
@@ -501,10 +509,10 @@ Use the functools module for working with functions:
 ```python
 import itertools
 
-# Good
+## Good
 even_numbers = itertools.islice(itertools.count(0, 2), 5)
 
-# Bad
+## Bad
 even_numbers = []
 for i in range(0, 10, 2):
     even_numbers.append(i)
@@ -516,12 +524,12 @@ for i in range(0, 10, 2):
 ```python
 import logging
 
-# Good
+## Good
 logging.basicConfig(level=logging.INFO)
 logging.debug("Debug message")
 logging.info("Info message")
 
-# Bad
+## Bad
 if debug:
     print("Debug message")
 print("Info message")
@@ -531,11 +539,11 @@ print("Info message")
 ### 37. Use with statement when working with files or other resources:
 
 ```python
-# Good
+## Good
 with open("file.txt", "r") as f:
     content = f.read()
 
-# Bad
+## Bad
 f = open("file.txt", "r")
 content = f.read()
 f.close()
@@ -547,12 +555,12 @@ f.close()
 ```python
 import unittest
 
-# Good
+## Good
 class TestStringMethods(unittest.TestCase):
     def test_upper(self):
         self.assertEqual("foo".upper(), "FOO")
 
-# Bad
+## Bad
 def test_upper():
     assert "foo".upper() == "FOO"
 
@@ -561,12 +569,12 @@ def test_upper():
 ### 39. Use assert statements to check for preconditions and postconditions:
 
 ```python
-# Good
+## Good
 def divide(a, b):
     assert b != 0, "division by zero"
     return a / b
 
-# Bad
+## Bad
 def divide(a, b):
     if b == 0:
         raise Exception("division by zero")
@@ -580,12 +588,12 @@ def divide(a, b):
 import os
 import shutil
 
-# Good
+## Good
 if not os.path.exists("directory"):
     os.makedirs("directory")
 shutil.copy("file1.txt", "directory")
 
-# Bad
+## Bad
 if not os.path.exists("directory"):
     os.system("mkdir directory")
 os.system("cp file1.txt directory")
@@ -597,7 +605,7 @@ os.system("cp file1.txt directory")
 ```python
 import contextlib
 
-# Good
+## Good
 @contextlib.contextmanager
 def make_temp_directory():
     temp_directory = tempfile.mkdtemp()
@@ -606,10 +614,10 @@ def make_temp_directory():
     finally:
         shutil.rmtree(temp_directory)
 
-# Bad
+## Bad
 temp_directory = tempfile.mkdtemp()
 try:
-    # do something with temp_directory
+    ## do something with temp_directory
 finally:
     shutil.rmtree(temp_directory)
 
@@ -621,13 +629,13 @@ finally:
 ```python
 import argparse
 
-# Good
+## Good
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", help="name of the person")
 parser.add_argument("-a", "--age", help="age of the person", type=int)
 args = parser.parse_args()
 
-# Bad
+## Bad
 import sys
 
 if len(sys.argv) < 3:
@@ -643,11 +651,11 @@ if sys.argv[1] == "-n":
 ```python
 import collections
 
-# Good
+## Good
 counter = collections.Counter([1, 2, 2, 3, 3, 3])
 print(counter)
 
-# Bad
+## Bad
 counter = {}
 for item in [1, 2, 2, 3, 3, 3]:
     if item in counter:
@@ -663,11 +671,11 @@ print(counter)
 ```python
 import re
 
-# Good
+## Good
 result = re.search("\d{3}-\d{2}-\d{4}", "Social Security Number: 123-45-6789")
 print(result.group(0))
 
-# Bad
+## Bad
 string = "Social Security Number: 123-45-6789"
 start = string.find("123")
 end = start + len("123-45-6789")
@@ -680,11 +688,11 @@ print(string[start:end])
 ```python
 import datetime
 
-# Good
+## Good
 today = datetime.datetime.now().date()
 print(today)
 
-# Bad
+## Bad
 from time import gmtime, strftime
 print(strftime("%Y-%m-%d", gmtime()))
 
@@ -695,12 +703,12 @@ print(strftime("%Y-%m-%d", gmtime()))
 ```python
 import bisect
 
-# Good
+## Good
 arr = [1, 2, 3, 4, 4, 4, 5]
 index = bisect.bisect_left(arr, 4)
 print(index)
 
-# Bad
+## Bad
 arr = [1, 2, 3, 4, 4, 4, 5]
 index = 0
 for i, item in enumerate(arr):
@@ -716,12 +724,12 @@ print(index)
 ```python
 import itertools
 
-# Good
+## Good
 numbers = [1, 2, 3, 4, 5]
 result = list(itertools.combinations(numbers, 2))
 print(result)
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 result = []
 for i in range(len(numbers)):
@@ -736,13 +744,13 @@ print(result)
 ```python
 import functools
 
-# Good
+## Good
 def add(a, b):
     return a + b
 add = functools.partial(add, b=10)
 print(add(5))
 
-# Bad
+## Bad
 def add(a, b=10):
     return a + b
 print(add(5))
@@ -754,7 +762,7 @@ print(add(5))
 ```python
 import threading
 
-# Good
+## Good
 def worker():
     print("worker")
 
@@ -768,10 +776,10 @@ thread.join()
 ```python
 import os
 
-# Good
+## Good
 print(os.path.join("data", "input.txt"))
 
-# Bad
+## Bad
 print("data" + os.sep + "input.txt")
 
 ```
@@ -781,10 +789,10 @@ print("data" + os.sep + "input.txt")
 ```python
 import shutil
 
-# Good
+## Good
 shutil.copy2("input.txt", "input_backup.txt")
 
-# Bad
+## Bad
 with open("input.txt", "r") as src:
     with open("input_backup.txt", "w") as dst:
         dst.write(src.read())
@@ -795,11 +803,11 @@ with open("input.txt", "r") as src:
 ```python
 import glob
 
-# Good
+## Good
 files = glob.glob("*.txt")
 print(files)
 
-# Bad
+## Bad
 import os
 files = [file for file in os.listdir() if file.endswith(".txt")]
 print(files)
@@ -811,12 +819,12 @@ print(files)
 ```python
 import pickle
 
-# Good
+## Good
 data = {"name": "John Doe", "age": 30}
 with open("data.pkl", "wb") as file:
     pickle.dump(data, file)
 
-# Bad
+## Bad
 data = {"name": "John Doe", "age": 30}
 with open("data.txt", "w") as file:
     file.write(str(data))
@@ -828,13 +836,13 @@ with open("data.txt", "w") as file:
 ```python
 import csv
 
-# Good
+## Good
 data = [["name", "age"], ["John Doe", 30]]
 with open("data.csv", "w", newline="") as file:
     writer = csv.writer(file)
     writer.writerows(data)
 
-# Bad
+## Bad
 data = [["name", "age"], ["John Doe", 30]]
 with open("data.csv", "w") as file:
     for row in data:
@@ -847,12 +855,12 @@ with open("data.csv", "w") as file:
 ```python
 import json
 
-# Good
+## Good
 data = {"name": "John Doe", "age": 30}
 with open("data.json", "w") as file:
     json.dump(data, file)
 
-# Bad
+## Bad
 data = {"name": "John Doe", "age": 30}
 with open("data.json", "w") as file:
     file.write(str(data))
@@ -862,13 +870,13 @@ with open("data.json", "w") as file:
 ### 56. Use try...except blocks to handle exceptions:
 
 ```python
-# Good
+## Good
 try:
     result = 1 / 0
 except ZeroDivisionError:
     print("Cannot divide by zero")
 
-# Bad
+## Bad
 result = 1 / 0
 print("This line will never be reached")
 
@@ -877,11 +885,11 @@ print("This line will never be reached")
 ### 57. Use with statements to work with context managers:
 
 ```python
-# Good
+## Good
 with open("data.txt", "r") as file:
     data = file.read()
 
-# Bad
+## Bad
 file = open("data.txt", "r")
 data = file.read()
 file.close()
@@ -891,10 +899,10 @@ file.close()
 ### 58. Use assert statements for debugging and testing:
 
 ```python
-# Good
+## Good
 assert len(data) > 0, "Data is empty"
 
-# Bad
+## Bad
 if len(data) == 0:
     raise ValueError("Data is empty")
 
@@ -903,11 +911,11 @@ if len(data) == 0:
 ### 59. Use is and is not instead of == and != when comparing to None:
 
 ```python
-# Good
+## Good
 if data is None:
     print("Data is None")
 
-# Bad
+## Bad
 if data == None:
     print("Data is None")
 
@@ -916,14 +924,14 @@ if data == None:
 ### 60. Use else blocks in for and while loops to specify an else block that is executed if the loop terminates normally (i.e., without encountering a break statement):
 
 ```python
-# Good
+## Good
 for number in range(10):
     if number == 5:
         break
 else:
     print("5 not found")
 
-# Bad
+## Bad
 found = False
 for number in range(10):
     if number == 5:
@@ -937,12 +945,12 @@ if not found:
 ### 61. Use enumerate() function to loop over a list and get both the index and the value:
 
 ```python
-# Good
+## Good
 fruits = ["apple", "banana", "cherry"]
 for index, fruit in enumerate(fruits):
     print(index, fruit)
 
-# Bad
+## Bad
 fruits = ["apple", "banana", "cherry"]
 for i in range(len(fruits)):
     print(i, fruits[i])
@@ -953,10 +961,10 @@ for i in range(len(fruits)):
 
 
 ```python
-# Good
+## Good
 squared_numbers = [x ** 2 for x in range(10)]
 
-# Bad
+## Bad
 squared_numbers = []
 for x in range(10):
     squared_numbers.append(x ** 2)
@@ -966,13 +974,13 @@ for x in range(10):
 ### 63. Use zip() function to loop over multiple lists in parallel:
 
 ```python
-# Good
+## Good
 names = ["Alice", "Bob", "Charlie"]
 ages = [25, 30, 35]
 for name, age in zip(names, ages):
     print(name, age)
 
-# Bad
+## Bad
 names = ["Alice", "Bob", "Charlie"]
 ages = [25, 30, 35]
 for i in range(len(names)):
@@ -983,11 +991,11 @@ for i in range(len(names)):
 ### 64. Use dict.get() method instead of dict[key] to avoid KeyError:
 
 ```python
-# Good
+## Good
 person = {"name": "Alice", "age": 25}
 age = person.get("age", 0)
 
-# Bad
+## Bad
 person = {"name": "Alice", "age": 25}
 age = person["age"]
 
@@ -996,14 +1004,14 @@ age = person["age"]
 ### 65. Use defaultdict from the collections module instead of dict when you need a dictionary with default values:
 
 ```python
-# Good
+## Good
 from collections import defaultdict
 
 person = defaultdict(str)
 person["name"] = "Alice"
 print(person["age"])  # Output: ''
 
-# Bad
+## Bad
 person = {}
 person["name"] = "Alice"
 try:
@@ -1016,12 +1024,12 @@ except KeyError:
 ### 66. Use map() and filter() functions to apply operations to lists:
 
 ```python
-# Good
+## Good
 numbers = [1, 2, 3, 4, 5]
 squared_numbers = list(map(lambda x: x ** 2, numbers))
 even_numbers = list(filter(lambda x: x % 2 == 0, numbers))
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 squared_numbers = []
 for number in numbers:
@@ -1036,7 +1044,7 @@ for number in numbers:
 ### 67. Use functools.partial() to partially apply functions:
 
 ```python
-# Good
+## Good
 from functools import partial
 
 def multiply(a, b):
@@ -1045,7 +1053,7 @@ def multiply(a, b):
 double = partial(multiply, 2)
 print(double(3))  # Output: 6
 
-# Bad
+## Bad
 def double(b):
     return 2 * b
 
@@ -1054,13 +1062,13 @@ def double(b):
 ### 68. Use itertools functions to work with iterators:
 
 ```python
-# Good
+## Good
 import itertools
 
 numbers = [1, 2, 3, 4, 5]
 combinations = list(itertools.combinations(numbers, 2))
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 combinations = []
 for i in range(len(numbers)):
@@ -1072,13 +1080,13 @@ for i in range(len(numbers)):
 ### 69. Use namedtuple from the collections module instead of tuples:
 
 ```python
-# Good
+## Good
 from collections import namedtuple
 
 Person = namedtuple("Person", ["name", "age"])
 person = Person("Alice", 25)
 
-# Bad
+## Bad
 person = ("Alice", 25)
 
 ```
@@ -1086,7 +1094,7 @@ person = ("Alice", 25)
 ### 70. Use dataclasses module for defining classes with default implementations for special methods:
 
 ```python
-# Good
+## Good
 from dataclasses import dataclass
 
 @dataclass
@@ -1096,7 +1104,7 @@ class Person:
 
 person = Person("Alice", 25)
 
-# Bad
+## Bad
 class Person:
     def __init__(self, name, age):
         self.name = name
@@ -1109,12 +1117,12 @@ person = Person("Alice", 25)
 ### 71. Use the format method for string formatting:
 
 ```python
-# Good
+## Good
 name = "Alice"
 age = 25
 print("My name is {0} and I am {1} years old.".format(name, age))
 
-# Bad
+## Bad
 name = "Alice"
 age = 25
 print("My name is " + name + " and I am " + str(age) + " years old.")
@@ -1124,12 +1132,12 @@ print("My name is " + name + " and I am " + str(age) + " years old.")
 ### 72. Use enumerate to iterate over lists and keep track of the index:
 
 ```python
-# Good
+## Good
 names = ["Alice", "Bob", "Charlie"]
 for i, name in enumerate(names):
     print(i, name)
 
-# Bad
+## Bad
 names = ["Alice", "Bob", "Charlie"]
 for i in range(len(names)):
     print(i, names[i])
@@ -1139,11 +1147,11 @@ for i in range(len(names)):
 ### 73. Use list comprehensions for simple list transformations:
 
 ```python
-# Good
+## Good
 numbers = [1, 2, 3, 4, 5]
 squared_numbers = [number ** 2 for number in numbers]
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 squared_numbers = []
 for number in numbers:
@@ -1154,11 +1162,11 @@ for number in numbers:
 ### 74. Use the with statement when working with resources that need to be cleaned up, such as files:
 
 ```python
-# Good
+## Good
 with open("file.txt", "r") as f:
     contents = f.read()
 
-# Bad
+## Bad
 f = open("file.txt", "r")
 contents = f.read()
 f.close()
@@ -1168,13 +1176,13 @@ f.close()
 ### 75. Use zip to iterate over multiple lists in parallel:
 
 ```python
-# Good
+## Good
 names = ["Alice", "Bob", "Charlie"]
 ages = [25, 30, 35]
 for name, age in zip(names, ages):
     print(name, age)
 
-# Bad
+## Bad
 names = ["Alice", "Bob", "Charlie"]
 ages = [25, 30, 35]
 for i in range(len(names)):
@@ -1185,13 +1193,13 @@ for i in range(len(names)):
 ### 76. Use exceptions to handle errors instead of returning error codes:
 
 ```python
-# Good
+## Good
 try:
     result = divide(a, b)
 except ZeroDivisionError:
     print("Cannot divide by zero.")
 
-# Bad
+## Bad
 result = divide(a, b)
 if result == ERROR_CODE:
     print("Cannot divide by zero.")
@@ -1201,7 +1209,7 @@ if result == ERROR_CODE:
 ### 77. Use the else clause in a for loop to perform an action when the loop finishes without being interrupted:
 
 ```python
-# Good
+## Good
 numbers = [1, 2, 3, 4, 5]
 for number in numbers:
     if number == 3:
@@ -1209,7 +1217,7 @@ for number in numbers:
 else:
     print("Loop finished without being interrupted.")
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 interrupted = False
 for number in numbers:
@@ -1224,7 +1232,7 @@ if not interrupted:
 ### 78. Use the repr method to provide a string representation of an object that can be used to recreate it:
 
 ```python
-# Good
+## Good
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -1233,7 +1241,7 @@ class Point:
     def __repr__(self):
         return "Point({0}, {1})".format(self.x, self.y)
 
-# Bad
+## Bad
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -1247,13 +1255,13 @@ class Point:
 ### 79. Use the with statement when working with resources that need to be cleaned up, such as databases:
 
 ```python
-# Good
+## Good
 with conn:
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users")
     users = cursor.fetchall()
 
-# Bad
+## Bad
 conn = connect()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM users")
@@ -1265,7 +1273,7 @@ conn.close()
 ### 80. Use the else clause in a while loop to perform an action when the loop finishes without being interrupted:
 
 ```python
-# Good
+## Good
 i = 0
 while i < 5:
     if i == 3:
@@ -1274,7 +1282,7 @@ while i < 5:
 else:
     print("Loop finished without being interrupted.")
 
-# Bad
+## Bad
 i = 0
 interrupted = False
 while i < 5:
@@ -1290,12 +1298,12 @@ if not interrupted:
 ### 81. Use the enumerate function when iterating over a sequence to keep track of the index:
 
 ```python
-# Good
+## Good
 words = ["apple", "banana", "cherry"]
 for i, word in enumerate(words):
     print(i, word)
 
-# Bad
+## Bad
 words = ["apple", "banana", "cherry"]
 i = 0
 for word in words:
@@ -1308,13 +1316,13 @@ for word in words:
 
 
 ```python
-# Good
+## Good
 words = ["apple", "banana", "cherry"]
 lengths = [5, 6, 6]
 for word, length in zip(words, lengths):
     print(word, length)
 
-# Bad
+## Bad
 words = ["apple", "banana", "cherry"]
 lengths = [5, 6, 6]
 for i in range(len(words)):
@@ -1325,10 +1333,10 @@ for i in range(len(words)):
 ### 83. Use list comprehensions instead of filter and map when possible:
 
 ```python
-# Good
+## Good
 squared = [x ** 2 for x in range(10) if x % 2 == 0]
 
-# Bad
+## Bad
 squared = list(map(lambda x: x ** 2, filter(lambda x: x % 2 == 0, range(10))))
 
 ```
@@ -1336,13 +1344,13 @@ squared = list(map(lambda x: x ** 2, filter(lambda x: x % 2 == 0, range(10))))
 ### 84. Use the None object instead of False or other values to represent a lack of value:
 
 ```python
-# Good
+## Good
 def divide(a, b):
     if b == 0:
         return None
     return a / b
 
-# Bad
+## Bad
 def divide(a, b):
     if b == 0:
         return False
@@ -1353,10 +1361,10 @@ def divide(a, b):
 ### 85. Use the assert statement to check for conditions that should always be true:
 
 ```python
-# Good
+## Good
 assert divide(4, 2) == 2
 
-# Bad
+## Bad
 result = divide(4, 2)
 if result != 2:
     raise Exception("Unexpected result.")
@@ -1366,13 +1374,13 @@ if result != 2:
 ### 86. Use the collections module to work with data structures such as Counter, defaultdict, and OrderedDict:
 
 ```python
-# Good
+## Good
 from collections import Counter
 
 word = "mississippi"
 counter = Counter(word)
 
-# Bad
+## Bad
 word = "mississippi"
 counter = {}
 for letter in word:
@@ -1386,11 +1394,11 @@ for letter in word:
 ### 87. Use the str.format() method instead of string concatenation for string formatting:
 
 ```python
-# Good
+## Good
 name = "Alice"
 print("Hello, {}!".format(name))
 
-# Bad
+## Bad
 name = "Alice"
 print("Hello, " + name + "!")
 
@@ -1399,11 +1407,11 @@ print("Hello, " + name + "!")
 ### 88. Use the with statement when working with files or other resources that need to be cleaned up after use:
 
 ```python
-# Good
+## Good
 with open("file.txt", "r") as file:
     contents = file.read()
 
-# Bad
+## Bad
 file = open("file.txt", "r")
 contents = file.read()
 file.close()
@@ -1413,13 +1421,13 @@ file.close()
 ### 89. Use the try...except statement to handle exceptions:
 
 ```python
-# Good
+## Good
 try:
     value = int("abc")
 except ValueError:
     value = 0
 
-# Bad
+## Bad
 value = int("abc")
 except ValueError:
     value = 0
@@ -1429,13 +1437,13 @@ except ValueError:
 ### 90. Use the pass statement as a placeholder when a statement is required syntactically, but no action is needed:
 
 ```python
-# Good
+## Good
 def noop():
     pass
 
-# Bad
+## Bad
 def noop():
-    # TODO: implement me!
+    ## TODO: implement me!
     return
 
 ```
@@ -1443,13 +1451,13 @@ def noop():
 ### 91. Use the functools module to work with functions, such as partial and reduce:
 
 ```python
-# Good
+## Good
 from functools import reduce
 
 numbers = [1, 2, 3, 4, 5]
 product = reduce(lambda x, y: x * y, numbers)
 
-# Bad
+## Bad
 numbers = [1, 2, 3, 4, 5]
 product = 1
 for number in numbers:
@@ -1460,13 +1468,13 @@ for number in numbers:
 ### 92. Use the itertools module to work with iterators, such as chain and zip_longest:
 
 ```python
-# Good
+## Good
 from itertools import chain
 
 words = ["apple", "banana", "cherry"]
 letters = chain.from_iterable(words)
 
-# Bad
+## Bad
 words = ["apple", "banana", "cherry"]
 letters = []
 for word in words:
@@ -1478,7 +1486,7 @@ for word in words:
 ### 93. Use the enum module to define enumerations:
 
 ```python
-# Good
+## Good
 from enum import Enum
 
 class Color(Enum):
@@ -1486,7 +1494,7 @@ class Color(Enum):
     GREEN = 2
     BLUE = 3
 
-# Bad
+## Bad
 RED = 1
 GREEN = 2
 BLUE = 3
@@ -1496,13 +1504,13 @@ BLUE = 3
 ### 94. Use the typing module to specify the types of variables, arguments, and return values:
 
 ```python
-# Good
+## Good
 from typing import List
 
 def reverse(lst: List[int]) -> List[int]:
     return lst[::-1]
 
-# Bad
+## Bad
 def reverse(lst):
     return lst[::-1]
 
@@ -1511,13 +1519,13 @@ def reverse(lst):
 ### 95. Use the collections module to work with collections, such as Counter and defaultdict:
 
 ```python
-# Good
+## Good
 from collections import Counter
 
 words = ["apple", "banana", "cherry", "apple", "banana"]
 counter = Counter(words)
 
-# Bad
+## Bad
 words = ["apple", "banana", "cherry", "apple", "banana"]
 counter = {}
 for word in words:
@@ -1531,7 +1539,7 @@ for word in words:
 ### 96. Use the queue module to work with queues, such as Queue and PriorityQueue:
 
 ```python
-# Good
+## Good
 from queue import Queue
 
 q = Queue()
@@ -1539,7 +1547,7 @@ q.put("apple")
 q.put("banana")
 q.put("cherry")
 
-# Bad
+## Bad
 q = []
 q.append("apple")
 q.append("banana")
@@ -1550,7 +1558,7 @@ q.append("cherry")
 ### 97. Use the weakref module to work with weak references:
 
 ```python
-# Good
+## Good
 import weakref
 
 class Node:
@@ -1562,7 +1570,7 @@ a = Node(1)
 b = Node(2)
 a.next = weakref.ref(b)
 
-# Bad
+## Bad
 class Node:
     def __init__(self, value):
         self.value = value
@@ -1577,14 +1585,14 @@ a.next = b
 ### 98. Use the copy module to make shallow or deep copies of objects:
 
 ```python
-# Good
+## Good
 import copy
 
 a = [1, 2, 3]
 b = copy.copy(a)
 c = copy.deepcopy(a)
 
-# Bad
+## Bad
 a = [1, 2, 3]
 b = a
 c = a[:]
@@ -1595,7 +1603,7 @@ c = a[:]
 
 
 ```python
-# Good
+## Good
 import dis
 
 def fib(n):
@@ -1605,7 +1613,7 @@ def fib(n):
 
 dis.dis(fib)
 
-# Bad
+## Bad
 def fib(n):
     if n < 2:
         return n
@@ -1618,7 +1626,7 @@ print(fib.__code__.co_code)
 ### 100. Use the logging module to log messages, such as debug, info, warning, error, and critical:
 
 ```python
-# Good
+## Good
 import logging
 
 logging.basicConfig(filename="app.log", level=logging.DEBUG)
@@ -1628,7 +1636,7 @@ logging.warning("This is a warning message")
 logging.error("This is an error message")
 logging.critical("This is a critical message")
 
-# Bad
+## Bad
 print("[DEBUG] This is a debug message")
 print("[INFO] This is an info message")
 print("[WARNING] This is a warning message")

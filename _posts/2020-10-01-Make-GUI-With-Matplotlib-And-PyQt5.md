@@ -1,11 +1,24 @@
 ---
-layout: post
-title: How to make a Matplotlib and PyQt5 based GUI
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: "Hello friends, here is the code for the simple matplotlib GUI. Save it as main.py and run it to load the csv files. Enjoy, and do \ngive back your feedback an..."
 featured-img: pyqt6
-description: Making a matplotlib GUI with multiple themes
+keywords:
+- based
+- development
+- matplotlib
+- code
+- gui
+- programming
+- tutorial
+- python
+layout: post
+mathjax: true
+title: How to make a Matplotlib and PyQt5 based GUI
 ---
+
+
+
 
 Hello friends, here is the code for the simple matplotlib GUI. Save it as main.py and run it to load the csv files. Enjoy, and do 
 give back your feedback and suggestions. Also please make sure, you are using Matplotlib version 3.2.1 or above. For more detail visit pyshine youtube channel.
@@ -16,19 +29,19 @@ give back your feedback and suggestions. Also please make sure, you are using Ma
 </div>
 <br>
 
-## main.py
+# main.py
 {% include codeHeader.html %}
 ```python
-# -*- coding: utf-8 -*-
-# Subscribe to PyShine Youtube channel for more detail! 
-#
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# WEBSITE: www.pyshine.com
+## # -*- coding: utf-8 -*-
+## # Subscribe to PyShine Youtube channel for more detail! 
+##
+## # Form implementation generated from reading ui file 'main.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # WEBSITE: www.pyshine.com
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
@@ -42,10 +55,10 @@ import seaborn as sns
 import pandas as pd
 import sip # can be installed : pip install sip
 
-# We require a canvas class
+## # We require a canvas class
 import platform
 
-# Use NSURL as a workaround to pyside/Qt4 behaviour for dragging and dropping on OSx
+## # Use NSURL as a workaround to pyside/Qt4 behaviour for dragging and dropping on OSx
 op_sys = platform.system()
 if op_sys == 'Darwin':
     from Foundation import NSURL
@@ -198,9 +211,9 @@ class Ui_MainWindow(object):
 		self.actionOpen_csv_file.setText(_translate("MainWindow", "Open csv file"))
 		self.actionExit.setText(_translate("MainWindow", "Exit"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 if __name__ == "__main__":
 	import sys

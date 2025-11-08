@@ -1,14 +1,29 @@
 ---
-layout: post
-title: How to configure Raspberry Pi in Ad hoc wifi mode
-categories: [Raspberry Pi Programming Series]
-mathjax: true
+categories:
+- Raspberry Pi Programming Series
+description: This tutorial is about configuring RPi in Ad hoc interface
 featured-img: jeep02
-description:  This tutorial is about configuring RPi in Ad hoc interface
-tags: [Raspberry Pi, Ad Hoc Mode, WiFi Networking, Python, FPV Systems, Raspberry Pi Configuration, Networking, Tutorial]
-keywords: [Raspberry Pi ad hoc mode, Raspberry Pi without router, configure ad hoc interface, Raspberry Pi FPV, Raspberry Pi networking, wireless ad hoc setup]
-
+keywords:
+- Raspberry Pi ad hoc mode
+- Raspberry Pi without router
+- configure ad hoc interface
+- Raspberry Pi FPV
+- Raspberry Pi networking
+- wireless ad hoc setup
+layout: post
+mathjax: true
+tags:
+- Raspberry Pi
+- Ad Hoc Mode
+- WiFi Networking
+- Python
+- FPV Systems
+- Raspberry Pi Configuration
+- Networking
+- Tutorial
+title: How to configure Raspberry Pi in Ad hoc wifi mode
 ---
+
 
 Hi friends! Today's tutorial is Part 02 of the Raspberry Pi (RPi) learning series. In this, you will learn how to configure your RPi device in Ad hoc mode or infrastructure-less mode. Yes, that means without any requirement of a wifi router.  That is a significant advantage of Ad hoc mode because it gives us the wifi-router freedom, and a dedicated point-to-point link provides lower latency, which is the best choice for the FPV systems.
 
@@ -96,7 +111,7 @@ Finally, every time you want to update some parameters to the adhoc interface, y
 
 That's it for this tutorial, enjoy :)
 
-## TIP
+# TIP
 We can run any Python code automatically by giving the path to profile, once the RPi is booted.
 Open up profile
 ```

@@ -1,12 +1,23 @@
 ---
-layout: post
-title: How to stream two videos in PyQt5 GUI
-mathjax: true
+description: This tutorial is about gui development with PyQt5 and OpenCV
 featured-img: pyqt5-two-video-gui2
-description:  This tutorial is about gui development with PyQt5 and OpenCV
-tags: [PyQt5, OpenCV, GUI, Programming]
-keywords: [PyQt5, OpenCV, video streaming, Python]
+keywords:
+- PyQt5
+- OpenCV
+- video streaming
+- Python
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- OpenCV
+- GUI
+- Programming
+title: How to stream two videos in PyQt5 GUI
 ---
+
+
+
 Hi friends following is the code for Part 17 of the PyQt5 learning series.
 
 <br>
@@ -18,15 +29,15 @@ Hi friends following is the code for Part 17 of the PyQt5 learning series.
 # main.ui
 {% include codeHeader.html %}
 ```python
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'process.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Form implementation generated from reading ui file 'process.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # Subscribe to PyShine Youtube channel for more detail! 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -59,7 +70,7 @@ class Ui_MainWindow(object):
         self.label.setPixmap(QtGui.QPixmap("images/H.png"))
         self.label.setObjectName("label")
 
-        # adding another label for second video
+        ## adding another label for second video
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
         self.label_4.setText("")
         self.label_4.setPixmap(QtGui.QPixmap("images/H.png"))
@@ -120,7 +131,7 @@ class Ui_MainWindow(object):
         self.pushButton.clicked.connect(self.savePhoto)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         
-        # Added code here
+        ## Added code here
         self.filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png' # Will hold the image address location
         self.tmp = None # Will hold the temporary image for display
         self.tmp2 = None # Will hold the temporary image for display2
@@ -169,7 +180,7 @@ class Ui_MainWindow(object):
         fps=0
         
         while(vid.isOpened()):
-            # QtWidgets.QApplication.processEvents()	
+            ## QtWidgets.QApplication.processEvents()	
             _, image = vid.read()
             image  = imutils.resize(image ,height = 480 )
             
@@ -230,7 +241,7 @@ class Ui_MainWindow(object):
         fps=0
         
         while(vid.isOpened()):
-            # QtWidgets.QApplication.processEvents()	
+            ## QtWidgets.QApplication.processEvents()	
             _, image = vid.read()
             image  = imutils.resize(image ,height = 480 )
             
@@ -328,7 +339,7 @@ class Ui_MainWindow(object):
         img = self.changeBrightness(image,self.brightness_value_now)
         img = self.changeBlur(img,self.blur_value_now)
 
-        # Here we add display text to the image
+        ## Here we add display text to the image
         text  =  'FPS: '+str(fps)
         img = ps.putBText(img,text,text_offset_x=20,text_offset_y=30,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
         text = str(time.strftime("%H:%M %p"))
@@ -362,9 +373,9 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Blur"))
         self.pushButton.setText(_translate("MainWindow", "Take picture"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 
 if __name__ == "__main__":

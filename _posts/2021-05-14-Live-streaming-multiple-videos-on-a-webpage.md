@@ -1,13 +1,30 @@
 ---
-layout: post
-title: How to stream multiple videos on an HTML webpage
-categories: [Tutorial Series]
-mathjax: true
+categories:
+- Tutorial Series
+description: This tutorial is about streaming multiple videos on a webpage using PyShine server
 featured-img: livehtmlpagetwo
-description:  This tutorial is about streaming multiple videos on a webpage using PyShine server
-tags: [Streaming, HTML, PyShine, OpenCV, Multiprocessing, Video Streaming, Web Development, Tutorial]
-keywords: [stream multiple videos on HTML, PyShine video streaming, OpenCV video streaming, Python multiprocessing, HTML video streaming tutorial, web development with video, PyShine server tutorial]
+keywords:
+- stream multiple videos on HTML
+- PyShine video streaming
+- OpenCV video streaming
+- Python multiprocessing
+- HTML video streaming tutorial
+- web development with video
+- PyShine server tutorial
+layout: post
+mathjax: true
+tags:
+- Streaming
+- HTML
+- PyShine
+- OpenCV
+- Multiprocessing
+- Video Streaming
+- Web Development
+- Tutorial
+title: How to stream multiple videos on an HTML webpage
 ---
+
 <br>
 Hi friends, hope your are doing great. This tutorial is about streaming multiple videos on a webpage. As an example, we will use two .mp4 files. We will use two processes to stream each video feed. In the following code, we will use two functions: 
 
@@ -29,7 +46,7 @@ The key idea here is to route the video feeds on the same server's same IP but w
 So let say if you want to stream four videos from four webcams connected to your server PC, you need to run four functions, each on a different port number. 
 To further explain this concept, let's look at the complete code for two video case.
 
-### run.py
+# run.py
 {% include codeHeader.html %}
 ```python
 

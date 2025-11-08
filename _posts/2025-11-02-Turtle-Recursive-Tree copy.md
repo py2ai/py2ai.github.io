@@ -1,16 +1,28 @@
 ---
-layout: post
-title: Fractal Tree Generator in Python with Turtle
-mathjax: false
-featured-img: 26072022-python-logo
 description: Learn how to build a beautiful recursive fractal tree using Python’s turtle graphics module with randomness for natural effects.
-keywords: ["Python", "Turtle", "Fractal Tree", "Recursion", "Graphics"]
-tags: ["python", "turtle", "recursion", "graphics", "fractal"]
+featured-img: 26072022-python-logo
+keywords:
+- Python
+- Turtle
+- Fractal Tree
+- Recursion
+- Graphics
+layout: post
+mathjax: false
+tags:
+- python
+- turtle
+- recursion
+- graphics
+- fractal
+title: Fractal Tree Generator in Python with Turtle
 ---
+
+
 
 # Fractal Tree Generator in Python
 
-### A Beginner’s Guide to Recursion and Turtle Graphics
+## A Beginner’s Guide to Recursion and Turtle Graphics
 
 In this tutorial, you’ll learn how to create a **beautiful fractal tree** using **Python’s turtle graphics module**. The project combines **recursion**, **randomness**, and **geometry** to draw realistic, organic-looking trees.
 
@@ -49,10 +61,10 @@ First, let’s import the required modules and set up some global parameters:
 ```python
 import turtle, random
 
-# Screen dimensions
+## Screen dimensions
 W, H = 400, 400
 
-# Tree configuration
+## Tree configuration
 DEPTH = 8      # Levels of recursion (branch generations)
 LENGTH = 80    # Average branch length
 BA = 25        # Average branch angle in degrees
@@ -75,22 +87,22 @@ def record_my_params(length, depth, level=0):
     """Recursively generate random branch parameters"""
     if depth == 0: return
 
-    # Random left and right angles
+    ## Random left and right angles
     a1 = random.uniform(BA-10, BA+10)
     a2 = random.uniform(BA-10, BA+10)
 
-    # Random left and right branch lengths
+    ## Random left and right branch lengths
     l1 = length * random.uniform(0.6, 0.8)
     l2 = length * random.uniform(0.6, 0.8)
 
-    # Store the parameters for reuse
+    ## Store the parameters for reuse
     branch_params.append((a1, a2, l1, l2, level))
 
-    # Recurse for next levels
+    ## Recurse for next levels
     record_my_params(l1, depth-1, level+1)
     record_my_params(l2, depth-1, level+1)
 
-# Initialize all branch parameters once
+## Initialize all branch parameters once
 record_my_params(LENGTH, DEPTH)
 ```
 
@@ -130,7 +142,7 @@ def turtle_tree():
     pen.speed(0)
     pen.color("lime")
 
-    # Start position and orientation
+    ## Start position and orientation
     pen.left(90)
     pen.penup()
     pen.goto(0, -H//2 + 30)
@@ -149,15 +161,15 @@ def turtle_tree():
         except StopIteration:
             return
 
-        # Left branch
+        ## Left branch
         pen.left(a1)
         draw_tree(l1, depth - 1)
 
-        # Right branch
+        ## Right branch
         pen.right(a1 + a2)
         draw_tree(l2, depth - 1)
 
-        # Return to original orientation and backtrack
+        ## Return to original orientation and backtrack
         pen.left(a2)
         pen.backward(length)
 
@@ -183,25 +195,25 @@ DEPTH = 8 # Recursive level or generations of branch
 LENGTH = 80 # Average branch length
 BA = 25 # Branch Angle on average
 random.seed(192) 
-# Generate Random angle and length sequence
+## Generate Random angle and length sequence
 branch_params = []
 def record_my_params(length, depth, level=0):
     """Recursively generate random branch parameters"""
     if depth == 0: return 
-    # Random branch angles (variation around BA)
+    ## Random branch angles (variation around BA)
     a1 = random.uniform(BA-10,BA+10) # left angle
     a2 = random.uniform(BA-10,BA+10) # right angle
-    # Random branch lenghts (60% to 80% of parent)
+    ## Random branch lenghts (60% to 80% of parent)
     l1 = length * random.uniform(0.6,0.8) # left length
     l2 = length * random.uniform(0.6,0.8) # right length
-    # Store parameters (for reuse later on)
+    ## Store parameters (for reuse later on)
     branch_params.append((a1,a2,l1,l2,level))
-    # Recurse deeper
+    ## Recurse deeper
     record_my_params(l1, depth-1, level+1)
     record_my_params(l2, depth-1, level+1)
-# Call once to populate the branch_params list
+## Call once to populate the branch_params list
 record_my_params(LENGTH, DEPTH)
-# Iterator to reuse identical random parameters
+## Iterator to reuse identical random parameters
 def param_gen():
     for p in branch_params: yield p 
 

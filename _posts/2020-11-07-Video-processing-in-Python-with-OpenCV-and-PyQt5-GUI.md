@@ -1,13 +1,27 @@
 ---
-layout: post
-title: PytQt5 GUI design and Video processing with OpenCV
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pyqt509
+categories:
+- GUI tutorial series
 description: How to make a GUI in PyQt5 for video processing applications
-keywords: [PyQt5, OpenCV, Video Processing, GUI Design, Python]
-tags: [PyQt5, OpenCV, Video Processing, GUI Design, Python]
+featured-img: pyqt509
+keywords:
+- PyQt5
+- OpenCV
+- Video Processing
+- GUI Design
+- Python
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- OpenCV
+- Video Processing
+- GUI Design
+- Python
+title: PytQt5 GUI design and Video processing with OpenCV
 ---
+
+
+
 
 <br>
 <div align="center">
@@ -19,7 +33,7 @@ Hello friends, today we will design a very basic GUI that will use the Model-Vie
 The user can change blur and brightness of the video frames and take pictures to save images. Additional text labels are also
 part of this tutorial as shown in the code. You will notice how the code is reused here from the Tutorial 05 of PyQt5 learning series.
 
-## Requirements
+# Requirements
 cv2
 pyshine
 numpy
@@ -39,20 +53,20 @@ put a video file in the same folder as the Python code below. Also the xml file 
 
 Updated version with <span style="color:red">**Start/Stop**</span> toggle button is added based on the suggestion from Ilker. This is the updated version 2.
 
-### process_version2.py
+## # process_version2.py
 {% include codeHeader.html %}
 ```python
 
 
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'process.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Form implementation generated from reading ui file 'process.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # Subscribe to PyShine Youtube channel for more detail! 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -130,7 +144,7 @@ class Ui_MainWindow(object):
         self.pushButton.clicked.connect(self.savePhoto)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         
-        # Added code here
+        ## Added code here
         self.filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png' # Will hold the image address location
         self.tmp = None # Will hold the temporary image for display
         self.brightness_value_now = 0 # Updated brightness value
@@ -256,7 +270,7 @@ class Ui_MainWindow(object):
         img = self.changeBrightness(self.image,self.brightness_value_now)
         img = self.changeBlur(img,self.blur_value_now)
 
-        # Here we add display text to the image
+        ## Here we add display text to the image
         text  =  'FPS: '+str(self.fps)
         img = ps.putBText(img,text,text_offset_x=20,text_offset_y=30,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
         text = str(time.strftime("%H:%M %p"))
@@ -284,9 +298,9 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Blur"))
         self.pushButton.setText(_translate("MainWindow", "Take picture"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 
 if __name__ == "__main__":
@@ -304,19 +318,19 @@ if __name__ == "__main__":
 Following is the old version 1.
 
 
-### process_version1.py
+## # process_version1.py
 {% include codeHeader.html %}
 ```python
 
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'process.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Form implementation generated from reading ui file 'process.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # Subscribe to PyShine Youtube channel for more detail! 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -388,7 +402,7 @@ class Ui_MainWindow(object):
 		self.pushButton.clicked.connect(self.savePhoto)
 		QtCore.QMetaObject.connectSlotsByName(MainWindow)
 		
-		# Added code here
+## #	# Added code here
 		self.filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png' # Will hold the image address location
 		self.tmp = None # Will hold the temporary image for display
 		self.brightness_value_now = 0 # Updated brightness value
@@ -501,7 +515,7 @@ class Ui_MainWindow(object):
 		img = self.changeBrightness(self.image,self.brightness_value_now)
 		img = self.changeBlur(img,self.blur_value_now)
 
-		# Here we add display text to the image
+## #	# Here we add display text to the image
 		text  =  'FPS: '+str(self.fps)
 		img = ps.putBText(img,text,text_offset_x=20,text_offset_y=30,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
 		text = str(time.strftime("%H:%M %p"))
@@ -529,9 +543,9 @@ class Ui_MainWindow(object):
 		self.label_3.setText(_translate("MainWindow", "Blur"))
 		self.pushButton.setText(_translate("MainWindow", "Take picture"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 
 if __name__ == "__main__":

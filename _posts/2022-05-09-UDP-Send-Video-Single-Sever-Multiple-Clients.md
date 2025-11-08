@@ -1,21 +1,32 @@
 ---
-layout: post
-title: UDP Single server to multiple clients 
+description: This tutorial is about streaming real-time video to multiple clients over UDP
 featured-img: udp_single_s_multiple_c
+keywords:
+- UDP
+- Streaming
+- Video
+- Python
+- Networking
+layout: post
 mathjax: true
+tags:
+- UDP
+- Networking
+- Python
+- Video Streaming
+title: UDP Single server to multiple clients
 toc: true
-description:  This tutorial is about streaming real-time video to multiple clients over UDP
-keywords: [UDP, Streaming, Video, Python, Networking]
-tags: [UDP, Networking, Python, Video Streaming]
 ---
+
+
 
 Hi friends! Here is the UDP based single server and multiple clients. For more details visit UDP basic server client tutorial at pyshine.com
 
-### server.py
+# server.py
 {% include codeHeader.html %}
 ```python
 
-# This is server code to send video frames over UDP
+## This is server code to send video frames over UDP
 import cv2,  socket
 import time
 import base64, threading
@@ -23,7 +34,7 @@ import os
 global RUNF, frame
 RUNF = {}
 frame = None
-# For details visit pyshine.com
+## For details visit pyshine.com
 
 BUFF_SIZE = 65536
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
@@ -113,7 +124,7 @@ Following is the index.html containing javascript
 {% include codeHeader.html %}
 ```python
 
-# This is client code to receive video frames over UDP
+## This is client code to receive video frames over UDP
 import cv2, socket
 import numpy as np
 import base64

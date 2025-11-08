@@ -1,11 +1,22 @@
 ---
-layout: post
-title: How to install protobuf on Mac OS
-categories: [tutorial]
+categories:
+- tutorial
+description: 'Hi everybody, today I show you a way to install Google Protocol Buffers on MAC OS. You might already have tried:'
 featured-img: protobufinstalll
+keywords:
+- protobuf
+- development
+- code
+- programming
+- tutorial
+- mac
+- python
+- install
+layout: post
 mathjax: true
-description: A quick tutorial to install protoc for tensorflow
+title: How to install protobuf on Mac OS
 ---
+
 
 
 

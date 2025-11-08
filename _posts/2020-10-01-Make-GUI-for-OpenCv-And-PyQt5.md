@@ -1,11 +1,24 @@
 ---
-layout: post
-title: How to make OpenCV and PyQt5 based GUI for image processing applications
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pyqt5
+categories:
+- GUI tutorial series
 description: Making an OpenCv GUI with brightness and blur adjustment
+featured-img: pyqt5
+keywords:
+- based
+- opencv
+- development
+- code
+- gui
+- image
+- programming
+- tutorial
+layout: post
+mathjax: true
+title: How to make OpenCV and PyQt5 based GUI for image...
 ---
+
+
+
 
 Hello friends, The tutorial is part 05 of PyQt5 GUI learning series. This video contains instructions to make a basic photo editing application in Python. 
 The concept of MVC or Model View Controller is implemented with explanation. Enjoy, and do 
@@ -19,7 +32,7 @@ give back your feedback and suggestions. For more detail visit pyshine youtube c
 
 Some friends have asked about the possibility of saving the image as an output instead of overwriting the input image. Yes, it is of course possible. In the savePhoto function simply change the self.filename to filename. Then provide the desired name such as a time stamp or filename = 'output.jpg' or filename = 'output.png' etc. The code below is already updated. Thanks for your great suggestions!
 
-### Sample Images 
+# Sample Images 
 
 [![Bird1](https://github.com/py2ai/pyqt5images/PyOpenCVone.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird1")
 
@@ -28,19 +41,19 @@ Some friends have asked about the possibility of saving the image as an output i
 [![Bird2](https://github.com/py2ai/pyqt5images/PyOpenCVthree.png?raw=true)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
 
 
-### process.py
+## # process.py
 {% include codeHeader.html %}
 ```python
 
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'process.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Form implementation generated from reading ui file 'process.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # Subscribe to PyShine Youtube channel for more detail! 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -101,7 +114,7 @@ class Ui_MainWindow(object):
 		self.pushButton.clicked.connect(self.savePhoto)
 		QtCore.QMetaObject.connectSlotsByName(MainWindow)
 		
-		# Added code here
+## #	# Added code here
 		self.filename = None # Will hold the image address location
 		self.tmp = None # Will hold the temporary image for display
 		self.brightness_value_now = 0 # Updated brightness value
@@ -176,18 +189,18 @@ class Ui_MainWindow(object):
 	
 	def savePhoto(self):
 		""" This function will save the image"""
-		# here provide the output file name
-		# lets say we want to save the output as a time stamp
-		# uncomment the two lines below
+## #	# here provide the output file name
+## #	# lets say we want to save the output as a time stamp
+## #	# uncomment the two lines below
 		
-		# import time
-		# filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
+## #	# import time
+## #	# filename = 'Snapshot '+str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
 		
-		# Or we can give any name such as output.jpg or output.png as well
-		# filename = 'Snapshot.png'	
+## #	# Or we can give any name such as output.jpg or output.png as well
+## #	# filename = 'Snapshot.png'	
 	
-		# Or a much better option is to let user decide the location and the extension
-          	# using a file dialog.
+## #	# Or a much better option is to let user decide the location and the extension
+           ## using a file dialog.
 		
 		filename = QFileDialog.getSaveFileName(filter="JPG(*.jpg);;PNG(*.png);;TIFF(*.tiff);;BMP(*.bmp)")[0]
 		
@@ -201,9 +214,9 @@ class Ui_MainWindow(object):
 		self.pushButton_2.setText(_translate("MainWindow", "Open"))
 		self.pushButton.setText(_translate("MainWindow", "Save"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 
 if __name__ == "__main__":

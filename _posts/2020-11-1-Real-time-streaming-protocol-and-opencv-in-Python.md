@@ -1,13 +1,25 @@
 ---
-layout: post
-title: OpenCV and Real time streaming protocol (RTSP)
-categories: [Networking tutorials]
-mathjax: true
-featured-img: rtsp
+categories:
+- Networking tutorials
 description: How to obtain video frames from an RTSP stream of video
-keywords: [OpenCV, RTSP, Real-Time Streaming, IP Cameras, Video Processing]
-tags: [OpenCV, RTSP, Video Streaming, IP Cameras, Python]
+featured-img: rtsp
+keywords:
+- OpenCV
+- RTSP
+- Real-Time Streaming
+- IP Cameras
+- Video Processing
+layout: post
+mathjax: true
+tags:
+- OpenCV
+- RTSP
+- Video Streaming
+- IP Cameras
+- Python
+title: OpenCV and Real time streaming protocol (RTSP)
 ---
+
 
 Hello friends, this tutorial is about RTSP stream basics, how to process it, and obtain frames in Python. In general, OpenCV is used with webcams connected to computers or also embedded inside them. However, for the surveillance purpose, we commonly use IP cameras that generate video streams using
 RTSP protocol. We can use such IP cameras in projects of video processing, like motion detection, etc. So let's start by knowing what RTSP is.
@@ -27,7 +39,7 @@ Here is the code to obtain frames of video from the rtsp link.
 ```python
 
 import cv2
-# vid = cv2.VideoCapture(0) # For webcam
+## vid = cv2.VideoCapture(0) # For webcam
 vid = cv2.VideoCapture("http://wmccpinetop.axiscam.net/mjpg/video.mjpg") # For streaming links
 while True:
   _,frame = vid.read()
@@ -49,7 +61,7 @@ rtsp://UserName:Password@IpAdress:Port/Streaming/Channels/ChannelID
 According to your settings, give the parameters in the link and use in your opencv projects.
 
 
-# Experiment of live webcam stream on webcam
+## Experiment of live webcam stream on webcam
 
 Issue this command in Terminal:
 
@@ -59,7 +71,7 @@ In another terminal run this python code
 
 ```python
 import cv2
-# vid = cv2.VideoCapture(0) # For webcam
+## vid = cv2.VideoCapture(0) # For webcam
 vid = cv2.VideoCapture("rtp://127.0.0.1:9999") # For streaming links
 while True:
 	rdy,frame = vid.read()

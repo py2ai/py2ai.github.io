@@ -1,12 +1,23 @@
 ---
-layout: post
-title: Learn Python Tips and Tricks Part 01
-mathjax: true
+description: Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course ...
 featured-img: 26072022-python-logo
-description:  Learn Python with Examples
-keywords: [Python, Basics, Installation, Variables, Data Types, Strings]
-tags: [Python, Basics, Strings, Data Types]
+keywords:
+- Python
+- Basics
+- Installation
+- Variables
+- Data Types
+- Strings
+layout: post
+mathjax: true
+tags:
+- Python
+- Basics
+- Strings
+- Data Types
+title: Learn Python Tips and Tricks Part 01
 ---
+
 
 Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. 
 
@@ -40,7 +51,7 @@ Hi friends! We are starting free Python learning course. If you are new to Pytho
 
 Go ahead and download Python from here https://www.python.org/downloads/ according to your Operating System, i.e., Windows, Mac OS or Linux, etc. We will use Python 3.8.5 version. 
 
-# Run basic python
+## Run basic python
 
 Once installed, open up a new Terminal and write `python` and hit `Enter` key. You will see the following Python interactive interpreter 
 
@@ -83,7 +94,7 @@ If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
 
-# Run basic python through file
+## Run basic python through file
 
 Let's do the same thing by writing the following code in a new file named `main.py` in any location or path in your computer. Open up a new Terminal and cd to the path.
 
@@ -122,7 +133,7 @@ If the implementation is easy to explain, it may be a good idea.
 Namespaces are one honking great idea -- let's do more of those!
 ```
 
-# Variables and Data types in Python
+## Variables and Data types in Python
 
 Everything in Python is object including the variables and data types. The basic data types in Python are:
 * strings - 'hello'
@@ -377,6 +388,6 @@ To find the last occurence or highest index of a sub-string in a string.
 ```
 
 
-# Summary
+## Summary
 
 We saw that we can either run Python script via interpretor or using python file. Throughout this course we will continue to use anyone of them...

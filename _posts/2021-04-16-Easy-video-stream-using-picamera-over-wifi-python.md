@@ -1,13 +1,31 @@
 ---
-layout: post
-title: How to easily stream picamera video over wifi with Raspberry Pi
-categories: [Raspberry Pi Programming Series]
-mathjax: true
+categories:
+- Raspberry Pi Programming Series
+description: This tutorial is about streaming RPi pi camera video to an HTML page without Flask
 featured-img: jeep03
-description:  This tutorial is about streaming RPi pi camera video to an HTML page without Flask
-tags: [Raspberry Pi, PiCamera, WiFi Streaming, Python, HTML, Video Transmission, PyShine, Tutorial]
-keywords: [PiCamera video streaming, Raspberry Pi WiFi video, Python video streaming, Raspberry Pi tutorial, HTML video stream, PiCamera without Flask, Raspberry Pi camera streaming]
+keywords:
+- PiCamera video streaming
+- Raspberry Pi WiFi video
+- Python video streaming
+- Raspberry Pi tutorial
+- HTML video stream
+- PiCamera without Flask
+- Raspberry Pi camera streaming
+layout: post
+mathjax: true
+tags:
+- Raspberry Pi
+- PiCamera
+- WiFi Streaming
+- Python
+- HTML
+- Video Transmission
+- PyShine
+- Tutorial
+title: How to easily stream picamera video over wifi with...
 ---
+
+
 
 Hi friends! Today's tutorial is Part 03 of the Raspberry Pi learning series. You will learn how to transmit video that from PiCamera library over the wifi. This video stream can be received on any mobile device connected to wifi and can open up an HTML webpage. 
 Again, in this tutorial, we do not require Flask or Django. All we need are two libraries; 1) picamera and 2) pyshine.
@@ -18,7 +36,7 @@ Again, in this tutorial, we do not require Flask or Django. All we need are two 
 </div>
 <br>
 
-### Installation 
+# Installation 
 1) picamera
 If you are using the Raspbian distro, you probably have picamera installed by default. 
 You can determin the installation by trying to import picamera in Python. Anyways, if you have no prior installation of picamera, then
@@ -42,10 +60,10 @@ The HTML page will get the mjpeg stream plays it in an inline fashion.
 
 From our previous tutorials, you may already have known the idea to get the IP address of your device. Let's say your IP address is `192.168.1.1`, then the following code is all we need to observe the video stream in another device's webbrowser.
 
-### main.py
+## main.py
 {% include codeHeader.html %}
 ```python
-# Part 03 using opencv access webcam and transmit the video in HTML
+## Part 03 using opencv access webcam and transmit the video in HTML
 import picamera
 import  pyshine as ps #  pip3 install pyshine==0.0.9
 HTML="""

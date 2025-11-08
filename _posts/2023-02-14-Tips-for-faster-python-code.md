@@ -1,25 +1,26 @@
 ---
-layout: post
-title: Python coding tips for faster and better software development
-mathjax: true
+description: 'Hello friends! Here are some tips and tricks to write faster code in Python:'
 featured-img: 26072022-python-logo
-description:  How to write better and faster code in Python
-tags:
-  - Python
-  - Coding Tips
-  - Software Development
-  - Performance
-  - Best Practices
 keywords:
-  - Python coding tips
-  - Faster Python code
-  - Better Python software
-  - Python performance
-  - Python best practices
-  - Code optimization
-  - Python development tips
-  - Efficient Python programming
+- Python coding tips
+- Faster Python code
+- Better Python software
+- Python performance
+- Python best practices
+- Code optimization
+- Python development tips
+- Efficient Python programming
+layout: post
+mathjax: true
+tags:
+- Python
+- Coding Tips
+- Software Development
+- Performance
+- Best Practices
+title: Python coding tips for faster and better software...
 ---
+
 
 Hello friends! Here are some tips and tricks to write faster code in Python:
 

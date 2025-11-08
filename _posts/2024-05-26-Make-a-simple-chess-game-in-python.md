@@ -1,18 +1,21 @@
 ---
-layout: post
-title: Building a Simple Chess Game in Python
-mathjax: true
+description: In this tutorial, we'll create a basic chess game using Python. The game will have a simple text-based interface where players can input their moves. We'll e...
 featured-img: 26072022-python-logo
-description:  make a chess game in python
-tags:
-  - Python
-  - Chess
-  - Game Development
 keywords:
-  - Python chess game
-  - text-based chess
-  - coding tutorial
+- Python chess game
+- text-based chess
+- coding tutorial
+layout: post
+mathjax: true
+tags:
+- Python
+- Chess
+- Game Development
+title: Building a Simple Chess Game in Python
 ---
+
+
+# Chess Game Tutorial
 
 In this tutorial, we'll create a basic chess game using Python. The game will have a simple text-based interface where players can input their moves. We'll explain the code step by step, focusing on how the ChessBoard class works and how the game logic is implemented.
 
@@ -27,7 +30,7 @@ class ChessBoard:
         self.turn = 'white'  # 'white' starts first
 
     def create_board(self):
-        # Unicode symbols for the chess pieces
+
         board = [
             ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
             ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
@@ -41,21 +44,20 @@ class ChessBoard:
         return board
 
     def print_board(self):
-        # Print top label for Player 1 side
+
         print('      Player 1')
         print('  a b c d e f g h')
 
-        # Print rows with side labels
         for i, row in enumerate(self.board):
-            # Print row number and left side label
+            ## Print row number and left side label
             print(f'{8 - i} ', end='')
-            # Print row content
+            ## Print row content
             for piece in row:
                 print(piece, end=' ')
-            # Print right side label
+            ## Print right side label
             print(f'{8 - i}')
 
-        # Print bottom label for Player 2 side
+        ## Print bottom label for Player 2 side
         print('  a b c d e f g h')
         print('      Player 2\n')
 
@@ -67,7 +69,7 @@ class ChessBoard:
         self.board[start_row][start_col] = '.'
         self.board[end_row][end_col] = piece
 
-        # Toggle turn
+        ## Toggle turn
         self.turn = 'black' if self.turn == 'white' else 'white'
 
 def parse_position(pos):
@@ -93,7 +95,7 @@ if __name__ == "__main__":
     main()
 ```
 
-# Explanation
+## Explanation
 
 ## ChessBoard Class
 
@@ -116,7 +118,7 @@ This function orchestrates the game. It creates an instance of ChessBoard, print
 ## Running the Game
 To run the game, simply execute the script. Players will be prompted to input their moves in the format 'e2' to 'e4', for example. The game will continue indefinitely until terminated manually.
 
-# Conclusion
+## Conclusion
 In this tutorial, we built a simple text-based chess game in Python. We explored the code for the ChessBoard class and explained how it manages the board state and player turns. You can further extend this game by implementing more complex rules, adding special moves, or creating a graphical interface. Happy coding!
 
 Example run:

@@ -1,13 +1,28 @@
 ---
-layout: post
-title: Video and Text chat in Python
-categories: [tutorial]
-featured-img: 2021-12-24-chat-text
-mathjax: true
+categories:
+- tutorial
 description: A quick tutorial to make server-client video and text chat
-tags: [Python, video chat, text chat, UDP, socket programming, tutorial]
-keywords: [Python video chat, Python text chat, server-client chat, UDP video transfer, Python socket programming, real-time chat tutorial]
+featured-img: 2021-12-24-chat-text
+keywords:
+- Python video chat
+- Python text chat
+- server-client chat
+- UDP video transfer
+- Python socket programming
+- real-time chat tutorial
+layout: post
+mathjax: true
+tags:
+- Python
+- video chat
+- text chat
+- UDP
+- socket programming
+- tutorial
+title: Video and Text chat in Python
 ---
+
+
 
 Hi friends, today's tutorial is rather more interesting than the previous ones. We will use a UDP socket connection for the real-time video transfer between the server and the client. So it will be a bidirectional video transfer, which means the server can watch the client's video and vice versa. 
 At the same time, it will enable users at the server and client to chat via messages to each other. Two important things to consider:
@@ -18,10 +33,10 @@ Second, to test both Python codes on separate computers, you can keep the id the
 
 
 
-### server.py
+# server.py
 {% include codeHeader.html %}
 ```python
-# This is server code to send video (over UDP) and message frames (over TCP)
+## This is server code to send video (over UDP) and message frames (over TCP)
 
 import cv2, imutils, socket
 import numpy as np
@@ -31,7 +46,7 @@ import threading, wave, pyaudio,pickle,struct
 import sys
 import queue
 import os
-# For details visit pyshine.com
+## For details visit pyshine.com
 q = queue.Queue(maxsize=10)
 
 
@@ -69,7 +84,7 @@ def send_video():
     fps,st,frames_to_count,cnt = (0,0,20,0)
     cv2.namedWindow('SERVER TRANSMITTING VIDEO')        
     cv2.moveWindow('SERVER TRANSMITTING VIDEO', 400,30) 
-    # while True:
+    ## while True:
     msg,client_addr = server_socket.recvfrom(BUFF_SIZE)
     print('GOT connection from ',client_addr)
     WIDTH=400
@@ -210,8 +225,8 @@ t5.start()
 ### client.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is client code to receive video (over UDP) and message frames (over TCP)
+## Welcome to PyShine
+## This is client code to receive video (over UDP) and message frames (over TCP)
 
 import cv2, imutils, socket
 import numpy as np
@@ -219,7 +234,7 @@ import time, os
 import base64
 import queue
 import threading, wave, pyaudio,pickle,struct
-# For details visit pyshine.com
+## For details visit pyshine.com
 BUFF_SIZE = 65536
 
 BREAK = False
@@ -256,7 +271,7 @@ def generate_video():
 
 def get_message():
 	
-    # TCP socket
+    ## TCP socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     socket_address = (host_ip,port-1)
     print('server listening at',socket_address)
@@ -293,7 +308,7 @@ def get_message():
 
 def send_message():
 
-    # create socket
+    ## create socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     socket_address = (host_ip,port-2)
     print('server listening at',socket_address)

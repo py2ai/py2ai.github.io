@@ -1,13 +1,28 @@
 ---
-layout: post
-title: How to send audio data using socket programming in Python
-categories: [Socket Programming Series]
-mathjax: true
-featured-img: matthiasgroeneveld
+categories:
+- Socket Programming Series
 description: This tutorial is about using PyAudio and TCP sockets for server-client transfer of audio stream
-tags: [Socket Programming, Python, PyAudio, Audio Streaming, TCP, UDP]
-keywords: [Audio Streaming, PyAudio, Socket Programming, Python, TCP, UDP]
+featured-img: matthiasgroeneveld
+keywords:
+- Audio Streaming
+- PyAudio
+- Socket Programming
+- Python
+- TCP
+- UDP
+layout: post
+mathjax: true
+tags:
+- Socket Programming
+- Python
+- PyAudio
+- Audio Streaming
+- TCP
+- UDP
+title: How to send audio data using socket programming in Python
 ---
+
+
 
 Hi! Let's say we have an audio file (.wav), and we want to send it to the client so that the client can listen
 the stream as a playback in real-time. For this purpose we require PyAudio and socket programming. PyAudio enriches
@@ -28,12 +43,12 @@ please visit our previous tutorials.
 Here is the server side code, we assume that you already have wave (.wav) audio file in the same directory as this 
 server.py file. Please run the server.py at one computer and accordingly provide your host_ip to it. 
 
-## TCP SOCKET VERSION 
+# TCP SOCKET VERSION 
 
-### server.py
+## server.py
 {% include codeHeader.html %}
 ```python
-# This is server code to send video and audio frames over TCP
+## This is server code to send video and audio frames over TCP
 
 import socket
 import threading, wave, pyaudio,pickle,struct
@@ -92,11 +107,11 @@ On the same or second computer please run the code below as:
 python client.py
 ```
 
-### client.py
+## client.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is client code to receive video and audio frames over TCP
+## Welcome to PyShine
+## This is client code to receive video and audio frames over TCP
 
 import socket,os
 import threading, wave, pyaudio, pickle,struct
@@ -114,7 +129,7 @@ def audio_stream():
 					output=True,
 					frames_per_buffer=CHUNK)
 					
-	# create socket
+### create socket
 	client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 	socket_address = (host_ip,port-1)
 	print('server listening at',socket_address)
@@ -162,7 +177,7 @@ Alright, lets do the same things as above but this time using UDP socket. The pr
 {% include codeHeader.html %}
 ```python
 
-# This is server code to send video and audio frames over UDP
+## This is server code to send video and audio frames over UDP
 
 import socket
 import threading, wave, pyaudio, time
@@ -171,7 +186,7 @@ host_name = socket.gethostname()
 host_ip = '192.168.1.102'#  socket.gethostbyname(host_name)
 print(host_ip)
 port = 9633
-# For details visit: www.pyshine.com
+## For details visit: www.pyshine.com
 
 def audio_stream_UDP():
 
@@ -215,8 +230,8 @@ we will playback the sound. A time.sleep(5), will provide 5 second delay at the 
 ### client.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is client code to receive video and audio frames over UDP
+## Welcome to PyShine
+## This is client code to receive video and audio frames over UDP
 
 import socket
 import threading, wave, pyaudio, time, queue
@@ -225,7 +240,7 @@ host_name = socket.gethostname()
 host_ip = '192.168.1.102'#  socket.gethostbyname(host_name)
 print(host_ip)
 port = 9633
-# For details visit: www.pyshine.com
+## For details visit: www.pyshine.com
 q = queue.Queue(maxsize=2000)
 
 def audio_stream_UDP():
@@ -240,7 +255,7 @@ def audio_stream_UDP():
 					output=True,
 					frames_per_buffer=CHUNK)
 					
-	# create socket
+### create socket
 	message = b'Hello'
 	client_socket.sendto(message,(host_ip,port))
 	socket_address = (host_ip,port)
@@ -294,7 +309,7 @@ client size.
 ### server.py
 {% include codeHeader.html %}
 ```python
-# This is server code to send video and audio frames over UDP
+## This is server code to send video and audio frames over UDP
 
 import socket
 import threading, wave, pyaudio, time
@@ -303,7 +318,7 @@ host_name = socket.gethostname()
 host_ip = '192.168.1.104'#  socket.gethostbyname(host_name)
 print(host_ip)
 port = 9633
-# For details visit: www.pyshine.com
+## For details visit: www.pyshine.com
 
 def audio_stream_UDP():
 
@@ -354,8 +369,8 @@ t1.start()
 ### client.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is client code to receive video and audio frames over UDP
+## Welcome to PyShine
+## This is client code to receive video and audio frames over UDP
 
 import socket
 import threading, wave, pyaudio, time, queue
@@ -364,7 +379,7 @@ host_name = socket.gethostname()
 host_ip = '192.168.1.104'#  socket.gethostbyname(host_name)
 print(host_ip)
 port = 9633
-# For details visit: www.pyshine.com
+## For details visit: www.pyshine.com
 
 
 def audio_stream_UDP():
@@ -379,7 +394,7 @@ def audio_stream_UDP():
 					output=True,
 					frames_per_buffer=CHUNK)
 					
-	# create socket
+### create socket
 	message = b'Hello'
 	client_socket.sendto(message,(host_ip,port))
 	DATA_SIZE,_= client_socket.recvfrom(BUFF_SIZE)

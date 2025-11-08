@@ -1,11 +1,22 @@
 ---
-layout: post
-title: How to install OpenCV and Python in windows 
-categories: [tutorial]
-mathjax: true
-featured-img: opencvandpythoninstall
+categories:
+- tutorial
 description: A quick tutorial to install python and opencv in windows7
+featured-img: opencvandpythoninstall
+keywords:
+- opencv
+- development
+- code
+- programming
+- windows
+- tutorial
+- python
+- install
+layout: post
+mathjax: true
+title: How to install OpenCV and Python in windows
 ---
+
 
 
 

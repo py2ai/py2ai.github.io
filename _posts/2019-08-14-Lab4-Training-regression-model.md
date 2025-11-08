@@ -1,13 +1,25 @@
 ---
-layout: post
-title: Lab4 Training regression model and Epochs
-categories: [Keras tutorial series]
-mathjax: true
+categories:
+- Keras tutorial series
+description: Hi there! today we will build a multilayer model. Lets import the necessary components.
 featured-img: keras
-description: A quick tutorial on Keras Regression
+keywords:
+- lab4
+- epochs
+- development
+- code
+- programming
+- tutorial
+- regression
+- python
+layout: post
+mathjax: true
+title: Lab4 Training regression model and Epochs
 ---
 
-## A quick and easy multilayer Regression model
+
+
+# A quick and easy multilayer Regression model
 
 Hi there! today we will build a multilayer model. Lets import the necessary components. 
 ```python
@@ -64,10 +76,10 @@ So lets do some trick here. Define a variable Epochs and use it as below.
 {% include codeHeader.html %}
 ```python
 for i in range(10):
-	# train model
+
 	Epochs+=50
 	history = model.fit(X, [1], epochs=Epochs, batch_size=len(X), verbose=2)
-	# plot metrics
+
 	pyplot.title('Epochs: {}'.format(Epochs))
 	pyplot.plot(history.history['mean_squared_error'],label='mse')
 	pyplot.plot(history.history['mean_absolute_error'],label='mae')
@@ -77,29 +89,29 @@ for i in range(10):
 	pyplot.ylabel('Metric Value')
 	pyplot.legend()
 	pyplot.savefig('Spring-epochs-{}.jpg'.format(Epochs)) 
-	#pyplot.show()
+
 	pyplot.close()
 ```	
 Here are some results.
 Thats all for this lab 4. 
 
-![]({{ "assets/img/posts/Spring-epochs-100.jpg" | absolute_url }})
+!![Spring epochs 100]({{ "assets/img/posts/Spring-epochs-100.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-150.jpg" | absolute_url }})
+!![Spring epochs 150]({{ "assets/img/posts/Spring-epochs-150.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-200.jpg" | absolute_url }})
+!![Spring epochs 200]({{ "assets/img/posts/Spring-epochs-200.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-250.jpg" | absolute_url }})
+!![Spring epochs 250]({{ "assets/img/posts/Spring-epochs-250.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-300.jpg" | absolute_url }})
+!![Spring epochs 300]({{ "assets/img/posts/Spring-epochs-300.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-350.jpg" | absolute_url }})
+!![Spring epochs 350]({{ "assets/img/posts/Spring-epochs-350.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-400.jpg" | absolute_url }})
+!![Spring epochs 400]({{ "assets/img/posts/Spring-epochs-400.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-450.jpg" | absolute_url }})
+!![Spring epochs 450]({{ "assets/img/posts/Spring-epochs-450.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-500.jpg" | absolute_url }})
+!![Spring epochs 500]({{ "assets/img/posts/Spring-epochs-500.jpg" | absolute_url }})
 
-![]({{ "assets/img/posts/Spring-epochs-550.jpg" | absolute_url }})
+!![Spring epochs 550]({{ "assets/img/posts/Spring-epochs-550.jpg" | absolute_url }})
 In the next lab 5 we will learn about training the model for Classification. I hope this lab will be helpful for the beginners. Code is  [available](https://github.com/py2ai/Keras-Labs).

@@ -1,13 +1,31 @@
 ---
-layout: post
-title: Transfer video over sockets from multiple clients and save at server side with a name
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: '<br>
+
+  <div align="center">
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/1skHb3IjOr4" frameborder="0" allow="accelerometer; autoplay; cl...'
 featured-img: mclients
-description: Save videos from multiple clients at server side
-keywords: [Socket Programming, Video Streaming, Python, OpenCV, Multi-Client, Server-Side Saving]
-tags: [Socket Programming, Video Streaming, Python, OpenCV, Multi-Client]
+keywords:
+- Socket Programming
+- Video Streaming
+- Python
+- OpenCV
+- Multi-Client
+- Server-Side Saving
+layout: post
+mathjax: true
+tags:
+- Socket Programming
+- Video Streaming
+- Python
+- OpenCV
+- Multi-Client
+title: Transfer video over sockets from multiple clients and...
 ---
+
+
 
 <br>
 <div align="center">
@@ -26,7 +44,7 @@ Hello friends, today we will again do socket programming for multiple clients an
 videos to a server in Python. The new thing is to save each client's frames as a separate video. The client.py utilizes OpenCv to access the video frames either from the live webcam or through the MP4 video. The server side code 
 runs multi-threading to display video frame which is optional from each of the connected client. 
 
-## Requirements for this project
+# Requirements for this project
 
 ```
 pip3 install opencv-contrib-python
@@ -37,7 +55,7 @@ pip3 install imutils
 
 Each client must know the IP of the server. Both the server and client should be connected to the same wifi router. Depending on the operating system, you can easily find the IP address of your machine as follows:
 
-### IP address for MAC OS users
+## IP address for MAC OS users
 
 Go to the terminal window and run this command:
 
@@ -73,9 +91,9 @@ The client code is exactly same as before.
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
-# lets make the client code
-# In this code client is sending video to server
+## Welcome to PyShine
+## lets make the client code
+## In this code client is sending video to server
 import socket,cv2, pickle,struct
 import pyshine as ps # pip install pyshine
 import imutils # pip install imutils
@@ -114,9 +132,9 @@ The server side code is update to save the client's video .mp4 with a name that 
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
-# In this video server is receiving video from clients and also record them with any names
-# Lets import the libraries
+## Welcome to PyShine
+## In this video server is receiving video from clients and also record them with any names
+## Lets import the libraries
 import socket, cv2, pickle, struct
 import imutils
 import threading

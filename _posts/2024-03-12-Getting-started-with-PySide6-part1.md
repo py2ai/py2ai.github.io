@@ -1,29 +1,30 @@
 ---
-layout: post
-title: Building Your First Simple GUI (Part 1)
-mathjax: true
+description: Welcome to the world of PySide6! PySide6 is a powerful Python module that allows you to create cross-platform graphical user interfaces (GUIs) with ease. Whe...
 featured-img: 26072022-python-logo
-description: Learning PySide6 for GUI development
-tags:
-  - Python
-  - PySide6
-  - GUI Development
-  - PySide6 Tutorial
-  - Application Development
-  - Programming
-  - Qt
 keywords:
-  - PySide6 tutorial
-  - Simple GUI PySide6
-  - PySide6 application
-  - Python GUI development
-  - PySide6 basics
-  - First PySide6 app
-  - PySide6 QPushButton
-  - PySide6 QMessageBox
-  - PySide6 window
-  - Introduction to PySide6
+- PySide6 tutorial
+- Simple GUI PySide6
+- PySide6 application
+- Python GUI development
+- PySide6 basics
+- First PySide6 app
+- PySide6 QPushButton
+- PySide6 QMessageBox
+- PySide6 window
+- Introduction to PySide6
+layout: post
+mathjax: true
+tags:
+- Python
+- PySide6
+- GUI Development
+- PySide6 Tutorial
+- Application Development
+- Programming
+- Qt
+title: Building Your First Simple GUI (Part 1)
 ---
+
 
 Welcome to the world of PySide6! PySide6 is a powerful Python module that allows you to create cross-platform graphical user interfaces (GUIs) with ease. Whether you're a beginner or an experienced developer, PySide6 provides a straightforward way to build interactive applications for desktop and mobile platforms.
 
@@ -35,11 +36,11 @@ Before we begin, make sure you have Python installed on your system. You can dow
 
 `pip install PySide6`
 
-# Setting Up Your Development Environment
+## Setting Up Your Development Environment
 
 Once Python and PySide6 are installed, you're ready to set up your development environment. You can use any text editor or integrated development environment (IDE) of your choice. Some popular options include Visual Studio Code, PyCharm, and Sublime Text.
 
-# Creating Your First PySide6 Application
+## Creating Your First PySide6 Application
 
 Let's dive right in and create a simple GUI application using PySide6. In this example, we'll create a window with a button that displays a message when clicked.
 
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     sys.exit(app.exec())
 ```
 
-# Understanding the Code
+## Understanding the Code
 
 Let's break down the code step by step:
 
@@ -84,7 +85,7 @@ Let's break down the code step by step:
 6. Finally, we create an instance of QApplication, create an instance of MainWindow, show it, and start the application event loop.
 
 
-# Running Your Application
+## Running Your Application
 
 To run the application, save the code to a file (e.g., simple_gui.py) and execute it using Python:
 

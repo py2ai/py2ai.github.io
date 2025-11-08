@@ -1,22 +1,41 @@
 ---
-layout: post
-title: How to make a simple webcam video recorder GUI in PyQt5
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: This tutorial is about using opencv to capture video of webcam in Python
 featured-img: webcamgui
-description:  This tutorial is about using opencv to capture video of webcam in Python
-tags: [PyQt5, GUI, Python, OpenCV, Video Recording, Webcam, PyQt5 Projects, Python GUI, Tutorial]
-keywords: [PyQt5 video recorder, Python GUI webcam, OpenCV PyQt5 tutorial, simple webcam GUI, PyQt5 video capture, Python webcam recording, Python projects]
+keywords:
+- PyQt5 video recorder
+- Python GUI webcam
+- OpenCV PyQt5 tutorial
+- simple webcam GUI
+- PyQt5 video capture
+- Python webcam recording
+- Python projects
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- GUI
+- Python
+- OpenCV
+- Video Recording
+- Webcam
+- PyQt5 Projects
+- Python GUI
+- Tutorial
+title: How to make a simple webcam video recorder GUI in PyQt5
 ---
+
+
 Hi friends! This GUI is dead simple because it will only capture the frames of video from the webcam to record it as mp4.
 Below is the code:
 
-### main.py
+# main.py
 {% include codeHeader.html %}
 ```python
 
-# Pyshine.com
-# Capture Video using WebCam and record as Mp4
+## Pyshine.com
+## Capture Video using WebCam and record as Mp4
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import os

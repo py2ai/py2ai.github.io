@@ -1,13 +1,19 @@
 ---
-layout: post
-title: Recursive function to grow TREE in Python
-mathjax: true
+description: '> A detailed, step-by-step tutorial explaining a Pygame program that draws a Fibonacci-based tree. This tutorial shows how the original recursive growth work...'
 featured-img: 26072022-python-logo
-description:  Fibonacci Tree in python
-keywords: ["recursion", "PyGame"]
-tags: ["fibonacci", "draw tree", "random tree"]
-
+keywords:
+- recursion
+- PyGame
+layout: post
+mathjax: true
+tags:
+- fibonacci
+- draw tree
+- random tree
+title: Recursive function to grow TREE in Python
 ---
+
+
 
 # Fibonacci Tree Growth (Multithreaded)
 
@@ -68,19 +74,19 @@ python fibonacci_tree_parallel.py
 ```python
 import pygame, sys, math, random
 
-# INITIAL SETUP 
+## INITIAL SETUP 
 pygame.init()
 
 WIN_WIDTH, WIN_HEIGHT = 1200, 600
 screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Fibonacci Tree Growth")
 
-# COLOR DEFINITIONS 
+## COLOR DEFINITIONS 
 SKY_COLOR   = (135, 206, 235)
 BROWN_COLOR = (139, 69, 19)
 GREEN_COLOR = (34, 139, 34)
 
-# TREE PARAMETERS 
+## TREE PARAMETERS 
 GROUND_HEIGHT   = 50
 TREE_DEPTH      = 10
 BRANCH_WIDTH    = 20
@@ -91,15 +97,15 @@ LENGTH_VARIANCE = 0.1
 BRANCH_STEP     = 3
 FPS             = 60
 
-# FONT 
+## FONT 
 font = pygame.font.SysFont(None, 28, bold=True)
 
-# GLOBALS 
+## GLOBALS 
 branches = []
 draw_step = 0
 started = False
 
-# FIBONACCI FUNCTION 
+## FIBONACCI FUNCTION 
 def fib(n):
     """Return the nth Fibonacci number."""
     a, b = 1, 1
@@ -107,7 +113,7 @@ def fib(n):
         a, b = b, a + b
     return a
 
-# TREE GENERATION 
+## TREE GENERATION 
 def grow(x, y, length, angle, depth, width):
     """
     Recursive Fibonacci-based branching function.
@@ -120,42 +126,42 @@ def grow(x, y, length, angle, depth, width):
     end_x = x + math.sin(rad) * length
     end_y = y - math.cos(rad) * length
 
-    # prevent branches from going below the ground
+    ## prevent branches from going below the ground
     if end_y > WIN_HEIGHT - GROUND_HEIGHT:
         end_y = WIN_HEIGHT - GROUND_HEIGHT
 
-    # add this branch
+    ## add this branch
     branches.append(((x, y), (end_x, end_y), width, depth))
 
-    # Fibonacci ratio scaling
+    ## Fibonacci ratio scaling
     f_ratio = fib(depth + 2) / fib(TREE_DEPTH + 2)
     spread = SPREAD_BASE + SPREAD_FACTOR * f_ratio
 
-    # number of child branches
+    ## number of child branches
     sub_branches = 2 + fib(depth) % 3
 
-    # nonlinear upward bias — keeps branches from pointing downward
+    ## nonlinear upward bias — keeps branches from pointing downward
     for _ in range(sub_branches):
         new_length = length * (LENGTH_DECAY + LENGTH_VARIANCE * f_ratio)
         
-        # bias the angle upwards: restrict below horizontal (no downward growth)
+        ## bias the angle upwards: restrict below horizontal (no downward growth)
         bias = random.uniform(-spread, spread)
         new_angle = angle + bias
 
-        # Clamp angles: ensure they stay above -90 (horizontal) and below 90
+        ## Clamp angles: ensure they stay above -90 (horizontal) and below 90
         new_angle = max(-70, min(70, new_angle))
 
         new_width = max(3, int(width * 0.75))
         grow(end_x, end_y, new_length, new_angle, depth - 1, new_width)
 
-# INITIAL TREE CREATION 
+## INITIAL TREE CREATION 
 INITIAL_LENGTH = (WIN_HEIGHT - 120) // (TREE_DEPTH * 0.8)
 grow(WIN_WIDTH // 2, WIN_HEIGHT - GROUND_HEIGHT, INITIAL_LENGTH * 2, 0, TREE_DEPTH, BRANCH_WIDTH)
 
-# CLOCK 
+## CLOCK 
 clock = pygame.time.Clock()
 
-# MAIN LOOP 
+## MAIN LOOP 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -286,18 +292,18 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import os
 
-# INITIAL SETUP
+## INITIAL SETUP
 pygame.init()
 WIN_WIDTH, WIN_HEIGHT = 1200, 600
 screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Fibonacci Tree Growth (Multithreaded)")
 
-# COLORS
+## COLORS
 SKY_COLOR   = (135, 206, 235)
 BROWN_COLOR = (139, 69, 19)
 GREEN_COLOR = (34, 139, 34)
 
-# TREE PARAMETERS
+## TREE PARAMETERS
 GROUND_HEIGHT   = 50
 TREE_DEPTH      = 10
 BRANCH_WIDTH    = 20
@@ -310,19 +316,19 @@ FPS             = 60
 
 font = pygame.font.SysFont(None, 28, bold=True)
 
-# GLOBALS
+## GLOBALS
 branches = []             # global branch list used by the renderer
 branches_lock = threading.Lock()  # protect writes to `branches`
 started = False
 
-# FIB
+## FIB
 def fib(n):
     a, b = 1, 1
     for _ in range(n - 1):
         a, b = b, a + b
     return a
 
-# Worker-grow produces a local list and returns it (no shared writes).
+## Worker-grow produces a local list and returns it (no shared writes).
 def grow_worker(x, y, length, angle, depth, width, tree_depth):
     local = []
     def _g(x, y, length, angle, depth, width):
@@ -350,13 +356,13 @@ def grow_worker(x, y, length, angle, depth, width, tree_depth):
     _g(x, y, length, angle, depth, width)
     return local
 
-# Multithreaded generation that submits the trunk's immediate children as tasks.
+## Multithreaded generation that submits the trunk's immediate children as tasks.
 def generate_tree_parallel(root_x, root_y, initial_length, root_depth, root_width):
-    # We'll compute the trunk synchronously, then spawn worker tasks for each top-level child subtree.
+    ## We'll compute the trunk synchronously, then spawn worker tasks for each top-level child subtree.
     global branches
     branches = []
 
-    # Add trunk (depth=root_depth)
+    ## Add trunk (depth=root_depth)
     rad = math.radians(0)
     trunk_end_x = root_x + math.sin(rad) * initial_length
     trunk_end_y = root_y - math.cos(rad) * initial_length
@@ -364,12 +370,12 @@ def generate_tree_parallel(root_x, root_y, initial_length, root_depth, root_widt
         trunk_end_y = WIN_HEIGHT - GROUND_HEIGHT
     branches.append(((root_x, root_y), (trunk_end_x, trunk_end_y), root_width, root_depth))
 
-    # Prepare tasks for child subtrees emerging from trunk_end
+    ## Prepare tasks for child subtrees emerging from trunk_end
     f_ratio = fib(root_depth + 2) / fib(TREE_DEPTH + 2)
     spread = SPREAD_BASE + SPREAD_FACTOR * f_ratio
     sub_branches = 2 + fib(root_depth) % 3
 
-    # Decide worker pool size
+    ## Decide worker pool size
     max_workers = min(32, (os.cpu_count() or 4))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
@@ -378,24 +384,24 @@ def generate_tree_parallel(root_x, root_y, initial_length, root_depth, root_widt
             bias = random.uniform(-spread, spread)
             new_angle = max(-70, min(70, bias))
             new_width = max(3, int(root_width * 0.75))
-            # Submit each subtree
+            ## Submit each subtree
             futures.append(executor.submit(grow_worker, trunk_end_x, trunk_end_y, new_length, new_angle, root_depth - 1, new_width, TREE_DEPTH))
 
-        # As futures complete, merge their local lists into the global branches list with minimal locking.
+        ## As futures complete, merge their local lists into the global branches list with minimal locking.
         for fut in as_completed(futures):
             local_branches = fut.result()
             with branches_lock:
                 branches.extend(local_branches)
 
-# INITIAL TREE CREATION (parallel)
+## INITIAL TREE CREATION (parallel)
 INITIAL_LENGTH = (WIN_HEIGHT - 120) // (TREE_DEPTH * 0.8)
-# generate using parallel generator
+## generate using parallel generator
 generate_tree_parallel(WIN_WIDTH // 2, WIN_HEIGHT - GROUND_HEIGHT, INITIAL_LENGTH * 2, TREE_DEPTH, BRANCH_WIDTH)
 
-# CLOCK
+## CLOCK
 clock = pygame.time.Clock()
 
-# MAIN LOOP
+## MAIN LOOP
 clock = pygame.time.Clock()
 while True:
     for event in pygame.event.get():
@@ -412,7 +418,7 @@ while True:
         msg = font.render("CLICK TO START", True, GREEN_COLOR)
         screen.blit(msg, (WIN_WIDTH // 2 - msg.get_width() // 2, WIN_HEIGHT // 2))
     else:
-        # animate growth
+        ## animate growth
         draw_step = min(len(branches), (pygame.time.get_ticks() // 10))
         for (start, end, width, depth) in branches[:draw_step]:
             if depth > 4:

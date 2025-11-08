@@ -1,13 +1,26 @@
 ---
-layout: post
-title: Socket programming to send and receive webcam video
-categories: [tutorial series]
-mathjax: true
-featured-img: server
+categories:
+- tutorial series
 description: This code will demonstrate the server client modules to transmit and receive video over wifi
-keywords: [Socket Programming, Webcam Video, Server-Client, Python, WiFi]
-tags: [Socket Programming, Webcam Video, Server-Client, Python, WiFi]
+featured-img: server
+keywords:
+- Socket Programming
+- Webcam Video
+- Server-Client
+- Python
+- WiFi
+layout: post
+mathjax: true
+tags:
+- Socket Programming
+- Webcam Video
+- Server-Client
+- Python
+- WiFi
+title: Socket programming to send and receive webcam video
 ---
+
+
 
 <br>
 <div align="center">
@@ -20,7 +33,7 @@ tags: [Socket Programming, Webcam Video, Server-Client, Python, WiFi]
 
 Depending on the operating system, you can easily find the IP address of your machine as follows:
 
-### MAC OS users
+# MAC OS users
 
 Go to the terminal window and run this command:
 
@@ -32,7 +45,7 @@ That will show your LAN IP address. Note that en0 is commonly used for ethernet 
 
 Depending on different OS settings:
 
-### Linux/Ubuntu OS users
+## Linux/Ubuntu OS users
 
 From the terminal window run this command:
 
@@ -55,18 +68,18 @@ The required IP address will show against IPv4 Address
 
 ### Block diagram explaining server/client Python modules
 
-![]({{ "assets/img/posts/serverclienttcp.png" | absolute_url }}). 
+!![serverclienttcp]({{ "assets/img/posts/serverclienttcp.png" | absolute_url }}). 
 
 
-# server.py
+## server.py
 ```python
-# Welcome to PyShine
+## Welcome to PyShine
 
-# This code is for the server 
-# Lets import the libraries
+## This code is for the server 
+## Lets import the libraries
 import socket, cv2, pickle,struct,imutils
 
-# Socket Create
+## Socket Create
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_name  = socket.gethostname()
 host_ip = socket.gethostbyname(host_name)
@@ -74,14 +87,14 @@ print('HOST IP:',host_ip)
 port = 9999
 socket_address = (host_ip,port)
 
-# Socket Bind
+## Socket Bind
 server_socket.bind(socket_address)
 
-# Socket Listen
+## Socket Listen
 server_socket.listen(5)
 print("LISTENING AT:",socket_address)
 
-# Socket Accept
+## Socket Accept
 while True:
 	client_socket,addr = server_socket.accept()
 	print('GOT CONNECTION FROM:',addr)
@@ -103,13 +116,13 @@ while True:
 ```
 After running the server.py, copy paste the `host_ip` of that to client.py, let's say if it is `192.168.1.20` then our client code would be:
 
-# client.py
+## client.py
 
 ```python
-# lets make the client code
+## lets make the client code
 import socket,cv2, pickle,struct
 
-# create socket
+## create socket
 client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.1.20' # paste your server ip address here
 port = 9999

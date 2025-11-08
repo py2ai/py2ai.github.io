@@ -1,13 +1,25 @@
 ---
-layout: post
-title: Faster and accurate object tracking in Python
-categories: [tutorial series]
-mathjax: true
+categories:
+- tutorial series
+description: This code will demonstrate opencv based object tracking using the CSRT
 featured-img: Slide1
-description: This code will demonstrate opencv based object tracking using the CSRT 
-keywords: [Object Tracking, CSRT, OpenCV, Python, Video Processing]
-tags: [Object Tracking, CSRT, OpenCV, Python, Video Processing]
+keywords:
+- Object Tracking
+- CSRT
+- OpenCV
+- Python
+- Video Processing
+layout: post
+mathjax: true
+tags:
+- Object Tracking
+- CSRT
+- OpenCV
+- Python
+- Video Processing
+title: Faster and accurate object tracking in Python
 ---
+
 <br>
 <div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/kFPDNYOz1EM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -16,17 +28,17 @@ tags: [Object Tracking, CSRT, OpenCV, Python, Video Processing]
 
 ```python
 # Welcome to PyShine
-# First we require cv2 versionn 3.4.5.20
-# Lets make sure we have the right version installed
-# Lets uninstall the previous 
-# UNINSTALL :
-# pip uninstall opencv-contrib-python
-# pip uninstall opencv-python
-# INSTALL
-# pip install opencv-contrib-python==3.4.5.20
-# pip install imutils
+## First we require cv2 versionn 3.4.5.20
+## Lets make sure we have the right version installed
+## Lets uninstall the previous 
+## UNINSTALL :
+## pip uninstall opencv-contrib-python
+## pip uninstall opencv-python
+## INSTALL
+## pip install opencv-contrib-python==3.4.5.20
+## pip install imutils
 
-# Lets start 
+## Lets start 
 import cv2, imutils
 tracker = cv2.TrackerCSRT_create()
 camera=True # Set it to True for webcam, else its video

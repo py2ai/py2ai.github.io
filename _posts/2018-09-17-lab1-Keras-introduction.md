@@ -1,15 +1,26 @@
 ---
-layout: post
-title: Lab1 Keras Basic Model
-categories: [Keras tutorial series]
-mathjax: true
+categories:
+- Keras tutorial series
+description: Today i am going to start a tutorial series about Keras library. Lets visit website of this Deep learning library https://keras.io. Keras is a high-level neu...
 featured-img: keras
-description: A quick tutorial Keras model
+keywords:
+- lab1
+- basic
+- development
+- code
+- programming
+- tutorial
+- keras
+- python
+layout: post
+mathjax: true
+title: Lab1 Keras Basic Model
 ---
+
 
 Today i am going to start a tutorial series about Keras library. Lets visit website of this Deep learning library https://keras.io. Keras is a high-level neural networks API. What is API? Its Application Program Interface. API is a set of routines, protocols, and tools for building software applications. It is written in Python and its open source. We can have a deeper look into different learning networks. It is built on top of different libraries such as TensorFlow, CNTK, or Theano.
 
-## What is a Tensor and its flow
+# What is a Tensor and its flow
 
 The term Tensor is used for an N dimensional array, where N can be any number and in Neural Networks we have layers as shown here:
 input -> first hidden layer-> second hidden layer->...output.
@@ -38,7 +49,7 @@ Open powershell and type : python basic.py. As a result you will find a mymodel.
 ```python
 plot_model(model, to_file='mymodel.png', show_shapes=True)
 ```
-![]({{ "assets/img/posts/basic_keras_model.png" | absolute_url }})
+!![basic keras model]({{ "assets/img/posts/basic_keras_model.png" | absolute_url }})
 
 Thats all for this lab 1. In the next lab 2 we will learn about more layers to a model. Thanks for reading. Code is [available](https://github.com/py2ai/Keras-Labs). I hope this will be helpful for the beginners. 
 

@@ -1,16 +1,28 @@
 ---
-layout: post
-title: Music Maker with Save/Load in Python
-mathjax: false
-featured-img: 26072022-python-logo
 description: Step-by-step beginner-friendly tutorial on building an interactive music maker with Pygame, including save/load functionality.
-keywords: ["Pygame", "Python", "music maker", "synth piano", "save load"]
-tags: ["pygame", "music", "interactive", "beginner", "python"]
+featured-img: 26072022-python-logo
+keywords:
+- Pygame
+- Python
+- music maker
+- synth piano
+- save load
+layout: post
+mathjax: false
+tags:
+- pygame
+- music
+- interactive
+- beginner
+- python
+title: Music Maker with Save/Load in Python
 ---
+
+
 
 # Interactive Music Maker in Python with Pygame
 
-### Beginner-Friendly Tutorial – Build a Synth Piano with Save/Load
+## Beginner-Friendly Tutorial – Build a Synth Piano with Save/Load
 
 This tutorial walks you through creating an **interactive music maker** using **Python and Pygame**. You'll learn how to build a **synthetic piano**, **draw a sequencer grid**, and **save/load your music patterns**. By the end, you'll have a working **step sequencer** for simple melodies.
 
@@ -103,7 +115,7 @@ def default_pattern():
 pattern = default_pattern()
 names = list(pattern.keys())
 
-# Layout
+## Layout
 margin_left, margin_top = 80, 150
 grid_width = W - margin_left - 40
 spacing = 3
@@ -180,7 +192,7 @@ for e in pygame.event.get():
                     data = f.read().strip()
                     pattern = json.loads(data) if data else {n:[0]*steps for n in names}
         else:
-            # Toggle grid cell
+            ## Toggle grid cell
             for r,name in enumerate(names):
                 y = margin_top + r*(cell_h+10)
                 for c in range(steps):
@@ -212,14 +224,14 @@ import pygame, sys, time, numpy as np, json, os
 pygame.init()
 pygame.mixer.init(frequency=44100)
 
-#  Settings 
+##  Settings 
 W, H = 480, 540
 S = pygame.display.set_mode((W, H))
 pygame.display.set_caption(" Music Maker(Save/Load)")
 font = pygame.font.SysFont(None, 26)
 clock = pygame.time.Clock()
 
-#  Synthetic piano 
+##  Synthetic piano 
 fs, duration = 44100, 1
 def make_note(freq):
     t = np.linspace(0, duration, int(fs*duration), False)
@@ -233,7 +245,7 @@ def make_note(freq):
 notes = {'C':261.63,'D':293.66,'E':329.63,'F':349.23,'G':392.00,'A':440.00}
 sounds = {n: make_note(f) for n,f in notes.items()}
 
-#  Default pattern (Twinkle Twinkle) 
+##  Default pattern (Twinkle Twinkle) 
 steps = 32
 def default_pattern():
     pat = {n:[0]*steps for n in notes}
@@ -249,23 +261,23 @@ def default_pattern():
 pattern = default_pattern()
 names = list(pattern.keys())
 
-#  Layout 
+##  Layout 
 margin_left, margin_top = 80, 150
 grid_width = W - margin_left - 40
 spacing = 3
 cell_w = (grid_width - spacing*(steps-1)) / steps
 cell_h = 50
 
-#  Buttons at Top 
+##  Buttons at Top 
 btn_w, btn_h = 180, 50
 save_btn = pygame.Rect(40, 60, btn_w, btn_h)
 load_btn = pygame.Rect(W - btn_w - 40, 60, btn_w, btn_h)
 
-#  Playback 
+##  Playback 
 step, bpm, playing = 0, 190, True
 beat_time, last = 60/bpm, time.time()
 
-#  Pygame-native file picker 
+##  Pygame-native file picker 
 def file_picker_overlay(for_save=False):
     files = [f for f in os.listdir('.') if f.endswith('.txt')]
     if for_save and "new_file.txt" not in files:  # allow saving to new file
@@ -298,17 +310,17 @@ def file_picker_overlay(for_save=False):
                         picker_open = False
     return selected
 
-#  Main loop 
+##  Main loop 
 while True:
     S.fill((25,25,25))
 
-    # Draw buttons
+    ## Draw buttons
     pygame.draw.rect(S, (70,130,180), save_btn, border_radius=10)
     pygame.draw.rect(S, (100,180,100), load_btn, border_radius=10)
     S.blit(font.render("SAVE", True, (255,255,255)), (save_btn.x+65, save_btn.y+15))
     S.blit(font.render("LOAD", True, (255,255,255)), (load_btn.x+65, load_btn.y+15))
 
-    # Draw grid
+    ## Draw grid
     for r,name in enumerate(names):
         y = margin_top + r*(cell_h+10)
         S.blit(font.render(name, True, (255,255,255)), (20, y+cell_h/3))
@@ -321,7 +333,7 @@ while True:
 
     pygame.display.flip()
 
-    #  Events 
+    ##  Events 
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             pygame.quit(); sys.exit()
@@ -350,7 +362,7 @@ while True:
                         print("Load error:", ex)
                         pattern = {n:[0]*steps for n in names}
             else:
-                # Toggle grid cell
+                ## Toggle grid cell
                 for r,name in enumerate(names):
                     y = margin_top + r*(cell_h+10)
                     for c in range(steps):
@@ -358,7 +370,7 @@ while True:
                         if pygame.Rect(x,y,cell_w,cell_h).collidepoint(mx,my):
                             pattern[name][c] ^= 1
 
-    #  Playback 
+    ##  Playback 
     if playing and time.time()-last >= beat_time:
         for name in names:
             if pattern[name][step]: sounds[name].play()

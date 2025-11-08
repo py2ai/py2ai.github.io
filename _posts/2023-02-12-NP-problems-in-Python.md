@@ -1,12 +1,16 @@
 ---
-layout: post
-title: What are NP problems
-mathjax: true
+description: Hello friends! Lets first talk about NP problems and then get to the coding part.
 featured-img: 26072022-python-logo
-description:  Can we solve NP problems?
-tags: [NP problems, computational theory, algorithms]
 keywords: NP problems, Traveling Salesman Problem, Knapsack Problem, SAT Problem
+layout: post
+mathjax: true
+tags:
+- NP problems
+- computational theory
+- algorithms
+title: What are NP problems
 ---
+
 
 Hello friends! Lets first talk about NP problems and then get to the coding part.
 
@@ -263,7 +267,7 @@ def knapsack(items, max_weight):
     
     return res, selected
 
-# example usage
+## example usage
 items = [(60, 10), (100, 20), (120, 30)]
 max_weight = 50
 print(knapsack(items, max_weight))

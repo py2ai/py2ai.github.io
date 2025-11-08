@@ -1,12 +1,23 @@
 ---
-layout: post
-title: Learn Python Tips and Tricks Part 03
-mathjax: true
+description: Hello friends! Installing any version of Python on any platform is easy. But this easy task becomes cumbersome when you need to work on cross-platforms, for ...
 featured-img: 26072022-python-logo
-description:  Setting up Conda environment for Python
-keywords: [Python, Conda, Miniconda, Virtual Environments, Cross-Platform Development]
-tags: [Python, Conda, Miniconda, Virtual Environments, Development Tips]
+keywords:
+- Python
+- Conda
+- Miniconda
+- Virtual Environments
+- Cross-Platform Development
+layout: post
+mathjax: true
+tags:
+- Python
+- Conda
+- Miniconda
+- Virtual Environments
+- Development Tips
+title: Learn Python Tips and Tricks Part 03
 ---
+
 
 Hello friends! Installing any version of Python on any platform is easy. But this easy task becomes cumbersome when you need to work on cross-platforms, for example, MacOs, Linux/Ubuntu/RedHat, Windows, etc. The situation gets even more worse when you have to work on multiple versions of Python. Now imagine a quick and easy way to work on virtual environments for any platform OS and any version of Python. Today we will walk through the installation steps and quote working tips about Miniconda.
 
@@ -43,7 +54,7 @@ At line:1 char:3
 The above problem can be resolved by opening up Power Shell as Administrator and typing this command `set-ExecutionPolicy RemoteSigned`
 It will ask to press `yes/no`. Simply press `y` and there you go. Close and re-open powershell as standalone or Terminal in Visual Studio Code, there will be no issue. 
 
-# Create virtual environment using conda with a specific Python version
+## Create virtual environment using conda with a specific Python version
 
 Open up the powershell or vscode based Terminal, you will see (base) default environment at the start.
 
@@ -53,20 +64,20 @@ To create a virtual environment (e.g., named py36) of your own choice with any s
 
 The above command will start creating a new virtual environent with `Python 3.6.5 version`, and the environment name will be `py36`. Of course you can give any name
 
-# Info about existing virtual environments
+## Info about existing virtual environments
 
 Following command will list the existing environments
 ```conda env list```
 output:
 ```py36   C:\Users\ps\miniconda3\envs\py36```
 
-# Activate a conda virtual environment 
+## Activate a conda virtual environment 
 
 Activating a conda environment is very simple. We can activate the `py36` env:
 
 ```conda activate py36```
 
-# Run python under a virtual environment
+## Run python under a virtual environment
 
 Under the `py36` environment, you can type `python` and hit enter.
 
@@ -77,7 +88,7 @@ Python 3.6.5 |Anaconda, Inc.| (default, Mar 29 2018, 13:32:41) [MSC v.1900 64 bi
 Type "help", "copyright", "credits" or "license" for more information.
 >>>
 ```
-# Install a Python Package using Conda
+## Install a Python Package using Conda
 
 You can either use `pip install package` under the activate virtual environment or simply use `conda install package`. Replace the `package` with the required one. For example to install `numpy` package, use `conda install numpy`.
 
@@ -157,7 +168,7 @@ Requirement already satisfied: numpy in c:\users\ps\miniconda3\envs\py36\lib\sit
 ```
 You can uninstall this package with `conda uninstall numpy`.
 
-# Deactivate a virtual environment
+## Deactivate a virtual environment
 
 To activate pass this command
 
@@ -172,7 +183,7 @@ PS C:\PyShine>
 ```
 Please note that the Python version and its relevant installed packages only belong to the virtual environment that is activated.
 
-# Remove a conda virtual environment
+## Remove a conda virtual environment
 
 You can always remove any existing conda environment, e.g., `py36` using the following command:
 

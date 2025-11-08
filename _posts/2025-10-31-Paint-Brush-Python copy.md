@@ -1,16 +1,27 @@
 ---
-layout: post
-title: Mini Paint (Smooth Circular Brush) in Python
-mathjax: false
-featured-img: 26072022-python-logo
 description: Build a simple interactive painting app with smooth circular brushes using Python and Pygame.
-keywords: ["Python", "Pygame", "drawing", "brush", "interactive"]
-tags: ["mini-paint", "pygame", "interactive-drawing", "python-tutorial"]
+featured-img: 26072022-python-logo
+keywords:
+- Python
+- Pygame
+- drawing
+- brush
+- interactive
+layout: post
+mathjax: false
+tags:
+- mini-paint
+- pygame
+- interactive-drawing
+- python-tutorial
+title: Mini Paint (Smooth Circular Brush) in Python
 ---
+
+
 
 # 🖌️ Mini Paint Tutorial (Smooth Circular Brush)
 
-### Educational Python Project – Create an Interactive Painting App
+## Educational Python Project – Create an Interactive Painting App
 
 This tutorial walks through building a **Mini Paint application** using **Python and Pygame**. The app allows users to **draw with smooth circular brushes**, choose from multiple colors, and select different brush sizes.
 
@@ -46,7 +57,7 @@ import math
 
 pygame.init()
 
-# Screen setup
+## Screen setup
 W, H = 400, 900
 S = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Mini Paint - Smooth Circles")
@@ -81,12 +92,12 @@ toolbar_height = 120
 color_buttons = []
 size_buttons = []
 
-# Color buttons
+## Color buttons
 for i, c in enumerate(colors):
     rect = pygame.Rect(10 + i * 55, 10, 40, 40)
     color_buttons.append((rect, c))
 
-# Size buttons
+## Size buttons
 for i, size in enumerate(brush_sizes):
     x = 40 + i * 90
     y = 75
@@ -127,15 +138,15 @@ while True:
 
         if e.type == pygame.MOUSEBUTTONDOWN:
             mx, my = e.pos
-            # Select color
+            ## Select color
             for rect, c in color_buttons:
                 if rect.collidepoint(mx, my):
                     current_color = c
-            # Select brush size
+            ## Select brush size
             for x, y, s in size_buttons:
                 if (mx - x)**2 + (my - y)**2 <= (s + 4)**2:
                     current_size = s
-            # Start drawing
+            ## Start drawing
             if my > toolbar_height:
                 drawing = True
                 last_pos = e.pos
@@ -144,23 +155,23 @@ while True:
             drawing = False
             last_pos = None
 
-    # Drawing
+    ## Drawing
     if drawing:
         mx, my = pygame.mouse.get_pos()
         if my > toolbar_height and last_pos:
             draw_smooth_circle_line(S, current_color, last_pos, (mx, my), current_size)
         last_pos = (mx, my)
 
-    # Toolbar background
+    ## Toolbar background
     pygame.draw.rect(S, (40, 40, 40), (0, 0, W, toolbar_height))
 
-    # Draw color buttons
+    ## Draw color buttons
     for rect, c in color_buttons:
         pygame.draw.rect(S, c, rect)
         if c == current_color:
             pygame.draw.rect(S, (255, 255, 255), rect, 3)
 
-    # Draw brush size selectors
+    ## Draw brush size selectors
     for x, y, s in size_buttons:
         pygame.draw.circle(S, (200, 200, 200), (x, y), s, 2)
         if s == current_size:
@@ -178,12 +189,12 @@ while True:
 import pygame, sys, math
 pygame.init()
 
-# Screen setup 
+## Screen setup 
 W, H = 400, 900
 S = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Mini Paint - Smooth Circles")
 
-# Colors
+## Colors
 colors = [
     (255, 0, 0),     # Red
     (255, 165, 0),   # Orange
@@ -197,17 +208,17 @@ brush_sizes = [3, 6, 12, 24]
 current_color = colors[0]
 current_size = brush_sizes[1]
 
-# Toolbar setup 
+## Toolbar setup 
 toolbar_height = 120
 color_buttons = []
 size_buttons = []
 
-# Color button positions
+## Color button positions
 for i, c in enumerate(colors):
     rect = pygame.Rect(10 + i * 55, 10, 40, 40)
     color_buttons.append((rect, c))
 
-# Size buttons (circles)
+## Size buttons (circles)
 for i, size in enumerate(brush_sizes):
     x = 40 + i * 90
     y = 75
@@ -229,24 +240,24 @@ def draw_smooth_circle_line(surface, color, start, end, radius):
         y = int(y1 + dy * i / distance)
         pygame.draw.circle(surface, color, (x, y), radius)
 
-# Main Loop
+## Main Loop
 while True:
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             pygame.quit(); sys.exit()
 
-        # Mouse down
+        ## Mouse down
         if e.type == pygame.MOUSEBUTTONDOWN:
             mx, my = e.pos
-            # Select color
+            ## Select color
             for rect, c in color_buttons:
                 if rect.collidepoint(mx, my):
                     current_color = c
-            # Select brush size
+            ## Select brush size
             for x, y, s in size_buttons:
                 if (mx - x)**2 + (my - y)**2 <= (s + 4)**2:
                     current_size = s
-            # Start drawing
+            ## Start drawing
             if my > toolbar_height:
                 drawing = True
                 last_pos = e.pos
@@ -255,23 +266,23 @@ while True:
             drawing = False
             last_pos = None
 
-    # Drawing with smooth circular brush 
+    ## Drawing with smooth circular brush 
     if drawing:
         mx, my = pygame.mouse.get_pos()
         if my > toolbar_height and last_pos:
             draw_smooth_circle_line(S, current_color, last_pos, (mx, my), current_size)
         last_pos = (mx, my)
 
-    # Toolbar background 
+    ## Toolbar background 
     pygame.draw.rect(S, (40, 40, 40), (0, 0, W, toolbar_height))
 
-    # Draw color buttons
+    ## Draw color buttons
     for rect, c in color_buttons:
         pygame.draw.rect(S, c, rect)
         if c == current_color:
             pygame.draw.rect(S, (255, 255, 255), rect, 3)
 
-    # Draw brush size selectors
+    ## Draw brush size selectors
     for x, y, s in size_buttons:
         pygame.draw.circle(S, (200, 200, 200), (x, y), s, 2)
         if s == current_size:

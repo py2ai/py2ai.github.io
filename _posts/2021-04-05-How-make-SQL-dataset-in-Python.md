@@ -1,13 +1,26 @@
 ---
-layout: post
-title: Basics about SQL database in Python
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: This tutorial is about using sqlite3 to create, insert data and update SQL table
 featured-img: sqlite3
-description:  This tutorial is about using sqlite3 to create, insert data and update SQL table
-tags: [Python, SQLite, SQL, Database, Tutorial]
-keywords: [SQLite, Python SQL, Database Tutorial, sqlite3, SQL Basics]
+keywords:
+- SQLite
+- Python SQL
+- Database Tutorial
+- sqlite3
+- SQL Basics
+layout: post
+mathjax: true
+tags:
+- Python
+- SQLite
+- SQL
+- Database
+- Tutorial
+title: Basics about SQL database in Python
 ---
+
+
 
 Hi friends! SQLite is basically a C library which gives us a lightweight disk-based database. It does not require a separate server process. On the other hand it allows us to access the database using a nonstandard variant of the SQL query 
 language. We can use SQLite in various applications for internal storage. Prototyping an application using SQLite is possible so that we can port the code to a
@@ -18,7 +31,7 @@ create a connection object which will represent the database and the all data wi
 try to create a ```test.db``` database for a company. It will then insert the data into the table. After that it will print the table and then we can add more data
 to update it. Finally we will print the whole database. 
 
-### sql.py
+# sql.py
 {% include codeHeader.html %}
 ```python
 import sqlite3
@@ -65,7 +78,7 @@ for row in cursor:
    print ("SCORE = ", row[4], "\n")
 print("Records created successfully")
 conn.close()
-# visit pyshine.com for more detail
+## visit pyshine.com for more detail
 """ UPDATE TABLE """
 
 conn = sqlite3.connect('test.db')

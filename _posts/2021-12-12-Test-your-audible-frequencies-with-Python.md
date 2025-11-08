@@ -1,29 +1,32 @@
 ---
-layout: post
-title: Test your audible frequency range in Python
-categories: [tutorial]
-featured-img: 2021-12-24-20000Hz
-mathjax: true
+categories:
+- tutorial
 description: A quick tutorial to generate audio tones of various frequencies and plot FFT
-tags:
-  - Python
-  - Pygame
-  - FFT
-  - Audio Processing
-  - Frequency Range
-  - Sound Generation
-  - Signal Processing
-  - Tutorial
+featured-img: 2021-12-24-20000Hz
 keywords:
-  - Python audio frequency
-  - Generate audio tones Python
-  - Pygame sound generation
-  - FFT plot in Python
-  - Frequency range test Python
-  - Signal processing tutorial
-  - Audio tone generation
-  - FFT audio visualization
+- Python audio frequency
+- Generate audio tones Python
+- Pygame sound generation
+- FFT plot in Python
+- Frequency range test Python
+- Signal processing tutorial
+- Audio tone generation
+- FFT audio visualization
+layout: post
+mathjax: true
+tags:
+- Python
+- Pygame
+- FFT
+- Audio Processing
+- Frequency Range
+- Sound Generation
+- Signal Processing
+- Tutorial
+title: Test your audible frequency range in Python
 ---
+
+
 
 Hi friends, this tutorial is about generating audio tones of various frequencies and saving the FFT plots for each frequency. We will use `pygame` library to generate our
 sound data and then we will use `wave` module to dump the data to .wav files. In PyGame, we have a very useful module named `pygame.sndarray` for accessing sound sample data functions 
@@ -41,7 +44,7 @@ We can plot the FFT of generated array using `fft` function from `from scipy.fft
 The use of f-string will help us to dynamically generate name (string) as `plt.savefig(f'tone_{freq}_Hz.png')`. Once the png image is saved, we will proceed to use `pygame.sndarray.make_sound(arr2)` and get
 the sound object and give a delay of 300ms (which will pause for a given number of milliseconds). The `pygame.time.delay(300)` function will use the processor (rather than sleeping) in order to make the delay
 more accurate than `pygame.time.wait()`. The final portion of our code is to save the sound raw data to a .wav file for each frequency.
-### main.py
+# main.py
 {% include codeHeader.html %}
 ```python
 import numpy
@@ -53,7 +56,7 @@ sampleRate = 44100
 pygame.mixer.init(44100,-16,2,512)
 duration_sec = 1
 frequency_list=[x*100 for x in range(10)]+[x*1000 for x in range(1,21,1)]
-# for details visis: www.pyshine.com
+## for details visis: www.pyshine.com
 for freq in frequency_list:
 	
     arr = numpy.array([4096 * numpy.sin(2.0 * numpy.pi * freq * x / sampleRate) for x in range(0, duration_sec*sampleRate)]).astype(numpy.int16)

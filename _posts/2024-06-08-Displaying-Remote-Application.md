@@ -1,13 +1,28 @@
 ---
-layout: post
-title: Displaying Remote Application Windows Locally Using SSH and X11 Forwarding
-mathjax: true
+description: In this tutorial, we'll walk you through the steps to display graphical applications running on a remote server on your local machine. This is especially use...
 featured-img: 26072022-python-logo
-description:  Display remote Matplotlib window in localhost
-keywords: ["X11 forwarding", "SSH", "XQuartz", "remote GUI applications", "Matplotlib", "Ubuntu", "macOS"]
-tags: ["X11", "SSH", "XQuartz", "remote applications", "GUI", "Matplotlib", "Ubuntu", "macOS"]
-
+keywords:
+- X11 forwarding
+- SSH
+- XQuartz
+- remote GUI applications
+- Matplotlib
+- Ubuntu
+- macOS
+layout: post
+mathjax: true
+tags:
+- X11
+- SSH
+- XQuartz
+- remote applications
+- GUI
+- Matplotlib
+- Ubuntu
+- macOS
+title: Displaying Remote Application Windows Locally Using SSH...
 ---
+
 
 In this tutorial, we'll walk you through the steps to display graphical applications running on a remote server on your local machine. This is especially useful for visualizing plots or running GUI-based applications from a remote server.
 
@@ -33,7 +48,7 @@ Open the downloaded .dmg file and follow the installation instructions.
 Open XQuartz from the Applications folder.
 
 
-# Step 2: Configure SSH for X11 Forwarding
+## Step 2: Configure SSH for X11 Forwarding
 ## On the Remote Server
 Edit the SSH Configuration File:
 
@@ -64,7 +79,7 @@ sudo systemctl restart ssh
 
 ```
 
-# Step 3: SSH with X11 Forwarding from macOS
+## Step 3: SSH with X11 Forwarding from macOS
 Set DISPLAY Variable on macOS:
 
 In a terminal on your Mac, set the DISPLAY variable:
@@ -84,7 +99,7 @@ ssh -Y user@remote_server_ip
 
 Replace user with your username on the remote server and remote_server_ip with the IP address of your remote server.
 
-# Step 4: Test X11 Forwarding
+## Step 4: Test X11 Forwarding
 ## Run a GUI Application:
 After logging into the remote server, try running an X11 application, such as `xclock`:
 ```
@@ -93,7 +108,7 @@ xclock
 
 If everything is configured correctly, the xclock window should appear on your local machine.
 
-# Troubleshooting
+## Troubleshooting
 If you encounter the "Can't open display" error or other issues, try the following steps:
 
 ## Ensure XQuartz is Allowing Connections:
@@ -121,7 +136,7 @@ plt.show()
 
 Sometimes, simply restarting XQuartz can resolve connection issues.
 
-# Conclusion
+## Conclusion
 By following these steps, you can run graphical applications on a remote server and display them on your local machine using X11 forwarding. This setup is particularly useful for remote development, running graphical applications, and visualizing data plots from a remote server. Thanks
 
 

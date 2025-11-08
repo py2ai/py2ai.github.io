@@ -1,12 +1,20 @@
 ---
-layout: post
-title: How to sort a list using Quicksort algorithms
-mathjax: true
+description: Hello friends! There are several variations of the quicksort algorithm, each with its own approach to choosing the pivot element, partitioning the data, and ...
 featured-img: 26072022-python-logo
-description:  Different functions to sort numbers
-tags: [algorithms, quicksort, sorting, python]
-keywords: [quicksort, sorting algorithms, Python]
+keywords:
+- quicksort
+- sorting algorithms
+- Python
+layout: post
+mathjax: true
+tags:
+- algorithms
+- quicksort
+- sorting
+- python
+title: How to sort a list using Quicksort algorithms
 ---
+
 
 Hello friends! There are several variations of the quicksort algorithm, each with its own approach to choosing the pivot element, partitioning the data, and optimizing performance. Some of the most common quicksort schemes include:
 
@@ -45,7 +53,7 @@ Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 The quick_sort function takes a list arr as input and returns the sorted list. The function uses the first element of the list as the pivot and splits the rest of the list into two sublists: less and greater. The less list contains all elements that are less than or equal to the pivot, and the greater list contains all elements that are greater than the pivot. The function then recursively calls itself on each of these sublists until the base case is reached, when the list has only one element. The base case returns the input list as it is already sorted. The sorted sublists are then combined and returned as the result of the function.
 
 
-#  Hoare Partition Scheme
+##  Hoare Partition Scheme
 The Hoare Partition Scheme is a popular algorithm used for quick sort. It works by selecting a pivot element, and then partitioning the elements into two groups such that all elements less than the pivot are in one group and all elements greater than the pivot are in another. Here's the code to implement Hoare Partition Scheme in Python:
 ```python
 def hoare_partition(arr, low, high):
@@ -79,7 +87,7 @@ output:
 Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 ```
 
-# Lomuto Partition Scheme
+## Lomuto Partition Scheme
 This implementation uses the Lomuto partition scheme, which is a common partition scheme used in the QuickSort algorithm. 
 The quick_sort function is the main function that implements the QuickSort algorithm, while the partition function is used to partition the array around the pivot element. 
 The pivot element is the last element in the array, in this implementation.
@@ -91,7 +99,7 @@ def quick_sort(array, low, high):
         quick_sort(array, low, pivot-1)
         quick_sort(array, pivot+1, high)
 
-# Lomuto partition scheme
+## Lomuto partition scheme
 def partition(array, low, high):
     pivot = array[high]
     i = low - 1
@@ -114,7 +122,7 @@ output:
 Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 ```
 
-# Tail Recursive Quicksort
+## Tail Recursive Quicksort
 Tail Recursion is a technique where the last statement in a function is a recursive call, allowing the function to return immediately, without having to keep the current function's state in memory. This can be particularly useful for sorting algorithms, such as QuickSort, which can have a large number of recursive calls. Here's a python implementation of Tail Recursive QuickSort:
 
 ```python
@@ -147,7 +155,7 @@ In this implementation, the tail_recursive_quicksort function uses a while loop 
 
 The tail_recursive_quicksort function sorts the array arr between indices low and high. To sort the entire array, you would call tail_recursive_quicksort(arr, 0, len(arr) - 1).
 
-# Randomized Quicksort
+## Randomized Quicksort
 Here's an implementation of randomized quicksort in Python:
 
 ```python
@@ -180,7 +188,7 @@ output:
 Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 ```
 
-# Runtime comparison
+## Runtime comparison
 
 * Classic Quicksort:
 
@@ -203,7 +211,7 @@ Sorted numbers:  [-8, 1, 2, 3, 5, 6, 70, 114]
 `0.03s user 0.01s system 64% cpu 0.060 total`
 
 
-# Conclusion
+## Conclusion
 
 There is no one "best" quicksort algorithm in terms of runtime, as the performance of quicksort can depend on various factors such as the size and distribution of the input, the choice of pivot element, and the implementation details. However, some common strategies can be used to improve the average-case runtime of quicksort. One approach to optimize quicksort is to use a pivot selection strategy that tends to result in more balanced partitions, such as choosing the median of the input as the pivot. This can help to reduce the likelihood of ending up with unbalanced partitions, which can lead to worse-case performance.
 

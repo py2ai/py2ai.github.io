@@ -1,13 +1,32 @@
 ---
-layout: post
-title: How to open and show the SQL database file in a PyQt5 GUI
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: This tutorial is about using sqlite3 to open, and show the data inside db file
 featured-img: ssqlgui
-description:  This tutorial is about using sqlite3 to open, and show the data inside db file
-tags: [PyQt5, GUI, Python, SQLite, SQL Database, Database Viewer, PyQt5 Projects, Python GUI, Tutorial]
-keywords: [PyQt5 SQLite viewer, Python SQL database GUI, SQLite PyQt5 tutorial, open database file PyQt5, Python database viewer, Python projects]
+keywords:
+- PyQt5 SQLite viewer
+- Python SQL database GUI
+- SQLite PyQt5 tutorial
+- open database file PyQt5
+- Python database viewer
+- Python projects
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- GUI
+- Python
+- SQLite
+- SQL Database
+- Database Viewer
+- PyQt5 Projects
+- Python GUI
+- Tutorial
+title: How to open and show the SQL database file in a PyQt5 GUI
 ---
+
+
+
 
 Hi friends! Hope you are doing great. Today's tutorial is simple but interesting because we will see how to use PyQt5 based GUI to display the data. In a previous tutorial
 about the basics of SQLite3 we have learnt how to generate the ```.db``` database file in Python. We can use the same file here to open up and populate the table of
@@ -17,16 +36,16 @@ The GUI will have two buttons ```LOAD``` and ```SHOW```, the first one will be u
 on the second button to visualize all the data inside this database file. Let's have a look at the overall code as shown below
 
 
-### main.py
+# main.py
 {% include codeHeader.html %}
 ```python
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
+## # Form implementation generated from reading ui file 'main.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -146,7 +165,7 @@ class Ui_MainWindow(object):
         self.conn.close()
         
 
-# visit www.pyshine.com for more details
+## # visit www.pyshine.com for more details
 class Worker(QtCore.QRunnable):  
 
     def __init__(self, fnc, *args, **kwargs):
@@ -175,7 +194,7 @@ if __name__ == "__main__":
 
 ```
 
-### Details of above code
+## # Details of above code
 
 We will have two functions in the above code connected to the PUSH buttons
 

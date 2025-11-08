@@ -1,12 +1,21 @@
 ---
-layout: post
-title: How to read and write in xlsx file using python
-categories: [Python tutorial series]
-mathjax: true
-featured-img: xls
+categories:
+- Python tutorial series
 description: A quick tutorial on Microsoft Excel .xlsx file operations in python
+featured-img: xls
+keywords:
+- file
+- read
+- write
+- development
+- code
+- programming
+- xlsx
+- using
+layout: post
+mathjax: true
+title: How to read and write in xlsx file using python
 ---
-
 
 Welcome to Pyshine  
 I wish and hope that you guyz are fine and enjoying good health
@@ -56,9 +65,7 @@ So lets make it
 ```python
 def getDataForKeyWord(keyword, keyword_column,target_column):
 	INFO = df.iloc[:,keyword_column:1+keyword_column].values
-	# Here the : means all rows and , keyword_column is the index number of column
-	
-	# Lets make the dictionary and list to output
+
 	sumDictOf = {}
 	nameList = []
 	for i in range (len(INFO)):
@@ -72,16 +79,13 @@ def getDataForKeyWord(keyword, keyword_column,target_column):
 				if (math.isnan(df.iloc[i,target_column:1+target_column].values[0])):
 					sumDictOf[(text[0:index+L],i)] = 0
 					nameList.append(text[0:index+L])
-					# In real life .xlsx data we may come across NaN values
-					# so this if was to handle that instant
-					# On the other hand if value is a number then
+
 				else:
 					sumDictOf[(text[0:index+L],i)] = df.iloc[i,target_column:1+target_column].values[0]
 					nameList.append(text[0:index+L])
 		except:
 			pass
 
-  # Alright so lets output the values
 	return sumDictOf,nameList
 
 sumDictOf,nameList = getDataForKeyWord('Fri',1,3)
@@ -104,7 +108,6 @@ Good enough next we make a new .xlsx file to put two columns
 wb = xw.Book()
 xw.Range('A1').value = np.array(nameList).reshape(len(nameList),1) # first col
 xw.Range('B1').value = np.array(list(sumDictOf.values())).reshape(len(list(sumDictOf.values())),1) # Second col
-# And lets save it
 wb.save(r'output.xlsx')
 ``` 
 Lets see , run it, close the .xlsx 

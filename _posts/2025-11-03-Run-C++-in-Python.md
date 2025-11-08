@@ -1,20 +1,32 @@
 ---
-layout: post
-title: Run C++ Code from Python – Step-by-Step Guide
-mathjax: false
-featured-img: 26072022-python-logo
 description: Learn how to compile and execute C++ code directly from Python using subprocess and tempfile modules.
-keywords: ["Python", "C++", "subprocess", "integration", "tutorial"]
-tags: ["python", "cpp", "automation", "interoperability", "tutorial"]
+featured-img: 26072022-python-logo
+keywords:
+- Python
+- C++
+- subprocess
+- integration
+- tutorial
+layout: post
+mathjax: false
+tags:
+- python
+- cpp
+- automation
+- interoperability
+- tutorial
+title: Run C++ Code from Python – Step-by-Step Guide
 ---
+
+
 
 # Run C++ Code from Python – Step-by-Step Guide
 
-### Beginner-Friendly Tutorial – Learn How Python Can Compile and Execute C++ Code
+## # Beginner-Friendly Tutorial – Learn How Python Can Compile and Execute C++ Code
 
 Python is an incredibly versatile language, but sometimes you might need the speed and performance of C++. This tutorial explains how to **run C++ code directly from Python**, making it easy to integrate both languages. You’ll learn how to write, compile, and execute a temporary C++ program from a Python script using the **`subprocess`** and **`tempfile`** modules. This is a great way to understand cross-language execution and automation using Python!
 
-## Table of Contents
+## # Table of Contents
 - [Overview](#overview)
 - [Why Run C++ from Python?](#why-run-c-from-python)
 - [Step 1: Writing C++ Code in Python](#step-1-writing-c-code-in-python)
@@ -26,7 +38,7 @@ Python is an incredibly versatile language, but sometimes you might need the spe
 - [Key Learnings](#key-learnings)
 - [Further Experiments](#further-experiments)
 
-## Overview
+## # Overview
 
 This project shows how Python can act as a **controller for compiling and executing C++ code**. The program:
 
@@ -35,13 +47,13 @@ This project shows how Python can act as a **controller for compiling and execut
 3. Executes the compiled program and displays the C++ output inside Python.
 4. Cleans up all temporary files automatically.
 
-## Why Run C++ from Python?
+## # Why Run C++ from Python?
 
 - Combine **Python's flexibility** with **C++'s performance**.
 - Automate **testing of C++ code** or **generate code dynamically**.
 - Build hybrid systems where Python handles logic and C++ handles computation-heavy tasks.
 
-## Step 1: Writing C++ Code in Python
+## # Step 1: Writing C++ Code in Python
 
 The script starts with a simple Python print, followed by defining C++ code as a multi-line string.
 
@@ -53,7 +65,7 @@ import os          # To handle file operations
 print("Hello World from Python!")  # Simple Python print
 
 cpp_code = """
-#include <iostream>
+## # include <iostream>
 using namespace std;
 
 int main() {
@@ -68,11 +80,11 @@ Here, the **C++ code is stored as a string** that will later be written to a tem
 
 ---
 
-## Setting Up `g++` on Your System
+## # Setting Up `g++` on Your System
 
 You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps below depending on your OS.
 
-### Windows
+## # Windows
 1. Install **MinGW-w64** (Minimalist GNU for Windows):
    - Visit: [https://winlibs.com/](https://winlibs.com/) or [https://sourceforge.net/projects/mingw-w64/](https://sourceforge.net/projects/mingw-w64/)
    - Download and install it.
@@ -83,7 +95,7 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```
    If it prints version info, you’re ready to go!
 
-### macOS
+## # macOS
 1. Install **Xcode Command Line Tools** by running:
    ```bash
    xcode-select --install
@@ -94,7 +106,7 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```
    You should see Apple’s `clang` compiler, which works for this tutorial.
 
-### Linux (Ubuntu/Debian)
+## # Linux (Ubuntu/Debian)
 1. Open Terminal and install `g++`:
    ```bash
    sudo apt update
@@ -107,7 +119,7 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
 ---
 
 
-## Step 2: Compiling C++ Code
+## # Step 2: Compiling C++ Code
 
 We create a temporary `.cpp` file and compile it using the **g++ compiler**.
 
@@ -129,7 +141,7 @@ compile_proc = subprocess.run(
 - **`subprocess.run()`** executes the g++ compiler to compile the file into an executable.
 - **`capture_output=True`** captures any compilation messages.
 
-## Step 3: Executing the Compiled Program
+## # Step 3: Executing the Compiled Program
 
 After successful compilation, Python runs the compiled C++ binary.
 
@@ -145,7 +157,7 @@ else:
 
 If compilation fails, Python displays the compiler error messages. If it succeeds, it prints the **C++ program output**.
 
-### Example Output:
+## # Example Output:
 
 ```
 Hello World from Python!
@@ -153,7 +165,7 @@ Output from C++:
 Hello World from C++!
 ```
 
-## Step 4: Cleaning Up Temporary Files
+## # Step 4: Cleaning Up Temporary Files
 
 Finally, we remove temporary files created during compilation.
 
@@ -165,7 +177,7 @@ if os.path.exists(exe_file):
 
 This ensures no leftover files clutter your system.
 
-## Complete Code
+## # Complete Code
 
 ```python
 import subprocess
@@ -175,7 +187,7 @@ import os
 print("Hello World from Python!")
 
 cpp_code = """
-#include <iostream>
+## # include <iostream>
 using namespace std;
 
 int main() {
@@ -205,21 +217,21 @@ if os.path.exists(exe_file):
     os.remove(exe_file)
 ```
 
-## How It Works
+## # How It Works
 
 1. **Python writes C++ code** to a temporary file.
 2. **g++ compiles** the code into an executable.
 3. **Python runs the executable** and prints its output.
 4. **Cleanup** removes temporary files for a tidy finish.
 
-## Key Learnings
+## # Key Learnings
 
 - Use **`subprocess.run()`** to execute system commands from Python.
 - Create **temporary files** using `tempfile` safely.
 - Capture **compiler output and program results**.
 - Integrate Python and C++ seamlessly for automation or hybrid projects.
 
-## Further Experiments
+## # Further Experiments
 
 - Modify the C++ code dynamically (e.g., generate code from user input).
 - Run multiple C++ snippets from one Python script.

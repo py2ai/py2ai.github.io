@@ -1,11 +1,22 @@
 ---
-layout: post
-title: Free Audio Video Screen Recorder for Windows 10
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: For installation to windows 10, please download these three parts in a folder and then extract (using winRAR) the PyShine Recorder setup.zip file. An exe wil...
 featured-img: free_recorder
-description: Installing a free Audio Video Screen Recorder
+keywords:
+- video
+- audio
+- free
+- development
+- recorder
+- programming
+- code
+- windows
+layout: post
+mathjax: true
+title: Free Audio Video Screen Recorder for Windows 10
 ---
+
 For installation to windows 10, please download these three parts in a folder and then extract (using winRAR) the PyShine Recorder setup.zip file. An exe will be generated, and you can simply double click and install the recorder by following the installation guide.
 
 1. [PyShine Recorder setup.zip]

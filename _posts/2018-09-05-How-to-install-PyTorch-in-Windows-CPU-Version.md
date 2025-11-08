@@ -1,10 +1,21 @@
 ---
-layout: post
-title: Installing Pytorch in Windows (CPU version)
-categories: [tutorial]
-mathjax: true
+categories:
+- tutorial
 description: A fastest way to install PyTorch in Windows without Conda
+keywords:
+- installing
+- pytorch
+- development
+- code
+- programming
+- cpu
+- windows
+- tutorial
+layout: post
+mathjax: true
+title: Installing Pytorch in Windows (CPU version)
 ---
+
 
 Hello there, today i am going to show you an easy way to install PyTorch in Windows 10 or Windows 7. Typical methods available for its installation are based on Conda. However, there also exists an easy way to install PyTorch (CPU support only). It is assumed that you have installed Python 3.6 in windows 7 or 10. If not then please google for the python 3.6 installation and then 
 follow these setps:

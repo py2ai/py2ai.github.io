@@ -1,17 +1,29 @@
 ---
-layout: post
-title: How to parse XML file and save the data as CSV
-categories: [tutorial]
-featured-img: 2021-12-24-xml-files
-mathjax: true
+categories:
+- tutorial
 description: A quick tutorial to parse XML files using XML Element Tree
-tags: [Python, XML parsing, CSV conversion, ElementTree, tutorial]
-keywords: [Python XML to CSV, XML file parsing, convert XML to CSV, Python ElementTree tutorial, CSV from XML data]
+featured-img: 2021-12-24-xml-files
+keywords:
+- Python XML to CSV
+- XML file parsing
+- convert XML to CSV
+- Python ElementTree tutorial
+- CSV from XML data
+layout: post
+mathjax: true
+tags:
+- Python
+- XML parsing
+- CSV conversion
+- ElementTree
+- tutorial
+title: How to parse XML file and save the data as CSV
 ---
+
 
 Hi there, let's say we have an XML file like this:
 
-### songs.xml
+# songs.xml
 {% include codeHeader.html %}
 ```xml
 <?xml version="1.0"?>
@@ -38,7 +50,7 @@ Hi there, let's say we have an XML file like this:
 
 So all we need to provide the name of the xml file in the Python script below:
 
-### main.py
+## main.py
 {% include codeHeader.html %}
 ```python
 import pandas as pd

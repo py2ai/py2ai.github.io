@@ -1,17 +1,29 @@
 ---
-layout: post
-title: Make a Tree with Blossoms in Python
-mathjax: false
-featured-img: 26072022-python-logo
 description: Python Turtle Graphics Tutorial to quickly draw a Tree
-keywords: ["Python", "Turtle", "Fractal Tree", "Recursion", "Graphics"]
-tags: ["python", "turtle", "recursion", "graphics", "fractal"]
+featured-img: 26072022-python-logo
+keywords:
+- Python
+- Turtle
+- Fractal Tree
+- Recursion
+- Graphics
+layout: post
+mathjax: false
+tags:
+- python
+- turtle
+- recursion
+- graphics
+- fractal
+title: Make a Tree with Blossoms in Python
 ---
 
 
+
+
 ---
 
-## Table of Contents
+# Table of Contents
 1. [Overview](#overview)
 2. [Setup and Imports](#setup-and-imports)
 3. [Generating Random Branch Parameters](#generating-random-branch-parameters)
@@ -36,7 +48,7 @@ The program uses recursion to generate realistic branches, randomization for nat
 import turtle
 from random import random, uniform, seed
 
-# Settings
+## Settings
 W, H = 420, 420
 DEPTH = 8
 LENGTH = 80

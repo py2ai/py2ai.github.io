@@ -1,11 +1,21 @@
 ---
-layout: post
-title: TensorFlow Basics
-categories: [tutorial]
-mathjax: true
+categories:
+- tutorial
+description: Hi everybody, today i will write about a little introduction to Tensorflow API. Tensorflow is a standard open source library released in 2015 by Google for b...
 featured-img: TensorFlow
-description: A quick tutorial about tensorflow
+keywords:
+- tensorflow
+- development
+- code
+- programming
+- tutorial
+- basics
+- python
+layout: post
+mathjax: true
+title: TensorFlow Basics
 ---
+
 
 
 
@@ -13,7 +23,7 @@ description: A quick tutorial about tensorflow
 Hi everybody, today i will write about a little introduction to Tensorflow API. Tensorflow is a standard open source library released in 2015 by Google for building deep learning algorithms. 
 Tensor can be considered as an N dimensional array. Tensors are defined by the unit of dimensionality which is known as rank. A scalar is a rank-zero tensor. A vector is rank-one tensor. A 2D matrix is a rank-two tensor and so on.
 
-## Data Types in TensorFlow
+# Data Types in TensorFlow
 
 Mulitple datatypes are supported by tensorflow such as; 
 

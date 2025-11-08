@@ -1,29 +1,31 @@
 ---
-layout: post
-title: Let's build a simple "Rock, Paper, Scissors" game
-mathjax: true
+description: Let's create a simple "Rock, Paper, Scissors" game where the user can play against the computer. This is a classic game that demonstrates user input, random ...
 featured-img: 26072022-python-logo
-description:  make a game in python
-tags:
-  - Python
-  - Programming
-  - Game Development
-  - Beginner Projects
-  - Coding Tutorial
 keywords:
-  - Rock Paper Scissors game
-  - Python game tutorial
-  - Random choice Python
-  - Conditional statements Python
-  - User input Python
-  - Python beginner projects
+- Rock Paper Scissors game
+- Python game tutorial
+- Random choice Python
+- Conditional statements Python
+- User input Python
+- Python beginner projects
+layout: post
+mathjax: true
+tags:
+- Python
+- Programming
+- Game Development
+- Beginner Projects
+- Coding Tutorial
+title: Let's build a simple "Rock, Paper, Scissors" game
 ---
+
+
 
 Let's create a simple "Rock, Paper, Scissors" game where the user can play against the computer. This is a classic game that demonstrates user input, random choices by the computer, and conditional statements to determine the winner.
 
 Here's the Python script for the "Rock, Paper, Scissors" game:
 
-### game.py
+# game.py
 
 {% include codeHeader.html %}
 ```python
@@ -64,9 +66,9 @@ if __name__ == "__main__":
     rock_paper_scissors()
 ```
 
-# Explanation
+## Explanation
 
-### Import the random module:
+## Import the random module:
 This module is used to generate random choices for the computer.
 
 ### Define the rock_paper_scissors function:
@@ -97,14 +99,14 @@ The loop exits when the user types 'quit'.
 
 Use if `__name__ == "__main__"`: to ensure the game runs when the script is executed directly.
 
-# Running the Game
+## Running the Game
 To play the game, simply run the script in a Python environment.
 The user will be prompted to enter their choice of 'rock', 'paper', or 'scissors'. The computer will then randomly select one of the three options, and the game will determine and display the result.
 The game will continue until the user types 'quit' to exit.
 This script demonstrates basic user interaction, randomization, and control flow in Python, making it an excellent tutorial example for beginners.
 
 
-# Example:
+## Example:
 
 ```
 python game.py

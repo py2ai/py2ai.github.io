@@ -1,11 +1,22 @@
 ---
-layout: post
-title: What are yield and return statements in Python
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: yield
+categories:
+- GUI tutorial series
 description: This code will demonstrate the key differences between yield and return statements in python
+featured-img: yield
+keywords:
+- yield
+- statements
+- development
+- what
+- code
+- programming
+- tutorial
+- are
+layout: post
+mathjax: true
+title: What are yield and return statements in Python
 ---
+
 yield keyword means: 
 Provide output and continue
 
@@ -47,12 +58,12 @@ next_value = next(value)
 print('Here is next(value)',next_value)
 
 # If we call the next value once more, we will get a traceback. 
-# Because the stack of executions is already empty
+## Because the stack of executions is already empty
 
-# next_value = next(value)
-# print('Here is next(value)',next_value)
+## next_value = next(value)
+## print('Here is next(value)',next_value)
 
-# So to have a list back lets call the make_list again
+## So to have a list back lets call the make_list again
 
 value = make_list(num)
 print(list(value))

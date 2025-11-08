@@ -1,28 +1,29 @@
 ---
-layout: post
-title: How to make a chatGPT like application
-mathjax: true
+description: In this tutorial we will learn to compress GPT and make a working chat GPT app
 featured-img: 26072022-python-logo
-description:  In this tutorial we will learn to compress GPT and make a working chat GPT app
-tags:
-  - ChatGPT
-  - GPT
-  - Model Compression
-  - FlexGen
-  - Python
-  - Machine Learning
-  - NLP
 keywords:
-  - ChatGPT-like application
-  - GPT model compression
-  - FlexGen
-  - Build ChatGPT app
-  - Model optimization
-  - Python chat application
-  - Transformer models
-  - AI chatbot
-  - NLP models
+- ChatGPT-like application
+- GPT model compression
+- FlexGen
+- Build ChatGPT app
+- Model optimization
+- Python chat application
+- Transformer models
+- AI chatbot
+- NLP models
+layout: post
+mathjax: true
+tags:
+- ChatGPT
+- GPT
+- Model Compression
+- FlexGen
+- Python
+- Machine Learning
+- NLP
+title: How to make a chatGPT like application
 ---
+
 
  
 Hello friends! Yes, it is possible to make a chat GPT like application by compressing the GPT models to reduce their size and computational complexity. Model compression techniques can be used to reduce the number of parameters and operations required by the model without significantly impacting its performance. But before that let's see what is GPT?
@@ -61,7 +62,7 @@ There are various approaches to compressing GPT models, including:
 
 Overall, model compression techniques can help reduce the computational and memory requirements of GPT models, making them more efficient and practical for deployment in resource-constrained environments.
 
-# Let's use FlexGen to make a chat GPT application
+## Let's use FlexGen to make a chat GPT application
 
 ## What is FlexGen
 
@@ -71,7 +72,7 @@ FlexGen is based on the idea of dynamically adjusting the model's architecture d
 
 FlexGen also incorporates other model compression techniques such as weight pruning, quantization, and knowledge distillation to further reduce the size and computational cost of the model. Experimental results show that FlexGen can achieve significant speedup and memory savings compared to traditional GPT models, while maintaining similar or slightly improved performance on various language modeling benchmarks.
 
-# Make the simple chat GPT like application
+## Make the simple chat GPT like application
 
 ## Step 1. Make a miniconda environment for python 3.8
 
@@ -120,8 +121,8 @@ git clone https://github.com/FMInference/FlexGen.git
 cd FlexGen
 pip3 install -e .
 
-# (Optional) Install openmpi for multi-gpu execution
-# sudo apt install openmpi-bin
+## (Optional) Install openmpi for multi-gpu execution
+## sudo apt install openmpi-bin
 ```
 
 Now you can run the command to download the model and simply test.
@@ -166,7 +167,7 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 
 Follow the Flask tutorial as a reference to deploy your chat app
 
-# Major advantages of ChatGPT
+## Major advantages of ChatGPT
 
 * Improved customer service: Companies can use ChatGPT to provide automated chatbot-based customer service, which can help them to quickly and efficiently handle customer inquiries, provide solutions to common issues, and improve the overall customer experience.
 
@@ -178,7 +179,7 @@ Follow the Flask tutorial as a reference to deploy your chat app
 
 * Better insights: ChatGPT can help companies analyze customer interactions and conversations to gain insights into customer behavior, preferences, and needs. This information can be used to improve products and services, as well as to develop more targeted marketing campaigns.
 
-# Why GPT is different from BERT
+## Why GPT is different from BERT
 
 BERT (Bidirectional Encoder Representations from Transformers) and GPT (Generative Pre-trained Transformer) are both natural language processing (NLP) models developed by OpenAI and Google, respectively. While they share some similarities, they also have key differences, including:
 
@@ -196,7 +197,7 @@ BERT (Bidirectional Encoder Representations from Transformers) and GPT (Generati
 
 Both BERT and GPT are state-of-the-art NLP models that use the Transformer architecture, they have key differences in task type, pre-training method, training data, output type, and fine-tuning.
 
-# Conclusion
+## Conclusion
 
 A chat application, whether for personal or business use, can offer several advantages, including:
 

@@ -1,12 +1,23 @@
 ---
-layout: post
-title: How to make an image to text classifier application
-mathjax: true
+description: This tutorial is about language classification based gui development with PyQt5 and Pytesseract
 featured-img: ocr1917092022
-description:  This tutorial is about language classification based gui development with PyQt5 and Pytesseract
-keywords: [OCR, PyQt5, Pytesseract, text classification, image processing]
-tags: [OCR, PyQt5, Pytesseract, image processing, text classification]
+keywords:
+- OCR
+- PyQt5
+- Pytesseract
+- text classification
+- image processing
+layout: post
+mathjax: true
+tags:
+- OCR
+- PyQt5
+- Pytesseract
+- image processing
+- text classification
+title: How to make an image to text classifier application
 ---
+
 Hi friends following is the code for Part 19 of the PyQt5 learning series. For details visit the pyshine channel below.
 
 <br>
@@ -72,7 +83,7 @@ Tesseract 4 contains LSTM neural net mode which mostly works best, but you are f
 In the following gui.py code we will use following configurations `custom_oem_psm_config = r'--oem 3 --psm 6'` and then use like this `pytesseract.image_to_string(image, config=custom_oem_psm_config)`
 
 
-# main.ui
+## main.ui
 {% include codeHeader.html %}
 ```python
 <?xml version="1.0" encoding="UTF-8"?>
@@ -216,10 +227,10 @@ In the following gui.py code we will use following configurations `custom_oem_ps
 </ui>
 ```
 
-# gui.py
+## gui.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
+## Welcome to PyShine
 import pytesseract
 import cv2, os,sys
 from PIL import Image
@@ -233,8 +244,8 @@ import glob
 from PIL import ImageQt
 import numpy as np
 from tesserocr import PyTessBaseAPI
-# Here we will get the path of the tessdata
-# For 64 bit installation of tesseract OCR 
+## Here we will get the path of the tessdata
+## For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
@@ -279,7 +290,7 @@ for font in range(110):
 	font+=2
 	font_list.append(str(font))
 
-# print('Font list:',font_list)
+## print('Font list:',font_list)
 
 class PyShine_OCR_APP(QtWidgets.QMainWindow):
     def __init__(self):
@@ -453,7 +464,7 @@ class PyShine_OCR_APP(QtWidgets.QMainWindow):
             return 0
         return QWidget.eventFilter(self,source,event)
 	
-# www.pyshine.com
+## www.pyshine.com
 app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()

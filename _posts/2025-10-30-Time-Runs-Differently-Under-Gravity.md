@@ -1,16 +1,26 @@
 ---
-layout: post
-title: Gravitational Time Dilation Simulation in Python
-mathjax: true
-featured-img: 26072022-python-logo
 description: Interactive simulation showing Earth Clock vs Gravity Clock and how gravity affects time.
-keywords: ["simulation", "PyGame", "gravity", "time dilation"]
-tags: ["gravitational-time-dilation", "relativity", "python-simulation", "interactive"]
+featured-img: 26072022-python-logo
+keywords:
+- simulation
+- PyGame
+- gravity
+- time dilation
+layout: post
+mathjax: true
+tags:
+- gravitational-time-dilation
+- relativity
+- python-simulation
+- interactive
+title: Gravitational Time Dilation Simulation in Python
 ---
+
+
 
 # Gravitational Time Dilation Simulation with Pygame
 
-### Educational Python Project – Visualize How Gravity Affects Time
+## Educational Python Project – Visualize How Gravity Affects Time
 
 This tutorial walks through building an **interactive Gravitational Time Dilation Simulation** using **Python and Pygame**. The simulation demonstrates how **time passes differently under varying gravitational strengths**, comparing a clock at Earth’s surface to a clock under stronger or weaker gravity.
 
@@ -109,7 +119,7 @@ import math
 import time
 import matplotlib.pyplot as plt
 
-#  Constants 
+##  Constants 
 G = 6.67430e-11           # Gravitational constant (m³/kg·s²)
 c = 299792458             # Speed of light (m/s)
 M = 5.972e24              # Mass of Earth (kg)
@@ -119,12 +129,12 @@ r_s = 2 * G * M / c**2    # Schwarzschild radius for Earth (m)
 gf_earth = 1 / math.sqrt(1 - 2*G*M/(R_earth*c**2))  # Time dilation factor at Earth surface
 SECONDS_PER_EARTH_YEAR = 365.25 * 24 * 3600  # Seconds in one Earth year
 
-#  Adjustable font sizes 
+##  Adjustable font sizes 
 FONT_SIZE_INFO = 28       # Info line font
 FONT_SIZE_CLOCK = 50      # Clock fonts
 FONT_SIZE_SMALL = 40      # Gravity / Relative Rate text
 
-#  Pygame setup 
+##  Pygame setup 
 pygame.init()
 WIDTH, HEIGHT = 500, 280
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -134,14 +144,14 @@ font_clock = pygame.font.SysFont(None, FONT_SIZE_CLOCK)
 font_small = pygame.font.SysFont(None, FONT_SIZE_SMALL)
 clock = pygame.time.Clock()
 
-#  Initial conditions 
+##  Initial conditions 
 gravity = g_surface
 keys = {"up": False, "down": False}
 t_earth = 0.0
 t_gravity = 0.0
 prev_time = time.time()
 
-#  Matplotlib setup 
+##  Matplotlib setup 
 plt.ion()
 fig, ax = plt.subplots(figsize=(5, 4))
 fig.patch.set_facecolor('black')
@@ -163,12 +173,12 @@ ax.grid(True, color='gray', linestyle='--', alpha=0.5)
 gravities = []
 relative_rates = []
 
-#  Function to calculate gravity factor safely 
+##  Function to calculate gravity factor safely 
 def gravity_factor_from_g(g):
     r = max(math.sqrt(G*M/g), r_s * 1.0001)
     return 1 / math.sqrt(1 - 2*G*M/(r*c**2))
 
-#  Format time function 
+##  Format time function 
 def format_time(t):
     t_int = int(t)
     h = t_int // 3600
@@ -176,7 +186,7 @@ def format_time(t):
     s = t_int % 60
     return f"{h:02d}:{m:02d}:{s:02d}"
 
-#  Main loop 
+##  Main loop 
 running = True
 while running:
     for event in pygame.event.get():
@@ -193,25 +203,25 @@ while running:
             elif event.key == pygame.K_DOWN:
                 keys["down"] = False
 
-    #  Compute delta time 
+    ##  Compute delta time 
     current_time = time.time()
     delta_earth = current_time - prev_time
     prev_time = current_time
 
-    #  Update gravity 
+    ##  Update gravity 
     if keys["up"]:
         gravity *= 10**0.05
     if keys["down"]:
         gravity /= 10**0.05
     gravity = max(gravity, 1e-5)
 
-    #  Update clocks 
+    ##  Update clocks 
     t_earth += delta_earth / gf_earth
     gf = gravity_factor_from_g(gravity)
     t_gravity += delta_earth / gf
     relative_rate = gf_earth / gf
 
-    #  Update Matplotlib plot 
+    ##  Update Matplotlib plot 
     if keys["up"] or keys["down"]:
         gravities.append(gravity)
         relative_rates.append(relative_rate)
@@ -220,11 +230,11 @@ while running:
             relative_rates.pop(0)
         line.set_data(gravities, relative_rates)
 
-        # Remove old gradient fills
+        ## Remove old gradient fills
         for coll in ax.collections:
             coll.remove()
 
-        # Gradient shadow under the curve
+        ## Gradient shadow under the curve
         alpha_max = 0.5
         n_layers = 10
         for i in range(n_layers):
@@ -237,7 +247,7 @@ while running:
                 alpha=alpha
             )
 
-        # Dynamic Y-axis limits
+        ## Dynamic Y-axis limits
         ymin = min(relative_rates) - 0.1
         ymax = max(relative_rates) + 0.1
         ax.set_ylim(ymin, ymax)
@@ -247,11 +257,11 @@ while running:
         plt.tight_layout()
         plt.pause(0.001)
 
-    #  Compute 1 Year equivalence 
+    ##  Compute 1 Year equivalence 
     gravity_years = relative_rate  # 1 Earth year = relative_rate Gravity Clock years
     info_str = f"1 Year @ Earth = {gravity_years:.6f} Year @ Gravity Clock"
 
-    #  Draw Pygame display 
+    ##  Draw Pygame display 
     screen.fill((0, 0, 0))
     screen.blit(font_info.render(info_str, True, (255, 200, 0)), (20, 10))
     screen.blit(font_clock.render(f"Earth Clock: {format_time(t_earth)}", True, (255, 255, 0)), (20, 60))

@@ -1,13 +1,26 @@
 ---
-layout: post
-title: How to make an image to text GUI in Python
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pytessgui
+categories:
+- GUI tutorial series
 description: Extract full text of various languages by using the trained model of the specific language
-tags: [Python, PyQt5, Tesseract, OCR, GUI]
-keywords: [Image-to-Text, PyQt5, Tesseract OCR, GUI Tutorial, Python]
+featured-img: pytessgui
+keywords:
+- Image-to-Text
+- PyQt5
+- Tesseract OCR
+- GUI Tutorial
+- Python
+layout: post
+mathjax: true
+tags:
+- Python
+- PyQt5
+- Tesseract
+- OCR
+- GUI
+title: How to make an image to text GUI in Python
 ---
+
+
 
 
 Hello friends, first of all thanks for your appreciations, comments and suggestions. One interesting suggestion was recently asked as the possibility of 
@@ -29,7 +42,7 @@ Before reading further it is highly recommended that you read this tutorial: htt
 
 Once the desginer window is launched please open up the ```main.ui``` file below:
 
-### main.ui
+# main.ui
 {% include codeHeader.html %}
 ```python
 <?xml version="1.0" encoding="UTF-8"?>
@@ -182,11 +195,11 @@ The full text can be scanned easily with this little funciton which will get the
  And finally here is the gui.py complete code. Please watch our PyQt5 tutorial for basics about more information about the following code:
 
 
-### gui.py
+## gui.py
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
+## Welcome to PyShine
 import pytesseract
 import cv2, os,sys
 from PIL import Image
@@ -198,8 +211,8 @@ from PyQt5 import uic
 from PyQt5 import QtCore,QtGui,QtWidgets
 import glob
 
-# Here we will get the path of the tessdata
-# For 64 bit installation of tesseract OCR 
+## Here we will get the path of the tessdata
+## For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
@@ -221,7 +234,7 @@ for font in range(110):
 	font+=2
 	font_list.append(str(font))
 
-# print('Font list:',font_list)
+## print('Font list:',font_list)
 
 class PyShine_OCR_APP(QtWidgets.QMainWindow):
     def __init__(self):
@@ -314,7 +327,7 @@ class PyShine_OCR_APP(QtWidgets.QMainWindow):
             return 0
         return QWidget.eventFilter(self,source,event)
 	
-# www.pyshine.com
+## www.pyshine.com
 app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()

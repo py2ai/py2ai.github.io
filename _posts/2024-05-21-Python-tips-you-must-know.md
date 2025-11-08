@@ -1,27 +1,28 @@
 ---
-layout: post
-title: Python tips and tricks you must know!
-mathjax: true
+description: Python programming skills have seen a surge in demand lately. To assist you in honing your Python coding prowess, we've compiled some nifty Python techniques...
 featured-img: 26072022-python-logo
-description:  Python tips and tricks
-tags:
-  - Python
-  - Programming Tips
-  - Python Tricks
-  - Coding Best Practices
-  - Python Programming
-  - Code Optimization
-  - Python Skills
 keywords:
-  - Python tips
-  - Python tricks
-  - Python best practices
-  - Python programming techniques
-  - Coding tricks
-  - Python optimization
-  - Programming shortcuts
-  - Python code improvement
+- Python tips
+- Python tricks
+- Python best practices
+- Python programming techniques
+- Coding tricks
+- Python optimization
+- Programming shortcuts
+- Python code improvement
+layout: post
+mathjax: true
+tags:
+- Python
+- Programming Tips
+- Python Tricks
+- Coding Best Practices
+- Python Programming
+- Code Optimization
+- Python Skills
+title: Python tips and tricks you must know!
 ---
+
 
 Python programming skills have seen a surge in demand lately. To assist you in honing your Python coding prowess, we've compiled some nifty Python techniques you can employ to enhance your code. Consider learning one new trick each day for the next month, and peruse our guide on Python best practices to ensure your code stands out.
 
@@ -49,7 +50,7 @@ Step: 1 (if not specified)
 Negative indices can also be passed, facilitating sequence reversal. For instance, in a list with four elements, the 0th index is equivalent to the -4 index, and the last index corresponds to -1. Leveraging this knowledge, the given example code prints the string in reverse order.
 
 
-# 2. Efficient Variable Swapping
+## 2. Efficient Variable Swapping
 
 {% include codeHeader.html %}
 ```python
@@ -71,7 +72,7 @@ Swapped: (5, 12)
 
 In Python, unpacking iterables into variables via automatic unpacking enables simultaneous assignment in a single line. Similarly, using the * operator allows collecting multiple values into a single variable, known as packing. The combination of automatic packing and unpacking gives rise to simultaneous assignment, streamlining the process of assigning values to multiple variables.
 
-# 3. Set vs. List
+## 3. Set vs. List
 {% include codeHeader.html %}
 ```python
 import sys
@@ -90,7 +91,7 @@ List size: 144 bytes
 While both sets and lists in Python are iterable and permit indexing, tuples offer distinct advantages over lists. Lists are mutable, allowing modifications, while tuples are immutable, preventing alterations and making them more memory-efficient. Tuples also offer faster performance compared to lists, making them preferable in scenarios where data immutability is desired.
 
 
-# 4. Generator Functions
+## 4. Generator Functions
 {% include codeHeader.html %}
 ```python
 a = [x * 2 for x in range(10)]
@@ -107,13 +108,13 @@ print(b)
 List comprehensions serve as a pythonic way of generating lists from iterables, offering faster performance than traditional for loops. However, substituting square brackets [ ] with parentheses ( ) inadvertently creates a generator object, leveraging lazy evaluation to generate elements upon request, thereby conserving memory.
 
 
-# 5. Object Aliasing
+## 5. Object Aliasing
 {% include codeHeader.html %}
 ```python
 original = [1, 2, 3, 4, 5]
 alias = original
 
-# Modify alias
+## Modify alias
 alias[4] = 7
 
 print(id(original))
@@ -130,7 +131,7 @@ In Python, every entity is an object, and assigning an object to an identifier c
 
 To create a distinct copy of the original object rather than a reference, one can utilize slicing `(b = a[:])` or other methods like `list(a)` or `copy()`.
 
-# 6. Utilizing the ‘not’ Operator
+## 6. Utilizing the ‘not’ Operator
 {% include codeHeader.html %}
 ```python
 empty_list = []
@@ -144,7 +145,7 @@ Python's not operator serves as a concise means of checking whether a data struc
 
 Additionally, the not operator finds utility in conditional statements, simplifying logic flow by negating conditional expressions when evaluating truth values.
 
-# 7. Enhanced String Formatting with F-strings
+## 7. Enhanced String Formatting with F-strings
 {% include codeHeader.html %}
 ```python
 name = "Alice"
@@ -160,7 +161,7 @@ Python 3.6 introduced f-strings, offering a more concise, readable, and efficien
 
 Moreover, f-strings support advanced features like printing variable names alongside their values ({variable = value}), further enhancing their versatility and utility in Python programming.
 
-# 8. Customizing Print Output with the ‘end’ Parameter
+## 8. Customizing Print Output with the ‘end’ Parameter
 
 {% include codeHeader.html %}
 ```python
@@ -174,7 +175,7 @@ English French Spanish German Twi
 ```
 The print() function's end parameter offers flexibility in customizing output by specifying the character or string to append at the end of each print call. By default, end is set to "\n", causing the print function to terminate with a newline character. Customizing end enables printing multiple values on the same line or appending custom separators, enhancing output formatting and presentation.
 
-# 9. Augmenting Tuples with Append Operations
+## 9. Augmenting Tuples with Append Operations
 {% include codeHeader.html %}
 ```python
 tup = (1, 2, [1, 2, 3])
@@ -189,7 +190,7 @@ Although tuples in Python are immutable, allowing no direct modifications, mutab
 
 While not a recommended practice due to potential confusion, this technique demonstrates the versatility of Python's data structures and the interplay between mutability and immutability.
 
-# 10. Streamlining Dictionary Merging
+## 10. Streamlining Dictionary Merging
 {% include codeHeader.html %}
 ```python
 dict1 = {"a": 1, "b": 2}

@@ -1,17 +1,30 @@
 ---
-layout: post
-title: Lab2 How to make a basic multilayer Keras model
-categories: [Keras tutorial series]
-mathjax: true
+categories:
+- Keras tutorial series
+description: 'Hi there! today we will build a multilayer model that should be like this figure:
+
+  ![]({{ "assets/img/posts/lab2_keras_model.png" | absolute_url }}).'
 featured-img: keras
-description: A quick tutorial on Keras model
+keywords:
+- model
+- basic
+- development
+- code
+- programming
+- lab2
+- tutorial
+- python
+layout: post
+mathjax: true
+title: Lab2 How to make a basic multilayer Keras model
 ---
 
 
-## A quick and easy multilayer model for Keras
+
+# A quick and easy multilayer model for Keras
 
 Hi there! today we will build a multilayer model that should be like this figure:
-![]({{ "assets/img/posts/lab2_keras_model.png" | absolute_url }}). 
+!![lab2 keras model]({{ "assets/img/posts/lab2_keras_model.png" | absolute_url }}). 
 ```python
 from keras.models import Sequential
 from keras.layers import Dense, Activation

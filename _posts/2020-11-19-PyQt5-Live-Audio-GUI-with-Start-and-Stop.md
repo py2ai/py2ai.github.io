@@ -1,13 +1,27 @@
 ---
-layout: post
-title: PytQt5 Live Audio GUI with start and stop buttons
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: audiolive2
+categories:
+- GUI tutorial series
 description: How to stop a thread in managed by the QThreadPool in PyQt5
-keywords: [PyQt5, Live Audio, QThread, GUI, Audio Stream, Thread Management]
-tags: [PyQt5, Audio, QThread, GUI, Thread Management]
+featured-img: audiolive2
+keywords:
+- PyQt5
+- Live Audio
+- QThread
+- GUI
+- Audio Stream
+- Thread Management
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- Audio
+- QThread
+- GUI
+- Thread Management
+title: PytQt5 Live Audio GUI with start and stop buttons
 ---
+
+
 <br>
 <div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/5vbIMWwWU5A" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -19,7 +33,7 @@ Tested on Mac OS and Windows.
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
 
-### main.ui
+# main.ui
 {% include codeHeader.html %}
 ```python
 <?xml version="1.0" encoding="UTF-8"?>
@@ -200,15 +214,15 @@ Tested on Mac OS and Windows.
 
 (Updated) Added QtWidgets.QApplication.processEvents(), runs well for Windows and Mac Os, please share your experiences below.
 
-### gui.py  
+## gui.py  
 {% include codeHeader.html %}
 ```python
 
 
-# Welcome to PyShine
-# This is part 11 of the PyQt5 learning series
-# Based on parameters, the GUI will plot live voice data using Matplotlib in PyQt5
-# We will use Qthreads to run the audio stream data.
+## Welcome to PyShine
+## This is part 11 of the PyQt5 learning series
+## Based on parameters, the GUI will plot live voice data using Matplotlib in PyQt5
+## We will use Qthreads to run the audio stream data.
 
 import sys
 import matplotlib
@@ -263,9 +277,9 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
         self.channels = [1]
         self.interval = 30 
         
-        # device_info =  sd.query_devices(self.device, 'input')
+        ## device_info =  sd.query_devices(self.device, 'input')
         
-        # self.samplerate = device_info['default_samplerate']
+        ## self.samplerate = device_info['default_samplerate']
         self.samplerate = 44100
         length  = int(self.window_length*self.samplerate/(1000*self.downsample))
         sd.default.samplerate = self.samplerate
@@ -416,7 +430,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
             pass
 
 
-# www.pyshine.com
+## www.pyshine.com
 class Worker(QtCore.QRunnable):
 
 	def __init__(self, function, *args, **kwargs):

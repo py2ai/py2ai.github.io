@@ -1,23 +1,36 @@
 ---
-layout: post
-title: How to send video using UDP socket in Python
-categories: [Socket Programming Series]
-mathjax: true
-featured-img: pythonudp1
+categories:
+- Socket Programming Series
 description: This tutorial is about using OpenCv and UDP sockets for server-client video transfer
-tags: [Python, UDP, Socket Programming, Video Streaming, OpenCV]
-keywords: [Python, UDP, video streaming, socket programming, OpenCV]
+featured-img: pythonudp1
+keywords:
+- Python
+- UDP
+- video streaming
+- socket programming
+- OpenCV
+layout: post
+mathjax: true
+tags:
+- Python
+- UDP
+- Socket Programming
+- Video Streaming
+- OpenCV
+title: How to send video using UDP socket in Python
 ---
+
+
 
 
 Hello friends! Previously, we have seen how TCP sockets work. In this tutorial we will use UDP sockets to send video from a server machine to a client machine.
 Details are available on the PyShine Youtube channel. 
 
-### server.py
+# server.py
 {% include codeHeader.html %}
 ```python
 
-# This is server code to send video frames over UDP
+## This is server code to send video frames over UDP
 import cv2, imutils, socket
 import numpy as np
 import time
@@ -64,11 +77,11 @@ while True:
 
 ```
 
-### client.py
+## client.py
 {% include codeHeader.html %}
 ```python
 
-# This is client code to receive video frames over UDP
+## This is client code to receive video frames over UDP
 import cv2, imutils, socket
 import numpy as np
 import time

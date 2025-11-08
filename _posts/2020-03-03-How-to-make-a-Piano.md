@@ -1,11 +1,23 @@
 ---
-layout: post
-title: How to make a piano in Python
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: Hi there! Today we will make a basic piano application. Below is the complete tutorial video which consists of four parts.
 featured-img: piano
-description: Making a piano in pyqt5
+keywords:
+- piano
+- development
+- code
+- programming
+- tutorial
+- python
+- make
+layout: post
+mathjax: true
+title: How to make a piano in Python
 ---
+
+
+
 
 Hi there! Today we will make a basic piano application. Below is the complete tutorial video which consists of four parts. 
 
@@ -19,24 +31,24 @@ Here is the complete code with description.
 
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
+## # Form implementation generated from reading ui file 'main.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# Lets import essential libraries
-# First use this in the command prompt 
-# pip3 install playsound
-# Next is to import items
+## # Lets import essential libraries
+## # First use this in the command prompt 
+## # pip3 install playsound
+## # Next is to import items
 
 import playsound
-# This will be used for the playing .wav files for the keys
+## # This will be used for the playing .wav files for the keys
 
 from threading import Thread
-# This will support us for multithreading
+## # This will support us for multithreading
 
 
 
@@ -45,7 +57,7 @@ class Ui_MainWindow(object):
 		MainWindow.setObjectName("MainWindow")
 		MainWindow.resize(659, 251)
 		
-		# We require a sender, that will tell us which key is pressed
+## #	# We require a sender, that will tell us which key is pressed
 		self.mw  = MainWindow
 		
 		self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -443,13 +455,13 @@ class Ui_MainWindow(object):
 		self.retranslateUi(MainWindow)
 		QtCore.QMetaObject.connectSlotsByName(MainWindow)
 		
-		# Here we make a dict of threads called th
+## #	# Here we make a dict of threads called th
 		self.th = {}
 		
-		# Lets connect a key to the button.
-		# Lets say c4 is a button or key of piano
-		# As u can see that i have added all the keys here
-		# These are white keys
+## #	# Lets connect a key to the button.
+## #	# Lets say c4 is a button or key of piano
+## #	# As u can see that i have added all the keys here
+## #	# These are white keys
 		self.c4.clicked.connect(self.run_threads)
 		self.d4.clicked.connect(self.run_threads)
 		self.e4.clicked.connect(self.run_threads)
@@ -466,7 +478,7 @@ class Ui_MainWindow(object):
 		self.b5.clicked.connect(self.run_threads) 
 		self.c6.clicked.connect(self.run_threads) 
 		
-		# These are the black keys
+## #	# These are the black keys
 		self.c40.clicked.connect(self.run_threads) 
 		self.c50.clicked.connect(self.run_threads) 
 		self.d40.clicked.connect(self.run_threads) 
@@ -478,26 +490,26 @@ class Ui_MainWindow(object):
 		self.a40.clicked.connect(self.run_threads) 
 		self.a50.clicked.connect(self.run_threads) 
 		
-		# ok so lets run it.
-		# To show how its working lets print the path of the sender
-		# Similarly lets add all the keys.
-		# Thanks for watching and please and share like and comment 
-		# Oh yes lets play and see if all keys are working.
+## #	# ok so lets run it.
+## #	# To show how its working lets print the path of the sender
+## #	# Similarly lets add all the keys.
+## #	# Thanks for watching and please and share like and comment 
+## #	# Oh yes lets play and see if all keys are working.
 		
-	# Lets make function to play sound
+## # Lets make function to play sound
 	def play_notes(self,notePath):
 		playsound.playsound(notePath,False)
 		print(notePath)
 	
 	
-	# Lets make another function to run the threads
+## # Lets make another function to run the threads
 	
 	def run_threads(self):
 		self.th[self.mw.sender().objectName()] = Thread(target = self.play_notes, args = ('Sounds/'+'{}.wav'.format(self.mw.sender().objectName()),)) 
-		# So here the th dict will have a key which is the name of piano key, 
-		# The thread has a target function self.play_notes, and arguments args is 
-		# simply the path Sounds/keyname.wav
-		# Then we start and join the thread
+## #	# So here the th dict will have a key which is the name of piano key, 
+## #	# The thread has a target function self.play_notes, and arguments args is 
+## #	# simply the path Sounds/keyname.wav
+## #	# Then we start and join the thread
 		self.th[self.mw.sender().objectName()].start()
 		self.th[self.mw.sender().objectName()].join()
 		

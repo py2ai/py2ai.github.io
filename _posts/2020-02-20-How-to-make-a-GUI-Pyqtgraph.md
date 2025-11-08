@@ -1,11 +1,24 @@
 ---
-layout: post
-title: Making Python GUI for sine and cosine
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: 'PyShine GUI series Lab-1
+
+  Lets import the required libraries'
 featured-img: gui
-description: A quick tutorial on pyqtgraph GUI
+keywords:
+- cosine
+- sine
+- development
+- making
+- code
+- gui
+- programming
+- tutorial
+layout: post
+mathjax: true
+title: Making Python GUI for sine and cosine
 ---
+
 
 
 

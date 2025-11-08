@@ -1,16 +1,29 @@
 ---
-layout: post
-title: How to install TVM on MAC OS
-categories: [tutorial]
-mathjax: true
+categories:
+- tutorial
 description: A quick tutorial for beginners to build from source the TVM in Mac OS
-keywords: [TVM, macOS, Installation, Apache TVM, Machine Learning, Compiler Framework]
-tags: [TVM, macOS, Installation, Machine Learning, Python]
+keywords:
+- TVM
+- macOS
+- Installation
+- Apache TVM
+- Machine Learning
+- Compiler Framework
+layout: post
+mathjax: true
+tags:
+- TVM
+- macOS
+- Installation
+- Machine Learning
+- Python
+title: How to install TVM on MAC OS
 ---
+
 
 Hello, today’s tutorial is about installing Apache TVM on your Mac OS. Some steps are required for beginners to install it successfully. Friends, Apache TVM is an open-source ML compiler framework for GPUS, CPUs, and deep learning accelerators. The goal of TVM is to enable the deep learning community to optimize and then run computations efficiently on hardware. TVM has a diverse community of hardware vendors, compiler engineers, and ML researchers. This community has built a unified, programmable software stack to enrich the ML technology ecosystem and make it available to everyone. As a result of this collective effort, the performance goes up. We require the following steps to install TVM on MacOS successfully. Please note that Homebrew is required for either Intel or Apple’s M1 chip processors. We need cmake, llvm and Python3.8; please note that currently, Python3.9 have some issues, so I will highly recommend Python3.8
 
-### Step 1
+# Step 1
 ```
 brew install gcc git cmake
 brew install llvm
@@ -19,7 +32,7 @@ If Python3.8 is not installed then either use virtualenv or conda env to install
 ```
 brew install python@3.8
 ```
-### Step 2
+## Step 2
 By default brew will not link your llvm installation to correct path, for this you need to force link it
 ```
 brew link llvm --force

@@ -1,19 +1,31 @@
 ---
-layout: post
-title: Let's build a simple "Battleship" game
-mathjax: true
+description: In this tutorial, we'll create a simple Battleship game that you can play via the command line. Battleship is a classic two-player game where players take tu...
 featured-img: 26072022-python-logo
-description:  make a battleship game in python
-keywords: ["Python", "Battleship", "game development", "command line game", "Python game", "programming"]
-tags: ["Python", "Battleship", "game development", "command line", "tutorial"]
+keywords:
+- Python
+- Battleship
+- game development
+- command line game
+- Python game
+- programming
+layout: post
+mathjax: true
+tags:
+- Python
+- Battleship
+- game development
+- command line
+- tutorial
+title: Let's build a simple "Battleship" game
 ---
+
 
 In this tutorial, we'll create a simple Battleship game that you can play via the command line. Battleship is a classic two-player game where players take turns guessing the locations of the opponent's ships on a grid.
 
 # Step 1: Setting Up the Environment
 First, ensure you have Python installed on your machine. You can download Python from python.org.
 
-# Step 2: Defining the Game Board
+## Step 2: Defining the Game Board
 We'll start by defining the game board and the basic structure of the game. Each player will have a 5x5 grid where they can place their ships and make guesses.
 
 {% include codeHeader.html %}
@@ -47,7 +59,7 @@ def get_user_guess():
 ```
 
 
-# Step 3: Setting Up the Game
+## Step 3: Setting Up the Game
 Next, we'll set up the game, including the boards for both players, and allow players to place their ships.
 
 {% include codeHeader.html %}
@@ -67,7 +79,7 @@ def setup_game(board_size=5, num_ships=3):
     return player1_board, player2_board
 ```
 
-# Step 4: Main Game Loop
+## Step 4: Main Game Loop
 We'll create the main game loop where players take turns guessing the locations of the opponent's ships. We'll also keep track of the number of ships each player has left.
 
 {% include codeHeader.html %}
@@ -120,7 +132,7 @@ if __name__ == "__main__":
     play_game()
 ```
 
-# Explanation:
+## Explanation:
 ## create_board Function: 
 This function creates an empty game board of the specified size.
 ## print_board Function: 
@@ -136,7 +148,7 @@ This is the main game loop where players take turns guessing the locations of th
 ## Running the Game
 Save the code to a file named battleship.py and run it from your command line:
 
-# Complete code
+## Complete code
 
 ### battleship.py
 {% include codeHeader.html %}

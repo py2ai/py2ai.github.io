@@ -1,13 +1,25 @@
 ---
-layout: post
-title: How to easily install OpenCv in Raspberry Pi boards
-categories: [Raspberry Pi Programming Series]
-mathjax: true
+categories:
+- Raspberry Pi Programming Series
+description: This tutorial is about installing Open CV library in Raspberry Pi
 featured-img: raspberrypisetup
-description: This tutorial is about installing Open CV library in Raspberry Pi 
-tags: [Raspberry Pi, OpenCV, Installation, Python, Programming]
-keywords: [OpenCV, Raspberry Pi, Installation Guide, Python, Computer Vision]
+keywords:
+- OpenCV
+- Raspberry Pi
+- Installation Guide
+- Python
+- Computer Vision
+layout: post
+mathjax: true
+tags:
+- Raspberry Pi
+- OpenCV
+- Installation
+- Python
+- Programming
+title: How to easily install OpenCv in Raspberry Pi boards
 ---
+
 
 
 
@@ -18,7 +30,7 @@ So, if you have just bought your Raspberry Pi board especially the Raspberry Pi 
 
 You may skip this step, if you already have an accessible Rasbperry Pi to SSH.
 
-### Fresh installation of Raspberry Pi OS
+# Fresh installation of Raspberry Pi OS
 
 1. Insert the SD card (better > 8GB size) into an USB card reader and plug it to your Computer (any of Mac OS, Windows and Ubuntu/Linux).
 2. Go to the official link to download the Raspberry Pi Imager https://www.raspberrypi.org/software/
@@ -35,7 +47,7 @@ You may skip this step, if you already have an accessible Rasbperry Pi to SSH.
 13. After that you can view in the device in the Network and Sharing connections. The device is ready to SSH!
 
 
-### Acess Raspberry Pi OS using SSH
+## Acess Raspberry Pi OS using SSH
 
 Our Raspberry Pi board is now configured for the SSH access and its Network device is ready. We can now use two ways to access it:
 1. By installing Putty software: https://www.putty.org/

@@ -1,13 +1,27 @@
 ---
-layout: post
-title: How to send and receive live audio using socket programming in Python
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: audio_socket
+categories:
+- GUI tutorial series
 description: This tutorial is about sending and receiving audio data over wifi between server and client.
-keywords: [Socket Programming, Audio Streaming, Pyshine, Python, WiFi Communication]
-tags: [Socket Programming, Audio Streaming, Pyshine, Python, WiFi Communication]
+featured-img: audio_socket
+keywords:
+- Socket Programming
+- Audio Streaming
+- Pyshine
+- Python
+- WiFi Communication
+layout: post
+mathjax: true
+tags:
+- Socket Programming
+- Audio Streaming
+- Pyshine
+- Python
+- WiFi Communication
+title: How to send and receive live audio using socket...
 ---
+
+
+
 Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
 programming.
 
@@ -30,7 +44,7 @@ pip3 install pyshine==0.0.6
 
 Both server and client computers should be on the same wifi router. The required IP address will be for Wifi LAN (inet)
 
-### Windows OS users
+# Windows OS users
 
 From the cmd window run this command:
 
@@ -43,7 +57,7 @@ The required IP address will be shown against IPv4 Address
 Here is the server side code. First, please change the IP address: '192.168.1.105' to yours, otherwise your server will not start.
 
 
-### server.py
+## # server.py
 
 ```python
 import socket, cv2, pickle,struct,time
@@ -52,9 +66,9 @@ import pyshine as ps
 mode =  'send'
 name = 'SERVER TRANSMITTING AUDIO'
 audio,context= ps.audioCapture(mode=mode)
-#ps.showPlot(context,name)
+## # ps.showPlot(context,name)
 
-# Socket Create
+## # Socket Create
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.1.105'
 port = 4982
@@ -84,7 +98,7 @@ client_socket.close()
 ```
 Here is code for the client. Please give the IP address of your server accordingly.
 
-### client.py
+## # client.py
 ```python
 import socket,cv2, pickle,struct
 import pyshine as ps
@@ -94,7 +108,7 @@ name = 'CLIENT RECEIVING AUDIO'
 audio,context = ps.audioCapture(mode=mode)
 ps.showPlot(context,name)
 
-# create socket
+## # create socket
 client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.1.105'
 port = 4982

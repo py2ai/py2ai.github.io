@@ -1,14 +1,22 @@
 ---
-layout: post
-title: Playing piano with Python
-categories: [Python tutorial series]
-mathjax: true
-featured-img: piano
+categories:
+- Python tutorial series
 description: A quick tutorial on multi threading in python to play twinkle twinkle little start poem
+featured-img: piano
+keywords:
+- piano
+- development
+- code
+- programming
+- tutorial
+- playing
+- python
+layout: post
+mathjax: true
+title: Playing piano with Python
 ---
 
-
-
+# Piano Playing Tutorial
 
 Hi there! 
 
@@ -81,8 +89,8 @@ A total of 88 wav files
 ```python
 path  = 'Sounds/'
 
-cnt =1	# A counter to delay once a line is finished as there
-# are 6 total lines
+cnt =1	
+
 ```
 We now make a dictionary for each thread th
 
@@ -97,8 +105,7 @@ Play the note
 ```python
 for t in Twinkle_List:
 	th[t] = Thread(target = play_notes,args = (path+'{}.wav'.format(t),0.3))
-	# These are arguments (path+'{}.wav'.format(t),0.3)
-	# Lets start the thread
+
 	th[t].start()
 	th[t].join()
 	if cnt%7==0:

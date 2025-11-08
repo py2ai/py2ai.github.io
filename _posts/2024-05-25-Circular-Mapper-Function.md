@@ -1,24 +1,26 @@
 ---
-layout: post
-title: What is a Circular or Ring mapper function
-mathjax: true
+description: The  function is a utility designed to generate a list of numbers based on a given index () within a circular range (). This function is particularly useful ...
 featured-img: 26072022-python-logo
-description:  make a circular list in python
-tags:
-  - Python
-  - Programming
-  - Algorithms
-  - Data Structures
-  - Modular Arithmetic
-  - Coding Tutorial
 keywords:
-  - Circular mapper function
-  - Python circular list
-  - Modular arithmetic Python
-  - Ring buffer Python
-  - Cyclic data structures
-  - Python algorithm tutorial
+- Circular mapper function
+- Python circular list
+- Modular arithmetic Python
+- Ring buffer Python
+- Cyclic data structures
+- Python algorithm tutorial
+layout: post
+mathjax: true
+tags:
+- Python
+- Programming
+- Algorithms
+- Data Structures
+- Modular Arithmetic
+- Coding Tutorial
+title: What is a Circular or Ring mapper function
 ---
+
+
 
 The `circular_mapper` function is a utility designed to generate a list of numbers based on a given index (`idx`) within a circular range (`N`). This function is particularly useful in scenarios where cyclic or circular data structures are used, such as in circular buffers, ring networks, or any system where wrap-around behavior is essential. Here's a detailed explanation of its importance and how it works.
 
@@ -34,7 +36,7 @@ The `circular_mapper` function is a utility designed to generate a list of numbe
 * ### Flexible Number Generation:
   Depending on whether the input index is even or odd, the function generates a sequence of numbers that are either odd or even, respectively. This flexibility can be tailored to various use cases where specific sequences are required.
 
-  # How the circular_mapper Function Works
+  ## How the circular_mapper Function Works
   
 Here's the complete code for the circular_mapper function:
 {% include codeHeader.html %}
@@ -46,7 +48,7 @@ def circular_mapper(N, idx):
     result = []
     
     if idx % 2 == 0:
-        # Generate lower odd numbers for even idx
+        ## Generate lower odd numbers for even idx
         count = 0
         current = idx - 1
         while count < 4:
@@ -55,7 +57,7 @@ def circular_mapper(N, idx):
                 count += 1
             current -= 1
     else:
-        # Generate lower even numbers for odd idx
+        ## Generate lower even numbers for odd idx
         count = 0
         current = idx - 1
         while count < 4:
@@ -66,7 +68,7 @@ def circular_mapper(N, idx):
     
     return result
 
-# Test cases
+## Test cases
 print(circular_mapper(8, 4))   # Output: [3, 1, 7, 5]
 print(circular_mapper(8, 1))   # Output: [0, 6, 4, 2]
 print(circular_mapper(20, 14)) # Example for larger N
@@ -74,7 +76,7 @@ print(circular_mapper(20, 5))  # Example for larger N
 print(circular_mapper(10, 0))  # Output: [9, 7, 5, 3]
 print(circular_mapper(10, 1))  # Output: [0, 8, 6, 4]
 ```
-# Detailed Explanation
+## Detailed Explanation
 ## Validation:
 
 {% include codeHeader.html %}
@@ -142,7 +144,7 @@ Return Result:
 return result
 ```
 Once the loop has gathered four appropriate numbers, the function returns the result list.
-# Test Cases
+## Test Cases
 The provided test cases demonstrate the function's versatility:
 
 {% include codeHeader.html %}
@@ -154,7 +156,7 @@ print(circular_mapper(20, 5))  # Example for larger N
 print(circular_mapper(10, 0))  # Output: [9, 7, 5, 3]
 print(circular_mapper(10, 1))  # Output: [0, 8, 6, 4]
 ```
-# Conclusion
+## Conclusion
 The `circular_mapper` function is a powerful tool for generating sequences within a circular range, particularly useful in various computer science and engineering applications. By leveraging modular arithmetic, it ensures that the numbers wrap around the specified range, making it robust and adaptable for any size of 
 `𝑁`. The function's ability to handle both even and odd indices with ease further adds to its versatility.
 

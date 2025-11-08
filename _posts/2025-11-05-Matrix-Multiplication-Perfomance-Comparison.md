@@ -1,15 +1,28 @@
 ---
-layout: post
-title: Matrix Multiplication Performance Comparison Python vs C++ vs NumPy
 description: Learn how to compare matrix multiplication speeds using naive Python, compiled C++, and optimized NumPy.
 featured-img: 26072022-python-logo
-keywords: ["matrix multiplication", "Python", "C++", "NumPy", "performance"]
-tags: ["matrix-multiplication", "Python", "C++", "NumPy", "performance"]
+keywords:
+- matrix multiplication
+- Python
+- C++
+- NumPy
+- performance
+layout: post
+tags:
+- matrix-multiplication
+- Python
+- C++
+- NumPy
+- performance
+title: Matrix Multiplication Performance Comparison Python vs...
 ---
+
+
+
 
 # Matrix Multiplication Performance Comparison: Python vs C++ vs NumPy
 
-### Beginner-Friendly Tutorial to Understand Matrix Computation and Optimization
+## # Beginner-Friendly Tutorial to Understand Matrix Computation and Optimization
 
 This tutorial will walk you through performing **matrix multiplication** using three approaches:
 1. Naive Python nested loops
@@ -20,7 +33,7 @@ We'll compare the execution times and understand why optimized libraries like Nu
 
 ---
 
-## Table of Contents
+## # Table of Contents
 - [Introduction](#introduction)
 - [Setup and Imports](#setup-and-imports)
 - [Generate Random Matrices](#generate-random-matrices)
@@ -34,7 +47,7 @@ We'll compare the execution times and understand why optimized libraries like Nu
 
 ---
 
-## Introduction
+## # Introduction
 
 Matrix multiplication is a fundamental operation in mathematics, computer science, and data science. However, **naive implementations in Python** are slow for large matrices because Python loops are interpreted at runtime.
 
@@ -42,7 +55,7 @@ Optimized libraries like **NumPy** and compiled languages like **C++** can signi
 
 ---
 
-## Setup and Imports
+## # Setup and Imports
 
 We'll use the following Python libraries:
 
@@ -61,15 +74,15 @@ pip install numpy
 ```
 ---
 
-## Generate Random Matrices
+## # Generate Random Matrices
 
 We'll generate two square matrices `A` and `B` of size `N x N` with random integers between 0 and 10.
 
 ```python
-# Matrix Size
+## # Matrix Size
 N = 600  # Increase N to see larger performance differences
 
-# Generate Matrices
+## # Generate Matrices
 A, B = np.random.randint(0, 11, (2, N, N))
 ```
 
@@ -77,7 +90,7 @@ A, B = np.random.randint(0, 11, (2, N, N))
 
 ---
 
-## Naive Python Multiplication
+## # Naive Python Multiplication
 
 Using nested loops, we multiply matrices manually.
 
@@ -92,7 +105,7 @@ end_py = time.time()
 python_time = end_py - start_py
 ```
 
-### How It Works
+## # How It Works
 - We create an empty matrix `C` with zeros.
 - Three nested loops compute the dot product.
 - Time is recorded using `time.time()`.
@@ -101,7 +114,7 @@ python_time = end_py - start_py
 
 ---
 
-## C++ Multiplication from Python
+## # C++ Multiplication from Python
 
 We can speed things up using **C++**, a compiled language. We'll:
 1. Write the C++ code to a temporary file.
@@ -111,10 +124,10 @@ We can speed things up using **C++**, a compiled language. We'll:
 {% raw %} 
 ```python
 cpp_code = f"""
-#include <iostream>
-#include <vector>
-#include <cstdlib>
-#include <ctime>
+## # include <iostream>
+## # include <vector>
+## # include <cstdlib>
+## # include <ctime>
 using namespace std;
 int main(){{
     int N = {N};
@@ -138,14 +151,14 @@ int main(){{
 }}
 """
 
-# Write to temp file
+## # Write to temp file
 with tempfile.NamedTemporaryFile(delete=False, suffix=".cpp") as f:
     cpp_file = f.name
     f.write(cpp_code.encode())
 
 exe_file = cpp_file.replace(".cpp", "")
 
-# Compile
+## # Compile
 compile_proc = subprocess.run(["g++", cpp_file, "-O2", "-o", exe_file], capture_output=True, text=True)
 if compile_proc.returncode != 0:
     print("C++ Compilation failed!", compile_proc.stderr)
@@ -153,7 +166,7 @@ else:
     result = subprocess.run([exe_file], capture_output=True, text=True)
     cpp_time = float(result.stdout.strip())
 
-# Cleanup
+## # Cleanup
 ios.remove(cpp_file)
 if os.path.exists(exe_file): os.remove(exe_file)
 ```
@@ -167,7 +180,7 @@ if os.path.exists(exe_file): os.remove(exe_file)
 
 ---
 
-## NumPy Multiplication
+## # NumPy Multiplication
 
 NumPy provides optimized matrix multiplication using highly efficient C/Fortran libraries under the hood.
 
@@ -180,14 +193,14 @@ C_np = np.dot(A_np, B_np)
 end_np = time.time()
 numpy_time = end_np - start_np
 ```
-### Why NumPy is Fast
+## # Why NumPy is Fast
 - NumPy leverages **vectorized operations**.
 - Internal loops are compiled in **C/Fortran**, avoiding Python overhead.
 - Utilizes CPU cache and SIMD instructions for speed.
 
 ---
 
-## Performance Comparison
+## # Performance Comparison
 
 Finally, let's compare all three methods:
 
@@ -206,7 +219,7 @@ for execution speed, with NumPy being the fastest.
 
 ---
 
-## Key Takeaways
+## # Key Takeaways
 - Naive Python loops are slow for large matrices.
 - C++ is faster due to compilation, but requires more setup.
 - NumPy is both **fast** and **easy to use** in Python.
@@ -214,7 +227,7 @@ for execution speed, with NumPy being the fastest.
 
 ---
 
-## Running the Code
+## # Running the Code
 
 1. Copy the code into a `.py` file.
 2. Ensure you have **NumPy** and **g++ compiler** installed.
@@ -222,7 +235,7 @@ for execution speed, with NumPy being the fastest.
 
 ---
 
-## Why Some Are Faster
+## # Why Some Are Faster
 
 The speed differences are due to how the code is executed:
 
@@ -234,18 +247,18 @@ The speed differences are due to how the code is executed:
 ```bash
 python matrix_comparison.py
 ```
-### Complete Code
+## # Complete Code
 {% raw %} 
 ```python
 import time, subprocess, tempfile, os
 import numpy as np # Highly optimized C/Fortran based
 
-# Matrix Size
+## # Matrix Size
 N = 100 # Adjust bigger N shows bigger speed difference
-# Generate Matrices
+## # Generate Matrices
 A,B = np.random.randint(0,11,(2,N,N))
 
-# Python Naive matrix Multiplication
+## # Python Naive matrix Multiplication
 start_py = time.time()
 C = [[0]*N for _ in range(N)]
 for i in range(N):
@@ -255,12 +268,12 @@ for i in range(N):
 end_py = time.time()
 python_time = end_py - start_py
 
-# C++ version from Python
+## # C++ version from Python
 cpp_code = f"""
-#include <iostream>
-#include <vector>
-#include <cstdlib>
-#include <ctime>
+## # include <iostream>
+## # include <vector>
+## # include <cstdlib>
+## # include <ctime>
 using namespace std;
 int main(){{
     int N = {N};
@@ -287,7 +300,7 @@ int main(){{
 }}
 """ 
 
-# Write C++ code to temp file
+## # Write C++ code to temp file
 with tempfile.NamedTemporaryFile(delete=False,
                                  suffix=".cpp") as f:
     cpp_file = f.name
@@ -301,18 +314,18 @@ if compile_proc.returncode !=0:
     print("C++ Compilation failed!")
     print(compile_proc.stderr)
 else:
-    # Run C++ executable and capture time
+    ## Run C++ executable and capture time
     result = subprocess.run([exe_file],
                             capture_output=True,
                             text=True)
     cpp_time = float(result.stdout.strip())
 
-# Cleanup temporary files
+## # Cleanup temporary files
 os.remove(cpp_file)
 if os.path.exists(exe_file):
     os.remove(exe_file)
 
-# Numpy Matrix Multiplication
+## # Numpy Matrix Multiplication
 A_np = np.array(A)
 B_np = np.array(B)
 
@@ -321,7 +334,7 @@ C_np = np.dot(A_np, B_np)
 end_np = time.time()
 numpy_time = end_np - start_np
 
-# Compare All
+## # Compare All
 print("\n=== Performance Comparison ===")
 print(f"Python: {python_time:.4f} s")
 print(f"C++: {cpp_time:.4f} s")

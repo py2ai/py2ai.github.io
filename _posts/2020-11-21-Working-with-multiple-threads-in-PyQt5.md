@@ -1,13 +1,28 @@
 ---
-layout: post
-title: Working with multiple threads in PyQt5
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: '<br>
+
+  <div align="center">
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/k5tIk7w50L4" frameborder="0" allow="accelerometer; autoplay; cl...'
 featured-img: threadspy
-description: How to start and stop QThread in PyQt5
-keywords: [PyQt5, QThread, Multi-threading, GUI Development]
-tags: [PyQt5, QThread, Multi-threading, GUI Development]
+keywords:
+- PyQt5
+- QThread
+- Multi-threading
+- GUI Development
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- QThread
+- Multi-threading
+- GUI Development
+title: Working with multiple threads in PyQt5
 ---
+
+
 
 <br>
 <div align="center">
@@ -21,7 +36,7 @@ especially in a while loop. To run this GUI code, make a new folder and put thes
 
 Run the code as python main.py
 
-### threads.ui
+# threads.ui
 
 ```python
 
@@ -198,14 +213,14 @@ Run the code as python main.py
 
 ```
 
-### main.py
+## main.py
 
 ```python
 
-# Welcome to PyShine
-# This is part 12 of the PyQt5 learning series
-# Start and Stop Qthreads
-# Source code available: www.pyshine.com
+## Welcome to PyShine
+## This is part 12 of the PyQt5 learning series
+## Start and Stop Qthreads
+## Source code available: www.pyshine.com
 from PyQt5 import QtCore, QtWidgets,QtGui
 from PyQt5 import uic
 import sys, time

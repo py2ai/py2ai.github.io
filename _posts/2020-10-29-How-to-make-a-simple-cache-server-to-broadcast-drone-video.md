@@ -1,13 +1,26 @@
 ---
-layout: post
-title: A simple cache-server to broadcast video to clients
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: drone
+categories:
+- GUI tutorial series
 description: How to broadcast drone video to multiple clients using a cache-server in Python
-keywords: [Cache-Server, Video Broadcasting, Python, Networking, Drone]
-tags: [Cache-Server, Video Broadcasting, Python, Networking, Drone]
+featured-img: drone
+keywords:
+- Cache-Server
+- Video Broadcasting
+- Python
+- Networking
+- Drone
+layout: post
+mathjax: true
+tags:
+- Cache-Server
+- Video Broadcasting
+- Python
+- Networking
+- Drone
+title: A simple cache-server to broadcast video to clients
 ---
+
+
 
 <br>
 <div align="center">
@@ -26,7 +39,7 @@ heavy lifting here, because increasing the number of threads, demands more resou
 The client side pc will get the video from the cache server. It is assumed in this tutorial that all devices have access to the local Wifi network. To find out the 
 IP address of each pc use the one against the Wifi adapter, the procedure for various platforms is here:
 
-### MAC OS users
+# MAC OS users
 
 Go to the terminal window and run this command:
 
@@ -37,7 +50,7 @@ ipconfig getifaddr en0
 That will show your LAN IP address. Note that en0 is commonly used for ethernet interface, and en1 is for the Airport interface. Make sure that your IP address is not starting from 127.x.x.x because that is your local host, and if you only want to check server client for the same pc then it is fine. Otherwise, consider use the command above and write the correct ip address for video transfer over different machines. 
 
 
-### Linux/Ubuntu OS users
+## Linux/Ubuntu OS users
 
 From the terminal window run this command:
 
@@ -61,10 +74,10 @@ Here are the respective codes:
 ### drone.py
 {% include codeHeader.html %}
 ```python
-# This code will run the drone side, it will send video to cache server
-# Lets import the libraries
-# Welcome to PyShine
-# www.pyshine.com
+## This code will run the drone side, it will send video to cache server
+## Lets import the libraries
+## Welcome to PyShine
+## www.pyshine.com
 import socket, cv2, pickle, struct
 import imutils
 import cv2
@@ -116,11 +129,11 @@ while True:
 ### cache-server.py
 {% include codeHeader.html %}
 ```python
-# Cache server will recieve video stream from the the drone camera
-# Also it will serve this video stream to multiple clients 
-# Lets import the libraries
-# Welcome to PyShine
-# www.pyshine.com
+## Cache server will recieve video stream from the the drone camera
+## Also it will serve this video stream to multiple clients 
+## Lets import the libraries
+## Welcome to PyShine
+## www.pyshine.com
 import socket, cv2, pickle, struct
 import imutils # pip install imutils
 import threading
@@ -201,13 +214,13 @@ while True:
 ### client.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# lets make the client code
-# Welcome to PyShine
-# www.pyshine.com
+## Welcome to PyShine
+## lets make the client code
+## Welcome to PyShine
+## www.pyshine.com
 import socket,cv2, pickle,struct
 
-# create socket
+## create socket
 client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.124.15' # Here Require CACHE Server IP
 port = 9999

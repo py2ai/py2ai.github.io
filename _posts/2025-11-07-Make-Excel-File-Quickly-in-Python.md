@@ -1,16 +1,29 @@
 ---
-layout: post
-title: Create Excel Files with Python – Complete Beginner's Guide
-mathjax: false
-featured-img: 26072022-python-logo
 description: Learn how to create Excel workbooks with multiple sheets using Python's openpyxl library. Step-by-step tutorial for absolute beginners.
-keywords: ["Python", "Excel", "openpyxl", "spreadsheet", "beginner", "tutorial"]
-tags: ["python", "excel", "openpyxl", "beginner", "data-processing", "tutorial"]
+featured-img: 26072022-python-logo
+keywords:
+- Python
+- Excel
+- openpyxl
+- spreadsheet
+- beginner
+- tutorial
+layout: post
+mathjax: false
+tags:
+- python
+- excel
+- openpyxl
+- beginner
+- data-processing
+- tutorial
+title: Create Excel Files with Python – Complete Beginner's Guide
 ---
+
 
 # Create Excel Files with Python – Complete Beginner's Guide
 
-### Learn How to Automate Excel File Creation with Python's openpyxl Library
+## Learn How to Automate Excel File Creation with Python's openpyxl Library
 
 Excel spreadsheets are everywhere in the business world, but did you know you can create them automatically using Python? This beginner-friendly tutorial will teach you how to generate Excel files with multiple sheets using the **openpyxl** library. You'll learn everything from installation to creating organized data sheets – perfect for automating reports or organizing data!
 
@@ -103,7 +116,7 @@ Let's break this down:
 ## Step 2: Creating Your First Workbook
 
 ```python
-# Create a new Excel workbook
+## Create a new Excel workbook
 workbook = Workbook()
 filename = "garden_data.xlsx"
 ```
@@ -124,7 +137,7 @@ filename = "garden_data.xlsx"
 ## Step 3: Understanding Sheets and Active Sheet
 
 ```
-# The default workbook starts with one sheet
+## The default workbook starts with one sheet
 sheet1 = workbook.active
 ```
 
@@ -163,7 +176,7 @@ sheet1.title = "Trees"
 ## Step 5: Adding Data to Cells
 
 ```python
-# Add data to the Trees sheet
+## Add data to the Trees sheet
 sheet1["A1"] = "Tree Name"   # First Column
 sheet1["B1"] = "Height (m)"  # Second Column
 ```
@@ -226,7 +239,7 @@ sheet1.append(["Banana", 5])   # Third Row
 ## Step 7: Creating a Second Sheet
 
 ```python
-# Create another sheet for Fruits
+## Create another sheet for Fruits
 sheet2 = workbook.create_sheet(title="Fruits")
 ```
 
@@ -280,7 +293,7 @@ sheet2.append(["Banana", "Yellow"])
 ## Step 9: Saving Your Excel File
 
 ```python
-# Save the workbook
+## Save the workbook
 workbook.save(filename)
 
 print(f"{filename} created, Trees and Fruits!")
@@ -308,24 +321,24 @@ print(f"{filename} created, Trees and Fruits!")
 ## Complete Code
 
 ```python
-# simple_excel_two_sheets.py
+## simple_excel_two_sheets.py
 from openpyxl import Workbook
 
-# Create a new Excel workbook
+## Create a new Excel workbook
 workbook = Workbook()
 filename = "garden_data.xlsx"
-# The default workbook starts with one sheet
+## The default workbook starts with one sheet
 sheet1 = workbook.active
 sheet1.title = "Trees"
 
-# Add data to the Trees sheet
+## Add data to the Trees sheet
 sheet1["A1"] = "Tree Name"   # First Column
 sheet1["B1"] = "Height (m)"  # Second Column
 sheet1.append(["Mango", 10]) # First Row
 sheet1.append(["Apple", 6])  # Second Row
 sheet1.append(["Banana", 5]) # Third Row
 
-# Create another sheet for Fruits
+## Create another sheet for Fruits
 sheet2 = workbook.create_sheet(title="Fruits")
 sheet2["A1"] = "Fruit Name"
 sheet2["B1"] = "Color"
@@ -333,7 +346,7 @@ sheet2.append(["Mango", "Yellow"])
 sheet2.append(["Apple", "Red"])
 sheet2.append(["Banana", "Yellow"])
 
-# Save the workbook
+## Save the workbook
 workbook.save(filename)
 
 print(f"{filename} created, Trees and Fruits!")
@@ -384,7 +397,7 @@ Now that you can create basic Excel files, try these enhancements:
 ### Add More Data:
 
 ```python
-# Add more tree data
+## Add more tree data
 sheet1.append(["Oak", 15])
 sheet1.append(["Pine", 20])
 
@@ -395,7 +408,7 @@ sheet1.append(["Pine", 20])
 ```python
 from openpyxl.styles import Font
 
-# Make headers bold
+## Make headers bold
 sheet1["A1"].font = Font(bold=True)
 sheet1["B1"].font = Font(bold=True)
 
@@ -404,7 +417,7 @@ sheet1["B1"].font = Font(bold=True)
 ### Add Formulas:
 
 ```python
-# Calculate average height
+## Calculate average height
 sheet1["A5"] = "Average Height:"
 sheet1["B5"] = "=AVERAGE(B2:B4)"
 ```
@@ -414,7 +427,7 @@ sheet1["B5"] = "=AVERAGE(B2:B4)"
 ```python
 from openpyxl import load_workbook
 
-# Open the file we just created
+## Open the file we just created
 workbook = load_workbook("garden_data.xlsx")
 sheet = workbook.active
 print(sheet["A2"].value)  # Prints "Mango"

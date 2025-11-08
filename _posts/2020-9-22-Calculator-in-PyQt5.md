@@ -1,13 +1,24 @@
 ---
-layout: post
-title: How to make a calculator GUI in python with PyQt5
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: Hi friends! this tutorial is about making a calculator application in PyQt5. The calc.ui file contains information about the gui and main.py is all about the...
 featured-img: calc
-description: Making a simple calculator
-keywords: [Python, PyQt5, Calculator, GUI Design]
-tags: [Python, PyQt5, Calculator, GUI]
+keywords:
+- Python
+- PyQt5
+- Calculator
+- GUI Design
+layout: post
+mathjax: true
+tags:
+- Python
+- PyQt5
+- Calculator
+- GUI
+title: How to make a calculator GUI in python with PyQt5
 ---
+
+
 Hi friends! this tutorial is about making a calculator application in PyQt5. The calc.ui file contains information about the gui and main.py is all about the calculator functionality. Copy both the calc.ui and main.py files in a directory and open the terminal and cd to the directory containing both files.
 Run `python3 main.py` and calc application will start.
 
@@ -249,18 +260,18 @@ Run `python3 main.py` and calc application will start.
  <connections/>
 </ui>
 ````
-# calc.py
+## # calc.py
 
 {% include codeHeader.html %}
 ```python
 
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'calc.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
+## # Form implementation generated from reading ui file 'calc.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import re

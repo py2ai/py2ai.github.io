@@ -1,13 +1,27 @@
 ---
-layout: post
-title: How to send audio from a client computer to a server over the wifi
-categories: [Python learning series]
-mathjax: true
-featured-img: ctos
+categories:
+- Python learning series
 description: This tutorial is about using socket programming to send audio data from Microphone of client to the server.
-keywords: [Python, Socket Programming, Audio Transmission, Pyshine, Wifi, Network Programming]
-tags: [Python, Socket Programming, Audio Transmission, Pyshine]
+featured-img: ctos
+keywords:
+- Python
+- Socket Programming
+- Audio Transmission
+- Pyshine
+- Wifi
+- Network Programming
+layout: post
+mathjax: true
+tags:
+- Python
+- Socket Programming
+- Audio Transmission
+- Pyshine
+title: How to send audio from a client computer to a server over...
 ---
+
+
+
 Hi friends! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket programming.
 
 <br>
@@ -29,7 +43,7 @@ pip3 install pyshine==0.0.6
 
 Both server and client computers should be on the same wifi router. The required IP address will be for Wifi LAN (inet)
 
-### Windows OS users
+# Windows OS users
 
 From the cmd window run this command:
 
@@ -37,7 +51,7 @@ From the cmd window run this command:
 ipconfig
 ```
 
-### Mac OS users
+## # Mac OS users
 ```
 ifconfig en0
 ```
@@ -46,7 +60,7 @@ The required IP address will be shown against IPv4 Address, or inet in MAC OS
 
 Here is the server side code. First, please change the IP address: '192.168.1.104' to yours, otherwise your server will not start.
 
-### server.py
+## # server.py
 {% include codeHeader.html %}
 ```python
 
@@ -56,9 +70,9 @@ import threading
 mode =  'get'
 name = 'SERVER RECEIVING AUDIO'
 audio,context= ps.audioCapture(mode=mode)
-#ps.showPlot(context,name)
+## # ps.showPlot(context,name)
 
-# Socket Create
+## # Socket Create
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.1.104'
 port = 4982
@@ -105,7 +119,7 @@ while True:
 ```
 
 
-### client.py
+## # client.py
 {% include codeHeader.html %}
 ```python
 import socket, pickle,struct
@@ -114,9 +128,9 @@ import pyshine as ps
 mode =  'send'
 name = 'CLIENT SENDING AUDIO'
 audio,context = ps.audioCapture(mode=mode)
-# ps.showPlot(context,name)
+## # ps.showPlot(context,name)
 
-# create socket
+## # create socket
 client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.1.104'
 port = 4982
@@ -162,7 +176,7 @@ pip3 install soundfile
 ```
 Then instead of above server.py use this one:
 
-### server_with_record.py
+## # server_with_record.py
 {% include codeHeader.html %}
 ```python
 
@@ -176,9 +190,9 @@ filename = tempfile.mktemp(prefix='output',suffix='.wav',dir='')
 mode =  'get'
 name = 'SERVER RECEIVING AUDIO'
 audio,context= ps.audioCapture(mode=mode)
-#ps.showPlot(context,name)
+## # ps.showPlot(context,name)
 
-# Socket Create
+## # Socket Create
 server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 host_ip = '192.168.1.104'
 port = 4982

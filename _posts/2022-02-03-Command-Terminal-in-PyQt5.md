@@ -1,13 +1,26 @@
 ---
-layout: post
-title: PytQt5 terminal console
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: Hi friends, this quick intro is about the Terminal console using PyQt5. The code is self explanatory. We will use two Widgets as small windows in the main gu...
 featured-img: pexels-negative-space-97077
-description: A simple PyQt5 terminal
-keywords: [PyQt5, Terminal, Console, GUI, Python, Tutorial]
-tags: [PyQt5, Terminal, Console, GUI, Python]
+keywords:
+- PyQt5
+- Terminal
+- Console
+- GUI
+- Python
+- Tutorial
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- Terminal
+- Console
+- GUI
+- Python
+title: PytQt5 terminal console
 ---
+
 Hi friends, this quick intro is about the Terminal console using PyQt5. The code is self explanatory. We will use two Widgets as small windows in the main gui namely,
 `self.cmdWindow` and `self.textWindow`. The former is responsible for entering the commands and the later is for displaying the output as the user will press Enter key.
 We will set the style of the main window using self.stylesheet() function. A function named self.run() will execute the command. You can add more functionalities accordingly.
@@ -16,7 +29,7 @@ Copy the `main.py` code and run in Python3 as:
 
 `python3 main.py`
 
-### main.py
+# main.py
 {% include codeHeader.html %}
 ```python
 from PyQt5.QtCore import QProcess, QStandardPaths, Qt, QEvent, QSettings, QPoint, QSize

@@ -1,19 +1,31 @@
 ---
-layout: post
-title: Let's build a simple "word game inspired by Scrabble"
-mathjax: true
+description: In this tutorial, we'll create a simple word game inspired by Scrabble that you can play via the command line. The game will allow two players to take turns ...
 featured-img: 26072022-python-logo
-description:  make a scrabble game in python
-keywords: ["Python", "Scrabble", "word game", "game development", "command line game", "PyDictionary"]
-tags: ["Python", "Scrabble", "word game", "game development", "tutorial"]
+keywords:
+- Python
+- Scrabble
+- word game
+- game development
+- command line game
+- PyDictionary
+layout: post
+mathjax: true
+tags:
+- Python
+- Scrabble
+- word game
+- game development
+- tutorial
+title: Let's build a simple "word game inspired by Scrabble"
 ---
+
 
 In this tutorial, we'll create a simple word game inspired by Scrabble that you can play via the command line. The game will allow two players to take turns forming words from a set of randomly chosen letters. The goal is to score the highest points by creating valid words.
 
 # Step 1: Setting Up the Environment
 First, ensure you have Python installed on your machine. You can download Python from python.org.
 
-# Step 2: Importing Necessary Libraries
+## Step 2: Importing Necessary Libraries
 We will use the random library to generate random letters and string to access a list of alphabets.
 
 {% include codeHeader.html %}
@@ -22,7 +34,7 @@ import random
 import string
 ```
 
-# Step 3: Creating the Game Logic
+## Step 3: Creating the Game Logic
 Generate Random Letters: We'll start by generating a list of random letters for players to use.
 
 {% include codeHeader.html %}
@@ -64,7 +76,7 @@ def is_valid_word(word, available_letters):
     return True
 ```
 
-# Step 4: Main Game Loop
+## Step 4: Main Game Loop
 
 The game will run in a loop, allowing two players to take turns.
 
@@ -103,7 +115,7 @@ if __name__ == "__main__":
     play_game()
 ```
 
-# Step 5: Running the Game
+## Step 5: Running the Game
 To play the game, save the above code to a file named word_game.py and run it from your command line:
 
 {% include codeHeader.html %}
@@ -193,7 +205,7 @@ import random
 import string
 from PyDictionary import PyDictionary
 
-# Initialize the dictionary
+## Initialize the dictionary
 dictionary = PyDictionary()
 
 def generate_letters(n=7):
@@ -256,7 +268,7 @@ if __name__ == "__main__":
     play_game()
 ```
 
-# Explanation:
+## Explanation:
 PyDictionary Integration: We added the PyDictionary library to check if the entered word exists in the dictionary.
 word_exists Function: This function uses PyDictionary to verify if a word has a valid meaning.
 Validation Loop: Inside the main game loop, we now have a nested loop to repeatedly ask the player for a valid word if the entered word is invalid.

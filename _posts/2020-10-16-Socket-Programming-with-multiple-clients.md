@@ -1,11 +1,23 @@
 ---
-layout: post
-title: Transfer video over sockets from multiple clients
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: mclients
+categories:
+- GUI tutorial series
 description: Socket programming with multiple clients and OpenCV in Python
+featured-img: mclients
+keywords:
+- video
+- sockets
+- multiple
+- development
+- code
+- clients
+- programming
+- tutorial
+layout: post
+mathjax: true
+title: Transfer video over sockets from multiple clients
 ---
+
+
 
 <br>
 <div align="center">
@@ -18,7 +30,7 @@ Hello friends, today we will do socket programming for multiple clients and a si
 videos to a server in Python. The client.py utilizes OpenCv to access the video frames either from the live webcam or through the MP4 video. The server side code 
 runs multi-threading to display video frame of each connected client. 
 
-## Requirements
+# Requirements
 
 ```
 pip3 install opencv-contrib-python
@@ -29,7 +41,7 @@ pip3 install imutils
 
 The client side must know the IP of the server. Both the server and client should be connected to the same wifi router. Depending on the operating system, you can easily find the IP address of your machine as follows:
 
-### MAC OS users
+## MAC OS users
 
 Go to the terminal window and run this command:
 
@@ -66,9 +78,9 @@ The required IP address will be shown against IPv4 Address
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
-# lets make the client code
-# In this code client is sending video to server
+## Welcome to PyShine
+## lets make the client code
+## In this code client is sending video to server
 import socket,cv2, pickle,struct
 import pyshine as ps # pip install pyshine
 import imutils # pip install imutils
@@ -107,9 +119,9 @@ And the server.py is available here
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
-# In this video server is receiving video from clients.
-# Lets import the libraries
+## Welcome to PyShine
+## In this video server is receiving video from clients.
+## Lets import the libraries
 import socket, cv2, pickle, struct
 import imutils
 import threading

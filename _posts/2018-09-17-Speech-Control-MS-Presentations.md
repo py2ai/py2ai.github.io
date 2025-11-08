@@ -1,10 +1,22 @@
 ---
-layout: post
-title: With Speech, control the MS Power Point Presentation
-categories: [tutorial]
-mathjax: true
+categories:
+- tutorial
 description: A simple AI application tutorial to control PPTX slides with speech using python
+keywords:
+- point
+- control
+- speech
+- power
+- development
+- code
+- programming
+- tutorial
+layout: post
+mathjax: true
+title: With Speech, control the MS Power Point Presentation
 ---
+
+
 
 Hello friends, today i am going to present a very simple AI application to voice control the Microsoft PowerPoint Presentation.
 The basic steps in making this application are:
@@ -155,7 +167,7 @@ class Ui_Dialog(object):
          
 
             # presentation.SlideShowWindow.View.Exit()
-            # app.Quit()
+            ## app.Quit()
                     
         
     def getProjectName(self):
@@ -201,7 +213,7 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 ```
     
-## ScreenShot:
+
 Save all the code in a app.py file and run using `python app.py`. 
 
 Now chose the .pptx file and hit OK button. After this the ppt will launch in full screen mode. You can say next slide, or next, in this portion of the code the text is scanned for next word and if it is detected correctly, the slide will turn to 

@@ -1,11 +1,23 @@
 ---
-layout: post
-title: How to make an image to text converter GUI in Python
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pyqt8
+categories:
+- GUI tutorial series
 description: Making a GUI to extract text of various languages by using the trained model of the specific language
+featured-img: pyqt8
+keywords:
+- text
+- development
+- code
+- gui
+- image
+- python
+- tutorial
+- programming
+layout: post
+mathjax: true
+title: How to make an image to text converter GUI in Python
 ---
+
+
 
 
 Hello friends, here is the code for the new idea of making pytesseract based GUI for all languages in PyQt5. This tutorial is about creating a multi-language OCR GUI in PyQt5 in Python. We start from very basic GUI in the Qt designer. We have tested various languages for image to text extraction process of pytesseract. These languages are tested for OCR: 
@@ -31,9 +43,9 @@ Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
 </div>
 <br>
 
-### To run this application, you require python 3. Copy the below main.ui file and save it in a new directory  as main.ui
+# To run this application, you require python 3. Copy the below main.ui file and save it in a new directory  as main.ui
 
-### Also save the gui.py file in that directory and run the gui.py file. Open any image of your language of interest and play with it. If you have questions,
+## Also save the gui.py file in that directory and run the gui.py file. Open any image of your language of interest and play with it. If you have questions,
 ### suggestions please comment, share and subscribe to PyShine youtube channel
 
 No more wait! Here is the ui file:
@@ -164,7 +176,7 @@ No more wait! Here is the ui file:
 ## gui.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
+## Welcome to PyShine
 import pytesseract
 import cv2, os,sys
 from PIL import Image
@@ -176,8 +188,8 @@ from PyQt5 import uic
 from PyQt5 import QtCore,QtGui,QtWidgets
 import glob
 
-# Here we will get the path of the tessdata
-# For 64 bit installation of tesseract OCR 
+## Here we will get the path of the tessdata
+## For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
@@ -199,7 +211,7 @@ for font in range(110):
 	font+=2
 	font_list.append(str(font))
 
-# print('Font list:',font_list)
+## print('Font list:',font_list)
 
 class PyShine_OCR_APP(QtWidgets.QMainWindow):
 	def __init__(self):
@@ -286,7 +298,7 @@ class PyShine_OCR_APP(QtWidgets.QMainWindow):
 			return 0
 		return QWidget.eventFilter(self,source,event)
 	
-# www.pyshine.com
+## www.pyshine.com
 app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()

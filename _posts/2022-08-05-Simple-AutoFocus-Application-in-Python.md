@@ -1,19 +1,30 @@
 ---
-layout: post
-title: A simple autofocus application in Python
-mathjax: true
+description: This tutorial is about using socket programming to set focus of a webcam
 featured-img: lego
-description:  This tutorial is about using socket programming to set focus of a webcam
-keywords: [Python, Raspberry Pi, Autofocus, Socket Programming, Image Processing]
-tags: [Python, Raspberry Pi, Autofocus, Socket Programming, Image Processing]
+keywords:
+- Python
+- Raspberry Pi
+- Autofocus
+- Socket Programming
+- Image Processing
+layout: post
+mathjax: true
+tags:
+- Python
+- Raspberry Pi
+- Autofocus
+- Socket Programming
+- Image Processing
+title: A simple autofocus application in Python
 ---
+
 
 Hello friends! This tutorial is about using raspberry pi to control the focus level of a webcam. Now the question is how to do that? We are using a normal webcam which has manual turning option to adjust is focus level. We can convert this webcam to a useful application to inspect Printed Circuit Boards PCBs or even for chat. To do this we will use the Lego gears to rotate the lense of the webcam. The motor attached to this Lego gears is controlled by Raspberrypi via an interface. The motor can send control signals like Stop, Forward and Back. The next question is how to know when to rotate the lens clockwise, counter-clockwise and when to stop?
 
 To answer this question we will use an image processing algorithm in PC. This algo. will receive the video frames from camera via usb and find the Laplacian variance in video frames. Note that the blur image has less edges and hence less variance so it will be of low focus level. The sharper image has more edges and hence larger value of laplacian variance. The algo. will act as an agent and take the laplacian variance of current frame and the previous frame. The agent will take an initial forward action and check after this action the current variance is higher than previous, if yes then this action will be given a score +=1 otherwise it will be a score of -=1. 
 
 The block diagram shows main setup.
-![]({{ "assets/img/posts/lego-diagram.png" | absolute_url }})
+!![lego diagram]({{ "assets/img/posts/lego-diagram.png" | absolute_url }})
 
 
 Here is the server.py code that will run on raspberry pi zero w.

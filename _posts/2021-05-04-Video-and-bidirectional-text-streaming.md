@@ -1,13 +1,31 @@
 ---
-layout: post
-title: How to stream video and bidirectional text in socket programming
-categories: [Socket Programming Series]
-mathjax: true
+categories:
+- Socket Programming Series
+description: This tutorial is about streaming video over UDP and text messages over TCP between server and client
 featured-img: serverclientvidtext
-description:  This tutorial is about streaming video over UDP and text messages over TCP between server and client
-tags: [Socket Programming, Video Streaming, UDP, TCP, Bidirectional Communication, Python, Networking, Tutorial]
-keywords: [socket programming video stream, bidirectional text communication, UDP video streaming, TCP text messaging, Python socket programming, client-server communication, networking tutorial]
+keywords:
+- socket programming video stream
+- bidirectional text communication
+- UDP video streaming
+- TCP text messaging
+- Python socket programming
+- client-server communication
+- networking tutorial
+layout: post
+mathjax: true
+tags:
+- Socket Programming
+- Video Streaming
+- UDP
+- TCP
+- Bidirectional Communication
+- Python
+- Networking
+- Tutorial
+title: How to stream video and bidirectional text in socket...
 ---
+
+
 
 Hi friends! Today's tutorial is about socket programming for the server and client. The server will send video over the UDP socket and text over the TCP sockets to the client. In contrast to previous tutorials, the client will receive the video and text and send the text messages to the server. Imagine if you have a robot in which the server.py code is running, and it is providing you (the client) the video feed and data in the form of text messages. But if you want to control the robot or server, you need to send the control commands or text messages to the robot. So this tutorial is precisely about achieving the same imagination. 
 
@@ -17,10 +35,10 @@ Just a reminder to change the ip address `192.168.1.1` according to your server 
 
 So here is the server side code:
 
-### server.py 
+# server.py 
 {% include codeHeader.html %}
 ```python
-# This is server code to send video (over UDP) and message frames (over TCP)
+## This is server code to send video (over UDP) and message frames (over TCP)
 
 import cv2, imutils, socket
 import numpy as np
@@ -30,7 +48,7 @@ import threading, wave, pyaudio,pickle,struct
 import sys
 import queue
 import os
-# For details visit pyshine.com
+## For details visit pyshine.com
 q = queue.Queue(maxsize=10)
 
 
@@ -161,15 +179,15 @@ and the client needs this code:
 ### client.py 
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is client code to receive video (over UDP) and message frames (over TCP)
+## Welcome to PyShine
+## This is client code to receive video (over UDP) and message frames (over TCP)
 
 import cv2, imutils, socket
 import numpy as np
 import time, os
 import base64
 import threading, wave, pyaudio,pickle,struct
-# For details visit pyshine.com
+## For details visit pyshine.com
 BUFF_SIZE = 65536
 
 BREAK = False
@@ -189,7 +207,7 @@ client_socket.sendto(message,(host_ip,port))
 
 def get_message():
 	
-    # TCP socket
+    ## TCP socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     socket_address = (host_ip,port-1)
     print('server listening at',socket_address)
@@ -225,7 +243,7 @@ def get_message():
 
 def send_message():
 
-    # create socket
+    ## create socket
     client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     socket_address = (host_ip,port-2)
     print('server listening at',socket_address)

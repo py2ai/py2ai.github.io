@@ -1,13 +1,20 @@
 ---
-layout: post
-title: How to make a zombie shooter game 
-mathjax: true
+description: Welcome to this tutorial where we’ll be building a simple "Zombie Shooter" game using Pygame! This game involves a player controlling a shooter at the bottom...
 featured-img: 26072022-python-logo
-description:  Display remote Matplotlib window in localhost
-keywords: ["zombie shooter game", "pygame tutorial", "pygame basic tutorial"]
-tags: ["zombie shooter game", "pygame tutorial", "pygame basic tutorial"]
-
+keywords:
+- zombie shooter game
+- pygame tutorial
+- pygame basic tutorial
+layout: post
+mathjax: true
+tags:
+- zombie shooter game
+- pygame tutorial
+- pygame basic tutorial
+title: How to make a zombie shooter game
 ---
+
+
 
 Welcome to this tutorial where we’ll be building a simple "Zombie Shooter" game using Pygame! This game involves a player controlling a shooter at the bottom of the screen, shooting bullets upwards to eliminate incoming zombies. The goal is to survive as long as possible while accumulating points by shooting zombies. We'll break down the code into several sections to make it easy to understand:
 
@@ -46,47 +53,47 @@ Source code :
 import pygame
 import random
 
-# Initialize pygame
+## Initialize pygame
 pygame.init()
 
-# Screen dimensions
+## Screen dimensions
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Zombie Shooter")
 
-# Colors
+## Colors
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 
-# Load assets
+## Load assets
 player_img = pygame.image.load("static/icon.png")
 zombie_img = pygame.image.load("static/zombie.png")
 
-# Resize images
+## Resize images
 player_size = 50
 player_img = pygame.transform.scale(player_img, (player_size, player_size))
 zombie_img = pygame.transform.scale(zombie_img, (player_size, player_size))
 
-# Player setup
+## Player setup
 player_x = WIDTH // 2
 player_y = HEIGHT - 70
 player_speed = 5
 
-# Bullet setup
+## Bullet setup
 bullets = []
 bullet_speed = 7
 
-# Zombie setup
+## Zombie setup
 zombies = []
 zombie_speed = 2
 spawn_rate = 25  # Lower is faster
 
-# Font setup
+## Font setup
 font = pygame.font.Font(None, 36)
 
-# Load top score from file
+## Load top score from file
 def load_top_score():
     try:
         with open("top_score.txt", "r") as file:
@@ -100,7 +107,7 @@ def save_top_score(score):
 
 top_score = load_top_score()
 
-# Game loop
+## Game loop
 running = True
 game_over = False
 clock = pygame.time.Clock()
@@ -119,7 +126,7 @@ while running:
     screen.fill(BLACK)
     
     if not game_over:
-        # Event handling
+        ## Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -127,30 +134,30 @@ while running:
                 if event.key == pygame.K_SPACE:
                     bullets.append([player_x + player_size // 2, player_y])
         
-        # Player movement
+        ## Player movement
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and player_x > 0:
             player_x -= player_speed
         if keys[pygame.K_RIGHT] and player_x < WIDTH - player_size:
             player_x += player_speed
         
-        # Bullet movement
+        ## Bullet movement
         for bullet in bullets[:]:
             bullet[1] -= bullet_speed
             if bullet[1] < 0:
                 bullets.remove(bullet)
         
-        # Spawn zombies
+        ## Spawn zombies
         if random.randint(1, spawn_rate) == 1:
             zombies.append([random.randint(0, WIDTH - player_size), 0])
         
-        # Zombie movement
+        ## Zombie movement
         for zombie in zombies[:]:
             zombie[1] += zombie_speed
             if zombie[1] > HEIGHT:
                 game_over = True  # Game over if a zombie reaches bottom
         
-        # Collision detection
+        ## Collision detection
         for bullet in bullets[:]:
             for zombie in zombies[:]:
                 if zombie[0] < bullet[0] < zombie[0] + player_size and \
@@ -159,14 +166,14 @@ while running:
                     bullets.remove(bullet)
                     score += 1
         
-        # Draw elements
+        ## Draw elements
         screen.blit(player_img, (player_x, player_y))
         for bullet in bullets:
             pygame.draw.rect(screen, RED, (bullet[0], bullet[1], 5, 10))
         for zombie in zombies:
             screen.blit(zombie_img, (zombie[0], zombie[1]))
         
-        # Update and display score
+        ## Update and display score
         if score > top_score:
             top_score = score
             save_top_score(top_score)
@@ -178,7 +185,7 @@ while running:
         screen.blit(score_text, (WIDTH - 200, 40))
     
     else:
-        # Game over screen
+        ## Game over screen
         game_over_text = font.render("Game Over! Your score: " + str(score), True, WHITE)
         screen.blit(game_over_text, (WIDTH // 2 - 150, HEIGHT // 2 - 50))
         

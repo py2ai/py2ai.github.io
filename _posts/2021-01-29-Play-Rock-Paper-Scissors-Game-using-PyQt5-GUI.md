@@ -1,13 +1,29 @@
 ---
-layout: post
-title: Play Rock Paper Scissors Game using PyQt5 GUI
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pyqtRPS
+categories:
+- GUI tutorial series
 description: This tutorial is about making a GUI in PyQt5 using OpenCV and Keras to play Rock Paper Scissors Game.
-keywords: [PyQt5, OpenCV, Keras, Rock Paper Scissors, GUI, Machine Learning, Deep Learning]
-tags: [PyQt5, OpenCV, Keras, Machine Learning, GUI]
+featured-img: pyqtRPS
+keywords:
+- PyQt5
+- OpenCV
+- Keras
+- Rock Paper Scissors
+- GUI
+- Machine Learning
+- Deep Learning
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- OpenCV
+- Keras
+- Machine Learning
+- GUI
+title: Play Rock Paper Scissors Game using PyQt5 GUI
 ---
+
+
+
 
 
 Hi and welcome! It is part 14 of the PyQt5 learning series. Today we will design a GUI to play Rock Paper Scissors (RPS) game. Most of you already have known or played this game. 
@@ -38,7 +54,7 @@ Please install latest version 0.0.7 of pyshine as:
 We will proceed in several steps to finish this GUI project. First let's have look at the structure of this GUI project.
 
 
-### 1. Structure of project directory 
+# 1. Structure of project directory 
 In the main project directory ```14-Play Rock Paper Scissors Game using PyQt5 GUI``` we have these items:
 
  ```
@@ -115,7 +131,7 @@ In the main project directory ```14-Play Rock Paper Scissors Game using PyQt5 GU
   
 
 
-### 2. Importing essentials
+## # 2. Importing essentials
 We can install them using pip install and then import them as:
 ```python
 from random import choice
@@ -137,7 +153,7 @@ from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 
 ```
-### 3. A global Epoch counter
+## # 3. A global Epoch counter
 
 ```python
 global epoch_cnt
@@ -145,7 +161,7 @@ epoch_cnt = 0
 ```
 Here we have the ``epoch_cnt`` that will be used in the training process to update the progress bar.
 
-### 4. PyShine_Callback for the end of each training Epoch
+## # 4. PyShine_Callback for the end of each training Epoch
 
 ```python
 class PyShine_Callback(Callback):
@@ -156,7 +172,7 @@ class PyShine_Callback(Callback):
 ```
 This class will continue to update the ```epoch_cnt``` counter for the display purpose of progress bar.
 
-### 5. Main window class
+## # 5. Main window class
 
 ```python
 class Ui_MainWindow(object):
@@ -174,7 +190,7 @@ class Ui_MainWindow(object):
 Here after initializing the setupUi for the MainWindow we will initialize all the parameters of the GUI just like we did in the
 previous PyQt5 tutorials on pyshine.com.
 
-### 6. Input modes functions
+## # 6. Input modes functions
 
 ```python
 def selectCam(self):
@@ -191,7 +207,7 @@ def selectVideo(self):
 ```
 The above two functions will be used to select the mode, either video input or camera input.
 
-### 7. Start the Training
+## # 7. Start the Training
 
 ```python
 def start_training(self):
@@ -207,7 +223,7 @@ def start_training(self):
 ```
 The above function will start the training process.
 
-### 8. Load the trained model
+## # 8. Load the trained model
 
 ```python
 def loadModel(self):
@@ -230,7 +246,7 @@ def loadModel(self):
 ```
 The above function will be used to load the .h5 file using a file dialog. This step is important before starting the game.
 
-### 9. Find the winner
+## # 9. Find the winner
 
 ```python
 def find_winner(self,predicted_name, pc_selected_name):
@@ -264,7 +280,7 @@ Once both players have made a choice, the human choice will be obtained via trai
 The above function will use another ```pc_selected_name``` to return the winner or a Tie.
 
 
-### 10. Update the progress bar to show training progress
+## # 10. Update the progress bar to show training progress
 ```python
 def update_train_progress(self):
 	""" This function is responsible to update the progress bar to show training percentage """
@@ -287,7 +303,7 @@ def update_train_progress(self):
 The above function will update the progress bar 2 once the epoch is incremented. Notice how we map the EPOCHS to a percentage.
 
 
-### 11. Mapping and Demapping the labels 
+## # 11. Mapping and Demapping the labels 
 
 ```python
 def mapper(self,labels):
@@ -303,7 +319,7 @@ def demapper(self,val):
 The above two functions will perform mapping to let the machine learn the repective integer for a label. After training,
 the demapper will be used to represent the predicted integer to its respective label such as Rock, Paper, Scissors, None.
 
-### 12. Training the model
+## # 12. Training the model
 
 ```python
 def train_model(self):
@@ -337,7 +353,7 @@ def train_model(self):
 
 	(trainX, testX, trainY, testY) = train_test_split(np.array(data), np.array(labels), test_size=0.25, random_state=42)
 
-	# construct the image generator for data augmentation
+## # construct the image generator for data augmentation
 	aug = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
 	height_shift_range=0.1, shear_range=0.2, zoom_range=0.2,
 	horizontal_flip=True, fill_mode="nearest")
@@ -371,7 +387,7 @@ def train_model(self):
 The above function will scan the dataset directory and make the dataset and labels so that it can be used to 
 train the model which has CNN architecture especially configured for the Rock Paper Scissors Network (RPSNET). 
 
-### 13. Load video or camera input to start the game
+## # 13. Load video or camera input to start the game
 
 ```python
 def loadImage(self):
@@ -459,7 +475,7 @@ def loadImage(self):
 
 	self.image = ps.putBText(self.image,predicted_name.upper(),text_offset_x=80,text_offset_y=10,font_scale=1.5,text_RGB=(220,0,0))
 
-	# Find who is the winner
+## # Find who is the winner
 	if prev_move != predicted_name:
 	if predicted_name != "None":
 	  pc_selected_name = choice(['Rock', 'Paper', 'Scissors'])
@@ -500,7 +516,7 @@ This function is self explanatory, once the user hits the Start button, this fun
 the while loop will continue to call the update function. The inference of input image is performed via the loaded model
 and the winner is displayed in the status.
 
-### 14. Set photo on the label
+## # 14. Set photo on the label
 
 ```python
 
@@ -524,7 +540,7 @@ def setPhoto(self,image):
 ```
 Above function will display the image on the GUI with a red color rectangle of the region of interest (roi). 
 
-### 15. Acquire the data
+## # 15. Acquire the data
 ```python
 def acquireData(self):
 	""" This funciton will acquire the image data into the respective label directory """
@@ -555,7 +571,7 @@ def acquireData(self):
  Above function will set the flag ```self.acquire``` to True which initiate the process of acquiring data in the generated
  subdirectory once the user hit Start.
  
-### 16. Update the photo on the label
+## # 16. Update the photo on the label
  ```python
  
 def update(self):
@@ -568,7 +584,7 @@ def update(self):
  ```
 Above function will simply call the setPhoto function with the image img.
 
-### 17. Retranslate the User Interface of GUI
+## # 17. Retranslate the User Interface of GUI
 ```python
 
 def retranslateUi(self, MainWindow):
@@ -592,7 +608,7 @@ def retranslateUi(self, MainWindow):
 	self.pushButton_4.setText(_translate("MainWindow", "Start"))
 ```
   
-### 18. Run the application
+## # 18. Run the application
 ```python
 if __name__ == "__main__":
     import sys
@@ -604,34 +620,34 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 ```
   
-### COMPLETE CODE
+## # COMPLETE CODE
 Here is complete main code:
   
-### RPS.py
+## # RPS.py
 {% include codeHeader.html %}
   ```python
   
-# -*- coding: utf-8 -*-
+## # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'RPS.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# Subscribe to PyShine Youtube channel for more detail! 
-# 
-# This code will let user to input: 1)video, 2) webcam and either train or test the model
-#
-# A user can generate data set by acquiring images and labels through GUI
-#
-# Train the model RPSNET via GUI, once .h5 file is generated deploy to start game
-#
-# Essentials can be installed through pip install: Tensorflow, cv2, PyQt5, numpy, imutils, pyshine, keras
-#
-# Usage: python RPS.py 
-#
-# Author: Pyshine www.pyshine.com
+## # Form implementation generated from reading ui file 'RPS.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # Subscribe to PyShine Youtube channel for more detail! 
+## # 
+## # This code will let user to input: 1)video, 2) webcam and either train or test the model
+##
+## # A user can generate data set by acquiring images and labels through GUI
+##
+## # Train the model RPSNET via GUI, once .h5 file is generated deploy to start game
+##
+## # Essentials can be installed through pip install: Tensorflow, cv2, PyQt5, numpy, imutils, pyshine, keras
+##
+## # Usage: python RPS.py 
+##
+## # Author: Pyshine www.pyshine.com
 
 
 from random import choice
@@ -958,7 +974,7 @@ class Ui_MainWindow(object):
 		
 		(trainX, testX, trainY, testY) = train_test_split(np.array(data), np.array(labels), test_size=0.25, random_state=42)
 
-		# construct the image generator for data augmentation
+## #	# construct the image generator for data augmentation
 		aug = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
 		height_shift_range=0.1, shear_range=0.2, zoom_range=0.2,
 		horizontal_flip=True, fill_mode="nearest")
@@ -1074,7 +1090,7 @@ class Ui_MainWindow(object):
 				
 				self.image = ps.putBText(self.image,predicted_name.upper(),text_offset_x=80,text_offset_y=10,font_scale=1.5,text_RGB=(220,0,0))
 	
-				# Find who is the winner
+## #			# Find who is the winner
 				if prev_move != predicted_name:
 					if predicted_name != "None":
 						pc_selected_name = choice(['Rock', 'Paper', 'Scissors'])
@@ -1186,7 +1202,7 @@ class Ui_MainWindow(object):
 		self.radioButton_2.setText(_translate("MainWindow", "Camera input"))
 		self.pushButton_4.setText(_translate("MainWindow", "Start"))
 
-# www.pyshine.com
+## # www.pyshine.com
 
 
 

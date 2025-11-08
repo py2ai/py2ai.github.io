@@ -1,29 +1,31 @@
 ---
-layout: post
-title: Interacting with Output Widgets Using Input Widgets in PySide6 (Part 7)
-mathjax: true
+description: Control the Progress bar with Slider widget and more
 featured-img: 26072022-python-logo
-description:  Control the Progress bar with Slider widget and more
-tags:
-  - Python
-  - PySide6
-  - GUI Development
-  - PySide6 Tutorial
-  - Application Development
-  - Programming
-  - Qt
 keywords:
-  - PySide6 tutorial
-  - Input widgets PySide6
-  - Output widgets PySide6
-  - Slider and Progress bar
-  - Spin Box and LCD Display
-  - Dynamic GUI updates
-  - PySide6 interactions
-  - Python GUI widgets
-  - PySide6 example
-  - GUI programming with PySide6
+- PySide6 tutorial
+- Input widgets PySide6
+- Output widgets PySide6
+- Slider and Progress bar
+- Spin Box and LCD Display
+- Dynamic GUI updates
+- PySide6 interactions
+- Python GUI widgets
+- PySide6 example
+- GUI programming with PySide6
+layout: post
+mathjax: true
+tags:
+- Python
+- PySide6
+- GUI Development
+- PySide6 Tutorial
+- Application Development
+- Programming
+- Qt
+title: Interacting with Output Widgets Using Input Widgets in...
 ---
+
+
 
 
 In this tutorial, we'll explore how to interact with output widgets by providing input through input widgets in PySide6. We'll build a simple example application where input widgets such as sliders and spin boxes are used to provide input, which will be displayed by output widgets like progress bars and digital segment displays.
@@ -34,7 +36,7 @@ Before we begin, ensure you have Python and PySide6 installed on your system. Yo
 
 `pip install PySide6`
 
-# Designing the GUI
+## Designing the GUI
 
 Our GUI will consist of a main window with input widgets like sliders and spin boxes, and output widgets like progress bars and digital segment displays to display the input values.
 
@@ -53,7 +55,7 @@ class InputOutputWidgetsApp(QWidget):
 
         layout = QVBoxLayout()
 
-        # Slider
+        ## Slider
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(100)
@@ -63,7 +65,7 @@ class InputOutputWidgetsApp(QWidget):
         self.slider.valueChanged.connect(self.updateOutputWidgets)
         layout.addWidget(self.slider)
 
-        # Spin Box
+        ## Spin Box
         self.spin_box = QSpinBox()
         self.spin_box.setMinimum(0)
         self.spin_box.setMaximum(100)
@@ -71,24 +73,24 @@ class InputOutputWidgetsApp(QWidget):
         self.spin_box.valueChanged.connect(self.updateOutputWidgets)
         layout.addWidget(self.spin_box)
 
-        # Progress Bar
+        ## Progress Bar
         self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
 
-        # Digital Segment Display
+        ## Digital Segment Display
         self.segment_display = QLCDNumber()
         layout.addWidget(self.segment_display)
 
         self.setLayout(layout)
 
-        # Update output widgets initially
+        ## Update output widgets initially
         self.updateOutputWidgets()
 
     def updateOutputWidgets(self):
-        # Update progress bar
+        ## Update progress bar
         self.progress_bar.setValue(self.slider.value())
 
-        # Update digital segment display
+        ## Update digital segment display
         self.segment_display.display(self.spin_box.value())
 
 if __name__ == '__main__':
@@ -98,20 +100,20 @@ if __name__ == '__main__':
     sys.exit(app.exec())
 ```
 
-# Understanding the Code
+## Understanding the Code
 
 * We create a class InputOutputWidgetsApp inheriting from QWidget.
 * We set up input widgets such as a slider and a spin box, and output widgets such as a progress bar and a digital segment display.
 * We connect the valueChanged signals of the slider and the spin box to a common updateOutputWidgets method, which updates the output widgets whenever the input values change.
 * The updateOutputWidgets method updates the value of the progress bar with the slider value and updates the value displayed on the digital segment display with the spin box value.
 
-# Running the Application
+## Running the Application
 Save the code to a file (e.g., input_output_widgets_app.py) and execute it using Python:
 
 `python input_output_widgets_app.py`
 
 You should see the GUI window with input widgets (slider and spin box) and output widgets (progress bar and digital segment display). Adjusting the values of the input widgets should dynamically update the output widgets accordingly.
 
-# Conclusion
+## Conclusion
 
 In this tutorial, we learned how to interact with output widgets by providing input through input widgets in PySide6. By connecting the signals of input widgets to appropriate methods, we can dynamically update the output widgets based on user input. This interaction allows us to create more dynamic and responsive GUI applications. Experiment with the code and explore the possibilities of PySide6 to create even more interactive and user-friendly applications!

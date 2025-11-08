@@ -1,11 +1,23 @@
 ---
-layout: post
-title: How to make screen recorder in PyQt5
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: screen
+categories:
+- GUI tutorial series
 description: Making of an audio and video screen recorder in Python
+featured-img: screen
+keywords:
+- development
+- recorder
+- programming
+- code
+- tutorial
+- python
+- pyqt5
+- screen
+layout: post
+mathjax: true
+title: How to make screen recorder in PyQt5
 ---
+
+
 
 Alright friends welcome back, lets make a very flexible screen recorder today. The target platform for this GUI is Windows 10. For direct installation to windows 10, please download these three parts in a folder and then extract (using winRAR) the PyShine Recorder setup.zip file:
 
@@ -18,7 +30,7 @@ Alright friends welcome back, lets make a very flexible screen recorder today. T
 
 [![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
 
-### IMPORTANT
+# IMPORTANT
 
 Please run the code below only from PowerShell and not use any IDE, such as PyCharm or others, because it will not work in them properly.
 Copy the code below in a Python file as main.py and save it to a location. Then go to that location open up the Windows PowerShell as Shift+ Right click 
@@ -30,14 +42,14 @@ python3 main.py
 
 
 
-### main.py 
+## main.py 
 {% include codeHeader.html %}
 ```python 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Subscribe to pyshine youtube channel for more learning videos.
-# Its an Audio Video Screen Recoder in Python 3.
-# -*- coding: utf-8 -*-
+## Subscribe to pyshine youtube channel for more learning videos.
+## Its an Audio Video Screen Recoder in Python 3.
+## -*- coding: utf-8 -*-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 
 from PyQt5 import QtCore, QtGui, QtWidgets # pip install pyqt5
@@ -99,7 +111,7 @@ class Ui_MainWindow(object):
 		self.cmd = ""
 		""" AUDIO and VIDIO DEVICES """
 		from PyQt5.QtMultimedia import QAudioDeviceInfo,QAudio,QCameraInfo
-		# List of Audio Input Devices
+##	# List of Audio Input Devices
 		input_audio_deviceInfos = QAudioDeviceInfo.availableDevices(QAudio.AudioInput)
 		for device in input_audio_deviceInfos:
 			self.comboBox.addItem(device.deviceName())
@@ -245,7 +257,7 @@ class Ui_MainWindow(object):
 			
 			x1,y1,w,h = self.takeSnap()
 			
-			# self.cmd = r'"ffmpeg -rtbufsize 100M -f dshow -i audio="{}" -f -y -rtbufsize 100M -f gdigrab -framerate 30 -offset_x {} -offset_y {} -video_size {}x{} -draw_mouse 1 -i desktop -c:v libx264 -r 30 -preset ultrafast -tune zerolatency -crf 25 -pix_fmt yuv420p "{}"'.format(self.Mic,x1,y1,w,h,filename[0])
+##		# self.cmd = r'"ffmpeg -rtbufsize 100M -f dshow -i audio="{}" -f -y -rtbufsize 100M -f gdigrab -framerate 30 -offset_x {} -offset_y {} -video_size {}x{} -draw_mouse 1 -i desktop -c:v libx264 -r 30 -preset ultrafast -tune zerolatency -crf 25 -pix_fmt yuv420p "{}"'.format(self.Mic,x1,y1,w,h,filename[0])
 			
 			self.cmd = """ffmpeg -rtbufsize 1500M -f dshow -i audio="{}" -f -y -rtbufsize 1500M -f gdigrab -framerate ntsc -offset_x {} -offset_y {} -video_size {}x{} -draw_mouse 1 -i desktop -c:v libx264 -r 30 -preset ultrafast -tune zerolatency -crf 1 -pix_fmt yuv420p "{}" """.format(self.Mic,x1,y1,w,h,filename[0])
 			
@@ -309,9 +321,9 @@ if __name__ == "__main__":
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Subscribe to pyshine youtube channel for more learning videos.
-# Its an Audio Video Screen Recoder in Python 3.
-# -*- coding: utf-8 -*-
+## Subscribe to pyshine youtube channel for more learning videos.
+## Its an Audio Video Screen Recoder in Python 3.
+## -*- coding: utf-8 -*-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 
 

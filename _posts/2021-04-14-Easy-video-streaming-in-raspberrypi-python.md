@@ -1,13 +1,31 @@
 ---
-layout: post
-title: How to easily stream webcam video over wifi with Raspberry Pi
-categories: [Raspberry Pi Programming Series]
-mathjax: true
+categories:
+- Raspberry Pi Programming Series
+description: This tutorial is about streaming webcam video to an HTML page without Flask
 featured-img: jeep01
-description:  This tutorial is about streaming webcam video to an HTML page without Flask
-tags: [Raspberry Pi, OpenCV, WiFi Streaming, Python, Video Streaming, Raspberry Pi Projects, Networking, Tutorial]
-keywords: [Raspberry Pi video streaming, OpenCV streaming Raspberry Pi, Raspberry Pi WiFi streaming, stream webcam Raspberry Pi, Raspberry Pi FPV, Raspberry Pi OpenCV, Raspberry Pi projects]
+keywords:
+- Raspberry Pi video streaming
+- OpenCV streaming Raspberry Pi
+- Raspberry Pi WiFi streaming
+- stream webcam Raspberry Pi
+- Raspberry Pi FPV
+- Raspberry Pi OpenCV
+- Raspberry Pi projects
+layout: post
+mathjax: true
+tags:
+- Raspberry Pi
+- OpenCV
+- WiFi Streaming
+- Python
+- Video Streaming
+- Raspberry Pi Projects
+- Networking
+- Tutorial
+title: How to easily stream webcam video over wifi with...
 ---
+
+
 
 Hi friends! Today's tutorial is Part 01 of the Raspberry Pi learning series. You will learn how to transmit video that from OpenCV library over the wifi. This video stream can be received on any mobile device connected to wifi and can open up an HTML webpage. Interestingly, in this tutorial, we do not require Flask or Django. All we need are two libraries; 1) cv2 and 2) pyshine.
 
@@ -17,7 +35,7 @@ Hi friends! Today's tutorial is Part 01 of the Raspberry Pi learning series. You
 </div>
 <br>
 
-### Installation 
+# Installation 
 1) cv2 
 You can easily install opencv as cv2 by following the tutorial here:
 
@@ -36,10 +54,10 @@ For this purpose, we need a `main.py` code as shown below, which will use the do
 
 From our previous tutorials, you may already have known the idea to get the IP address of your device. Let's say your IP address is `192.168.1.1`, then the following code is all we need to observe the video stream in another device's webbrowser.
 
-### main.py
+## main.py
 {% include codeHeader.html %}
 ```python
-# Part 01 using opencv access webcam and transmit the video in HTML
+## Part 01 using opencv access webcam and transmit the video in HTML
 import cv2
 import  pyshine as ps #  pip3 install pyshine==0.0.9
 HTML="""

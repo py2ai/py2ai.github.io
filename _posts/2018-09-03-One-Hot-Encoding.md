@@ -1,16 +1,27 @@
 ---
-layout: post
-title: Importance of One Hot Encoding
-categories: [tutorial]
-mathjax: true
+categories:
+- tutorial
 description: Why One Hot Encoding is important for Neural Netwoks
+keywords:
+- hot
+- development
+- code
+- programming
+- importance
+- encoding
+- tutorial
+- one
+layout: post
+mathjax: true
+title: Importance of One Hot Encoding
 ---
 
-## What is ONE HOT ENCODING?
+
+# What is ONE HOT ENCODING?
 
 An efficient method of encoding the classes to train a network.
 
-### One Hot Encoding
+## One Hot Encoding
 ```python
 [1,0,0]: Class A
 [0,1,0]: Class B

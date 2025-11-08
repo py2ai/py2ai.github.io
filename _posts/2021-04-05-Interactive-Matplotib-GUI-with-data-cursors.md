@@ -1,19 +1,33 @@
 ---
-layout: post
-title: Interactive Matplotlib GUI with data cursors
-categories: [GUI tutorial series]
-mathjax: true
+categories:
+- GUI tutorial series
+description: Matplotlib GUI with data cursors showing values where you click
 featured-img: datacursor
-description:  Matplotlib GUI with data cursors showing values where you click
-tags: [Python, PyQt5, Matplotlib, mpldatacursor, Data Visualization]
-keywords: [Matplotlib GUI, PyQt5, Data Cursor, mpldatacursor, Python tutorial]
+keywords:
+- Matplotlib GUI
+- PyQt5
+- Data Cursor
+- mpldatacursor
+- Python tutorial
+layout: post
+mathjax: true
+tags:
+- Python
+- PyQt5
+- Matplotlib
+- mpldatacursor
+- Data Visualization
+title: Interactive Matplotlib GUI with data cursors
 ---
+
+
+
 
 Hello friends! I hope you are doing great with the PyQt5 learning series. Thank you for your valuable comments and appreciation. Alright, let's discuss today's GUI, which is a continuation of our previous Matplotlib based GUI series. Today we will use the GUI of part 15 and integrate the exciting yet straightforward feature of the data cursor. It means that whenever the user clicks on the plot, a small label window will popup on the canvas showing the x and y data.
 Alright, so all the changes only need to be made in the main.py. The rest of the code is the same as before. We will use ```mpldatacursor```
 library, which provides interactive data cursors (that are clickable annotation boxes) for Matplotlib. However, currently, it is only supported for the Matplotlib version 3.1.2. It would not work for the latest version of Matplotlib. However, you are free to give it a try.
 
-### Installation of matplolib and mpldatacursor
+# Installation of matplolib and mpldatacursor
 
 ```pip3 install matplotlib==3.1.2```
 
@@ -21,7 +35,7 @@ library, which provides interactive data cursors (that are clickable annotation 
 
 The next step is to check if the mpldatacursor is working fine or not.
 
-### Testing mpldatacursor
+## # Testing mpldatacursor
 
 The following code will plot seven lines and you can click on each line to see the cursor.
 {% include codeHeader.html %}
@@ -45,19 +59,19 @@ The most important three steps in the above code are:
 
 So lets use the above three steps in our main.py code as folows:
 
-### main.py
+## # main.py
 {% include codeHeader.html %}
 ```python
-# -*- coding: utf-8 -*-
-# Subscribe to PyShine Youtube channel for more detail! 
-#
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# WEBSITE: www.pyshine.com
+## # -*- coding: utf-8 -*-
+## # Subscribe to PyShine Youtube channel for more detail! 
+##
+## # Form implementation generated from reading ui file 'main.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # WEBSITE: www.pyshine.com
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -73,7 +87,7 @@ import pandas as pd
 import sip # can be installed : pip install sip
 from datetime import datetime
 
-# We require a canvas class
+## # We require a canvas class
 from mpldatacursor import datacursor
 class MatplotlibCanvas(FigureCanvasQTAgg):
 	def __init__(self,parent=None, dpi = 120):
@@ -328,14 +342,14 @@ class Ui_MainWindow(object):
         df = pd.read_csv(csvfilename,encoding='utf-8').fillna(0)
         LIST_OF_COLUMNS = df.columns.tolist()
         dataset={}
-        # time_format = "%d/%m/%Y %H:%M:%S" 
-        # time_format =  "%m/%d/%Y"
-        # time_format = "%d/%m/%Y"
-        # time_format = "%m-%d-%Y"
-        # time_format = "%d-%m-%Y"
-        # time_format = "%H:%M:%S"
-        # time_format = "%M:%S"
-        # time_format = '%d/%m/%Y %H:%M%f'
+        ## time_format = "%d/%m/%Y %H:%M:%S" 
+        ## time_format =  "%m/%d/%Y"
+        ## time_format = "%d/%m/%Y"
+        ## time_format = "%m-%d-%Y"
+        ## time_format = "%d-%m-%Y"
+        ## time_format = "%H:%M:%S"
+        ## time_format = "%M:%S"
+        ## time_format = '%d/%m/%Y %H:%M%f'
         time_format = '%Y-%m-%d %H:%M:%S.%f'
         
         
@@ -387,9 +401,9 @@ class Ui_MainWindow(object):
         self.actionOpen_csv_file.setText(_translate("MainWindow", "Open csv file"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 if __name__ == "__main__":
 	import sys

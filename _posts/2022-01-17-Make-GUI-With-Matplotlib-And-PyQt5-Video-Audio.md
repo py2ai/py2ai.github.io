@@ -1,29 +1,32 @@
 ---
-layout: post
-title: PytQt5 Video and Audio GUI with start and stop buttons
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: 2022-01-17-plot-vi
+categories:
+- GUI tutorial series
 description: How to plot audio and video from opencv matplotlib and PyQt5
-tags:
-  - PyQt5
-  - GUI
-  - Audio
-  - Video
-  - OpenCV
-  - Matplotlib
-  - Tutorial
-  - Python
+featured-img: 2022-01-17-plot-vi
 keywords:
-  - PyQt5 video GUI
-  - PyQt5 audio plot
-  - OpenCV video display
-  - Matplotlib audio visualization
-  - Python GUI tutorial
-  - Start and stop buttons PyQt5
-  - Live audio plotting PyQt5
-  - Video playback PyQt5
+- PyQt5 video GUI
+- PyQt5 audio plot
+- OpenCV video display
+- Matplotlib audio visualization
+- Python GUI tutorial
+- Start and stop buttons PyQt5
+- Live audio plotting PyQt5
+- Video playback PyQt5
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- GUI
+- Audio
+- Video
+- OpenCV
+- Matplotlib
+- Tutorial
+- Python
+title: PytQt5 Video and Audio GUI with start and stop buttons
 ---
+
+
 
 Hello friends, this tutorial is about displaying mp4 video and its audio plot on the same GUI. This is part 16 of the PyQt5 learning series. More details about making the
 backbone-gui is available here https://pyshine.com/PyQt5-Live-Audio-GUI-with-Start-and-Stop/. Below are two files: main.ui and gui.py. Put both in same directory and 
@@ -31,7 +34,7 @@ run `python3 gui.py`
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
 
-### main.ui
+# main.ui
 {% include codeHeader.html %}
 ```python
 
@@ -247,13 +250,13 @@ run `python3 gui.py`
 
 (Updated) Added QtWidgets.QApplication.processEvents(), runs well for Windows and Mac Os, please share your experiences below.
 
-### gui.py  
+## gui.py  
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is part 16 of the PyQt5 learning series
-# Based on parameters, the GUI will plot Video using OpenCV and Audio using Matplotlib in PyQt5
-# We will use Qthreads to run the audio/Video streams
+## Welcome to PyShine
+## This is part 16 of the PyQt5 learning series
+## Based on parameters, the GUI will plot Video using OpenCV and Audio using Matplotlib in PyQt5
+## We will use Qthreads to run the audio/Video streams
 
 import sys
 import matplotlib
@@ -275,7 +278,7 @@ import os
 import wave, pyaudio, pdb
 import cv2,imutils
 from PyQt5.QtWidgets import QFileDialog
-# For details visit pyshine.com
+## For details visit pyshine.com
 
 
 
@@ -368,7 +371,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 			data = wf.readframes(CHUNK)
 			audio_as_np_int16 = np.frombuffer(data, dtype=np.int16)
 			audio_as_np_float32 = audio_as_np_int16.astype(np.float32)
-			# Normalise float32 array                                                   
+##		# Normalise float32 array                                                   
 			max_int16 = 2**15
 			audio_normalised = audio_as_np_float32 / max_int16
 			
@@ -568,7 +571,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
 				self.stop_worker()
 				break
 
-# www.pyshine.com
+## www.pyshine.com
 class Worker(QtCore.QRunnable):
 
 	def __init__(self, function, *args, **kwargs):

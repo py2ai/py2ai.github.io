@@ -1,13 +1,28 @@
 ---
-layout: post
-title: How to make a Matplotlib and PyQt5 based GUI to plot a CSV file data
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: pyqt15datatime
+categories:
+- GUI tutorial series
 description: Making a drag drop CSV file based matplotlib GUI with multiple themes and adding axis selection options
-keywords: [PyQt5, Matplotlib, GUI, CSV, Python, Data Visualization, Tutorial]
-tags: [PyQt5, Matplotlib, GUI, Data Visualization]
+featured-img: pyqt15datatime
+keywords:
+- PyQt5
+- Matplotlib
+- GUI
+- CSV
+- Python
+- Data Visualization
+- Tutorial
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- Matplotlib
+- GUI
+- Data Visualization
+title: How to make a Matplotlib and PyQt5 based GUI to plot a...
 ---
+
+
+
 
 
 Hello friends! This is part 15 of the PyQt5 GUI learning series. Recently, some friends have given interesting suggestions related to part 07. In
@@ -45,20 +60,20 @@ In a project directory (in our case ```15-Drag Drop CSV matplotlib GUI with sele
 
 
 
-## main.py
+# main.py
 {% include codeHeader.html %}
 ```python
 
-# -*- coding: utf-8 -*-
-# Subscribe to PyShine Youtube channel for more detail! 
-#
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# WEBSITE: www.pyshine.com
+## # -*- coding: utf-8 -*-
+## # Subscribe to PyShine Youtube channel for more detail! 
+##
+## # Form implementation generated from reading ui file 'main.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # WEBSITE: www.pyshine.com
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -73,7 +88,7 @@ import seaborn as sns
 import pandas as pd
 import sip # can be installed : pip install sip
 from datetime import datetime
-# We require a canvas class
+## # We require a canvas class
 
 
 class MatplotlibCanvas(FigureCanvasQTAgg):
@@ -331,9 +346,9 @@ class Ui_MainWindow(object):
 		self.actionOpen_csv_file.setText(_translate("MainWindow", "Open csv file"))
 		self.actionExit.setText(_translate("MainWindow", "Exit"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 if __name__ == "__main__":
 	import sys
@@ -348,13 +363,13 @@ if __name__ == "__main__":
 
 ```
 
-## drag_drop.py
+## # drag_drop.py
 {% include codeHeader.html %}
 ```python
 
-# Lets make the main window class
-# Subscribe to PyShine Youtube channel for more detail! 
-# WEBSITE: www.pyshine.com
+## # Lets make the main window class
+## # Subscribe to PyShine Youtube channel for more detail! 
+## # WEBSITE: www.pyshine.com
 from main import Ui_MainWindow
 import sys
 from PyQt5 import QtCore, QtWidgets
@@ -402,8 +417,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 			self.readData()
 		else:
 			e.ignore() # just like above functions	
-# Subscribe to PyShine Youtube channel for more detail! 
-# WEBSITE: www.pyshine.com		
+## # Subscribe to PyShine Youtube channel for more detail! 
+## # WEBSITE: www.pyshine.com		
 if __name__ == '__main__':
 	app = QtWidgets.QApplication(sys.argv)
 	window = MainWindow()
@@ -413,7 +428,7 @@ if __name__ == '__main__':
 	
 ```
 
-### performance_metrics.csv
+## # performance_metrics.csv
 ```csv
 Variance score,Mean Absolute Error,Mean Square Error,Root Mean Square Error,R2
 0.174653649,0.10403642,0.032201797,0.179448591,0.055943322
@@ -444,7 +459,7 @@ Important in the main.py:
       time_format = '%Y-%m-%d %H:%M:%S.%f' # Please use this format for time_series-data_2.csv kind of time stamp
       time_format = '%d/%m/%Y %H:%M%f'     # Please use this format for time_series-data_1.csv kind of time stamp
       ```
-### Date Time formats
+## # Date Time formats
 
 To understand the various formats that can be used for the date time formatting, please have a look at this code:
 
@@ -475,7 +490,7 @@ You can try the above code:
 
 
 
-### time_series-data_2.csv
+## # time_series-data_2.csv
 
 ```csv
 timestamp, light, orange, mango, banana, pear
@@ -487,7 +502,7 @@ timestamp, light, orange, mango, banana, pear
 2020-08-12 23:10:19.372733, 16, 248, 216, 195, 21.687
 
 ```
-### time_series_data_1.csv
+## # time_series_data_1.csv
 ```csv
 time,data,# Lane Points,% Observed
 04/03/2016 0:00,16,1,100
@@ -744,20 +759,20 @@ Wait a minute, would it be a good idea to plot all others vs the selected x-axis
 on the y-axis. In that case we have to add another checkbox, which is also known as radio button. We can call it versus all or (vs all). If you want this functionality, please use the main_vsall.py instead of main.py. 
 
 
-### main_vsall.py
+## # main_vsall.py
 {% include codeHeader.html %}
 ```python
 
-# -*- coding: utf-8 -*-
-# Subscribe to PyShine Youtube channel for more detail! 
-#
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
-#
-# WEBSITE: www.pyshine.com
+## # -*- coding: utf-8 -*-
+## # Subscribe to PyShine Youtube channel for more detail! 
+##
+## # Form implementation generated from reading ui file 'main.ui'
+##
+## # Created by: PyQt5 UI code generator 5.11.3
+##
+## # WARNING! All changes made in this file will be lost!
+##
+## # WEBSITE: www.pyshine.com
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -773,7 +788,7 @@ import pandas as pd
 import sip # can be installed : pip install sip
 from datetime import datetime
 
-# We require a canvas class
+## # We require a canvas class
 
 class MatplotlibCanvas(FigureCanvasQTAgg):
 	def __init__(self,parent=None, dpi = 120):
@@ -1024,14 +1039,14 @@ class Ui_MainWindow(object):
 		df = pd.read_csv(csvfilename,encoding='utf-8').fillna(0)
 		LIST_OF_COLUMNS = df.columns.tolist()
 		dataset={}
-		# time_format = "%d/%m/%Y %H:%M:%S" 
-		# time_format =  "%m/%d/%Y"
-		# time_format = "%d/%m/%Y"
-		# time_format = "%m-%d-%Y"
-		# time_format = "%d-%m-%Y"
-		# time_format = "%H:%M:%S"
-		# time_format = "%M:%S"
-		# time_format = '%d/%m/%Y %H:%M%f'
+## #	# time_format = "%d/%m/%Y %H:%M:%S" 
+## #	# time_format =  "%m/%d/%Y"
+## #	# time_format = "%d/%m/%Y"
+## #	# time_format = "%m-%d-%Y"
+## #	# time_format = "%d-%m-%Y"
+## #	# time_format = "%H:%M:%S"
+## #	# time_format = "%M:%S"
+## #	# time_format = '%d/%m/%Y %H:%M%f'
 		time_format = '%Y-%m-%d %H:%M:%S.%f'
 		
 		
@@ -1083,9 +1098,9 @@ class Ui_MainWindow(object):
 		self.actionOpen_csv_file.setText(_translate("MainWindow", "Open csv file"))
 		self.actionExit.setText(_translate("MainWindow", "Exit"))
 
-# Subscribe to PyShine Youtube channel for more detail! 
+## # Subscribe to PyShine Youtube channel for more detail! 
 
-# WEBSITE: www.pyshine.com
+## # WEBSITE: www.pyshine.com
 
 if __name__ == "__main__":
 	import sys

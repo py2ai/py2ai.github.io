@@ -1,14 +1,31 @@
 ---
-layout: post
-title: How to perform online video processing from the client's camera
-categories: [Tutorial Series]
-mathjax: true
+categories:
+- Tutorial Series
+description: This tutorial is about obtaining live frames of a client's camera, process it and provide result back to the client
 featured-img: flasklipsonlinelogo
-description:  This tutorial is about obtaining live frames of a client's camera, process it and provide result back to the client
-tags: [Flask, Socket.IO, JavaScript, Video Processing, Real-time Communication, Online Services, Deep Learning, Tutorial]
-keywords: [Flask video processing, Socket.IO real-time communication, online video processing tutorial, client-server video processing, Flask tutorial, deep learning services, real-time video processing]
-
+keywords:
+- Flask video processing
+- Socket.IO real-time communication
+- online video processing tutorial
+- client-server video processing
+- Flask tutorial
+- deep learning services
+- real-time video processing
+layout: post
+mathjax: true
+tags:
+- Flask
+- Socket.IO
+- JavaScript
+- Video Processing
+- Real-time Communication
+- Online Services
+- Deep Learning
+- Tutorial
+title: How to perform online video processing from the client's...
 ---
+
+
 
 Hi friends, hope you are doing great! Today's tutorial is about using Flask, Socket.io and JavaScript, to obtain frames from a client's camera, then process it
 at the server side and then send the output to the client. This approach enables online services especially from the deployment point of view. Clients can use 
@@ -31,7 +48,7 @@ media is not available, then the promise is rejected with NotAllowedError or Not
 and event-based communication. It works on every platform, browser or device, focusing equally on reliability and speed. We will keep the frame rate at 6 FPS but you can
 try various values and note the variations in latencies.
 
-### Important installation steps to aviod any issues
+# Important installation steps to aviod any issues
 
 We need to install the proper working version of Werkzeug i.e. (Werkzeug-0.10.2.dev0dev-20220510) . In addition install the following versions 
 
@@ -63,7 +80,7 @@ In a project folder we require following files:
 3. templates/index.html
 4. ngrok: can be downloaded from https://ngrok.com/download for port forwarding, so that your localhost (or server address) is availble to the public on the internet.
 
-### index.html
+## index.html
 {% include codeHeader.html %}
 ```html
 
@@ -219,12 +236,12 @@ def image(data_image):
     frame = ps.putBText(frame,text,text_offset_x=20,text_offset_y=30,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
     imgencode = cv2.imencode('.jpeg', frame,[cv2.IMWRITE_JPEG_QUALITY,40])[1]
 
-    # base64 encode
+    ## base64 encode
     stringData = base64.b64encode(imgencode).decode('utf-8')
     b64_src = 'data:image/jpeg;base64,'
     stringData = b64_src + stringData
 
-    # emit the frame back
+    ## emit the frame back
     emit('response_back', stringData)
     
     fps = 1/(recv_time - prev_recv_time)

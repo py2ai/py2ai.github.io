@@ -1,11 +1,24 @@
 ---
-layout: post
-title: Basic Coding in TensorFlow
-categories: [tutorial]
+categories:
+- tutorial
+description: 'Before we proceed the basic coding, please note that according to the tensorflow 1.0.0 release notes,
+
+  tf.mul, tf.sub and tf.neg are deprecated in favor of tf...'
 featured-img: TensorFlow
+keywords:
+- tensorflow
+- basic
+- development
+- code
+- programming
+- tutorial
+- coding
+- python
+layout: post
 mathjax: true
-description: Lets code in TensorFlow
+title: Basic Coding in TensorFlow
 ---
+
 
 Before we proceed the basic coding, please note that according to the tensorflow 1.0.0 release notes,
 tf.mul, tf.sub and tf.neg are deprecated in favor of tf.multiply, tf.subtract and tf.negative. Other changes
@@ -23,7 +36,7 @@ text=tf.constant('Hello TF World')
 ```
 Now just type `text` in the console and hit enter, which will result in:
 
-## String Data Type
+# String Data Type
 
 `>>> text
 <tf.Tensor 'Const:0' shape=() dtype=string>`
@@ -146,7 +159,7 @@ with tf.Session() as sess:
 ```
 The Weights tensor looks like this with values with standard deviation of 
 
-![]({{ "assets/img/tensor flow/tensor_values.png" | absolute_url }})
+!![tensor values]({{ "assets/img/tensor flow/tensor_values.png" | absolute_url }})
 Here find loc: [here](http://htmlpreview.github.io/?https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/map2.html)
 
 
@@ -154,7 +167,7 @@ Here find loc: [here](http://htmlpreview.github.io/?https://github.com/py2ai/py2
 The distribution of values in the tensor looks like this, obviously, the standard
 deviation is 0.5.
 
-![]({{ "assets/img/tensor flow/tensor_distribution.png" | absolute_url }})
+!![tensor distribution]({{ "assets/img/tensor flow/tensor_distribution.png" | absolute_url }})
 
 
 

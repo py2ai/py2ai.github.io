@@ -1,13 +1,26 @@
 ---
-layout: post
-title: How to publish-subscribe video using socket programming in Python
-categories: [Socket programming tutorial series]
-mathjax: true
-featured-img: pubsub
+categories:
+- Socket programming tutorial series
 description: This tutorial is short and simple implementation of server client modules in Publish/Subscribe mode to transfer video frames
-keywords: [Python, Socket Programming, Publish-Subscribe, ZeroMQ, Video Streaming]
-tags: [Python, Socket Programming, Publish-Subscribe, ZeroMQ, Video Streaming]
+featured-img: pubsub
+keywords:
+- Python
+- Socket Programming
+- Publish-Subscribe
+- ZeroMQ
+- Video Streaming
+layout: post
+mathjax: true
+tags:
+- Python
+- Socket Programming
+- Publish-Subscribe
+- ZeroMQ
+- Video Streaming
+title: How to publish-subscribe video using socket programming...
 ---
+
+
 Hi friends HAPPY NEW YEAR 2021! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
 programming.
 
@@ -22,7 +35,7 @@ Today, we will use a rather simple way to transfer video over wifi using Publish
 will be displayed on the client window, and a server will transmit (publish) the video. Similar to our previous videos, we assume that you 
 will find your computer's IP address for the wifi. Both server and client computers should be connected to the same wifi router.
 
-### ZMQ
+# ZMQ
 ZeroMQ (also known as ØMQ, 0MQ, or zmq) is like an embeddable networking library but it acts like a concurrency framework. It gives us sockets
 that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. We can connect sockets N-to-N with patterns 
 like fan-out, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives 
@@ -45,14 +58,14 @@ of the .mp4 file accordingly.
 We will use pyshine_video_queue(vid) function to obtain a queue of size 10. This queue will continue to acquire the frames from the webcam
 in a separate thread. Then a separate while loop is used to obtain and send each frame from this queue. 
 
-### server.py
+## server.py
 {% include codeHeader.html %}
 ```python
 import cv2,imutils
 import zmq
 import base64,time
 import queue,threading
-# www.pyshine.com
+## www.pyshine.com
 context = zmq.Context()
 server_socket = context.socket(zmq.PUB)
 server_socket.bind("tcp://192.168.1.105:5555")
@@ -101,7 +114,7 @@ cv2.destroyAllWindows()
 Here is code for the client. Please give the IP address of your server accordingly in client_socket.connect("tcp://192.168.1.105:5555"), 
 following the similar way as in server.py code.
 
-### client.py
+## client.py
 {% include codeHeader.html %}
 ```python
 import cv2
@@ -109,7 +122,7 @@ import zmq
 import base64
 import numpy as np,time
 import pyshine as ps
-# www.pyshine.com
+## www.pyshine.com
 context = zmq.Context()
 client_socket = context.socket(zmq.SUB)
 client_socket.connect("tcp://192.168.1.105:5555")

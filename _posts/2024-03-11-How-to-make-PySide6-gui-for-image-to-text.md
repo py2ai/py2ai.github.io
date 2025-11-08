@@ -1,30 +1,32 @@
 ---
-layout: post
-title: How to make PySide6 based GUI
-mathjax: true
+description: In the realm of Python GUI (Graphical User Interface) development, libraries play a pivotal role in simplifying the creation of visually appealing and intera...
 featured-img: 26072022-python-logo
-description:  Making an Image to Text based GUI with PySide6
-tags:
-  - Python
-  - PySide6
-  - GUI Development
-  - OCR
-  - Tesseract
-  - PySide6 Tutorial
-  - Image Processing
-  - Multi-language OCR
 keywords:
-  - PySide6 GUI tutorial
-  - Image to text PySide6
-  - PySide6 OCR application
-  - Multi-language OCR with PySide6
-  - Tesseract OCR PySide6
-  - Python GUI development
-  - PySide6 code example
-  - GUI with PySide6
-  - Optical Character Recognition PySide6
-  - PySide6 tutorial for beginners
+- PySide6 GUI tutorial
+- Image to text PySide6
+- PySide6 OCR application
+- Multi-language OCR with PySide6
+- Tesseract OCR PySide6
+- Python GUI development
+- PySide6 code example
+- GUI with PySide6
+- Optical Character Recognition PySide6
+- PySide6 tutorial for beginners
+layout: post
+mathjax: true
+tags:
+- Python
+- PySide6
+- GUI Development
+- OCR
+- Tesseract
+- PySide6 Tutorial
+- Image Processing
+- Multi-language OCR
+title: How to make PySide6 based GUI
 ---
+
+
 
 # The Importance of PySide6: Transitioning from PyQt5
 
@@ -55,7 +57,7 @@ You can visit the following video for the background in PyQt5.
 <br>
 
 
-### Again to run this application, you require python 3.12 and PySide6. Copy the below main.ui file and save it in a new directory  as main.ui
+## Again to run this application, you require python 3.12 and PySide6. Copy the below main.ui file and save it in a new directory  as main.ui
 
 ### Also save the gui.py file in that directory and run the gui.py file. Open any image of your language of interest and play with it. If you have questions,
 ### suggestions please comment, share and subscribe to PyShine youtube channel
@@ -205,8 +207,8 @@ import sys
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QFile, QIODevice
-# Here we will get the path of the tessdata
-# For 64 bit installation of tesseract OCR 
+## Here we will get the path of the tessdata
+## For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
@@ -224,7 +226,7 @@ for font in range(110):
 	font+=2
 	font_list.append(str(font))
 
-# print('Font list:',font_list)
+## print('Font list:',font_list)
 
 class PyShine_OCR_APP(QMainWindow):
     def __init__(self):
@@ -247,7 +249,7 @@ class PyShine_OCR_APP(QMainWindow):
         self.ui.label_2.installEventFilter(self)
         self.ui.label_2.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # Access comboBox and comboBox_2 through the central widget
+        ## Access comboBox and comboBox_2 through the central widget
         self.comboBox = self.ui.dockWidgetContents_2.findChild(QtWidgets.QComboBox, "comboBox")
         self.comboBox_2 = self.ui.dockWidgetContents_2.findChild(QtWidgets.QComboBox, "comboBox_2")
         
@@ -323,7 +325,7 @@ class PyShine_OCR_APP(QMainWindow):
             return 0
         return super(PyShine_OCR_APP, self).eventFilter(source, event)
 
-# www.pyshine.com
+## www.pyshine.com
 app = QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()
@@ -333,7 +335,7 @@ sys.exit(app.exec())
 ```
 
 
-# Why PySide6?
+## Why PySide6?
 
 1. Licensing Issues:
 PyQt5 is released under the GPL (General Public License) which mandates certain obligations if the software is used in proprietary applications. This has posed challenges for commercial projects. PySide6, on the other hand, is distributed under the more permissive LGPL (Lesser General Public License) and Apache 2.0, making it a preferred choice for commercial development.
@@ -381,7 +383,7 @@ Thats it! As for reference you can use the following PyQt5 code for reference:
 ## gui.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
+## Welcome to PyShine
 import pytesseract
 import cv2, os,sys
 from PIL import Image
@@ -393,8 +395,8 @@ from PyQt5 import uic
 from PyQt5 import QtCore,QtGui,QtWidgets
 import glob
 
-# Here we will get the path of the tessdata
-# For 64 bit installation of tesseract OCR 
+## Here we will get the path of the tessdata
+## For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
@@ -416,7 +418,7 @@ for font in range(110):
 	font+=2
 	font_list.append(str(font))
 
-# print('Font list:',font_list)
+## print('Font list:',font_list)
 
 class PyShine_OCR_APP(QtWidgets.QMainWindow):
 	def __init__(self):
@@ -503,7 +505,7 @@ class PyShine_OCR_APP(QtWidgets.QMainWindow):
 			return 0
 		return QWidget.eventFilter(self,source,event)
 	
-# www.pyshine.com
+## www.pyshine.com
 app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()

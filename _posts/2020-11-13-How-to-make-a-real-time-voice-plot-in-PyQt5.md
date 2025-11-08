@@ -1,13 +1,27 @@
 ---
-layout: post
-title: PytQt5 GUI design to plot Live audio data from Microphone
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: audiolive
+categories:
+- GUI tutorial series
 description: How to make a GUI using PyQt5 and Matplotlib to plot real-time data
-keywords: [PyQt5, Matplotlib, Live Audio, GUI, Real-time Data, Audio Plotting]
-tags: [PyQt5, Matplotlib, Audio, GUI, Real-time Data]
+featured-img: audiolive
+keywords:
+- PyQt5
+- Matplotlib
+- Live Audio
+- GUI
+- Real-time Data
+- Audio Plotting
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- Matplotlib
+- Audio
+- GUI
+- Real-time Data
+title: PytQt5 GUI design to plot Live audio data from Microphone
 ---
+
+
 
 <br>
 <div align="center">
@@ -20,7 +34,7 @@ We will use the Matplotlib figure and update the canvas according to the set int
 you can plot temperature, counts of vehicles, peoples, and much more. The basic idea is to use the QTimer and QThread to run the Audio stream, put the stream data to a queue, and get the queue data to display it to the Matplotlib canvas. The functionality of the different modules used in the code below are explained
 in the video above.
 
-### Installation of sounddevice
+# Installation of sounddevice
 
 Installing sounddevice in Linux/Ubuntu requires following two steps:
 
@@ -44,7 +58,7 @@ Alright, to run the GUI, we actually require two files:
 Please copy the code and paste in the empty Python files named as main.ui and gui.py. It is highly recommended to run this code (gui.py) using Power Shell, IDLE or terminal in
 the MAC OS. Put both these files in the same directory and from that driectory run the code.
 
-### Run the code as:
+## Run the code as:
 ```python
 
 python3 gui.py
@@ -229,10 +243,10 @@ Here is the main.ui file, you can open it in the PyQt5 designer as a main.ui fil
 ### gui.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is part 10 of the PyQt5 learning series
-# Based on parameters, the GUI will plot live voice data using Matplotlib in PyQt5
-# We will use Qthreads to run the audio stream data.
+## Welcome to PyShine
+## This is part 10 of the PyQt5 learning series
+## Based on parameters, the GUI will plot live voice data using Matplotlib in PyQt5
+## We will use Qthreads to run the audio stream data.
 
 import sys
 import matplotlib
@@ -287,8 +301,8 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
         self.channels = [1]
         self.interval = 30 
         
-        # device_info =  sd.query_devices(self.device, 'input')
-        # self.samplerate = device_info['default_samplerate']
+        ## device_info =  sd.query_devices(self.device, 'input')
+        ## self.samplerate = device_info['default_samplerate']
 
         self.samplerate = 44100
         length  = int(self.window_length*self.samplerate/(1000*self.downsample))
@@ -394,7 +408,7 @@ class PyShine_LIVE_PLOT_APP(QtWidgets.QMainWindow):
             pass
 
 
-# www.pyshine.com
+## www.pyshine.com
 class Worker(QtCore.QRunnable):
 
 	def __init__(self, function, *args, **kwargs):

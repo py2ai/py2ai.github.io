@@ -1,10 +1,21 @@
 ---
-layout: post
-title: Installing Pytorch in Windows (GPU version)
-categories: [tutorial]
-mathjax: true
+categories:
+- tutorial
 description: A fastest way to install PyTorch in Windows without Conda
+keywords:
+- installing
+- pytorch
+- development
+- code
+- programming
+- windows
+- tutorial
+- version
+layout: post
+mathjax: true
+title: Installing Pytorch in Windows (GPU version)
 ---
+
 
 Hi there, today we are installing PyTorch in Windows. It is assumed that you already have installed NVidia GPU card. 
 The installation also requires the correct version of CUDA toolkit and the type of graphics card. For example if your 

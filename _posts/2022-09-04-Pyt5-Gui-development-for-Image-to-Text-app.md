@@ -1,12 +1,23 @@
 ---
-layout: post
-title: How to extract text from image in Python
-mathjax: true
+description: This tutorial is about gui development with PyQt5 and Pytesseract
 featured-img: pyqt5-ocr-aug-2022
-description:  This tutorial is about gui development with PyQt5 and Pytesseract
-tags: [PyQt5, OCR, Pytesseract, Python]
-keywords: [PyQt5, OCR, Pytesseract, Python, GUI, Tesseract]
+keywords:
+- PyQt5
+- OCR
+- Pytesseract
+- Python
+- GUI
+- Tesseract
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- OCR
+- Pytesseract
+- Python
+title: How to extract text from image in Python
 ---
+
 Hi friends following is the code for Part 18 of the PyQt5 learning series.
 
 <br>
@@ -159,10 +170,10 @@ Hi friends following is the code for Part 18 of the PyQt5 learning series.
 </ui>
 ```
 
-# gui.py
+## gui.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
+## Welcome to PyShine
 import pytesseract
 import cv2, os,sys
 from PIL import Image
@@ -175,8 +186,8 @@ from PyQt5 import QtCore,QtGui,QtWidgets
 import glob
 from PIL import ImageQt
 import numpy as np
-# Here we will get the path of the tessdata
-# For 64 bit installation of tesseract OCR 
+## Here we will get the path of the tessdata
+## For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
 language_path_list = glob.glob(language_path+"*.traineddata")
 
@@ -198,7 +209,7 @@ for font in range(110):
 	font+=2
 	font_list.append(str(font))
 
-# print('Font list:',font_list)
+## print('Font list:',font_list)
 
 class PyShine_OCR_APP(QtWidgets.QMainWindow):
     def __init__(self):
@@ -362,7 +373,7 @@ class PyShine_OCR_APP(QtWidgets.QMainWindow):
             return 0
         return QWidget.eventFilter(self,source,event)
 	
-# www.pyshine.com
+## www.pyshine.com
 app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()

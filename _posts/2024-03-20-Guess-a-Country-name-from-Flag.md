@@ -1,28 +1,30 @@
 ---
-layout: post
-title: Creating a Guess Country from Flag Game in Python (Part 7)
-mathjax: true
+description: In this tutorial, we'll create a graphical user interface (GUI) application using PySide6, a Python binding for the Qt toolkit. Our application will display ...
 featured-img: 26072022-python-logo
-description:  Guess a country name
-tags:
-  - Python
-  - PySide6
-  - GUI Development
-  - Game Development
-  - Flagpy
-  - Qt
-  - Programming Tutorial
 keywords:
-  - Python game development
-  - PySide6 tutorial
-  - GUI application
-  - Flagpy library
-  - Qt Python
-  - Guess the country game
-  - Python GUI
-  - Random flags
-  - Country guessing game
+- Python game development
+- PySide6 tutorial
+- GUI application
+- Flagpy library
+- Qt Python
+- Guess the country game
+- Python GUI
+- Random flags
+- Country guessing game
+layout: post
+mathjax: true
+tags:
+- Python
+- PySide6
+- GUI Development
+- Game Development
+- Flagpy
+- Qt
+- Programming Tutorial
+title: Creating a Guess Country from Flag Game in Python (Part 7)
 ---
+
+
 
 In this tutorial, we'll create a graphical user interface (GUI) application using PySide6, a Python binding for the Qt toolkit. Our application will display flags of random countries, and the user will have to guess the name of the country. We'll utilize the flagpy library to fetch flag images and country names. Let's dive into the step-by-step process of building this game.
 
@@ -35,7 +37,7 @@ Python (3.x recommended)
 PySide6 library (pip install PySide6)
 flagpy library (pip install flagpy)
 
-# Understanding the Code
+## Understanding the Code
 
 Let's break down the provided code before we proceed with the tutorial.
 
@@ -65,22 +67,22 @@ class RandomCountryFlagApp(QMainWindow):
 
         layout = QVBoxLayout()
 
-        # Label to display country flag
+        ## Label to display country flag
         self.flag_label = QLabel()
         layout.addWidget(self.flag_label)
 
-        # Label to display country name
+        ## Label to display country name
         self.name_label = QLabel()
         self.name_label.setAlignment(Qt.AlignCenter)
         self.name_label.setStyleSheet("font-size: 20px; font-weight: bold;")
         layout.addWidget(self.name_label)
 
-        # Button to display country name and flag
+        ## Button to display country name and flag
         self.show_button = QPushButton("Show Name")
         self.show_button.clicked.connect(self.display_country_info)
         layout.addWidget(self.show_button)
 
-        # Button to show next random flag and guess name
+        ## Button to show next random flag and guess name
         self.next_button = QPushButton("Next Flag")
         self.next_button.clicked.connect(self.display_random_flag)
         layout.addWidget(self.next_button)

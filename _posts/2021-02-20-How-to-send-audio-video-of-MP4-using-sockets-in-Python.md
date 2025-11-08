@@ -1,13 +1,30 @@
 ---
-layout: post
-title: How to send audio and video using socket programming in Python
-categories: [Socket Programming Series]
-mathjax: true
-featured-img: pythonudpaudiovideo
+categories:
+- Socket Programming Series
 description: This tutorial is about using OpenCV, UDP and TCP sockets for server-client transfer of audio-video streams
-tags: [Python, Socket Programming, Audio, Video, UDP, TCP, OpenCV]
-keywords: [Python, socket programming, audio streaming, video streaming, UDP, TCP, OpenCV]
+featured-img: pythonudpaudiovideo
+keywords:
+- Python
+- socket programming
+- audio streaming
+- video streaming
+- UDP
+- TCP
+- OpenCV
+layout: post
+mathjax: true
+tags:
+- Python
+- Socket Programming
+- Audio
+- Video
+- UDP
+- TCP
+- OpenCV
+title: How to send audio and video using socket programming in...
 ---
+
+
 
 
 Hello friends! Today's tutorial is about sending audio and video streams from a server to a client. These streams will
@@ -71,12 +88,12 @@ and open up the power shell or terminal and use the command below:
 pip3.6 install PyAudio‑0.2.11‑cp36‑cp36m‑win_amd64.whl
 ```
 
-## Windows OS 
+# Windows OS 
 
-### server.py
+## server.py
 {% include codeHeader.html %}
 ```python
-# This is server code to send video and audio frames over UDP/TCP
+## This is server code to send video and audio frames over UDP/TCP
 
 import cv2, imutils, socket
 import numpy as np
@@ -86,7 +103,7 @@ import threading, wave, pyaudio,pickle,struct
 import sys
 import queue
 import os
-# For details visit pyshine.com
+## For details visit pyshine.com
 q = queue.Queue(maxsize=10)
 
 filename =  'count.mp4'
@@ -221,15 +238,15 @@ and keeping the synchronization of audio and video.
 {% include codeHeader.html %}
 ```python
 
-# Welcome to PyShine
-# This is client code to receive video and audio frames over UDP/TCP
+## Welcome to PyShine
+## This is client code to receive video and audio frames over UDP/TCP
 
 import cv2, imutils, socket
 import numpy as np
 import time, os
 import base64
 import threading, wave, pyaudio,pickle,struct
-# For details visit pyshine.com
+## For details visit pyshine.com
 BUFF_SIZE = 65536
 
 BREAK = False
@@ -287,7 +304,7 @@ def audio_stream():
 					output=True,
 					frames_per_buffer=CHUNK)
 					
-	# create socket
+### create socket
 	client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 	socket_address = (host_ip,port-1)
 	print('server listening at',socket_address)
@@ -343,7 +360,7 @@ If the above code does not work for MAC OS users, please use the code below:
 ### server.py
 {% include codeHeader.html %}
 ```python
-# This is server code to send video and audio frames over UDP/TCP
+## This is server code to send video and audio frames over UDP/TCP
 
 import cv2, imutils, socket
 import numpy as np
@@ -353,7 +370,7 @@ import threading, wave, pyaudio,pickle,struct
 import sys
 import queue
 import os
-# For details visit pyshine.com
+## For details visit pyshine.com
 q = queue.Queue(maxsize=10)
 
 filename =  'av.mp4'
@@ -473,15 +490,15 @@ while True:
 ### client.py
 {% include codeHeader.html %}
 ```python
-# Welcome to PyShine
-# This is client code to receive video and audio frames over UDP/TCP
+## Welcome to PyShine
+## This is client code to receive video and audio frames over UDP/TCP
 
 import cv2, imutils, socket
 import numpy as np
 import time, os
 import base64
 import threading, wave, pyaudio,pickle,struct
-# For details visit pyshine.com
+## For details visit pyshine.com
 BUFF_SIZE = 65536
 
 BREAK = False
@@ -508,7 +525,7 @@ def audio_stream():
 					output=True,
 					frames_per_buffer=CHUNK)
 					
-	# create socket
+### create socket
 	client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 	socket_address = (host_ip,port-1)
 	print('server listening at',socket_address)

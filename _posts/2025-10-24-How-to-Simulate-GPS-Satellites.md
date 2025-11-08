@@ -1,17 +1,23 @@
 ---
-layout: post
-title: How to make a GPS Satellite Simulation in Python
-mathjax: true
+description: "<div style=\"text-align:center;\">\n  <iframe width=\"320\" height=\"568\" \n      src=\"https://www.youtube.com/embed/-LxLf4hZzHY?rel=0&autoplay=0\" \n      title=\"You..."
 featured-img: 26072022-python-logo
-description:  Visualizing GPS satellites in 3D
-keywords: ["Vpython", "GPS Satellite Simulation"]
-tags: ["gps satellites", "vpython tutorial", "gps satellites basic tutorial"]
-
+keywords:
+- Vpython
+- GPS Satellite Simulation
+layout: post
+mathjax: true
+tags:
+- gps satellites
+- vpython tutorial
+- gps satellites basic tutorial
+title: How to make a GPS Satellite Simulation in Python
 ---
 
 
+
+
 For more details:
-### Check out our YouTube Short!
+# Check out our YouTube Short!
 
 <div style="text-align:center;">
   <iframe width="320" height="568" 
@@ -23,7 +29,7 @@ For more details:
 </div>
 
 
-# 3D Visualization of a GPS Satellite Constellation
+## 3D Visualization of a GPS Satellite Constellation
 
 **A detailed, step-by-step tutorial and annotated markdown blog** that explains a VPython script which renders a 3D visualization of the GPS satellite constellation (24 operational satellites shown across 6 orbital planes). This tutorial covers setup, math, per-line code explanation, optimization tips, debugging, and suggested extensions.
 
@@ -59,7 +65,7 @@ from vpython import sphere, vector, rate, color, \
     textures, label, canvas, cylinder, mag
 import math
 
-# Scene setup
+## Scene setup
 scene = canvas(
     title = "GPS Satellites:24 | Orbital Planes: 6",
     width = 400,
@@ -68,7 +74,7 @@ scene = canvas(
     center = vector(0,0,0)
 )
 
-# Earth and GPS parameters
+## Earth and GPS parameters
 EARTH_RADIUS = 6371e3 # 6,371 km
 GPS_ALTITUDE = 20180e3 # 20,180 km
 GPS_RADIUS = EARTH_RADIUS + GPS_ALTITUDE
@@ -76,18 +82,18 @@ SCALE = 1e-7
 DISP_R = EARTH_RADIUS * SCALE
 DISPLAY_GPS_RADIUS = GPS_RADIUS * SCALE
 
-# Orbital parameters
+## Orbital parameters
 GPS_ORBITAL_PERIOD = 43080 # seconds (11h 58m)
 SPEED_FACTOR = 3000 # Time scale multiplier for visuals
 TIME_STEP = 1/60
 omega_gps = 2 * math.pi / GPS_ORBITAL_PERIOD * SPEED_FACTOR
 
-# Create Earth
+## Create Earth
 earth = sphere(radius = DISP_R,
                texture=textures.earth,
                shininess=0.1)
 
-# Create GPS satellites
+## Create GPS satellites
 num_planes = 6
 sats_per_plane = 4
 total_satellites = num_planes * sats_per_plane
@@ -95,7 +101,7 @@ satellites = []
 sat_labels = []
 connection_lines = []
 
-# Colors for each plane
+## Colors for each plane
 plane_colors = [color.red, color.orange, color.yellow,
                 color.green, color.cyan, color.magenta]
 
@@ -142,7 +148,7 @@ for plane in range(num_planes):
 
 print(f"Created {len(satellites)} GPS satellites in {num_planes} orbital planes")
 
-# Simulation loop
+## Simulation loop
 while True:
     rate(60)
     earth.rotate(angle=0.001, axis=vector(0,1,0))
@@ -151,17 +157,17 @@ while True:
         sat.true_anomaly += omega_gps * TIME_STEP
         r = DISPLAY_GPS_RADIUS
 
-        # Position in orbital plane
+        ## Position in orbital plane
         x_orb = r * math.cos(sat.true_anomaly)
         y_orb = 0
         z_orb = r * math.sin(sat.true_anomaly)
 
-        # Apply inclination rotation
+        ## Apply inclination rotation
         x_incl = x_orb
         y_incl = y_orb * math.cos(inclination) - z_orb * math.sin(inclination)
         z_incl = y_orb * math.sin(inclination) + z_orb * math.cos(inclination)
 
-        # Apply RAAN rotation
+        ## Apply RAAN rotation
         x_final = x_incl * math.cos(sat.raan) - y_incl * math.sin(sat.raan)
         y_final = x_incl * math.sin(sat.raan) + y_incl * math.cos(sat.raan)
         z_final = z_incl

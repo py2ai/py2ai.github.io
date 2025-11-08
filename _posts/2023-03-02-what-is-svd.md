@@ -1,27 +1,28 @@
 ---
-layout: post
-title: What is SVD 
-mathjax: true
+description: In this tutorial we will learn what is Singular Value Decomposition (SVD) and run it in python
 featured-img: 26072022-python-logo
-description:  In this tutorial we will learn what is Singular Value Decomposition (SVD) and run it in python
-tags:
-  - SVD
-  - Linear Algebra
-  - Python
-  - Data Analysis
-  - Matrix Decomposition
-  - Machine Learning
 keywords:
-  - Singular Value Decomposition
-  - SVD in Python
-  - Matrix factorization
-  - Python SVD tutorial
-  - Linear algebra
-  - Data compression
-  - Dimensionality reduction
-  - Matrix approximation
-  - NumPy SVD
+- Singular Value Decomposition
+- SVD in Python
+- Matrix factorization
+- Python SVD tutorial
+- Linear algebra
+- Data compression
+- Dimensionality reduction
+- Matrix approximation
+- NumPy SVD
+layout: post
+mathjax: true
+tags:
+- SVD
+- Linear Algebra
+- Python
+- Data Analysis
+- Matrix Decomposition
+- Machine Learning
+title: What is SVD
 ---
+
 
 # Singular Value Decomposition
 
@@ -42,20 +43,20 @@ So let's try to run a 2x2 matrix for svd
 ```python
 import numpy as np
 
-# Define a 2x2 matrix A
+## Define a 2x2 matrix A
 A = np.array([[2, 3], [4, 1]])
 
-# Perform SVD on A
+## Perform SVD on A
 U, s, Vt = np.linalg.svd(A)
 
-# Construct the diagonal matrix Σ
+## Construct the diagonal matrix Σ
 Sigma = np.zeros_like(A)
 Sigma[np.diag_indices(min(A.shape))] = s
 
-# Reconstruct the matrix A from its SVD components
+## Reconstruct the matrix A from its SVD components
 A_reconstructed = np.dot(U, np.dot(Sigma, Vt))
 
-# Print the results
+## Print the results
 print("Original matrix:\n", A)
 print("Left-singular vectors (U):\n", U)
 print("Singular values (Σ):\n", Sigma)
@@ -86,7 +87,7 @@ Reconstructed matrix:
 
 This code defines a 2x2 matrix A and then uses the np.linalg.svd() function from the NumPy library to perform the SVD on A. The resulting left-singular vectors U, singular values s, and right-singular vectors Vt are then used to reconstruct the original matrix A using the formula A = UΣV^T. The reconstructed matrix is then printed along with the original matrix and the SVD components.
 
-# Why the reconstructed matrix is a little different?
+## Why the reconstructed matrix is a little different?
 
 In the SVD decomposition, the matrix A is decomposed into three matrices: U, Σ, and V^T. The original matrix A can then be reconstructed by multiplying these three matrices together: A = UΣV^T.
 
@@ -96,29 +97,29 @@ In the example code above, the reconstructed matrix A_reconstructed might not be
 
 In summary, the reconstructed matrix A_reconstructed might not be exactly the same as the original matrix A due to the truncation of singular values. However, the reconstructed matrix should still capture the most important features of the original matrix.
 
-# How to get the better resconstruction of matrix A?
+## How to get the better resconstruction of matrix A?
 
 To get a better reconstruction result, we can include more singular values in the reconstruction. Here's an example Python code that uses the first two singular values to reconstruct the matrix A:
 
 ```python
 import numpy as np
 
-# Define a 2x2 matrix A
+## Define a 2x2 matrix A
 A = np.array([[2, 3], [4, 1]])
 
-# Perform SVD on A
+## Perform SVD on A
 U, s, Vt = np.linalg.svd(A)
 
-# Keep the first two singular values and truncate the others to zero
+## Keep the first two singular values and truncate the others to zero
 k = 2
 Sigma = np.diag(s[:k])
 U = U[:, :k]
 Vt = Vt[:k, :]
 
-# Reconstruct the matrix A from its SVD components using the first two singular values
+## Reconstruct the matrix A from its SVD components using the first two singular values
 A_reconstructed = U @ Sigma @ Vt
 
-# Print the results
+## Print the results
 print("Original matrix:\n", A)
 print("Left-singular vectors (U):\n", U)
 print("Singular values (Σ):\n", Sigma)
@@ -153,13 +154,13 @@ In the context of the SVD reconstruction, we use `@` to multiply the left-singul
 The @ operator is different from the `*` operator in Python, which performs element-wise multiplication for arrays and matrices. For example, if we have two NumPy arrays `A` and `B`, `A*B` will perform element-wise multiplication of the corresponding elements in `A` and `B`, whereas `A@B` will perform matrix multiplication of `A` and `B`. The `@` operator makes it easier and more intuitive to perform matrix multiplication in Python.
 
 
-# Can we use the python code for any dimension of matrix A to perform SVD?
+## Can we use the python code for any dimension of matrix A to perform SVD?
 
 Yes the above code can be used for any dimension of matrix A. The NumPy linalg.svd function works for any size of input matrix, and the SVD decomposition can be used to reconstruct the original matrix for any dimension.
 
 In the code, we have used the numpy.diag function to create the diagonal matrix Σ from the singular values s. This function automatically creates a square matrix of size (len(s), len(s)), so it will work for any dimension of the input matrix A. Similarly, the truncation of singular values and the selection of left and right singular vectors can be performed for any size of input matrix A. So, the code above is flexible enough to be used for any dimension of matrix A.
 
-# What are the advantages of SVD?
+## What are the advantages of SVD?
 
 The Singular Value Decomposition (SVD) is a powerful tool in linear algebra that has several advantages, including:
 
@@ -175,7 +176,7 @@ The Singular Value Decomposition (SVD) is a powerful tool in linear algebra that
 
 So, the SVD is a powerful tool that has a wide range of applications in linear algebra, signal processing, machine learning, and many other fields. It is an essential tool for data analysts and researchers who need to analyze and manipulate high-dimensional data.
 
-# What are the disadvantages of SVD?
+## What are the disadvantages of SVD?
 
 While the Singular Value Decomposition (SVD) has many advantages, it also has some disadvantages, including:
 

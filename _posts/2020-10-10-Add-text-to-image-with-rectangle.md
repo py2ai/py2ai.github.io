@@ -1,11 +1,23 @@
 ---
-layout: post
-title: Add text with transparent rectangle on an image
-categories: [GUI tutorial series]
-mathjax: true
-featured-img: putBText
+categories:
+- GUI tutorial series
 description: How to add transparent box behind text in an open cv image
+featured-img: putBText
+keywords:
+- text
+- transparent
+- add
+- development
+- code
+- programming
+- image
+- tutorial
+layout: post
+mathjax: true
+title: Add text with transparent rectangle on an image
 ---
+
+
 
 <br>
 <div align="center">
@@ -17,7 +29,7 @@ description: How to add transparent box behind text in an open cv image
 
 Hello friends, today we will put some text with a background box behind it. It looks awesome and conveys to the point information on the image as well. It can be used in various outputs of computer vision applications e.g. object detection results, office or school auto-attendence system. You can use it for Python3.
 
-## Requirements
+# Requirements
 cv2
 pyshine
 numpy
@@ -40,10 +52,10 @@ python3 main.py
 ## main.py
 ```python3
 
-# author:    PyShine
-# website:   http://www.pyshine.com
+## author:    PyShine
+## website:   http://www.pyshine.com
 
-# import the necessary packages
+## import the necessary packages
 import pyshine as ps,cv2
 import time
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')

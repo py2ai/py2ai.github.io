@@ -1,20 +1,31 @@
 ---
-layout: post
-title: FAQs about PyQt5
-categories: [GUI tutorial series]
-featured-img: pyqt5logo
-mathjax: true
+categories:
+- GUI tutorial series
 description: You can find important issues and their solutions related to PyQt5 here
-keywords: [PyQt5, FAQ, GUI Programming, Python, Qt Designer]
-tags: [PyQt5, GUI, Python, Qt Designer]
+featured-img: pyqt5logo
+keywords:
+- PyQt5
+- FAQ
+- GUI Programming
+- Python
+- Qt Designer
+layout: post
+mathjax: true
+tags:
+- PyQt5
+- GUI
+- Python
+- Qt Designer
+title: FAQs about PyQt5
 ---
+
 
 Hi friends, we are going to start a Q and A about PyQt5 here. This page will be dedicated to only Questions that are frequently asked by you and their answers.
 We will continue to update this page accordingly.
 
-### Question: 
+# Question: 
 _I found this Traceback (most recent call last): ImportError: cannot import name 'QtWebEngineWidgets'_
-### Answer: 
+## Answer: 
 Highly recommended version is earlier not the latest if you find above trace back 'QtWebEngineWidgets'. Simply install exactly  `pip3 install PyQt5==5.15.2`
 `pip install pyqtwebengine`
 

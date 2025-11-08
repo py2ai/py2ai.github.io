@@ -1,25 +1,27 @@
 ---
-layout: post
-title:  Building a Tic-Tac-Toe Game in Python!
-mathjax: true
+description: In this tutorial, we'll create a simple Tic-Tac-Toe game in Python where a user can play against the computer. The computer will make random moves.
 featured-img: 26072022-python-logo
-description:  Learn python with fun!
-tags:
-  - Python
-  - Game Development
-  - Tic-Tac-Toe
-  - Programming Tutorial
-  - Computer Science
-  - Coding Challenges
 keywords:
-  - Tic-Tac-Toe game
-  - Python game development
-  - Python Tic-Tac-Toe
-  - Build a Tic-Tac-Toe game
-  - Python programming tutorial
-  - Simple Python games
-  - Game development with Python
+- Tic-Tac-Toe game
+- Python game development
+- Python Tic-Tac-Toe
+- Build a Tic-Tac-Toe game
+- Python programming tutorial
+- Simple Python games
+- Game development with Python
+layout: post
+mathjax: true
+tags:
+- Python
+- Game Development
+- Tic-Tac-Toe
+- Programming Tutorial
+- Computer Science
+- Coding Challenges
+title: Building a Tic-Tac-Toe Game in Python!
 ---
+
+
 
 # Building a Tic-Tac-Toe Game in Python
 
@@ -53,17 +55,17 @@ Next, we need to check if a player has won. We'll create a function that checks 
 {% include codeHeader.html %}
 ```python
 def check_win(board, player):
-    # Check rows
+    ## Check rows
     for row in board:
         if all([spot == player for spot in row]):
             return True
 
-    # Check columns
+    ## Check columns
     for col in range(3):
         if all([board[row][col] == player for row in range(3)]):
             return True
 
-    # Check diagonals
+    ## Check diagonals
     if all([board[i][i] == player for i in range(3)]):
         return True
     if all([board[i][2 - i] == player for i in range(3)]):
@@ -119,17 +121,17 @@ def print_board(board):
         print("-" * 5)
 
 def check_win(board, player):
-    # Check rows
+    ## Check rows
     for row in board:
         if all([spot == player for spot in row]):
             return True
 
-    # Check columns
+    ## Check columns
     for col in range(3):
         if all([board[row][col] == player for row in range(3)]):
             return True
 
-    # Check diagonals
+    ## Check diagonals
     if all([board[i][i] == player for i in range(3)]):
         return True
     if all([board[i][2 - i] == player for i in range(3)]):
@@ -349,7 +351,7 @@ Computer wins!
 
 ```
 
-# Conclusion
+## Conclusion
 
 Congratulations! You've successfully created a Tic-Tac-Toe game in Python. This game can be further enhanced by improving the computer's strategy or adding a graphical user interface. Happy coding!
 

@@ -1,13 +1,26 @@
 ---
-layout: post
-title: How to deploy Python video processing application on the server
-categories: [Web development tutorial series]
-mathjax: true
-featured-img: flask
+categories:
+- Web development tutorial series
 description: We will use Flask and OpenCv to change blur and brightness of the video and serve it on the network
-keywords: [Flask, OpenCV, Video Processing, PythonAnywhere, Web Deployment]
-tags: [Flask, OpenCV, Video Processing, PythonAnywhere, Web Deployment]
+featured-img: flask
+keywords:
+- Flask
+- OpenCV
+- Video Processing
+- PythonAnywhere
+- Web Deployment
+layout: post
+mathjax: true
+tags:
+- Flask
+- OpenCV
+- Video Processing
+- PythonAnywhere
+- Web Deployment
+title: How to deploy Python video processing application on the...
 ---
+
+
 
 <br>
 <div align="center">
@@ -25,7 +38,7 @@ input parameters. These parameters are Brightness value, and Blur value. Followi
 the PythonAnywhere.com service. Its basic plan is free, for more details please visit the website. Follow the above video tutorial for deployment on the wifi local
 area network as per your server's IP address.
 
-### Important installation steps to aviod any issues
+# Important installation steps to aviod any issues
 
 We need to install the proper working version of Werkzeug i.e. (Werkzeug-0.10.2.dev0dev-20220510) . In addition install the following versions 
 
@@ -88,7 +101,7 @@ def pyshine_process(params):
 	else:
 		cap = cv2.VideoCapture('videos/mario.mp4')
 	print('FUNCTION DONE')
-	# Read until video is completed
+### Read until video is completed
 	fps=0
 	st=0
 	frames_to_count=20
@@ -196,7 +209,7 @@ if __name__ == "__main__":
 
 ### results.html
 
-![]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
+!![resultshtml]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
 
 ## Files for deployment on the wifi LAN
 
@@ -259,7 +272,7 @@ def pyshine_process(params):
 	else:
 		cap = cv2.VideoCapture('videos/mario.mp4')
 	print('FUNCTION DONE')
-	# Read until video is completed
+### Read until video is completed
 	fps=0
 	st=0
 	frames_to_count=20
@@ -360,7 +373,7 @@ if __name__ == "__main__":
 
 ### results.html
 
-![]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
+!![resultshtml]({{ "assets/img/posts/resultshtml.png" | absolute_url }})
 
 Please do comment, if you like this tutorial, also if have question or suggestions. 
 
