@@ -1,6 +1,6 @@
 ---
 description: Python Turtle Graphics Tutorial to quickly draw a Tree
-featured-img: 26072022-python-logo
+featured-img: 20251109-blossom2
 keywords:
 - Python
 - Turtle
