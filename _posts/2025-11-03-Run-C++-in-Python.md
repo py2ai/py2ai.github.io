@@ -1,6 +1,6 @@
 ---
 description: Learn how to compile and execute C++ code directly from Python using subprocess and tempfile modules.
-featured-img: 26072022-python-logo
+featured-img: 20251109-c++vpython
 keywords:
 - Python
 - C++
