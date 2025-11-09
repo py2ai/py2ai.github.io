@@ -1,6 +1,6 @@
 ---
 description: Learn how to create Excel workbooks with multiple sheets using Python's openpyxl library. Step-by-step tutorial for absolute beginners.
-featured-img: 20251109-excelpython-openpyxl
+featured-img: 20251109-excelpython-openpyxl-2
 keywords:
 - Python
 - Excel
