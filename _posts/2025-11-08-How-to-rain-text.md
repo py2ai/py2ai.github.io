@@ -1,6 +1,6 @@
 ---
 description: Learn how to create a terminal-based Matrix rain animation in Python. Step-by-step beginner-friendly guide to build the iconic green digital rain effect.
-featured-img: 26072022-python-logo
+featured-img: 20251109-matrixrain
 keywords:
 - Python
 - Matrix
