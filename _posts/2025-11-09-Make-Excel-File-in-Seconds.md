@@ -1,6 +1,6 @@
 ---
 description: Step-by-step beginner-friendly tutorial to create Excel workbooks with multiple sheets using Python's pandas library.
-featured-img: 26072022-python-logo
+featured-img: 20251109-excelpython
 keywords:
 - Python
 - Excel
