@@ -1,6 +1,6 @@
 ---
 description: Python Turtle Graphics Tutorial to animate falling cherry blossoms
-featured-img: 26072022-python-logo
+featured-img: 20251109-blossoms3
 keywords:
 - Python
 - Turtle
