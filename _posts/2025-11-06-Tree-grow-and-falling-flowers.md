@@ -1,6 +1,6 @@
 ---
 description: Learn how to create a beautiful animated tree with growing and falling flowers using Python's Turtle graphics module. Step-by-step tutorial with physics simu...
-featured-img: 26072022-python-logo
+featured-img: 20251109-cherryblossom
 keywords:
 - Python
 - Turtle Graphics
