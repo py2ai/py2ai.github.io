@@ -1,6 +1,6 @@
 ---
 description: Learn how to compare matrix multiplication speeds using naive Python, compiled C++, and optimized NumPy.
-featured-img: 26072022-python-logo
+featured-img: 20251109-cpppython
 keywords:
 - matrix multiplication
 - Python
