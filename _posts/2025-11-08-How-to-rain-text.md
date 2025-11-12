@@ -21,6 +21,7 @@ tags:
 - tutorial
 title: Matrix Rain Animation in Python – Complete Beginner's Guide
 ---
+
 # Table of Contents
 
 1. [Introduction](#introduction)
@@ -195,14 +196,14 @@ python3 matrix_rain.py
 {% include codeHeader.html %}
 
 ```python
-# Tutorial and Source code at www.pyshine.com
+## Tutorial and Source code at www.pyshine.com
 from random import randint, choice
 import shutil, time
-# Your Terminal window Size
+## Your Terminal window Size
 columns, rows = shutil.get_terminal_size()
-# Characters to display
+## Characters to display
 chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-# Initialize streams
+## Initialize streams
 streams = []
 for _ in range(columns):
     streams.append({
@@ -210,11 +211,11 @@ for _ in range(columns):
         "length": randint(5, rows//2), # tail length
         "tail": [] # list of tail characters
     })
-# Function to generate the lime Green with Intensity
+## Function to generate the lime Green with Intensity
 def lime_color(intensity):
     green = int(255*intensity)
     return f"\033[38;2;0;{green};0m"
-# Hide cursor for better effect
+## Hide cursor for better effect
 print("\033[?25l",end="")
 try:
     while True:

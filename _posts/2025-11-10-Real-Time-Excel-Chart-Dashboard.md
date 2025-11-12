@@ -1,6 +1,4 @@
 ---
-layout: post
-title: Real-Time Excel Chart Updater with Python and Watchdog
 description: Step-by-step beginner-friendly guide to create a live-updating Excel chart using Python's pandas, matplotlib, and watchdog libraries.
 featured-img: 20251110-python-matplotlib
 keywords:
@@ -14,6 +12,7 @@ keywords:
 - data-visualization
 - beginner
 - tutorial
+layout: post
 mathjax: false
 tags:
 - python
@@ -25,10 +24,12 @@ tags:
 - beginner
 - data-visualization
 - tutorial
+title: Real-Time Excel Chart Updater with Python and Watchdog
 ---
+
 # Real-Time Excel Chart Updater with Python and Watchdog
 
-### Automatically Refresh Charts When Excel Files Change
+## Automatically Refresh Charts When Excel Files Change
 
 This tutorial shows you how to build a **real-time Excel chart visualizer** using **Python**, **pandas**, **matplotlib**, and **watchdog**.
 The script detects changes in an Excel file and automatically **updates a live chart** without manual refresh — perfect for dashboards, live monitoring, and educational demos.

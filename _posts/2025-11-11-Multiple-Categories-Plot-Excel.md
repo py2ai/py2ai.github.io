@@ -1,7 +1,5 @@
 ---
-layout: post
-title: Garden Data Live Chart Tutorial with Python
-description: Learn how to create a live-updating Excel chart in Python using Pandas, Matplotlib, and Watchdog. Step-by-step beginner-friendly guide for real-time data visualization.
+description: Learn how to create a live-updating Excel chart in Python using Pandas, Matplotlib, and Watchdog. Step-by-step beginner-friendly guide for real-time data vis...
 featured-img: 20251111-python-multimatplotlib
 keywords:
 - Python
@@ -14,6 +12,7 @@ keywords:
 - real-time update
 - automation
 - beginner tutorial
+layout: post
 mathjax: false
 tags:
 - python
@@ -25,11 +24,13 @@ tags:
 - automation
 - beginner
 - tutorial
+title: Garden Data Live Chart Tutorial with Python
 ---
+
 
 # Garden Data Live Chart in Python
 
-### Beginner-Friendly Tutorial – Live-Refreshing Excel Charts
+## Beginner-Friendly Tutorial – Live-Refreshing Excel Charts
 
 This tutorial walks you through creating a **live-updating chart viewer** for Excel sheets using **Python**, **Pandas**, **Matplotlib**, and **Watchdog**. By the end, you will have a tool that:
 - Reads multiple sheets from an Excel file.
@@ -272,7 +273,7 @@ fig = plt.figure(figsize=(5, 7.5))
 ax = plt.axes([0.15, 0.4, 0.7, 0.5])
 ax_bg = plt.axes([0.05, 0.05, 0.9, 0.25])
 ax_bg.set_facecolor('#f1f3f4')
-# ... add labels and style
+## ... add labels and style
 sheet_names = get_sheet_names()
 if sheet_names:
     create_sheet_buttons(sheet_names, fig)
@@ -301,7 +302,7 @@ observer.join()
 ## Complete Code
 {% include codeHeader.html %}
 ```python
-# Source code at www.pyshine.com
+## Source code at www.pyshine.com
 import pandas as pd
 import matplotlib.pyplot as plt
 from watchdog.observers import Observer
