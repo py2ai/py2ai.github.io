@@ -20,9 +20,6 @@ tags:
 - python
 title: Music Maker with Save Load Clear & Slider
 ---
-
-
-
 # PyShine Music Maker – The Ultimate Step Sequencer Tutorial
 
 ## Build a Visual Music Sequencer with Pygame, JSON Save/Load, Clear, Slider, and Real-Time Waveform Visualization
@@ -32,15 +29,16 @@ This comprehensive tutorial will help you build a **feature-packed music maker a
 ---
 
 ## Table of Contents
+
 1. [Overview](#overview)
 2. [Setting Up Pygame](#setting-up-pygame)
 3. [Creating Synthetic Piano Notes](#creating-synthetic-piano-notes)
-4. [Sequencer Pattern & Grid Layout](#sequencer-pattern--grid-layout)
+4. [Sequencer Pattern &amp; Grid Layout](#sequencer-pattern--grid-layout)
 5. [Buttons: Save, Load, Clear](#buttons-save-load-clear)
 6. [Slider for Loop Control](#slider-for-loop-control)
 7. [Waveform Visualization](#waveform-visualization)
 8. [Playback Thread](#playback-thread)
-9. [Main Loop & Event Handling](#main-loop--event-handling)
+9. [Main Loop &amp; Event Handling](#main-loop--event-handling)
 10. [Running the Application](#running-the-application)
 11. [Key Learnings](#key-learnings)
 12. [Further Ideas](#further-ideas)
@@ -252,6 +250,7 @@ def load_pattern():
 ```
 
 ### Why Use JSON?
+
 It’s lightweight, readable, and editable. You can even open your melody file in a text editor and modify it manually.
 
 The **Clear** button resets all notes, making quick restarts effortless.
@@ -265,6 +264,7 @@ This section establishes the basic file management and editing functions that ma
 The **loop slider** determines how many steps are played before restarting. This allows you to fine-tune short loops during composition.
 
 ### Define Geometry
+
 ```python
 slider_x = 80
 slider_y = 260
@@ -275,6 +275,7 @@ slider_dragging = False
 ```
 
 ### Drawing
+
 ```python
 def draw_slider(x, y, w, h, val):
     pygame.draw.rect(S, (150,150,150), (x,y,w,h), border_radius=4)
@@ -286,6 +287,7 @@ def draw_slider(x, y, w, h, val):
 ```
 
 ### Event Handling
+
 ```python
 if event.type == pygame.MOUSEBUTTONDOWN and slider_y <= event.pos[1] <= slider_y + slider_h:
     slider_dragging = True
@@ -397,9 +399,11 @@ jingle.json
 jingle bells {"C": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "D": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0], "E": [1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], "F": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "G": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], "A": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
 ```
 
-## Complete Code 
+## Complete Code
 
 ### pyshine_music_maker
+
+{% include codeHeader.html %}
 
 ```python
 import pygame, sys, time, numpy as np, json, os, threading
@@ -713,4 +717,3 @@ Click cells to activate notes, save and load patterns, clear the grid, and adjus
 ---
 
 This in-depth guide transforms your simple code into a **mini music production environment** — blending coding, sound design, and interactive graphics beautifully.
-

@@ -19,16 +19,15 @@ tags:
 - tutorial
 title: Create Excel Files with Python and pandas
 ---
-
 # Table of Contents
 
 1. [Introduction](#introduction)
 2. [Understanding the Requirements](#understanding-the-requirements)
 3. [Setting Up Your Environment](#setting-up-your-environment)
 4. [Breaking Down the Code](#breaking-down-the-code)
-    1. [Importing pandas](#importing-pandas)
-    2. [Preparing Data](#preparing-data)
-    3. [Writing to Excel](#writing-to-excel)
+   1. [Importing pandas](#importing-pandas)
+   2. [Preparing Data](#preparing-data)
+   3. [Writing to Excel](#writing-to-excel)
 5. [Running the Script](#running-the-script)
 6. [Conclusion](#conclusion)
 
@@ -71,6 +70,8 @@ pip install pandas openpyxl
 
 ### Importing pandas
 
+{% include codeHeader.html %}
+
 ```python
 import pandas as pd
 ```
@@ -79,6 +80,8 @@ import pandas as pd
 - We use it here to create DataFrames and export them to Excel.
 
 ### Preparing Data
+
+{% include codeHeader.html %}
 
 ```python
 filename = "garden_data.xlsx"
@@ -95,6 +98,8 @@ sheets_data = {
   - Each value is another dictionary containing the data for that sheet.
 
 ### Writing to Excel
+
+{% include codeHeader.html %}
 
 ```python
 with pd.ExcelWriter(filename) as writer:
@@ -143,4 +148,3 @@ You have successfully created an Excel workbook with multiple sheets using Pytho
 - How to write multiple sheets to a single Excel file
 
 Feel free to expand this example by adding more sheets or more complex data. Pandas makes working with Excel files both simple and powerful!
-

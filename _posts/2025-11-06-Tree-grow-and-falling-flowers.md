@@ -19,9 +19,6 @@ tags:
 - tutorial
 title: Animated Flower Tree with Python Turtle – Growing &...
 ---
-
-
-
 # Animated Flower Tree with Python Turtle – Growing & Falling Flowers
 
 ## Create Stunning Animated Nature Scenes with Python's Built-in Turtle Module
@@ -31,8 +28,9 @@ Python's Turtle graphics module isn't just for simple shapes – it can create b
 ---
 
 ## Table of Contents
+
 - [Overview](#overview)
-- [What You'll Learn](#what-youll-learn)
+- [What You&#39;ll Learn](#what-youll-learn)
 - [Step 1: Setting Up the Environment](#step-1-setting-up-the-environment)
 - [Step 2: Generating the Tree Structure](#step-2-generating-the-tree-structure)
 - [Step 3: Color Blending for Natural Look](#step-3-color-blending-for-natural-look)
@@ -110,15 +108,15 @@ def record_my_params(length, depth, level=0):
     """Recursively generate tree branch parameters"""
     if depth == 0:
         return
-    
+  
     ## Randomize angles and lengths for natural look
     a1 = uniform(BA - 10, BA + 10)
     a2 = uniform(BA - 10, BA + 10)
     l1 = length * uniform(0.6, 0.8)  # Child branches are shorter
     l2 = length * uniform(0.6, 0.8)
-    
+  
     branch_params.append((a1, a2, l1, l2, level))
-    
+  
     ## Recursive calls for sub-branches
     record_my_params(l1, depth - 1, level + 1)
     record_my_params(l2, depth - 1, level + 1)
@@ -181,12 +179,12 @@ def draw_flower_at_position(pen, x, y, color, size, rotation=0, growth_factor=1.
     pen.goto(x, y)
     pen.setheading(rotation)
     pen.pendown()
-    
+  
     ## Apply growth factor to size
     current_size = size * growth_factor
     if current_size < 0.5:  # Don't draw if too small
         return
-        
+      
     pen.fillcolor(color)
     pen.pencolor(color)
     pen.begin_fill()
@@ -194,7 +192,7 @@ def draw_flower_at_position(pen, x, y, color, size, rotation=0, growth_factor=1.
         pen.circle(current_size, 72)  # Draw petal
         pen.left(144)                 # Turn for next petal
     pen.end_fill()
-    
+  
     ## Draw flower center
     pen.penup()
     pen.goto(x, y)
@@ -206,13 +204,13 @@ def animate_flower_growth(screen, tree_pen, flower_positions):
     flower_pen.hideturtle()
     flower_pen.speed(0)
     flower_pen.penup()
-    
+  
     growth_stages = 20  # Number of growth stages
-    
+  
     for stage in range(growth_stages + 1):
         flower_pen.clear()
         growth_factor = stage / growth_stages  # 0 to 1
-        
+      
         for flower in flower_positions:
             draw_flower_at_position(
                 flower_pen, 
@@ -222,7 +220,7 @@ def animate_flower_growth(screen, tree_pen, flower_positions):
                 flower['size'], 
                 growth_factor=growth_factor
             )
-        
+      
         screen.update()
         time.sleep(FPS)
 
@@ -244,45 +242,45 @@ Realistic falling animation with gravity, wind, and rotation physics.
 ```python
 def make_flowers_fall(screen, tree_pen, flower_pen, flower_positions):
     """Animate flowers falling with physics simulation"""
-    
+  
     velocities = {}  # Store velocity for each flower
     rotations = {}   # Store rotation for each flower
-    
+  
     while True:
         flower_pen.clear()
-        
+      
         ## Randomly detach flowers over time
         for flower in flower_positions:
             if flower['attached'] and random() < 0.03:
                 flower['attached'] = False
                 flower_id = flower['id']
-                
+              
                 ## Initialize physics properties
                 velocities[flower_id] = [
                     uniform(-WIND, WIND),  # Horizontal velocity (wind)
                     -GRAVITY * uniform(0.8, 1.2)  # Vertical velocity
                 ]
                 rotations[flower_id] = uniform(0, 360)  # Initial rotation
-        
+      
         ## Update falling flowers
         for flower in flower_positions:
             if not flower['attached']:
                 flower_id = flower['id']
                 vx, vy = velocities[flower_id]
-                
+              
                 ## Apply physics
                 flower['x'] += vx
                 flower['y'] += vy
                 vy -= GRAVITY * 0.08  # Gravity acceleration
-                
+              
                 ## Air resistance and random movement
                 vx *= 0.998
                 vy *= 0.998
                 vx += uniform(-0.008, 0.008)
-                
+              
                 ## Update rotation based on horizontal movement
                 rotations[flower_id] += vx * 3
-                
+              
                 ## Ground collision
                 if flower['y'] <= -H//2 + 20:
                     flower['y'] = -H//2 + 20  # Stop at ground
@@ -290,9 +288,9 @@ def make_flowers_fall(screen, tree_pen, flower_pen, flower_positions):
                         vy = -vy * 0.2  # Bounce
                     else:
                         vy = 0  # Stop moving
-                
+              
                 velocities[flower_id] = [vx, vy]
-                
+              
                 ## Draw with current rotation
                 draw_flower_at_position(
                     flower_pen, 
@@ -302,7 +300,7 @@ def make_flowers_fall(screen, tree_pen, flower_pen, flower_positions):
                     flower['size'], 
                     rotations[flower_id]
                 )
-        
+      
         screen.update()
         time.sleep(FPS)
 ```
@@ -319,6 +317,8 @@ def make_flowers_fall(screen, tree_pen, flower_pen, flower_positions):
 ---
 
 ## Complete Code
+
+{% include codeHeader.html %}
 
 ```python
 ## source code at www.pyshine.com
@@ -369,12 +369,12 @@ def draw_flower_at_position(pen, x, y, color, size, rotation=0, growth_factor=1.
     pen.goto(x, y)
     pen.setheading(rotation)
     pen.pendown()
-    
+  
     ## Apply growth factor to size
     current_size = size * growth_factor
     if current_size < 0.5:  # Don't draw if too small
         return
-        
+      
     pen.fillcolor(color)
     pen.pencolor(color)
     pen.begin_fill()
@@ -392,7 +392,7 @@ def draw_tree_with_flowers():
     screen.title("Turtle Tree with Growing and Falling Flowers")
     screen.bgcolor("black")
     screen.tracer(0, 0)  # Turn off animation for initial drawing
-    
+  
     ## Create main tree pen
     tree_pen = turtle.Turtle()
     tree_pen.hideturtle()
@@ -421,7 +421,7 @@ def draw_tree_with_flowers():
                 'id': len(flower_positions)  # Unique ID for each flower
             })
             return
-            
+          
         t = (DEPTH - depth) / DEPTH
         brown = (139/255, 69/255, 19/255)
         green = (34/255, 139/255, 34/255)
@@ -429,7 +429,7 @@ def draw_tree_with_flowers():
         tree_pen.pencolor(r, g, b)
         tree_pen.pensize(max(1, depth / 2))
         tree_pen.forward(length)
-        
+      
         if random() < 0.12 and depth < DEPTH - 2:
             ## Record branch flower position but don't draw yet
             size = uniform(2, 5)
@@ -443,12 +443,12 @@ def draw_tree_with_flowers():
                 'grown': False,  # Flower hasn't grown yet
                 'id': len(flower_positions)  # Unique ID for each flower
             })
-            
+          
         try:
             a1, a2, l1, l2, level = next(params)
         except StopIteration:
             return
-            
+          
         tree_pen.left(a1)
         draw_branch(l1, depth - 1)
         tree_pen.right(a1 + a2)
@@ -459,46 +459,46 @@ def draw_tree_with_flowers():
     ## Draw the initial tree structure (without flowers)
     params = param_gen()
     draw_branch(LENGTH, DEPTH)
-    
+  
     screen.update()  # Show the initial tree
     print(f"Tree structure complete. {len(flower_positions)} flower positions recorded.")
-    
+  
     ## Now animate flowers growing
     animate_flower_growth(screen, tree_pen, flower_positions)
 
 def animate_flower_growth(screen, tree_pen, flower_positions):
     """Animate flowers growing on the tree"""
-    
+  
     ## Create a separate pen for flowers
     flower_pen = turtle.Turtle()
     flower_pen.hideturtle()
     flower_pen.speed(0)
     flower_pen.penup()
-    
+  
     print("Flowers growing...")
-    
+  
     ## Grow flowers gradually
     growth_stages = 20  # Number of growth stages
     breeze_phase = 0
     breeze_strength = 0.8
     breeze_frequency = 0.08
-    
+  
     for stage in range(growth_stages + 1):
         flower_pen.clear()
-        
+      
         ## Calculate breeze effect for subtle movement
         breeze_phase += breeze_frequency
         current_breeze = math.sin(breeze_phase) * breeze_strength
-        
+      
         ## Calculate growth factor (0 to 1)
         growth_factor = stage / growth_stages
-        
+      
         ## Draw each flower with current growth factor
         for flower in flower_positions:
             if not flower['grown']:
                 ## Slight sway with breeze
                 sway_x = current_breeze * 0.1 * math.sin(stage * 0.5 + flower['x'] * 0.01)
-                
+              
                 draw_flower_at_position(
                     flower_pen, 
                     flower['x'] + sway_x, 
@@ -508,29 +508,29 @@ def animate_flower_growth(screen, tree_pen, flower_positions):
                     current_breeze * 2,
                     growth_factor
                 )
-        
+      
         screen.update()
         time.sleep(FPS)
-    
+  
     ## Mark all flowers as fully grown
     for flower in flower_positions:
         flower['grown'] = True
-    
+  
     print("All flowers have grown!")
     time.sleep(1)  # Pause to show fully grown flowers
-    
+  
     ## Now start the falling animation
     make_flowers_fall(screen, tree_pen, flower_pen, flower_positions)
 
 def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
     """Animate flowers falling from the tree"""
-    
+  
     ## Create a separate pen for falling flowers
     fall_pen = turtle.Turtle()
     fall_pen.hideturtle()
     fall_pen.speed(0)
     fall_pen.penup()
-    
+  
     ## Copy initial flowers for animation
     flowers = []
     for flower in initial_flowers:
@@ -543,7 +543,7 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
             'grown': True,
             'id': flower['id']
         })
-    
+  
     ## Initialize velocities and rotations
     velocities = {}
     rotations = {}
@@ -557,12 +557,12 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
 
     ## Store which flowers are currently attached to the tree
     attached_flowers = {flower['id']: flower for flower in flowers if flower['attached']}
-    
+  
     while True:
         frame_count += 1
         fall_pen.clear()
         flower_pen.clear()  # Clear the flower pen to remove flowers from tree
-        
+      
         ## Calculate breeze effect
         breeze_phase += breeze_frequency
         current_breeze = math.sin(breeze_phase) * breeze_strength
@@ -573,7 +573,7 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
             if (flower['attached'] and frame_count > 10 and 
                 random() < 0.03 and frame_count % 4 == 0):
                 flowers_to_detach.append(flower['id'])
-        
+      
         ## Detach the flowers
         for flower_id in flowers_to_detach:
             for flower in flowers:
@@ -607,13 +607,13 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
         ## Update and draw falling flowers
         all_fallen = len(attached_flowers) == 0
         active_falling_flowers = False
-        
+      
         for flower in flowers:
             if not flower['attached']:
                 ## Update falling flower physics
                 flower_id = flower['id']
                 vx, vy = velocities.get(flower_id, (0, 0))
-                
+              
                 ## Apply physics
                 flower['x'] += vx + current_breeze * 0.05
                 flower['y'] += vy
@@ -621,11 +621,11 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
                 vx += current_breeze * 0.015 + uniform(-0.008, 0.008)
                 vx *= 0.998
                 vy *= 0.998
-                
+              
                 ## Update rotation
                 if flower_id in rotations:
                     rotations[flower_id] += vx * 3
-                
+              
                 ## Ground collision
                 ground_level = -H//2 + flower['size'] * 1.4 + 20
                 if flower['y'] <= ground_level:
@@ -635,10 +635,10 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
                     else:
                         vy = 0
                         vx *= 0.8
-                
+              
                 velocities[flower_id] = [vx, vy]
                 rotation = rotations.get(flower_id, 0)
-                
+              
                 ## Draw falling flower
                 draw_flower_at_position(
                     fall_pen, 
@@ -648,19 +648,19 @@ def make_flowers_fall(screen, tree_pen, flower_pen, initial_flowers):
                     flower['size'], 
                     rotation
                 )
-                
+              
                 if vy != 0 or vx != 0:
                     active_falling_flowers = True
 
         screen.update()
         time.sleep(FPS)
-        
+      
         ## End condition: all flowers have fallen and stopped moving
         if all_fallen and not active_falling_flowers and frame_count > 60:
             break
 
     print(f"All {fallen_count} flowers have fallen!")
-    
+  
     ## Keep the window open
     screen.exitonclick()
 

@@ -12,18 +12,14 @@ tags:
 - random tree
 title: Recursive function to grow TREE in Python
 ---
-
-
-
 # Fibonacci Tree Growth (Multithreaded)
 
 > A detailed, step-by-step tutorial explaining a Pygame program that draws a Fibonacci-based tree. This tutorial shows how the original recursive growth works and how to modify it so branches grow in parallel using multithreading (safe and practical approach).
 
-
-
 ## Table of contents
 
 ## Table of Contents
+
 - [Introduction](#1-introduction)
 - [Prerequisites](#2-prerequisites)
 - [Project Structure](#3-project-structure)
@@ -33,7 +29,7 @@ title: Recursive function to grow TREE in Python
 - [Design Choices for Multithreading](#7-design-choices-for-multithreading)
 - [Multithreaded Implementation — Full Code](#8-multithreaded-implementation--full-code)
 - [How to Run and Test](#9-how-to-run-and-test)
-- [Performance Considerations & Debugging Tips](#10-performance-considerations--debugging-tips)
+- [Performance Considerations &amp; Debugging Tips](#10-performance-considerations--debugging-tips)
 - [FAQ and Closing Notes](#11-faq-and-closing-notes)
 
 ## 1. Introduction
@@ -41,13 +37,12 @@ title: Recursive function to grow TREE in Python
 This tutorial teaches you how a small Pygame program simulates a fractal, Fibonacci-based tree. Branch lengths and spreads follow Fibonacci-derived ratios so the resulting shape looks natural and organic.
 
 You'll see:
+
 - How the recursive `grow()` function builds branches.
 - Why some branches look thicker or greener.
 - How to convert the growth stage into parallel tasks so multiple branches can be computed at the same time, using Python threads.
 
 The tutorial ends with a complete multithreaded version ready to copy and run.
-
-
 
 ## 2. Prerequisites
 
@@ -55,8 +50,6 @@ The tutorial ends with a complete multithreaded version ready to copy and run.
 - `pygame` installed (`pip install pygame`)
 - Basic knowledge of Python functions and threading concepts
 - Optional: `concurrent.futures` familiarity
-
-
 
 ## 3. Project structure
 
@@ -66,10 +59,9 @@ Single file: `fibonacci_tree_parallel.py` . Run it with:
 python fibonacci_tree_parallel.py
 ```
 
+## 4. Simple code
 
-
-## 4. Simple code 
-
+{% include codeHeader.html %}
 
 ```python
 import pygame, sys, math, random
@@ -143,7 +135,7 @@ def grow(x, y, length, angle, depth, width):
     ## nonlinear upward bias — keeps branches from pointing downward
     for _ in range(sub_branches):
         new_length = length * (LENGTH_DECAY + LENGTH_VARIANCE * f_ratio)
-        
+      
         ## bias the angle upwards: restrict below horizontal (no downward growth)
         bias = random.uniform(-spread, spread)
         new_angle = angle + bias
@@ -195,10 +187,6 @@ while True:
     clock.tick(FPS)
 ```
 
-
-
-
-
 ## 5. Deep explanation — line by line and concept by concept
 
 I'll walk through the important pieces and why they exist.
@@ -230,6 +218,7 @@ def fib(n):
 `grow(x, y, length, angle, depth, width)` does the heavy lifting.
 
 Key steps inside:
+
 1. Base case: stop when depth <= 0 or length is tiny.
 2. Compute end coordinates using trigonometry:
    - `end_x = x + sin(angle) * length`
@@ -248,8 +237,6 @@ This recursion builds a flattened list `branches` which is later drawn progressi
 - Once user clicks, `draw_step` increases and the program draws `branches[:draw_step]` to animate growth.
 - Color interpolation between brown and green depends on depth to simulate branch → leaf transition.
 
-
-
 ## 6. Why and when to parallelize
 
 The algorithm is CPU-heavy when `TREE_DEPTH` is high — recursively creating many branches. Parallelizing the **generation** (not the drawing) can bring speed benefits on multicore machines.
@@ -257,34 +244,36 @@ The algorithm is CPU-heavy when `TREE_DEPTH` is high — recursively creating ma
 **Important**: Pygame drawing calls must happen in the main thread on many platforms. So you parallelize only the computationally heavy part: generating branch geometry (`branches` list). Drawing stays single-threaded.
 
 When to parallelize:
+
 - If `TREE_DEPTH >= 11` or you notice long pauses at startup while branches are computed.
 - If you want quicker precomputation before animating the growth.
-
-
 
 ## 7. Design choices for multithreading
 
 Options:
+
 - `threading.Thread` and manual queue/lock management.
 - `concurrent.futures.ThreadPoolExecutor` — simpler, higher-level.
 
 Constraints & safety:
+
 - The shared `branches` list must be protected by a `threading.Lock` during append operations.
 - Avoid creating thousands of concurrent threads. Use a bounded pool (`max_workers = min(32, os.cpu_count() or 4)`) to limit resource usage.
 - Keep recursion depth per thread modest; better approach: have each submitted task compute an entire subtree (e.g., `grow()` from a given node down to a shallow depth) and append the resulting local list to the global list under a lock.
 
 Strategy implemented below:
+
 - The main `grow_parallel()` will push top-level child `grow` tasks into an executor.
 - Each worker runs a variant `grow_worker()` that returns a local list of branches for that subtree.
 - The main thread collects futures and merges results into the global `branches` once each future completes (safe merging under lock).
 
 This design reduces lock contention (threads only lock briefly to append a chunk) and keeps Pygame drawing safe.
 
-
-
 ## 8. Multithreaded implementation — full code
 
 Copy this file as `fibonacci_tree_parallel.py` and run it. This includes the parallel `generate_tree()` which uses `ThreadPoolExecutor` and a safe `branches` merge.
+
+{% include codeHeader.html %}
 
 ```python
 import pygame, sys, math, random
@@ -438,11 +427,10 @@ while True:
 ```
 
 **Notes about the code above**:
+
 - `grow_worker()` performs the recursion only *locally* and returns a `local` list of branches rather than appending to a global list while computing. This avoids heavy lock contention.
 - `generate_tree_parallel()` handles trunk creation synchronously, then schedules multiple subtree computations via `ThreadPoolExecutor`. When a future completes, its result is merged into `branches` under `branches_lock`.
 - The renderer still draws from `branches` on the main thread.
-
-
 
 ## 9. How to run and test
 
@@ -452,22 +440,16 @@ while True:
 4. Click the window to start the growth animation.
 
 **Testing tips**:
+
 - Try small/large `TREE_DEPTH` values to observe performance changes.
 - Toggle `max_workers` or the strategy to see CPU/time tradeoffs.
-
-
 
 ## 10. Performance considerations & debugging tips
 
 - Python threads are limited by the Global Interpreter Lock (GIL) for pure-Python CPU-bound tasks. However, splitting heavy recursion into multiple threads often helps if some operations release the GIL (not the case here) OR if overhead (waiting for random numbers, I/O) exists. Still, for pure CPU-bound tasks, `multiprocessing` may give better scaling. The thread approach helps eliminate GUI freeze because branch generation tasks are off the main thread.
-
 - If you want true parallel CPU utilization for heavy depth, consider `multiprocessing` instead. It requires serializing results between processes (e.g., `multiprocessing.Pool`), but it avoids the GIL.
-
 - Keep `branches` merging minimal and batched. Appending many single branches under a lock causes contention. Returning a local list and merging it once avoids this.
-
 - On Windows, `pygame` must run in the main thread. Don't attempt to call Pygame display or drawing from worker threads.
-
-
 
 ## 11. FAQ and closing notes
 
@@ -479,9 +461,6 @@ A: No — drawing must stay in the main thread for portability and correctness.
 
 **Q: When should I use `multiprocessing` instead?**
 A: Use it when `TREE_DEPTH` is large (e.g., 12+) and CPU usage is the bottleneck. It has higher overhead but avoids the GIL.
-
-
-
 
 ### Final thoughts
 

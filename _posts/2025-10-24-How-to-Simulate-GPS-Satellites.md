@@ -12,11 +12,8 @@ tags:
 - gps satellites basic tutorial
 title: How to make a GPS Satellite Simulation in Python
 ---
-
-
-
-
 For more details:
+
 # Check out our YouTube Short!
 
 <div style="text-align:center;">
@@ -28,18 +25,13 @@ For more details:
   </iframe>
 </div>
 
-
 ## 3D Visualization of a GPS Satellite Constellation
 
 **A detailed, step-by-step tutorial and annotated markdown blog** that explains a VPython script which renders a 3D visualization of the GPS satellite constellation (24 operational satellites shown across 6 orbital planes). This tutorial covers setup, math, per-line code explanation, optimization tips, debugging, and suggested extensions.
 
-
-
 ## Overview
 
 The script creates a **3D animation of GPS satellites** orbiting Earth using VPython. It models the **real GPS constellation** with six orbital planes, each containing four satellites, at an altitude of about 20,180 km. The satellites orbit with a 55° inclination and leave colorful trails to show their paths.
-
-
 
 ## Requirements
 
@@ -56,9 +48,9 @@ pip install vpython
 
 > VPython runs in a browser or a standalone window depending on your setup.
 
-
-
 ## Full Source Code
+
+{% include codeHeader.html %}
 
 ```python
 from vpython import sphere, vector, rate, color, \
@@ -112,7 +104,7 @@ for plane in range(num_planes):
     raan = 2 * math.pi * plane / num_planes  # RAAN evenly spaced
     for sat_in_plane in range(sats_per_plane):
         true_anomaly = 2 * math.pi * sat_in_plane / sats_per_plane
-        
+      
         sat = sphere(
             radius = DISP_R * 0.1,
             color = color.white,
@@ -186,8 +178,6 @@ while True:
             sat.clear_trail()
 ```
 
-
-
 ## Detailed Explanation
 
 ### Scene and Scale
@@ -197,6 +187,7 @@ We use a `canvas` as our 3D scene and apply scaling to shrink Earth's real radiu
 ### Orbital Parameters
 
 The GPS system uses:
+
 - **6 orbital planes** separated by 60° in RAAN.
 - **4 satellites per plane**, spaced 90° apart in true anomaly.
 - **Inclination:** 55° relative to Earth's equator.
@@ -209,6 +200,7 @@ To make orbits visible, we scale the angular speed by `SPEED_FACTOR = 3000` so s
 Each satellite is created as a small white `sphere` with a colored trail. The color corresponds to its orbital plane. We also attach a `label` above each satellite and a `cylinder` line connecting it to Earth's surface.
 
 The nested loop structure:
+
 - Outer loop (`plane`) sets the plane’s RAAN.
 - Inner loop (`sat_in_plane`) places satellites evenly spaced in that plane.
 
@@ -217,6 +209,7 @@ We store each satellite’s RAAN, true anomaly, and plane index for later update
 ### Orbital Motion
 
 Each frame (at 60 FPS):
+
 1. Increment the true anomaly based on angular velocity.
 2. Compute the position in the orbital plane.
 3. Apply two rotations:
@@ -229,23 +222,21 @@ Each frame (at 60 FPS):
 ### Earth Rotation
 
 The Earth sphere is rotated slowly with:
+
 ```python
 earth.rotate(angle=0.001, axis=vector(0,1,0))
 ```
+
 This simulates Earth’s spin and adds realism.
-
-
 
 ## Mathematical Summary
 
-| Step | Rotation Axis | Formula | Purpose |
-|------|----------------|----------|----------|
-| 1 | X-axis | y' = y*cos(i) - z*sin(i) | Inclination rotation |
-| 2 | Z-axis | x'' = x'*cos(Ω) - y'*sin(Ω) | RAAN rotation |
+| Step | Rotation Axis | Formula                       | Purpose              |
+| ---- | ------------- | ----------------------------- | -------------------- |
+| 1    | X-axis        | y' = y*cos(i) - z*sin(i)    | Inclination rotation |
+| 2    | Z-axis        | x'' = x'*cos(Ω) - y'*sin(Ω) | RAAN rotation        |
 
 `Ω` (RAAN) shifts the orbital plane around Earth’s z-axis. `i` (inclination) tilts the plane.
-
-
 
 ## Performance Tips
 
@@ -254,8 +245,6 @@ This simulates Earth’s spin and adds realism.
 - Decrease number of satellites for testing.
 - Avoid frequent creation/deletion of VPython objects inside the loop.
 
-
-
 ## Enhancements You Can Try
 
 1. **Add real-time controls:** buttons for pause/resume, orbit speed, and trail toggle.
@@ -263,17 +252,12 @@ This simulates Earth’s spin and adds realism.
 3. **Add ground stations:** show visible satellites from a chosen location.
 4. **Add camera animation:** orbit camera around Earth.
 
-
-
 ## Summary
 
 This VPython project demonstrates how to visualize satellite constellations in 3D. You learned:
+
 - How to model orbital planes and inclination.
 - How to use VPython primitives (`sphere`, `cylinder`, `label`).
 - How to simulate orbital motion using angular updates.
 
 It’s a powerful educational example for both orbital mechanics and real-time 3D visualization in Python.
-
-
-
-

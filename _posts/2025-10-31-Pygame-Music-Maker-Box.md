@@ -17,9 +17,6 @@ tags:
 - python
 title: Music Maker with Save/Load in Python
 ---
-
-
-
 # Interactive Music Maker in Python with Pygame
 
 ## Beginner-Friendly Tutorial – Build a Synth Piano with Save/Load
@@ -27,11 +24,12 @@ title: Music Maker with Save/Load in Python
 This tutorial walks you through creating an **interactive music maker** using **Python and Pygame**. You'll learn how to build a **synthetic piano**, **draw a sequencer grid**, and **save/load your music patterns**. By the end, you'll have a working **step sequencer** for simple melodies.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Setting Up Pygame](#setting-up-pygame)
 - [Creating the Synthetic Piano](#creating-the-synthetic-piano)
-- [Sequencer Grid & Layout](#sequencer-grid--layout)
-- [Save & Load Buttons](#save--load-buttons)
+- [Sequencer Grid &amp; Layout](#sequencer-grid--layout)
+- [Save &amp; Load Buttons](#save--load-buttons)
 - [Event Handling](#event-handling)
 - [Playback Logic](#playback-logic)
 - [Complete Code](#complete-code)
@@ -44,6 +42,7 @@ This tutorial walks you through creating an **interactive music maker** using **
 This project creates a **simple step sequencer** where each row represents a note (C, D, E, F, G, A) and each column is a step in the melody. You can toggle notes on/off, **play the melody**, and **save/load patterns** to/from files.
 
 Key features:
+
 - Real-time playback of a synthetic piano
 - Clickable grid for sequencing notes
 - Save and load your music patterns using JSON
@@ -218,6 +217,8 @@ if playing and time.time()-last >= beat_time:
 
 ## Complete Code
 
+{% include codeHeader.html %}
+
 ```python
 import pygame, sys, time, numpy as np, json, os
 
@@ -381,8 +382,8 @@ while True:
 
 ```
 
-An example Twinkle Twinkle Little Star music text file is here. Copy the following and paste in a new 
-twinkle.txt file you can load it later 
+An example Twinkle Twinkle Little Star music text file is here. Copy the following and paste in a new
+twinkle.txt file you can load it later
 
 ### twinkle.txt
 
@@ -393,14 +394,18 @@ twinkle.txt file you can load it later
 ## How to Run
 
 1. Install dependencies:
+
 ```bash
 pip install pygame numpy
 ```
+
 2. Save the `.py` file.
 3. Run:
+
 ```bash
 python music_maker.py
 ```
+
 4. Click on the grid to toggle notes.
 5. Use **SAVE** and **LOAD** to persist your patterns.
 
@@ -423,4 +428,3 @@ python music_maker.py
 ---
 
 This beginner-friendly tutorial introduces **music programming in Python** and **interactive sequencer logic**. With practice, you can expand this into a **full-fledged music maker** with more features.
-

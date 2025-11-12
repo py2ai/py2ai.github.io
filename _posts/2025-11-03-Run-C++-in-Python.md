@@ -17,9 +17,6 @@ tags:
 - tutorial
 title: Run C++ Code from Python – Step-by-Step Guide
 ---
-
-
-
 # Run C++ Code from Python – Step-by-Step Guide
 
 ## # Beginner-Friendly Tutorial – Learn How Python Can Compile and Execute C++ Code
@@ -27,6 +24,7 @@ title: Run C++ Code from Python – Step-by-Step Guide
 Python is an incredibly versatile language, but sometimes you might need the speed and performance of C++. This tutorial explains how to **run C++ code directly from Python**, making it easy to integrate both languages. You’ll learn how to write, compile, and execute a temporary C++ program from a Python script using the **`subprocess`** and **`tempfile`** modules. This is a great way to understand cross-language execution and automation using Python!
 
 ## # Table of Contents
+
 - [Overview](#overview)
 - [Why Run C++ from Python?](#why-run-c-from-python)
 - [Step 1: Writing C++ Code in Python](#step-1-writing-c-code-in-python)
@@ -77,7 +75,6 @@ int main() {
 
 Here, the **C++ code is stored as a string** that will later be written to a temporary file.
 
-
 ---
 
 ## # Setting Up `g++` on Your System
@@ -85,6 +82,7 @@ Here, the **C++ code is stored as a string** that will later be written to a tem
 You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps below depending on your OS.
 
 ## # Windows
+
 1. Install **MinGW-w64** (Minimalist GNU for Windows):
    - Visit: [https://winlibs.com/](https://winlibs.com/) or [https://sourceforge.net/projects/mingw-w64/](https://sourceforge.net/projects/mingw-w64/)
    - Download and install it.
@@ -93,9 +91,11 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```bash
    g++ --version
    ```
+
    If it prints version info, you’re ready to go!
 
 ## # macOS
+
 1. Install **Xcode Command Line Tools** by running:
    ```bash
    xcode-select --install
@@ -104,9 +104,11 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```bash
    g++ --version
    ```
+
    You should see Apple’s `clang` compiler, which works for this tutorial.
 
 ## # Linux (Ubuntu/Debian)
+
 1. Open Terminal and install `g++`:
    ```bash
    sudo apt update
@@ -116,8 +118,8 @@ You need a working C++ compiler (`g++`) to run this tutorial. Follow the steps b
    ```bash
    g++ --version
    ```
----
 
+---
 
 ## # Step 2: Compiling C++ Code
 
@@ -178,6 +180,8 @@ if os.path.exists(exe_file):
 This ensures no leftover files clutter your system.
 
 ## # Complete Code
+
+{% include codeHeader.html %}
 
 ```python
 import subprocess
@@ -241,4 +245,3 @@ if os.path.exists(exe_file):
 ---
 
 With this simple integration, you’ve built a **bridge between Python and C++**, unlocking a world of hybrid programming possibilities. You can extend this example to dynamically generate more complex C++ programs, compile them on the fly, and benchmark their performance using Python scripts.
-

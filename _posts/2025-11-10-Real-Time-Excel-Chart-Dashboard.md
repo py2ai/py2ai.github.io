@@ -26,17 +26,17 @@ tags:
 - data-visualization
 - tutorial
 ---
-
 # Real-Time Excel Chart Updater with Python and Watchdog
 
 ### Automatically Refresh Charts When Excel Files Change
 
-This tutorial shows you how to build a **real-time Excel chart visualizer** using **Python**, **pandas**, **matplotlib**, and **watchdog**.  
+This tutorial shows you how to build a **real-time Excel chart visualizer** using **Python**, **pandas**, **matplotlib**, and **watchdog**.
 The script detects changes in an Excel file and automatically **updates a live chart** without manual refresh — perfect for dashboards, live monitoring, and educational demos.
 
 ---
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [How It Works](#how-it-works)
 - [Setup Instructions](#setup-instructions)
@@ -53,21 +53,22 @@ The script detects changes in an Excel file and automatically **updates a live c
 
 ## Overview
 
-This project continuously monitors an Excel file named **`garden_data.xlsx`**.  
+This project continuously monitors an Excel file named **`garden_data.xlsx`**.
 Whenever the file changes, the Python program automatically **reloads it** and **redraws the chart**.
 
 Ideal for:
-- Real-time data logging dashboards  
-- Automatically visualizing IoT or sensor data  
+
+- Real-time data logging dashboards
+- Automatically visualizing IoT or sensor data
 - Tracking and plotting financial trends in Excel
 
 ---
 
 ## How It Works
 
-1. **Watchdog** detects when the Excel file changes.  
-2. **pandas** loads and parses the Excel data.  
-3. **matplotlib** renders an interactive live chart.  
+1. **Watchdog** detects when the Excel file changes.
+2. **pandas** loads and parses the Excel data.
+3. **matplotlib** renders an interactive live chart.
 4. The chart updates instantly — no need to rerun the program.
 
 ---
@@ -80,14 +81,14 @@ First, install the dependencies:
 pip install pandas matplotlib watchdog numpy openpyxl
 ```
 
-Next, create a file named **`garden_data.xlsx`** in the same folder.  
+Next, create a file named **`garden_data.xlsx`** in the same folder.
 Example sheet content:
 
 | Plant | Height |
-|--------|---------|
-| Rose   | 30      |
-| Tulip  | 25      |
-| Lily   | 35      |
+| ----- | ------ |
+| Rose  | 30     |
+| Tulip | 25     |
+| Lily  | 35     |
 
 Now, you’re ready to run the script!
 
@@ -97,7 +98,7 @@ Now, you’re ready to run the script!
 
 ### 1. Drawing the Chart
 
-The `draw_chart(ax)` function automatically detects numeric columns from your Excel sheet and plots them.  
+The `draw_chart(ax)` function automatically detects numeric columns from your Excel sheet and plots them.
 It also handles errors gracefully if the file is missing or contains no numeric data.
 
 ```python
@@ -151,7 +152,7 @@ def draw_chart(ax):
 
 ### 2. Watching for File Changes
 
-The `Watcher` class listens for file modification events using **watchdog**.  
+The `Watcher` class listens for file modification events using **watchdog**.
 Whenever the Excel file changes, a flag is triggered to refresh the chart.
 
 ```python
@@ -166,7 +167,7 @@ class Watcher(FileSystemEventHandler):
 
 ### 3. Main Loop
 
-The main loop runs continuously with `plt.ion()` (interactive mode).  
+The main loop runs continuously with `plt.ion()` (interactive mode).
 It checks for updates and redraws the chart automatically.
 
 ```python
@@ -196,6 +197,8 @@ if __name__ == "__main__":
 ## Complete Code
 
 Here’s the entire script in one block:
+
+{% include codeHeader.html %}
 
 ```python
 import pandas as pd
@@ -285,8 +288,8 @@ if __name__ == "__main__":
 
 ## How to Run
 
-1. Save the above script as **`excel_chart_watcher.py`**  
-2. Place **`garden_data.xlsx`** in the same directory  
+1. Save the above script as **`excel_chart_watcher.py`**
+2. Place **`garden_data.xlsx`** in the same directory
 3. Run:
 
 ```bash
@@ -299,21 +302,21 @@ Make any edits to the Excel file — and watch your chart refresh instantly! ⚡
 
 ## Key Learnings
 
-- Real-time file watching with **watchdog**  
-- Automated Excel parsing with **pandas**  
-- Smart detection of numeric vs non-numeric columns  
+- Real-time file watching with **watchdog**
+- Automated Excel parsing with **pandas**
+- Smart detection of numeric vs non-numeric columns
 - Live visualization using **matplotlib**
 
 ---
 
 ## Further Ideas
 
-- Display multiple charts (for each sheet)  
-- Add filtering or smoothing for better clarity  
-- Save charts as images automatically  
-- Integrate with **Tkinter** or **Streamlit** for dashboards  
+- Display multiple charts (for each sheet)
+- Add filtering or smoothing for better clarity
+- Save charts as images automatically
+- Integrate with **Tkinter** or **Streamlit** for dashboards
 
 ---
 
-**You’ve built a live Excel chart updater in Python!**  
+**You’ve built a live Excel chart updater in Python!**
 Perfect for automation, teaching, and data monitoring projects.

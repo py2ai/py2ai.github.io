@@ -17,12 +17,10 @@ tags:
 - nature
 title: Make a Tree with falling Flowers
 ---
-
-
-
 ---
 
 # Table of Contents
+
 1. [Overview](#overview)
 2. [Setup and Imports](#setup-and-imports)
 3. [Generating Branch Parameters](#generating-branch-parameters)
@@ -36,7 +34,8 @@ title: Make a Tree with falling Flowers
 ---
 
 ## Overview
-This tutorial expands on our previous **Cherry Blossom Tree** by adding **animated falling petals** that gently sway in the wind and settle on the ground.  
+
+This tutorial expands on our previous **Cherry Blossom Tree** by adding **animated falling petals** that gently sway in the wind and settle on the ground.
 We’ll use `turtle` graphics and a lightweight physics simulation with gravity, wind, and smooth animation updates.
 
 ---
@@ -58,13 +57,14 @@ WIND = 2.0
 FPS = 0.02
 seed(192)
 ```
+
 We initialize the screen size, branch depth, and animation constants for wind and gravity.
 
 ---
 
 ## Generating Branch Parameters
 
-Before drawing, we create random parameters for branch angles and lengths.  
+Before drawing, we create random parameters for branch angles and lengths.
 This ensures a natural look while keeping the structure reproducible.
 
 ```python
@@ -86,6 +86,7 @@ def param_gen():
     for p in branch_params:
         yield p
 ```
+
 The `record_my_params()` function recursively stores all angles and lengths before we start drawing.
 
 ---
@@ -118,6 +119,7 @@ def draw_flower(pen, x, y, color, size, rotation=0):
     pen.goto(x, y)
     pen.dot(size * 0.6, (0.9, 0.4, 0.6))
 ```
+
 Each blossom is drawn using a **five-petal shape** with subtle pink tones.
 
 ---
@@ -152,11 +154,14 @@ while True:
     ## Move and draw each blossom
     ...
 ```
+
 The simulation uses **gravity and sinusoidal wind motion** for realistic drifting.
 
 ---
 
 ## Complete Code
+
+{% include codeHeader.html %}
 
 ```python
 import turtle
@@ -370,14 +375,14 @@ if __name__ == "__main__":
 
 ```
 
-
 ---
 
 ## How It Works
-- **Tree Drawing:** Recursive function generates symmetrical branches.  
-- **Blossom Attachment:** Each flower starts attached to a branch.  
-- **Falling Motion:** Randomly detaches and moves downward using basic gravity physics.  
-- **Wind:** Adds horizontal sway using a sine wave pattern.  
+
+- **Tree Drawing:** Recursive function generates symmetrical branches.
+- **Blossom Attachment:** Each flower starts attached to a branch.
+- **Falling Motion:** Randomly detaches and moves downward using basic gravity physics.
+- **Wind:** Adds horizontal sway using a sine wave pattern.
 - **Collision Detection:** Flowers stop gently upon reaching the ground.
 
 ---
@@ -395,6 +400,7 @@ You’ll see a black background with blossoms drifting gracefully from the branc
 ---
 
 ## Conclusion
-This project brings life to your fractal tree by adding **motion and realism**.  
-Experiment with `WIND`, `GRAVITY`, and `FPS` to create slow drifting or stormy blossom effects 🌸💨  
+
+This project brings life to your fractal tree by adding **motion and realism**.
+Experiment with `WIND`, `GRAVITY`, and `FPS` to create slow drifting or stormy blossom effects 🌸💨
 Next, try combining this animation with **sound or seasonal background music** for a serene interactive art piece!

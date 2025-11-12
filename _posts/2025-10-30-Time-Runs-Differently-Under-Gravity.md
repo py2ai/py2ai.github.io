@@ -15,9 +15,6 @@ tags:
 - interactive
 title: Gravitational Time Dilation Simulation in Python
 ---
-
-
-
 # Gravitational Time Dilation Simulation with Pygame
 
 ## Educational Python Project – Visualize How Gravity Affects Time
@@ -25,6 +22,7 @@ title: Gravitational Time Dilation Simulation in Python
 This tutorial walks through building an **interactive Gravitational Time Dilation Simulation** using **Python and Pygame**. The simulation demonstrates how **time passes differently under varying gravitational strengths**, comparing a clock at Earth’s surface to a clock under stronger or weaker gravity.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Theory: Gravitational Time Dilation](#theory-gravitational-time-dilation)
 - [Pygame Setup](#pygame-setup)
@@ -49,9 +47,8 @@ $$
 \text{time factor} = \frac{1}{\sqrt{1 - \frac{2 G M}{r c^2}}}
 $$
 
-
-
 Where:
+
 - \(G\) is the gravitational constant
 - \(M\) is the mass of the object (Earth)
 - \(r\) is the distance from the center of the mass
@@ -82,6 +79,7 @@ font_small = pygame.font.SysFont(None, FONT_SIZE_SMALL)
 ## Clock Display
 
 The simulation shows two clocks:
+
 - **Earth Clock**: baseline reference
 - **Gravity Clock**: affected by gravity changes
 
@@ -92,6 +90,7 @@ You can use the **UP and DOWN arrow keys** to increase or decrease gravity. The 
 ## Matplotlib Live Plot
 
 A live Matplotlib plot shows the **relative clock rate vs gravity**. The plot features:
+
 - Blue line with sky-blue dots
 - Gradient shadow under the curve
 - Dynamic Y-axis
@@ -111,6 +110,8 @@ The simulation also shows:
 This uses the `relative_rate` variable to dynamically display how 1 Earth year corresponds to a different duration on the gravity clock.
 
 ## Complete Python Code
+
+{% include codeHeader.html %}
 
 ```python
 import pygame

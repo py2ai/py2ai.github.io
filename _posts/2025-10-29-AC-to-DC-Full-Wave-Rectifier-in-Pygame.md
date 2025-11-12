@@ -12,17 +12,14 @@ tags:
 - ac dc rectifier simulation
 title: AC to DC conversion Simulation in Python
 ---
-
-
-
 # Full Wave Bridge Rectifier Simulation with Pygame
 
 ## Educational Python Project – Visualize AC to DC Conversion
 
 This tutorial walks through building a **Full Wave Bridge Rectifier Simulation** using **Python and Pygame**. The simulation visually demonstrates how **AC (Alternating Current)** is converted into **DC (Direct Current)** using **four diodes** arranged in a bridge circuit.
 
-
 ## Table of Contents
+
 - [Overview](#overview)
 - [Circuit Concept](#circuit-concept)
 - [Pygame Setup](#pygame-setup)
@@ -44,8 +41,6 @@ This simulation provides an interactive, animated look at how a **bridge rectifi
 
 The current flow alternates between two paths during positive and negative half-cycles, visually explaining the rectification process.
 
-
-
 ## Circuit Concept
 
 A **full wave bridge rectifier** uses **four diodes (D1–D4)** arranged in a diamond shape. During each half-cycle:
@@ -58,8 +53,6 @@ A **full wave bridge rectifier** uses **four diodes (D1–D4)** arranged in a di
   - D2 and D3 conduct.
 
 Thus, both halves of the AC waveform are converted into unidirectional current, producing a full-wave DC output.
-
-
 
 ## Pygame Setup
 
@@ -93,8 +86,6 @@ C = {
 }
 ```
 
-
-
 ## Drawing the Circuit
 
 We build a diamond-shaped layout for the diodes:
@@ -111,8 +102,6 @@ Each diode is drawn with proper anode/cathode markers using `pygame.draw.polygon
 
 Active diodes (the ones conducting in the current half-cycle) are highlighted in bright colors.
 
-
-
 ## Waveform Animation
 
 Two waveforms are drawn to represent **input AC** and **output DC** signals:
@@ -128,8 +117,6 @@ for x in range(280):
     draw.circle(S, color, (cx - 140 + x, int(y_pos)), 1)
 ```
 
-
-
 ## Current Flow Visualization
 
 To make the current path more interactive, small **moving dots** simulate the direction of electron flow through the active diodes and load resistor. The animation updates continuously using a changing `phase` variable.
@@ -141,11 +128,11 @@ Positive and negative half-cycles each show distinct paths:
 
 This helps students visually understand how current always flows in the same direction through the load.
 
-
-
 ## Complete Python Code
 
 Below is the complete code that combines everything explained above.
+
+{% include codeHeader.html %}
 
 ```python
 
@@ -189,10 +176,10 @@ def grid():
 def draw_diode_with_polarity(pos, angle=0, color=None, active=False, reverse=False):
     x, y = pos
     s = 20
-    
+  
     ## Create a surface for the diode
     diode_surface = pygame.Surface((s*3, s*3), pygame.SRCALPHA)
-    
+  
     ## Use provided color or default
     if active and color:
         diode_color = color
@@ -205,7 +192,7 @@ def draw_diode_with_polarity(pos, angle=0, color=None, active=False, reverse=Fal
         wire_color = C["WIRE"]
         anode_color = C["ANODE"]
         cathode_color = C["CATHODE"]
-    
+  
     ## Draw diode symbol - reverse the direction if needed
     if reverse:
         ## Reverse diode (cathode on left, anode on right)
@@ -214,7 +201,7 @@ def draw_diode_with_polarity(pos, angle=0, color=None, active=False, reverse=Fal
         pygame.draw.polygon(diode_surface, wire_color, 
                            [(s*2.2, s*0.5), (s*2.2, s*2.5), (s*1.2, s*1.5)], 2)
         pygame.draw.line(diode_surface, wire_color, (s*0.8, s*0.5), (s*0.8, s*2.5), 3)
-        
+      
         ## Anode and cathode markers (swapped for reverse diode)
         pygame.draw.circle(diode_surface, cathode_color, (int(s*0.5), int(s*1.5)), 4)  # Cathode on left
         pygame.draw.circle(diode_surface, anode_color, (int(s*2.5), int(s*1.5)), 4)    # Anode on right
@@ -225,14 +212,14 @@ def draw_diode_with_polarity(pos, angle=0, color=None, active=False, reverse=Fal
         pygame.draw.polygon(diode_surface, wire_color, 
                            [(s*0.8, s*0.5), (s*0.8, s*2.5), (s*1.8, s*1.5)], 2)
         pygame.draw.line(diode_surface, wire_color, (s*2.2, s*0.5), (s*2.2, s*2.5), 3)
-        
+      
         ## Anode and cathode markers
         pygame.draw.circle(diode_surface, anode_color, (int(s*0.5), int(s*1.5)), 4)
         pygame.draw.circle(diode_surface, cathode_color, (int(s*2.5), int(s*1.5)), 4)
-    
+  
     ## Rotate the surface
     rotated_surface = pygame.transform.rotate(diode_surface, angle)
-    
+  
     ## Get the rect and center it at the position
     rect = rotated_surface.get_rect(center=(x, y))
     S.blit(rotated_surface, rect)
@@ -240,18 +227,18 @@ def draw_diode_with_polarity(pos, angle=0, color=None, active=False, reverse=Fal
 def waves(p):
     grid()
     cx, cy = W//2, H//2
-    
+  
     ## Input Wave (AC) - TOP (moved 40px down) 
     box_y = 160  # Was 120, now 160 (40px down)
     draw.rect(S, C["DIODE"], (cx - 150, box_y - 55, 300, 115), 2)
-    
+  
     ## Draw input wave with color coding
     for x in range(280):
         y_val = amp * math.sin(freq*(x + p))
         y_pos = box_y + y_val
         color = C["POSITIVE_HALF"] if y_val >= 0 else C["NEGATIVE_HALF"]
         draw.circle(S, color, (cx - 140 + x, int(y_pos)), 1)
-    
+  
     txt("AC Input Waveform", (cx, box_y - 90), C["IN"])
     ## txt("Live", (cx - 50, box_y + 80), C["IN"])
     ## txt("Neutral", (cx + 50, box_y + 80), C["IN"])
@@ -259,14 +246,14 @@ def waves(p):
     ## Output Wave (Full-Wave DC) - BOTTOM (moved 40px up) 
     box_y = H - 160  # Was H - 120, now H - 160 (40px up)
     draw.rect(S, C["DIODE"], (cx - 150, box_y - 70, 300, 115), 2)
-    
+  
     ## Draw output wave with color coding based on original input phase
     for x in range(280):
         y_val = amp * math.sin(freq*(x + p))
         y_pos = box_y - amp * abs(math.sin(freq*(x + p)))
         color = C["POSITIVE_HALF"] if y_val >= 0 else C["NEGATIVE_HALF"]
         draw.circle(S, color, (cx - 140 + x, int(y_pos)), 1)
-    
+  
     txt("DC Output Waveform", (cx, box_y - 90), C["OUT"])
     txt("-", (cx - 50, box_y + 80), C["OUT"])
     txt("+", (cx + 50, box_y + 80), C["OUT"])
@@ -274,7 +261,7 @@ def waves(p):
     ## Bridge Rectifier Circuit - CENTER 
     center_x, center_y = cx, H//2
     radius = 120
-    
+  
     ## Define the four points of the diamond
     top = (center_x, center_y - radius)      # Live input
     right = (center_x + radius, center_y)    # Positive output
@@ -309,7 +296,7 @@ def waves(p):
     ## D2: Top-left - Negative to Live (REVERSE direction - NOW NORMAL)
     ## D3: Bottom-right - Neutral to Positive (normal direction - NOW REVERSE)  
     ## D4: Bottom-left - Negative to Neutral (REVERSE direction)
-    
+  
     ## Only color the two conducting diodes
     if is_positive_half:
         ## Positive half cycle: D1 and D4 conduct (ONLY these two are colored)
@@ -336,7 +323,7 @@ def waves(p):
     draw.line(S, wire_color_live, top, (top[0], top[1] - 20), 5 if is_positive_half else 3)
     draw.circle(S, C["IN"], (top[0], top[1] - 25), 6, 2)
     txt("L", (top[0], top[1] - 40), C["IN"])
-    
+  
     ## Neutral wire - short line downward from bottom point
     wire_color_neutral = active_color if (not is_positive_half) else C["WIRE"]
     draw.line(S, wire_color_neutral, bottom, (bottom[0], bottom[1] + 20), 5 if not is_positive_half else 3)
@@ -347,7 +334,7 @@ def waves(p):
     ## Positive output - short line to right from right point
     draw.line(S, active_color, right, (right[0] + 20, right[1]), 5)
     txt("-", (right[0] + 35, right[1]), C["OUT"])
-    
+  
     ## Negative output - short line to left from left point
     draw.line(S, active_color, left, (left[0] - 20, left[1]), 5)
     txt("+", (left[0] - 35, left[1]), C["OUT"])
@@ -355,12 +342,12 @@ def waves(p):
     ## Load resistor - placed INSIDE bridge width
     load_width, load_height = 60, 40
     load_x, load_y = center_x, center_y
-    
+  
     ## Draw load resistor with active color
     draw.rect(S, active_color, (load_x - load_width//2, load_y - load_height//2, 
                             load_width, load_height), 3)
     txt("Load", (load_x, load_y), active_color)
-    
+  
     ## Connect load to bridge - short connections with active color
     draw.line(S, active_color, (right[0] - 3, right[1]), 
               (load_x + load_width//2, load_y), 5)
@@ -402,11 +389,11 @@ def waves(p):
     ## Add title and description
     txt("Full Wave Bridge Rectifier", (cx, 50), C["WIRE"])
     txt("AC to DC Conversion", (cx, 90), (200, 200, 200))
-    
+  
     ## Add connection indicators (adjusted positions)
     txt("AC Input", (cx, center_y - radius - 60), C["IN"])
     txt("DC Output", (cx, center_y + radius + 60), C["OUT"])
-    
+  
     ## Show current path description
     if is_positive_half:
         path_text = "Current Path (Blue): Live → D1 → (+) → Load → (-) → D4 → Neutral"
@@ -428,7 +415,6 @@ while True:
     clk.tick(60)
 ```
 
-
 ## How to Run
 
 1. Install **Pygame** if you haven’t already:
@@ -442,16 +428,12 @@ while True:
    ```
 4. Press **[ESC]** to quit.
 
-
-
 ## Key Learnings
 
 - How a **Full Wave Bridge Rectifier** works.
 - How to **simulate electric circuits visually** using Python.
 - Using **Pygame for animation** and dynamic drawing.
 - Representing **waveforms and logic** through geometry and color.
-
-
 
 ## Further Ideas
 
@@ -462,15 +444,10 @@ Here are some fun ways to extend the project:
 - Add **sound effects** when current changes direction.
 - Show **voltage vs time graph** side-by-side with the circuit.
 
-
-
 ## Credits
 
 Developed by **PyShine** — bringing electronics and Python to life through visual learning!
 
 If you found this helpful, consider subscribing to [PyShine on YouTube](https://www.youtube.com/@pyshine_official)  for more fun Python projects.
 
-
-
 **Happy Coding & Keep Learning! ⚡**
-

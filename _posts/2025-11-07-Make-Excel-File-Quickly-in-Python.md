@@ -19,8 +19,6 @@ tags:
 - tutorial
 title: Create Excel Files with Python – Complete Beginner's Guide
 ---
-
-
 # Create Excel Files with Python – Complete Beginner's Guide
 
 ## Learn How to Automate Excel File Creation with Python's openpyxl Library
@@ -30,7 +28,8 @@ Excel spreadsheets are everywhere in the business world, but did you know you ca
 ---
 
 ## Table of Contents
-- [What We're Building](#what-were-building)
+
+- [What We&#39;re Building](#what-were-building)
 - [Why Use Python for Excel?](#why-use-python-for-excel)
 - [Step 0: Installing openpyxl](#step-0-installing-openpyxl)
 - [Step 1: Importing the Library](#step-1-importing-the-library)
@@ -77,6 +76,7 @@ Before we start coding, we need to install the openpyxl library. Open your comma
 ```bash
 pip install openpyxl
 ```
+
 ### What is pip?
 
 pip is Python's package manager that helps install external libraries
@@ -84,6 +84,7 @@ pip is Python's package manager that helps install external libraries
 It comes automatically with Python (if you installed Python from python.org)
 
 ### Verifying Installation:
+
 After installation, you can verify it worked by opening Python and typing:
 
 ```
@@ -246,11 +247,8 @@ sheet2 = workbook.create_sheet(title="Fruits")
 ### Multiple Sheets Organization:
 
 * Different types of data belong in different sheets
-
 * "Trees" sheet: Information about trees
-
 * "Fruits" sheet: Information about fruits
-
 * This keeps related data together and separate from unrelated data
 
 ### What happens behind the scenes:
@@ -320,6 +318,8 @@ print(f"{filename} created, Trees and Fruits!")
 
 ## Complete Code
 
+{% include codeHeader.html %}
+
 ```python
 ## simple_excel_two_sheets.py
 from openpyxl import Workbook
@@ -381,9 +381,9 @@ After running the code, you'll find "garden_data.xlsx" in your project folder. W
 
 1. Forgetting to save: Your work won't be preserved without workbook.save()
 2. Incorrect cell references:
-    * Wrong: `sheet1["1A"]` (number first)
-    * Right: `sheet1["A1"]` (letter first)
 
+   * Wrong: `sheet1["1A"]` (number first)
+   * Right: `sheet1["A1"]` (letter first)
 3. Missing installation: Forgetting to run `pip install openpyxl` first
 4. File permission issues: Trying to save to protected folders
 5. Overwriting files: Saving with same filename overwrites existing files
@@ -438,5 +438,3 @@ print(sheet["A2"].value)  # Prints "Mango"
 Congratulations! You've just automated Excel file creation using Python. This fundamental skill opens doors to automated reporting, data processing, and much more. The simple garden data example demonstrates principles you can apply to business reports, scientific data, or any structured information that needs organizing.
 
 *Try modifying the code to create your own custom Excel files – the possibilities are endless!*
-
-

@@ -17,13 +17,10 @@ tags:
 - fractal
 title: Make a Tree with Blossoms in Python
 ---
-
-
-
-
 ---
 
 # Table of Contents
+
 1. [Overview](#overview)
 2. [Setup and Imports](#setup-and-imports)
 3. [Generating Random Branch Parameters](#generating-random-branch-parameters)
@@ -37,7 +34,8 @@ title: Make a Tree with Blossoms in Python
 ---
 
 ## Overview
-This tutorial demonstrates how to create a **beautiful cherry blossom tree** using Python’s `turtle` graphics module.  
+
+This tutorial demonstrates how to create a **beautiful cherry blossom tree** using Python’s `turtle` graphics module.
 The program uses recursion to generate realistic branches, randomization for natural variation, and color blending to simulate blooming flowers.
 
 ---
@@ -62,7 +60,7 @@ We set up the screen dimensions, recursion depth, branch length, and base branch
 
 ## Generating Random Branch Parameters
 
-Before drawing, we pre-generate random angles and lengths for each branch.  
+Before drawing, we pre-generate random angles and lengths for each branch.
 This ensures consistent structure each time the script runs (because we fixed the random seed).
 
 ```python
@@ -90,8 +88,9 @@ def param_gen():
 
 ## Drawing Functions
 
-Two helper functions are used:  
-- `blend()` for color blending  
+Two helper functions are used:
+
+- `blend()` for color blending
 - `draw_flower()` for drawing small cherry blossoms
 
 ```python
@@ -154,6 +153,8 @@ def draw_branch(length, depth):
 ---
 
 ## Complete Code
+
+{% include codeHeader.html %}
 
 ```python
 import turtle
@@ -253,9 +254,10 @@ if __name__ == "__main__":
 ---
 
 ## How It Works
-- **Recursion:** Each branch splits into two sub-branches with random angles and lengths.  
-- **Color blending:** Gradually transitions from brown to green as branches move outward.  
-- **Flowers:** Small pink blossoms are drawn at branch tips and occasionally mid-branch.  
+
+- **Recursion:** Each branch splits into two sub-branches with random angles and lengths.
+- **Color blending:** Gradually transitions from brown to green as branches move outward.
+- **Flowers:** Small pink blossoms are drawn at branch tips and occasionally mid-branch.
 - **Param reuse:** Pre-generated parameters keep the tree consistent on reruns.
 
 ---
@@ -273,6 +275,6 @@ A black screen with a growing cherry blossom tree should appear.
 ---
 
 ## Conclusion
-This project combines **recursion**, **randomness**, and **color blending** to simulate organic growth.  
-You can modify parameters like `DEPTH`, `LENGTH`, and flower colors to create your own natural variations!
 
+This project combines **recursion**, **randomness**, and **color blending** to simulate organic growth.
+You can modify parameters like `DEPTH`, `LENGTH`, and flower colors to create your own natural variations!

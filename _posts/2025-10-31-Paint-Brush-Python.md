@@ -16,10 +16,7 @@ tags:
 - python-tutorial
 title: Mini Paint (Smooth Circular Brush) in Python
 ---
-
-
-
-# 🖌️ Mini Paint Tutorial (Smooth Circular Brush)
+# Mini Paint Tutorial (Smooth Circular Brush)
 
 ## Educational Python Project – Create an Interactive Painting App
 
@@ -185,6 +182,8 @@ while True:
 
 ## Complete Python Code
 
+{% include codeHeader.html %}
+
 ```python
 import pygame, sys, math
 pygame.init()
@@ -298,4 +297,3 @@ while True:
 You now have a working Mini Paint application with smooth circular brushes, multiple colors, and variable brush sizes! This is a fun project to practice **interactive GUI programming in Python using Pygame**.
 
 Enjoy painting!
-

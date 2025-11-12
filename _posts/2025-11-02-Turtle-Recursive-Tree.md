@@ -17,9 +17,6 @@ tags:
 - fractal
 title: Fractal Tree Generator in Python with Turtle
 ---
-
-
-
 # Fractal Tree Generator in Python
 
 ## A Beginner’s Guide to Recursion and Turtle Graphics
@@ -29,6 +26,7 @@ In this tutorial, you’ll learn how to create a **beautiful fractal tree** usin
 ---
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Project Setup](#project-setup)
 - [Recursive Tree Logic](#recursive-tree-logic)
@@ -48,6 +46,7 @@ Fractals are **self-similar geometric patterns** that repeat at smaller scales. 
 In this project, we’ll use **recursive functions** to draw a tree, where each branch spawns two smaller branches at random angles and lengths.
 
 Here’s what we’ll build:
+
 - Recursive branching up to a defined depth
 - Randomized angles and lengths for organic look
 - A vibrant turtle graphics visualization
@@ -115,6 +114,7 @@ This step ensures that even if we re-run the drawing, we use **the same random t
 In nature, no two branches are exactly alike — randomness is key to realism.
 
 Here’s what we randomized:
+
 - **Branch Angles (`a1`, `a2`)** → vary around ±10° from the base angle `BA`.
 - **Branch Lengths (`l1`, `l2`)** → randomly between 60% and 80% of the parent branch.
 
@@ -187,6 +187,8 @@ When you run this, you’ll see your turtle gracefully draw the branches, recurs
 ## Complete Code
 
 Here’s the complete Python script for your fractal tree:
+
+{% include codeHeader.html %}
 
 ```python
 import turtle, random
@@ -275,4 +277,3 @@ if __name__ == "__main__":
 ---
 
 With just a few lines of recursive code, you’ve created an **organic fractal tree** that grows beautifully on your screen. This project is a fun introduction to **recursive graphics and procedural generation** — concepts that power both **natural simulations** and **game development**!
-
