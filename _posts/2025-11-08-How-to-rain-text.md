@@ -44,6 +44,18 @@ title: Matrix Rain Animation in Python – Complete Beginner's Guide
 
 Have you ever wanted to recreate the iconic Matrix "digital rain" effect in your terminal using Python? In this tutorial, we'll build a fully working terminal-based Matrix rain animation. This guide is written for absolute beginners, so no prior experience with terminal animations is required.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/DS2n4mHz6XA" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Understanding the Requirements

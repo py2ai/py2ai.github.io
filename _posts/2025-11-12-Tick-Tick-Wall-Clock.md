@@ -25,6 +25,18 @@ title: Wall Clock Tutorial with Tick Sound and Date Display
 
 This tutorial will guide you through creating a wall clock using Python and Pygame. It is designed for beginners and explains the code step by step. By the end, you will have a working digital clock with a tick sound and date display.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/uOX9hG15t3g" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Table of Contents

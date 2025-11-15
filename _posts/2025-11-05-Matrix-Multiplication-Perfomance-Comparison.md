@@ -28,6 +28,18 @@ This tutorial will walk you through performing **matrix multiplication** using t
 
 We'll compare the execution times and understand why optimized libraries like NumPy are much faster.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/SvDeUw0Xv_U" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## # Table of Contents

@@ -38,6 +38,20 @@ This tutorial walks you through creating a **live-updating chart viewer** for Ex
 - Automatically refreshes when the Excel file is updated.
 - Allows switching between sheets using clickable buttons.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/gxV5FiEzLFE" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+--- 
+
 ## Table of Contents
 - [Overview](#overview)
 - [Setting Up Your Environment](#setting-up-your-environment)

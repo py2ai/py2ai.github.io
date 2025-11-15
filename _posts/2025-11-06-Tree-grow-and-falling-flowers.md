@@ -25,6 +25,18 @@ title: Animated Flower Tree with Python Turtle – Growing &...
 
 Python's Turtle graphics module isn't just for simple shapes – it can create beautiful, complex animations with physics simulations! This tutorial shows you how to build an **animated flowering tree** where blossoms gradually grow on branches and then gently fall with realistic physics. You'll learn recursive tree generation, color blending, growth animation, and basic physics simulation – all with pure Python.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/r2zzJFscM3M" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Table of Contents

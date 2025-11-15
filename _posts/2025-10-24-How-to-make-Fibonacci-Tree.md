@@ -16,7 +16,19 @@ title: Recursive function to grow TREE in Python
 
 > A detailed, step-by-step tutorial explaining a Pygame program that draws a Fibonacci-based tree. This tutorial shows how the original recursive growth works and how to modify it so branches grow in parallel using multithreading (safe and practical approach).
 
-## Table of contents
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/7slYKru0Z10" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+---
 
 ## Table of Contents
 

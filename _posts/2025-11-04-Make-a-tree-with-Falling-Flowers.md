@@ -17,7 +17,6 @@ tags:
 - nature
 title: Make a Tree with falling Flowers
 ---
----
 
 # Table of Contents
 
@@ -38,7 +37,19 @@ title: Make a Tree with falling Flowers
 This tutorial expands on our previous **Cherry Blossom Tree** by adding **animated falling petals** that gently sway in the wind and settle on the ground.
 We’ll use `turtle` graphics and a lightweight physics simulation with gravity, wind, and smooth animation updates.
 
----
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/QAFBXJtgIOc" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+--- 
 
 ## Setup and Imports
 

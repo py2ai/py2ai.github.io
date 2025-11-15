@@ -23,6 +23,20 @@ title: Music Maker with Save/Load in Python
 
 This tutorial walks you through creating an **interactive music maker** using **Python and Pygame**. You'll learn how to build a **synthetic piano**, **draw a sequencer grid**, and **save/load your music patterns**. By the end, you'll have a working **step sequencer** for simple melodies.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/FS1Rj8BtfWg" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)

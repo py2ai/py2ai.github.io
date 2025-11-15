@@ -23,6 +23,18 @@ title: Fractal Tree Generator in Python with Turtle
 
 In this tutorial, you’ll learn how to create a **beautiful fractal tree** using **Python’s turtle graphics module**. The project combines **recursion**, **randomness**, and **geometry** to draw realistic, organic-looking trees.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/O-yRV2Bd8qA" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Table of Contents

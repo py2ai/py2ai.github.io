@@ -37,6 +37,18 @@ title: Create Excel Files with Python and pandas
 
 In this tutorial, we will learn how to create an Excel workbook with multiple sheets using Python's **pandas** library. This guide is written for absolute beginners and explains every line of the code.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/dAEYK15JAto" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Understanding the Requirements

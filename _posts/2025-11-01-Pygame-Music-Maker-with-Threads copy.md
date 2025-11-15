@@ -26,6 +26,18 @@ title: Music Maker with Save Load Clear & Slider
 
 This comprehensive tutorial will help you build a **feature-packed music maker app** using **Python** and **Pygame**. You’ll not only learn to synthesize musical notes using NumPy but also understand threading, grid-based sequencing, waveform visualization, and dynamic user controls such as buttons and sliders.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/a2UwwCou4eY" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Table of Contents

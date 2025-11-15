@@ -22,6 +22,18 @@ title: Mini Paint (Smooth Circular Brush) in Python
 
 This tutorial walks through building a **Mini Paint application** using **Python and Pygame**. The app allows users to **draw with smooth circular brushes**, choose from multiple colors, and select different brush sizes.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/5fxkMjhJhpE" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Features

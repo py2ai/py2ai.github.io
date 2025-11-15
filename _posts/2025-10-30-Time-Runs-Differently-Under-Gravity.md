@@ -21,6 +21,20 @@ title: Gravitational Time Dilation Simulation in Python
 
 This tutorial walks through building an **interactive Gravitational Time Dilation Simulation** using **Python and Pygame**. The simulation demonstrates how **time passes differently under varying gravitational strengths**, comparing a clock at Earth’s surface to a clock under stronger or weaker gravity.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/YtNhMUMRLwg" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)

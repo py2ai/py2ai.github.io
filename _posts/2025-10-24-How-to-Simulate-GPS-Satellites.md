@@ -25,6 +25,8 @@ For more details:
   </iframe>
 </div>
 
+---
+
 ## 3D Visualization of a GPS Satellite Constellation
 
 **A detailed, step-by-step tutorial and annotated markdown blog** that explains a VPython script which renders a 3D visualization of the GPS satellite constellation (24 operational satellites shown across 6 orbital planes). This tutorial covers setup, math, per-line code explanation, optimization tips, debugging, and suggested extensions.
