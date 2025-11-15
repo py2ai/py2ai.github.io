@@ -35,6 +35,18 @@ title: Voice-Enabled Wall Clock with Greetings
 
 This tutorial shows how to create a **Python-based wall clock** using `pygame`, with **text-to-speech** and **speech-to-text** using **pyttsx3** and **Vosk**. The app listens for the word "time" and responds with the current time and a greeting based on the current hour.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/bjY2wvX-3B8" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 # Table of Contents
