@@ -57,31 +57,31 @@ ja_url: /ja/Listening-and-Talking-clock/
 3. [先决条件](#prerequisites)
 4. [安装依赖项](#installing-dependencies)
 
-- [Windows](#windows)
-- [macOS](#macos)
-- [Linux](#linux)
+    - [Windows](#windows)
+    - [macOS](#macos)
+    - [Linux](#linux)
 
 5. [了解语音转文本 (Vosk)](#understanding-speech-to-text-vosk)
 
-- [为什么语音转文本很重要](#why-speech-to-text-is-important)
-- [Vosk 的工作原理 — 理论（简化）](#how-vosk-works--the-theory-simplified)
-- [蜡模型类型](#wax-model-types)
-- [从哪里获取语言模型](#where-to-get-language-models)
-- [支持的语言](#supported- languages)
-- [初学者应该使用哪种模型？](#which-model-should-beginners-use)
+    - [为什么语音转文本很重要](#why-speech-to-text-is-important)
+    - [Vosk 的工作原理 — 理论（简化）](#how-vosk-works--the-theory-simplified)
+    - [蜡模型类型](#wax-model-types)
+    - [从哪里获取语言模型](#where-to-get-language-models)
+    - [支持的语言](#supported- languages)
+    - [初学者应该使用哪种模型？](#which-model-should-beginners-use)
 
 6. [了解文本转语音 (pyttsx3)](#understanding-text-to-speech-pyttsx3)
 
-- [改变声音](#改变声音)
-- [改变说话速度](#change-speaking-speed)
+    - [改变声音](#改变声音)
+    - [改变说话速度](#change-speaking-speed)
 
 7. [代码分解](#code-breakdown)
 
-- [时钟渲染](#clock-rendering)
-- [滴答声生成](#tick-sound- Generation)
-- [打字动画](#typing-animation)
-- [监听按钮行为](#listen-button-behavior)
-- [STT回调逻辑](#stt-callback-logic)
+    - [时钟渲染](#clock-rendering)
+    - [滴答声生成](#tick-sound- Generation)
+    - [打字动画](#typing-animation)
+    - [监听按钮行为](#listen-button-behavior)
+    - [STT回调逻辑](#stt-callback-logic)
 
 8. [运行应用程序](#running-the-app)
 9. [故障排除](#troubleshooting)
