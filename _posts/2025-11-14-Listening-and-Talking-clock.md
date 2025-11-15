@@ -222,12 +222,12 @@ Although Vosk feels simple to use, under the hood it uses serious speech-process
    * Raw audio is too detailed and noisy for machine learning models.
    * Vosk converts the raw audio into MFCC features (Mel-Frequency Cepstral Coefficients).
 
-#### MFCCs represent:
+    #### MFCCs represent:
 
-- frequency distribution
-- loudness
-- tone
-- patterns that humans perceive as speech
+    - frequency distribution
+    - loudness
+    - tone
+    - patterns that humans perceive as speech
 
 *Think of MFCCs as a fingerprint of sound that neural networks can understand.*
 
@@ -270,9 +270,11 @@ Although Vosk feels simple to use, under the hood it uses serious speech-process
 * 100% Offline
 * No internet means:
 
-✔ privacy
-✔ reliability
-✔ great for IoT or field environments
+    ✔ privacy
+
+    ✔ reliability
+
+    ✔ great for IoT or field environments
 
 * Low CPU Usage
 
