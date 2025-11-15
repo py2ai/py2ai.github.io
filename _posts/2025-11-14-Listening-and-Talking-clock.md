@@ -219,13 +219,13 @@ Although Vosk feels simple to use, under the hood it uses serious speech-process
 
 1. Audio Capture
 
-* Your microphone records raw audio waves.
-* These waves are just numbers representing air pressure changes over time.
+    * Your microphone records raw audio waves.
+    * These waves are just numbers representing air pressure changes over time.
 
 2. Feature Extraction (MFCC)
 
-* Raw audio is too detailed and noisy for machine learning models.
-* Vosk converts the raw audio into MFCC features (Mel-Frequency Cepstral Coefficients).
+    * Raw audio is too detailed and noisy for machine learning models.
+    * Vosk converts the raw audio into MFCC features (Mel-Frequency Cepstral Coefficients).
 
 #### MFCCs represent:
 
@@ -238,39 +238,39 @@ Although Vosk feels simple to use, under the hood it uses serious speech-process
 
 3. Acoustic Model (Neural Network)
 
-This model takes the MFCC features and predicts phonemes —
-the smallest units of sound like:
+    This model takes the MFCC features and predicts phonemes —
+    the smallest units of sound like:
 
-`k    a    t    ( = "cat" )`
+    `k    a    t    ( = "cat" )`
 
-The acoustic model is trained on thousands of hours of speech recordings.
+    The acoustic model is trained on thousands of hours of speech recordings.
 
 4. Language Model
 
-Humans don’t speak in random phoneme sequences.
-So the language model helps predict what words make sense.
+    Humans don’t speak in random phoneme sequences.
+    So the language model helps predict what words make sense.
 
-For example:
-If the acoustic model detects something like:
+    For example:
+    If the acoustic model detects something like:
 
-`d   t   a   m   p`
+    `d   t   a   m   p`
 
-The language model guides it to:
+    The language model guides it to:
 
-`→ "time"`
+    `→ "time"`
 
-instead of gibberish.
+    instead of gibberish.
 
 5. Decoder
 
-The decoder combines:
+    The decoder combines:
 
-- predictions from the acoustic model
-- probabilities from the language model
+    - predictions from the acoustic model
+    - probabilities from the language model
 
-and chooses the most likely final text output.
+    and chooses the most likely final text output.
 
-Result: clear, readable text.
+    Result: clear, readable text.
 
 ### Why Developers Love Vosk
 
