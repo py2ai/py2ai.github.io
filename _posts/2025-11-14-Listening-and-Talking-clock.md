@@ -79,36 +79,30 @@ This project builds a **beautiful wall clock GUI** using `pygame` — but with a
 ## Features Overview
 
 ### Analog Wall Clock
-
 - Smooth second, minute, and hour hands
 - Date and weekday display
 - Optional dark theme compatible
 
 ### Built‑in Tick Sound
-
 - Generated artificially using NumPy
 - No external audio files required
 
 ### Voice Detection (STT)
-
 - Uses Vosk offline speech recognition
 - Works without internet
 - Detects simple keywords (“time”)
 
 ### Text‑to‑Speech (TTS)
-
 - Uses pyttsx3 (offline)
 - Automatically speaks:
   *“Good afternoon. It's 03:25 PM now!”*
 
 ### Typing Animation
-
 - Displays greeting and time
 - Smooth blinking cursor
 - Auto-clears after a few seconds
 
 ### Listen Button
-
 - Toggles continuous microphone listening
 - Runs recognition in background thread
 
@@ -117,7 +111,6 @@ This project builds a **beautiful wall clock GUI** using `pygame` — but with a
 ## Prerequisites
 
 You only need:
-
 - Python 3.8+ (Better use Python 3.12)
 - A microphone
 - Basic terminal usage
@@ -146,9 +139,7 @@ Extract and rename:
 ```
 vosk-model-small-en-us-0.15
 ```
-
 ---
-
 ### macOS
 
 ```bash
@@ -157,11 +148,8 @@ source py312/bin/activate
 brew install portaudio
 pip install pygame pyttsx3 sounddevice vosk numpy
 ```
-
 Download the same English model as above.
-
 ---
-
 ### Linux
 
 ```bash
@@ -172,55 +160,42 @@ pip install pygame pyttsx3 sounddevice vosk numpy
 sudo apt update
 sudo apt install -y libportaudio2 libportaudiocpp0 portaudio19-dev
 ```
-
 ---
-
 ## Understanding Speech‑to‑Text (Vosk)
-
 Speech-to-Text (STT) is the process of converting spoken language into written text. Vosk is one of the most popular offline STT engines, known for being lightweight, accurate, and easy to use in Python projects.
 
 Below is a detailed explanation suitable for tutorials, documentation, or learning purposes.
 
 ### Why Speech-to-Text Is Important
-
 Speech-to-Text technology has become essential in modern software because:
 
 #### Hands-Free Interaction
-
 Users can control apps using voice, useful for clocks, assistants, and any hands-busy scenario (cooking, driving, etc.).
 
 #### Accessibility
-
 STT helps users with motor disabilities or those who cannot type easily.
 
 #### Real-Time Automation
-
 Voice commands can trigger events instantly — e.g.,
 “start timer”, “stop music”, “what’s the time”.
 
 #### Works Without a Screen
-
 Useful for IoT devices, Raspberry Pi systems, or embedded gadgets.
 
 #### Offline Security
-
 Vosk works completely offline, so no voice data is sent to the cloud, enhancing privacy.
 
 ### How Vosk Works — The Theory (Simplified)
-
 Although Vosk feels simple to use, under the hood it uses serious speech-processing theory. Here’s a digestible, beginner-friendly explanation:
 
 1. Audio Capture
-
    * Your microphone records raw audio waves.
    * These waves are just numbers representing air pressure changes over time.
 2. Feature Extraction (MFCC)
-
    * Raw audio is too detailed and noisy for machine learning models.
    * Vosk converts the raw audio into MFCC features (Mel-Frequency Cepstral Coefficients).
 
     #### MFCCs represent:
-
     - frequency distribution
     - loudness
     - tone
@@ -229,54 +204,37 @@ Although Vosk feels simple to use, under the hood it uses serious speech-process
 *Think of MFCCs as a fingerprint of sound that neural networks can understand.*
 
 3. Acoustic Model (Neural Network)
-
    This model takes the MFCC features and predicts phonemes —
    the smallest units of sound like:
-
    `k    a    t    ( = "cat" )`
-
    The acoustic model is trained on thousands of hours of speech recordings.
 4. Language Model
-
    Humans don’t speak in random phoneme sequences.
    So the language model helps predict what words make sense.
 
    For example:
    If the acoustic model detects something like:
-
    `d   t   a   m   p`
-
    The language model guides it to:
-
    `→ "time"`
-
    instead of gibberish.
 5. Decoder
-
    The decoder combines:
-
    - predictions from the acoustic model
    - probabilities from the language model
-
    and chooses the most likely final text output.
-
    Result: clear, readable text.
 
 ### Why Developers Love Vosk
 
 * 100% Offline
 * No internet means:
-
     ✔ privacy
-
     ✔ reliability
-
     ✔ great for IoT or field environments
-
 * Low CPU Usage
 
 Runs on:
-
 - Raspberry Pi
 - Old laptops
 - Mid-range PCs
@@ -287,11 +245,9 @@ Runs on:
 - Multi-language Support
 
 ### Vosk Model Types
-
 You can choose based on your device:
 
 #### Small models
-
 - <40MB
 - Fastest
 - Lower accuracy
@@ -299,23 +255,19 @@ You can choose based on your device:
 - Perfect for this “voice clock project”
 
 #### Medium models
-
 - Balanced accuracy + speed
 - Good for desktops or laptops
 
 #### Large models
-
 - Best accuracy
 - Heavier CPU load
 - Overkill for simple voice commands
 
 ### Where to get language models
-
 All official models here:
 https://alphacephei.com/vosk/models
 
 ### Supported languages
-
 Vosk supports:
 
 | Language | Model                           |
@@ -330,7 +282,6 @@ Vosk supports:
 …and many more.
 
 ### Which model should beginners use?
-
 Use a **small model**:
 
 - Fast
@@ -349,7 +300,6 @@ Example small model names:
 ## Understanding Text‑to‑Speech (pyttsx3)
 
 ### Changing voice
-
 In the code:
 
 ```python
@@ -365,7 +315,6 @@ engine.setProperty('rate', 150)
 ```
 
 Common values:
-
 - 120 (slow)
 - 150 (default)
 - 180 (fast)
@@ -375,18 +324,14 @@ Common values:
 ## Code Breakdown
 
 ### Clock Rendering
-
 The clock is drawn manually:
-
 - Outer circle
 - Hour numbers
 - Minute ticks
 - Rotating hands based on time
 
 ### Tick Sound Generation
-
 Instead of loading `.wav`, we generate audio:
-
 - 1500 Hz click
 - 50 ms duration
 - Exponential fade
@@ -394,31 +339,23 @@ Instead of loading `.wav`, we generate audio:
 Thanks to NumPy, the clock always ticks without importing external files.
 
 ### Typing Animation
-
 The greeting appears like real typing:
-
 - Characters appear gradually
 - Cursor blinks
 - After 4 seconds, text clears automatically
 
 ### Listen Button Behavior
-
 - Toggle on/off
 - Blue → idle
 - Green → listening
 - Runs Vosk microphone stream in background
 
 ### STT Callback Logic
-
 When Vosk decodes speech:
-
 - Print detected text
 - If it contains “time”, call `speak_time()`
-
 ---
-
 ## Running the App
-
 Once everything is installed:
 
 ```bash
@@ -432,9 +369,7 @@ Steps:
 3. Speak:**“time”**
 4. Clock will speak the current time
 5. Text animation appears at bottom
-
 ---
-
 ## Troubleshooting
 
 ### ❗ No microphone detected
@@ -450,9 +385,7 @@ Or select input device:
 ```python
 sd.default.device = 1
 ```
-
 ---
-
 ### ❗ No speech detected
 
 Use a **small** model; large ones need more CPU.
@@ -709,7 +642,7 @@ if __name__ == "__main__":
 ### main.py
 
 The full working source code here:
-
+{% include codeHeader.html %}
 ```python
 # Tutorial and Source Code available: www.pyshine.com
 
