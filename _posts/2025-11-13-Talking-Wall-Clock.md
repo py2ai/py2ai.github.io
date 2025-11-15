@@ -529,6 +529,12 @@ def main():
 
 ```python
 # Tutorial and Source Code available: www.pyshine.com
+# Fix Windows DPI scaling issue
+import ctypes
+try:
+    ctypes.windll.user32.SetProcessDPIAware()
+except:
+    pass
 import pygame
 import math
 import datetime
