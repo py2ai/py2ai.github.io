@@ -71,11 +71,8 @@ This tutorial shows how to create a **Python-based wall clock** using `pygame`, 
 ## Introduction
 
 This project builds a **beautiful wall clock GUI** using `pygame` — but with a twist:
-
-It can **speak the time aloud**
-…and it can **hear you ask for the time** using speech recognition.
-
-When you say **“time”**, the app will detect your speech using **Vosk**, speak the current time using **pyttsx3**, and display a smooth **typing animation** at the bottom of the screen.
+* It can **speak the time aloud** …and it can **hear you ask for the time** using speech recognition.
+* When you say **“time”**, the app will detect your speech using **Vosk**, speak the current time using **pyttsx3**, and display a smooth **typing animation** at the bottom of the screen.
 
 ---
 
