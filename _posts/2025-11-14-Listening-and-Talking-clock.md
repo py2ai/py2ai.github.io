@@ -83,6 +83,7 @@ This tutorial shows how to create a **Python-based wall clock** using `pygame`, 
 ## Introduction
 
 This project builds a **beautiful wall clock GUI** using `pygame` — but with a twist:
+
 * It can **speak the time aloud** …and it can **hear you ask for the time** using speech recognition.
 * When you say **“time”**, the app will detect your speech using **Vosk**, speak the current time using **pyttsx3**, and display a smooth **typing animation** at the bottom of the screen.
 
@@ -91,30 +92,36 @@ This project builds a **beautiful wall clock GUI** using `pygame` — but with a
 ## Features Overview
 
 ### Analog Wall Clock
+
 - Smooth second, minute, and hour hands
 - Date and weekday display
 - Optional dark theme compatible
 
 ### Built‑in Tick Sound
+
 - Generated artificially using NumPy
 - No external audio files required
 
 ### Voice Detection (STT)
+
 - Uses Vosk offline speech recognition
 - Works without internet
 - Detects simple keywords (“time”)
 
 ### Text‑to‑Speech (TTS)
+
 - Uses pyttsx3 (offline)
 - Automatically speaks:
   *“Good afternoon. It's 03:25 PM now!”*
 
 ### Typing Animation
+
 - Displays greeting and time
 - Smooth blinking cursor
 - Auto-clears after a few seconds
 
 ### Listen Button
+
 - Toggles continuous microphone listening
 - Runs recognition in background thread
 
@@ -123,6 +130,7 @@ This project builds a **beautiful wall clock GUI** using `pygame` — but with a
 ## Prerequisites
 
 You only need:
+
 - Python 3.8+ (Better use Python 3.12)
 - A microphone
 - Basic terminal usage
@@ -151,7 +159,9 @@ Extract and rename:
 ```
 vosk-model-small-en-us-0.15
 ```
+
 ---
+
 ### macOS
 
 ```bash
@@ -160,8 +170,10 @@ source py312/bin/activate
 brew install portaudio
 pip install pygame pyttsx3 sounddevice vosk numpy
 ```
+
 Download the same English model as above.
----
+-----------------------------------------
+
 ### Linux
 
 ```bash
@@ -172,7 +184,9 @@ pip install pygame pyttsx3 sounddevice vosk numpy
 sudo apt update
 sudo apt install -y libportaudio2 libportaudiocpp0 portaudio19-dev
 ```
+
 ---
+
 ## Understanding Speech‑to‑Text (Vosk)
 Speech-to-Text (STT) is the process of converting spoken language into written text. Vosk is one of the most popular offline STT engines, known for being lightweight, accurate, and easy to use in Python projects.
 
@@ -180,20 +194,15 @@ Below is a detailed explanation suitable for tutorials, documentation, or learni
 
 ### Why Speech-to-Text Is Important
 Speech-to-Text technology has become essential in modern software because:
-
 #### Hands-Free Interaction
 Users can control apps using voice, useful for clocks, assistants, and any hands-busy scenario (cooking, driving, etc.).
-
 #### Accessibility
 STT helps users with motor disabilities or those who cannot type easily.
-
 #### Real-Time Automation
 Voice commands can trigger events instantly — e.g.,
 “start timer”, “stop music”, “what’s the time”.
-
 #### Works Without a Screen
 Useful for IoT devices, Raspberry Pi systems, or embedded gadgets.
-
 #### Offline Security
 Vosk works completely offline, so no voice data is sent to the cloud, enhancing privacy.
 
@@ -201,17 +210,21 @@ Vosk works completely offline, so no voice data is sent to the cloud, enhancing 
 Although Vosk feels simple to use, under the hood it uses serious speech-processing theory. Here’s a digestible, beginner-friendly explanation:
 
 1. Audio Capture
+
    * Your microphone records raw audio waves.
    * These waves are just numbers representing air pressure changes over time.
 2. Feature Extraction (MFCC)
+
    * Raw audio is too detailed and noisy for machine learning models.
    * Vosk converts the raw audio into MFCC features (Mel-Frequency Cepstral Coefficients).
 
-    #### MFCCs represent:
-    - frequency distribution
-    - loudness
-    - tone
-    - patterns that humans perceive as speech
+   #### MFCCs represent:
+
+
+   - frequency distribution
+   - loudness
+   - tone
+   - patterns that humans perceive as speech
 
 *Think of MFCCs as a fingerprint of sound that neural networks can understand.*
 
@@ -232,21 +245,23 @@ Although Vosk feels simple to use, under the hood it uses serious speech-process
    instead of gibberish.
 5. Decoder
    The decoder combines:
+
    - predictions from the acoustic model
    - probabilities from the language model
-   and chooses the most likely final text output.
-   Result: clear, readable text.
+     and chooses the most likely final text output.
+     Result: clear, readable text.
 
 ### Why Developers Love Vosk
 
 * 100% Offline
 * No internet means:
-    ✔ privacy
-    ✔ reliability
-    ✔ great for IoT or field environments
+  ✔ privacy
+  ✔ reliability
+  ✔ great for IoT or field environments
 * Low CPU Usage
 
 Runs on:
+
 - Raspberry Pi
 - Old laptops
 - Mid-range PCs
@@ -257,9 +272,11 @@ Runs on:
 - Multi-language Support
 
 ### Vosk Model Types
+
 You can choose based on your device:
 
 #### Small models
+
 - <40MB
 - Fastest
 - Lower accuracy
@@ -267,19 +284,23 @@ You can choose based on your device:
 - Perfect for this “voice clock project”
 
 #### Medium models
+
 - Balanced accuracy + speed
 - Good for desktops or laptops
 
 #### Large models
+
 - Best accuracy
 - Heavier CPU load
 - Overkill for simple voice commands
 
 ### Where to get language models
+
 All official models here:
 https://alphacephei.com/vosk/models
 
 ### Supported languages
+
 Vosk supports:
 
 | Language | Model                           |
@@ -294,6 +315,7 @@ Vosk supports:
 …and many more.
 
 ### Which model should beginners use?
+
 Use a **small model**:
 
 - Fast
@@ -312,6 +334,7 @@ Example small model names:
 ## Understanding Text‑to‑Speech (pyttsx3)
 
 ### Changing voice
+
 In the code:
 
 ```python
@@ -327,6 +350,7 @@ engine.setProperty('rate', 150)
 ```
 
 Common values:
+
 - 120 (slow)
 - 150 (default)
 - 180 (fast)
@@ -336,14 +360,18 @@ Common values:
 ## Code Breakdown
 
 ### Clock Rendering
+
 The clock is drawn manually:
+
 - Outer circle
 - Hour numbers
 - Minute ticks
 - Rotating hands based on time
 
 ### Tick Sound Generation
+
 Instead of loading `.wav`, we generate audio:
+
 - 1500 Hz click
 - 50 ms duration
 - Exponential fade
@@ -351,23 +379,31 @@ Instead of loading `.wav`, we generate audio:
 Thanks to NumPy, the clock always ticks without importing external files.
 
 ### Typing Animation
+
 The greeting appears like real typing:
+
 - Characters appear gradually
 - Cursor blinks
 - After 4 seconds, text clears automatically
 
 ### Listen Button Behavior
+
 - Toggle on/off
 - Blue → idle
 - Green → listening
 - Runs Vosk microphone stream in background
 
 ### STT Callback Logic
+
 When Vosk decodes speech:
+
 - Print detected text
 - If it contains “time”, call `speak_time()`
+
 ---
+
 ## Running the App
+
 Once everything is installed:
 
 ```bash
@@ -381,7 +417,9 @@ Steps:
 3. Speak:**“time”**
 4. Clock will speak the current time
 5. Text animation appears at bottom
+
 ---
+
 ## Troubleshooting
 
 ### ❗ No microphone detected
@@ -397,7 +435,9 @@ Or select input device:
 ```python
 sd.default.device = 1
 ```
+
 ---
+
 ### ❗ No speech detected
 
 Use a **small** model; large ones need more CPU.
@@ -427,16 +467,13 @@ except:
 - Wrapped in a `try` block for compatibility with other OS.
 
 ---
-
 ### 2. Imports
-
 ```python
 import pygame, math, datetime, sys, numpy as np, pyttsx3, threading, time
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
 import json, os
 ```
-
 - **pygame**: GUI and graphics.
 - **math**: Trigonometry for clock hands.
 - **datetime**: Current time for clock and greetings.
@@ -445,25 +482,18 @@ import json, os
 - **threading**: Run TTS/STT in background.
 - **sounddevice & vosk**: Speech-to-text recognition.
 - **json & os**: Parse Vosk output and handle files.
-
 ---
-
 ### 3. Pygame Initialization
-
 ```python
 pygame.init()
 pygame.mixer.init(frequency=44100, size=-16, channels=2)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("PyShine Wall Clock")
 ```
-
 - Initializes **Pygame** and **audio mixer** for sound playback.
 - Sets **screen size** and window **title**.
-
 ---
-
 ### 4. Constants and Colors
-
 ```python
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -475,31 +505,22 @@ BUTTON_HOVER = (0, 180, 255)
 BUTTON_ACTIVE = (0, 200, 0)
 LIME = (0, 255, 0)
 ```
-
 - Defines **colors** used for clock face, hands, button, and text.
-
 ---
-
 ### 5. Clock Parameters & Fonts
-
 ```python
 center_x, center_y = WIDTH // 2, HEIGHT // 2
 clock_radius = 150
-
 font = pygame.font.SysFont('Arial', 24, bold=True)
 date_font = pygame.font.SysFont('Arial', 20)
 button_font = pygame.font.SysFont('Arial', 20, bold=True)
 time_str_font = pygame.font.SysFont('Arial', 28, bold=True)
 ```
-
 - `center_x, center_y`: Center of clock.
 - `clock_radius`: Size of clock face.
 - Fonts for **numbers, date, button text, and TTS text display**.
-
 ---
-
 ### 6. Tick Sound
-
 ```python
 def create_tick_sound():
     ...
@@ -507,102 +528,75 @@ def create_tick_sound():
     tick_sound.set_volume(0.5)
     return tick_sound
 ```
-
 - Generates a **short 1500Hz click** using NumPy.
 - No external audio file needed.
 - Used to play **tick every second**.
-
 ---
-
 ### 7. Listen Button
-
 ```python
 button_rect = pygame.Rect(WIDTH // 2 - 80, 80, 160, 50)
 listening_active = False
 def draw_button(mouse_pos):
     ...
 ```
-
 - Draws **button on screen**.
 - Changes color when **hovered** or **active**.
 - Controls **microphone listening state**.
-
 ---
-
 ### 8. Text Typing & TTS
-
 ```python
 def speak_time():
     ...
     threading.Thread(target=tts_func, args=(spoken_time_str,), daemon=True).start()
 ```
-
 - Determines **greeting** based on current hour.
 - Formats **spoken text**: e.g., `"Good afternoon\nIt's 03:25 PM now!"`.
 - Starts **text-to-speech in a background thread**.
 - Updates **typing animation** variables.
 
 ---
-
 ### 9. Vosk Speech-to-Text Setup
-
 ```python
 MODEL_PATH = "vosk-model-small-en-us-0.15"
 vosk_model = Model(MODEL_PATH)
 recognizer = KaldiRecognizer(vosk_model, 16000)
 ```
-
 - Loads **offline Vosk model**.
 - Recognizer converts **audio bytes to text**.
 - Ensures **offline speech recognition**.
-
 ---
-
 #### STT Callbacks
-
 ```python
 def stt_callback(indata, frames, time_data, status):
     ...
     if "time" in result_text.lower():
         speak_time()
 ```
-
 - Processes audio from microphone.
 - Converts it into text.
 - Triggers `speak_time()` when **keyword “time”** is detected.
-
 ---
-
 ### 10. Clock Drawing Functions
-
 #### Clock Face
-
 ```python
 def draw_clock_face():
     ...
 ```
-
 - Draws **outer circle, hour numbers, minute ticks**.
 - Differentiates **hour ticks** (thicker) and **minute ticks** (thin).
-
 #### Clock Hands
-
 ```python
 def draw_clock_hands():
     ...
 ```
-
 - Draws **hour, minute, second hands** based on current time.
 - Plays **tick sound every second**.
 - Draws **center pivot** circle.
-
 #### Date Display
-
 ```python
 def draw_date_display(now):
     ...
 ```
-
 - Displays **current date** and **day of the week**.
 
 #### Typing Animation
@@ -611,20 +605,17 @@ def draw_date_display(now):
 def draw_spoken_time():
     ...
 ```
-
 - Shows **greeting and time gradually** like typing.
 - Cursor **blinks**.
 - Auto clears after **4 seconds**.
 
 ---
-
 ### 11. Main Loop
 
 ```python
 def main():
     ...
 ```
-
 - Handles **events**:
   - Quit
   - ESC key
@@ -637,24 +628,20 @@ def main():
   - **Listen button**
 - Runs at **30 FPS**.
 - Ensures **smooth animation and interaction**.
-
 ---
-
 ### 12. Entry Point
 
 ```python
 if __name__ == "__main__":
     main()
 ```
-
 - Starts the **main loop** when the script is executed directly.
-
 ---
-
 ### main.py
 
 The full working source code here:
 {% include codeHeader.html %}
+
 ```python
 # Tutorial and Source Code available: www.pyshine.com
 
@@ -898,7 +885,7 @@ def draw_spoken_time():
         # Split into lines
         lines = spoken_time_str.split("\n")
         chars_to_show = min(int(elapsed * typing_speed), sum(len(line) for line in lines))
-    
+  
         # Determine how many chars to show per line
         display_lines = []
         chars_remaining = chars_to_show
@@ -909,7 +896,7 @@ def draw_spoken_time():
             else:
                 display_lines.append(line[:chars_remaining])
                 break
-    
+  
         # Clear after 4 seconds of full display
         if chars_to_show == sum(len(line) for line in lines) and text_display_complete_time is None:
             text_display_complete_time = time.time()
