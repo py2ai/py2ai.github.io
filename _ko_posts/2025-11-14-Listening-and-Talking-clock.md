@@ -29,14 +29,16 @@ tags:
 - vosk
 - beginner
 - tutorial
-title: "听和说的时钟"
-lang: zh
+title: 인사말이 포함된 음성 인식 벽시계
+lang: ko
 en_url: /Listening-and-Talking-clock/
+zh_url: /zh/Listening-and-Talking-clock/
 ja_url: /ja/Listening-and-Talking-clock/
 ---
-# 带语音时间和问候语的挂钟
 
-本教程展示了如何使用创建 **基于 Python 的挂钟** `pygame`，使用 **pyttsx3** 和 **Vosk** 进行 **文本转语音** 和 **语音转文本**。该应用程序侦听“时间”一词，并根据当前时间响应当前时间和问候语。
+# 음성 시간과 인사말이 포함된 벽시계
+
+이 튜토리얼에서는 다음을 사용하여 **Python 기반 벽시계**를 만드는 방법을 보여줍니다.`pygame`, **pyttsx3** 및 **Vosk**를 사용하여 **text-to-speech** 및 **speech-to-text**를 사용합니다. 앱은 "시간"이라는 단어를 듣고 현재 시간과 현재 시간을 기준으로 한 인사말로 응답합니다.
 
 <div class="video-container">
   <iframe 
@@ -50,98 +52,93 @@ ja_url: /ja/Listening-and-Talking-clock/
   </iframe>
 </div>
 
-# 目录
+---
 
-1. [介绍](#introduction)
-2. [特点概述](#features-overview)
-3. [先决条件](#prerequisites)
-4. [安装依赖项](#installing-dependencies)
+# 목차
 
-    - [Windows](#windows)
+1. [소개](#introduction)
+2. [기능 개요](#features-overview)
+3. [전제 조건](#prerequisites)
+4. [종속성 설치](#installing-dependencies)
+    - [윈도우](#windows)
     - [macOS](#macos)
-    - [Linux](#linux)
+    - [리눅스](#linux)
+5. [음성-텍스트 이해(Vosk)](#understanding-speech-to-text-vosk)
+    - [음성-텍스트 변환이 중요한 이유](#why-speech-to-text-is-important)
+    - [Vosk의 작동 원리 - 이론(간체)](#how-vosk-works--the-theory-simplified)
+    - [왁스 모델 유형](#wax-model-types)
+    - [언어 모델을 얻을 수 있는 곳](#where-to-get-언어-모델)
+    - [지원 언어](#supported-언어)
+    - [초보자는 어떤 모델을 사용해야 할까요?](#which-model-should-beginners-use)
+6. [텍스트 음성 변환(pyttsx3) 이해](#understanding-text-to-speech-pyttsx3)
+    - [목소리 바꾸기](#changing-voice)
+    - [말하는 속도 변경](#changing-speaking-speed)
+7. [코드 분석](#code-breakdown)
+    - [시계 렌더링](#clock-rendering)
+    - [틱소리 생성](#틱-소리-생성)
+    - [타자 애니메이션](#typing-animation)
+    - [듣기 버튼 동작](#listen-button-behavior)
+    - [STT 콜백 로직](#stt-callback-logic)
+8. [앱 실행](#running-the-app)
+9. [문제 해결](#troubleshooting)
+10. [전체 소스 코드](#full-source-code)
 
-5. [了解语音转文本 (Vosk)](#understanding-speech-to-text-vosk)
+## 소개
 
-    - [为什么语音转文本很重要](#why-speech-to-text-is-important)
-    - [Vosk 的工作原理 — 理论（简化）](#how-vosk-works--the-theory-simplified)
-    - [蜡模型类型](#wax-model-types)
-    - [从哪里获取语言模型](#where-to-get-language-models)
-    - [支持的语言](#supported- languages)
-    - [初学者应该使用哪种模型？](#which-model-should-beginners-use)
+이 프로젝트는 다음을 사용하여 **아름다운 벽시계 GUI**를 구축합니다.`pygame`— 하지만 반전이 있습니다.
 
-6. [了解文本转语音 (pyttsx3)](#understanding-text-to-speech-pyttsx3)
+* **시간을 소리내어 말**할 수 있으며 음성 인식을 통해 **시간을 묻는 소리**를 들을 수 있습니다.
+* **“시간”**이라고 말하면 앱은 **Vosk**를 사용하여 음성을 감지하고 **pyttsx3**을 사용하여 현재 시간을 말하고 화면 하단에 부드러운 **타이핑 애니메이션**을 표시합니다.
 
-    - [改变声音](#改变声音)
-    - [改变说话速度](#change-speaking-speed)
+## 기능 개요
 
-7. [代码分解](#code-breakdown)
+### 아날로그 벽시계
 
-    - [时钟渲染](#clock-rendering)
-    - [滴答声生成](#tick-sound- Generation)
-    - [打字动画](#typing-animation)
-    - [监听按钮行为](#listen-button-behavior)
-    - [STT回调逻辑](#stt-callback-logic)
+- 부드러운 초침, 분침, 시침
+- 날짜 및 요일 표시
+- 선택적으로 어두운 테마와 호환 가능
 
-8. [运行应用程序](#running-the-app)
-9. [故障排除](#troubleshooting)
-10. [完整源代码](#full-source-code)
+### 내장 틱 사운드
 
-## 介绍
+- NumPy를 사용하여 인위적으로 생성됨
+- 외부 오디오 파일이 필요하지 않습니다.
 
-该项目使用以下命令构建了一个**漂亮的挂钟 GUI** `pygame`——但有一个转折：
+### 음성 감지(STT)
 
-* 它可以**大声说出时间** ...并且它可以使用语音识别**听到您询问时间**。
-* 当您说**“时间”**时，应用程序将使用**Vosk**检测您的语音，使用**pyttsx3**说出当前时间，并在屏幕底部显示流畅的**打字动画**。
+- Vosk 오프라인 음성 인식 사용
+- 인터넷 없이 작동
+- 단순 키워드(“시간”)를 탐지합니다.
 
-## 特点概述
+### TTS(텍스트 음성 변환)
 
-### 模拟挂钟
+- pyttsx3 사용(오프라인)
+- 자동으로 말합니다:
+*"안녕하세요. 지금은 오후 3시 25분입니다!"*
 
-- 光滑的秒针、分针和时针
-- 日期和星期显示
-- 可选的深色主题兼容
+### 타이핑 애니메이션
 
-### 内置滴答声
+- 인사말과 시간을 표시합니다.
+- 부드럽게 깜박이는 커서
+- 몇 초 후에 자동으로 지워집니다.
 
-- 使用 NumPy 人工生成
-- 无需外部音频文件
+### 듣기 버튼
 
-### 语音检测（STT）
+- 지속적인 마이크 청취를 전환합니다.
+- 백그라운드 스레드에서 인식을 실행합니다.
 
-- 使用 Vosk 离线语音识别
-- 无需互联网即可工作
-- 检测简单的关键字（“时间”）
+## 전제 조건
 
-### 文本转语音 (TTS)
+다음만 필요합니다:
 
-- 使用 pyttsx3（离线）
-- 自动说话：
-  *“下午好。现在是下午 03:25！”*
+- Python 3.8+(Python 3.12를 사용하는 것이 더 좋음)
+- 마이크
+- 기본 단말기 사용법
+- 패키지 설치 기능
 
-### 打字动画
 
-- 显示问候语和时间
-- 平滑闪烁的光标
-- 几秒钟后自动清除
+## 종속성 설치
 
-### 收听按钮
-
-- 切换连续麦克风监听
-- 在后台线程中运行识别
-
-## 先决条件
-
-您只需要：
-
-- Python 3.8+（最好使用Python 3.12）
-- 麦克风
-- 终端基本使用
-- 能够安装软件包
-
-## 安装依赖项
-
-### 视窗
+### 윈도우
 
 ```bash
 python -m venv py312
@@ -150,12 +147,12 @@ py312\Scripts\activate
 pip install pygame pyttsx3 sounddevice vosk numpy
 ```
 
-下载 Vosk 模型：
+Vosk 모델 다운로드:
 https://alphacephei.com/vosk/models
 
-获取模型例如[this](https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip“https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip”)
+예를 들어 모델을 얻으세요. [이것](https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip")
 
-提取并重命名：
+추출 및 이름 바꾸기:
 
 ```
 vosk-model-small-en-us-0.15
@@ -170,10 +167,10 @@ brew install portaudio
 pip install pygame pyttsx3 sounddevice vosk numpy
 ```
 
-下载与上面相同的英文模型。
---------------------------
+위와 동일한 영어 모델을 다운로드합니다.
+----------------------------
 
-### Linux
+### 리눅스
 
 ```bash
 python3 -m venv py312
@@ -184,166 +181,157 @@ sudo apt update
 sudo apt install -y libportaudio2 libportaudiocpp0 portaudio19-dev
 ```
 
-## 了解语音转文本 (Vosk)
 
-语音转文本 (STT) 是将口语转换为书面文本的过程。 Vosk 是最流行的离线 STT 引擎之一，以轻量、准确且易于在 Python 项目中使用而闻名。
 
-以下是适合教程、文档或学习目的的详细说明。
+## 음성-텍스트 이해(Vosk)
+STT(Speech-to-Text)는 음성 언어를 서면 텍스트로 변환하는 프로세스입니다. Vosk는 Python 프로젝트에서 가볍고 정확하며 사용하기 쉬운 것으로 알려진 가장 인기 있는 오프라인 STT 엔진 중 하나입니다.
 
-### 为什么语音转文本很重要
+다음은 튜토리얼, 문서화 또는 학습 목적에 적합한 자세한 설명입니다.
 
-语音转文本技术在现代软件中已变得至关重要，因为：
+### 음성-텍스트 변환이 중요한 이유
+Speech-to-Text 기술은 다음과 같은 이유로 현대 소프트웨어에서 필수적이 되었습니다.
+#### 핸즈프리 상호작용
+사용자는 음성을 사용하여 앱을 제어할 수 있으며 시계, 보조자 및 손이 바쁜 상황(요리, 운전 등)에 유용합니다.
+#### 접근성
+STT는 운동 장애가 있거나 쉽게 입력할 수 없는 사용자를 돕습니다.
+#### 실시간 자동화
+음성 명령은 즉시 이벤트를 트리거할 수 있습니다. 예:
+"타이머 시작", "음악 중지", "지금 몇 시야".
+#### 화면 없이 작동
+IoT 장치, Raspberry Pi 시스템 또는 임베디드 장치에 유용합니다.
+#### 오프라인 보안
+Vosk는 완전히 오프라인으로 작동하므로 음성 데이터가 클라우드로 전송되지 않아 개인 정보 보호가 강화됩니다.
 
-#### 免提交互
+### Vosk 작동 방식 - 이론(간체)
+Vosk는 사용이 간편하다고 느껴지지만 내부적으로는 심각한 음성 처리 이론을 사용합니다. 다음은 이해하기 쉽고 초보자에게 친숙한 설명입니다.
 
-用户可以使用语音控制应用程序，这对于时钟、助手和任何需要手动操作的场景（烹饪、驾驶等）很有用。
+1. 오디오 캡처
 
-#### 无障碍
+* 마이크는 원시 오디오 웨이브를 녹음합니다.
+* 이 파동은 시간에 따른 기압 변화를 나타내는 숫자일 뿐입니다.
+2. 특징 추출(MFCC)
 
-STT 可以帮助有运动障碍或无法轻松打字的用户。
+* 원시 오디오는 기계 학습 모델에 비해 너무 자세하고 잡음이 많습니다.
+* Vosk는 원시 오디오를 MFCC 기능(Mel-Frequency Cepstral Coefficients)으로 변환합니다.
 
-#### 实时自动化
+#### MFCC는 다음을 나타냅니다.
 
-语音命令可以立即触发事件 - 例如，
-“启动计时器”、“停止音乐”、“现在几点了”。
 
-#### 无需屏幕即可工作
+- 주파수 분포
+- 음량
+- 톤
+- 인간이 말로 인식하는 패턴
 
-适用于 IoT 设备、Raspberry Pi 系统或嵌入式小工具。
+*MFCC를 신경망이 이해할 수 있는 소리의 지문이라고 생각하세요.*
 
-#### 离线安全
-
-Vosk 完全离线工作，因此不会将语音数据发送到云端，从而增强了隐私性。
-
-### Vosk 的工作原理——理论（简化）
-
-尽管 Vosk 感觉使用起来很简单，但它实际上使用了严格的语音处理理论。这是一个易于理解、适合初学者的解释：
-
-1. 音频采集
-
-* 您的麦克风记录原始音频波。
-* 这些波只是代表气压随时间变化的数字。
-
-2. 特征提取（MFCC）
-
-* 对于机器学习模型来说，原始音频过于详细且嘈杂。
-* Vosk 将原始音频转换为 MFCC 特征（梅尔倒谱系数）。
-
-#### MFCC 代表：
-
-- 频率分布
-- 响度
-- 语气
-- 人类感知为言语的模式
-
-*将 MFCC 视为神经网络可以理解的声音指纹。*
-
-3.声学模型（神经网络）
-该模型采用 MFCC 特征并预测音素 —
-最小的声音单位，例如：
+3. 음향 모델(신경망)
+이 모델은 MFCC 기능을 사용하여 음소를 예측합니다.
+다음과 같은 소리의 가장 작은 단위:
 `k    a    t    ( = "cat" )`
-声学模型经过数千小时的语音录音训练。
-4. 语言模型
-人类不会以随机的音素序列说话。
-因此，语言模型有助于预测哪些单词有意义。
+음향 모델은 수천 시간의 음성 녹음을 통해 훈련되었습니다.
+4. 언어 모델
+인간은 임의의 음소 순서로 말하지 않습니다.
+따라서 언어 모델은 어떤 단어가 의미가 있는지 예측하는 데 도움이 됩니다.
 
-例如：
-如果声学模型检测到以下内容：
+예를 들어:
+음향 모델이 다음과 같은 것을 감지하는 경우:
 `d   t   a   m   p`
-语言模型引导它：
+언어 모델은 다음을 안내합니다.
 `→ "time"`
-而不是胡言乱语。
-5. 解码器
-解码器结合了：
+횡설수설 대신.
+5. 디코더
+디코더는 다음을 결합합니다.
 
-- 声学模型的预测
-- 来自语言模型的概率
-  and chooses the most likely final text output.
-  Result: clear, readable text.
+- 음향 모델로부터의 예측
+- 언어 모델의 확률
+     and chooses the most likely final text output.
+     Result: clear, readable text.
 
-### 为什么开发人员喜欢 Vosk
+### 개발자들이 Vosk를 좋아하는 이유
 
-* 100% 离线
-* 没有互联网意味着：
-  ✔ 隐私
-  ✔ 可靠性
-  ✔ 非常适合物联网或现场环境
-* 低CPU使用率
+* 100% 오프라인
+* 인터넷이 없다는 것은 다음을 의미합니다.
+✔ 개인정보 보호
+✔ 신뢰성
+✔ IoT 또는 현장 환경에 적합
+* 낮은 CPU 사용량
 
-运行于：
+실행 대상:
 
-- 树莓派
-- 旧笔记本电脑
-- 中档电脑
-- 提供小型型号
-- 某些型号<50MB。
-- 快速且实时
-- 即使在普通的硬件上，它也可以立即转录。
-- 多语言支持
+- 라즈베리 파이
+- 오래된 노트북
+- 중급 PC
+- 소형 모델 이용 가능
+- 일부 모델은 50MB 미만입니다.
+- 빠르고 실시간
+- 보통 수준의 하드웨어에서도 즉시 기록됩니다.
+- 다국어 지원
 
-### 蜡模型类型
+### 왁스 모델 유형
 
-您可以根据您的设备进行选择：
+귀하의 장치에 따라 선택할 수 있습니다:
 
-#### 小型号
+#### 소형 모델
 
 - <40MB
-- 最快
-- 精度较低
-- 非常适合 Raspberry Pi 或简单命令
-- 非常适合这个“语音时钟项目”
+- 가장 빠름
+- 낮은 정확도
+- Raspberry Pi 또는 간단한 명령에 이상적입니다.
+- 이 "음성 시계 프로젝트"에 딱 맞습니다.
 
-#### 中型型号
+#### 중형 모델
 
-- 平衡精度+速度
-- 适用于台式机或笔记本电脑
+- 균형 잡힌 정확도 + 속도
+- 데스크탑이나 노트북에 적합
 
-#### 大型机型
+#### 대형 모델
 
-- 最佳准确度
-- CPU负载较重
-- 对于简单的语音命令来说太过分了
+- 최고의 정확도
+- CPU 부하가 더 커짐
+- 간단한 음성 명령에는 과잉
 
-### 从哪里获取语言模型
+### 언어 모델을 얻을 수 있는 곳
 
-所有官方型号在这里：
+모든 공식 모델은 여기에 있습니다:
 https://alphacephei.com/vosk/models
 
-### 支持的语言
+### 지원되는 언어
 
-沃斯克支持：
+Vosk는 다음을 지원합니다.
 
-| 语言     | 型号                            |
-| -------- | ------------------------------- |
-| 英语     | `vosk-model-small-en-us-0.15` |
-| 日语     | `vosk-model-small-ja-0.22`    |
-| 中文     | `vosk-model-small-cn-0.22`    |
-| 西班牙语 | `vosk-model-small-es-0.42`    |
-| 法语     | `vosk-model-small-fr-0.22`    |
-| 印地语   | `vosk-model-small-hi-0.22`    |
+| 언어 | 모델 |
+| -------- | ------------------ |
+| 영어 |`vosk-model-small-en-us-0.15`
+| 일본어 |`vosk-model-small-ja-0.22`
+| 중국어 |`vosk-model-small-cn-0.22`
+| 스페인어 |`vosk-model-small-es-0.42`
+| 프랑스어 |`vosk-model-small-fr-0.22`
+| 힌디어 |`vosk-model-small-hi-0.22`
 
-……还有更多。
+…그리고 더 많은 것들이 있습니다.
 
-### 初学者应该使用哪种模型？
+### 초보자는 어떤 모델을 사용해야 합니까?
 
-使用**小模型**：
+**작은 모델** 사용:
 
-- 快速地
-- 低CPU使用率
-- 非常适合树莓派
-- 对于单字命令来说足够准确
+- 빠른
+- 낮은 CPU 사용량
+- 라즈베리 파이에 딱 맞습니다.
+- 한 단어 명령에도 충분히 정확함
 
-小型号名称示例：
+작은 모델 이름의 예:
 
 `vosk-model-small-en-us-0.15`
 `vosk-model-small-es-0.42`
 `vosk-model-small-fr-0.22`
 
-## 了解文本转语音 (pyttsx3)
 
-### 改变声音
 
-在代码中：
+## 텍스트 음성 변환(pyttsx3) 이해
+
+### 목소리 바꾸기
+
+코드에서:
 
 ```python
 engine = pyttsx3.init()
@@ -351,105 +339,117 @@ voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
 ```
 
-### 改变说话速度
+### 말하기 속도 변경
 
 ```python
 engine.setProperty('rate', 150)
 ```
 
-共同价值观：
+공통 값:
 
-- 120（慢速）
-- 150（默认）
-- 180（快速）
+- 120 (느림)
+- 150(기본값)
+- 180 (빠름)
 
-## 代码分解
 
-### 时钟渲染
 
-时钟是手动绘制的：
+## 코드 분석
 
-- 外圈
-- 小时数
-- 分钟刻度
-- 根据时间旋转指针
+### 시계 렌더링
 
-### 滴答声生成
+시계는 수동으로 그려집니다.
 
-而不是加载 `.wav`，我们生成音频：
+- 외부 원
+- 시간 번호
+- 분 틱
+- 시간에 따라 바늘을 회전
 
-- 1500赫兹点击
-- 50 毫秒持续时间
-- 指数褪色
+### 틱 사운드 생성
 
-感谢 NumPy，时钟始终滴答作响，无需导入外部文件。
+로딩하는 대신`.wav`, 오디오를 생성합니다.
 
-### 打字动画
+- 1500Hz 클릭
+- 지속 시간 50ms
+- 지수 페이드
 
-问候语看起来就像真实的打字一样：
+NumPy 덕분에 외부 파일을 가져오지 않고도 시계가 항상 똑딱거립니다.
 
-- 人物逐渐出现
-- 光标闪烁
-- 4秒后，文字自动清除
+### 타이핑 애니메이션
 
-### 监听按钮行为
+인사말은 실제 입력하는 것처럼 나타납니다.
 
-- 打开/关闭
-- 蓝色 → 闲置
-- 绿色 → 聆听
-- 在后台运行 Vosk 麦克风流
+- 캐릭터가 점차적으로 나타남
+- 커서가 깜박입니다.
+- 4초 후 텍스트가 자동으로 지워집니다.
 
-### STT回调逻辑
+### 듣기 버튼 동작
 
-当 Vosk 解码语音时：
+- 켜기/끄기 전환
+- 파란색 → 유휴 상태
+- 녹색 → 듣기
+- 백그라운드에서 Vosk 마이크 스트림 실행
 
-- 打印检测到的文本
-- 如果包含“时间”，则调用 `speak_time()`
+### STT 콜백 로직
 
-## 运行应用程序
+Vosk가 음성을 해독할 때:
 
-一切安装完毕后：
+- 감지된 텍스트 인쇄
+- "시간"이 포함된 경우 호출`speak_time()`
+
+
+
+## 앱 실행
+
+모든 것이 설치되면 다음을 수행하십시오.
 
 ```bash
 python main.py
 ```
 
-步骤：
+단계:
 
-1.时钟出现
-2. 单击**听**
-3. 说：**“时间”**
-4. 时钟会说出当前时间
-5.底部出现文字动画
+1. 시계가 나타납니다
+2. **듣기**를 클릭하세요.
+3. 말하세요:**“시간”**
+4. 시계가 현재 시간을 알려줍니다.
+5. 하단에 텍스트 애니메이션이 나타납니다.
 
-## 故障排除
 
-### ❗ 未检测到麦克风
 
-尝试：
+## 문제 해결
+
+### ❗ 마이크가 감지되지 않았습니다.
+
+노력하다:
 
 ```bash
 pip install sounddevice
 ```
 
-或者选择输入设备：
+또는 입력 장치를 선택하세요.
 
 ```python
 sd.default.device = 1
 ```
 
-### ❗ 未检测到语音
 
-使用**小**模型；大的需要更多的CPU。
-发音清晰，点击“听”后等待 1-2 秒。
 
-### ❗ TTS 只能运行一次
+### ❗ 음성이 감지되지 않았습니다.
 
-确保每个 TTS 调用都会创建一个**新引擎**（已在提供的代码中完成）。
+**작은** 모델을 사용하세요. 큰 것에는 더 많은 CPU가 필요합니다.
+명확하게 말하고 “LISTEN(듣기)”을 클릭한 후 1~2초 정도 기다리세요.
 
-## 完整源代码
 
-### 1.Windows DPI 感知
+
+### ❗ TTS는 한 번만 작동합니다.
+
+각 TTS 호출이 **새 엔진**을 생성하는지 확인하세요(제공된 코드에서 이미 완료됨).
+
+
+
+## 전체 소스 코드
+
+### 1. Windows DPI 인식
 
 ```python
 import ctypes
@@ -459,41 +459,37 @@ except:
     pass
 ```
 
-- 确保应用程序在 Windows 中的**高 DPI 屏幕**上正确显示。
-- 包裹在 `try`块以与其他操作系统兼容。
+- Windows의 **높은 DPI 화면**에 애플리케이션이 올바르게 표시되는지 확인합니다.
+-에 싸서`try`다른 OS와의 호환성을 위해 차단합니다.
 
-### 2. 进口
 
+### 2. 수입품
 ```python
 import pygame, math, datetime, sys, numpy as np, pyttsx3, threading, time
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
 import json, os
 ```
+- **pygame**: GUI 및 그래픽.
+- **수학**: 시계 바늘의 삼각법.
+- **datetime**: 시계 및 인사말의 현재 시간입니다.
+- **numpy**: 인공적인 틱 소리를 생성합니다.
+- **pyttsx3**: 텍스트 음성 변환 엔진.
+- **스레딩**: 백그라운드에서 TTS/STT를 실행합니다.
+- **사운드 장치 및 보스크**: 음성-텍스트 인식.
+- **json & os**: Vosk 출력을 구문 분석하고 파일을 처리합니다.
 
-- **pygame**：GUI 和图形。
-- **数学**：时钟指针的三角学。
-- **日期时间**：时钟和问候语的当前时间。
-- **numpy**：生成人工滴答声。
-- **pyttsx3**：文本转语音引擎。
-- **线程**：在后台运行 TTS/STT。
-- **声音设备和vosk**：语音转文本识别。
-- **json & os**：解析 Vosk 输出并处理文件。
-
-### 3.Pygame初始化
-
+### 3. 파이게임 초기화
 ```python
 pygame.init()
 pygame.mixer.init(frequency=44100, size=-16, channels=2)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("PyShine Wall Clock")
 ```
+- 사운드 재생을 위해 **파이게임** 및 **오디오 믹서**를 초기화합니다.
+- **화면 크기** 및 창 **제목**을 설정합니다.
 
-- 初始化 **Pygame** 和 **音频混合器** 以进行声音播放。
-- 设置**屏幕尺寸**和窗口**标题**。
-
-### 4. 常数和颜色
-
+### 4. 상수와 색상
 ```python
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -505,11 +501,9 @@ BUTTON_HOVER = (0, 180, 255)
 BUTTON_ACTIVE = (0, 200, 0)
 LIME = (0, 255, 0)
 ```
+- 시계 문자판, 바늘, 버튼, 텍스트에 사용되는 **색상**을 정의합니다.
 
-- 定义用于钟面、指针、按钮和文本的**颜色**。
-
-### 5. 时钟参数及字体
-
+### 5. 시계 매개변수 및 글꼴
 ```python
 center_x, center_y = WIDTH // 2, HEIGHT // 2
 clock_radius = 150
@@ -518,14 +512,11 @@ date_font = pygame.font.SysFont('Arial', 20)
 button_font = pygame.font.SysFont('Arial', 20, bold=True)
 time_str_font = pygame.font.SysFont('Arial', 28, bold=True)
 ```
+`center_x, center_y`: 시계의 중심.
+`clock_radius`: 시계 문자판의 크기입니다.
+- **숫자, 날짜, 버튼 텍스트 및 TTS 텍스트 표시**용 글꼴.
 
-`center_x, center_y`：时钟中心。
-`clock_radius`：钟面的尺寸。
-
-- **数字、日期、按钮文本和 TTS 文本显示**的字体。
-
-### 6. 滴答声
-
+### 6. 틱 소리
 ```python
 def create_tick_sound():
     ...
@@ -533,137 +524,118 @@ def create_tick_sound():
     tick_sound.set_volume(0.5)
     return tick_sound
 ```
+- NumPy를 사용하여 **1500Hz의 짧은 클릭**을 생성합니다.
+- 외부 오디오 파일이 필요하지 않습니다.
+- **매초마다 틱**을 재생하는 데 사용됩니다.
 
-- 使用 NumPy 生成 **短 1500Hz 的点击**。
-- 无需外部音频文件。
-- 用于播放**每秒滴答声**。
-
-### 7. 收听按钮
-
+### 7. 듣기 버튼
 ```python
 button_rect = pygame.Rect(WIDTH // 2 - 80, 80, 160, 50)
 listening_active = False
 def draw_button(mouse_pos):
     ...
 ```
+- **화면에 버튼**을 그립니다.
+- **호버링** 또는 **활성** 시 색상이 변경됩니다.
+- **마이크 청취 상태**를 제어합니다.
 
-- 在屏幕上绘制**按钮**。
-  Error 500 (Server Error)!!1500.That’s an error.There was an error. Please try again later.That’s all we know.
-- 控制**麦克风监听状态**。
-
-### 8. 文本输入和 TTS
-
+### 8. 텍스트 입력 및 TTS
 ```python
 def speak_time():
     ...
     threading.Thread(target=tts_func, args=(spoken_time_str,), daemon=True).start()
 ```
+- 현재 시간을 기준으로 **인사말**을 결정합니다.
+- **음성 텍스트** 형식: 예:`"Good afternoon\nIt's 03:25 PM now!"`
+- **백그라운드 스레드에서 텍스트 음성 변환**을 시작합니다.
+- **입력 애니메이션** 변수를 업데이트합니다.
 
-- 根据当前时间确定**问候语**。
-- 格式**语音文本**：例如，`"Good afternoon\nIt's 03:25 PM now!"`。
-- 在后台线程中启动**文本转语音**。
-- 更新**打字动画**变量。
 
-### 9.Wax 语音转文本设置
-
+### 9. 왁스 음성-텍스트 설정
 ```python
 MODEL_PATH = "vosk-model-small-en-us-0.15"
 vosk_model = Model(MODEL_PATH)
 recognizer = KaldiRecognizer(vosk_model, 16000)
 ```
+- **오프라인 Vosk 모델**을 로드합니다.
+- 인식기는 **오디오 바이트를 텍스트**로 변환합니다.
+- **오프라인 음성 인식**을 보장합니다.
 
-- 加载**离线 Vosk 模型**。
-- 识别器将**音频字节转换为文本**。
-- 确保**离线语音识别**。
-
-#### STT 回调
-
+#### STT 콜백
 ```python
 def stt_callback(indata, frames, time_data, status):
     ...
     if "time" in result_text.lower():
         speak_time()
 ```
+- 마이크의 오디오를 처리합니다.
+- 텍스트로 변환합니다.
+- 트리거`speak_time()`**키워드 “time”**이 감지되면
 
-- 处理来自麦克风的音频。
-- 将其转换为文本。
-- 触发器 `speak_time()`当检测到**关键字“时间”**时。
-
-### 10. 时钟绘图函数
-
-#### 钟面
-
+### 10. 시계 그리기 기능
+#### 시계 페이스
 ```python
 def draw_clock_face():
     ...
 ```
-
-- 绘制**外圈、小时数字、分钟刻度**。
-- 区分**小时刻度**（较粗）和**分钟刻度**（较细）。
-
-#### 钟针
-
+- **바깥쪽 원, 시간 숫자, 분 틱**을 그립니다.
+- **시간 단위**(두꺼움)와 **분 단위**(얇음)를 구분합니다.
+#### 시계바늘
 ```python
 def draw_clock_hands():
     ...
 ```
-
-- 根据当前时间绘制**时针、分针、秒针**。
-- 每秒播放**滴答声**。
-- 绘制**中心枢轴**圆。
-
-#### 日期显示
-
+- 현재 시간을 기준으로 **시, 분, 초침**을 그립니다.
+- **초마다 틱 소리**를 재생합니다.
+- **중심 피벗** 원을 그립니다.
+#### 날짜 표시
 ```python
 def draw_date_display(now):
     ...
 ```
+- **현재 날짜**와 **요일**을 표시합니다.
 
-- 显示**当前日期**和**星期几**。
-
-#### 打字动画
+#### 타이핑 애니메이션
 
 ```python
 def draw_spoken_time():
     ...
 ```
+- 타이핑처럼 **인사말과 시간**을 순차적으로 보여줍니다.
+- 커서 **깜박임**.
+- **4초** 후에 자동으로 지워집니다.
 
-- 像打字一样逐渐显示**问候语和时间**。
-- 光标**闪烁**。
-- **4 秒**后自动清除。
 
-### 11. 主循环
+### 11. 메인 루프
 
 ```python
 def main():
     ...
 ```
+- **이벤트** 처리:
+- 그만두다
+- ESC 키
+- **듣기 버튼**을 마우스로 클릭하세요.
+- 업데이트:
+- **시계 페이스**
+- **손**
+- **날짜**
+- **입력된 인사말**
+- **듣기 버튼**
+- **30FPS**에서 실행됩니다.
+- **부드러운 애니메이션과 상호작용**을 보장합니다.
 
-- 处理**事件**：
-- 辞职
-- ESC键
-- 鼠标点击**收听按钮**
-- 更新：
-- **钟面**
-- **手**
-- **日期**
-- **输入问候语**
-- **收听按钮**
-- 以 **30 FPS** 运行。
-- 确保**流畅的动画和交互**。
-
-### 12. 入口点
+### 12. 진입점
 
 ```python
 if __name__ == "__main__":
     main()
 ```
+- 스크립트가 직접 실행될 때 **메인 루프**를 시작합니다.
 
-- 直接执行脚本时启动**主循环**。
+### main.py
 
-### 主要.py
-
-完整的工作源代码在这里：
+전체 작동 소스 코드는 다음과 같습니다.
 {% include codeHeader.html %}
 
 ```python
@@ -995,5 +967,7 @@ if __name__ == "__main__":
 
 ```
 
-**网站：** https://www.pyshine.com
-**作者：** PyShine
+
+
+**웹사이트:** https://www.pyshine.com
+**저자:** 파이샤인

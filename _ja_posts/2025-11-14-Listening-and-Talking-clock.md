@@ -33,14 +33,14 @@ title: "音声対応の挨拶付き掛け時計"
 lang: ja
 en_url: /Listening-and-Talking-clock/
 zh_url: /zh/Listening-and-Talking-clock/
-
+ko_url: /ko/Listening-and-Talking-clock/
 ---
 # 音声時刻と挨拶付き掛け時計
 
 このチュートリアルでは、**Python ベースの壁掛け時計**を作成する方法を説明します。`pygame`**pyttsx3** と **Vosk** を使用した **text-to-speech** と **speech-to-text** です。アプリは「時間」という単語をリッスンし、現在の時刻と、現在の時刻に基づいた挨拶を返します。
 
-<div class="ビデオコンテナ">
-<iframe
+<div class="video-container">
+  <iframe 
     width="560" 
     height="315" 
     src="https://www.youtube.com/embed/bjY2wvX-3B8" 
@@ -48,7 +48,7 @@ zh_url: /zh/Listening-and-Talking-clock/
     frameborder="0" 
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
     allowfullscreen>
-</iframe>
+  </iframe>
 </div>
 
 # 目次
