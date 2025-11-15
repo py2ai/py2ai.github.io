@@ -29,7 +29,7 @@ tags:
 - vosk
 - beginner
 - tutorial
-title: "听和说的时钟"
+title: "音声対応の挨拶付き掛け時計"
 lang: ja
 en_url: /Listening-and-Talking-clock/
 zh_url: /zh/Listening-and-Talking-clock/
