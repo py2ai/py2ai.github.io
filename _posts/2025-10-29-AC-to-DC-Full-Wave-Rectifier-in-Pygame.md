@@ -451,3 +451,8 @@ Developed by **PyShine** — bringing electronics and Python to life through vis
 If you found this helpful, consider subscribing to [PyShine on YouTube](https://www.youtube.com/@pyshine_official)  for more fun Python projects.
 
 **Happy Coding & Keep Learning! ⚡**
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

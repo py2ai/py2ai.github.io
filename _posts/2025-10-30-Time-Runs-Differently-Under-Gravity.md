@@ -307,3 +307,8 @@ python gravitational_time_dilation.py
 - Show a 3D representation of gravity wells
 - Include relativistic effects at high velocities
 - Export simulation data for further analysis
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

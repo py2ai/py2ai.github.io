@@ -465,4 +465,5 @@ This tutorial gives a solid foundation for beginner-friendly Pygame projects.
 
 ---
 
-*Tutorial and Source Code available at www.pyshine.com*
+**Website:** https://www.pyshine.com
+**Author:** PyShine

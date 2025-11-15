@@ -245,3 +245,8 @@ if os.path.exists(exe_file):
 ---
 
 With this simple integration, you’ve built a **bridge between Python and C++**, unlocking a world of hybrid programming possibilities. You can extend this example to dynamically generate more complex C++ programs, compile them on the fly, and benchmark their performance using Python scripts.
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

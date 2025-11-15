@@ -467,3 +467,8 @@ A: Use it when `TREE_DEPTH` is large (e.g., 12+) and CPU usage is the bottleneck
 This tutorial shows how to understand the original recursive fractal generator and how to safely run expensive geometry generation in parallel without touching the GUI thread. Use the provided code as a starting point — tweak parameters, depths, and the pool strategy to match your CPU and artistic goal.
 
 Happy coding and happy tree-growing!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

@@ -224,3 +224,7 @@ We add logic to restart the game when the 'R' key is pressed:
 ## Conclusion
 Congratulations! You have created a simple helicopter game using Pygame. This tutorial covered the basics of setting up a game window, handling user input, rendering graphics, and managing game states. With these foundations, you can further enhance the game by adding new features such as sound effects, advanced graphics, and more complex obstacle patterns.
 
+---
+**Website:** https://www.pyshine.com
+**Author:** PyShine
+

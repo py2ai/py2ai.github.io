@@ -277,3 +277,8 @@ if __name__ == "__main__":
 ---
 
 With just a few lines of recursive code, you’ve created an **organic fractal tree** that grows beautifully on your screen. This project is a fun introduction to **recursive graphics and procedural generation** — concepts that power both **natural simulations** and **game development**!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

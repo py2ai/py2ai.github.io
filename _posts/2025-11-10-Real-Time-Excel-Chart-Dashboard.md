@@ -321,3 +321,8 @@ Make any edits to the Excel file — and watch your chart refresh instantly! ⚡
 
 **You’ve built a live Excel chart updater in Python!**
 Perfect for automation, teaching, and data monitoring projects.
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

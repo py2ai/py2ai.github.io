@@ -278,3 +278,8 @@ A black screen with a growing cherry blossom tree should appear.
 
 This project combines **recursion**, **randomness**, and **color blending** to simulate organic growth.
 You can modify parameters like `DEPTH`, `LENGTH`, and flower colors to create your own natural variations!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

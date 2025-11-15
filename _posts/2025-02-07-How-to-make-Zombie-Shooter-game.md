@@ -206,3 +206,8 @@ pygame.quit()
 ```
 
 
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine
+

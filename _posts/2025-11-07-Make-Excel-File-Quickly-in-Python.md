@@ -438,3 +438,8 @@ print(sheet["A2"].value)  # Prints "Mango"
 Congratulations! You've just automated Excel file creation using Python. This fundamental skill opens doors to automated reporting, data processing, and much more. The simple garden data example demonstrates principles you can apply to business reports, scientific data, or any structured information that needs organizing.
 
 *Try modifying the code to create your own custom Excel files – the possibilities are endless!*
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

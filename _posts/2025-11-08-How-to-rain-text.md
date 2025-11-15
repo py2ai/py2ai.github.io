@@ -267,3 +267,8 @@ You now have a fully functional Matrix rain animation running in your terminal! 
 - Animation using loops and buffers
 
 Mastering ANSI codes opens the door to advanced terminal applications, interactive CLI tools, and colorful animations. Happy coding!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

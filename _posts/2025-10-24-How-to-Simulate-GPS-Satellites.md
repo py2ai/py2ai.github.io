@@ -261,3 +261,8 @@ This VPython project demonstrates how to visualize satellite constellations in 3
 - How to simulate orbital motion using angular updates.
 
 It’s a powerful educational example for both orbital mechanics and real-time 3D visualization in Python.
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

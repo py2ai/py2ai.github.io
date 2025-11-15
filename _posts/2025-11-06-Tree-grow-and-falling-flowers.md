@@ -704,3 +704,8 @@ if __name__ == "__main__":
 This project demonstrates that Python's Turtle graphics can create much more than simple drawings. By combining recursive algorithms, color theory, and physics simulation, you can build beautiful, complex animations that bring digital nature to life. The techniques learned here can be applied to game development, data visualization, or interactive art projects.
 
 Try modifying the parameters to create your own unique animated scenes!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

@@ -629,4 +629,8 @@ python garden_live_chart.py
 ---
 
 This tutorial provides a **complete beginner-friendly guide** to creating **interactive, live-refreshing Excel visualizations** in Python.
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine
 

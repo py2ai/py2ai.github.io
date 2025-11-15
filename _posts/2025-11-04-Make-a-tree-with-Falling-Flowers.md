@@ -404,3 +404,8 @@ You’ll see a black background with blossoms drifting gracefully from the branc
 This project brings life to your fractal tree by adding **motion and realism**.
 Experiment with `WIND`, `GRAVITY`, and `FPS` to create slow drifting or stormy blossom effects 🌸💨
 Next, try combining this animation with **sound or seasonal background music** for a serene interactive art piece!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

@@ -297,3 +297,8 @@ while True:
 You now have a working Mini Paint application with smooth circular brushes, multiple colors, and variable brush sizes! This is a fun project to practice **interactive GUI programming in Python using Pygame**.
 
 Enjoy painting!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

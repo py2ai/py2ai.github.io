@@ -148,3 +148,8 @@ You have successfully created an Excel workbook with multiple sheets using Pytho
 - How to write multiple sheets to a single Excel file
 
 Feel free to expand this example by adding more sheets or more complex data. Pandas makes working with Excel files both simple and powerful!
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

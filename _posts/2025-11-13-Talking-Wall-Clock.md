@@ -773,4 +773,5 @@ This project demonstrates advanced Pygame features and integrating multimedia el
 
 ---
 
-*Tutorial and Source Code available at www.pyshine.com*
+**Website:** https://www.pyshine.com
+**Author:** PyShine

@@ -316,3 +316,7 @@ Hit!
 Player 1 wins!
 
 ```
+
+---
+**Website:** https://www.pyshine.com
+**Author:** PyShine

@@ -717,3 +717,8 @@ Click cells to activate notes, save and load patterns, clear the grid, and adjus
 ---
 
 This in-depth guide transforms your simple code into a **mini music production environment** — blending coding, sound design, and interactive graphics beautifully.
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine

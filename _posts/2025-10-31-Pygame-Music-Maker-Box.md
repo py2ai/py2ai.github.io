@@ -428,3 +428,8 @@ python music_maker.py
 ---
 
 This beginner-friendly tutorial introduces **music programming in Python** and **interactive sequencer logic**. With practice, you can expand this into a **full-fledged music maker** with more features.
+
+---
+
+**Website:** https://www.pyshine.com
+**Author:** PyShine
