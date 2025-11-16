@@ -121,14 +121,11 @@ Essentially, each font is a dictionary of characters and their ASCII designs. By
 PyFiglet offers several useful functions beyond `renderText()`:
 
 - **`FigletFont.getFonts()`**: Lists all available fonts.
-  ```python
 
-  ```
-
+```python
 from pyfiglet import Figlet, FigletFont
 fonts = FigletFont.getFonts()
 print(fonts)
-
 ```
 output
 
@@ -139,10 +136,8 @@ output
 ```
 
 - **`setFont(font='fontname')`**: Dynamically change the font.
-  ```python
 
-  ```
-
+```python
 f = Figlet(font='slant')
 f.setFont(font='block')
 print(f.renderText("Python"))
