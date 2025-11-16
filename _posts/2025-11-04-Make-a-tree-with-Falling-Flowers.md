@@ -18,20 +18,6 @@ tags:
 title: Make a Tree with falling Flowers
 ---
 
-# Table of Contents
-
-1. [Overview](#overview)
-2. [Setup and Imports](#setup-and-imports)
-3. [Generating Branch Parameters](#generating-branch-parameters)
-4. [Tree and Flower Drawing Functions](#tree-and-flower-drawing-functions)
-5. [Animating Falling Blossoms](#animating-falling-blossoms)
-6. [Complete Code](#complete-code)
-7. [How It Works](#how-it-works)
-8. [Run the Script](#run-the-script)
-9. [Conclusion](#conclusion)
-
----
-
 ## Overview
 
 This tutorial expands on our previous **Cherry Blossom Tree** by adding **animated falling petals** that gently sway in the wind and settle on the ground.

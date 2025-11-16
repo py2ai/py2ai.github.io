@@ -21,8 +21,6 @@ tags:
 title: Building a Tic-Tac-Toe Game in Python!
 ---
 
-
-
 # Building a Tic-Tac-Toe Game in Python
 
 In this tutorial, we'll create a simple Tic-Tac-Toe game in Python where a user can play against the computer. The computer will make random moves.

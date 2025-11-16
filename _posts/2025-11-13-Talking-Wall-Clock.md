@@ -43,25 +43,6 @@ This updated tutorial covers creating a wall clock using Python and Pygame with 
 
 ---
 
-## Table of Contents
-
-1. [Introduction](#introduction)
-2. [Setup](#setup)
-3. [Code Explanation](#code-explanation)
-   - [Initializing Pygame and TTS](#initializing-pygame-and-tts)
-   - [Screen, Colors, and Fonts](#screen-colors-and-fonts)
-   - [Tick Sound](#tick-sound)
-   - [Button Setup](#button-setup)
-   - [Clock Face](#clock-face)
-   - [Clock Hands](#clock-hands)
-   - [Date Display](#date-display)
-   - [TTS Spoken Time Display](#tts-spoken-time-display)
-4. [Main Loop](#main-loop)
-5. [Complete Code](#complete-code)
-6. [Conclusion](#conclusion)
-
----
-
 ## Introduction
 
 Have you ever wondered how digital clocks in apps or smart devices keep time, produce sounds, and even talk to you without missing a beat? In this tutorial, you'll not only build a fully functional wall clock in Python but also understand **how graphics, sound, and text-to-speech can work together in real-time**. By the end, you'll have a **hands-on, interactive clock** that looks professional, speaks the time, and animates text dynamically.

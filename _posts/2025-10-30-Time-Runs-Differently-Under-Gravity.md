@@ -35,20 +35,6 @@ This tutorial walks through building an **interactive Gravitational Time Dilatio
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Theory: Gravitational Time Dilation](#theory-gravitational-time-dilation)
-- [Pygame Setup](#pygame-setup)
-- [Clock Display](#clock-display)
-- [Gravity Adjustment](#gravity-adjustment)
-- [Matplotlib Live Plot](#matplotlib-live-plot)
-- [Relative Year Info](#relative-year-info)
-- [Complete Python Code](#complete-python-code)
-- [How to Run](#how-to-run)
-- [Key Learnings](#key-learnings)
-- [Further Ideas](#further-ideas)
-
 ## Overview
 
 This project simulates **gravitational time dilation** using Python. You can interactively increase or decrease gravity and watch how the time on the gravity clock diverges from the Earth clock.

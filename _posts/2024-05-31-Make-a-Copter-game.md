@@ -20,8 +20,6 @@ tags:
 title: Let's build a copter game
 ---
 
-
-
 # Introduction
 Games have always been a fascinating way to blend creativity with programming skills. In this tutorial, we will build a simple yet engaging helicopter game using Python's Pygame library. This game will help you understand the basics of game development, including handling user inputs, rendering graphics, and managing game states.
 

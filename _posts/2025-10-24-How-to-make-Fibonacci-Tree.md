@@ -30,20 +30,6 @@ title: Recursive function to grow TREE in Python
 
 ---
 
-## Table of Contents
-
-- [Introduction](#1-introduction)
-- [Prerequisites](#2-prerequisites)
-- [Project Structure](#3-project-structure)
-- [Full Original Code](#4-simple-code)
-- [Deep Explanation — Line by Line and Concept by Concept](#5-deep-explanation--line-by-line-and-concept-by-concept)
-- [Why and When to Parallelize](#6-why-and-when-to-parallelize)
-- [Design Choices for Multithreading](#7-design-choices-for-multithreading)
-- [Multithreaded Implementation — Full Code](#8-multithreaded-implementation--full-code)
-- [How to Run and Test](#9-how-to-run-and-test)
-- [Performance Considerations &amp; Debugging Tips](#10-performance-considerations--debugging-tips)
-- [FAQ and Closing Notes](#11-faq-and-closing-notes)
-
 ## 1. Introduction
 
 This tutorial teaches you how a small Pygame program simulates a fractal, Fibonacci-based tree. Branch lengths and spreads follow Fibonacci-derived ratios so the resulting shape looks natural and organic.

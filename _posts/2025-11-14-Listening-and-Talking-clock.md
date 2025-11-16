@@ -53,37 +53,6 @@ This tutorial shows how to create a **Python-based wall clock** using `pygame`, 
 
 ---
 
-# Table of Contents
-
-1. [Introduction](#introduction)
-2. [Features Overview](#features-overview)
-3. [Prerequisites](#prerequisites)
-4. [Installing Dependencies](#installing-dependencies)
-   - [Windows](#windows)
-   - [macOS](#macos)
-   - [Linux](#linux)
-5. [Understanding Speech-to-Text (Vosk)](#understanding-speech-to-text-vosk)
-   - [Why Speech-to-Text Is Important](#why-speech-to-text-is-important)
-   - [How Vosk Works — The Theory (Simplified)](#how-vosk-works--the-theory-simplified)
-   - [Vosk Model Types](#vosk-model-types)
-   - [Where to get language models](#where-to-get-language-models)
-   - [Supported languages](#supported-languages)
-   - [Which model should beginners use?](#which-model-should-beginners-use)
-6. [Understanding Text-to-Speech (pyttsx3)](#understanding-text-to-speech-pyttsx3)
-   - [Changing voice](#changing-voice)
-   - [Changing speaking speed](#changing-speaking-speed)
-7. [Code Breakdown](#code-breakdown)
-   - [Clock rendering](#clock-rendering)
-   - [Tick sound generation](#tick-sound-generation)
-   - [Typing animation](#typing-animation)
-   - [Listen button behavior](#listen-button-behavior)
-   - [STT callback logic](#stt-callback-logic)
-8. [Running the App](#running-the-app)
-9. [Troubleshooting](#troubleshooting)
-10. [Full Source Code](#full-source-code)
-
----
-
 ## Introduction
 
 This project builds a **beautiful wall clock GUI** using `pygame` — but with a twist:

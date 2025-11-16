@@ -52,19 +52,6 @@ This tutorial walks you through creating a **live-updating chart viewer** for Ex
 
 --- 
 
-## Table of Contents
-- [Overview](#overview)
-- [Setting Up Your Environment](#setting-up-your-environment)
-- [Reading Excel Sheets](#reading-excel-sheets)
-- [Drawing Charts with Matplotlib](#drawing-charts-with-matplotlib)
-- [Adding Sheet Selection Buttons](#adding-sheet-selection-buttons)
-- [Watching for File Changes](#watching-for-file-changes)
-- [Putting It All Together](#putting-it-all-together)
-- [Complete Code](#complete-code)
-- [Running the Script](#running-the-script)
-- [Key Learnings](#key-learnings)
-- [Further Improvements](#further-improvements)
-
 ## Overview
 
 We are building a **live chart viewer** for an Excel file named `garden_data.xlsx`. Each sheet in the Excel file can be visualized as a **grouped bar chart**. The program automatically detects changes in the Excel file and updates the chart, making it useful for monitoring live data.

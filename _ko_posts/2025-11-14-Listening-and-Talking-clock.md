@@ -54,35 +54,6 @@ ja_url: /ja/Listening-and-Talking-clock/
 
 ---
 
-# 목차
-
-1. [소개](#introduction)
-2. [기능 개요](#features-overview)
-3. [전제 조건](#prerequisites)
-4. [종속성 설치](#installing-dependencies)
-    - [윈도우](#windows)
-    - [macOS](#macos)
-    - [리눅스](#linux)
-5. [음성-텍스트 이해(Vosk)](#understanding-speech-to-text-vosk)
-    - [음성-텍스트 변환이 중요한 이유](#why-speech-to-text-is-important)
-    - [Vosk의 작동 원리 - 이론(간체)](#how-vosk-works--the-theory-simplified)
-    - [왁스 모델 유형](#wax-model-types)
-    - [언어 모델을 얻을 수 있는 곳](#where-to-get-언어-모델)
-    - [지원 언어](#supported-언어)
-    - [초보자는 어떤 모델을 사용해야 할까요?](#which-model-should-beginners-use)
-6. [텍스트 음성 변환(pyttsx3) 이해](#understanding-text-to-speech-pyttsx3)
-    - [목소리 바꾸기](#changing-voice)
-    - [말하는 속도 변경](#changing-speaking-speed)
-7. [코드 분석](#code-breakdown)
-    - [시계 렌더링](#clock-rendering)
-    - [틱소리 생성](#틱-소리-생성)
-    - [타자 애니메이션](#typing-animation)
-    - [듣기 버튼 동작](#listen-button-behavior)
-    - [STT 콜백 로직](#stt-callback-logic)
-8. [앱 실행](#running-the-app)
-9. [문제 해결](#troubleshooting)
-10. [전체 소스 코드](#full-source-code)
-
 ## 소개
 
 이 프로젝트는 다음을 사용하여 **아름다운 벽시계 GUI**를 구축합니다.`pygame`— 하지만 반전이 있습니다.

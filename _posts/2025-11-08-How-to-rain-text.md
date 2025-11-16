@@ -22,24 +22,6 @@ tags:
 title: Matrix Rain Animation in Python – Complete Beginner's Guide
 ---
 
-# Table of Contents
-
-1. [Introduction](#introduction)
-2. [Understanding the Requirements](#understanding-the-requirements)
-3. [Setting Up Your Environment](#setting-up-your-environment)
-4. [Breaking Down the Code](#breaking-down-the-code)
-   1. [Importing Modules](#importing-modules)
-   2. [Terminal Size](#terminal-size)
-   3. [Characters and Streams](#characters-and-streams)
-   4. [Lime Green Color Function](#lime-green-color-function)
-   5. [ANSI Escape Codes Explained](#ansi-escape-codes-explained)
-   6. [The Main Animation Loop](#the-main-animation-loop)
-   7. [Exiting the Animation](#exiting-the-animation)
-5. [Running the Script](#running-the-script)
-6. [Conclusion](#conclusion)
-
----
-
 ## Introduction
 
 Have you ever wanted to recreate the iconic Matrix "digital rain" effect in your terminal using Python? In this tutorial, we'll build a fully working terminal-based Matrix rain animation. This guide is written for absolute beginners, so no prior experience with terminal animations is required.

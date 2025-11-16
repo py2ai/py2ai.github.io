@@ -21,32 +21,6 @@ title: Learn Python Tips and Tricks Part 01
 
 Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. 
 
-* [Python Installation](#python-installation)
-* [Run basic python](#run-basic-python)
-* [Run basic python through file](#run-basic-python-through-file)
-    * [main.py](#main.py)
-* [Variables and Data types in Python](#variables-and-data-types-in-python)
-    * [Strings](#strings)
-    * [Let's play with string](#let's-play-with-string)
-        * [How to add two strings in Python?](#how-to-add-two-strings-in-python)
-        * [How to access first element of string variable in Python?](#how-to-access-first-element-of-string-variable-in-python)
-        * [How to access last element of string variable in Python?](#how-to-access-last-element-of-string-variable-in-python)
-        * [How to reverse a string variable in Python?](#how-to-reverse-a-string-variable-in-python)
-        * [How to print a string multiple times by using integer?](#how-to-print-a-string-multiple-times-by-using-integer)
-        * [How to find a string in a string in Python?](#how-to-find-a-string-in-a-string-in-python)
-        * [How to replace a letter in string with another letter in Python?](#how-to-replace-a-letter-in-string-with-another-letter-in-python)
-        * [How to set upper case of a string in Python?](#how-to-set-upper-case-of-a-string-in-python)
-        * [How to set lower case of a string in Python?](#how-to-set-lower-case-of-a-string-in-python)
-        * [How to check if a string starts with some letter in Python?](#how-to-check-if-a-string-starts-with-some-letter-in-python)
-        * [How to check if a string ends with some letter in Python?](#how-to-check-if-a-string-ends-with-some-letter-in-python)
-        * [How to find the highest index of occurence of a letter in a string in Python?](#how-to-find-the-highest-index-of-occurence-of-a-letter-in-a-string-in-python)
-        * [How to count occurences of a letter in string in Python?](#how-to-count-occurences-of-a-letter-in-string-in-python)
-        * [How to convert other data types to string in Python?](#how-to-convert-other-data-types-to-string-in-python)
-    * [integers](#integers)
-    * [floats - 2.34](#floats---2.34)
-    * [booleans - `True` or `False`](#booleans---`true`-or-`false`)
-* [Summary](#summary)
-
 # Python Installation
 
 Go ahead and download Python from here https://www.python.org/downloads/ according to your Operating System, i.e., Windows, Mac OS or Linux, etc. We will use Python 3.8.5 version. 

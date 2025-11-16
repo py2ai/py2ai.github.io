@@ -19,7 +19,6 @@ tags:
 title: Let's build a simple "word game inspired by Scrabble"
 ---
 
-
 In this tutorial, we'll create a simple word game inspired by Scrabble that you can play via the command line. The game will allow two players to take turns forming words from a set of randomly chosen letters. The goal is to score the highest points by creating valid words.
 
 # Step 1: Setting Up the Environment

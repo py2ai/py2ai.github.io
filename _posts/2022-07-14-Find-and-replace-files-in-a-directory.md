@@ -20,14 +20,6 @@ title: Learn Python Tips and Tricks Part 02
 
 Hi friends! In this part we will learn how to get a list of files in a directory. How to rename the extensions of specific type of files. Imagine you have a directory of thousands files and you have to rename only a particular type of files. Manually doing such stuff would require lots of time and energy. But thanks to Python we can do this job quickly.
 
-* [Folder containing target files](#folder-containing-target-files)
-    * [Using glob library to get paths of all files](#using-glob-library-to-get-paths-of-all-files)
-        * [main.py](#main.py)
-    * [Iterate the list of files](#iterate-the-list-of-files)
-        * [main.py](#main.py)
-    * [Perform the rename operation on files](#perform-the-rename-operation-on-files)
-        * [main.py](#main.py)
-* [Summary ](#summary-)
 
 # Folder containing target files
 

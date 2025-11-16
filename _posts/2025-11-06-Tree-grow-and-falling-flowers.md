@@ -39,22 +39,6 @@ Python's Turtle graphics module isn't just for simple shapes – it can create b
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [What You&#39;ll Learn](#what-youll-learn)
-- [Step 1: Setting Up the Environment](#step-1-setting-up-the-environment)
-- [Step 2: Generating the Tree Structure](#step-2-generating-the-tree-structure)
-- [Step 3: Color Blending for Natural Look](#step-3-color-blending-for-natural-look)
-- [Step 4: Drawing Flowers with Growth Animation](#step-4-drawing-flowers-with-growth-animation)
-- [Step 5: Physics for Falling Flowers](#step-5-physics-for-falling-flowers)
-- [Complete Code](#complete-code)
-- [How It Works](#how-it-works)
-- [Customization Ideas](#customization-ideas)
-- [Key Learnings](#key-learnings)
-
----
-
 ## Overview
 
 This project creates a **procedurally generated tree** with these animated features:

@@ -18,21 +18,6 @@ tags:
 title: Make a Tree with Blossoms in Python
 ---
 
-
-# Table of Contents
-
-1. [Overview](#overview)
-2. [Setup and Imports](#setup-and-imports)
-3. [Generating Random Branch Parameters](#generating-random-branch-parameters)
-4. [Drawing Functions](#drawing-functions)
-5. [Main Tree Function](#main-tree-function)
-6. [Complete Code](#complete-code)
-7. [How It Works](#how-it-works)
-8. [Run the Script](#run-the-script)
-9. [Conclusion](#conclusion)
-
----
-
 ## Overview
 
 This tutorial demonstrates how to create a **beautiful cherry blossom tree** using Python’s `turtle` graphics module.

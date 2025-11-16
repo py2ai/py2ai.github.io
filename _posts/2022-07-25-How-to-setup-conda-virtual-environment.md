@@ -21,18 +21,6 @@ title: Learn Python Tips and Tricks Part 03
 
 Hello friends! Installing any version of Python on any platform is easy. But this easy task becomes cumbersome when you need to work on cross-platforms, for example, MacOs, Linux/Ubuntu/RedHat, Windows, etc. The situation gets even more worse when you have to work on multiple versions of Python. Now imagine a quick and easy way to work on virtual environments for any platform OS and any version of Python. Today we will walk through the installation steps and quote working tips about Miniconda.
 
-* [Install Miniconda ](#install-miniconda-)
-    * [Miniconda installation on Windows ](#miniconda-installation-on-windows-)
-        * [Solution to Miniconda activate problem on Windows](#solution-to-miniconda-activate-problem-on-windows)
-* [Create virtual environment using conda with a specific Python version](#create-virtual-environment-using-conda-with-a-specific-python-version)
-* [Info about existing virtual environments](#info-about-existing-virtual-environments)
-* [Activate a conda virtual environment ](#activate-a-conda-virtual-environment-)
-* [Run python under a virtual environment](#run-python-under-a-virtual-environment)
-* [Install a Python Package using Conda](#install-a-python-package-using-conda)
-    * [Package Plan ##](#package-plan-##)
-* [Deactivate a virtual environment](#deactivate-a-virtual-environment)
-* [Remove a conda virtual environment](#remove-a-conda-virtual-environment)
-
 # Install Miniconda 
 
 Go to this website https://docs.conda.io/en/latest/miniconda.html, and according to your OS, download the install the Miniconda.

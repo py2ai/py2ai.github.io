@@ -37,20 +37,6 @@ This tutorial walks you through creating an **interactive music maker** using **
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Setting Up Pygame](#setting-up-pygame)
-- [Creating the Synthetic Piano](#creating-the-synthetic-piano)
-- [Sequencer Grid &amp; Layout](#sequencer-grid--layout)
-- [Save &amp; Load Buttons](#save--load-buttons)
-- [Event Handling](#event-handling)
-- [Playback Logic](#playback-logic)
-- [Complete Code](#complete-code)
-- [How to Run](#how-to-run)
-- [Key Learnings](#key-learnings)
-- [Further Ideas](#further-ideas)
-
 ## Overview
 
 This project creates a **simple step sequencer** where each row represents a note (C, D, E, F, G, A) and each column is a step in the melody. You can toggle notes on/off, **play the melody**, and **save/load patterns** to/from files.

@@ -27,27 +27,6 @@ Excel spreadsheets are everywhere in the business world, but did you know you ca
 
 ---
 
-## Table of Contents
-
-- [What We&#39;re Building](#what-were-building)
-- [Why Use Python for Excel?](#why-use-python-for-excel)
-- [Step 0: Installing openpyxl](#step-0-installing-openpyxl)
-- [Step 1: Importing the Library](#step-1-importing-the-library)
-- [Step 2: Creating Your First Workbook](#step-2-creating-your-first-workbook)
-- [Step 3: Understanding Sheets and Active Sheet](#step-3-understanding-sheets-and-active-sheet)
-- [Step 4: Naming Your First Sheet](#step-4-naming-your-first-sheet)
-- [Step 5: Adding Data to Cells](#step-5-adding-data-to-cells)
-- [Step 6: Adding Multiple Rows with append()](#step-6-adding-multiple-rows-with-append)
-- [Step 7: Creating a Second Sheet](#step-7-creating-a-second-sheet)
-- [Step 8: Organizing Related Data](#step-8-organizing-related-data)
-- [Step 9: Saving Your Excel File](#step-9-saving-your-excel-file)
-- [Complete Code](#complete-code)
-- [Understanding the Output](#understanding-the-output)
-- [Common Mistakes to Avoid](#common-mistakes-to-avoid)
-- [Next Steps](#next-steps)
-
----
-
 ## What We're Building
 
 In this tutorial, we'll create an Excel file called **"garden_data.xlsx"** that contains two sheets:

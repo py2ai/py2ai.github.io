@@ -47,7 +47,6 @@ Install it via pip:
 ```bash
 pip install vpython
 ```
-
 > VPython runs in a browser or a standalone window depending on your setup.
 
 ## Full Source Code

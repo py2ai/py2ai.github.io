@@ -19,8 +19,6 @@ tags:
 title: Let's build a simple "Rock, Paper, Scissors" game
 ---
 
-
-
 Let's create a simple "Rock, Paper, Scissors" game where the user can play against the computer. This is a classic game that demonstrates user input, random choices by the computer, and conditional statements to determine the winner.
 
 Here's the Python script for the "Rock, Paper, Scissors" game:

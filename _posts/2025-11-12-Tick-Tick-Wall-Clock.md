@@ -39,23 +39,6 @@ This tutorial will guide you through creating a wall clock using Python and Pyga
 
 ---
 
-## Table of Contents
-
-1. [Introduction](#introduction)
-2. [Setup](#setup)
-3. [Code Explanation](#code-explanation)
-   - [Initializing Pygame](#initializing-pygame)
-   - [Screen and Colors](#screen-and-colors)
-   - [Clock Face](#clock-face)
-   - [Tick Sound](#tick-sound)
-   - [Clock Hands](#clock-hands)
-   - [Date Display](#date-display)
-4. [Main Loop](#main-loop)
-5. [Complete Code](#complete-code)
-6. [Conclusion](#conclusion)
-
----
-
 ## Introduction
 
 In this tutorial, you will learn how to:

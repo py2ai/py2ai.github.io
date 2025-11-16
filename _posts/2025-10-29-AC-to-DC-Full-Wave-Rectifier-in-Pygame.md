@@ -29,19 +29,6 @@ This tutorial walks through building a **Full Wave Bridge Rectifier Simulation**
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Circuit Concept](#circuit-concept)
-- [Pygame Setup](#pygame-setup)
-- [Drawing the Circuit](#drawing-the-circuit)
-- [Waveform Animation](#waveform-animation)
-- [Current Flow Visualization](#current-flow-visualization)
-- [Complete Python Code](#complete-python-code)
-- [How to Run](#how-to-run)
-- [Key Learnings](#key-learnings)
-- [Further Ideas](#further-ideas)
-
 ## Overview
 
 This simulation provides an interactive, animated look at how a **bridge rectifier** converts alternating current into pulsating direct current. The display shows:

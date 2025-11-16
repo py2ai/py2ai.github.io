@@ -23,7 +23,6 @@ tags:
 title: Python tips and tricks you must know!
 ---
 
-
 Python programming skills have seen a surge in demand lately. To assist you in honing your Python coding prowess, we've compiled some nifty Python techniques you can employ to enhance your code. Consider learning one new trick each day for the next month, and peruse our guide on Python best practices to ensure your code stands out.
 
 If you find your Python skills lacking, you can also enhance them through our Python Skill Path.
@@ -39,7 +38,6 @@ print(phrase[::-1])
 !dlrow ,eybdooG
 """
 ```
-
 Python indexing allows users to access a subset of a sequence. The index represents the position of an element in the sequence. While mutable sequences allow slicing for data extraction and modification, attempting to modify slices of immutable sequences raises a TypeError.
 
 The slicing format in Python is sequence`[start:stop:step]`. If no values are specified for start, stop, and step, the sequence defaults to:

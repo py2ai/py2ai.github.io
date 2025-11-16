@@ -48,22 +48,6 @@ The script detects changes in an Excel file and automatically **updates a live c
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [How It Works](#how-it-works)
-- [Setup Instructions](#setup-instructions)
-- [Core Components](#core-components)
-  - [1. Drawing the Chart](#1-drawing-the-chart)
-  - [2. Watching for File Changes](#2-watching-for-file-changes)
-  - [3. Main Loop](#3-main-loop)
-- [Complete Code](#complete-code)
-- [How to Run](#how-to-run)
-- [Key Learnings](#key-learnings)
-- [Further Ideas](#further-ideas)
-
----
-
 ## Overview
 
 This project continuously monitors an Excel file named **`garden_data.xlsx`**.

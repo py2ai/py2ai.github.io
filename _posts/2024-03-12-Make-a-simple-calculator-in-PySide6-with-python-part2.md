@@ -25,8 +25,6 @@ tags:
 title: Building a Calculator Application with PySide6 (Part 2)
 ---
 
-
-
 Welcome back to our PySide6 tutorial series! In the previous tutorial, we explored the fundamentals of PySide6 by creating a simple Todo List application. Now, let's take our PySide6 skills to the next level by building a calculator application. A calculator is a classic example of a GUI application that involves handling user input and performing calculations.
 
 # Prerequisites

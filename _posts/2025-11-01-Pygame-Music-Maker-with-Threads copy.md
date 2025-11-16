@@ -40,23 +40,6 @@ This comprehensive tutorial will help you build a **feature-packed music maker a
 
 ---
 
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Setting Up Pygame](#setting-up-pygame)
-3. [Creating Synthetic Piano Notes](#creating-synthetic-piano-notes)
-4. [Sequencer Pattern &amp; Grid Layout](#sequencer-pattern--grid-layout)
-5. [Buttons: Save, Load, Clear](#buttons-save-load-clear)
-6. [Slider for Loop Control](#slider-for-loop-control)
-7. [Waveform Visualization](#waveform-visualization)
-8. [Playback Thread](#playback-thread)
-9. [Main Loop &amp; Event Handling](#main-loop--event-handling)
-10. [Running the Application](#running-the-application)
-11. [Key Learnings](#key-learnings)
-12. [Further Ideas](#further-ideas)
-
----
-
 ## Overview
 
 The **PyShine Music Maker** combines interactive graphics and synthesized audio, offering an accessible introduction to digital sound processing and event-driven programming. It’s an **interactive step sequencer** that lets you visually create patterns, loop them, and hear your creations immediately. The program includes:

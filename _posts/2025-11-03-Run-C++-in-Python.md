@@ -34,19 +34,6 @@ Python is an incredibly versatile language, but sometimes you might need the spe
 
 --- 
 
-# Table of Contents
-
-- [Overview](#overview)
-- [Why Run C++ from Python?](#why-run-c-from-python)
-- [Step 1: Writing C++ Code in Python](#step-1-writing-c-code-in-python)
-- [Step 2: Compiling C++ Code](#step-2-compiling-c-code)
-- [Step 3: Executing the Compiled Program](#step-3-executing-the-compiled-program)
-- [Step 4: Cleaning Up Temporary Files](#step-4-cleaning-up-temporary-files)
-- [Complete Code](#complete-code)
-- [How It Works](#how-it-works)
-- [Key Learnings](#key-learnings)
-- [Further Experiments](#further-experiments)
-
 ## Overview
 
 This project shows how Python can act as a **controller for compiling and executing C++ code**. The program:

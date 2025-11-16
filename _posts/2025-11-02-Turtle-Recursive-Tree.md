@@ -37,20 +37,6 @@ In this tutorial, you’ll learn how to create a **beautiful fractal tree** usin
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Project Setup](#project-setup)
-- [Recursive Tree Logic](#recursive-tree-logic)
-- [Randomization for Natural Shapes](#randomization-for-natural-shapes)
-- [Drawing with Turtle](#drawing-with-turtle)
-- [Complete Code](#complete-code)
-- [How to Run](#how-to-run)
-- [Key Learnings](#key-learnings)
-- [Further Experiments](#further-experiments)
-
----
-
 ## Overview
 
 Fractals are **self-similar geometric patterns** that repeat at smaller scales. Trees are a perfect example — each branch splits into smaller branches that resemble the whole tree.

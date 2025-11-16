@@ -42,21 +42,6 @@ We'll compare the execution times and understand why optimized libraries like Nu
 
 ---
 
-## # Table of Contents
-
-- [Introduction](#introduction)
-- [Setup and Imports](#setup-and-imports)
-- [Generate Random Matrices](#generate-random-matrices)
-- [Naive Python Multiplication](#naive-python-multiplication)
-- [C++ Multiplication from Python](#c-multiplication-from-python)
-- [NumPy Multiplication](#numpy-multiplication)
-- [Performance Comparison](#performance-comparison)
-- [Key Takeaways](#key-takeaways)
-- [Running the Code](#running-the-code)
-- [Why Some Are Faster](#why-some-are-faster)
-
----
-
 ## # Introduction
 
 Matrix multiplication is a fundamental operation in mathematics, computer science, and data science. However, **naive implementations in Python** are slow for large matrices because Python loops are interpreted at runtime.

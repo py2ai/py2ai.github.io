@@ -57,8 +57,6 @@ def get_user_guess():
             print("Invalid input. Please enter two numbers separated by a space.")
 
 ```
-
-
 ## Step 3: Setting Up the Game
 Next, we'll set up the game, including the boards for both players, and allow players to place their ships.
 

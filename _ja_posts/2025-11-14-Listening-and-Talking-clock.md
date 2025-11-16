@@ -51,35 +51,6 @@ ko_url: /ko/Listening-and-Talking-clock/
   </iframe>
 </div>
 
-# 目次
-
-1. [導入](#introduction)
-2. [機能の概要](#features-overview)
-3. [前提条件](#prerequisites)
-4. [依存関係のインストール](#installing-dependencies)
-    - [Windows](#windows)
-    - [macOS](#macos)
-    - [Linux](#linux)
-5. [Speech-to-Text を理解する (Vosk)](#understanding-speech-to-text-vosk)
-    - [音声合成が重要な理由](#why-speech-to-text-is- important)
-    - [Vosk の仕組み — 理論 (簡略化)](#how-vosk-works--the- Theory-simplified)
-    - [ワックスモデルの種類](#wax-model-types)
-    - [言語モデルの入手先](#where-to-get- language-models)
-    - [サポートされている言語](#supported-langages)
-    - [初心者はどのモデルを使用するべきですか?](#what-model- should-beginners-use)
-6. [テキスト読み上げ (pyttsx3) を理解する](#understanding-text-to-speech-pyttsx3)
-    - [声を変える](#changing-voice)
-    - [話す速度を変更する](#changing-speaking-speed)
-7. [コードの内訳](#code-breakdown)
-    - [クロックレンダリング](#クロックレンダリング)
-    - [カチカチ音生成](#tick-sound-generation)
-    - [タイピングアニメーション](#typing-animation)
-    - [リッスンボタンの動作](#listen-button-behavior)
-    - [STT コールバック ロジック](#stt-callback-logic)
-8. [アプリの実行](#running-the-app)
-9. [トラブルシューティング](#troubleshooting)
-10. [完全なソースコード](#full-source-code)
-
 ## 導入
 
 このプロジェクトは、**美しい掛け時計 GUI** を構築します。`pygame`— しかし、ひねりが加えられています:
