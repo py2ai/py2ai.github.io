@@ -16,6 +16,20 @@ keywords:
 
 Have you ever wanted to turn your plain text into epic, stylized ASCII art? Python makes it easy and fun using the `PyFiglet` library. In this tutorial, we'll cover everything a beginner needs to know, including examples, importance, theory behind it, additional functions, possible use cases, and frequently asked questions.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/gsn2U79uuwM" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div> 
+
+---
+
 ## What is PyFiglet?
 
 `PyFiglet` is a Python library that allows you to render text in ASCII art fonts. ASCII art is a graphic design technique that uses characters to create images and text art. With PyFiglet, you can make your terminal outputs look stylish and fun!
