@@ -32,7 +32,6 @@ tags:
 title: "Listening and Talking Clock"
 lang: en
 zh_url: /zh/Listening-and-Talking-clock/
-ja_url: /ja/Listening-and-Talking-clock/
 ko_url: /ko/Listening-and-Talking-clock/
 ---
 # Wall Clock with Voice Time and Greeting

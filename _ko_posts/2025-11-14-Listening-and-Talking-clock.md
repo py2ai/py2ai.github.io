@@ -33,9 +33,7 @@ title: 인사말이 포함된 음성 인식 벽시계
 lang: ko
 en_url: /Listening-and-Talking-clock/
 zh_url: /zh/Listening-and-Talking-clock/
-ja_url: /ja/Listening-and-Talking-clock/
 ---
-
 # 음성 시간과 인사말이 포함된 벽시계
 
 이 튜토리얼에서는 다음을 사용하여 **Python 기반 벽시계**를 만드는 방법을 보여줍니다.`pygame`, **pyttsx3** 및 **Vosk**를 사용하여 **text-to-speech** 및 **speech-to-text**를 사용합니다. 앱은 "시간"이라는 단어를 듣고 현재 시간과 현재 시간을 기준으로 한 인사말로 응답합니다.
@@ -84,7 +82,7 @@ ja_url: /ja/Listening-and-Talking-clock/
 
 - pyttsx3 사용(오프라인)
 - 자동으로 말합니다:
-*"안녕하세요. 지금은 오후 3시 25분입니다!"*
+  *"안녕하세요. 지금은 오후 3시 25분입니다!"*
 
 ### 타이핑 애니메이션
 
@@ -105,7 +103,6 @@ ja_url: /ja/Listening-and-Talking-clock/
 - 마이크
 - 기본 단말기 사용법
 - 패키지 설치 기능
-
 
 ## 종속성 설치
 
@@ -139,7 +136,7 @@ pip install pygame pyttsx3 sounddevice vosk numpy
 ```
 
 위와 동일한 영어 모델을 다운로드합니다.
-----------------------------
+---------------------------------------
 
 ### 리눅스
 
@@ -152,41 +149,52 @@ sudo apt update
 sudo apt install -y libportaudio2 libportaudiocpp0 portaudio19-dev
 ```
 
-
-
 ## 음성-텍스트 이해(Vosk)
+
 STT(Speech-to-Text)는 음성 언어를 서면 텍스트로 변환하는 프로세스입니다. Vosk는 Python 프로젝트에서 가볍고 정확하며 사용하기 쉬운 것으로 알려진 가장 인기 있는 오프라인 STT 엔진 중 하나입니다.
 
 다음은 튜토리얼, 문서화 또는 학습 목적에 적합한 자세한 설명입니다.
 
 ### 음성-텍스트 변환이 중요한 이유
+
 Speech-to-Text 기술은 다음과 같은 이유로 현대 소프트웨어에서 필수적이 되었습니다.
+
 #### 핸즈프리 상호작용
+
 사용자는 음성을 사용하여 앱을 제어할 수 있으며 시계, 보조자 및 손이 바쁜 상황(요리, 운전 등)에 유용합니다.
+
 #### 접근성
+
 STT는 운동 장애가 있거나 쉽게 입력할 수 없는 사용자를 돕습니다.
+
 #### 실시간 자동화
+
 음성 명령은 즉시 이벤트를 트리거할 수 있습니다. 예:
 "타이머 시작", "음악 중지", "지금 몇 시야".
+
 #### 화면 없이 작동
+
 IoT 장치, Raspberry Pi 시스템 또는 임베디드 장치에 유용합니다.
+
 #### 오프라인 보안
+
 Vosk는 완전히 오프라인으로 작동하므로 음성 데이터가 클라우드로 전송되지 않아 개인 정보 보호가 강화됩니다.
 
 ### Vosk 작동 방식 - 이론(간체)
+
 Vosk는 사용이 간편하다고 느껴지지만 내부적으로는 심각한 음성 처리 이론을 사용합니다. 다음은 이해하기 쉽고 초보자에게 친숙한 설명입니다.
 
 1. 오디오 캡처
 
 * 마이크는 원시 오디오 웨이브를 녹음합니다.
 * 이 파동은 시간에 따른 기압 변화를 나타내는 숫자일 뿐입니다.
+
 2. 특징 추출(MFCC)
 
 * 원시 오디오는 기계 학습 모델에 비해 너무 자세하고 잡음이 많습니다.
 * Vosk는 원시 오디오를 MFCC 기능(Mel-Frequency Cepstral Coefficients)으로 변환합니다.
 
 #### MFCC는 다음을 나타냅니다.
-
 
 - 주파수 분포
 - 음량
@@ -196,13 +204,13 @@ Vosk는 사용이 간편하다고 느껴지지만 내부적으로는 심각한 �
 *MFCC를 신경망이 이해할 수 있는 소리의 지문이라고 생각하세요.*
 
 3. 음향 모델(신경망)
-이 모델은 MFCC 기능을 사용하여 음소를 예측합니다.
-다음과 같은 소리의 가장 작은 단위:
-`k    a    t    ( = "cat" )`
-음향 모델은 수천 시간의 음성 녹음을 통해 훈련되었습니다.
+   이 모델은 MFCC 기능을 사용하여 음소를 예측합니다.
+   다음과 같은 소리의 가장 작은 단위:
+   `k    a    t    ( = "cat" )`
+   음향 모델은 수천 시간의 음성 녹음을 통해 훈련되었습니다.
 4. 언어 모델
-인간은 임의의 음소 순서로 말하지 않습니다.
-따라서 언어 모델은 어떤 단어가 의미가 있는지 예측하는 데 도움이 됩니다.
+   인간은 임의의 음소 순서로 말하지 않습니다.
+   따라서 언어 모델은 어떤 단어가 의미가 있는지 예측하는 데 도움이 됩니다.
 
 예를 들어:
 음향 모델이 다음과 같은 것을 감지하는 경우:
@@ -215,16 +223,16 @@ Vosk는 사용이 간편하다고 느껴지지만 내부적으로는 심각한 �
 
 - 음향 모델로부터의 예측
 - 언어 모델의 확률
-     and chooses the most likely final text output.
-     Result: clear, readable text.
+  and chooses the most likely final text output.
+  Result: clear, readable text.
 
 ### 개발자들이 Vosk를 좋아하는 이유
 
 * 100% 오프라인
 * 인터넷이 없다는 것은 다음을 의미합니다.
-✔ 개인정보 보호
-✔ 신뢰성
-✔ IoT 또는 현장 환경에 적합
+  ✔ 개인정보 보호
+  ✔ 신뢰성
+  ✔ IoT 또는 현장 환경에 적합
 * 낮은 CPU 사용량
 
 실행 대상:
@@ -270,14 +278,14 @@ https://alphacephei.com/vosk/models
 
 Vosk는 다음을 지원합니다.
 
-| 언어 | 모델 |
-| -------- | ------------------ |
-| 영어 |`vosk-model-small-en-us-0.15`
-| 일본어 |`vosk-model-small-ja-0.22`
-| 중국어 |`vosk-model-small-cn-0.22`
-| 스페인어 |`vosk-model-small-es-0.42`
-| 프랑스어 |`vosk-model-small-fr-0.22`
-| 힌디어 |`vosk-model-small-hi-0.22`
+| 언어     | 모델                            |
+| -------- | ------------------------------- |
+| 영어     | `vosk-model-small-en-us-0.15` |
+| 일본어   | `vosk-model-small-ja-0.22`    |
+| 중국어   | `vosk-model-small-cn-0.22`    |
+| 스페인어 | `vosk-model-small-es-0.42`    |
+| 프랑스어 | `vosk-model-small-fr-0.22`    |
+| 힌디어   | `vosk-model-small-hi-0.22`    |
 
 …그리고 더 많은 것들이 있습니다.
 
@@ -295,8 +303,6 @@ Vosk는 다음을 지원합니다.
 `vosk-model-small-en-us-0.15`
 `vosk-model-small-es-0.42`
 `vosk-model-small-fr-0.22`
-
-
 
 ## 텍스트 음성 변환(pyttsx3) 이해
 
@@ -322,8 +328,6 @@ engine.setProperty('rate', 150)
 - 150(기본값)
 - 180 (빠름)
 
-
-
 ## 코드 분석
 
 ### 시계 렌더링
@@ -337,7 +341,7 @@ engine.setProperty('rate', 150)
 
 ### 틱 사운드 생성
 
-로딩하는 대신`.wav`, 오디오를 생성합니다.
+로딩하는 대신 `.wav`, 오디오를 생성합니다.
 
 - 1500Hz 클릭
 - 지속 시간 50ms
@@ -365,9 +369,7 @@ NumPy 덕분에 외부 파일을 가져오지 않고도 시계가 항상 똑딱�
 Vosk가 음성을 해독할 때:
 
 - 감지된 텍스트 인쇄
-- "시간"이 포함된 경우 호출`speak_time()`
-
-
+- "시간"이 포함된 경우 호출 `speak_time()`
 
 ## 앱 실행
 
@@ -385,8 +387,6 @@ python main.py
 4. 시계가 현재 시간을 알려줍니다.
 5. 하단에 텍스트 애니메이션이 나타납니다.
 
-
-
 ## 문제 해결
 
 ### ❗ 마이크가 감지되지 않았습니다.
@@ -403,20 +403,14 @@ pip install sounddevice
 sd.default.device = 1
 ```
 
-
-
 ### ❗ 음성이 감지되지 않았습니다.
 
 **작은** 모델을 사용하세요. 큰 것에는 더 많은 CPU가 필요합니다.
 명확하게 말하고 “LISTEN(듣기)”을 클릭한 후 1~2초 정도 기다리세요.
 
-
-
 ### ❗ TTS는 한 번만 작동합니다.
 
 각 TTS 호출이 **새 엔진**을 생성하는지 확인하세요(제공된 코드에서 이미 완료됨).
-
-
 
 ## 전체 소스 코드
 
@@ -431,16 +425,17 @@ except:
 ```
 
 - Windows의 **높은 DPI 화면**에 애플리케이션이 올바르게 표시되는지 확인합니다.
--에 싸서`try`다른 OS와의 호환성을 위해 차단합니다.
-
+  -에 싸서 `try`다른 OS와의 호환성을 위해 차단합니다.
 
 ### 2. 수입품
+
 ```python
 import pygame, math, datetime, sys, numpy as np, pyttsx3, threading, time
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
 import json, os
 ```
+
 - **pygame**: GUI 및 그래픽.
 - **수학**: 시계 바늘의 삼각법.
 - **datetime**: 시계 및 인사말의 현재 시간입니다.
@@ -451,16 +446,19 @@ import json, os
 - **json & os**: Vosk 출력을 구문 분석하고 파일을 처리합니다.
 
 ### 3. 파이게임 초기화
+
 ```python
 pygame.init()
 pygame.mixer.init(frequency=44100, size=-16, channels=2)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("PyShine Wall Clock")
 ```
+
 - 사운드 재생을 위해 **파이게임** 및 **오디오 믹서**를 초기화합니다.
 - **화면 크기** 및 창 **제목**을 설정합니다.
 
 ### 4. 상수와 색상
+
 ```python
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -472,9 +470,11 @@ BUTTON_HOVER = (0, 180, 255)
 BUTTON_ACTIVE = (0, 200, 0)
 LIME = (0, 255, 0)
 ```
+
 - 시계 문자판, 바늘, 버튼, 텍스트에 사용되는 **색상**을 정의합니다.
 
 ### 5. 시계 매개변수 및 글꼴
+
 ```python
 center_x, center_y = WIDTH // 2, HEIGHT // 2
 clock_radius = 150
@@ -483,11 +483,14 @@ date_font = pygame.font.SysFont('Arial', 20)
 button_font = pygame.font.SysFont('Arial', 20, bold=True)
 time_str_font = pygame.font.SysFont('Arial', 28, bold=True)
 ```
+
 `center_x, center_y`: 시계의 중심.
 `clock_radius`: 시계 문자판의 크기입니다.
+
 - **숫자, 날짜, 버튼 텍스트 및 TTS 텍스트 표시**용 글꼴.
 
 ### 6. 틱 소리
+
 ```python
 def create_tick_sound():
     ...
@@ -495,75 +498,92 @@ def create_tick_sound():
     tick_sound.set_volume(0.5)
     return tick_sound
 ```
+
 - NumPy를 사용하여 **1500Hz의 짧은 클릭**을 생성합니다.
 - 외부 오디오 파일이 필요하지 않습니다.
 - **매초마다 틱**을 재생하는 데 사용됩니다.
 
 ### 7. 듣기 버튼
+
 ```python
 button_rect = pygame.Rect(WIDTH // 2 - 80, 80, 160, 50)
 listening_active = False
 def draw_button(mouse_pos):
     ...
 ```
+
 - **화면에 버튼**을 그립니다.
 - **호버링** 또는 **활성** 시 색상이 변경됩니다.
 - **마이크 청취 상태**를 제어합니다.
 
 ### 8. 텍스트 입력 및 TTS
+
 ```python
 def speak_time():
     ...
     threading.Thread(target=tts_func, args=(spoken_time_str,), daemon=True).start()
 ```
+
 - 현재 시간을 기준으로 **인사말**을 결정합니다.
 - **음성 텍스트** 형식: 예:`"Good afternoon\nIt's 03:25 PM now!"`
 - **백그라운드 스레드에서 텍스트 음성 변환**을 시작합니다.
 - **입력 애니메이션** 변수를 업데이트합니다.
 
-
 ### 9. 왁스 음성-텍스트 설정
+
 ```python
 MODEL_PATH = "vosk-model-small-en-us-0.15"
 vosk_model = Model(MODEL_PATH)
 recognizer = KaldiRecognizer(vosk_model, 16000)
 ```
+
 - **오프라인 Vosk 모델**을 로드합니다.
 - 인식기는 **오디오 바이트를 텍스트**로 변환합니다.
 - **오프라인 음성 인식**을 보장합니다.
 
 #### STT 콜백
+
 ```python
 def stt_callback(indata, frames, time_data, status):
     ...
     if "time" in result_text.lower():
         speak_time()
 ```
+
 - 마이크의 오디오를 처리합니다.
 - 텍스트로 변환합니다.
-- 트리거`speak_time()`**키워드 “time”**이 감지되면
+- 트리거 `speak_time()`**키워드 “time”**이 감지되면
 
 ### 10. 시계 그리기 기능
+
 #### 시계 페이스
+
 ```python
 def draw_clock_face():
     ...
 ```
+
 - **바깥쪽 원, 시간 숫자, 분 틱**을 그립니다.
 - **시간 단위**(두꺼움)와 **분 단위**(얇음)를 구분합니다.
+
 #### 시계바늘
+
 ```python
 def draw_clock_hands():
     ...
 ```
+
 - 현재 시간을 기준으로 **시, 분, 초침**을 그립니다.
 - **초마다 틱 소리**를 재생합니다.
 - **중심 피벗** 원을 그립니다.
+
 #### 날짜 표시
+
 ```python
 def draw_date_display(now):
     ...
 ```
+
 - **현재 날짜**와 **요일**을 표시합니다.
 
 #### 타이핑 애니메이션
@@ -572,10 +592,10 @@ def draw_date_display(now):
 def draw_spoken_time():
     ...
 ```
+
 - 타이핑처럼 **인사말과 시간**을 순차적으로 보여줍니다.
 - 커서 **깜박임**.
 - **4초** 후에 자동으로 지워집니다.
-
 
 ### 11. 메인 루프
 
@@ -583,6 +603,7 @@ def draw_spoken_time():
 def main():
     ...
 ```
+
 - **이벤트** 처리:
 - 그만두다
 - ESC 키
@@ -602,6 +623,7 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
 - 스크립트가 직접 실행될 때 **메인 루프**를 시작합니다.
 
 ### main.py
@@ -937,8 +959,6 @@ if __name__ == "__main__":
     main()
 
 ```
-
-
 
 **웹사이트:** https://www.pyshine.com
 **저자:** 파이샤인

@@ -32,7 +32,6 @@ tags:
 title: "听和说的时钟"
 lang: zh
 en_url: /Listening-and-Talking-clock/
-ja_url: /ja/Listening-and-Talking-clock/
 ko_url: /ko/Listening-and-Talking-clock/
 ---
 # 带语音时间和问候语的挂钟
