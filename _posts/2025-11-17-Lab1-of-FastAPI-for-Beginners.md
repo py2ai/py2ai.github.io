@@ -19,7 +19,7 @@ tags:
 - backend
 - beginner
 - tutorial
-title: FastAPI Beginner Tutorial – Build Your First Joke API
+title: Lab1 Build Your First Joke API
 ---
 ## Introduction
 
@@ -184,7 +184,7 @@ http://127.0.0.1:8000/docs
 http://127.0.0.1:8000/redoc
 ```
 
-![1763597234731](_posts/image/2025-11-17-Lab1-of-FastAPI-for-Beginners/1763597234731.png)
+![1763597234731]({{"_posts/image/2025-11-17-Lab1-of-FastAPI-for-Beginners/1763597234731.png" | absolute_url}} )
 
 You get beautiful, interactive API docs **for free**.
 

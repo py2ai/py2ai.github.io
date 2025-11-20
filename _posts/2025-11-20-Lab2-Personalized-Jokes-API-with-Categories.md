@@ -19,22 +19,21 @@ tags:
 - backend
 - tutorial
 - beginner
-title: FastAPI Lab 2 – Personalized Jokes API with Categories
+title: FastAPI Lab2 – Personalized Jokes API with Categories
 ---
-
 ## Introduction
 
-Welcome to **Lab 2** of your FastAPI learning journey!  
-In the previous lab, you built a basic Jokes API.  
+Welcome to **Lab 2** of your FastAPI learning journey!
+In the previous lab, you built a basic Jokes API.
 Now, it's time to **upgrade your API** by adding **categories** and **query parameters**.
 
 This tutorial is beginner‑friendly and explains everything step-by-step.
 
 By the end of this lab, you will know how to:
 
-- Add query parameters to FastAPI routes  
-- Pass values dynamically through URLs  
-- Create customized API responses  
+- Add query parameters to FastAPI routes
+- Pass values dynamically through URLs
+- Create customized API responses
 - Use PyJokes categories
 
 ---
@@ -119,7 +118,8 @@ app = FastAPI()
 @app.get("/joke")
 ```
 
-This means:  
+This means:
+
 > When someone visits `/joke`, run the following function.
 
 ### 4. Adding a Query Parameter
@@ -213,15 +213,15 @@ Here you can test the `category` query parameter interactively.
 
 In this lab, you learned how to:
 
-- Add query parameters with defaults  
-- Make your API dynamic  
-- Personalize responses  
-- Use PyJokes categories  
-- Read logs printed in your server console  
+- Add query parameters with defaults
+- Make your API dynamic
+- Personalize responses
+- Use PyJokes categories
+- Read logs printed in your server console
 
 You now have a flexible Jokes API that users can interact with!
 
 ---
 
-**Website:** https://www.pyshine.com  
+**Website:** https://www.pyshine.com
 **Author:** PyShine
