@@ -30,6 +30,18 @@ In this tutorial, you’ll build your **first FastAPI application** — a simple
 
 This guide is written for **absolute beginners**, so no prior backend experience is required.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/Q-14n6CqhGI" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div> 
+
 ---
 
 ## Understanding the Requirements

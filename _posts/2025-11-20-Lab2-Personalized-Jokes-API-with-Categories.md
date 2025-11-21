@@ -29,6 +29,18 @@ Now, it's time to **upgrade your API** by adding **categories** and **query para
 
 This tutorial is beginner‑friendly and explains everything step-by-step.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/CHAl7isKo9c" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div> 
+
 By the end of this lab, you will know how to:
 
 - Add query parameters to FastAPI routes
