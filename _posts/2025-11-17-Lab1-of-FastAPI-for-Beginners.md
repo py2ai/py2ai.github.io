@@ -19,7 +19,7 @@ tags:
 - backend
 - beginner
 - tutorial
-title: Lab1 Build Your First Joke API
+title: FastAPI Lab1 – Build Your First Joke API
 ---
 ## Introduction
 
