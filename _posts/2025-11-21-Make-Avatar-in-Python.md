@@ -74,6 +74,7 @@ You also need Python's built-in `random` module, which requires no installation.
 
 Create a new Python file, e.g., **`avatar_gen.py`**, and add:
 
+{% include codeHeader.html %}
 ```python
 import python_avatars as pa
 import random as r
