@@ -1,6 +1,6 @@
 ---
 description: Beginner-friendly tutorial to create random avatars in Python using python_avatars. Step-by-step guide to generate personalized SVG avatars.
-featured-img: 20251121-python-avatars
+featured-img: 20251121-python-avatars/20251121-python-avatars
 keywords:
 - Python
 - python_avatars
