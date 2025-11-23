@@ -22,13 +22,7 @@ title: Python Avatars – Generate Random SVG Avatars for Beginners
 ---
 
 ## Introduction
-<iframe 
-    src="https://pyshine.pythonanywhere.com/" 
-    width="450" 
-    height="840" 
-    style="border:1px solid #ffff; margin: 20px 0;" 
-    title="Avatar Generator">
-</iframe>
+
 Creating unique avatars is fun and useful for websites, apps, or games.  
 In this tutorial, you'll learn how to generate **random avatars** using Python with the `python_avatars` library.
 
