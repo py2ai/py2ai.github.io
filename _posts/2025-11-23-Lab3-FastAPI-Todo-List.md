@@ -25,6 +25,18 @@ title: FastAPI Lab 3 – Build a Simple To-Do List API
 
 Have you ever wondered how apps like  **Google Keep** ,  **Todoist** , or even your phone’s reminder app manage and organize your tasks behind the scenes? In this lab, you’ll step into the world of web APIs and build your very own **Simple To-Do List API** using **FastAPI** and  **Pydantic** .
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/EHBkr1hAfVw" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 With this API, you’ll be able to  **add tasks** ,  **view all tasks** , and understand how data flows between clients and servers — the same concepts used in real-world apps.
 
 Don’t worry if you’ve never worked with APIs before — this guide is  **beginner-friendly** , walks you through every step, and requires no prior experience. By the end, you’ll have a working backend that could be the foundation for your own productivity app!
