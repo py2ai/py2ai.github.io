@@ -21,11 +21,10 @@ tags:
 - beginner
 title: FastAPI Lab 3 – Build a Simple To-Do List API
 ---
-
 ## Introduction
 
-In this lab, you will learn how to build a **Simple To-Do List API** using **FastAPI** and **Pydantic**.  
-This API allows users to add tasks and view all tasks.  
+In this lab, you will learn how to build a **Simple To-Do List API** using **FastAPI** and **Pydantic**.
+This API allows users to add tasks and view all tasks.
 
 This guide is **beginner-friendly**, and no prior experience with APIs is required.
 
@@ -51,6 +50,62 @@ pip install fastapi uvicorn
 ```
 
 ---
+
+## GET Requests
+
+- Purpose: Retrieve or fetch data from a server.
+- Effect on Server: Does not change server data (read-only).
+- Data Transmission: Data is sent via URL query parameters (visible in the URL).
+- Idempotence: Yes — making the same GET request multiple times produces the same result.
+- Caching: GET requests can be cached by browsers and proxies.
+- Use Case Examples:
+- Viewing all tasks in a to-do list API
+- Retrieving a user profile
+- Loading a web page
+
+```python
+@app.get("/tasks")
+def get_tasks():
+    return {"tasks": tasks}
+```
+
+Visiting `/tasks` in your browser or via curl retrieves all tasks.
+
+## POST Requests
+
+- Purpose: Send data to the server to create or update resources.
+- Effect on Server: Changes server state (e.g., adds a new record).
+- Data Transmission: Data is sent in the request body (not visible in the URL).
+- Idempotence: Usually no — repeating a POST request can create multiple resources.
+- Caching: POST requests are usually not cached.
+- Use Case Examples:
+- Adding a new task to a to-do list
+- Creating a new user account
+- Submitting a form
+
+```python
+@app.post("/add")
+def add_task(item: Task):
+    tasks.append(item.task)
+    return {"message": "Task added!", "task": item.task}
+
+```
+
+## Key Differences Between GET and POST
+
+| Feature            | GET                  | POST                |
+| ------------------ | -------------------- | ------------------- |
+| Purpose            | Retrieve data        | Send or create data |
+| Alters Server Data | No                   | Yes                 |
+| Data Location      | URL query parameters | Request body        |
+| Visibility         | URL visible          | Body hidden         |
+| Idempotent         | Yes                  | Usually No          |
+| Caching            | Can be cached        | Usually not cached  |
+
+### Summary:
+
+- Use GET to read data without changing anything.
+- Use POST to send data or make changes to the server.
 
 ## Writing the To-Do API
 
@@ -85,7 +140,7 @@ def get_tasks():
 
 ### 1. Importing Libraries
 
-- `FastAPI` → to create API endpoints  
+- `FastAPI` → to create API endpoints
 - `BaseModel` → to define and validate request data
 
 ### 2. Creating the App
@@ -198,5 +253,5 @@ You can expand this lab in the future by:
 
 ---
 
-**Website:** https://www.pyshine.com  
+**Website:** https://www.pyshine.com
 **Author:** PyShine
