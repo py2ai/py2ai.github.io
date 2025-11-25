@@ -122,7 +122,7 @@ for i, row in enumerate(resized):
 ---
 
 ## Full Source Code
-
+{% include codeHeader.html %}
 ```python
 import cv2
 import time
@@ -165,6 +165,108 @@ Your ASCII animation will begin drawing line-by-line!
 
 ---
 
+Try the following for colorful version:
+
+{% include codeHeader.html %}
+```python
+import cv2, time
+
+ASCII = " .:-=+*#%@"
+img = cv2.imread("ia.png")
+if img is None: raise FileNotFoundError()
+h, w = img.shape[:2]
+new_w = 80
+new_h = int(new_w * (h / w) * 0.5)
+img = cv2.resize(img, (new_w, new_h))
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+for gy, row in zip(gray, img):
+    line = "".join(
+        f"\033[38;2;{r};{g};{b}m{ASCII[p*9//255]}\033[0m"
+        for p, (b, g, r) in zip(gy, row)
+    )
+    print(line)
+    time.sleep(0.01)
+
+```
+
+## Breaking Down the Code for COLORFUL ASCII ART
+
+1. Importing Libraries
+
+```python
+import cv2, time
+```
+- cv2 → OpenCV library for image processing
+- time → To add a small delay for animated printing
+
+2. ASCII Characters
+
+```python
+ASCII = " .:-=+*#%@"
+```
+
+Each character represents a different brightness level
+
+" " is the lightest, "@" is the darkest
+
+3. Loading the Image
+
+```python
+img = cv2.imread("ia.png")
+if img is None: 
+    raise FileNotFoundError()
+```
+
+- Reads the image file
+- Throws an error if the image is missing
+
+4. Resizing the Image
+
+```python
+h, w = img.shape[:2]
+new_w = 80
+new_h = int(new_w * (h / w) * 0.5)
+img = cv2.resize(img, (new_w, new_h))
+```
+
+- Maintains aspect ratio
+- Scales the width to 80 characters
+- 0.5 factor compensates for character height vs width
+
+5. Converting to Grayscale
+
+```python
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+```
+
+- Converts image to grayscale
+- Each pixel now represents brightness (0–255)
+
+6. Mapping Pixels to ASCII Characters with Color
+
+```python
+for gy, row in zip(gray, img):
+    line = "".join(
+        f"\033[38;2;{r};{g};{b}m{ASCII[p*9//255]}\033[0m"
+        for p, (b, g, r) in zip(gy, row)
+    )
+    print(line)
+    time.sleep(0.01)
+```
+
+- Loops over each row of pixels
+- Maps brightness to ASCII character
+- Colors characters using ANSI escape codes:
+
+```
+\033[38;2;R;G;Bm
+```
+
+- Sets RGB foreground color
+- `\033[0m` resets formatting
+- `time.sleep(0.01)` adds a small delay to create a smooth printing effect
+
 ## Conclusion
 
 You now know how to:
@@ -178,6 +280,12 @@ Try modifying:
 - The ASCII character set
 - Image size
 - Animation speed
+
+Tips:
+
+- Increase new_w for higher-resolution ASCII art.
+- Use a terminal with truecolor support for best results.
+- You can experiment with different ASCII character sets for different artistic styles.
 
 Enjoy experimenting, and happy coding!
 
