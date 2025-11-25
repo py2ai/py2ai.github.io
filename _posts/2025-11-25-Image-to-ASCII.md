@@ -165,6 +165,7 @@ Your ASCII animation will begin drawing line-by-line!
 
 ---
 
+## Full Source Code (Colored version)
 Try the following for colorful version:
 
 {% include codeHeader.html %}
