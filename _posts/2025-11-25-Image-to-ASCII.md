@@ -39,7 +39,7 @@ This project is perfect for beginners learning:
 Install the required library:
 
 ```bash
-pip install opencv-python
+pip install opencv-contrib-python
 ```
 
 You also need an image file named:
