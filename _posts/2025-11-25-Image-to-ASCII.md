@@ -54,7 +54,7 @@ Place it in the same folder as your script. Of course you can try any other imag
 
 ## Understanding the Code
 
-### 1. Importing Libraries
+## 1. Importing Libraries
 
 ```python
 import cv2
