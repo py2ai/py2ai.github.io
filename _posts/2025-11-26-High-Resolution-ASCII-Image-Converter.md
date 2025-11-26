@@ -289,7 +289,7 @@ def load_monospace_font(size=20):
             except:
                 pass
 
-    print("⚠ Using fallback font")
+    print("Using fallback font")
     return ImageFont.load_default()
 
 font = load_monospace_font(20)
