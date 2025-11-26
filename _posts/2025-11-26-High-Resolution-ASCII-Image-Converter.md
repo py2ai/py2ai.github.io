@@ -26,7 +26,9 @@ In this tutorial, we’ll build a Python program that converts images into **ful
 
 This guide is written for **beginners**, and no prior experience with image processing is required.
 
----
+Example input image:
+
+![ascii_hd_cat]({{"assets/img/posts/cat.png" | absolute_url}} )
 
 ## Understanding the Requirements
 
@@ -251,6 +253,7 @@ python ascii_matcher_hd.py
 ## Complete code
 
 {% include codeHeader.html %}
+
 ```python
 
 import os, platform
@@ -391,6 +394,87 @@ if __name__ == "__main__":
     image_to_ascii("cat.png", "ascii_hd.png", cols=200, brightness=1.6)
 
 ```
+
+
+Output image via these parameters :
+
+`image_to_ascii("cat.png","ascii_hd.png",cols=400,brightness=1.6)`
+
+
+![ascii_hd_cat]({{"assets/img/posts/ascii_hd_cat.png" | absolute_url}} )
+
+```bash
+python main.py
+Font cell = (12, 15)
+Saved: ascii_hd.png
+
+=== CHARACTER USAGE REPORT ===
+Total characters used: 128000
+'N' : 56261
+' ' : 28717
+'M' : 21530
+'U' : 10621
+'%' : 6287
+'|' : 1990
+'W' : 520
+'`' : 380
+'0' : 284
+'[' : 158
+'*' : 154
+'C' : 107
+'R' : 89
+'J' : 83
+'~' : 81
+'@' : 80
+'K' : 80
+'B' : 75
+'w' : 65
+'<' : 40
+'Z' : 38
+'#' : 36
+'^' : 34
+'D' : 33
+'L' : 33
+'r' : 32
+'>' : 24
+'/' : 14
+'-' : 13
+'m' : 11
+'q' : 11
+'9' : 10
+'!' : 8
+'3' : 8
+'2' : 7
+'H' : 7
+'+' : 6
+'A' : 6
+'a' : 6
+'1' : 5
+'\' : 5
+'d' : 5
+'k' : 5
+'$' : 4
+'4' : 4
+'X' : 4
+'u' : 4
+'6' : 3
+'8' : 3
+':' : 3
+'f' : 3
+'e' : 2
+'{' : 2
+'"' : 1
+'(' : 1
+')' : 1
+'7' : 1
+'P' : 1
+'Q' : 1
+'S' : 1
+'o' : 1
+'y' : 1
+```
+
+---
 
 4. Check the generated **ASCII art image**.
 
