@@ -30,6 +30,18 @@ AnimeGANv3 allows you to transform images into anime-style artwork using pre-tra
 - Converts it into anime style using ONNX models
 - Allows you to view, save, or revert to the original image
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/18NOZhaZpSU" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 No prior experience with ONNX or GUI programming is needed.
 
 ---
