@@ -26,9 +26,17 @@ In this tutorial, we’ll build a Python program that converts images into **ful
 
 This guide is written for **beginners**, and no prior experience with image processing is required.
 
-Example input image:
-
-![ascii_hd_cat]({{"assets/img/posts/cat.png" | absolute_url}} )
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/Iek-azP5o1s" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
 
 ## Understanding the Requirements
 
@@ -396,7 +404,7 @@ if __name__ == "__main__":
 ```
 
 
-Output image via these parameters :
+Example image via these parameters :
 
 `image_to_ascii("cat.png","ascii_hd.png",cols=400,brightness=1.6)`
 
