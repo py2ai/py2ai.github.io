@@ -403,11 +403,9 @@ if __name__ == "__main__":
 
 ```
 
-
 Example image via these parameters :
 
 `image_to_ascii("cat.png","ascii_hd.png",cols=400,brightness=1.6)`
-
 
 ![ascii_hd_cat]({{"assets/img/posts/ascii_hd_cat.png" | absolute_url}} )
 
@@ -482,9 +480,6 @@ Total characters used: 128000
 'y' : 1
 ```
 
----
-
-4. Check the generated **ASCII art image**.
 
 ---
 
