@@ -263,6 +263,10 @@ if __name__ == "__main__":
 ```
 
 ---
+## Sample Images
+![image1]({{"assets/img/posts/samples/image1.png" | absolute_url}} )
+![image2]({{"assets/img/posts/samples/image2.png" | absolute_url}} )
+![image3]({{"assets/img/posts/samples/image3.png" | absolute_url}} )
 
 ## Complete Code
 

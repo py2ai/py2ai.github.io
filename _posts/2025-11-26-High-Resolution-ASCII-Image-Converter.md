@@ -403,7 +403,7 @@ if __name__ == "__main__":
 
 ```
 
-Example image via these parameters :
+Example image via these parameters:
 
 `image_to_ascii("cat.png","ascii_hd.png",cols=400,brightness=1.6)`
 
