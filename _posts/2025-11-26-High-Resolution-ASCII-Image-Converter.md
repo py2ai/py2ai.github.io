@@ -485,7 +485,9 @@ Total characters used: 128000
 
 ## Conclusion
 
-You now have a **high-resolution, full-color ASCII converter** in Python!This tutorial introduces:
+You now have a **high-resolution, full-color ASCII converter** in Python! 
+
+This tutorial introduces:
 
 - Image resizing and processing with OpenCV
 - Using PIL for drawing ASCII characters
