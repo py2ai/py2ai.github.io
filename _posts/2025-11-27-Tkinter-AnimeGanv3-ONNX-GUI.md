@@ -21,11 +21,9 @@ tags:
 - tutorial
 title: AnimeGANv3 ONNX GUI – Complete Beginner's Guide
 ---
-
 ## Introduction
 
-AnimeGANv3 allows you to transform images into anime-style artwork using pre-trained ONNX models.  
-In this tutorial, we will build a **Tkinter GUI application** that:
+AnimeGANv3 allows you to transform images into anime-style artwork using pre-trained ONNX models.In this tutorial, we will build a **Tkinter GUI application** that:
 
 - Automatically installs required Python packages
 - Lets you select an image
@@ -57,6 +55,7 @@ Our app will:
 ---
 
 ## Step 1: Setting Up the Environment
+
 It is recommended to use Python >=3.8 and <=3.11. Open your terminal and install packages manually (optional, automatic installer included in code):
 
 ```bash
@@ -263,14 +262,23 @@ if __name__ == "__main__":
 ```
 
 ---
+
 ## Sample Images
+
 ![image1]({{"assets/img/posts/samples/image1.png" | absolute_url}} )
+
+---
+
 ![image2]({{"assets/img/posts/samples/image2.png" | absolute_url}} )
+
+---
+
 ![image3]({{"assets/img/posts/samples/image3.png" | absolute_url}} )
 
 ## Complete Code
 
 {% include codeHeader.html %}
+
 ```python
 import sys
 import subprocess
@@ -426,7 +434,7 @@ class AnimeApp:
         frame = tk.Frame(master)
         frame.pack(pady=5)
 
-        
+      
         # OptionMenu for style selection 
         self.style_var = tk.StringVar()
         self.style_var.set("Hayao")  # default value
@@ -553,8 +561,7 @@ if __name__ == "__main__":
 
 ## Conclusion
 
-You now have a **fully functional AnimeGANv3 ONNX GUI**!  
-You learned:
+You now have a **fully functional AnimeGANv3 ONNX GUI**!You learned:
 
 - Automatic package installation
 - Downloading ONNX models
@@ -566,6 +573,5 @@ Experiment with different styles and images to create your own anime artwork!
 
 ---
 
-**Website:** https://www.pyshine.com  
+**Website:** https://www.pyshine.com
 **Author:** PyShine
-
