@@ -1,18 +1,19 @@
 ---
-description: Welcome to this tutorial where we’ll be building a simple "Zombie Shooter" game using Pygame! This game involves a player controlling a shooter at the bottom...
+title: How to Make a Zombie Shooter Game in Pygame (Beginner Tutorial)
+description: Learn how to build a simple Zombie Shooter game step-by-step using Pygame. Perfect for beginners who want to start making games in Python!
 featured-img: 26072022-python-logo
-keywords:
-- zombie shooter game
-- pygame tutorial
-- pygame basic tutorial
 layout: post
 mathjax: true
 tags:
-- zombie shooter game
-- pygame tutorial
-- pygame basic tutorial
-title: How to make a zombie shooter game
+  - zombie shooter game
+  - pygame tutorial
+  - pygame basic tutorial
+keywords:
+  - zombie shooter game
+  - pygame tutorial
+  - pygame basic tutorial
 ---
+
 
 Welcome to this tutorial where we’ll be building a simple "Zombie Shooter" game using Pygame! This game involves a player controlling a shooter at the bottom of the screen, shooting bullets upwards to eliminate incoming zombies. The goal is to survive as long as possible while accumulating points by shooting zombies. We'll break down the code into several sections to make it easy to understand:
 
@@ -29,7 +30,111 @@ Collision Detection: The game checks for collisions between bullets and zombies.
 Score and Game Over: The score is tracked and displayed on the screen. If the player’s score surpasses the top score, it is saved to a file. If the game ends, the player can restart by pressing "R".
 
 
-# Key Sections of the Code:
+
+Welcome to this beginner-friendly tutorial where we’ll build a fun and simple **Zombie Shooter** game using **Pygame**!  
+If you’re new to game development, this project is perfect for learning core concepts like movement, collision detection, sprites, scoring, and game loops.
+
+By the end of this tutorial, you’ll have a fully working arcade-style shooter game.
+
+Let’s get started!
+
+---
+
+## What We'll Build
+
+In this game:
+
+- Use **Left/Right arrow keys** to move  
+- Press **Spacebar** to shoot  
+- Avoid letting zombies reach the bottom  
+- Earn points by shooting zombies  
+- Beat your **top score**, saved in a local file  
+
+Here is a preview:
+
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/yCKxrxnGAj0" 
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+</div>
+
+---
+
+## Game Breakdown (Step-by-Step)
+
+### 1. **Game Initialization**
+We start by:
+
+- Initializing Pygame  
+- Creating the main window  
+- Defining colors  
+- Loading assets (player + zombie images)  
+
+This sets the stage for everything else.
+
+---
+
+### 2. **Player Setup**
+- The player sprite sits at the bottom of the screen  
+- It moves left and right  
+- Movement is handled using the arrow keys  
+
+We store the player's position using `player_x`, `player_y`.
+
+---
+
+### 3. **Bullet Mechanics**
+Bullets:
+
+- Spawn at the player's current location  
+- Move upward each frame  
+- Disappear when leaving the screen  
+
+We store bullets as a list of `[x, y]` positions.
+
+---
+
+### 4. **Zombie Mechanics**
+Zombies:
+
+- Spawn at random x-positions at the top  
+- Move downward at a constant speed  
+- Trigger game over if they reach the bottom  
+
+We store zombies just like bullets—lists of `[x, y]`.
+
+---
+
+### 5. **Collision Detection**
+We compare bullet and zombie positions:
+
+- If a bullet hits a zombie:
+  - Remove both  
+  - Increase score  
+  - Update top score if necessary  
+
+---
+
+### 6. **Game Over & Restart**
+If a zombie passes the bottom:
+
+- Game shows “Game Over!”  
+- Displays the final score  
+- Player can restart by pressing **R**  
+
+The `reset_game()` function clears bullets, zombies, score, and positions.
+
+---
+
+
+
+## Summary
 
 Player Setup: This is where we load the player's image and place it at the bottom center of the screen. The player moves left and right using the arrow keys, and we track the player’s position using player_x and player_y.
 
@@ -41,11 +146,21 @@ Collision and Scoring: Whenever a bullet hits a zombie, the zombie and bullet ar
 
 Game Over and Restart: If the game is over, the player can press "R" to restart the game, resetting everything to its initial state.
 
-For more details:
-<iframe width="560" height="315" src="https://www.youtube.com/embed/c_aLPUfAaxo?si=WnFz4Ej35mGKDN3u" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/yCKxrxnGAj0" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
 
 
-Source code :
+## Source code
+
 {% include codeHeader.html %}
 ```python
 import pygame
