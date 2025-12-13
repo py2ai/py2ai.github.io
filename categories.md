@@ -1,12 +1,11 @@
 ---
 layout: page
-title: Search All Blog Posts HERE
+title: Search All Blog Posts
 permalink: /categories/
 ---
 
 <h2 style="margin-bottom: 20px; text-align:center;">All Blog Posts</h2>
 
-<!-- 🔍 Search Bar with Button -->
 <div style="text-align:center; margin-bottom: 20px;">
   <input
     id="post-search"
@@ -28,10 +27,8 @@ permalink: /categories/
   {% assign all_posts = site.posts | sort: "date" | reverse %}
   {% for post in all_posts %}
     <li class="post-item" style="margin-bottom: 12px;">
-      <a
-        href="{{ site.baseurl }}{{ post.url }}"
-        style="font-size: 1.1rem; color: #007acc; text-decoration: none;"
-      >
+      <a href="{{ site.baseurl }}{{ post.url }}"
+         style="font-size: 1.1rem; color: #007acc; text-decoration: none;">
         {{ post.title }}
       </a>
       <br />
@@ -48,39 +45,4 @@ permalink: /categories/
   {% endfor %}
 </ul>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-  function filterPosts() {
-    const input = document.getElementById("post-search");
-    if (!input) return;
-
-    const query = input.value.trim().toLowerCase();
-    const items = document.querySelectorAll(".post-item");
-
-    items.forEach(function (li) {
-      const titleEl = li.querySelector("a");
-      const descEl = li.querySelector(".post-desc");
-
-      const title = titleEl ? titleEl.textContent.toLowerCase() : "";
-      const desc = descEl ? descEl.textContent.toLowerCase() : "";
-
-      li.style.display =
-        title.includes(query) || desc.includes(query) ? "" : "none";
-    });
-  }
-
-  const searchInput = document.getElementById("post-search");
-  const searchBtn = document.getElementById("search-btn");
-
-  if (!searchInput || !searchBtn) return;
-
-  // Desktop + mobile + iOS Safari support
-  ["input", "keyup", "change", "search"].forEach(function (event) {
-    searchInput.addEventListener(event, filterPosts);
-  });
-
-  searchBtn.addEventListener("click", filterPosts);
-
-});
-</script>
+<script src="{{ '/assets/js/post-search.js' | relative_url }}"></script>
