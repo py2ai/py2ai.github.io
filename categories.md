@@ -39,34 +39,38 @@ permalink: /categories/
   {% endfor %}
 </ul>
 
-<!-- 🔍 Search Filter Script -->
-<script>
-function filterPosts() {
-  const q = document.getElementById("post-search").value.toLowerCase();
-  const items = document.querySelectorAll(".post-item");
+<<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-  items.forEach(li => {
-    const title = li.querySelector("a").textContent.toLowerCase();
-    const desc = (li.querySelector(".post-desc")?.textContent || "").toLowerCase();
+  function filterPosts() {
+    const input = document.getElementById("post-search");
+    if (!input) return;
 
-    li.style.display = (title.includes(q) || desc.includes(q)) ? "" : "none";
-  });
-}
+    const q = input.value.toLowerCase();
+    const items = document.querySelectorAll(".post-item");
 
-const searchInput = document.getElementById("post-search");
+    items.forEach(li => {
+      const titleEl = li.querySelector("a");
+      const descEl = li.querySelector(".post-desc");
 
-// Desktop + modern browsers
-searchInput.addEventListener("input", filterPosts);
+      const title = titleEl ? titleEl.textContent.toLowerCase() : "";
+      const desc = descEl ? descEl.textContent.toLowerCase() : "";
 
-// iPhone Safari & Android keyboard events
-searchInput.addEventListener("keyup", filterPosts);
+      li.style.display = (title.includes(q) || desc.includes(q)) ? "" : "none";
+    });
+  }
 
-// Fires when user taps "Done" on iOS keyboards
-searchInput.addEventListener("change", filterPosts);
+  const searchInput = document.getElementById("post-search");
+  const searchBtn = document.getElementById("search-btn");
 
-// Fires when user taps "X" in input (iOS)
-searchInput.addEventListener("search", filterPosts);
+  if (!searchInput || !searchBtn) return;
 
-// Button click still works
-document.getElementById("search-btn").addEventListener("click", filterPosts);
+  // Mobile + desktop safe events
+  ["input", "keyup", "change", "search"].forEach(evt =>
+    searchInput.addEventListener(evt, filterPosts)
+  );
+
+  searchBtn.addEventListener("click", filterPosts);
+
+});
 </script>
