@@ -1,11 +1,7 @@
 ---
 categories:
 - GUI tutorial series
-description: '<br>
-
-  <div align="center">
-
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/1skHb3IjOr4" frameborder="0" allow="accelerometer; autoplay; cl...'
+description: Videos over Sockets
 featured-img: mclients
 keywords:
 - Socket Programming
