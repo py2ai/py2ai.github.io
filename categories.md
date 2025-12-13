@@ -48,14 +48,25 @@ function filterPosts() {
   items.forEach(li => {
     const title = li.querySelector("a").textContent.toLowerCase();
     const desc = (li.querySelector(".post-desc")?.textContent || "").toLowerCase();
-    
+
     li.style.display = (title.includes(q) || desc.includes(q)) ? "" : "none";
   });
 }
 
-// Search as you type
-document.getElementById("post-search").addEventListener("input", filterPosts);
+const searchInput = document.getElementById("post-search");
 
-// Search when clicking button
+// Desktop + modern browsers
+searchInput.addEventListener("input", filterPosts);
+
+// iPhone Safari & Android keyboard events
+searchInput.addEventListener("keyup", filterPosts);
+
+// Fires when user taps "Done" on iOS keyboards
+searchInput.addEventListener("change", filterPosts);
+
+// Fires when user taps "X" in input (iOS)
+searchInput.addEventListener("search", filterPosts);
+
+// Button click still works
 document.getElementById("search-btn").addEventListener("click", filterPosts);
 </script>

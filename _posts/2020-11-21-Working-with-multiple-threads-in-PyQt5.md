@@ -1,11 +1,7 @@
 ---
 categories:
 - GUI tutorial series
-description: '<br>
-
-  <div align="center">
-
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/k5tIk7w50L4" frameborder="0" allow="accelerometer; autoplay; cl...'
+description: Threads run in parallel
 featured-img: threadspy
 keywords:
 - PyQt5
