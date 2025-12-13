@@ -16,11 +16,9 @@ layout: post
 mathjax: true
 title: How to make a Matplotlib and PyQt5 based GUI with drag...
 ---
+## PyQt5 and Matplotlib
 
-# PyQt5 and Matplotlib
-
-
-Hello friends, here is the code for the drag and drop enabled matplotlib GUI in PyQt5. Save the first main.py and the second drag_drop.py and run it. Enjoy, and do 
+Hello friends, here is the code for the drag and drop enabled matplotlib GUI in PyQt5. Save the first main.py and the second drag_drop.py and run it. Enjoy, and do
 give your feedback and suggestions. Also please make sure that you are using Matplotlib version 3.2.1 or above. For more detail visit pyshine youtube channel.
 
 <br>
@@ -29,8 +27,10 @@ give your feedback and suggestions. Also please make sure that you are using Mat
 </div>
 <br>
 
-## main.py
+## Complete Code
+
 {% include codeHeader.html %}
+
 ```python
 
 ## # # -*- coding: utf-8 -*-
@@ -70,8 +70,8 @@ class MatplotlibCanvas(FigureCanvasQTAgg):
 		self.axes = fig.add_subplot(111)
 		super(MatplotlibCanvas,self).__init__(fig)
 		#fig.tight_layout() #  uncomment for tight layout
-		
-		
+	
+	
 
 class Ui_MainWindow(object):
 	def setupUi(self, MainWindow):
@@ -100,7 +100,7 @@ class Ui_MainWindow(object):
 		self.spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
 		self.verticalLayout.addItem(self.spacerItem1)
 		self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
-		
+	
 		MainWindow.setCentralWidget(self.centralwidget)
 		self.menubar = QtWidgets.QMenuBar(MainWindow)
 		self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
@@ -121,14 +121,14 @@ class Ui_MainWindow(object):
 
 		self.retranslateUi(MainWindow)
 		QtCore.QMetaObject.connectSlotsByName(MainWindow)
-		
+	
 		self.filename = ''
 		self.canv = MatplotlibCanvas(self)
 		self.df = []
-		
+	
 		self.toolbar = Navi(self.canv,self.centralwidget)
 		self.horizontalLayout.addWidget(self.toolbar)
-		
+	
 		self.themes = ['bmh', 'classic', 'dark_background', 'fast', 
 		'fivethirtyeight', 'ggplot', 'grayscale', 'seaborn-bright',
 		 'seaborn-colorblind', 'seaborn-dark-palette', 'seaborn-dark', 
@@ -138,12 +138,12 @@ class Ui_MainWindow(object):
 		 'Solarize_Light2', 'tableau-colorblind10']
 		 
 		self.comboBox.addItems(self.themes)
-		
+	
 		self.pushButton.clicked.connect(self.getFile)
 		self.comboBox.currentIndexChanged['QString'].connect(self.Update)
 		self.actionExit.triggered.connect(MainWindow.close)
 		self.actionOpen_csv_file.triggered.connect(self.getFile)
-		
+	
 	def Update(self,value):
 		print("Value from Combo Box:",value)
 		plt.clf()
@@ -151,7 +151,7 @@ class Ui_MainWindow(object):
 		try:
 			self.horizontalLayout.removeWidget(self.toolbar)
 			self.verticalLayout.removeWidget(self.canv)
-			
+		
 			sip.delete(self.toolbar)
 			sip.delete(self.canv)
 			self.toolbar = None
@@ -162,26 +162,26 @@ class Ui_MainWindow(object):
 			pass
 		self.canv = MatplotlibCanvas(self)
 		self.toolbar = Navi(self.canv,self.centralwidget)
-		
+	
 		self.horizontalLayout.addWidget(self.toolbar)
 		self.verticalLayout.addWidget(self.canv)
-		
+	
 		self.canv.axes.cla()
 		ax = self.canv.axes
 		self.df.plot(ax = self.canv.axes)
 		legend = ax.legend()
 		legend.set_draggable(True)
-		
+	
 		ax.set_xlabel('X axis')
 		ax.set_ylabel('Y axis')
 		ax.set_title(self.Title)
-		
-		self.canv.draw()
-		
-		
-		
-		
 	
+		self.canv.draw()
+	
+	
+	
+	
+
 	def getFile(self):
 		""" This function will get the address of the csv file location
 			also calls a readData function 
@@ -189,7 +189,7 @@ class Ui_MainWindow(object):
 		self.filename = QFileDialog.getOpenFileName(filter = "csv (*.csv)")[0]
 		print("File :", self.filename)
 		self.readData()
-	
+
 	def readData(self):
 		""" This function will read the data using pandas and call the update
 			function to plot
@@ -200,9 +200,9 @@ class Ui_MainWindow(object):
 		print('FILE',self.Title )
 		self.df = pd.read_csv(self.filename,encoding = 'utf-8').fillna(0)
 		self.Update(self.themes[0]) # lets 0th theme be the default : bmh
-	
 
-	
+
+
 	def retranslateUi(self, MainWindow):
 		_translate = QtCore.QCoreApplication.translate
 		MainWindow.setWindowTitle(_translate("MainWindow", "PyShine simple plot"))
@@ -222,15 +222,17 @@ if __name__ == "__main__":
 	MainWindow = QtWidgets.QMainWindow()
 	ui = Ui_MainWindow()
 	ui.setupUi(MainWindow)
-	
+
 	MainWindow.show()
 	sys.exit(app.exec_())
 
 
 ```
 
-## # # drag_drop.py
+## Main window Class code
+
 {% include codeHeader.html %}
+
 ```python
 
 ## # # Lets make the main window class
@@ -292,23 +294,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 			print("GOT ADDRESS:",self.filename)
 			self.readData()
 		else:
-			e.ignore() # just like above functions	
+			e.ignore() # just like above functions
 ## # # Subscribe to PyShine Youtube channel for more detail! 
-## # # WEBSITE: www.pyshine.com		
+## # # WEBSITE: www.pyshine.com	
 if __name__ == '__main__':
 	app = QtWidgets.QApplication(sys.argv)
 	window = MainWindow()
 	window.show()
 	sys.exit(app.exec_())
-	
+
 ```
 
-
 [Download sample csv data files](https://drive.google.com/file/d/10gvk-A0orWWktIaHkw7WMAGzYcoMkB9t/view?usp=sharing)
-	
-	
-	
-	
-	
-	
-
