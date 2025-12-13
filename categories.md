@@ -1,15 +1,27 @@
 ---
 layout: page
-title: All Posts
+title: Search All Blog Posts
 permalink: /categories/
 ---
 
-<h2 style="margin-bottom: 20px;">All Blog Posts</h2>
+<h2 style="margin-bottom: 20px; text-align:center;">All Blog Posts</h2>
 
-<ul style="list-style: none; padding-left: 0;">
+<!-- 🔍 Search Bar with Button -->
+<div style="text-align:center; margin-bottom: 20px;">
+
+  <input id="post-search" 
+         type="text" 
+         placeholder="Search posts..." 
+         style="padding: 10px 15px; width: 55%; max-width: 350px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;">
+
+
+
+</div>
+
+<ul id="post-list" style="list-style: none; padding-left: 0;">
   {% assign all_posts = site.posts | sort: "date" | reverse %}
   {% for post in all_posts %}
-    <li style="margin-bottom: 12px;">
+    <li class="post-item" style="margin-bottom: 12px;">
       <a href="{{ site.baseurl }}{{ post.url }}" style="font-size: 1.1rem; color: #007acc; text-decoration: none;">
         {{ post.title }}
       </a>
@@ -18,8 +30,28 @@ permalink: /categories/
         📅 {{ post.date | date: "%B %d, %Y" }}
       </small>
       {% if post.description %}
-        <p style="margin: 5px 0 0; color: #555;">{{ post.description }}</p>
+        <p class="post-desc" style="margin: 5px 0 0; color: #555;">{{ post.description }}</p>
       {% endif %}
     </li>
   {% endfor %}
 </ul>
+
+<!-- 🔍 Search Filter Script -->
+<script>
+function filterPosts() {
+  const q = document.getElementById("post-search").value.toLowerCase();
+  const items = document.querySelectorAll(".post-item");
+
+  items.forEach(li => {
+    const title = li.querySelector("a").textContent.toLowerCase();
+    const desc = (li.querySelector(".post-desc")?.textContent || "").toLowerCase();
+    
+    li.style.display = (title.includes(q) || desc.includes(q)) ? "" : "none";
+  });
+}
+
+// Search as you type
+document.getElementById("post-search").addEventListener("input", filterPosts);
+
+
+</script>
