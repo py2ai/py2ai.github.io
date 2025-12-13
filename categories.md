@@ -39,7 +39,7 @@ permalink: /categories/
   {% endfor %}
 </ul>
 
-<<script>
+<script>
 document.addEventListener("DOMContentLoaded", function () {
 
   function filterPosts() {
