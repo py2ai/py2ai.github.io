@@ -1,5 +1,5 @@
 ---
-description: "<div style=\"text-align:center;\">\n  <iframe width=\"320\" height=\"568\" \n      src=\"https://www.youtube.com/embed/-LxLf4hZzHY?rel=0&autoplay=0\" \n      title=\"You..."
+description: "Gps satellite simulation and visualization in python"
 featured-img: 26072022-python-logo
 keywords:
 - Vpython
