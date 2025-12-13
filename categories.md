@@ -14,7 +14,10 @@ permalink: /categories/
          placeholder="Search posts..." 
          style="padding: 10px 15px; width: 55%; max-width: 350px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;">
 
-
+  <button id="search-btn"
+          style="padding: 10px 15px; font-size: 1rem; border-radius: 6px; background:#007acc; color:white; border:none; cursor:pointer;">
+    Search
+  </button>
 
 </div>
 
@@ -53,5 +56,6 @@ function filterPosts() {
 // Search as you type
 document.getElementById("post-search").addEventListener("input", filterPosts);
 
-
+// Search when clicking button
+document.getElementById("search-btn").addEventListener("click", filterPosts);
 </script>
