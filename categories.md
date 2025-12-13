@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Search All Blog Posts
+title: Search All Blog Posts HERE
 permalink: /categories/
 ---
 
