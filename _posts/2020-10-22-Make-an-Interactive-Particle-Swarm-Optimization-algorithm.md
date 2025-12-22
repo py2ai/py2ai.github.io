@@ -43,93 +43,89 @@ Just make a new directory and place both these .py files. Then simply run the ma
 ```python
 
 ## Welcome to PyShine
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import csv
+import signal
+import sys
 
-fig = plt.figure(figsize=(4,4))
-plt.xlim([-500, 500])
-plt.ylim([-500, 500])
-ax = fig.add_subplot(111)
+TARGET_FILE = "target.csv"
 
+def cleanup(*_):
+    plt.close("all")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, cleanup)
+signal.signal(signal.SIGTERM, cleanup)
+
+
+# FIGURE SETUP (EXPLICIT WHITE)
+
+fig, ax = plt.subplots(figsize=(4, 4))
+fig.patch.set_facecolor("white")
+ax.set_facecolor("white")
+
+ax.set_xlim(-500, 500)
+ax.set_ylim(-500, 500)
+ax.set_title("Drag the Target")
+
+
+# DRAGGABLE CLASS (NO BLITTING = NO BLACK SCREEN)
 class Draggable_Target:
-	lock = None 
-	def __init__(self, point):
-		self.point = point
-		self.press = None
-		self.background = None
-		self.ID = None
+    lock = None
 
-	def setID(self,ID):
-		self.ID = ID
-	def getID(self):
-		return self.ID
-		
-	def connect(self):
-		#'connect to all the events we need'
-		self.cidpress = self.point.figure.canvas.mpl_connect('button_press_event', self.on_press)
-		self.cidrelease = self.point.figure.canvas.mpl_connect('button_release_event', self.on_release)
-		self.cidmotion = self.point.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
+    def __init__(self, point):
+        self.point = point
+        self.press = None
 
-	def on_press(self, event):
-		if event.inaxes != self.point.axes: return
-		if Draggable_Target.lock is not None: return
-		contains, attrd = self.point.contains(event)
-		if not contains: return
-		self.press = (self.point.center), event.xdata, event.ydata
-		Draggable_Target.lock = self
-		canvas = self.point.figure.canvas
-		axes = self.point.axes
-		self.point.set_animated(True)
-		canvas.draw()
-		self.background = canvas.copy_from_bbox(self.point.axes.bbox)
-		axes.draw_artist(self.point)
-		canvas.blit(axes.bbox)
+    def connect(self):
+        self.cidpress = self.point.figure.canvas.mpl_connect(
+            'button_press_event', self.on_press)
+        self.cidrelease = self.point.figure.canvas.mpl_connect(
+            'button_release_event', self.on_release)
+        self.cidmotion = self.point.figure.canvas.mpl_connect(
+            'motion_notify_event', self.on_motion)
 
-	def on_motion(self, event):
-		if Draggable_Target.lock is not self:
-			return
-		if event.inaxes != self.point.axes: return
-		self.point.center, xpress, ypress = self.press
-		dx = event.xdata - xpress
-		dy = event.ydata - ypress
-		self.point.center = (self.point.center[0]+dx, self.point.center[1]+dy)
-		print(str(self.point.center[0])+','+str( self.point.center[1]),file = open('target.csv','w'))
-		canvas = self.point.figure.canvas
-		axes = self.point.axes
-		canvas.restore_region(self.background)
-		axes.draw_artist(self.point)
-		canvas.blit(axes.bbox)
+    def on_press(self, event):
+        if event.inaxes != ax:
+            return
+        contains, _ = self.point.contains(event)
+        if not contains:
+            return
+        self.press = self.point.center, event.xdata, event.ydata
+        Draggable_Target.lock = self
 
-	def on_release(self, event):
-		#'on release we reset the press data'
-		if Draggable_Target.lock is not self:
-			return
+    def on_motion(self, event):
+        if Draggable_Target.lock is not self or event.inaxes != ax:
+            return
 
-		self.press = None
-		Draggable_Target.lock = None
-		self.point.set_animated(False)
-		self.background = None
-		self.point.figure.canvas.draw()
+        (x0, y0), xpress, ypress = self.press
+        dx = event.xdata - xpress
+        dy = event.ydata - ypress
 
-	def disconnect(self):
-		#'disconnect all the stored connection ids'
-		self.point.figure.canvas.mpl_disconnect(self.cidpress)
-		self.point.figure.canvas.mpl_disconnect(self.cidrelease)
-		self.point.figure.canvas.mpl_disconnect(self.cidmotion)
+        self.point.center = (x0 + dx, y0 + dy)
 
-drs = []
-circles =     [patches.Circle( (10, -10),    20,  label='Click to drag the Target', fc = 'k',color = 'k', alpha=1)]
-cnt = 0
-for circ in circles:
-	ax.add_patch(circ)
-	dr = Draggable_Target(circ)
-	dr.setID(cnt)
-	dr.connect()
-	drs.append(dr)
-	cnt+=1
-plt.legend()
+        # write target position
+        with open(TARGET_FILE, "w", newline="") as f:
+            csv.writer(f).writerow(self.point.center)
+
+        # full redraw (safe & fast enough)
+        self.point.figure.canvas.draw_idle()
+
+    def on_release(self, event):
+        Draggable_Target.lock = None
+        self.press = None
+
+
+# CREATE TARGET
+circle = patches.Circle((10, -10), 20, fc='black')
+ax.add_patch(circle)
+
+dr = Draggable_Target(circle)
+dr.connect()
+
 plt.show()
+
 
 ```
 
@@ -315,6 +311,8 @@ class Interactive_PSO():
 Interactive_PSO(fitness_function,initial,bounds,num_particles=16)# let say 2 particles and 50 iterations
 if __name__ == "__Interactive_PSO__":
     main()
+
+
 
 ```
 
