@@ -16,22 +16,18 @@ layout: post
 mathjax: true
 title: How to make an interactive PSO algorithm in Python
 ---
-
-
-
 <br>
 <div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/xEQv9YdvRiA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <br>
 
-
-Hello friends, today we will use Matplotlib in Python to make an interactive PSO environment, where you can change the target as well as 
+Hello friends, today we will use Matplotlib in Python to make an interactive PSO environment, where you can change the target as well as
 the number of particles including their various parameters.
 
-# IMPORTANT 
+# IMPORTANT
 
-Please note that the files below are intended for Python 3, and not for Python2. Use Matplotlib version 2.2.4
+Please note that the files below are intended for Python 3, and not for Python2. Use Matplotlib and Numpy
 
 1) Draggable.py
 2) main.py
@@ -39,7 +35,9 @@ Please note that the files below are intended for Python 3, and not for Python2.
 Just make a new directory and place both these .py files. Then simply run the main.py. Lets see what's inside the Draggable.py
 
 ## Draggable.py
+
 {% include codeHeader.html %}
+
 ```python
 
 ## Welcome to PyShine
@@ -132,7 +130,9 @@ plt.show()
 And here is the main.py, it will use the thread to call the above Draggable.py file. So please make sure to name the above file as Draggable, otherwise change the name accordingly in the code below under the start_drag function.
 
 ## main.py
+
 {% include codeHeader.html %}
+
 ```python
 ## Welcome to PyShine
 
@@ -181,23 +181,23 @@ class Particle:
         self.vel=[] 
         self.best_pos=[] 
         self.best_error=-1 
-        self.error=-1     
+        self.error=-1   
         for i in range(0, num_dimensions): 
             self.vel.append(random.uniform(-1,1))
             self.pos.append(initial[i])
-    
+  
     def update_velocity(self, global_best_position): 
         w = 0.5
         c1 = 1 
         c2 = 2 
-        
+      
         for i in range(0, num_dimensions): 
             r1=random.random()
             r2=random.random()
             cog_vel=c1*r1*(self.best_pos[i]-self.pos[i])
             social_vel=c2*r2*(global_best_position[i]-self.pos[i])
             self.vel[i]=w*self.vel[i]+cog_vel+social_vel 
-        
+      
     def update_position(self, bounds): 
         for i in range(0, num_dimensions):
             self.pos[i]+=self.vel[i]
@@ -205,7 +205,7 @@ class Particle:
                 self.pos[i]=bounds[i][1]
             if self.pos[i]<bounds[i][0]:
                 self.pos[i]=bounds[i][0]
-    
+  
     def evaluate_fitness(self, fitness_function):
         self.error=fitness_function(self.pos) 
         print("ERROR------->", self.error)
@@ -232,9 +232,9 @@ def getXY(filename):
 class Interactive_PSO():
     def __init__(self, fitness_function, initial, bounds, num_particles):
         global num_dimensions, running
-        
+      
         num_dimensions = len(initial) 
-        global_best_error=-1             
+        global_best_error=-1           
         global_best_position=[] 
         self.gamma = 0.0001
         swarm=[]
@@ -254,7 +254,7 @@ class Interactive_PSO():
             # 🔴 SAFETY ESCAPE (ADDED)
             if not running:
                 break
-            
+          
             for j in range(0, num_particles):
                 swarm[j].evaluate_fitness(fitness_function)
                 print('global_best_position', swarm[j].error, global_best_error)
@@ -267,20 +267,20 @@ class Interactive_PSO():
                             num_particles, round(global_best_error,1)
                         )
                     )
-                    
-                if i%2==0:	
+                  
+                if i%2==0:
                     global_best_error=-1
                     global_best_position = [
                         swarm[j].pos[0]+self.gamma*(swarm[j].error)*random.random(),
                         swarm[j].pos[1]+self.gamma*(swarm[j].error)*random.random()
                     ]
-                    
+                  
             pos_0 = {}
             pos_1 = {}
             for j in range(0, num_particles): 
                 pos_0[j] = []
-                pos_1[j] = []	
-            
+                pos_1[j] = []
+          
             for j in range(0, num_particles): 
                 swarm[j].update_velocity(global_best_position)
                 swarm[j].update_position(bounds) 
@@ -288,7 +288,7 @@ class Interactive_PSO():
                 pos_1[j].append(swarm[j].pos[1])
                 plt.xlim([-500, 500])
                 plt.ylim([-500, 500])
-                
+              
             for j in range(0, num_particles):
                 plt.plot(pos_0[j], pos_1[j], color=colors[j], marker='o')
 
@@ -309,7 +309,3 @@ Interactive_PSO(fitness_function, initial, bounds, num_particles=16)
 
 
 ```
-
-
-
-
