@@ -205,7 +205,8 @@ Please note that the files below are intended for Python 3, and not for Python2.
 Just make a new directory and place both these .py files. Then simply run the main.py. Lets see what's inside the Draggable.py
 
 ## Complete Code
-## Draggable.py
+
+### Draggable.py
 
 {% include codeHeader.html %}
 
