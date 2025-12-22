@@ -392,10 +392,16 @@ def fitness_function(x):
 
 
 def getXY(filename):
-    with open(filename) as csvDataFile:
-        csvReader = csv.reader(csvDataFile)
-        for row in csvReader:
-            return row[0], row[1]
+    try:
+        with open(filename) as csvDataFile:
+            csvReader = csv.reader(csvDataFile)
+            for row in csvReader:
+                if len(row) >= 2:
+                    return row[0], row[1]
+    except:
+        pass
+    return 0, 0
+
 
 
 class Interactive_PSO():
