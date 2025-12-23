@@ -200,6 +200,8 @@ Many beginners never see these ideas combined.
 
 ### Draggable.py
 
+{% include codeHeader.html %}
+
 ```python
 ## Welcome to PyShine
 import matplotlib.pyplot as plt
@@ -233,7 +235,7 @@ pt, = ax.plot(
     'ko', markersize=10
 )
 
-# 📝 TEXT OVERLAY (TOP-LEFT, AXES COORDS)
+# TEXT OVERLAY (TOP-LEFT, AXES COORDS)
 txt = ax.text(
     0.02, 0.95,
     "",
@@ -300,6 +302,8 @@ plt.show()
 ```
 
 ### main.py
+
+{% include codeHeader.html %}
 
 ```python
 ## Welcome to PyShine
