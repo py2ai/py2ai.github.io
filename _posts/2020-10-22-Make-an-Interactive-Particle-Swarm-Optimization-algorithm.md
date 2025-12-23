@@ -47,12 +47,14 @@ Over time, particles converge toward an optimal solution.
 This project has **two Python programs running together**:
 
 ### PSO Engine (`main.py`)
+
 - Simulates particles
 - Computes fitness
 - Updates velocities & positions
 - Draws particles in real time
 
 ### Draggable Target (`Draggable.py`)
+
 - Displays a draggable circle
 - Writes its position to `target.csv`
 - Acts as a **moving optimization goal**
@@ -85,6 +87,7 @@ target.csv      → Shared target position
 This project includes important safety mechanisms:
 
 ### Graceful Window Close
+
 ```python
 running = True
 
@@ -92,13 +95,16 @@ def on_close(event):
     global running
     running = False
 ```
+
 Prevents infinite loops when the window is closed.
 
 ### Signal Handling (Ctrl+C)
+
 ```python
 signal.signal(signal.SIGINT, cleanup)
 signal.signal(signal.SIGTERM, cleanup)
 ```
+
 Ensures clean exits.
 
 ---
@@ -132,7 +138,11 @@ def fitness_function(x):
     return (x0 - x[0])**2 + (y0 - x[1])**2
 ```
 
+
+
 ✔ Measures **distance to the target**
+
+
 ✔ Lower value = better solution
 
 ---
@@ -151,9 +161,9 @@ Particles instantly react to movement.
 
 ## Why This Project Is Important
 
-- Turns abstract optimization into something **visual**  
-- Teaches **real-time feedback systems**  
-- Demonstrates **human-in-the-loop optimization**  
+- Turns abstract optimization into something **visual**
+- Teaches **real-time feedback systems**
+- Demonstrates **human-in-the-loop optimization**
 - Bridges math, algorithms, and UI
 
 ---
@@ -171,15 +181,19 @@ Particles instantly react to movement.
 ## Common Questions (FAQ)
 
 ### Why use a CSV file for communication?
+
 It’s simple, cross-process, and beginner-friendly.
 
 ### Why reset global best periodically?
+
 It prevents premature convergence and encourages exploration.
 
 ### Can this work in 3D?
+
 Yes! Add a third dimension and use a 3D Matplotlib plot.
 
 ### Can I replace mouse dragging with keyboard input?
+
 Absolutely — update the target position programmatically.
 
 ---
@@ -195,7 +209,6 @@ By studying this project, you learn:
 - Clean shutdown techniques
 
 ---
-
 
 Please note that the files below are intended for Python 3, and not for Python2. Use Matplotlib and Numpy
 
@@ -300,7 +313,6 @@ plt.show()
 
 And here is the main.py, it will use the thread to call the above Draggable.py file. So please make sure to name the above file as Draggable, otherwise change the name accordingly in the code below under the start_drag function.
 
-
 ### main.py
 
 {% include codeHeader.html %}
@@ -359,14 +371,14 @@ class Particle:
         w = 0.5
         c1 = 1 
         c2 = 2 
-      
+    
         for i in range(0, num_dimensions): 
             r1=random.random()
             r2=random.random()
             cog_vel=c1*r1*(self.best_pos[i]-self.pos[i])
             social_vel=c2*r2*(global_best_position[i]-self.pos[i])
             self.vel[i]=w*self.vel[i]+cog_vel+social_vel 
-      
+    
     def update_position(self, bounds): 
         for i in range(0, num_dimensions):
             self.pos[i]+=self.vel[i]
@@ -407,9 +419,9 @@ def getXY(filename):
 class Interactive_PSO():
     def __init__(self, fitness_function, initial, bounds, num_particles):
         global num_dimensions, running
-      
+    
         num_dimensions = len(initial) 
-        global_best_error=-1           
+        global_best_error=-1         
         global_best_position=[] 
         self.gamma = 0.0001
         swarm=[]
@@ -426,7 +438,7 @@ class Interactive_PSO():
             # SAFETY ESCAPE
             if not running:
                 break
-          
+        
             for j in range(0, num_particles):
                 swarm[j].evaluate_fitness(fitness_function)
                 print('global_best_position', swarm[j].error, global_best_error)
@@ -439,20 +451,20 @@ class Interactive_PSO():
                             num_particles, round(global_best_error,1)
                         )
                     )
-                  
+                
                 if i%2==0:
                     global_best_error=-1
                     global_best_position = [
                         swarm[j].pos[0]+self.gamma*(swarm[j].error)*random.random(),
                         swarm[j].pos[1]+self.gamma*(swarm[j].error)*random.random()
                     ]
-                  
+                
             pos_0 = {}
             pos_1 = {}
             for j in range(0, num_particles): 
                 pos_0[j] = []
                 pos_1[j] = []
-          
+        
             for j in range(0, num_particles): 
                 swarm[j].update_velocity(global_best_position)
                 swarm[j].update_position(bounds) 
@@ -460,7 +472,7 @@ class Interactive_PSO():
                 pos_1[j].append(swarm[j].pos[1])
                 plt.xlim([-500, 500])
                 plt.ylim([-500, 500])
-              
+            
             for j in range(0, num_particles):
                 plt.plot(pos_0[j], pos_1[j], color=colors[j], marker='o')
 
@@ -481,7 +493,6 @@ Interactive_PSO(fitness_function, initial, bounds, num_particles=16)
 
 ```
 
-
 ## Final Thoughts
 
 This interactive PSO project transforms a classic optimization algorithm into a **living system** that responds instantly to user input. It’s an excellent foundation for more advanced AI, robotics, and simulation projects.
@@ -491,4 +502,3 @@ Once you understand this, you're no longer *just coding* — you're **building s
 ---
 
 Happy optimizing!
-
