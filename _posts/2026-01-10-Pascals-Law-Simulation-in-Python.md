@@ -185,14 +185,11 @@ that pressure applied to a confined fluid is transmitted
 equally throughout the fluid.
 
 Key Features:
-- Real-time piston movement and corresponding 
-    pressure/force change.
-- Adjustable output piston area via mouse drag to
-    visualize force multiplication.
-- Realistic SI units (Force in N, Area in meter-square., 
-    Pressure in Pa).
-- Dynamic info panel displaying Pascal's law and live 
-    values.
+Real-time piston movement and corresponding pressure/force change.
+Adjustable output piston area via mouse drag to visualize force multiplication.
+Realistic SI units (Force in N, Area in meter-square., Pressure in Pa).
+Dynamic info panel displaying Pascal's law and live values.
+visit: www.pyshine.com for more details
 """
 
 import pygame, sys
@@ -462,7 +459,7 @@ while True:
                (30, 20 + i*22))
 
     pygame.display.flip()
-    
+# visit: www.pyshine.com for more details    
 ```
 
 ## Live Information Panel
