@@ -186,10 +186,10 @@ equally throughout the fluid.
 
 Key Features:
 Real-time piston movement and corresponding pressure/force change.
-Adjustable output piston area via mouse drag to visualize force multiplication.
+Adjustable output piston area via mouse drag tovisualize force multiplication.
 Realistic SI units (Force in N, Area in meter-square., Pressure in Pa).
 Dynamic info panel displaying Pascal's law and live values.
-visit: www.pyshine.com for more details
+visit www.pyshine.com for more details
 """
 
 import pygame, sys
@@ -197,7 +197,7 @@ from pygame.draw import rect, lines
 from pygame import Rect
 pygame.init()
 
-# Portrait window setup
+#Portrait window setup
 W, H = 500, 650
 S = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Hydraulic Pressure")
@@ -211,7 +211,7 @@ OUTLINE = (100, 100, 100)
 HANDLE_COLOR = (255, 200, 50)
 ORANGE = (255, 165, 0)  # New color for dragging
 
-# SI Units Setup
+#SI Units Setup
 # Areas in m^2, 
 # Pressure in Pa (Pascals), 
 # Force in N (Newtons)
@@ -220,7 +220,7 @@ A_big = 0.08          # 0.08 m^2 = 800 cm^2 (big piston)
 fluid_density = 1000  # kg/m³ (water density)
 g = 9.81              # m/s² (gravity)
 
-# Geometry
+#Geometry
 left_x, right_x = 150, 350
 pipe_top, pipe_bottom = 440, 450
 shaft_len = 60
@@ -300,7 +300,7 @@ initial_right_y = 400
 initial_fluid_area = calculate_fluid_area(
                     piston_y,initial_right_y, big_w)
 # Main Loop
-
+# visit www.pyshine.com for more details
 while True:
     for e in pygame.event.get():
         if e.type == pygame.QUIT: 
@@ -334,7 +334,7 @@ while True:
                     (new_big_w / base_width) ** 2  
                 big_w = new_big_w
 
-    # --- Physics ---
+    #Physics
     P_in = input_pressure(piston_y)  # Pressure Pascals
     P_out = P_in  # Same pressure (Pascal's principle)
     F_in = P_in * A_small  # Force in Newtons
@@ -353,7 +353,7 @@ while True:
     current_fluid_area = calculate_fluid_area(
                             piston_y, right_y, big_w)
 
-    # --- Drawing ---
+    #Drawing
     S.fill(DARK)
 
     # U-shaped pipe - ALL THREE BLUE REGIONS:
@@ -459,7 +459,6 @@ while True:
                (30, 20 + i*22))
 
     pygame.display.flip()
-# visit: www.pyshine.com for more details    
 ```
 
 ## Live Information Panel
