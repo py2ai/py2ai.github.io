@@ -16,6 +16,18 @@ keywords:
 
 This project demonstrates **Pascal's Law**, a fundamental principle of fluid mechanics, using an interactive **Pygame simulation**. By dragging pistons and adjusting areas, users can visually and numerically understand how pressure and force behave in a confined fluid.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/1LPkqUvLulU" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## What Is Pascal’s Law?
