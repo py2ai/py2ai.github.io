@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>4-Finger Live Fingerprint Capture</title>
+<title>Fingerprint Capture – High Quality</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -26,15 +26,39 @@ body {
 }
 
 video, canvas {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
+video { z-index: 1; }
+#maskCanvas { z-index: 2; }
+#bwCanvas { z-index: 1; }
+
 .overlay {
     position: absolute;
     inset: 0;
+    z-index: 3;
     pointer-events: none;
+}
+
+.controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 4;
+    pointer-events: auto;
+}
+
+button {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
 }
 
 .arrow {
@@ -42,7 +66,7 @@ video, canvas {
     top: 8px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 28px;
+    font-size: 26px;
     font-weight: bold;
 }
 
@@ -56,14 +80,6 @@ video, canvas {
     border-radius: 8px;
     font-size: 13px;
 }
-
-.mask-label {
-    position: absolute;
-    top: 8px;
-    left: 10px;
-    font-size: 12px;
-    opacity: 0.7;
-}
 </style>
 </head>
 
@@ -71,25 +87,28 @@ video, canvas {
 
 <div class="container">
 
-    <!-- TOP: Camera + Mask -->
-    <div class="box">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="maskCanvas"></canvas>
+<!-- TOP: Camera + ROI -->
+<div class="box">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="maskCanvas"></canvas>
 
-        <div class="overlay">
-            <div id="arrow" class="arrow">⬆ Move Closer</div>
-            <div id="scoreTop" class="score">Detail Score: 0</div>
-            <div class="mask-label">Place 4 fingers inside the slots</div>
-        </div>
+    <div class="controls">
+        <button id="torchBtn">🔦 Torch ON</button>
     </div>
 
-    <!-- BOTTOM: Fingerprint BW -->
-    <div class="box">
-        <canvas id="bwCanvas"></canvas>
-        <div class="overlay">
-            <div class="score">Peak: <span id="peakScore">0</span></div>
-        </div>
+    <div class="overlay">
+        <div id="arrow" class="arrow">⬆ Move Closer</div>
+        <div id="scoreTop" class="score">Quality: 0</div>
     </div>
+</div>
+
+<!-- BOTTOM: Enhanced Fingerprint -->
+<div class="box">
+    <canvas id="bwCanvas"></canvas>
+    <div class="overlay">
+        <div class="score">Peak: <span id="peakScore">0</span></div>
+    </div>
+</div>
 
 </div>
 
@@ -97,87 +116,98 @@ video, canvas {
 const video = document.getElementById("video");
 const maskCanvas = document.getElementById("maskCanvas");
 const maskCtx = maskCanvas.getContext("2d");
-
 const bwCanvas = document.getElementById("bwCanvas");
 const bwCtx = bwCanvas.getContext("2d");
 
 const arrow = document.getElementById("arrow");
 const scoreTop = document.getElementById("scoreTop");
 const peakScoreEl = document.getElementById("peakScore");
+const torchBtn = document.getElementById("torchBtn");
 
 let peakScore = 0;
+let videoTrack = null;
+let torchOn = false;
 
-// Camera
+// Camera with torch capability
 navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" }
-}).then(stream => video.srcObject = stream);
+    video: {
+        facingMode: "environment",
+        advanced: [{ torch: false }]
+    }
+}).then(stream => {
+    video.srcObject = stream;
+    videoTrack = stream.getVideoTracks()[0];
+});
 
-// Resize canvases
+// Torch toggle
+torchBtn.onclick = async () => {
+    if (!videoTrack) return;
+    try {
+        torchOn = !torchOn;
+        await videoTrack.applyConstraints({
+            advanced: [{ torch: torchOn }]
+        });
+        torchBtn.textContent = torchOn ? "🔦 Torch OFF" : "🔦 Torch ON";
+    } catch {
+        alert("Torch not supported on this device/browser");
+    }
+};
+
+// Resize
 function resize() {
-    maskCanvas.width = bwCanvas.width = video.videoWidth || 640;
-    maskCanvas.height = bwCanvas.height = video.videoHeight || 480;
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    maskCanvas.width = bwCanvas.width = w;
+    maskCanvas.height = bwCanvas.height = h;
 }
 video.addEventListener("loadedmetadata", resize);
 
-// Draw 4-finger mask
-function drawMask() {
+// Draw rectangular ROI
+function drawROI() {
     const w = maskCanvas.width;
     const h = maskCanvas.height;
 
-    maskCtx.clearRect(0,0,w,h);
+    const roiW = w * 0.7;
+    const roiH = h * 0.5;
+    const x = (w - roiW) / 2;
+    const y = h * 0.2;
 
-    // Dark overlay
-    maskCtx.fillStyle = "rgba(0,0,0,0.7)";
+    maskCtx.clearRect(0,0,w,h);
+    maskCtx.fillStyle = "rgba(0,0,0,0.75)";
     maskCtx.fillRect(0,0,w,h);
 
-    // Cut out finger slots
     maskCtx.globalCompositeOperation = "destination-out";
-
-    const fingerWidth = w * 0.12;
-    const fingerHeight = h * 0.7;
-    const spacing = fingerWidth * 0.3;
-    const startX = (w - (4*fingerWidth + 3*spacing)) / 2;
-    const y = h * 0.15;
-    const radius = fingerWidth * 0.45;
-
-    for (let i = 0; i < 4; i++) {
-        const x = startX + i * (fingerWidth + spacing);
-
-        maskCtx.beginPath();
-        maskCtx.moveTo(x + radius, y);
-        maskCtx.lineTo(x + fingerWidth - radius, y);
-        maskCtx.quadraticCurveTo(x + fingerWidth, y, x + fingerWidth, y + radius);
-        maskCtx.lineTo(x + fingerWidth, y + fingerHeight - radius);
-        maskCtx.quadraticCurveTo(x + fingerWidth, y + fingerHeight, x + fingerWidth - radius, y + fingerHeight);
-        maskCtx.lineTo(x + radius, y + fingerHeight);
-        maskCtx.quadraticCurveTo(x, y + fingerHeight, x, y + fingerHeight - radius);
-        maskCtx.lineTo(x, y + radius);
-        maskCtx.quadraticCurveTo(x, y, x + radius, y);
-        maskCtx.closePath();
-        maskCtx.fill();
-    }
-
+    maskCtx.fillRect(x, y, roiW, roiH);
     maskCtx.globalCompositeOperation = "source-over";
+
+    return { x, y, w: roiW, h: roiH };
 }
 
-// Processing loop
+// Enhanced fingerprint processing
 function process() {
     if (!bwCanvas.width) return requestAnimationFrame(process);
 
-    drawMask();
+    const roi = drawROI();
 
-    // Draw masked camera area only
-    bwCtx.drawImage(video, 0, 0, bwCanvas.width, bwCanvas.height);
+    // Crop ROI
+    bwCtx.drawImage(video,
+        roi.x, roi.y, roi.w, roi.h,
+        roi.x, roi.y, roi.w, roi.h
+    );
 
-    let img = bwCtx.getImageData(0,0,bwCanvas.width,bwCanvas.height);
+    let img = bwCtx.getImageData(roi.x, roi.y, roi.w, roi.h);
     let d = img.data;
 
     let sumEdges = 0, sum = 0, sumSq = 0;
 
+    // Adaptive grayscale + edge emphasis
     for (let i = 0; i < d.length; i += 4) {
         let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-        let bw = g > 120 ? 255 : 0;
-        d[i] = d[i+1] = d[i+2] = bw;
+
+        // Contrast boost
+        g = Math.min(255, Math.max(0, (g - 128) * 1.4 + 128));
+
+        d[i] = d[i+1] = d[i+2] = g;
 
         sum += g;
         sumSq += g*g;
@@ -185,13 +215,19 @@ function process() {
         if (i > 4) sumEdges += Math.abs(g - d[i-4]);
     }
 
-    bwCtx.putImageData(img,0,0);
+    // Adaptive threshold
+    let mean = sum / (d.length / 4);
+    for (let i = 0; i < d.length; i += 4) {
+        let bw = d[i] < mean ? 0 : 255;
+        d[i] = d[i+1] = d[i+2] = bw;
+    }
 
-    let mean = sum / (d.length/4);
-    let variance = sumSq / (d.length/4) - mean*mean;
+    bwCtx.putImageData(img, roi.x, roi.y);
+
+    let variance = sumSq / (d.length / 4) - mean * mean;
     let score = Math.round(sumEdges + variance);
 
-    scoreTop.textContent = `Detail Score: ${score}`;
+    scoreTop.textContent = `Quality: ${score}`;
 
     if (score > peakScore) {
         peakScore = score;
