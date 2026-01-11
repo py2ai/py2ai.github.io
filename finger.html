@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Fingerprint Light & Camera Position Helper</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{margin:0;background:#0e0e0e;font-family:system-ui,-apple-system,BlinkMacSystemFont,Arial,sans-serif;color:#eaeaea}
 header{padding:14px 16px;border-bottom:1px solid #333;background:#121212}
@@ -24,9 +23,9 @@ button{background:#1f1f1f;color:#fff;border:1px solid #333;border-radius:8px;pad
 <header>
 <h1>Fingerprint Light & Camera Position Helper</h1>
 <p>
-This application helps you visually verify fingerprint visibility under
-current lighting and camera position. If fingerprints are visible, close
-this page and open your fingerprint verification application.
+Adjust lighting, distance, and background until fingerprint ridges are clearly
+visible below. Once visible, close this page and open your fingerprint
+verification application.
 </p>
 </header>
 
@@ -37,7 +36,7 @@ this page and open your fingerprint verification application.
     <canvas id="m"></canvas>
   </div>
   <div class="box">
-    <div class="box-title">Detected Fingerprints</div>
+    <div class="box-title">Enhanced Fingerprints</div>
     <canvas id="b"></canvas>
   </div>
 </div>
@@ -47,100 +46,107 @@ this page and open your fingerprint verification application.
 </div>
 
 <script>
-/* ===============================
-   HARD DOMAIN + PATH LOCK
-   =============================== */
+/* ================= DOMAIN / PATH LOCK ================= */
 (function(){
-  const h = location.hostname;
-  const p = location.pathname;
-  const s = location.protocol;
-
-  if (
-    s !== "https:" ||
-    h !== "www.pyshine.com" ||
-    !p.startsWith("/finger")
-  ) {
-    document.body.innerHTML = "";
-    document.body.style.background = "#000";
+  if(
+    location.protocol!=="https:" ||
+    location.hostname!=="www.pyshine.com" ||
+    !location.pathname.startsWith("/finger")
+  ){
+    document.body.innerHTML="";
+    document.body.style.background="#000";
     return;
   }
 })();
 
-/* ===============================
-   CORE LOGIC (lightly obfuscated)
-   =============================== */
-(() => {
-const v=_=>document.getElementById(_),
-video=v("v"),
-mask=v("m"),
-bw=v("b"),
-btn=v("t"),
-ctxm=mask.getContext("2d"),
-ctxb=bw.getContext("2d");
+/* ================= CORE (OBFUSCATED) ================= */
+(()=>{
 
-let track=null,torch=true;
+const $=id=>document.getElementById(id),
+v=$("v"),m=$("m"),b=$("b"),btn=$("t"),
+cm=m.getContext("2d"),cb=b.getContext("2d");
 
+let tr=null,torch=true;
+
+/* Camera */
 navigator.mediaDevices.getUserMedia({
-  video:{facingMode:{ideal:"environment"},focusMode:"continuous"}
+ video:{facingMode:{ideal:"environment"},focusMode:"continuous"}
 }).then(s=>{
-  video.srcObject=s;
-  track=s.getVideoTracks()[0];
-  try{track.applyConstraints({advanced:[{torch:true}]})}catch(e){}
+ v.srcObject=s;
+ tr=s.getVideoTracks()[0];
+ try{tr.applyConstraints({advanced:[{torch:true}]})}catch(e){}
 });
 
+/* Torch toggle */
 btn.onclick=()=>{
-  torch=!torch;
-  try{
-    track.applyConstraints({advanced:[{torch:torch}]});
-    btn.textContent=torch?"Turn Torch OFF":"Turn Torch ON";
-  }catch(e){}
+ torch=!torch;
+ try{
+  tr.applyConstraints({advanced:[{torch:torch}]});
+  btn.textContent=torch?"Turn Torch OFF":"Turn Torch ON";
+ }catch(e){}
 };
 
-video.onloadedmetadata=()=>{
-  mask.width=bw.width=video.videoWidth;
-  mask.height=bw.height=video.videoHeight;
+/* Resize */
+v.onloadedmetadata=()=>{
+ m.width=b.width=v.videoWidth;
+ m.height=b.height=v.videoHeight;
 };
 
-function roi(){
-  const w=mask.width,h=mask.height;
-  const rw=w*.75,rh=h*.5;
-  const x=(w-rw)/2,y=h*.22;
-
-  ctxm.clearRect(0,0,w,h);
-  ctxm.fillStyle="rgba(0,0,0,.78)";
-  ctxm.fillRect(0,0,w,h);
-  ctxm.globalCompositeOperation="destination-out";
-  ctxm.fillRect(x,y,rw,rh);
-  ctxm.globalCompositeOperation="source-over";
-  ctxm.strokeStyle="rgba(255,255,255,.35)";
-  ctxm.lineWidth=2;
-  ctxm.strokeRect(x,y,rw,rh);
-  return{x,y,w:rw,h:rh};
+/* ROI */
+function R(){
+ const w=m.width,h=m.height;
+ const rw=w*.75,rh=h*.5;
+ const x=(w-rw)/2,y=h*.22;
+ cm.clearRect(0,0,w,h);
+ cm.fillStyle="rgba(0,0,0,.78)";
+ cm.fillRect(0,0,w,h);
+ cm.globalCompositeOperation="destination-out";
+ cm.fillRect(x,y,rw,rh);
+ cm.globalCompositeOperation="source-over";
+ cm.strokeStyle="rgba(255,255,255,.35)";
+ cm.lineWidth=2;
+ cm.strokeRect(x,y,rw,rh);
+ return{x,y,w:rw,h:rh};
 }
 
-(function loop(){
-  if(!bw.width)return requestAnimationFrame(loop);
-  const r=roi();
-  ctxb.drawImage(video,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h);
-  const img=ctxb.getImageData(r.x,r.y,r.w,r.h);
-  const d=img.data;
-  let g=[],sum=0;
+/* Enhancement + segmentation loop */
+(function L(){
+ if(!b.width)return requestAnimationFrame(L);
 
-  for(let i=0,j=0;i<d.length;i+=4,j++){
-    let x=.299*d[i]+.587*d[i+1]+.114*d[i+2];
-    x=Math.min(255,Math.max(0,(x-110)*1.8+128));
-    g[j]=x; sum+=x;
-  }
+ const r=R();
+ cb.drawImage(v,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h);
+ const img=cb.getImageData(r.x,r.y,r.w,r.h);
+ const d=img.data,px=d.length>>2;
 
-  const m=sum/g.length;
-  for(let i=0,j=0;i<d.length;i+=4,j++){
-    const f=g[j]>m*.6&&g[j]<m*1.2;
-    const bwv=f?(g[j]<m?0:255):0;
-    d[i]=d[i+1]=d[i+2]=bwv;
-  }
-  ctxb.putImageData(img,r.x,r.y);
-  requestAnimationFrame(loop);
+ let g=new Uint8Array(px),sum=0,min=255,max=0;
+
+ for(let i=0,j=0;i<d.length;i+=4,j++){
+  let x=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+  g[j]=x; sum+=x;
+  if(x<min)min=x;if(x>max)max=x;
+ }
+
+ const mean=sum/px,range=Math.max(1,max-min);
+
+ /* Local contrast + ridge emphasis */
+ for(let i=1;i<px-1;i++){
+  let v0=(g[i]-min)/range*255;
+  let gx=Math.abs(g[i]-g[i-1]);
+  let gy=Math.abs(g[i]-g[i+1]);
+  g[i]=Math.min(255,Math.max(0,v0*1.4+(gx+gy)*0.6));
+ }
+
+ /* Adaptive finger-only threshold (works with 1–4 fingers) */
+ for(let i=0,j=0;i<d.length;i+=4,j++){
+  const isFinger=g[j]>mean*0.55 && g[j]<mean*1.25;
+  const bw=isFinger?(g[j]<mean?0:255):0;
+  d[i]=d[i+1]=d[i+2]=bw;
+ }
+
+ cb.putImageData(img,r.x,r.y);
+ requestAnimationFrame(L);
 })();
+
 })();
 </script>
 
