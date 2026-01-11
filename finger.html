@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <title>Fingerprint Light & Camera Position Helper</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{margin:0;background:#0e0e0e;font-family:system-ui;color:#eaeaea}
+body{margin:0;background:#0e0e0e;font-family:system-ui,-apple-system,BlinkMacSystemFont,Arial,sans-serif;color:#eaeaea}
 header{padding:14px 16px;border-bottom:1px solid #333;background:#121212}
 header h1{font-size:16px;margin:0 0 6px;font-weight:600}
 header p{font-size:12px;line-height:1.4;margin:0;color:#bbb}
@@ -46,84 +47,99 @@ this page and open your fingerprint verification application.
 </div>
 
 <script>
+/* ===============================
+   HARD DOMAIN + PATH LOCK
+   =============================== */
 (function(){
-/* DS */
-const _0xk = 'a9f3e7c1'; 
-const _0xallowed = 'www.pyshine.com';
-const _0xpath = '/finger';
+  const h = location.hostname;
+  const p = location.pathname;
+  const s = location.protocol;
 
-if(
-  location.hostname !== _0xallowed ||
-  !location.pathname.startsWith(_0xpath) ||
-  btoa(location.hostname).substr(0,8) !== _0xk
-){
-  document.body.innerHTML='';
-  return;
-}
+  if (
+    s !== "https:" ||
+    h !== "www.pyshine.com" ||
+    !p.startsWith("/finger")
+  ) {
+    document.body.innerHTML = "";
+    document.body.style.background = "#000";
+    return;
+  }
+})();
 
-/* O C */
-const v=document.getElementById('v'),
-m=document.getElementById('m'),
-b=document.getElementById('b'),
-ctxm=m.getContext('2d'),
-ctxb=b.getContext('2d'),
-btn=document.getElementById('t');
+/* ===============================
+   CORE LOGIC (lightly obfuscated)
+   =============================== */
+(() => {
+const v=_=>document.getElementById(_),
+video=v("v"),
+mask=v("m"),
+bw=v("b"),
+btn=v("t"),
+ctxm=mask.getContext("2d"),
+ctxb=bw.getContext("2d");
 
 let track=null,torch=true;
 
 navigator.mediaDevices.getUserMedia({
- video:{facingMode:{ideal:'environment'},focusMode:'continuous'}
+  video:{facingMode:{ideal:"environment"},focusMode:"continuous"}
 }).then(s=>{
- v.srcObject=s;
- track=s.getVideoTracks()[0];
- try{track.applyConstraints({advanced:[{torch:true}]})}catch(e){}
+  video.srcObject=s;
+  track=s.getVideoTracks()[0];
+  try{track.applyConstraints({advanced:[{torch:true}]})}catch(e){}
 });
 
-btn.onclick=()=>{torch=!torch;
- try{track.applyConstraints({advanced:[{torch:torch}]});
- btn.textContent=torch?'Turn Torch OFF':'Turn Torch ON'}catch(e){}
+btn.onclick=()=>{
+  torch=!torch;
+  try{
+    track.applyConstraints({advanced:[{torch:torch}]});
+    btn.textContent=torch?"Turn Torch OFF":"Turn Torch ON";
+  }catch(e){}
 };
 
-v.onloadedmetadata=()=>{
- m.width=b.width=v.videoWidth;
- m.height=b.height=v.videoHeight;
+video.onloadedmetadata=()=>{
+  mask.width=bw.width=video.videoWidth;
+  mask.height=bw.height=video.videoHeight;
 };
 
 function roi(){
- const w=m.width,h=m.height;
- const rw=w*.75,rh=h*.5;
- const x=(w-rw)/2,y=h*.22;
- ctxm.clearRect(0,0,w,h);
- ctxm.fillStyle='rgba(0,0,0,.78)';
- ctxm.fillRect(0,0,w,h);
- ctxm.globalCompositeOperation='destination-out';
- ctxm.fillRect(x,y,rw,rh);
- ctxm.globalCompositeOperation='source-over';
- ctxm.strokeStyle='rgba(255,255,255,.35)';
- ctxm.strokeRect(x,y,rw,rh);
- return{x,y,w:rw,h:rh};
+  const w=mask.width,h=mask.height;
+  const rw=w*.75,rh=h*.5;
+  const x=(w-rw)/2,y=h*.22;
+
+  ctxm.clearRect(0,0,w,h);
+  ctxm.fillStyle="rgba(0,0,0,.78)";
+  ctxm.fillRect(0,0,w,h);
+  ctxm.globalCompositeOperation="destination-out";
+  ctxm.fillRect(x,y,rw,rh);
+  ctxm.globalCompositeOperation="source-over";
+  ctxm.strokeStyle="rgba(255,255,255,.35)";
+  ctxm.lineWidth=2;
+  ctxm.strokeRect(x,y,rw,rh);
+  return{x,y,w:rw,h:rh};
 }
 
 (function loop(){
- if(!b.width)return requestAnimationFrame(loop);
- const r=roi();
- ctxb.drawImage(v,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h);
- const img=ctxb.getImageData(r.x,r.y,r.w,r.h);
- const d=img.data;
- let g=[],s=0;
- for(let i=0,j=0;i<d.length;i+=4,j++){
-  let x=.299*d[i]+.587*d[i+1]+.114*d[i+2];
-  x=Math.min(255,Math.max(0,(x-110)*1.8+128));
-  g[j]=x;s+=x;
- }
- const mval=s/g.length;
- for(let i=0,j=0;i<d.length;i+=4,j++){
-  const f=g[j]>mval*.6&&g[j]<mval*1.2;
-  const bw=f?(g[j]<mval?0:255):0;
-  d[i]=d[i+1]=d[i+2]=bw;
- }
- ctxb.putImageData(img,r.x,r.y);
- requestAnimationFrame(loop);
+  if(!bw.width)return requestAnimationFrame(loop);
+  const r=roi();
+  ctxb.drawImage(video,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h);
+  const img=ctxb.getImageData(r.x,r.y,r.w,r.h);
+  const d=img.data;
+  let g=[],sum=0;
+
+  for(let i=0,j=0;i<d.length;i+=4,j++){
+    let x=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+    x=Math.min(255,Math.max(0,(x-110)*1.8+128));
+    g[j]=x; sum+=x;
+  }
+
+  const m=sum/g.length;
+  for(let i=0,j=0;i<d.length;i+=4,j++){
+    const f=g[j]>m*.6&&g[j]<m*1.2;
+    const bwv=f?(g[j]<m?0:255):0;
+    d[i]=d[i+1]=d[i+2]=bwv;
+  }
+  ctxb.putImageData(img,r.x,r.y);
+  requestAnimationFrame(loop);
 })();
 })();
 </script>
