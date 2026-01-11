@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fingerprint Capture – Quality Guided</title>
+<title>Fingerprint Capture – Finger Segmented Quality</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -35,16 +35,7 @@ video, canvas {
 
 video { z-index: 1; }
 #maskCanvas { z-index: 2; }
-#bwCanvas { z-index: 1; }
 
-.overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-}
-
-/* Donut */
 #donutCanvas {
     position: absolute;
     top: 50%;
@@ -86,8 +77,6 @@ video { z-index: 1; }
 <div class="box">
     <video id="video" autoplay playsinline></video>
     <canvas id="maskCanvas"></canvas>
-
-    <!-- Donut -->
     <canvas id="donutCanvas" width="140" height="140"></canvas>
     <div id="scoreText" class="score-text">0%</div>
 </div>
@@ -95,9 +84,7 @@ video { z-index: 1; }
 <!-- BOTTOM -->
 <div class="box">
     <canvas id="bwCanvas"></canvas>
-    <div class="overlay">
-        <div class="bottom-score">Peak Quality: <span id="peakScore">0%</span></div>
-    </div>
+    <div class="bottom-score">Peak: <span id="peakScore">0%</span></div>
 </div>
 
 </div>
@@ -115,9 +102,8 @@ const scoreText = document.getElementById("scoreText");
 const peakScoreEl = document.getElementById("peakScore");
 
 let peakScore = 0;
-let videoTrack = null;
 
-// === CAMERA INIT (TORCH ON + MACRO BIAS) ===
+// === CAMERA INIT (TORCH ON) ===
 navigator.mediaDevices.getUserMedia({
     video: {
         facingMode: { ideal: "environment" },
@@ -128,19 +114,11 @@ navigator.mediaDevices.getUserMedia({
     }
 }).then(stream => {
     video.srcObject = stream;
-    videoTrack = stream.getVideoTracks()[0];
-
-    // Enable torch by default
-    try {
-        videoTrack.applyConstraints({ advanced: [{ torch: true }] });
-    } catch {}
-
-    // Bias focus to near distance if supported
-    const caps = videoTrack.getCapabilities?.();
+    const track = stream.getVideoTracks()[0];
+    try { track.applyConstraints({ advanced: [{ torch: true }] }); } catch {}
+    const caps = track.getCapabilities?.();
     if (caps?.focusDistance) {
-        videoTrack.applyConstraints({
-            advanced: [{ focusDistance: caps.focusDistance.min }]
-        });
+        track.applyConstraints({ advanced: [{ focusDistance: caps.focusDistance.min }] });
     }
 });
 
@@ -153,11 +131,10 @@ function resize() {
 }
 video.addEventListener("loadedmetadata", resize);
 
-// === ROI RECTANGLE ===
+// === ROI ===
 function drawROI() {
     const w = maskCanvas.width;
     const h = maskCanvas.height;
-
     const rw = w * 0.72;
     const rh = h * 0.48;
     const x = (w - rw) / 2;
@@ -166,7 +143,6 @@ function drawROI() {
     maskCtx.clearRect(0,0,w,h);
     maskCtx.fillStyle = "rgba(0,0,0,0.75)";
     maskCtx.fillRect(0,0,w,h);
-
     maskCtx.globalCompositeOperation = "destination-out";
     maskCtx.fillRect(x, y, rw, rh);
     maskCtx.globalCompositeOperation = "source-over";
@@ -174,80 +150,90 @@ function drawROI() {
     return { x, y, w: rw, h: rh };
 }
 
-// === QUALITY DONUT ===
+// === DONUT ===
 function drawDonut(score) {
     dctx.clearRect(0,0,140,140);
+    const cx=70, cy=70, r=55;
+    const start=-Math.PI/2;
+    const end=start+2*Math.PI*score;
+    const color = score<0.4?"#ff4444":score<0.7?"#ffaa00":"#00ff88";
 
-    const cx = 70, cy = 70;
-    const r = 55;
-    const start = -Math.PI / 2;
-    const end = start + (Math.PI * 2 * score);
-
-    let color = score < 0.4 ? "#ff4444" :
-                score < 0.7 ? "#ffaa00" : "#00ff88";
-
-    // Background ring
-    dctx.strokeStyle = "#222";
-    dctx.lineWidth = 12;
+    dctx.lineWidth=12;
+    dctx.strokeStyle="#222";
     dctx.beginPath();
-    dctx.arc(cx, cy, r, 0, Math.PI * 2);
+    dctx.arc(cx,cy,r,0,2*Math.PI);
     dctx.stroke();
 
-    // Score ring
-    dctx.strokeStyle = color;
+    dctx.strokeStyle=color;
     dctx.beginPath();
-    dctx.arc(cx, cy, r, start, end);
+    dctx.arc(cx,cy,r,start,end);
     dctx.stroke();
 }
 
-// === PROCESSING LOOP ===
+// === PROCESS LOOP WITH FINGER SEGMENTATION ===
 function process() {
     if (!bwCanvas.width) return requestAnimationFrame(process);
 
     const roi = drawROI();
 
-    bwCtx.drawImage(video,
-        roi.x, roi.y, roi.w, roi.h,
-        roi.x, roi.y, roi.w, roi.h
-    );
-
+    bwCtx.drawImage(video, roi.x, roi.y, roi.w, roi.h, roi.x, roi.y, roi.w, roi.h);
     let img = bwCtx.getImageData(roi.x, roi.y, roi.w, roi.h);
     let d = img.data;
 
-    let sum = 0, sumSq = 0, edges = 0;
+    let gray = new Uint8Array(d.length/4);
+    let sum=0, sumSq=0;
 
-    // Grayscale + contrast stretch
-    for (let i = 0; i < d.length; i += 4) {
-        let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-        g = Math.min(255, Math.max(0, (g - 110) * 1.8 + 128));
-        d[i] = d[i+1] = d[i+2] = g;
-        sum += g;
-        sumSq += g*g;
-        if (i > 4) edges += Math.abs(g - d[i-4]);
+    // Grayscale + contrast
+    for (let i=0,j=0;i<d.length;i+=4,j++){
+        let g = 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+        g = Math.min(255, Math.max(0,(g-110)*1.8+128));
+        gray[j]=g;
+        sum+=g;
+        sumSq+=g*g;
     }
 
-    const mean = sum / (d.length / 4);
+    const mean = sum/gray.length;
 
-    // Adaptive threshold (finger optimized)
-    for (let i = 0; i < d.length; i += 4) {
-        let bw = d[i] < mean ? 0 : 255;
-        d[i] = d[i+1] = d[i+2] = bw;
+    // Finger mask (skin-like region)
+    let fingerMask = new Uint8Array(gray.length);
+    let fingerPixels=0;
+
+    for (let i=0;i<gray.length;i++){
+        if (gray[i] > mean*0.6 && gray[i] < mean*1.2){
+            fingerMask[i]=1;
+            fingerPixels++;
+        }
+    }
+
+    // Compute quality only on finger pixels
+    let edges=0, varSum=0;
+    for (let i=1;i<gray.length;i++){
+        if (fingerMask[i]){
+            let diff = Math.abs(gray[i]-gray[i-1]);
+            edges+=diff;
+            varSum+=(gray[i]-mean)*(gray[i]-mean);
+        }
+    }
+
+    // Render BW fingerprint (finger-only)
+    for (let i=0,j=0;i<d.length;i+=4,j++){
+        let bw = fingerMask[j] ? (gray[j]<mean?0:255) : 0;
+        d[i]=d[i+1]=d[i+2]=bw;
     }
 
     bwCtx.putImageData(img, roi.x, roi.y);
 
-    // Quality score normalization
-    let variance = sumSq / (d.length / 4) - mean * mean;
-    let rawScore = edges + variance;
-    let quality = Math.min(1, rawScore / 1500000);
+    // Normalize quality
+    let rawScore = (edges + varSum) / Math.max(1,fingerPixels);
+    let quality = Math.min(1, rawScore / 900);
 
-    let percent = Math.round(quality * 100);
-    scoreText.textContent = percent + "%";
+    let percent = Math.round(quality*100);
+    scoreText.textContent = percent+"%";
     drawDonut(quality);
 
-    if (percent > peakScore) {
-        peakScore = percent;
-        peakScoreEl.textContent = peakScore + "%";
+    if (percent>peakScore){
+        peakScore=percent;
+        peakScoreEl.textContent=peakScore+"%";
     }
 
     requestAnimationFrame(process);
