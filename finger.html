@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fingerprint Macro Capture</title>
+<title>Fingerprint Capture – Quality Guided</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -66,11 +66,11 @@ button {
     top: 8px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: bold;
 }
 
-.score {
+.scoreText {
     position: absolute;
     bottom: 8px;
     left: 50%;
@@ -79,6 +79,16 @@ button {
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 13px;
+}
+
+/* Quality donut */
+#donut {
+    position: absolute;
+    bottom: 60px;
+    right: 12px;
+    width: 80px;
+    height: 80px;
+    z-index: 4;
 }
 </style>
 </head>
@@ -92,13 +102,15 @@ button {
     <video id="video" autoplay playsinline></video>
     <canvas id="maskCanvas"></canvas>
 
+    <canvas id="donut"></canvas>
+
     <div class="controls">
         <button id="torchBtn">🔦 Torch ON</button>
     </div>
 
     <div class="overlay">
         <div id="arrow" class="arrow">⬆ Move Closer</div>
-        <div id="scoreTop" class="score">Quality: 0</div>
+        <div id="scoreTop" class="scoreText">Quality: 0</div>
     </div>
 </div>
 
@@ -106,7 +118,7 @@ button {
 <div class="box">
     <canvas id="bwCanvas"></canvas>
     <div class="overlay">
-        <div class="score">Peak: <span id="peakScore">0</span></div>
+        <div class="scoreText">Peak: <span id="peakScore">0</span></div>
     </div>
 </div>
 
@@ -119,6 +131,9 @@ const maskCtx = maskCanvas.getContext("2d");
 const bwCanvas = document.getElementById("bwCanvas");
 const bwCtx = bwCanvas.getContext("2d");
 
+const donutCanvas = document.getElementById("donut");
+const donutCtx = donutCanvas.getContext("2d");
+
 const arrow = document.getElementById("arrow");
 const scoreTop = document.getElementById("scoreTop");
 const peakScoreEl = document.getElementById("peakScore");
@@ -128,31 +143,26 @@ let peakScore = 0;
 let videoTrack = null;
 let torchOn = false;
 
-// === CAMERA INIT (MACRO OPTIMIZED) ===
+// Camera init (macro-optimized)
 navigator.mediaDevices.getUserMedia({
     video: {
         facingMode: { ideal: "environment" },
         focusMode: "continuous",
-        exposureMode: "continuous",
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        exposureMode: "continuous"
     }
 }).then(stream => {
     video.srcObject = stream;
     videoTrack = stream.getVideoTracks()[0];
 
-    // Try to bias focus toward near distance (if supported)
     const caps = videoTrack.getCapabilities?.();
     if (caps?.focusDistance) {
         videoTrack.applyConstraints({
-            advanced: [{
-                focusDistance: caps.focusDistance.min
-            }]
+            advanced: [{ focusDistance: caps.focusDistance.min }]
         });
     }
-}).catch(err => alert(err.message));
+});
 
-// === TORCH ===
+// Torch
 torchBtn.onclick = async () => {
     if (!videoTrack) return;
     try {
@@ -162,7 +172,7 @@ torchBtn.onclick = async () => {
         });
         torchBtn.textContent = torchOn ? "🔦 Torch OFF" : "🔦 Torch ON";
     } catch {
-        alert("Torch not supported on this device/browser");
+        alert("Torch not supported");
     }
 };
 
@@ -172,14 +182,14 @@ function resize() {
     const h = video.videoHeight || 480;
     maskCanvas.width = bwCanvas.width = w;
     maskCanvas.height = bwCanvas.height = h;
+    donutCanvas.width = donutCanvas.height = 80;
 }
 video.addEventListener("loadedmetadata", resize);
 
-// === RECTANGLE ROI ===
+// ROI
 function drawROI() {
     const w = maskCanvas.width;
     const h = maskCanvas.height;
-
     const roiW = w * 0.72;
     const roiH = h * 0.48;
     const x = (w - roiW) / 2;
@@ -188,7 +198,6 @@ function drawROI() {
     maskCtx.clearRect(0,0,w,h);
     maskCtx.fillStyle = "rgba(0,0,0,0.75)";
     maskCtx.fillRect(0,0,w,h);
-
     maskCtx.globalCompositeOperation = "destination-out";
     maskCtx.fillRect(x, y, roiW, roiH);
     maskCtx.globalCompositeOperation = "source-over";
@@ -196,7 +205,34 @@ function drawROI() {
     return { x, y, w: roiW, h: roiH };
 }
 
-// === FINGERPRINT ENHANCEMENT ===
+// Draw quality donut
+function drawDonut(value) {
+    const ctx = donutCtx;
+    const r = 34;
+    const cx = 40;
+    const cy = 40;
+    const pct = Math.min(1, value);
+
+    ctx.clearRect(0,0,80,80);
+
+    // Background ring
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Color by quality
+    let color = pct < 0.4 ? "#ff4444" : pct < 0.7 ? "#ffaa00" : "#00ff88";
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + pct * Math.PI * 2);
+    ctx.stroke();
+}
+
+// Processing
 function process() {
     if (!bwCanvas.width) return requestAnimationFrame(process);
 
@@ -215,20 +251,16 @@ function process() {
     for (let i = 0; i < d.length; i += 4) {
         let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
 
-        // Contrast boost (macro-friendly)
-        g = Math.min(255, Math.max(0, (g - 128) * 1.6 + 128));
+        // Sharpen + contrast
+        g = Math.min(255, Math.max(0, (g - 128) * 1.7 + 128));
 
         d[i] = d[i+1] = d[i+2] = g;
-
         sum += g;
         sumSq += g*g;
-
         if (i > 4) sumEdges += Math.abs(g - d[i-4]);
     }
 
     let mean = sum / (d.length / 4);
-
-    // Adaptive threshold
     for (let i = 0; i < d.length; i += 4) {
         let bw = d[i] < mean ? 0 : 255;
         d[i] = d[i+1] = d[i+2] = bw;
@@ -239,16 +271,19 @@ function process() {
     let variance = sumSq / (d.length / 4) - mean * mean;
     let score = Math.round(sumEdges + variance);
 
-    scoreTop.textContent = `Quality: ${score}`;
-
     if (score > peakScore) {
         peakScore = score;
         peakScoreEl.textContent = peakScore;
     }
 
-    if (score < peakScore * 0.85) arrow.textContent = "⬆ Move Closer";
-    else if (score > peakScore * 0.95) arrow.textContent = "⬇ Move Away";
-    else arrow.textContent = "✔ Hold Position";
+    scoreTop.textContent = `Quality: ${score}`;
+
+    const norm = peakScore ? score / peakScore : 0;
+    drawDonut(norm);
+
+    if (norm < 0.85) arrow.textContent = "⬆ Move Closer";
+    else if (norm > 1.05) arrow.textContent = "⬇ Move Away";
+    else arrow.textContent = "✔ BEST";
 
     requestAnimationFrame(process);
 }
