@@ -2,48 +2,63 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fingerprint Visibility Check</title>
+<title>Fingerprint Light & Camera Position Helper</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
     margin: 0;
-    background: #0b0b0b;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    color: #ffffff;
+    background: #0e0e0e;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    color: #eaeaea;
+}
+
+header {
+    padding: 14px 16px;
+    border-bottom: 1px solid #333;
+    background: #121212;
+}
+
+header h1 {
+    font-size: 16px;
+    margin: 0 0 6px 0;
+    font-weight: 600;
+}
+
+header p {
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 0;
+    color: #bbb;
 }
 
 .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh - 96px);
+    padding: 10px;
+    gap: 10px;
 }
 
-/* Header */
-.header {
-    padding: 14px 16px 10px;
-    background: linear-gradient(to bottom, #111, #0b0b0b);
-    border-bottom: 1px solid #222;
-}
-
-.header h1 {
-    font-size: 16px;
-    margin: 0 0 6px;
-    font-weight: 600;
-}
-
-.header p {
-    font-size: 12px;
-    line-height: 1.4;
-    margin: 0;
-    color: #cfcfcf;
-}
-
-/* Camera boxes */
 .box {
     flex: 1;
     position: relative;
     overflow: hidden;
+    border: 2px solid #2a2a2a;
+    border-radius: 10px;
+    background: #000;
+}
+
+.box-title {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 11px;
+    background: rgba(0,0,0,0.6);
+    padding: 3px 6px;
+    border-radius: 6px;
+    z-index: 5;
+    letter-spacing: 0.3px;
 }
 
 video, canvas {
@@ -57,52 +72,63 @@ video, canvas {
 video { z-index: 1; }
 #maskCanvas { z-index: 2; }
 
-/* Footer note */
-.footer {
-    padding: 8px 12px;
-    text-align: center;
-    font-size: 11px;
-    color: #aaa;
-    background: #0b0b0b;
-    border-top: 1px solid #222;
+.controls {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+}
+
+button {
+    background: #1f1f1f;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+button:active {
+    background: #333;
 }
 </style>
 </head>
 
 <body>
 
+<header>
+    <h1>Fingerprint Light & Camera Position Helper</h1>
+    <p>
+        This tool helps you understand how your current lighting, camera position,
+        and background affect fingerprint visibility.
+        <br>
+        Adjust the phone distance, angle, and light until you can clearly see
+        fingerprint ridges below. Once visible, close this page and open your
+        fingerprint verification application.
+    </p>
+</header>
+
 <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">
-        <h1>Fingerprint Visibility Check</h1>
-        <p>
-            This page helps you visualize the underlying fingerprints using your current
-            camera position, lighting, and background. Adjust your hand, distance, and
-            light until fingerprint ridges become visible.
-            <br><br>
-            <strong>If you can clearly see fingerprint patterns below,</strong>
-            this is the ideal setup. You may then close this page and open your
-            fingerprint verification application.
-        </p>
-    </div>
-
-    <!-- TOP: LIVE CAMERA WITH ROI -->
+    <!-- TOP: LIVE CAMERA -->
     <div class="box">
+        <div class="box-title">Live Camera (Adjust Light & Position)</div>
         <video id="video" autoplay playsinline></video>
         <canvas id="maskCanvas"></canvas>
     </div>
 
-    <!-- BOTTOM: PROCESSED FINGERPRINT VIEW -->
+    <!-- BOTTOM: PROCESSED -->
     <div class="box">
+        <div class="box-title">Detected Fingerprints (Black & White)</div>
         <canvas id="bwCanvas"></canvas>
     </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-        Tip: Use steady hands, avoid glare, and keep fingers flat for best results.
-    </div>
+</div>
 
+<div class="controls">
+    <button id="torchBtn">Turn Torch OFF</button>
 </div>
 
 <script>
@@ -111,8 +137,12 @@ const maskCanvas = document.getElementById("maskCanvas");
 const maskCtx = maskCanvas.getContext("2d");
 const bwCanvas = document.getElementById("bwCanvas");
 const bwCtx = bwCanvas.getContext("2d");
+const torchBtn = document.getElementById("torchBtn");
 
-// === CAMERA INIT (TORCH + MACRO BIAS) ===
+let videoTrack = null;
+let torchOn = true;
+
+// === CAMERA INIT (TORCH ON BY DEFAULT) ===
 navigator.mediaDevices.getUserMedia({
     video: {
         facingMode: { ideal: "environment" },
@@ -123,21 +153,29 @@ navigator.mediaDevices.getUserMedia({
     }
 }).then(stream => {
     video.srcObject = stream;
-    const track = stream.getVideoTracks()[0];
+    videoTrack = stream.getVideoTracks()[0];
 
-    // Torch ON (if supported)
     try {
-        track.applyConstraints({ advanced: [{ torch: true }] });
+        videoTrack.applyConstraints({ advanced: [{ torch: true }] });
     } catch {}
 
-    // Bias toward macro focus if available
-    const caps = track.getCapabilities?.();
+    const caps = videoTrack.getCapabilities?.();
     if (caps?.focusDistance) {
-        track.applyConstraints({
+        videoTrack.applyConstraints({
             advanced: [{ focusDistance: caps.focusDistance.min }]
         });
     }
 });
+
+// Torch toggle
+torchBtn.onclick = () => {
+    if (!videoTrack) return;
+    torchOn = !torchOn;
+    try {
+        videoTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+        torchBtn.textContent = torchOn ? "Turn Torch OFF" : "Turn Torch ON";
+    } catch {}
+};
 
 // Resize canvases
 function resize() {
@@ -148,28 +186,30 @@ function resize() {
 }
 video.addEventListener("loadedmetadata", resize);
 
-// === ROI MASK ===
+// === ROI DRAW ===
 function drawROI() {
     const w = maskCanvas.width;
     const h = maskCanvas.height;
-
-    const rw = w * 0.72;
-    const rh = h * 0.48;
+    const rw = w * 0.75;
+    const rh = h * 0.5;
     const x = (w - rw) / 2;
     const y = h * 0.22;
 
-    maskCtx.clearRect(0, 0, w, h);
+    maskCtx.clearRect(0,0,w,h);
     maskCtx.fillStyle = "rgba(0,0,0,0.78)";
-    maskCtx.fillRect(0, 0, w, h);
-
+    maskCtx.fillRect(0,0,w,h);
     maskCtx.globalCompositeOperation = "destination-out";
     maskCtx.fillRect(x, y, rw, rh);
     maskCtx.globalCompositeOperation = "source-over";
 
+    maskCtx.strokeStyle = "rgba(255,255,255,0.35)";
+    maskCtx.lineWidth = 2;
+    maskCtx.strokeRect(x, y, rw, rh);
+
     return { x, y, w: rw, h: rh };
 }
 
-// === PROCESS LOOP (SEGMENTED FINGERPRINT VIEW) ===
+// === PROCESS LOOP (FINGER SEGMENTATION ONLY) ===
 function process() {
     if (!bwCanvas.width) return requestAnimationFrame(process);
 
@@ -187,7 +227,6 @@ function process() {
     let gray = new Uint8Array(d.length / 4);
     let sum = 0;
 
-    // Grayscale + contrast boost
     for (let i = 0, j = 0; i < d.length; i += 4, j++) {
         let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
         g = Math.min(255, Math.max(0, (g - 110) * 1.8 + 128));
@@ -197,19 +236,10 @@ function process() {
 
     const mean = sum / gray.length;
 
-    // Finger segmentation mask
-    let fingerMask = new Uint8Array(gray.length);
-    for (let i = 0; i < gray.length; i++) {
-        if (gray[i] > mean * 0.6 && gray[i] < mean * 1.2) {
-            fingerMask[i] = 1;
-        }
-    }
-
-    // Render fingerprint-only black & white
+    // Finger-only thresholding
     for (let i = 0, j = 0; i < d.length; i += 4, j++) {
-        let bw = fingerMask[j]
-            ? (gray[j] < mean ? 0 : 255)
-            : 0;
+        const isFinger = gray[j] > mean * 0.6 && gray[j] < mean * 1.2;
+        const bw = isFinger ? (gray[j] < mean ? 0 : 255) : 0;
         d[i] = d[i+1] = d[i+2] = bw;
     }
 
