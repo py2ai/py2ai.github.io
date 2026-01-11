@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>4-Finger Live Fingerprint Capture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.box {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+video, canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.arrow {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.score {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.mask-label {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- TOP: Camera + Mask -->
+    <div class="box">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="maskCanvas"></canvas>
+
+        <div class="overlay">
+            <div id="arrow" class="arrow">⬆ Move Closer</div>
+            <div id="scoreTop" class="score">Detail Score: 0</div>
+            <div class="mask-label">Place 4 fingers inside the slots</div>
+        </div>
+    </div>
+
+    <!-- BOTTOM: Fingerprint BW -->
+    <div class="box">
+        <canvas id="bwCanvas"></canvas>
+        <div class="overlay">
+            <div class="score">Peak: <span id="peakScore">0</span></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const video = document.getElementById("video");
+const maskCanvas = document.getElementById("maskCanvas");
+const maskCtx = maskCanvas.getContext("2d");
+
+const bwCanvas = document.getElementById("bwCanvas");
+const bwCtx = bwCanvas.getContext("2d");
+
+const arrow = document.getElementById("arrow");
+const scoreTop = document.getElementById("scoreTop");
+const peakScoreEl = document.getElementById("peakScore");
+
+let peakScore = 0;
+
+// Camera
+navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "environment" }
+}).then(stream => video.srcObject = stream);
+
+// Resize canvases
+function resize() {
+    maskCanvas.width = bwCanvas.width = video.videoWidth || 640;
+    maskCanvas.height = bwCanvas.height = video.videoHeight || 480;
+}
+video.addEventListener("loadedmetadata", resize);
+
+// Draw 4-finger mask
+function drawMask() {
+    const w = maskCanvas.width;
+    const h = maskCanvas.height;
+
+    maskCtx.clearRect(0,0,w,h);
+
+    // Dark overlay
+    maskCtx.fillStyle = "rgba(0,0,0,0.7)";
+    maskCtx.fillRect(0,0,w,h);
+
+    // Cut out finger slots
+    maskCtx.globalCompositeOperation = "destination-out";
+
+    const fingerWidth = w * 0.12;
+    const fingerHeight = h * 0.7;
+    const spacing = fingerWidth * 0.3;
+    const startX = (w - (4*fingerWidth + 3*spacing)) / 2;
+    const y = h * 0.15;
+    const radius = fingerWidth * 0.45;
+
+    for (let i = 0; i < 4; i++) {
+        const x = startX + i * (fingerWidth + spacing);
+
+        maskCtx.beginPath();
+        maskCtx.moveTo(x + radius, y);
+        maskCtx.lineTo(x + fingerWidth - radius, y);
+        maskCtx.quadraticCurveTo(x + fingerWidth, y, x + fingerWidth, y + radius);
+        maskCtx.lineTo(x + fingerWidth, y + fingerHeight - radius);
+        maskCtx.quadraticCurveTo(x + fingerWidth, y + fingerHeight, x + fingerWidth - radius, y + fingerHeight);
+        maskCtx.lineTo(x + radius, y + fingerHeight);
+        maskCtx.quadraticCurveTo(x, y + fingerHeight, x, y + fingerHeight - radius);
+        maskCtx.lineTo(x, y + radius);
+        maskCtx.quadraticCurveTo(x, y, x + radius, y);
+        maskCtx.closePath();
+        maskCtx.fill();
+    }
+
+    maskCtx.globalCompositeOperation = "source-over";
+}
+
+// Processing loop
+function process() {
+    if (!bwCanvas.width) return requestAnimationFrame(process);
+
+    drawMask();
+
+    // Draw masked camera area only
+    bwCtx.drawImage(video, 0, 0, bwCanvas.width, bwCanvas.height);
+
+    let img = bwCtx.getImageData(0,0,bwCanvas.width,bwCanvas.height);
+    let d = img.data;
+
+    let sumEdges = 0, sum = 0, sumSq = 0;
+
+    for (let i = 0; i < d.length; i += 4) {
+        let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+        let bw = g > 120 ? 255 : 0;
+        d[i] = d[i+1] = d[i+2] = bw;
+
+        sum += g;
+        sumSq += g*g;
+
+        if (i > 4) sumEdges += Math.abs(g - d[i-4]);
+    }
+
+    bwCtx.putImageData(img,0,0);
+
+    let mean = sum / (d.length/4);
+    let variance = sumSq / (d.length/4) - mean*mean;
+    let score = Math.round(sumEdges + variance);
+
+    scoreTop.textContent = `Detail Score: ${score}`;
+
+    if (score > peakScore) {
+        peakScore = score;
+        peakScoreEl.textContent = peakScore;
+    }
+
+    if (score < peakScore * 0.85) arrow.textContent = "⬆ Move Closer";
+    else if (score > peakScore * 0.95) arrow.textContent = "⬇ Move Away";
+    else arrow.textContent = "✔ Hold Position";
+
+    requestAnimationFrame(process);
+}
+
+process();
+</script>
+
+</body>
+</html>
