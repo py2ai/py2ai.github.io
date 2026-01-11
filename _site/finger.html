@@ -2,29 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fingerprint Macro Capture</title>
+<title>Fingerprint Capture – Focus Quality (Laplacian)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
     margin: 0;
     background: #000;
-    color: #fff;
     font-family: Arial, sans-serif;
+    color: #fff;
 }
-
 .container {
     display: flex;
     flex-direction: column;
     height: 100vh;
 }
-
 .box {
     flex: 1;
     position: relative;
     overflow: hidden;
 }
-
 video, canvas {
     position: absolute;
     inset: 0;
@@ -32,45 +29,27 @@ video, canvas {
     height: 100%;
     object-fit: cover;
 }
-
 video { z-index: 1; }
 #maskCanvas { z-index: 2; }
-#bwCanvas { z-index: 1; }
-
-.overlay {
+#donutCanvas {
     position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-}
-
-.controls {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 4;
-    pointer-events: auto;
-}
-
-button {
-    background: #222;
-    color: #fff;
-    border: 1px solid #444;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-}
-
-.arrow {
-    position: absolute;
-    top: 8px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    font-size: 26px;
-    font-weight: bold;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    z-index: 4;
 }
-
-.score {
+.score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    font-weight: bold;
+    z-index: 5;
+}
+.bottom-score {
     position: absolute;
     bottom: 8px;
     left: 50%;
@@ -87,27 +66,16 @@ button {
 
 <div class="container">
 
-<!-- TOP -->
 <div class="box">
     <video id="video" autoplay playsinline></video>
     <canvas id="maskCanvas"></canvas>
-
-    <div class="controls">
-        <button id="torchBtn">🔦 Torch ON</button>
-    </div>
-
-    <div class="overlay">
-        <div id="arrow" class="arrow">⬆ Move Closer</div>
-        <div id="scoreTop" class="score">Quality: 0</div>
-    </div>
+    <canvas id="donutCanvas" width="140" height="140"></canvas>
+    <div id="scoreText" class="score-text">0%</div>
 </div>
 
-<!-- BOTTOM -->
 <div class="box">
     <canvas id="bwCanvas"></canvas>
-    <div class="overlay">
-        <div class="score">Peak: <span id="peakScore">0</span></div>
-    </div>
+    <div class="bottom-score">Peak: <span id="peakScore">0%</span></div>
 </div>
 
 </div>
@@ -119,16 +87,14 @@ const maskCtx = maskCanvas.getContext("2d");
 const bwCanvas = document.getElementById("bwCanvas");
 const bwCtx = bwCanvas.getContext("2d");
 
-const arrow = document.getElementById("arrow");
-const scoreTop = document.getElementById("scoreTop");
+const donut = document.getElementById("donutCanvas");
+const dctx = donut.getContext("2d");
+const scoreText = document.getElementById("scoreText");
 const peakScoreEl = document.getElementById("peakScore");
-const torchBtn = document.getElementById("torchBtn");
 
 let peakScore = 0;
-let videoTrack = null;
-let torchOn = false;
 
-// === CAMERA INIT (MACRO OPTIMIZED) ===
+// === CAMERA INIT (TORCH + MACRO BIAS) ===
 navigator.mediaDevices.getUserMedia({
     video: {
         facingMode: { ideal: "environment" },
@@ -139,32 +105,13 @@ navigator.mediaDevices.getUserMedia({
     }
 }).then(stream => {
     video.srcObject = stream;
-    videoTrack = stream.getVideoTracks()[0];
-
-    // Try to bias focus toward near distance (if supported)
-    const caps = videoTrack.getCapabilities?.();
+    const track = stream.getVideoTracks()[0];
+    try { track.applyConstraints({ advanced: [{ torch: true }] }); } catch {}
+    const caps = track.getCapabilities?.();
     if (caps?.focusDistance) {
-        videoTrack.applyConstraints({
-            advanced: [{
-                focusDistance: caps.focusDistance.min
-            }]
-        });
+        track.applyConstraints({ advanced: [{ focusDistance: caps.focusDistance.min }] });
     }
-}).catch(err => alert(err.message));
-
-// === TORCH ===
-torchBtn.onclick = async () => {
-    if (!videoTrack) return;
-    try {
-        torchOn = !torchOn;
-        await videoTrack.applyConstraints({
-            advanced: [{ torch: torchOn }]
-        });
-        torchBtn.textContent = torchOn ? "🔦 Torch OFF" : "🔦 Torch ON";
-    } catch {
-        alert("Torch not supported on this device/browser");
-    }
-};
+});
 
 // Resize
 function resize() {
@@ -175,80 +122,111 @@ function resize() {
 }
 video.addEventListener("loadedmetadata", resize);
 
-// === RECTANGLE ROI ===
+// ROI
 function drawROI() {
     const w = maskCanvas.width;
     const h = maskCanvas.height;
-
-    const roiW = w * 0.72;
-    const roiH = h * 0.48;
-    const x = (w - roiW) / 2;
+    const rw = w * 0.72;
+    const rh = h * 0.48;
+    const x = (w - rw) / 2;
     const y = h * 0.22;
 
     maskCtx.clearRect(0,0,w,h);
     maskCtx.fillStyle = "rgba(0,0,0,0.75)";
     maskCtx.fillRect(0,0,w,h);
-
     maskCtx.globalCompositeOperation = "destination-out";
-    maskCtx.fillRect(x, y, roiW, roiH);
+    maskCtx.fillRect(x, y, rw, rh);
     maskCtx.globalCompositeOperation = "source-over";
 
-    return { x, y, w: roiW, h: roiH };
+    return { x, y, w: rw, h: rh };
 }
 
-// === FINGERPRINT ENHANCEMENT ===
+// Donut
+function drawDonut(score) {
+    dctx.clearRect(0,0,140,140);
+    const cx=70, cy=70, r=55;
+    const start=-Math.PI/2;
+    const end=start+2*Math.PI*score;
+    const color = score<0.4?"#ff4444":score<0.7?"#ffaa00":"#00ff88";
+
+    dctx.lineWidth=12;
+    dctx.strokeStyle="#222";
+    dctx.beginPath();
+    dctx.arc(cx,cy,r,0,2*Math.PI);
+    dctx.stroke();
+
+    dctx.strokeStyle=color;
+    dctx.beginPath();
+    dctx.arc(cx,cy,r,start,end);
+    dctx.stroke();
+}
+
+// === MAIN LOOP (LAPLACIAN FOCUS) ===
 function process() {
     if (!bwCanvas.width) return requestAnimationFrame(process);
 
     const roi = drawROI();
 
-    bwCtx.drawImage(video,
-        roi.x, roi.y, roi.w, roi.h,
-        roi.x, roi.y, roi.w, roi.h
-    );
-
+    bwCtx.drawImage(video, roi.x, roi.y, roi.w, roi.h, roi.x, roi.y, roi.w, roi.h);
     let img = bwCtx.getImageData(roi.x, roi.y, roi.w, roi.h);
     let d = img.data;
 
-    let sumEdges = 0, sum = 0, sumSq = 0;
+    let gray = new Float32Array(d.length/4);
+    let mean = 0;
 
-    for (let i = 0; i < d.length; i += 4) {
+    for (let i=0,j=0;i<d.length;i+=4,j++){
         let g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+        gray[j] = g;
+        mean += g;
+    }
+    mean /= gray.length;
 
-        // Contrast boost (macro-friendly)
-        g = Math.min(255, Math.max(0, (g - 128) * 1.6 + 128));
-
-        d[i] = d[i+1] = d[i+2] = g;
-
-        sum += g;
-        sumSq += g*g;
-
-        if (i > 4) sumEdges += Math.abs(g - d[i-4]);
+    // Finger segmentation
+    let mask = new Uint8Array(gray.length);
+    let count = 0;
+    for (let i=0;i<gray.length;i++){
+        if (gray[i] > mean*0.6 && gray[i] < mean*1.25){
+            mask[i] = 1;
+            count++;
+        }
     }
 
-    let mean = sum / (d.length / 4);
+    // Laplacian focus measure
+    let lapSum = 0, lapSq = 0, n = 0;
+    const w = roi.w;
 
-    // Adaptive threshold
-    for (let i = 0; i < d.length; i += 4) {
-        let bw = d[i] < mean ? 0 : 255;
-        d[i] = d[i+1] = d[i+2] = bw;
+    for (let i=w+1;i<gray.length-w-1;i++){
+        if (!mask[i]) continue;
+        let lap =
+            -4 * gray[i] +
+            gray[i-1] + gray[i+1] +
+            gray[i-w] + gray[i+w];
+
+        lapSum += lap;
+        lapSq += lap * lap;
+        n++;
     }
 
+    let variance = n ? (lapSq / n - (lapSum / n) ** 2) : 0;
+
+    // Render BW fingerprint
+    for (let i=0,j=0;i<d.length;i+=4,j++){
+        let bw = mask[j] ? (gray[j] < mean ? 0 : 255) : 0;
+        d[i]=d[i+1]=d[i+2]=bw;
+    }
     bwCtx.putImageData(img, roi.x, roi.y);
 
-    let variance = sumSq / (d.length / 4) - mean * mean;
-    let score = Math.round(sumEdges + variance);
+    // Normalize focus score
+    let focusScore = Math.min(1, variance / 1200);
+    let percent = Math.round(focusScore * 100);
 
-    scoreTop.textContent = `Quality: ${score}`;
+    scoreText.textContent = percent + "%";
+    drawDonut(focusScore);
 
-    if (score > peakScore) {
-        peakScore = score;
-        peakScoreEl.textContent = peakScore;
+    if (percent > peakScore) {
+        peakScore = percent;
+        peakScoreEl.textContent = peakScore + "%";
     }
-
-    if (score < peakScore * 0.85) arrow.textContent = "⬆ Move Closer";
-    else if (score > peakScore * 0.95) arrow.textContent = "⬇ Move Away";
-    else arrow.textContent = "✔ Hold Position";
 
     requestAnimationFrame(process);
 }
