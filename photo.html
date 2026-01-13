@@ -48,6 +48,11 @@ video,canvas{
 }
 video{object-fit:cover}
 
+/* mirror only for front camera (display only) */
+video.mirror{
+  transform:scaleX(-1);
+}
+
 #output{display:none}
 
 .frame-title{
@@ -60,7 +65,7 @@ video{object-fit:cover}
   z-index:5;
 }
 
-/* live info */
+/* info */
 .info{
   position:absolute;
   bottom:8px;
@@ -72,18 +77,41 @@ video{object-fit:cover}
   z-index:5;
 }
 
+/* camera switch */
+.switch{
+  position:absolute;
+  top:6px;
+  right:8px;
+  font-size:11px;
+  background:rgba(0,0,0,.6);
+  padding:6px 10px;
+  border-radius:999px;
+  cursor:pointer;
+  z-index:6;
+  user-select:none;
+}
+
 /* capture button */
 .capture{
   position:absolute;
   left:50%;
   bottom:26%;
   transform:translateX(-50%);
-  width:72px;height:72px;
+  width:72px;
+  height:72px;
   border-radius:50%;
   background:#fff;
   border:5px solid #111;
   cursor:pointer;
   z-index:6;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  font-weight:600;
+  color:#111;
+  user-select:none;
 }
 .capture:active{transform:translateX(-50%) scale(.95)}
 
@@ -91,14 +119,13 @@ video{object-fit:cover}
 .countdown{
   position:absolute;
   inset:0;
-  display:flex;
+  display:none;
   align-items:center;
   justify-content:center;
   font-size:72px;
   font-weight:700;
   background:rgba(0,0,0,.45);
   z-index:10;
-  display:none;
 }
 </style>
 </head>
@@ -107,17 +134,19 @@ video{object-fit:cover}
 
 <header>
 <h1>Passport Photo Capture</h1>
-<p>Align head & shoulders. Button is placed for easy thumb access.</p>
+<p>Use front or back camera. Front camera preview is mirrored.</p>
 </header>
 
 <div class="container">
   <div class="frame">
     <div class="frame-title">Passport Frame (3×4)</div>
+    <div class="switch" id="switch">Front</div>
+
     <video id="video" autoplay playsinline></video>
     <canvas id="mask"></canvas>
 
     <div class="info" id="info">Live size: — KB</div>
-    <div class="capture" id="capture"></div>
+    <div class="capture" id="capture">Press</div>
     <div class="countdown" id="countdown">10</div>
   </div>
 </div>
@@ -133,9 +162,13 @@ const output=document.getElementById("output");
 const info=document.getElementById("info");
 const captureBtn=document.getElementById("capture");
 const countdownEl=document.getElementById("countdown");
+const switchBtn=document.getElementById("switch");
 
 const mctx=mask.getContext("2d");
 const octx=output.getContext("2d");
+
+let facing="user";
+let stream=null;
 
 /* AUDIO */
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -144,14 +177,32 @@ function beep(freq=800,dur=0.1){
   const g=audioCtx.createGain();
   o.frequency.value=freq;
   o.connect(g); g.connect(audioCtx.destination);
-  o.start(); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+dur);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+dur);
   o.stop(audioCtx.currentTime+dur);
 }
 
-/* CAMERA */
-navigator.mediaDevices.getUserMedia({
-  video:{facingMode:"user",width:{ideal:1280},height:{ideal:1920}}
-}).then(s=>video.srcObject=s);
+/* CAMERA START */
+async function startCamera(){
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+
+  stream=await navigator.mediaDevices.getUserMedia({
+    video:{facingMode:facing,width:{ideal:1280},height:{ideal:1920}}
+  });
+  video.srcObject=stream;
+
+  if(facing==="user") video.classList.add("mirror");
+  else video.classList.remove("mirror");
+}
+
+startCamera();
+
+/* SWITCH CAMERA */
+switchBtn.onclick=()=>{
+  facing = facing==="user" ? "environment" : "user";
+  switchBtn.textContent = facing==="user" ? "Front" : "Back";
+  startCamera();
+};
 
 /* RESIZE */
 function resize(){
@@ -202,7 +253,7 @@ function loop(){
 }
 loop();
 
-/* CAPTURE WITH COUNTDOWN */
+/* COUNTDOWN + CAPTURE */
 captureBtn.onclick=()=>{
   audioCtx.resume();
   let t=10;
@@ -223,6 +274,7 @@ captureBtn.onclick=()=>{
   },1000);
 };
 
+/* SAVE (NOT MIRRORED) */
 function takePhoto(){
   beep(1200,0.2);
 
