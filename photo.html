@@ -32,7 +32,6 @@ header p{font-size:12px;color:#bbb;margin:0}
 .container{
   display:flex;
   flex-direction:column;
-  gap:14px;
   padding:12px;
   min-height:calc(100vh - 120px);
 }
@@ -66,35 +65,43 @@ video,canvas{
   height:100%;
 }
 
-/* camera must NEVER stretch */
-video{
-  object-fit:cover;
-}
+video{ object-fit:cover; }
 
-/* output canvas hidden until save */
-#output{
-  display:none;
-}
+#output{ display:none; }
 
-.controls{
-  padding:12px;
-  border-top:1px solid #333;
-  background:#111;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-button{
-  background:#1f1f1f;
+/* SAVE BUTTON ON IMAGE */
+.capture-btn{
+  position:absolute;
+  left:50%;
+  top:72%;
+  transform:translate(-50%,-50%);
+  z-index:10;
+  background:rgba(20,20,20,.85);
+  border:1px solid #444;
   color:#fff;
-  border:1px solid #333;
-  border-radius:8px;
-  padding:10px 16px;
-  font-size:13px;
+  padding:14px 22px;
+  border-radius:999px;
+  font-size:14px;
+  cursor:pointer;
 }
 
+/* COUNTDOWN */
+.countdown{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:72px;
+  font-weight:700;
+  background:rgba(0,0,0,.45);
+  z-index:20;
+}
+
+/* INFO */
 .info{
+  text-align:center;
+  padding:10px;
   font-size:12px;
   color:#bbb;
 }
@@ -114,13 +121,13 @@ button{
   <div class="frame-title">Live Passport Frame (3×4)</div>
   <video id="video" autoplay playsinline></video>
   <canvas id="mask"></canvas>
+
+  <button class="capture-btn" id="save">Take Photo</button>
+  <div class="countdown" id="countdown">10</div>
 </div>
 
-</div>
+<div class="info" id="info">Live size: — KB</div>
 
-<div class="controls">
-  <div class="info" id="info">360×480 • JPEG ≤ 20 KB</div>
-  <button id="save">Save Photo</button>
 </div>
 
 <canvas id="output" width="360" height="480"></canvas>
@@ -134,22 +141,18 @@ const video = document.getElementById("video");
 const mask = document.getElementById("mask");
 const output = document.getElementById("output");
 const info = document.getElementById("info");
+const countdownEl = document.getElementById("countdown");
+const saveBtn = document.getElementById("save");
 
 const mctx = mask.getContext("2d");
 const octx = output.getContext("2d");
 
 /* CAMERA */
 navigator.mediaDevices.getUserMedia({
-  video:{
-    facingMode:"user",
-    width:{ideal:1280},
-    height:{ideal:1920}
-  }
-}).then(stream=>{
-  video.srcObject = stream;
-});
+  video:{ facingMode:"user", width:{ideal:1280}, height:{ideal:1920} }
+}).then(stream=> video.srcObject = stream);
 
-/* RESIZE MASK TO DISPLAY SIZE */
+/* RESIZE */
 function resizeMask(){
   const r = mask.getBoundingClientRect();
   mask.width = r.width;
@@ -158,95 +161,100 @@ function resizeMask(){
 window.addEventListener("resize", resizeMask);
 video.onloadedmetadata = resizeMask;
 
-/* REALISTIC PASSPORT MASK */
+/* MASK */
 function drawMask(){
-  const w = mask.width;
-  const h = mask.height;
-
+  const w = mask.width, h = mask.height;
   mctx.clearRect(0,0,w,h);
 
-  /* dark overlay */
-  mctx.fillStyle = "rgba(0,0,0,0.7)";
+  mctx.fillStyle="rgba(0,0,0,.7)";
   mctx.fillRect(0,0,w,h);
-
   mctx.globalCompositeOperation="destination-out";
 
-  /* head */
-  const cx = w/2;
-  const headY = h*0.38;
-  const rx = w*0.3;
-  const ry = h*0.28;
+  const cx=w/2;
+  const headY=h*0.38;
+  const rx=w*0.30;
+  const ry=h*0.28;
 
   mctx.beginPath();
-  mctx.ellipse(cx, headY, rx, ry, 0, 0, Math.PI*2);
+  mctx.ellipse(cx,headY,rx,ry,0,0,Math.PI*2);
   mctx.fill();
 
-  /* shoulders */
   mctx.beginPath();
-  mctx.moveTo(w*0.12, h*0.74);
-  mctx.quadraticCurveTo(cx, h*0.58, w*0.88, h*0.74);
-  mctx.lineTo(w*0.88, h);
-  mctx.lineTo(w*0.12, h);
+  mctx.moveTo(w*0.12,h*0.74);
+  mctx.quadraticCurveTo(cx,h*0.58,w*0.88,h*0.74);
+  mctx.lineTo(w*0.88,h);
+  mctx.lineTo(w*0.12,h);
   mctx.closePath();
   mctx.fill();
 
   mctx.globalCompositeOperation="source-over";
-
-  /* guide lines */
   mctx.strokeStyle="rgba(255,255,255,.55)";
   mctx.lineWidth=2;
 
   mctx.beginPath();
-  mctx.ellipse(cx, headY, rx, ry, 0, 0, Math.PI*2);
-  mctx.stroke();
-
-  mctx.beginPath();
-  mctx.moveTo(w*0.12, h*0.78);
-  mctx.quadraticCurveTo(cx, h*0.62, w*0.88, h*0.78);
+  mctx.ellipse(cx,headY,rx,ry,0,0,Math.PI*2);
   mctx.stroke();
 }
 
-/* DRAW LOOP */
+/* LIVE SIZE ESTIMATION */
+function estimateSize(){
+  const vw=video.videoWidth, vh=video.videoHeight;
+  if(!vw) return;
+
+  const target=PW/PH;
+  let sw=vw,sh=vh,sx=0,sy=0;
+
+  if(vw/vh>target){ sw=vh*target; sx=(vw-sw)/2; }
+  else{ sh=vw/target; sy=(vh-sh)/2; }
+
+  octx.drawImage(video,sx,sy,sw,sh,0,0,PW,PH);
+
+  let q=0.9, size=0;
+  do{
+    const d=output.toDataURL("image/jpeg",q);
+    size=Math.round((d.length*3)/4/1024);
+    q-=0.05;
+  }while(size>MAX_KB && q>0.3);
+
+  info.textContent=`Live size: ${size} KB`;
+}
+
+/* LOOP */
 function loop(){
   drawMask();
+  estimateSize();
   requestAnimationFrame(loop);
 }
 loop();
 
-/* CAPTURE EXACT PASSPORT FRAME */
+/* COUNTDOWN + CAPTURE */
+function startCountdown(){
+  let t=10;
+  countdownEl.style.display="flex";
+  countdownEl.textContent=t;
+  saveBtn.disabled=true;
+
+  const timer=setInterval(()=>{
+    t--;
+    countdownEl.textContent=t;
+    if(t<=0){
+      clearInterval(timer);
+      countdownEl.style.display="none";
+      saveBtn.disabled=false;
+      capture();
+    }
+  },1000);
+}
+
 function capture(){
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-  const target = PW / PH;
-
-  let sw = vw, sh = vh, sx = 0, sy = 0;
-
-  if(vw / vh > target){
-    sw = vh * target;
-    sx = (vw - sw) / 2;
-  }else{
-    sh = vw / target;
-    sy = (vh - sh) / 2;
-  }
-
-  octx.drawImage(video, sx, sy, sw, sh, 0, 0, PW, PH);
-
-  let q = 0.95, data, size;
-  do{
-    data = output.toDataURL("image/jpeg", q);
-    size = Math.round((data.length * 3) / 4 / 1024);
-    q -= 0.05;
-  }while(size > MAX_KB && q > 0.3);
-
-  info.textContent = `Saved: ${PW}×${PH} • ${size} KB`;
-
-  const a = document.createElement("a");
-  a.href = data;
-  a.download = "passport_photo.jpg";
+  const data=output.toDataURL("image/jpeg",0.9);
+  const a=document.createElement("a");
+  a.href=data;
+  a.download="passport_photo.jpg";
   a.click();
 }
 
-document.getElementById("save").onclick = capture;
+saveBtn.onclick=startCountdown;
 </script>
 
 </body>
