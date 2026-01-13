@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminder Table & Kanban Board</title>
+    <!-- Load the SheetJS library -->
+    <script src="xlsx.full.min.js"></script>
+    <style>
+        /* [All CSS styles from previous version remain exactly the same] */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #1e3c72, #2a5298); color: #333; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); overflow: hidden; }
+        header { padding: 25px 30px; background: linear-gradient(135deg, #2a5298, #1e3c72); color: white; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .subtitle { font-size: 1rem; opacity: 0.8; }
+        .time-display { font-size: 1.2rem; background-color: rgba(255, 255, 255, 0.15); padding: 8px 15px; border-radius: 20px; font-weight: 600; }
+        .tabs { display: flex; background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1; }
+        .tab { padding: 18px 30px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; color: #64748b; border-bottom: 3px solid transparent; }
+        .tab:hover { background-color: #e2e8f0; color: #475569; }
+        .tab.active { background-color: white; color: #1e3c72; border-bottom: 3px solid #1e3c72; }
+        .tab-content { display: none; padding: 25px; min-height: 600px; }
+        .tab-content.active { display: block; }
+        .table-controls { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .btn { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
+        .btn:hover { background: linear-gradient(135deg, #2a5298, #1e3c72); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn-secondary { background: linear-gradient(135deg, #475569, #64748b); }
+        .btn-secondary:hover { background: linear-gradient(135deg, #64748b, #475569); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #34d399); }
+        .btn-success:hover { background: linear-gradient(135deg, #34d399, #10b981); }
+        .search-box { flex: 1; max-width: 400px; padding: 12px 15px; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 16px; transition: border-color 0.3s; }
+        .search-box:focus { border-color: #1e3c72; outline: none; }
+        .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); }
+        table { width: 100%; border-collapse: collapse; background-color: white; }
+        th { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); padding: 16px 12px; text-align: left; font-weight: 600; color: #334155; border-bottom: 2px solid #cbd5e1; user-select: none; }
+        td { padding: 14px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background-color: #f8fafc; }
+        .editable-cell { position: relative; }
+        .editable-cell input, .editable-cell textarea, .editable-cell select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; transition: border-color 0.3s; }
+        .editable-cell input:focus, .editable-cell textarea:focus, .editable-cell select:focus { border-color: #1e3c72; outline: none; box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1); }
+        .editable-cell textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+        .action-cell { display: flex; gap: 8px; }
+        .action-btn { width: 32px; height: 32px; border-radius: 4px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.2s; }
+        .delete-btn { background-color: #fee2e2; color: #dc2626; }
+        .delete-btn:hover { background-color: #fecaca; }
+        .save-btn { background-color: #d1fae5; color: #059669; }
+        .save-btn:hover { background-color: #a7f3d0; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-scheduled { background-color: #dbeafe; color: #1d4ed8; }
+        .status-due { background-color: #fef3c7; color: #d97706; }
+        .status-completed { background-color: #d1fae5; color: #059669; }
+        .status-recurring { background-color: #e9d5ff; color: #7c3aed; }
+        .kanban-container { display: flex; gap: 20px; overflow-x: auto; padding: 10px; min-height: 600px; }
+        .kanban-column { flex: 1; min-width: 300px; background-color: #f1f5f9; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; max-height: 700px; }
+        .kanban-header { padding-bottom: 15px; margin-bottom: 15px; border-bottom: 2px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
+        .column-title { font-size: 1.2rem; font-weight: 700; color: #334155; }
+        .column-count { background-color: #cbd5e1; color: #334155; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+        .kanban-cards { flex: 1; overflow-y: auto; padding-right: 5px; min-height: 300px; }
+        .kanban-card { background-color: white; border-radius: 8px; padding: 18px; margin-bottom: 15px; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); border-left: 5px solid #1e3c72; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
+        .kanban-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        .kanban-card.dragging { opacity: 0.5; transform: rotate(3deg); }
+        .card-title { font-weight: 600; margin-bottom: 10px; color: #1e293b; word-break: break-word; }
+        .card-date { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+        .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+        .card-btn { width: 28px; height: 28px; border-radius: 4px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s; }
+        .card-delete { background-color: #fee2e2; color: #dc2626; }
+        .card-delete:hover { background-color: #fecaca; }
+        .card-complete { background-color: #d1fae5; color: #059669; }
+        .card-complete:hover { background-color: #a7f3d0; }
+        .card-renew { background-color: #dbeafe; color: #1d4ed8; }
+        .card-renew:hover { background-color: #bfdbfe; }
+        .empty-column { text-align: center; padding: 30px 20px; color: #94a3b8; font-style: italic; }
+        .notification-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .notification-content { background-color: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); animation: popup 0.3s ease-out; }
+        @keyframes popup { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .notification-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }
+        .notification-title { color: #1e3c72; font-size: 1.5rem; }
+        .close-notification { background-color: #e2e8f0; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; cursor: pointer; transition: background-color 0.3s; }
+        .close-notification:hover { background-color: #cbd5e0; }
+        .notification-body { font-size: 18px; line-height: 1.6; margin-bottom: 20px; padding: 15px; background-color: #f7fafc; border-radius: 8px; }
+        .notification-time { color: #64748b; font-size: 14px; text-align: right; }
+        .status-bar { position: fixed; bottom: 20px; right: 20px; background-color: white; padding: 12px 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); font-size: 14px; color: #334155; display: flex; align-items: center; gap: 10px; z-index: 100; }
+        .status-indicator { width: 12px; height: 12px; border-radius: 50%; background-color: #10b981; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .column-todo { border-top: 5px solid #ef4444; }
+        .column-inprogress { border-top: 5px solid #f59e0b; }
+        .column-done { border-top: 5px solid #10b981; }
+        @media (max-width: 1200px) { .kanban-container { flex-direction: column; } .kanban-column { min-width: 100%; } .table-controls { flex-direction: column; } .search-box { max-width: 100%; } }
+        @media (max-width: 768px) { .tabs { flex-direction: column; } .tab { padding: 15px; border-bottom: 1px solid #cbd5e1; } .tab.active { border-bottom: 3px solid #1e3c72; } header { flex-direction: column; gap: 15px; text-align: center; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Reminder Table & Kanban Board</h1>
+                <p class="subtitle">Excel file persistence • Recurring tasks • Automatic Todo placement</p>
+            </div>
+            <div class="time-display" id="current-time"></div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="table">Reminder Table</div>
+            <div class="tab" data-tab="kanban">Kanban Board</div>
+        </div>
+        
+        <!-- Table Tab -->
+        <div class="tab-content active" id="table-tab">
+            <div class="table-controls">
+                <button class="btn" id="add-row">
+                    <span>+</span> Add New Reminder
+                </button>
+                <input type="text" class="search-box" id="search-table" placeholder="Search reminders...">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" id="import-excel">
+                        📁 Import Excel
+                    </button>
+                    <button class="btn btn-secondary" id="export-excel">
+                        💾 Export Excel
+                    </button>
+                    <button class="btn btn-secondary" id="clear-completed">
+                        Clear Completed
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="reminders-table">
+                    <thead>
+                        <tr>
+                            <th width="120px">Status</th>
+                            <th width="150px">Date</th>
+                            <th width="120px">Time</th>
+                            <th>Reminder Text</th>
+                            <th width="150px">Category</th>
+                            <th width="150px">Repeat</th>
+                            <th width="100px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Table rows will be added here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: #64748b;">
+                <p>Click on any cell to edit. Use Import/Export buttons to load/save from data.xlsx file.</p>
+            </div>
+        </div>
+        
+        <!-- Kanban Tab -->
+        <div class="tab-content" id="kanban-tab">
+            <div class="kanban-container">
+                <div class="kanban-column column-todo">
+                    <div class="kanban-header">
+                        <h3 class="column-title">To Do</h3>
+                        <div class="column-count" id="todo-count">0</div>
+                    </div>
+                    <div class="kanban-cards" id="todo-column" data-status="todo">
+                        <!-- Cards will be added here -->
+                    </div>
+                </div>
+                
+                <div class="kanban-column column-inprogress">
+                    <div class="kanban-header">
+                        <h3 class="column-title">In Progress</h3>
+                        <div class="column-count" id="inprogress-count">0</div>
+                    </div>
+                    <div class="kanban-cards" id="inprogress-column" data-status="inprogress">
+                        <!-- Cards will be added here -->
+                    </div>
+                </div>
+                
+                <div class="kanban-column column-done">
+                    <div class="kanban-header">
+                        <h3 class="column-title">Done</h3>
+                        <div class="column-count" id="done-count">0</div>
+                    </div>
+                    <div class="kanban-cards" id="done-column" data-status="done">
+                        <!-- Cards will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: #64748b;">
+                <p>Drag and drop cards between columns. Kanban is independent - deleting here doesn't affect Table.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Modal -->
+    <div class="notification-modal" id="notification-modal">
+        <div class="notification-content">
+            <div class="notification-header">
+                <h3 class="notification-title">Reminder!</h3>
+                <button class="close-notification" id="close-notification">×</button>
+            </div>
+            <div class="notification-body" id="notification-text">
+                <!-- Notification text will appear here -->
+            </div>
+            <div class="notification-time" id="notification-time">
+                <!-- Notification time will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-indicator"></div>
+        <span id="status-text">Reminder service is active</span>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="file-input" accept=".xlsx" style="display: none;">
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const currentTimeEl = document.getElementById('current-time');
+            const tableTab = document.getElementById('table-tab');
+            const kanbanTab = document.getElementById('kanban-tab');
+            const tabs = document.querySelectorAll('.tab');
+            const tableBody = document.getElementById('table-body');
+            const addRowBtn = document.getElementById('add-row');
+            const searchTable = document.getElementById('search-table');
+            const clearCompletedBtn = document.getElementById('clear-completed');
+            const importExcelBtn = document.getElementById('import-excel');
+            const exportExcelBtn = document.getElementById('export-excel');
+            const notificationModal = document.getElementById('notification-modal');
+            const notificationText = document.getElementById('notification-text');
+            const notificationTimeEl = document.getElementById('notification-time');
+            const closeNotificationBtn = document.getElementById('close-notification');
+            const statusText = document.getElementById('status-text');
+            const fileInput = document.getElementById('file-input');
+            
+            // Kanban columns
+            const todoColumn = document.getElementById('todo-column');
+            const inprogressColumn = document.getElementById('inprogress-column');
+            const doneColumn = document.getElementById('done-column');
+            const todoCount = document.getElementById('todo-count');
+            const inprogressCount = document.getElementById('inprogress-count');
+            const doneCount = document.getElementById('done-count');
+            
+            // Initialize data - SEPARATE data structures for Table and Kanban
+            let reminders = []; // Original reminders from table
+            let kanbanTasks = []; // Tasks that are in kanban board
+            let checkInterval;
+            let dragCard = null;
+            
+            // Debounce function to prevent rapid updates
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+            
+            // Check if XLSX library is loaded
+            if (typeof XLSX === 'undefined') {
+                alert('Error: XLSX library not loaded. Please download xlsx.full.min.js and place it in the same folder as this file.');
+                statusText.textContent = 'XLSX library missing!';
+                statusText.style.color = '#dc2626';
+            }
+            
+            // Initialize the app
+            function init() {
+                updateCurrentTime();
+                
+                // Try to load from Excel file on startup
+                loadFromExcelFile();
+                
+                updateTable();
+                updateKanban();
+                startReminderChecker();
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Update time every second
+                setInterval(updateCurrentTime, 1000);
+                
+                // Periodically check for updates (every 10 seconds)
+                setInterval(() => {
+                    checkReminders();
+                }, 10000);
+            }
+            
+            // Update current time display
+            function updateCurrentTime() {
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const timeStr = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                currentTimeEl.textContent = `${dateStr} • ${timeStr}`;
+            }
+            
+            // Load data from Excel file
+            function loadFromExcelFile() {
+                // Note: In browser, we can't directly check if file exists
+                // We'll try to load it via file input if user wants to import
+                statusText.textContent = 'Ready - Use Import button to load data.xlsx';
+            }
+            
+            // Save reminders to Excel file
+            function saveToExcelFile() {
+                try {
+                    if (typeof XLSX === 'undefined') {
+                        throw new Error('XLSX library not loaded');
+                    }
+                    
+                    // Prepare data for Excel - save both reminders and kanban state
+                    const excelData = [
+                        ['=== REMINDERS TABLE DATA ==='],
+                        ['ID', 'Text', 'Date', 'Time', 'Category', 'Status', 'Repeat', 'RepeatInterval', 'DueAt', 'CreatedAt', 'NextRenewal']
+                    ];
+                    
+                    // Save reminders
+                    reminders.forEach(reminder => {
+                        excelData.push([
+                            reminder.id,
+                            reminder.text,
+                            reminder.date,
+                            reminder.time,
+                            reminder.category,
+                            reminder.status,
+                            reminder.repeat || 'none',
+                            reminder.repeatInterval || '',
+                            reminder.dueAt,
+                            reminder.createdAt,
+                            reminder.nextRenewal || ''
+                        ]);
+                    });
+                    
+                    // Add separator
+                    excelData.push([]);
+                    excelData.push(['=== KANBAN BOARD DATA ===']);
+                    excelData.push(['ID', 'Text', 'Date', 'Time', 'Category', 'KanbanStatus', 'Status', 'Repeat', 'DueAt']);
+                    
+                    // Save kanban tasks
+                    kanbanTasks.forEach(task => {
+                        excelData.push([
+                            task.id,
+                            task.text,
+                            task.date,
+                            task.time,
+                            task.category,
+                            task.kanbanStatus,
+                            task.status,
+                            task.repeat || 'none',
+                            task.dueAt
+                        ]);
+                    });
+                    
+                    // Create workbook
+                    const ws = XLSX.utils.aoa_to_sheet(excelData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'RemindersAndKanban');
+                    
+                    // Generate Excel file
+                    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    
+                    // Create download link
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'data.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    statusText.textContent = 'Data exported to data.xlsx';
+                    setTimeout(() => {
+                        statusText.textContent = 'Reminder service is active';
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('Error saving to Excel:', error);
+                    statusText.textContent = 'Error exporting Excel file';
+                    statusText.style.color = '#dc2626';
+                    setTimeout(() => {
+                        statusText.textContent = 'Reminder service is active';
+                        statusText.style.color = '';
+                    }, 3000);
+                }
+            }
+            
+            // Import data from Excel file
+            function importFromExcelFile(file) {
+                try {
+                    if (typeof XLSX === 'undefined') {
+                        throw new Error('XLSX library not loaded');
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            
+                            // Clear existing data
+                            reminders = [];
+                            kanbanTasks = [];
+                            
+                            let isInKanbanSection = false;
+                            let hasPassedSeparator = false;
+                            
+                            // Parse data
+                            jsonData.forEach((row, index) => {
+                                // Skip header rows
+                                if (index < 2) return; // Skip first two rows
+                                
+                                // Check for separator between sections
+                                if (row.length === 0 || (row.length === 1 && row[0] === '')) {
+                                    hasPassedSeparator = true;
+                                    return;
+                                }
+                                
+                                // Check if we've entered kanban section
+                                if (row.length === 1 && row[0] === '=== KANBAN BOARD DATA ===') {
+                                    isInKanbanSection = true;
+                                    return;
+                                }
+                                
+                                if (isInKanbanSection) {
+                                    // Skip kanban header row
+                                    if (row[0] === 'ID') return;
+                                    
+                                    // Parse kanban task
+                                    if (row.length >= 9) {
+                                        const task = {
+                                            id: row[0] || Date.now(),
+                                            text: row[1] || '',
+                                            date: row[2] || new Date().toISOString().split('T')[0],
+                                            time: row[3] || '09:00',
+                                            category: row[4] || 'Personal',
+                                            kanbanStatus: row[5] || 'todo',
+                                            status: row[6] || 'due',
+                                            repeat: row[7] || 'none',
+                                            dueAt: row[8] || new Date().toISOString()
+                                        };
+                                        
+                                        // Convert string dates back to ISO strings if needed
+                                        if (typeof task.dueAt === 'string' && !task.dueAt.includes('T')) {
+                                            task.dueAt = new Date(`${task.date}T${task.time}`).toISOString();
+                                        }
+                                        
+                                        kanbanTasks.push(task);
+                                    }
+                                } else if (!hasPassedSeparator && row.length >= 11) {
+                                    // Parse reminder from table section
+                                    const reminder = {
+                                        id: row[0] || Date.now(),
+                                        text: row[1] || '',
+                                        date: row[2] || new Date().toISOString().split('T')[0],
+                                        time: row[3] || '09:00',
+                                        category: row[4] || 'Personal',
+                                        status: row[5] || 'scheduled',
+                                        repeat: row[6] || 'none',
+                                        repeatInterval: row[7] || '',
+                                        dueAt: row[8] || new Date().toISOString(),
+                                        createdAt: row[9] || new Date().toISOString(),
+                                        nextRenewal: row[10] || ''
+                                    };
+                                    
+                                    // Convert string dates back to ISO strings if needed
+                                    if (typeof reminder.dueAt === 'string' && !reminder.dueAt.includes('T')) {
+                                        reminder.dueAt = new Date(`${reminder.date}T${reminder.time}`).toISOString();
+                                    }
+                                    
+                                    reminders.push(reminder);
+                                }
+                            });
+                            
+                            updateTable();
+                            updateKanban();
+                            
+                            statusText.textContent = `Imported ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks`;
+                            setTimeout(() => {
+                                statusText.textContent = 'Reminder service is active';
+                            }, 3000);
+                            
+                        } catch (parseError) {
+                            console.error('Error parsing Excel file:', parseError);
+                            statusText.textContent = 'Error parsing Excel file';
+                            statusText.style.color = '#dc2626';
+                            setTimeout(() => {
+                                statusText.textContent = 'Reminder service is active';
+                                statusText.style.color = '';
+                            }, 3000);
+                        }
+                    };
+                    
+                    reader.readAsArrayBuffer(file);
+                    
+                } catch (error) {
+                    console.error('Error importing from Excel:', error);
+                    statusText.textContent = 'Error importing Excel file';
+                    statusText.style.color = '#dc2626';
+                    setTimeout(() => {
+                        statusText.textContent = 'Reminder service is active';
+                        statusText.style.color = '';
+                    }, 3000);
+                }
+            }
+            
+            // Add a new row to the table
+            function addNewRow() {
+                const now = new Date();
+                const tomorrow = new Date(now.getTime() + 24 * 60 * 60000);
+                const formattedDate = tomorrow.toISOString().split('T')[0];
+                
+                const newReminder = {
+                    id: Date.now(),
+                    text: "",
+                    date: formattedDate,
+                    time: "09:00",
+                    category: "Personal",
+                    status: "scheduled",
+                    repeat: "none",
+                    repeatInterval: "",
+                    createdAt: now.toISOString(),
+                    dueAt: new Date(`${formattedDate}T09:00`).toISOString(),
+                    nextRenewal: ""
+                };
+                
+                reminders.push(newReminder);
+                updateTable();
+                
+                statusText.textContent = 'New reminder row added (stays in table until due)';
+                setTimeout(() => {
+                    statusText.textContent = 'Reminder service is active';
+                }, 2000);
+                
+                // Scroll to the new row
+                const rows = tableBody.querySelectorAll('tr');
+                if (rows.length > 0) {
+                    rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+            
+            // Update the table display
+            function updateTable() {
+                const searchTerm = searchTable.value.toLowerCase();
+                
+                // Filter reminders based on search term
+                let filteredReminders = reminders;
+                if (searchTerm) {
+                    filteredReminders = reminders.filter(reminder => 
+                        reminder.text.toLowerCase().includes(searchTerm) ||
+                        reminder.category.toLowerCase().includes(searchTerm) ||
+                        reminder.date.includes(searchTerm) ||
+                        reminder.time.includes(searchTerm)
+                    );
+                }
+                
+                // Clear table body
+                tableBody.innerHTML = '';
+                
+                // Add rows
+                filteredReminders.forEach(reminder => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-id', reminder.id);
+                    
+                    // Determine status badge
+                    let statusBadge = '';
+                    if (reminder.status === 'scheduled') {
+                        statusBadge = '<span class="status-badge status-scheduled">Scheduled</span>';
+                    } else if (reminder.status === 'due') {
+                        statusBadge = '<span class="status-badge status-due">Due</span>';
+                    } else if (reminder.status === 'completed') {
+                        statusBadge = '<span class="status-badge status-completed">Completed</span>';
+                    }
+                    
+                    // Add recurring badge if applicable
+                    if (reminder.repeat !== 'none') {
+                        statusBadge += ' <span class="status-badge status-recurring">🔄 ' + reminder.repeat + '</span>';
+                    }
+                    
+                    // Check if this reminder is also in kanban
+                    const inKanban = kanbanTasks.some(task => task.id === reminder.id);
+                    if (inKanban) {
+                        statusBadge += ' <span class="status-badge" style="background-color: #fed7aa; color: #9a3412;">In Kanban</span>';
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="editable-cell status-cell">${statusBadge}</td>
+                        <td class="editable-cell">
+                            <input type="date" value="${reminder.date}" data-field="date" class="date-input">
+                        </td>
+                        <td class="editable-cell">
+                            <input type="time" value="${reminder.time}" data-field="time" class="time-input">
+                        </td>
+                        <td class="editable-cell">
+                            <textarea data-field="text" placeholder="Enter reminder text" class="text-input">${reminder.text}</textarea>
+                        </td>
+                        <td class="editable-cell">
+                            <select data-field="category" class="category-select">
+                                <option value="Personal" ${reminder.category === 'Personal' ? 'selected' : ''}>Personal</option>
+                                <option value="Work" ${reminder.category === 'Work' ? 'selected' : ''}>Work</option>
+                                <option value="Health" ${reminder.category === 'Health' ? 'selected' : ''}>Health</option>
+                                <option value="Finance" ${reminder.category === 'Finance' ? 'selected' : ''}>Finance</option>
+                                <option value="Other" ${reminder.category === 'Other' ? 'selected' : ''}>Other</option>
+                            </select>
+                        </td>
+                        <td class="editable-cell">
+                            <select data-field="repeat" style="width: 100%;" class="repeat-select">
+                                <option value="none" ${reminder.repeat === 'none' ? 'selected' : ''}>None</option>
+                                <option value="daily" ${reminder.repeat === 'daily' ? 'selected' : ''}>Daily</option>
+                                <option value="weekly" ${reminder.repeat === 'weekly' ? 'selected' : ''}>Weekly</option>
+                                <option value="monthly" ${reminder.repeat === 'monthly' ? 'selected' : ''}>Monthly</option>
+                            </select>
+                        </td>
+                        <td class="action-cell">
+                            <button class="action-btn delete-btn" data-action="delete">🗑</button>
+                            <button class="action-btn save-btn" data-action="save">✓</button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners to table cells
+                addTableEventListeners();
+            }
+            
+            // Update the kanban board
+            function updateKanban() {
+                // Clear columns first
+                if (todoColumn) todoColumn.innerHTML = '';
+                if (inprogressColumn) inprogressColumn.innerHTML = '';
+                if (doneColumn) doneColumn.innerHTML = '';
+                
+                // Get counts for each column
+                const todoTasks = kanbanTasks.filter(task => task.kanbanStatus === 'todo');
+                const inprogressTasks = kanbanTasks.filter(task => task.kanbanStatus === 'inprogress');
+                const doneTasks = kanbanTasks.filter(task => task.kanbanStatus === 'done');
+                
+                // Update counts
+                if (todoCount) todoCount.textContent = todoTasks.length;
+                if (inprogressCount) inprogressCount.textContent = inprogressTasks.length;
+                if (doneCount) doneCount.textContent = doneTasks.length;
+                
+                // Add empty message or cards to todo column
+                if (todoTasks.length === 0 && todoColumn) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'empty-column';
+                    emptyMsg.textContent = 'No reminders in Todo';
+                    todoColumn.appendChild(emptyMsg);
+                } else if (todoColumn) {
+                    todoTasks.forEach(task => {
+                        const card = createKanbanCard(task);
+                        todoColumn.appendChild(card);
+                    });
+                }
+                
+                // Add empty message or cards to inprogress column
+                if (inprogressTasks.length === 0 && inprogressColumn) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'empty-column';
+                    emptyMsg.textContent = 'No reminders in Progress';
+                    inprogressColumn.appendChild(emptyMsg);
+                } else if (inprogressColumn) {
+                    inprogressTasks.forEach(task => {
+                        const card = createKanbanCard(task);
+                        inprogressColumn.appendChild(card);
+                    });
+                }
+                
+                // Add empty message or cards to done column
+                if (doneTasks.length === 0 && doneColumn) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'empty-column';
+                    emptyMsg.textContent = 'No completed reminders';
+                    doneColumn.appendChild(emptyMsg);
+                } else if (doneColumn) {
+                    doneTasks.forEach(task => {
+                        const card = createKanbanCard(task);
+                        doneColumn.appendChild(card);
+                    });
+                }
+                
+                // Add drag and drop listeners
+                addDragAndDropListeners();
+            }
+            
+            // Create a kanban card element
+            function createKanbanCard(task) {
+                const card = document.createElement('div');
+                card.className = 'kanban-card';
+                card.setAttribute('draggable', 'true');
+                card.setAttribute('data-id', task.id);
+                
+                const formattedDate = new Date(task.dueAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                
+                const formattedTime = new Date(task.dueAt).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Show recurring icon if task repeats
+                const repeatIcon = task.repeat !== 'none' ? ' 🔄' : '';
+                
+                card.innerHTML = `
+                    <div class="card-title">${task.text || 'No text'}${repeatIcon}</div>
+                    <div class="card-date">${formattedDate} at ${formattedTime}</div>
+                    <div class="status-badge ${task.status === 'scheduled' ? 'status-scheduled' : task.status === 'due' ? 'status-due' : 'status-completed'}">${task.category}</div>
+                    <div class="card-actions">
+                        <button class="card-btn card-delete" data-action="delete">🗑</button>
+                        ${task.repeat !== 'none' && task.kanbanStatus === 'done' ? '<button class="card-btn card-renew" data-action="renew">🔄</button>' : ''}
+                        ${task.kanbanStatus !== 'done' ? '<button class="card-btn card-complete" data-action="complete">✓</button>' : ''}
+                    </div>
+                `;
+                
+                return card;
+            }
+            
+            // Calculate next due date for recurring tasks
+            function calculateNextDueDate(task) {
+                const now = new Date();
+                const currentDue = new Date(task.dueAt);
+                let nextDue = new Date(currentDue);
+                
+                if (task.repeat === 'daily') {
+                    nextDue.setDate(nextDue.getDate() + 1);
+                } else if (task.repeat === 'weekly') {
+                    nextDue.setDate(nextDue.getDate() + 7);
+                } else if (task.repeat === 'monthly') {
+                    nextDue.setMonth(nextDue.getMonth() + 1);
+                }
+                
+                // If the next due date is in the past, keep adding intervals until it's in the future
+                while (nextDue <= now && task.repeat !== 'none') {
+                    if (task.repeat === 'daily') {
+                        nextDue.setDate(nextDue.getDate() + 1);
+                    } else if (task.repeat === 'weekly') {
+                        nextDue.setDate(nextDue.getDate() + 7);
+                    } else if (task.repeat === 'monthly') {
+                        nextDue.setMonth(nextDue.getMonth() + 1);
+                    }
+                }
+                
+                return nextDue.toISOString();
+            }
+            
+            // Check for due reminders and move them from table to kanban
+            function checkReminders() {
+                const now = new Date();
+                const dueReminders = [];
+                
+                reminders.forEach(reminder => {
+                    const dueAt = new Date(reminder.dueAt);
+                    
+                    // Check if reminder is due (within the current minute)
+                    if (dueAt <= now && dueAt > new Date(now.getTime() - 60000)) {
+                        // Only trigger if not already marked as due or completed
+                        if (reminder.status === 'scheduled') {
+                            reminder.status = 'due';
+                            
+                            // Check if this reminder is already in kanban
+                            const alreadyInKanban = kanbanTasks.some(task => task.id === reminder.id);
+                            
+                            // If not in kanban, add it to kanban todo
+                            if (!alreadyInKanban) {
+                                const kanbanTask = {
+                                    id: reminder.id,
+                                    text: reminder.text,
+                                    date: reminder.date,
+                                    time: reminder.time,
+                                    category: reminder.category,
+                                    kanbanStatus: 'todo',
+                                    status: 'due',
+                                    repeat: reminder.repeat,
+                                    dueAt: reminder.dueAt
+                                };
+                                
+                                kanbanTasks.push(kanbanTask);
+                                dueReminders.push(reminder);
+                            }
+                        }
+                    }
+                    
+                    // Mark overdue reminders and add them to kanban
+                    if (dueAt < now && reminder.status === 'scheduled') {
+                        reminder.status = 'due';
+                        
+                        // Check if this reminder is already in kanban
+                        const alreadyInKanban = kanbanTasks.some(task => task.id === reminder.id);
+                        
+                        // If not in kanban, add it to kanban todo
+                        if (!alreadyInKanban) {
+                            const kanbanTask = {
+                                id: reminder.id,
+                                text: reminder.text,
+                                date: reminder.date,
+                                time: reminder.time,
+                                category: reminder.category,
+                                kanbanStatus: 'todo',
+                                status: 'due',
+                                repeat: reminder.repeat,
+                                dueAt: reminder.dueAt
+                            };
+                            
+                            kanbanTasks.push(kanbanTask);
+                        }
+                    }
+                });
+                
+                // Show notifications and update display
+                if (dueReminders.length > 0) {
+                    // Show notification for the first due reminder
+                    const firstReminder = dueReminders[0];
+                    showNotification(firstReminder.text, firstReminder.dueAt);
+                    
+                    // Update display
+                    updateTable();
+                    updateKanban();
+                    
+                    statusText.textContent = `${dueReminders.length} reminder(s) moved to Kanban Todo`;
+                    setTimeout(() => {
+                        statusText.textContent = 'Reminder service is active';
+                    }, 5000);
+                }
+            }
+            
+            // Renew a recurring task
+            function renewRecurringTask(taskId) {
+                // Find the task in kanban
+                const taskIndex = kanbanTasks.findIndex(task => task.id === taskId);
+                if (taskIndex !== -1 && kanbanTasks[taskIndex].repeat !== 'none') {
+                    const task = kanbanTasks[taskIndex];
+                    
+                    // Calculate next due date
+                    task.dueAt = calculateNextDueDate(task);
+                    task.status = 'due';
+                    task.kanbanStatus = 'todo'; // Reset to todo for next cycle
+                    
+                    // Also update the corresponding reminder in the table
+                    const reminderIndex = reminders.findIndex(r => r.id === taskId);
+                    if (reminderIndex !== -1) {
+                        reminders[reminderIndex].dueAt = task.dueAt;
+                        reminders[reminderIndex].status = 'due';
+                    }
+                    
+                    updateTable();
+                    updateKanban();
+                    
+                    statusText.textContent = 'Recurring task renewed for next period';
+                    setTimeout(() => {
+                        statusText.textContent = 'Reminder service is active';
+                    }, 3000);
+                }
+            }
+            
+            // Show notification
+            function showNotification(text, time) {
+                if (!notificationModal || !notificationText || !notificationTimeEl) return;
+                
+                notificationText.textContent = text;
+                notificationTimeEl.textContent = `Reminder set for: ${new Date(time).toLocaleString()}`;
+                notificationModal.style.display = 'flex';
+                
+                // Play notification sound
+                playNotificationSound();
+                
+                // Auto-close after 30 seconds
+                setTimeout(() => {
+                    if (notificationModal && notificationModal.style.display === 'flex') {
+                        notificationModal.style.display = 'none';
+                    }
+                }, 30000);
+            }
+            
+            // Play notification sound
+            function playNotificationSound() {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 1);
+                } catch (e) {
+                    console.log("Could not play notification sound:", e);
+                }
+            }
+            
+            // Start the reminder checker
+            function startReminderChecker() {
+                // Check immediately on load
+                checkReminders();
+                
+                // Then check every minute
+                checkInterval = setInterval(checkReminders, 60000);
+            }
+            
+            // Set up event listeners
+            function setupEventListeners() {
+                // Tab switching
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabId = tab.getAttribute('data-tab');
+                        
+                        // Update active tab
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        
+                        // Show corresponding content
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            content.classList.remove('active');
+                        });
+                        
+                        const tabContent = document.getElementById(`${tabId}-tab`);
+                        if (tabContent) {
+                            tabContent.classList.add('active');
+                        }
+                    });
+                });
+                
+                // Add row button
+                if (addRowBtn) {
+                    addRowBtn.addEventListener('click', addNewRow);
+                }
+                
+                // Search table
+                if (searchTable) {
+                    searchTable.addEventListener('input', updateTable);
+                }
+                
+                // Clear completed button
+                if (clearCompletedBtn) {
+                    clearCompletedBtn.addEventListener('click', () => {
+                        const completedCount = reminders.filter(r => r.status === 'completed' && r.repeat === 'none').length;
+                        reminders = reminders.filter(r => !(r.status === 'completed' && r.repeat === 'none'));
+                        updateTable();
+                        
+                        statusText.textContent = `Cleared ${completedCount} non-recurring completed reminder(s)`;
+                        setTimeout(() => {
+                            statusText.textContent = 'Reminder service is active';
+                        }, 3000);
+                    });
+                }
+                
+                // Import Excel button
+                if (importExcelBtn) {
+                    importExcelBtn.addEventListener('click', () => {
+                        fileInput.click();
+                    });
+                }
+                
+                // Export Excel button
+                if (exportExcelBtn) {
+                    exportExcelBtn.addEventListener('click', saveToExcelFile);
+                }
+                
+                // File input change (for import)
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => {
+                        if (e.target.files.length > 0) {
+                            importFromExcelFile(e.target.files[0]);
+                            // Reset file input
+                            fileInput.value = '';
+                        }
+                    });
+                }
+                
+                // Close notification button
+                if (closeNotificationBtn) {
+                    closeNotificationBtn.addEventListener('click', () => {
+                        if (notificationModal) {
+                            notificationModal.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // Close notification when clicking outside
+                if (notificationModal) {
+                    notificationModal.addEventListener('click', (e) => {
+                        if (e.target === notificationModal) {
+                            notificationModal.style.display = 'none';
+                        }
+                    });
+                }
+            }
+            
+            // Add event listeners to table cells
+            function addTableEventListeners() {
+                // Delete button
+                document.querySelectorAll('.action-btn[data-action="delete"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const row = e.target.closest('tr');
+                        if (!row) return;
+                        
+                        const id = parseInt(row.getAttribute('data-id'));
+                        const reminder = reminders.find(r => r.id === id);
+                        
+                        // Check if it's a recurring task
+                        if (reminder && reminder.repeat !== 'none') {
+                            alert('Recurring tasks cannot be deleted from the table. Use the Kanban board to manage them.');
+                            return;
+                        }
+                        
+                        // Remove from reminders
+                        reminders = reminders.filter(r => r.id !== id);
+                        
+                        // Also remove from kanban if it exists there
+                        kanbanTasks = kanbanTasks.filter(task => task.id !== id);
+                        
+                        updateTable();
+                        updateKanban();
+                        
+                        statusText.textContent = 'Reminder deleted from both Table and Kanban';
+                        setTimeout(() => {
+                            statusText.textContent = 'Reminder service is active';
+                        }, 2000);
+                    });
+                });
+                
+                // Save button
+                document.querySelectorAll('.action-btn[data-action="save"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const row = e.target.closest('tr');
+                        if (!row) return;
+                        
+                        const id = parseInt(row.getAttribute('data-id'));
+                        const reminder = reminders.find(r => r.id === id);
+                        
+                        if (reminder) {
+                            // Get updated values
+                            const dateInput = row.querySelector('input[data-field="date"]');
+                            const timeInput = row.querySelector('input[data-field="time"]');
+                            const textInput = row.querySelector('textarea[data-field="text"]');
+                            const categorySelect = row.querySelector('select[data-field="category"]');
+                            const repeatSelect = row.querySelector('select[data-field="repeat"]');
+                            
+                            if (dateInput && timeInput && textInput && categorySelect && repeatSelect) {
+                                reminder.date = dateInput.value;
+                                reminder.time = timeInput.value;
+                                reminder.text = textInput.value;
+                                reminder.category = categorySelect.value;
+                                reminder.repeat = repeatSelect.value;
+                                reminder.dueAt = new Date(`${dateInput.value}T${timeInput.value}`).toISOString();
+                                
+                                // Update status based on due date
+                                const now = new Date();
+                                const dueAt = new Date(reminder.dueAt);
+                                
+                                if (reminder.status !== 'completed') {
+                                    if (dueAt <= now) {
+                                        reminder.status = 'due';
+                                    } else {
+                                        reminder.status = 'scheduled';
+                                    }
+                                }
+                                
+                                // Update corresponding kanban task if it exists
+                                const kanbanTaskIndex = kanbanTasks.findIndex(task => task.id === id);
+                                if (kanbanTaskIndex !== -1) {
+                                    kanbanTasks[kanbanTaskIndex].text = reminder.text;
+                                    kanbanTasks[kanbanTaskIndex].date = reminder.date;
+                                    kanbanTasks[kanbanTaskIndex].time = reminder.time;
+                                    kanbanTasks[kanbanTaskIndex].category = reminder.category;
+                                    kanbanTasks[kanbanTaskIndex].repeat = reminder.repeat;
+                                    kanbanTasks[kanbanTaskIndex].dueAt = reminder.dueAt;
+                                    
+                                    if (reminder.status === 'due' && kanbanTasks[kanbanTaskIndex].kanbanStatus === 'todo') {
+                                        kanbanTasks[kanbanTaskIndex].status = 'due';
+                                    }
+                                }
+                                
+                                updateTable();
+                                updateKanban();
+                                
+                                statusText.textContent = 'Reminder updated';
+                                setTimeout(() => {
+                                    statusText.textContent = 'Reminder service is active';
+                                }, 2000);
+                            }
+                        }
+                    });
+                });
+                
+                // Create debounced update function for date and time inputs
+                const debouncedUpdate = debounce(function(input) {
+                    const row = input.closest('tr');
+                    if (!row) return;
+                    
+                    const id = parseInt(row.getAttribute('data-id'));
+                    const reminder = reminders.find(r => r.id === id);
+                    
+                    if (reminder) {
+                        const field = input.getAttribute('data-field');
+                        reminder[field] = input.value;
+                        
+                        // If date or time changed, update dueAt
+                        if (field === 'date' || field === 'time') {
+                            const dateInput = row.querySelector('input[data-field="date"]');
+                            const timeInput = row.querySelector('input[data-field="time"]');
+                            if (dateInput && timeInput) {
+                                reminder.dueAt = new Date(`${dateInput.value}T${timeInput.value}`).toISOString();
+                                
+                                // Update status based on new due date
+                                const now = new Date();
+                                const dueAt = new Date(reminder.dueAt);
+                                
+                                if (reminder.status !== 'completed') {
+                                    if (dueAt <= now) {
+                                        reminder.status = 'due';
+                                    } else {
+                                        reminder.status = 'scheduled';
+                                    }
+                                }
+                                
+                                // Update corresponding kanban task if it exists
+                                const kanbanTaskIndex = kanbanTasks.findIndex(task => task.id === id);
+                                if (kanbanTaskIndex !== -1) {
+                                    kanbanTasks[kanbanTaskIndex].dueAt = reminder.dueAt;
+                                    kanbanTasks[kanbanTaskIndex].status = reminder.status;
+                                }
+                            }
+                        }
+                        
+                        updateTable();
+                        updateKanban();
+                    }
+                }, 800); // 800ms delay after user stops typing
+                
+                // Add event listeners for date and time inputs with debouncing
+                document.querySelectorAll('.date-input, .time-input').forEach(input => {
+                    // Clear any previous event listeners
+                    const newInput = input.cloneNode(true);
+                    input.parentNode.replaceChild(newInput, input);
+                    
+                    // Add new event listeners with debouncing
+                    newInput.addEventListener('input', function() {
+                        debouncedUpdate(this);
+                    });
+                    
+                    // Also update on blur (when user leaves the field)
+                    newInput.addEventListener('blur', function() {
+                        const row = this.closest('tr');
+                        if (!row) return;
+                        
+                        const id = parseInt(row.getAttribute('data-id'));
+                        const reminder = reminders.find(r => r.id === id);
+                        
+                        if (reminder) {
+                            const field = this.getAttribute('data-field');
+                            reminder[field] = this.value;
+                            
+                            // If date or time changed, update dueAt
+                            if (field === 'date' || field === 'time') {
+                                const dateInput = row.querySelector('input[data-field="date"]');
+                                const timeInput = row.querySelector('input[data-field="time"]');
+                                if (dateInput && timeInput) {
+                                    reminder.dueAt = new Date(`${dateInput.value}T${timeInput.value}`).toISOString();
+                                    
+                                    // Update status based on new due date
+                                    const now = new Date();
+                                    const dueAt = new Date(reminder.dueAt);
+                                    
+                                    if (reminder.status !== 'completed') {
+                                        if (dueAt <= now) {
+                                            reminder.status = 'due';
+                                        } else {
+                                            reminder.status = 'scheduled';
+                                        }
+                                    }
+                                    
+                                    // Update corresponding kanban task if it exists
+                                    const kanbanTaskIndex = kanbanTasks.findIndex(task => task.id === id);
+                                    if (kanbanTaskIndex !== -1) {
+                                        kanbanTasks[kanbanTaskIndex].dueAt = reminder.dueAt;
+                                        kanbanTasks[kanbanTaskIndex].status = reminder.status;
+                                    }
+                                }
+                            }
+                            
+                            updateTable();
+                            updateKanban();
+                        }
+                    });
+                });
+                
+                // For text inputs and selects, use normal change event (no debouncing needed)
+                document.querySelectorAll('.text-input, .category-select, .repeat-select').forEach(input => {
+                    // Clear any previous event listeners
+                    const newInput = input.cloneNode(true);
+                    input.parentNode.replaceChild(newInput, input);
+                    
+                    newInput.addEventListener('change', function() {
+                        const row = this.closest('tr');
+                        if (!row) return;
+                        
+                        const id = parseInt(row.getAttribute('data-id'));
+                        const reminder = reminders.find(r => r.id === id);
+                        
+                        if (reminder) {
+                            const field = this.getAttribute('data-field');
+                            reminder[field] = this.value;
+                            
+                            // Update corresponding kanban task if it exists
+                            const kanbanTaskIndex = kanbanTasks.findIndex(task => task.id === id);
+                            if (kanbanTaskIndex !== -1) {
+                                if (field === 'text') {
+                                    kanbanTasks[kanbanTaskIndex].text = reminder.text;
+                                } else if (field === 'category') {
+                                    kanbanTasks[kanbanTaskIndex].category = reminder.category;
+                                } else if (field === 'repeat') {
+                                    kanbanTasks[kanbanTaskIndex].repeat = reminder.repeat;
+                                }
+                            }
+                            
+                            updateTable();
+                            updateKanban();
+                        }
+                    });
+                });
+            }
+            
+            // Add drag and drop listeners
+            function addDragAndDropListeners() {
+                const cards = document.querySelectorAll('.kanban-card');
+                const columns = document.querySelectorAll('.kanban-cards');
+                
+                cards.forEach(card => {
+                    card.addEventListener('dragstart', dragStart);
+                    card.addEventListener('dragend', dragEnd);
+                });
+                
+                columns.forEach(column => {
+                    column.addEventListener('dragover', dragOver);
+                    column.addEventListener('dragenter', dragEnter);
+                    column.addEventListener('dragleave', dragLeave);
+                    column.addEventListener('drop', dragDrop);
+                });
+                
+                // Delete, complete, and renew buttons on cards
+                document.querySelectorAll('.card-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        const card = this.closest('.kanban-card');
+                        if (!card) return;
+                        
+                        const id = parseInt(card.getAttribute('data-id'));
+                        const action = this.getAttribute('data-action');
+                        const taskIndex = kanbanTasks.findIndex(task => task.id === id);
+                        
+                        if (taskIndex !== -1) {
+                            if (action === 'delete') {
+                                // Simply remove from kanbanTasks (doesn't affect reminders table)
+                                kanbanTasks.splice(taskIndex, 1);
+                                statusText.textContent = 'Task removed from Kanban (still in Table)';
+                            } else if (action === 'complete') {
+                                kanbanTasks[taskIndex].status = 'completed';
+                                kanbanTasks[taskIndex].kanbanStatus = 'done';
+                                statusText.textContent = 'Task marked as completed in Kanban';
+                            } else if (action === 'renew') {
+                                renewRecurringTask(id);
+                                return; // renewRecurringTask already shows status
+                            }
+                            
+                            updateKanban();
+                            
+                            setTimeout(() => {
+                                statusText.textContent = 'Reminder service is active';
+                            }, 2000);
+                        }
+                        
+                        e.stopPropagation();
+                    });
+                });
+            }
+            
+            // Drag and drop functions
+            function dragStart() {
+                dragCard = this;
+                this.classList.add('dragging');
+            }
+            
+            function dragEnd() {
+                this.classList.remove('dragging');
+                dragCard = null;
+            }
+            
+            function dragOver(e) {
+                e.preventDefault();
+            }
+            
+            function dragEnter(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            }
+            
+            function dragLeave() {
+                this.classList.remove('drag-over');
+            }
+            
+            function dragDrop() {
+                this.classList.remove('drag-over');
+                
+                if (dragCard) {
+                    const newStatus = this.getAttribute('data-status');
+                    const cardId = parseInt(dragCard.getAttribute('data-id'));
+                    const taskIndex = kanbanTasks.findIndex(task => task.id === cardId);
+                    
+                    if (taskIndex !== -1) {
+                        // Update only the kanban task, not the original reminder
+                        kanbanTasks[taskIndex].kanbanStatus = newStatus;
+                        
+                        // Update status based on kanban column
+                        if (newStatus === 'done') {
+                            kanbanTasks[taskIndex].status = 'completed';
+                        } else if (newStatus === 'todo' && kanbanTasks[taskIndex].status === 'completed') {
+                            kanbanTasks[taskIndex].status = 'due';
+                        } else if (newStatus === 'inprogress') {
+                            kanbanTasks[taskIndex].status = 'due';
+                        }
+                        
+                        updateKanban();
+                        
+                        statusText.textContent = `Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'inprogress' ? 'In Progress' : 'Done'}`;
+                        setTimeout(() => {
+                            statusText.textContent = 'Reminder service is active';
+                        }, 2000);
+                    }
+                }
+            }
+            
+            // Initialize the app
+            init();
+        });
+    </script>
+</body>
+</html>
