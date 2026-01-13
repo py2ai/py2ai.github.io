@@ -6,18 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root{
-  --pw:360;
-  --ph:480;
-  --ratio:3 / 4;
-}
-
+:root{--ratio:3/4}
 *{box-sizing:border-box}
 
 body{
   margin:0;
   background:#0e0e0e;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  font-family:system-ui;
   color:#eaeaea;
 }
 
@@ -31,14 +26,12 @@ header p{font-size:12px;color:#bbb;margin:0}
 
 .container{
   display:flex;
-  flex-direction:column;
+  justify-content:center;
   padding:12px;
-  min-height:calc(100vh - 120px);
 }
 
 .frame{
-  margin:auto;
-  width:min(92vw, 420px);
+  width:min(92vw,420px);
   aspect-ratio:var(--ratio);
   position:relative;
   border-radius:14px;
@@ -47,63 +40,65 @@ header p{font-size:12px;color:#bbb;margin:0}
   box-shadow:0 0 0 2px #2a2a2a;
 }
 
-.frame-title{
-  position:absolute;
-  top:6px;
-  left:8px;
-  font-size:11px;
-  padding:3px 6px;
-  border-radius:6px;
-  background:rgba(0,0,0,.6);
-  z-index:5;
-}
-
 video,canvas{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
 }
+video{object-fit:cover}
 
-video{ object-fit:cover; }
+#output{display:none}
 
-#output{ display:none; }
-
-/* SAVE BUTTON ON IMAGE */
-.capture-btn{
+.frame-title{
   position:absolute;
-  left:50%;
-  top:72%;
-  transform:translate(-50%,-50%);
-  z-index:10;
-  background:rgba(20,20,20,.85);
-  border:1px solid #444;
-  color:#fff;
-  padding:14px 22px;
-  border-radius:999px;
-  font-size:14px;
-  cursor:pointer;
+  top:6px;left:8px;
+  font-size:11px;
+  background:rgba(0,0,0,.6);
+  padding:3px 6px;
+  border-radius:6px;
+  z-index:5;
 }
 
-/* COUNTDOWN */
+/* live info */
+.info{
+  position:absolute;
+  bottom:8px;
+  left:8px;
+  font-size:11px;
+  background:rgba(0,0,0,.6);
+  padding:4px 8px;
+  border-radius:6px;
+  z-index:5;
+}
+
+/* capture button */
+.capture{
+  position:absolute;
+  left:50%;
+  bottom:26%;
+  transform:translateX(-50%);
+  width:72px;height:72px;
+  border-radius:50%;
+  background:#fff;
+  border:5px solid #111;
+  cursor:pointer;
+  z-index:6;
+}
+.capture:active{transform:translateX(-50%) scale(.95)}
+
+/* countdown */
 .countdown{
   position:absolute;
   inset:0;
-  display:none;
+  display:flex;
   align-items:center;
   justify-content:center;
   font-size:72px;
   font-weight:700;
   background:rgba(0,0,0,.45);
-  z-index:20;
-}
-
-/* INFO */
-.info{
-  text-align:center;
-  padding:10px;
-  font-size:12px;
-  color:#bbb;
+  z-index:10;
+  display:none;
 }
 </style>
 </head>
@@ -112,68 +107,70 @@ video{ object-fit:cover; }
 
 <header>
 <h1>Passport Photo Capture</h1>
-<p>Align head & shoulders inside the guide. Neutral face, even lighting.</p>
+<p>Align head & shoulders. Button is placed for easy thumb access.</p>
 </header>
 
 <div class="container">
+  <div class="frame">
+    <div class="frame-title">Passport Frame (3×4)</div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="mask"></canvas>
 
-<div class="frame">
-  <div class="frame-title">Live Passport Frame (3×4)</div>
-  <video id="video" autoplay playsinline></video>
-  <canvas id="mask"></canvas>
-
-  <button class="capture-btn" id="save">Take Photo</button>
-  <div class="countdown" id="countdown">10</div>
-</div>
-
-<div class="info" id="info">Live size: — KB</div>
-
+    <div class="info" id="info">Live size: — KB</div>
+    <div class="capture" id="capture"></div>
+    <div class="countdown" id="countdown">10</div>
+  </div>
 </div>
 
 <canvas id="output" width="360" height="480"></canvas>
 
 <script>
-const PW = 360;
-const PH = 480;
-const MAX_KB = 20;
+const PW=360, PH=480, MAX_KB=20;
 
-const video = document.getElementById("video");
-const mask = document.getElementById("mask");
-const output = document.getElementById("output");
-const info = document.getElementById("info");
-const countdownEl = document.getElementById("countdown");
-const saveBtn = document.getElementById("save");
+const video=document.getElementById("video");
+const mask=document.getElementById("mask");
+const output=document.getElementById("output");
+const info=document.getElementById("info");
+const captureBtn=document.getElementById("capture");
+const countdownEl=document.getElementById("countdown");
 
-const mctx = mask.getContext("2d");
-const octx = output.getContext("2d");
+const mctx=mask.getContext("2d");
+const octx=output.getContext("2d");
+
+/* AUDIO */
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function beep(freq=800,dur=0.1){
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.frequency.value=freq;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+dur);
+  o.stop(audioCtx.currentTime+dur);
+}
 
 /* CAMERA */
 navigator.mediaDevices.getUserMedia({
-  video:{ facingMode:"user", width:{ideal:1280}, height:{ideal:1920} }
-}).then(stream=> video.srcObject = stream);
+  video:{facingMode:"user",width:{ideal:1280},height:{ideal:1920}}
+}).then(s=>video.srcObject=s);
 
 /* RESIZE */
-function resizeMask(){
-  const r = mask.getBoundingClientRect();
-  mask.width = r.width;
-  mask.height = r.height;
+function resize(){
+  const r=mask.getBoundingClientRect();
+  mask.width=r.width; mask.height=r.height;
 }
-window.addEventListener("resize", resizeMask);
-video.onloadedmetadata = resizeMask;
+window.addEventListener("resize",resize);
+video.onloadedmetadata=resize;
 
 /* MASK */
 function drawMask(){
-  const w = mask.width, h = mask.height;
+  const w=mask.width,h=mask.height;
   mctx.clearRect(0,0,w,h);
-
   mctx.fillStyle="rgba(0,0,0,.7)";
   mctx.fillRect(0,0,w,h);
-  mctx.globalCompositeOperation="destination-out";
 
-  const cx=w/2;
-  const headY=h*0.38;
-  const rx=w*0.30;
-  const ry=h*0.28;
+  mctx.globalCompositeOperation="destination-out";
+  const cx=w/2, headY=h*0.38;
+  const rx=w*0.30, ry=h*0.28;
 
   mctx.beginPath();
   mctx.ellipse(cx,headY,rx,ry,0,0,Math.PI*2);
@@ -188,73 +185,68 @@ function drawMask(){
   mctx.fill();
 
   mctx.globalCompositeOperation="source-over";
-  mctx.strokeStyle="rgba(255,255,255,.55)";
-  mctx.lineWidth=2;
-
-  mctx.beginPath();
-  mctx.ellipse(cx,headY,rx,ry,0,0,Math.PI*2);
-  mctx.stroke();
 }
 
-/* LIVE SIZE ESTIMATION */
+/* LIVE SIZE ESTIMATE */
 function estimateSize(){
-  const vw=video.videoWidth, vh=video.videoHeight;
-  if(!vw) return;
-
-  const target=PW/PH;
-  let sw=vw,sh=vh,sx=0,sy=0;
-
-  if(vw/vh>target){ sw=vh*target; sx=(vw-sw)/2; }
-  else{ sh=vw/target; sy=(vh-sh)/2; }
-
-  octx.drawImage(video,sx,sy,sw,sh,0,0,PW,PH);
-
-  let q=0.9, size=0;
-  do{
-    const d=output.toDataURL("image/jpeg",q);
-    size=Math.round((d.length*3)/4/1024);
-    q-=0.05;
-  }while(size>MAX_KB && q>0.3);
-
-  info.textContent=`Live size: ${size} KB`;
+  octx.drawImage(video,0,0,PW,PH);
+  const d=output.toDataURL("image/jpeg",0.8);
+  return Math.round((d.length*3)/4/1024);
 }
 
 /* LOOP */
 function loop(){
   drawMask();
-  estimateSize();
+  info.textContent=`Live size: ${estimateSize()} KB`;
   requestAnimationFrame(loop);
 }
 loop();
 
-/* COUNTDOWN + CAPTURE */
-function startCountdown(){
+/* CAPTURE WITH COUNTDOWN */
+captureBtn.onclick=()=>{
+  audioCtx.resume();
   let t=10;
   countdownEl.style.display="flex";
   countdownEl.textContent=t;
-  saveBtn.disabled=true;
+  beep();
 
   const timer=setInterval(()=>{
     t--;
-    countdownEl.textContent=t;
-    if(t<=0){
+    if(t>0){
+      countdownEl.textContent=t;
+      beep();
+    }else{
       clearInterval(timer);
       countdownEl.style.display="none";
-      saveBtn.disabled=false;
-      capture();
+      takePhoto();
     }
   },1000);
-}
+};
 
-function capture(){
-  const data=output.toDataURL("image/jpeg",0.9);
+function takePhoto(){
+  beep(1200,0.2);
+
+  const vw=video.videoWidth,vh=video.videoHeight;
+  const target=PW/PH;
+  let sw=vw,sh=vh,sx=0,sy=0;
+
+  if(vw/vh>target){sw=vh*target;sx=(vw-sw)/2}
+  else{sh=vw/target;sy=(vh-sh)/2}
+
+  octx.drawImage(video,sx,sy,sw,sh,0,0,PW,PH);
+
+  let q=0.95,data,size;
+  do{
+    data=output.toDataURL("image/jpeg",q);
+    size=Math.round((data.length*3)/4/1024);
+    q-=0.05;
+  }while(size>MAX_KB && q>0.3);
+
   const a=document.createElement("a");
   a.href=data;
   a.download="passport_photo.jpg";
   a.click();
 }
-
-saveBtn.onclick=startCountdown;
 </script>
 
 </body>
