@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Passport Photo Helper</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --pw:360;
+  --ph:480;
+  --ratio:3 / 4;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:#0e0e0e;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  color:#eaeaea;
+}
+
+header{
+  padding:14px 16px;
+  border-bottom:1px solid #333;
+  background:#121212;
+}
+header h1{font-size:16px;margin:0 0 6px}
+header p{font-size:12px;color:#bbb;margin:0}
+
+.container{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding:12px;
+  min-height:calc(100vh - 120px);
+}
+
+.frame{
+  margin:auto;
+  width:min(92vw, 420px);
+  aspect-ratio:var(--ratio);
+  position:relative;
+  border-radius:14px;
+  overflow:hidden;
+  background:#000;
+  box-shadow:0 0 0 2px #2a2a2a;
+}
+
+.frame-title{
+  position:absolute;
+  top:6px;
+  left:8px;
+  font-size:11px;
+  padding:3px 6px;
+  border-radius:6px;
+  background:rgba(0,0,0,.6);
+  z-index:5;
+}
+
+video,canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+/* camera must NEVER stretch */
+video{
+  object-fit:cover;
+}
+
+/* output canvas hidden until save */
+#output{
+  display:none;
+}
+
+.controls{
+  padding:12px;
+  border-top:1px solid #333;
+  background:#111;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+button{
+  background:#1f1f1f;
+  color:#fff;
+  border:1px solid #333;
+  border-radius:8px;
+  padding:10px 16px;
+  font-size:13px;
+}
+
+.info{
+  font-size:12px;
+  color:#bbb;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Passport Photo Capture</h1>
+<p>Align head & shoulders inside the guide. Neutral face, even lighting.</p>
+</header>
+
+<div class="container">
+
+<div class="frame">
+  <div class="frame-title">Live Passport Frame (3×4)</div>
+  <video id="video" autoplay playsinline></video>
+  <canvas id="mask"></canvas>
+</div>
+
+</div>
+
+<div class="controls">
+  <div class="info" id="info">360×480 • JPEG ≤ 20 KB</div>
+  <button id="save">Save Photo</button>
+</div>
+
+<canvas id="output" width="360" height="480"></canvas>
+
+<script>
+const PW = 360;
+const PH = 480;
+const MAX_KB = 20;
+
+const video = document.getElementById("video");
+const mask = document.getElementById("mask");
+const output = document.getElementById("output");
+const info = document.getElementById("info");
+
+const mctx = mask.getContext("2d");
+const octx = output.getContext("2d");
+
+/* CAMERA */
+navigator.mediaDevices.getUserMedia({
+  video:{
+    facingMode:"user",
+    width:{ideal:1280},
+    height:{ideal:1920}
+  }
+}).then(stream=>{
+  video.srcObject = stream;
+});
+
+/* RESIZE MASK TO DISPLAY SIZE */
+function resizeMask(){
+  const r = mask.getBoundingClientRect();
+  mask.width = r.width;
+  mask.height = r.height;
+}
+window.addEventListener("resize", resizeMask);
+video.onloadedmetadata = resizeMask;
+
+/* REALISTIC PASSPORT MASK */
+function drawMask(){
+  const w = mask.width;
+  const h = mask.height;
+
+  mctx.clearRect(0,0,w,h);
+
+  /* dark overlay */
+  mctx.fillStyle = "rgba(0,0,0,0.7)";
+  mctx.fillRect(0,0,w,h);
+
+  mctx.globalCompositeOperation="destination-out";
+
+  /* head */
+  const cx = w/2;
+  const headY = h*0.38;
+  const rx = w*0.3;
+  const ry = h*0.28;
+
+  mctx.beginPath();
+  mctx.ellipse(cx, headY, rx, ry, 0, 0, Math.PI*2);
+  mctx.fill();
+
+  /* shoulders */
+  mctx.beginPath();
+  mctx.moveTo(w*0.12, h*0.74);
+  mctx.quadraticCurveTo(cx, h*0.58, w*0.88, h*0.74);
+  mctx.lineTo(w*0.88, h);
+  mctx.lineTo(w*0.12, h);
+  mctx.closePath();
+  mctx.fill();
+
+  mctx.globalCompositeOperation="source-over";
+
+  /* guide lines */
+  mctx.strokeStyle="rgba(255,255,255,.55)";
+  mctx.lineWidth=2;
+
+  mctx.beginPath();
+  mctx.ellipse(cx, headY, rx, ry, 0, 0, Math.PI*2);
+  mctx.stroke();
+
+  mctx.beginPath();
+  mctx.moveTo(w*0.12, h*0.78);
+  mctx.quadraticCurveTo(cx, h*0.62, w*0.88, h*0.78);
+  mctx.stroke();
+}
+
+/* DRAW LOOP */
+function loop(){
+  drawMask();
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* CAPTURE EXACT PASSPORT FRAME */
+function capture(){
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const target = PW / PH;
+
+  let sw = vw, sh = vh, sx = 0, sy = 0;
+
+  if(vw / vh > target){
+    sw = vh * target;
+    sx = (vw - sw) / 2;
+  }else{
+    sh = vw / target;
+    sy = (vh - sh) / 2;
+  }
+
+  octx.drawImage(video, sx, sy, sw, sh, 0, 0, PW, PH);
+
+  let q = 0.95, data, size;
+  do{
+    data = output.toDataURL("image/jpeg", q);
+    size = Math.round((data.length * 3) / 4 / 1024);
+    q -= 0.05;
+  }while(size > MAX_KB && q > 0.3);
+
+  info.textContent = `Saved: ${PW}×${PH} • ${size} KB`;
+
+  const a = document.createElement("a");
+  a.href = data;
+  a.download = "passport_photo.jpg";
+  a.click();
+}
+
+document.getElementById("save").onclick = capture;
+</script>
+
+</body>
+</html>
