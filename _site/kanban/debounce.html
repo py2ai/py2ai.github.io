@@ -7,7 +7,7 @@
     <!-- Load the SheetJS library -->
     <script src="xlsx.full.min.js"></script>
     <style>
-        /* [All CSS styles from previous version remain exactly the same] */
+        /* [All CSS styles remain exactly the same as before] */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: linear-gradient(135deg, #1e3c72, #2a5298); color: #333; min-height: 100vh; padding: 20px; }
         .container { max-width: 1600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); overflow: hidden; }
@@ -88,6 +88,35 @@
         .column-done { border-top: 5px solid #10b981; }
         @media (max-width: 1200px) { .kanban-container { flex-direction: column; } .kanban-column { min-width: 100%; } .table-controls { flex-direction: column; } .search-box { max-width: 100%; } }
         @media (max-width: 768px) { .tabs { flex-direction: column; } .tab { padding: 15px; border-bottom: 1px solid #cbd5e1; } .tab.active { border-bottom: 3px solid #1e3c72; } header { flex-direction: column; gap: 15px; text-align: center; } }
+        
+        /* Additional styles for file management */
+        .file-status { font-size: 0.9rem; color: #10b981; font-weight: 600; background-color: rgba(16, 185, 129, 0.1); padding: 4px 8px; border-radius: 4px; }
+        .btn-save { background: linear-gradient(135deg, #059669, #10b981); }
+        .btn-save:hover { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-export { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+        .btn-export:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        
+        /* Storage info */
+        .storage-info {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .storage-bar {
+            width: 100px;
+            height: 4px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .storage-fill {
+            height: 100%;
+            background-color: #10b981;
+            transition: width 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -95,7 +124,14 @@
         <header>
             <div>
                 <h1>Reminder Table & Kanban Board</h1>
-                <p class="subtitle">Excel file persistence • Recurring tasks • Automatic Todo placement</p>
+                <p class="subtitle">Local Storage Persistence • Auto-save • Excel Export</p>
+                <div id="file-status" class="file-status">Data saved locally in browser</div>
+                <div class="storage-info">
+                    <span id="storage-text">Storage: 0% used</span>
+                    <div class="storage-bar">
+                        <div class="storage-fill" id="storage-fill"></div>
+                    </div>
+                </div>
             </div>
             <div class="time-display" id="current-time"></div>
         </header>
@@ -116,8 +152,11 @@
                     <button class="btn btn-success" id="import-excel">
                         📁 Import Excel
                     </button>
-                    <button class="btn btn-secondary" id="export-excel">
-                        💾 Export Excel
+                    <button class="btn btn-save" id="save-data">
+                        💾 Save Data
+                    </button>
+                    <button class="btn btn-export" id="export-excel">
+                        📤 Export to Excel
                     </button>
                     <button class="btn btn-secondary" id="clear-completed">
                         Clear Completed
@@ -145,7 +184,9 @@
             </div>
             
             <div style="margin-top: 20px; text-align: center; color: #64748b;">
-                <p>Click on any cell to edit. Use Import/Export buttons to load/save from data.xlsx file.</p>
+                <p>All data is automatically saved in your browser's local storage.</p>
+                <p id="last-save-time">Last saved: Just now</p>
+                <p><small>Use "Export to Excel" to download a backup file.</small></p>
             </div>
         </div>
         
@@ -208,7 +249,7 @@
     <!-- Status Bar -->
     <div class="status-bar">
         <div class="status-indicator"></div>
-        <span id="status-text">Reminder service is active</span>
+        <span id="status-text">Auto-saving enabled</span>
     </div>
 
     <!-- Hidden file input for import -->
@@ -227,6 +268,7 @@
             const searchTable = document.getElementById('search-table');
             const clearCompletedBtn = document.getElementById('clear-completed');
             const importExcelBtn = document.getElementById('import-excel');
+            const saveDataBtn = document.getElementById('save-data');
             const exportExcelBtn = document.getElementById('export-excel');
             const notificationModal = document.getElementById('notification-modal');
             const notificationText = document.getElementById('notification-text');
@@ -234,6 +276,10 @@
             const closeNotificationBtn = document.getElementById('close-notification');
             const statusText = document.getElementById('status-text');
             const fileInput = document.getElementById('file-input');
+            const lastSaveTime = document.getElementById('last-save-time');
+            const fileStatus = document.getElementById('file-status');
+            const storageText = document.getElementById('storage-text');
+            const storageFill = document.getElementById('storage-fill');
             
             // Kanban columns
             const todoColumn = document.getElementById('todo-column');
@@ -248,37 +294,30 @@
             let kanbanTasks = []; // Tasks that are in kanban board
             let checkInterval;
             let dragCard = null;
-            
-            // Debounce function to prevent rapid updates
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
+            let lastSaveTimestamp = new Date();
+            let autoSaveTimer = null;
+            let isInitialized = false;
             
             // Check if XLSX library is loaded
             if (typeof XLSX === 'undefined') {
                 alert('Error: XLSX library not loaded. Please download xlsx.full.min.js and place it in the same folder as this file.');
                 statusText.textContent = 'XLSX library missing!';
                 statusText.style.color = '#dc2626';
+                fileStatus.textContent = 'XLSX library missing!';
+                fileStatus.style.color = '#dc2626';
             }
             
             // Initialize the app
             function init() {
                 updateCurrentTime();
                 
-                // Try to load from Excel file on startup
-                loadFromExcelFile();
+                // Try to load from local storage on startup
+                loadFromLocalStorage();
                 
                 updateTable();
                 updateKanban();
                 startReminderChecker();
+                updateStorageInfo();
                 
                 // Set up event listeners
                 setupEventListeners();
@@ -290,6 +329,15 @@
                 setInterval(() => {
                     checkReminders();
                 }, 10000);
+                
+                // Auto-save every 30 seconds if there are changes
+                setInterval(() => {
+                    if (isInitialized) {
+                        saveToLocalStorage();
+                    }
+                }, 30000);
+                
+                isInitialized = true;
             }
             
             // Update current time display
@@ -310,21 +358,249 @@
                 currentTimeEl.textContent = `${dateStr} • ${timeStr}`;
             }
             
-            // Load data from Excel file
-            function loadFromExcelFile() {
-                // Note: In browser, we can't directly check if file exists
-                // We'll try to load it via file input if user wants to import
-                statusText.textContent = 'Ready - Use Import button to load data.xlsx';
+            // Load data from local storage
+            function loadFromLocalStorage() {
+                try {
+                    const savedData = localStorage.getItem('reminders_app_data');
+                    
+                    if (savedData) {
+                        const parsedData = JSON.parse(savedData);
+                        reminders = parsedData.reminders || [];
+                        kanbanTasks = parsedData.kanbanTasks || [];
+                        
+                        // Update timestamps to Date objects
+                        reminders.forEach(reminder => {
+                            if (reminder.dueAt && typeof reminder.dueAt === 'string') {
+                                reminder.dueAt = new Date(reminder.dueAt).toISOString();
+                            }
+                            if (reminder.createdAt && typeof reminder.createdAt === 'string') {
+                                reminder.createdAt = new Date(reminder.createdAt).toISOString();
+                            }
+                            if (reminder.nextRenewal && typeof reminder.nextRenewal === 'string') {
+                                reminder.nextRenewal = new Date(reminder.nextRenewal).toISOString();
+                            }
+                        });
+                        
+                        kanbanTasks.forEach(task => {
+                            if (task.dueAt && typeof task.dueAt === 'string') {
+                                task.dueAt = new Date(task.dueAt).toISOString();
+                            }
+                        });
+                        
+                        const reminderCount = reminders.length;
+                        const kanbanCount = kanbanTasks.length;
+                        
+                        fileStatus.textContent = `Loaded ${reminderCount} reminders, ${kanbanCount} kanban tasks`;
+                        updateLastSaveTime(parsedData.timestamp);
+                        
+                        console.log(`Loaded ${reminderCount} reminders and ${kanbanCount} kanban tasks from local storage`);
+                    } else {
+                        // Create some sample data if no saved data exists
+                        createSampleData();
+                        saveToLocalStorage();
+                        fileStatus.textContent = 'Created sample data';
+                    }
+                } catch (error) {
+                    console.error('Error loading from local storage:', error);
+                    fileStatus.textContent = 'Error loading data, using fresh data';
+                    fileStatus.style.color = '#dc2626';
+                    
+                    // Create fresh data if loading fails
+                    createSampleData();
+                    saveToLocalStorage();
+                }
             }
             
-            // Save reminders to Excel file
-            function saveToExcelFile() {
+            // Save data to local storage
+            function saveToLocalStorage() {
+                try {
+                    const saveData = {
+                        reminders: reminders,
+                        kanbanTasks: kanbanTasks,
+                        timestamp: new Date().toISOString(),
+                        version: "1.0"
+                    };
+                    
+                    localStorage.setItem('reminders_app_data', JSON.stringify(saveData));
+                    
+                    lastSaveTimestamp = new Date();
+                    updateLastSaveTime(lastSaveTimestamp);
+                    
+                    // Update storage info
+                    updateStorageInfo();
+                    
+                    // Flash the status bar
+                    statusText.textContent = 'Auto-saved locally';
+                    setTimeout(() => {
+                        statusText.textContent = 'Auto-saving enabled';
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('Error saving to local storage:', error);
+                    fileStatus.textContent = 'Error saving data';
+                    fileStatus.style.color = '#dc2626';
+                    statusText.textContent = 'Error saving data';
+                    statusText.style.color = '#dc2626';
+                    setTimeout(() => {
+                        statusText.textContent = 'Auto-saving enabled';
+                        statusText.style.color = '';
+                    }, 3000);
+                }
+            }
+            
+            // Update storage usage info
+            function updateStorageInfo() {
+                try {
+                    // Calculate approximate storage usage
+                    const dataStr = JSON.stringify({
+                        reminders: reminders,
+                        kanbanTasks: kanbanTasks
+                    });
+                    
+                    const dataSize = new Blob([dataStr]).size;
+                    const maxSize = 5 * 1024 * 1024; // 5MB typical for localStorage
+                    const usagePercent = Math.min(100, (dataSize / maxSize) * 100);
+                    
+                    storageText.textContent = `Storage: ${(dataSize / 1024).toFixed(1)}KB (${usagePercent.toFixed(1)}% used)`;
+                    storageFill.style.width = `${usagePercent}%`;
+                    
+                    // Change color based on usage
+                    if (usagePercent > 90) {
+                        storageFill.style.backgroundColor = '#ef4444';
+                    } else if (usagePercent > 70) {
+                        storageFill.style.backgroundColor = '#f59e0b';
+                    } else {
+                        storageFill.style.backgroundColor = '#10b981';
+                    }
+                    
+                } catch (error) {
+                    console.error('Error updating storage info:', error);
+                }
+            }
+            
+            // Update last save time display
+            function updateLastSaveTime(timestamp) {
+                if (!timestamp) {
+                    lastSaveTime.textContent = 'Last saved: Never';
+                    return;
+                }
+                
+                const saveDate = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - saveDate;
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                
+                if (diffSecs < 10) {
+                    lastSaveTime.textContent = 'Last saved: Just now';
+                } else if (diffSecs < 60) {
+                    lastSaveTime.textContent = `Last saved: ${diffSecs} seconds ago`;
+                } else if (diffMins < 60) {
+                    lastSaveTime.textContent = `Last saved: ${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+                } else {
+                    const diffHours = Math.floor(diffMins / 60);
+                    lastSaveTime.textContent = `Last saved: ${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+                }
+            }
+            
+            // Create sample data for first-time users
+            function createSampleData() {
+                const now = new Date();
+                const tomorrow = new Date(now.getTime() + 24 * 60 * 60000);
+                const dayAfterTomorrow = new Date(now.getTime() + 48 * 60 * 60000);
+                
+                reminders = [
+                    {
+                        id: 1,
+                        text: "Team meeting - Project review",
+                        date: now.toISOString().split('T')[0],
+                        time: "10:00",
+                        category: "Work",
+                        status: "scheduled",
+                        repeat: "none",
+                        repeatInterval: "",
+                        createdAt: now.toISOString(),
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0).toISOString(),
+                        nextRenewal: ""
+                    },
+                    {
+                        id: 2,
+                        text: "Dentist appointment",
+                        date: tomorrow.toISOString().split('T')[0],
+                        time: "14:30",
+                        category: "Health",
+                        status: "scheduled",
+                        repeat: "none",
+                        repeatInterval: "",
+                        createdAt: now.toISOString(),
+                        dueAt: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 14, 30).toISOString(),
+                        nextRenewal: ""
+                    },
+                    {
+                        id: 3,
+                        text: "Pay electricity bill",
+                        date: now.toISOString().split('T')[0],
+                        time: "09:00",
+                        category: "Finance",
+                        status: "due",
+                        repeat: "monthly",
+                        repeatInterval: "",
+                        createdAt: new Date(now.getFullYear(), now.getMonth() - 1, now.getDate(), 9, 0).toISOString(),
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0).toISOString(),
+                        nextRenewal: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate(), 9, 0).toISOString()
+                    },
+                    {
+                        id: 4,
+                        text: "Gym workout session",
+                        date: now.toISOString().split('T')[0],
+                        time: "18:00",
+                        category: "Health",
+                        status: "scheduled",
+                        repeat: "daily",
+                        repeatInterval: "",
+                        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 18, 0).toISOString(),
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0).toISOString(),
+                        nextRenewal: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 18, 0).toISOString()
+                    },
+                    {
+                        id: 5,
+                        text: "Submit monthly report",
+                        date: dayAfterTomorrow.toISOString().split('T')[0],
+                        time: "16:00",
+                        category: "Work",
+                        status: "scheduled",
+                        repeat: "none",
+                        repeatInterval: "",
+                        createdAt: now.toISOString(),
+                        dueAt: new Date(dayAfterTomorrow.getFullYear(), dayAfterTomorrow.getMonth(), dayAfterTomorrow.getDate(), 16, 0).toISOString(),
+                        nextRenewal: ""
+                    }
+                ];
+                
+                // Add some sample kanban tasks
+                kanbanTasks = [
+                    {
+                        id: 3,
+                        text: "Pay electricity bill",
+                        date: now.toISOString().split('T')[0],
+                        time: "09:00",
+                        category: "Finance",
+                        kanbanStatus: "todo",
+                        status: "due",
+                        repeat: "monthly",
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0).toISOString()
+                    }
+                ];
+            }
+            
+            // Export data to Excel file (manual download)
+            function exportToExcelFile() {
                 try {
                     if (typeof XLSX === 'undefined') {
                         throw new Error('XLSX library not loaded');
                     }
                     
-                    // Prepare data for Excel - save both reminders and kanban state
+                    // Prepare data for Excel
                     const excelData = [
                         ['=== REMINDERS TABLE DATA ==='],
                         ['ID', 'Text', 'Date', 'Time', 'Category', 'Status', 'Repeat', 'RepeatInterval', 'DueAt', 'CreatedAt', 'NextRenewal']
@@ -367,6 +643,13 @@
                         ]);
                     });
                     
+                    // Add metadata
+                    excelData.push([]);
+                    excelData.push(['=== METADATA ===']);
+                    excelData.push(['Export Date', new Date().toISOString()]);
+                    excelData.push(['Total Reminders', reminders.length]);
+                    excelData.push(['Total Kanban Tasks', kanbanTasks.length]);
+                    
                     // Create workbook
                     const ws = XLSX.utils.aoa_to_sheet(excelData);
                     const wb = XLSX.utils.book_new();
@@ -380,23 +663,33 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'data.xlsx';
+                    
+                    // Use timestamp to create unique filename
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+                    a.download = `reminders-backup-${timestamp}.xlsx`;
+                    
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
-                    statusText.textContent = 'Data exported to data.xlsx';
+                    // Update status
+                    fileStatus.textContent = `Exported ${reminders.length} reminders to Excel`;
+                    fileStatus.style.color = '#10b981';
+                    
+                    statusText.textContent = 'Data exported to Excel file';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving enabled';
                     }, 3000);
                     
                 } catch (error) {
-                    console.error('Error saving to Excel:', error);
+                    console.error('Error exporting to Excel:', error);
+                    fileStatus.textContent = 'Error exporting to Excel';
+                    fileStatus.style.color = '#dc2626';
                     statusText.textContent = 'Error exporting Excel file';
                     statusText.style.color = '#dc2626';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving enabled';
                         statusText.style.color = '';
                     }, 3000);
                 }
@@ -427,7 +720,7 @@
                             // Parse data
                             jsonData.forEach((row, index) => {
                                 // Skip header rows
-                                if (index < 2) return; // Skip first two rows
+                                if (index < 2) return;
                                 
                                 // Check for separator between sections
                                 if (row.length === 0 || (row.length === 1 && row[0] === '')) {
@@ -448,7 +741,7 @@
                                     // Parse kanban task
                                     if (row.length >= 9) {
                                         const task = {
-                                            id: row[0] || Date.now(),
+                                            id: row[0] || Date.now() + Math.random(),
                                             text: row[1] || '',
                                             date: row[2] || new Date().toISOString().split('T')[0],
                                             time: row[3] || '09:00',
@@ -469,7 +762,7 @@
                                 } else if (!hasPassedSeparator && row.length >= 11) {
                                     // Parse reminder from table section
                                     const reminder = {
-                                        id: row[0] || Date.now(),
+                                        id: row[0] || Date.now() + Math.random(),
                                         text: row[1] || '',
                                         date: row[2] || new Date().toISOString().split('T')[0],
                                         time: row[3] || '09:00',
@@ -493,18 +786,24 @@
                             
                             updateTable();
                             updateKanban();
+                            saveToLocalStorage(); // Save imported data to local storage
                             
-                            statusText.textContent = `Imported ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks`;
+                            fileStatus.textContent = `Imported ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks`;
+                            fileStatus.style.color = '#10b981';
+                            
+                            statusText.textContent = 'Data imported and saved locally';
                             setTimeout(() => {
-                                statusText.textContent = 'Reminder service is active';
+                                statusText.textContent = 'Auto-saving enabled';
                             }, 3000);
                             
                         } catch (parseError) {
                             console.error('Error parsing Excel file:', parseError);
-                            statusText.textContent = 'Error parsing Excel file';
+                            fileStatus.textContent = 'Error parsing Excel file';
+                            fileStatus.style.color = '#dc2626';
+                            statusText.textContent = 'Error importing Excel file';
                             statusText.style.color = '#dc2626';
                             setTimeout(() => {
-                                statusText.textContent = 'Reminder service is active';
+                                statusText.textContent = 'Auto-saving enabled';
                                 statusText.style.color = '';
                             }, 3000);
                         }
@@ -514,10 +813,12 @@
                     
                 } catch (error) {
                     console.error('Error importing from Excel:', error);
+                    fileStatus.textContent = 'Error importing Excel file';
+                    fileStatus.style.color = '#dc2626';
                     statusText.textContent = 'Error importing Excel file';
                     statusText.style.color = '#dc2626';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving enabled';
                         statusText.style.color = '';
                     }, 3000);
                 }
@@ -530,7 +831,7 @@
                 const formattedDate = tomorrow.toISOString().split('T')[0];
                 
                 const newReminder = {
-                    id: Date.now(),
+                    id: Date.now() + Math.random(),
                     text: "",
                     date: formattedDate,
                     time: "09:00",
@@ -546,9 +847,12 @@
                 reminders.push(newReminder);
                 updateTable();
                 
-                statusText.textContent = 'New reminder row added (stays in table until due)';
+                // Auto-save after adding new row
+                saveToLocalStorage();
+                
+                statusText.textContent = 'New reminder row added';
                 setTimeout(() => {
-                    statusText.textContent = 'Reminder service is active';
+                    statusText.textContent = 'Auto-saving enabled';
                 }, 2000);
                 
                 // Scroll to the new row
@@ -557,6 +861,11 @@
                     rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
+            
+            // [All other functions remain the same as before: updateTable, updateKanban, createKanbanCard, 
+            // calculateNextDueDate, checkReminders, renewRecurringTask, showNotification, playNotificationSound, 
+            // startReminderChecker, setupEventListeners, addTableEventListeners, addDragAndDropListeners,
+            // dragStart, dragEnd, dragOver, dragEnter, dragLeave, dragDrop]
             
             // Update the table display
             function updateTable() {
@@ -839,9 +1148,12 @@
                     updateTable();
                     updateKanban();
                     
+                    // Auto-save after moving reminders to kanban
+                    saveToLocalStorage();
+                    
                     statusText.textContent = `${dueReminders.length} reminder(s) moved to Kanban Todo`;
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving enabled';
                     }, 5000);
                 }
             }
@@ -868,9 +1180,12 @@
                     updateTable();
                     updateKanban();
                     
+                    // Auto-save after renewal
+                    saveToLocalStorage();
+                    
                     statusText.textContent = 'Recurring task renewed for next period';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving enabled';
                     }, 3000);
                 }
             }
@@ -966,26 +1281,34 @@
                         reminders = reminders.filter(r => !(r.status === 'completed' && r.repeat === 'none'));
                         updateTable();
                         
+                        // Auto-save after clearing completed
+                        saveToLocalStorage();
+                        
                         statusText.textContent = `Cleared ${completedCount} non-recurring completed reminder(s)`;
                         setTimeout(() => {
-                            statusText.textContent = 'Reminder service is active';
+                            statusText.textContent = 'Auto-saving enabled';
                         }, 3000);
                     });
                 }
                 
-                // Import Excel button
+                // Import Excel button (for manual import)
                 if (importExcelBtn) {
                     importExcelBtn.addEventListener('click', () => {
                         fileInput.click();
                     });
                 }
                 
-                // Export Excel button
-                if (exportExcelBtn) {
-                    exportExcelBtn.addEventListener('click', saveToExcelFile);
+                // Save Data button
+                if (saveDataBtn) {
+                    saveDataBtn.addEventListener('click', saveToLocalStorage);
                 }
                 
-                // File input change (for import)
+                // Export Excel button
+                if (exportExcelBtn) {
+                    exportExcelBtn.addEventListener('click', exportToExcelFile);
+                }
+                
+                // File input change (for manual import)
                 if (fileInput) {
                     fileInput.addEventListener('change', (e) => {
                         if (e.target.files.length > 0) {
@@ -1013,6 +1336,13 @@
                         }
                     });
                 }
+                
+                // Save data before page unload
+                window.addEventListener('beforeunload', function() {
+                    if (isInitialized) {
+                        saveToLocalStorage();
+                    }
+                });
             }
             
             // Add event listeners to table cells
@@ -1023,7 +1353,7 @@
                         const row = e.target.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         // Check if it's a recurring task
@@ -1041,9 +1371,12 @@
                         updateTable();
                         updateKanban();
                         
-                        statusText.textContent = 'Reminder deleted from both Table and Kanban';
+                        // Auto-save after deletion
+                        saveToLocalStorage();
+                        
+                        statusText.textContent = 'Reminder deleted';
                         setTimeout(() => {
-                            statusText.textContent = 'Reminder service is active';
+                            statusText.textContent = 'Auto-saving enabled';
                         }, 2000);
                     });
                 });
@@ -1054,7 +1387,7 @@
                         const row = e.target.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         if (reminder) {
@@ -1103,21 +1436,37 @@
                                 updateTable();
                                 updateKanban();
                                 
+                                // Auto-save after update
+                                saveToLocalStorage();
+                                
                                 statusText.textContent = 'Reminder updated';
                                 setTimeout(() => {
-                                    statusText.textContent = 'Reminder service is active';
+                                    statusText.textContent = 'Auto-saving enabled';
                                 }, 2000);
                             }
                         }
                     });
                 });
                 
+                // Debounce function for input updates
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
                 // Create debounced update function for date and time inputs
                 const debouncedUpdate = debounce(function(input) {
                     const row = input.closest('tr');
                     if (!row) return;
                     
-                    const id = parseInt(row.getAttribute('data-id'));
+                    const id = parseFloat(row.getAttribute('data-id'));
                     const reminder = reminders.find(r => r.id === id);
                     
                     if (reminder) {
@@ -1154,6 +1503,9 @@
                         
                         updateTable();
                         updateKanban();
+                        
+                        // Auto-save after debounced update
+                        saveToLocalStorage();
                     }
                 }, 800); // 800ms delay after user stops typing
                 
@@ -1173,7 +1525,7 @@
                         const row = this.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         if (reminder) {
@@ -1210,6 +1562,9 @@
                             
                             updateTable();
                             updateKanban();
+                            
+                            // Auto-save on blur
+                            saveToLocalStorage();
                         }
                     });
                 });
@@ -1224,7 +1579,7 @@
                         const row = this.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         if (reminder) {
@@ -1245,6 +1600,9 @@
                             
                             updateTable();
                             updateKanban();
+                            
+                            // Auto-save on change
+                            saveToLocalStorage();
                         }
                     });
                 });
@@ -1273,7 +1631,7 @@
                         const card = this.closest('.kanban-card');
                         if (!card) return;
                         
-                        const id = parseInt(card.getAttribute('data-id'));
+                        const id = parseFloat(card.getAttribute('data-id'));
                         const action = this.getAttribute('data-action');
                         const taskIndex = kanbanTasks.findIndex(task => task.id === id);
                         
@@ -1293,8 +1651,11 @@
                             
                             updateKanban();
                             
+                            // Auto-save after kanban action
+                            saveToLocalStorage();
+                            
                             setTimeout(() => {
-                                statusText.textContent = 'Reminder service is active';
+                                statusText.textContent = 'Auto-saving enabled';
                             }, 2000);
                         }
                         
@@ -1332,7 +1693,7 @@
                 
                 if (dragCard) {
                     const newStatus = this.getAttribute('data-status');
-                    const cardId = parseInt(dragCard.getAttribute('data-id'));
+                    const cardId = parseFloat(dragCard.getAttribute('data-id'));
                     const taskIndex = kanbanTasks.findIndex(task => task.id === cardId);
                     
                     if (taskIndex !== -1) {
@@ -1350,9 +1711,12 @@
                         
                         updateKanban();
                         
+                        // Auto-save after drag and drop
+                        saveToLocalStorage();
+                        
                         statusText.textContent = `Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'inprogress' ? 'In Progress' : 'Done'}`;
                         setTimeout(() => {
-                            statusText.textContent = 'Reminder service is active';
+                            statusText.textContent = 'Auto-saving enabled';
                         }, 2000);
                     }
                 }
