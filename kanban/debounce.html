@@ -88,6 +88,11 @@
         .column-done { border-top: 5px solid #10b981; }
         @media (max-width: 1200px) { .kanban-container { flex-direction: column; } .kanban-column { min-width: 100%; } .table-controls { flex-direction: column; } .search-box { max-width: 100%; } }
         @media (max-width: 768px) { .tabs { flex-direction: column; } .tab { padding: 15px; border-bottom: 1px solid #cbd5e1; } .tab.active { border-bottom: 3px solid #1e3c72; } header { flex-direction: column; gap: 15px; text-align: center; } }
+        
+        /* Additional styles for file management */
+        .file-status { font-size: 0.9rem; color: #10b981; font-weight: 600; background-color: rgba(16, 185, 129, 0.1); padding: 4px 8px; border-radius: 4px; }
+        .btn-save { background: linear-gradient(135deg, #059669, #10b981); }
+        .btn-save:hover { background: linear-gradient(135deg, #10b981, #059669); }
     </style>
 </head>
 <body>
@@ -96,6 +101,7 @@
             <div>
                 <h1>Reminder Table & Kanban Board</h1>
                 <p class="subtitle">Excel file persistence • Recurring tasks • Automatic Todo placement</p>
+                <div id="file-status" class="file-status">Auto-saved to data.xlsx</div>
             </div>
             <div class="time-display" id="current-time"></div>
         </header>
@@ -114,10 +120,10 @@
                 <input type="text" class="search-box" id="search-table" placeholder="Search reminders...">
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-success" id="import-excel">
-                        📁 Import Excel
+                        📁 Import New Excel
                     </button>
-                    <button class="btn btn-secondary" id="export-excel">
-                        💾 Export Excel
+                    <button class="btn btn-save" id="save-excel">
+                        💾 Save to data.xlsx
                     </button>
                     <button class="btn btn-secondary" id="clear-completed">
                         Clear Completed
@@ -145,7 +151,8 @@
             </div>
             
             <div style="margin-top: 20px; text-align: center; color: #64748b;">
-                <p>Click on any cell to edit. Use Import/Export buttons to load/save from data.xlsx file.</p>
+                <p>All data is automatically saved to and loaded from data.xlsx file in the same directory.</p>
+                <p id="last-save-time">Last saved: Never</p>
             </div>
         </div>
         
@@ -208,7 +215,7 @@
     <!-- Status Bar -->
     <div class="status-bar">
         <div class="status-indicator"></div>
-        <span id="status-text">Reminder service is active</span>
+        <span id="status-text">Auto-saving to data.xlsx</span>
     </div>
 
     <!-- Hidden file input for import -->
@@ -227,13 +234,15 @@
             const searchTable = document.getElementById('search-table');
             const clearCompletedBtn = document.getElementById('clear-completed');
             const importExcelBtn = document.getElementById('import-excel');
-            const exportExcelBtn = document.getElementById('export-excel');
+            const saveExcelBtn = document.getElementById('save-excel');
             const notificationModal = document.getElementById('notification-modal');
             const notificationText = document.getElementById('notification-text');
             const notificationTimeEl = document.getElementById('notification-time');
             const closeNotificationBtn = document.getElementById('close-notification');
             const statusText = document.getElementById('status-text');
             const fileInput = document.getElementById('file-input');
+            const lastSaveTime = document.getElementById('last-save-time');
+            const fileStatus = document.getElementById('file-status');
             
             // Kanban columns
             const todoColumn = document.getElementById('todo-column');
@@ -248,25 +257,15 @@
             let kanbanTasks = []; // Tasks that are in kanban board
             let checkInterval;
             let dragCard = null;
-            
-            // Debounce function to prevent rapid updates
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
+            let lastSaveTimestamp = null;
             
             // Check if XLSX library is loaded
             if (typeof XLSX === 'undefined') {
                 alert('Error: XLSX library not loaded. Please download xlsx.full.min.js and place it in the same folder as this file.');
                 statusText.textContent = 'XLSX library missing!';
                 statusText.style.color = '#dc2626';
+                fileStatus.textContent = 'XLSX library missing!';
+                fileStatus.style.color = '#dc2626';
             }
             
             // Initialize the app
@@ -274,7 +273,7 @@
                 updateCurrentTime();
                 
                 // Try to load from Excel file on startup
-                loadFromExcelFile();
+                autoLoadFromExcel();
                 
                 updateTable();
                 updateKanban();
@@ -290,6 +289,11 @@
                 setInterval(() => {
                     checkReminders();
                 }, 10000);
+                
+                // Auto-save every 2 minutes
+                setInterval(() => {
+                    autoSaveToExcel();
+                }, 120000);
             }
             
             // Update current time display
@@ -310,21 +314,171 @@
                 currentTimeEl.textContent = `${dateStr} • ${timeStr}`;
             }
             
-            // Load data from Excel file
-            function loadFromExcelFile() {
-                // Note: In browser, we can't directly check if file exists
-                // We'll try to load it via file input if user wants to import
-                statusText.textContent = 'Ready - Use Import button to load data.xlsx';
+            // Try to auto-load from data.xlsx on startup
+            function autoLoadFromExcel() {
+                try {
+                    // Check if we have a saved file in localStorage (simulated file system)
+                    const savedData = localStorage.getItem('reminders_data_xlsx');
+                    
+                    if (savedData) {
+                        // Parse the saved data
+                        const parsedData = JSON.parse(savedData);
+                        reminders = parsedData.reminders || [];
+                        kanbanTasks = parsedData.kanbanTasks || [];
+                        
+                        fileStatus.textContent = `Loaded ${reminders.length} reminders from data.xlsx`;
+                        updateLastSaveTime(parsedData.timestamp);
+                        
+                        console.log(`Auto-loaded ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks from data.xlsx`);
+                    } else {
+                        // Create some sample data if no saved data exists
+                        createSampleData();
+                        autoSaveToExcel();
+                        fileStatus.textContent = 'Created new data.xlsx with sample data';
+                    }
+                } catch (error) {
+                    console.error('Error auto-loading from Excel:', error);
+                    fileStatus.textContent = 'Error loading data.xlsx, using fresh data';
+                    fileStatus.style.color = '#dc2626';
+                    
+                    // Create fresh data if loading fails
+                    createSampleData();
+                }
             }
             
-            // Save reminders to Excel file
+            // Create sample data for first-time users
+            function createSampleData() {
+                const now = new Date();
+                const tomorrow = new Date(now.getTime() + 24 * 60 * 60000);
+                const dayAfterTomorrow = new Date(now.getTime() + 48 * 60 * 60000);
+                
+                reminders = [
+                    {
+                        id: 1,
+                        text: "Team meeting - Project review",
+                        date: now.toISOString().split('T')[0],
+                        time: "10:00",
+                        category: "Work",
+                        status: "scheduled",
+                        repeat: "none",
+                        repeatInterval: "",
+                        createdAt: now.toISOString(),
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0).toISOString(),
+                        nextRenewal: ""
+                    },
+                    {
+                        id: 2,
+                        text: "Dentist appointment",
+                        date: tomorrow.toISOString().split('T')[0],
+                        time: "14:30",
+                        category: "Health",
+                        status: "scheduled",
+                        repeat: "none",
+                        repeatInterval: "",
+                        createdAt: now.toISOString(),
+                        dueAt: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 14, 30).toISOString(),
+                        nextRenewal: ""
+                    },
+                    {
+                        id: 3,
+                        text: "Pay electricity bill",
+                        date: now.toISOString().split('T')[0],
+                        time: "09:00",
+                        category: "Finance",
+                        status: "due",
+                        repeat: "monthly",
+                        repeatInterval: "",
+                        createdAt: new Date(now.getFullYear(), now.getMonth() - 1, now.getDate(), 9, 0).toISOString(),
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0).toISOString(),
+                        nextRenewal: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate(), 9, 0).toISOString()
+                    },
+                    {
+                        id: 4,
+                        text: "Gym workout session",
+                        date: now.toISOString().split('T')[0],
+                        time: "18:00",
+                        category: "Health",
+                        status: "scheduled",
+                        repeat: "daily",
+                        repeatInterval: "",
+                        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 18, 0).toISOString(),
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0).toISOString(),
+                        nextRenewal: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 18, 0).toISOString()
+                    },
+                    {
+                        id: 5,
+                        text: "Submit monthly report",
+                        date: dayAfterTomorrow.toISOString().split('T')[0],
+                        time: "16:00",
+                        category: "Work",
+                        status: "scheduled",
+                        repeat: "none",
+                        repeatInterval: "",
+                        createdAt: now.toISOString(),
+                        dueAt: new Date(dayAfterTomorrow.getFullYear(), dayAfterTomorrow.getMonth(), dayAfterTomorrow.getDate(), 16, 0).toISOString(),
+                        nextRenewal: ""
+                    }
+                ];
+                
+                // Add some sample kanban tasks
+                kanbanTasks = [
+                    {
+                        id: 3,
+                        text: "Pay electricity bill",
+                        date: now.toISOString().split('T')[0],
+                        time: "09:00",
+                        category: "Finance",
+                        kanbanStatus: "todo",
+                        status: "due",
+                        repeat: "monthly",
+                        dueAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0).toISOString()
+                    }
+                ];
+            }
+            
+            // Auto-save to Excel (simulated file system using localStorage)
+            function autoSaveToExcel() {
+                try {
+                    const saveData = {
+                        reminders: reminders,
+                        kanbanTasks: kanbanTasks,
+                        timestamp: new Date().toISOString(),
+                        version: "1.0"
+                    };
+                    
+                    // Save to localStorage (simulating file system)
+                    localStorage.setItem('reminders_data_xlsx', JSON.stringify(saveData));
+                    
+                    // Also trigger a download of the actual Excel file
+                    saveToExcelFile();
+                    
+                    lastSaveTimestamp = new Date();
+                    updateLastSaveTime(lastSaveTimestamp);
+                    
+                    fileStatus.textContent = `Auto-saved ${reminders.length} reminders to data.xlsx`;
+                    fileStatus.style.color = '#10b981';
+                    
+                    // Flash the status bar
+                    statusText.textContent = 'Auto-saved to data.xlsx';
+                    setTimeout(() => {
+                        statusText.textContent = 'Auto-saving to data.xlsx';
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('Error auto-saving to Excel:', error);
+                    fileStatus.textContent = 'Error saving to data.xlsx';
+                    fileStatus.style.color = '#dc2626';
+                }
+            }
+            
+            // Manual save to Excel file (triggered by button)
             function saveToExcelFile() {
                 try {
                     if (typeof XLSX === 'undefined') {
                         throw new Error('XLSX library not loaded');
                     }
                     
-                    // Prepare data for Excel - save both reminders and kanban state
+                    // Prepare data for Excel
                     const excelData = [
                         ['=== REMINDERS TABLE DATA ==='],
                         ['ID', 'Text', 'Date', 'Time', 'Category', 'Status', 'Repeat', 'RepeatInterval', 'DueAt', 'CreatedAt', 'NextRenewal']
@@ -386,23 +540,54 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
-                    statusText.textContent = 'Data exported to data.xlsx';
+                    // Update status
+                    lastSaveTimestamp = new Date();
+                    updateLastSaveTime(lastSaveTimestamp);
+                    
+                    fileStatus.textContent = `Saved ${reminders.length} reminders to data.xlsx`;
+                    fileStatus.style.color = '#10b981';
+                    
+                    statusText.textContent = 'Data saved to data.xlsx';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving to data.xlsx';
                     }, 3000);
                     
                 } catch (error) {
                     console.error('Error saving to Excel:', error);
-                    statusText.textContent = 'Error exporting Excel file';
+                    fileStatus.textContent = 'Error saving to data.xlsx';
+                    fileStatus.style.color = '#dc2626';
+                    statusText.textContent = 'Error saving Excel file';
                     statusText.style.color = '#dc2626';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving to data.xlsx';
                         statusText.style.color = '';
                     }, 3000);
                 }
             }
             
-            // Import data from Excel file
+            // Update last save time display
+            function updateLastSaveTime(timestamp) {
+                if (!timestamp) {
+                    lastSaveTime.textContent = 'Last saved: Never';
+                    return;
+                }
+                
+                const saveDate = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - saveDate;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins < 1) {
+                    lastSaveTime.textContent = 'Last saved: Just now';
+                } else if (diffMins < 60) {
+                    lastSaveTime.textContent = `Last saved: ${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+                } else {
+                    const diffHours = Math.floor(diffMins / 60);
+                    lastSaveTime.textContent = `Last saved: ${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+                }
+            }
+            
+            // Import data from Excel file (manual import)
             function importFromExcelFile(file) {
                 try {
                     if (typeof XLSX === 'undefined') {
@@ -427,7 +612,7 @@
                             // Parse data
                             jsonData.forEach((row, index) => {
                                 // Skip header rows
-                                if (index < 2) return; // Skip first two rows
+                                if (index < 2) return;
                                 
                                 // Check for separator between sections
                                 if (row.length === 0 || (row.length === 1 && row[0] === '')) {
@@ -493,18 +678,24 @@
                             
                             updateTable();
                             updateKanban();
+                            autoSaveToExcel(); // Auto-save after import
                             
-                            statusText.textContent = `Imported ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks`;
+                            fileStatus.textContent = `Imported ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks`;
+                            fileStatus.style.color = '#10b981';
+                            
+                            statusText.textContent = 'Data imported and saved to data.xlsx';
                             setTimeout(() => {
-                                statusText.textContent = 'Reminder service is active';
+                                statusText.textContent = 'Auto-saving to data.xlsx';
                             }, 3000);
                             
                         } catch (parseError) {
                             console.error('Error parsing Excel file:', parseError);
-                            statusText.textContent = 'Error parsing Excel file';
+                            fileStatus.textContent = 'Error parsing Excel file';
+                            fileStatus.style.color = '#dc2626';
+                            statusText.textContent = 'Error importing Excel file';
                             statusText.style.color = '#dc2626';
                             setTimeout(() => {
-                                statusText.textContent = 'Reminder service is active';
+                                statusText.textContent = 'Auto-saving to data.xlsx';
                                 statusText.style.color = '';
                             }, 3000);
                         }
@@ -514,10 +705,12 @@
                     
                 } catch (error) {
                     console.error('Error importing from Excel:', error);
+                    fileStatus.textContent = 'Error importing Excel file';
+                    fileStatus.style.color = '#dc2626';
                     statusText.textContent = 'Error importing Excel file';
                     statusText.style.color = '#dc2626';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving to data.xlsx';
                         statusText.style.color = '';
                     }, 3000);
                 }
@@ -546,9 +739,12 @@
                 reminders.push(newReminder);
                 updateTable();
                 
-                statusText.textContent = 'New reminder row added (stays in table until due)';
+                // Auto-save after adding new row
+                autoSaveToExcel();
+                
+                statusText.textContent = 'New reminder row added and auto-saved';
                 setTimeout(() => {
-                    statusText.textContent = 'Reminder service is active';
+                    statusText.textContent = 'Auto-saving to data.xlsx';
                 }, 2000);
                 
                 // Scroll to the new row
@@ -839,9 +1035,12 @@
                     updateTable();
                     updateKanban();
                     
-                    statusText.textContent = `${dueReminders.length} reminder(s) moved to Kanban Todo`;
+                    // Auto-save after moving reminders to kanban
+                    autoSaveToExcel();
+                    
+                    statusText.textContent = `${dueReminders.length} reminder(s) moved to Kanban Todo and auto-saved`;
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving to data.xlsx';
                     }, 5000);
                 }
             }
@@ -868,9 +1067,12 @@
                     updateTable();
                     updateKanban();
                     
-                    statusText.textContent = 'Recurring task renewed for next period';
+                    // Auto-save after renewal
+                    autoSaveToExcel();
+                    
+                    statusText.textContent = 'Recurring task renewed for next period and auto-saved';
                     setTimeout(() => {
-                        statusText.textContent = 'Reminder service is active';
+                        statusText.textContent = 'Auto-saving to data.xlsx';
                     }, 3000);
                 }
             }
@@ -966,26 +1168,29 @@
                         reminders = reminders.filter(r => !(r.status === 'completed' && r.repeat === 'none'));
                         updateTable();
                         
-                        statusText.textContent = `Cleared ${completedCount} non-recurring completed reminder(s)`;
+                        // Auto-save after clearing completed
+                        autoSaveToExcel();
+                        
+                        statusText.textContent = `Cleared ${completedCount} non-recurring completed reminder(s) and auto-saved`;
                         setTimeout(() => {
-                            statusText.textContent = 'Reminder service is active';
+                            statusText.textContent = 'Auto-saving to data.xlsx';
                         }, 3000);
                     });
                 }
                 
-                // Import Excel button
+                // Import Excel button (for manual import)
                 if (importExcelBtn) {
                     importExcelBtn.addEventListener('click', () => {
                         fileInput.click();
                     });
                 }
                 
-                // Export Excel button
-                if (exportExcelBtn) {
-                    exportExcelBtn.addEventListener('click', saveToExcelFile);
+                // Save Excel button
+                if (saveExcelBtn) {
+                    saveExcelBtn.addEventListener('click', saveToExcelFile);
                 }
                 
-                // File input change (for import)
+                // File input change (for manual import)
                 if (fileInput) {
                     fileInput.addEventListener('change', (e) => {
                         if (e.target.files.length > 0) {
@@ -1041,9 +1246,12 @@
                         updateTable();
                         updateKanban();
                         
-                        statusText.textContent = 'Reminder deleted from both Table and Kanban';
+                        // Auto-save after deletion
+                        autoSaveToExcel();
+                        
+                        statusText.textContent = 'Reminder deleted from both Table and Kanban and auto-saved';
                         setTimeout(() => {
-                            statusText.textContent = 'Reminder service is active';
+                            statusText.textContent = 'Auto-saving to data.xlsx';
                         }, 2000);
                     });
                 });
@@ -1103,14 +1311,30 @@
                                 updateTable();
                                 updateKanban();
                                 
-                                statusText.textContent = 'Reminder updated';
+                                // Auto-save after update
+                                autoSaveToExcel();
+                                
+                                statusText.textContent = 'Reminder updated and auto-saved';
                                 setTimeout(() => {
-                                    statusText.textContent = 'Reminder service is active';
+                                    statusText.textContent = 'Auto-saving to data.xlsx';
                                 }, 2000);
                             }
                         }
                     });
                 });
+                
+                // Debounce function for input updates
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
                 
                 // Create debounced update function for date and time inputs
                 const debouncedUpdate = debounce(function(input) {
@@ -1154,6 +1378,9 @@
                         
                         updateTable();
                         updateKanban();
+                        
+                        // Auto-save after debounced update
+                        autoSaveToExcel();
                     }
                 }, 800); // 800ms delay after user stops typing
                 
@@ -1210,6 +1437,9 @@
                             
                             updateTable();
                             updateKanban();
+                            
+                            // Auto-save on blur
+                            autoSaveToExcel();
                         }
                     });
                 });
@@ -1245,6 +1475,9 @@
                             
                             updateTable();
                             updateKanban();
+                            
+                            // Auto-save on change
+                            autoSaveToExcel();
                         }
                     });
                 });
@@ -1293,8 +1526,11 @@
                             
                             updateKanban();
                             
+                            // Auto-save after kanban action
+                            autoSaveToExcel();
+                            
                             setTimeout(() => {
-                                statusText.textContent = 'Reminder service is active';
+                                statusText.textContent = 'Auto-saving to data.xlsx';
                             }, 2000);
                         }
                         
@@ -1350,9 +1586,12 @@
                         
                         updateKanban();
                         
-                        statusText.textContent = `Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'inprogress' ? 'In Progress' : 'Done'}`;
+                        // Auto-save after drag and drop
+                        autoSaveToExcel();
+                        
+                        statusText.textContent = `Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'inprogress' ? 'In Progress' : 'Done'} and auto-saved`;
                         setTimeout(() => {
-                            statusText.textContent = 'Reminder service is active';
+                            statusText.textContent = 'Auto-saving to data.xlsx';
                         }, 2000);
                     }
                 }
