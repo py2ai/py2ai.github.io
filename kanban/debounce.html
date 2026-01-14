@@ -7,7 +7,7 @@
     <!-- Load the SheetJS library -->
     <script src="xlsx.full.min.js"></script>
     <style>
-        /* [All CSS styles from previous version remain exactly the same] */
+        /* [All CSS styles remain exactly the same as before] */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: linear-gradient(135deg, #1e3c72, #2a5298); color: #333; min-height: 100vh; padding: 20px; }
         .container { max-width: 1600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); overflow: hidden; }
@@ -93,6 +93,30 @@
         .file-status { font-size: 0.9rem; color: #10b981; font-weight: 600; background-color: rgba(16, 185, 129, 0.1); padding: 4px 8px; border-radius: 4px; }
         .btn-save { background: linear-gradient(135deg, #059669, #10b981); }
         .btn-save:hover { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-export { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+        .btn-export:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        
+        /* Storage info */
+        .storage-info {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .storage-bar {
+            width: 100px;
+            height: 4px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .storage-fill {
+            height: 100%;
+            background-color: #10b981;
+            transition: width 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -100,8 +124,14 @@
         <header>
             <div>
                 <h1>Reminder Table & Kanban Board</h1>
-                <p class="subtitle">Excel file persistence • Recurring tasks • Automatic Todo placement</p>
-                <div id="file-status" class="file-status">Auto-saved to data.xlsx</div>
+                <p class="subtitle">Local Storage Persistence • Auto-save • Excel Export</p>
+                <div id="file-status" class="file-status">Data saved locally in browser</div>
+                <div class="storage-info">
+                    <span id="storage-text">Storage: 0% used</span>
+                    <div class="storage-bar">
+                        <div class="storage-fill" id="storage-fill"></div>
+                    </div>
+                </div>
             </div>
             <div class="time-display" id="current-time"></div>
         </header>
@@ -120,10 +150,13 @@
                 <input type="text" class="search-box" id="search-table" placeholder="Search reminders...">
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-success" id="import-excel">
-                        📁 Import New Excel
+                        📁 Import Excel
                     </button>
-                    <button class="btn btn-save" id="save-excel">
-                        💾 Save to data.xlsx
+                    <button class="btn btn-save" id="save-data">
+                        💾 Save Data
+                    </button>
+                    <button class="btn btn-export" id="export-excel">
+                        📤 Export to Excel
                     </button>
                     <button class="btn btn-secondary" id="clear-completed">
                         Clear Completed
@@ -151,8 +184,9 @@
             </div>
             
             <div style="margin-top: 20px; text-align: center; color: #64748b;">
-                <p>All data is automatically saved to and loaded from data.xlsx file in the same directory.</p>
-                <p id="last-save-time">Last saved: Never</p>
+                <p>All data is automatically saved in your browser's local storage.</p>
+                <p id="last-save-time">Last saved: Just now</p>
+                <p><small>Use "Export to Excel" to download a backup file.</small></p>
             </div>
         </div>
         
@@ -215,7 +249,7 @@
     <!-- Status Bar -->
     <div class="status-bar">
         <div class="status-indicator"></div>
-        <span id="status-text">Auto-saving to data.xlsx</span>
+        <span id="status-text">Auto-saving enabled</span>
     </div>
 
     <!-- Hidden file input for import -->
@@ -234,7 +268,8 @@
             const searchTable = document.getElementById('search-table');
             const clearCompletedBtn = document.getElementById('clear-completed');
             const importExcelBtn = document.getElementById('import-excel');
-            const saveExcelBtn = document.getElementById('save-excel');
+            const saveDataBtn = document.getElementById('save-data');
+            const exportExcelBtn = document.getElementById('export-excel');
             const notificationModal = document.getElementById('notification-modal');
             const notificationText = document.getElementById('notification-text');
             const notificationTimeEl = document.getElementById('notification-time');
@@ -243,6 +278,8 @@
             const fileInput = document.getElementById('file-input');
             const lastSaveTime = document.getElementById('last-save-time');
             const fileStatus = document.getElementById('file-status');
+            const storageText = document.getElementById('storage-text');
+            const storageFill = document.getElementById('storage-fill');
             
             // Kanban columns
             const todoColumn = document.getElementById('todo-column');
@@ -257,7 +294,9 @@
             let kanbanTasks = []; // Tasks that are in kanban board
             let checkInterval;
             let dragCard = null;
-            let lastSaveTimestamp = null;
+            let lastSaveTimestamp = new Date();
+            let autoSaveTimer = null;
+            let isInitialized = false;
             
             // Check if XLSX library is loaded
             if (typeof XLSX === 'undefined') {
@@ -272,12 +311,13 @@
             function init() {
                 updateCurrentTime();
                 
-                // Try to load from Excel file on startup
-                autoLoadFromExcel();
+                // Try to load from local storage on startup
+                loadFromLocalStorage();
                 
                 updateTable();
                 updateKanban();
                 startReminderChecker();
+                updateStorageInfo();
                 
                 // Set up event listeners
                 setupEventListeners();
@@ -290,10 +330,14 @@
                     checkReminders();
                 }, 10000);
                 
-                // Auto-save every 2 minutes
+                // Auto-save every 30 seconds if there are changes
                 setInterval(() => {
-                    autoSaveToExcel();
-                }, 120000);
+                    if (isInitialized) {
+                        saveToLocalStorage();
+                    }
+                }, 30000);
+                
+                isInitialized = true;
             }
             
             // Update current time display
@@ -314,35 +358,148 @@
                 currentTimeEl.textContent = `${dateStr} • ${timeStr}`;
             }
             
-            // Try to auto-load from data.xlsx on startup
-            function autoLoadFromExcel() {
+            // Load data from local storage
+            function loadFromLocalStorage() {
                 try {
-                    // Check if we have a saved file in localStorage (simulated file system)
-                    const savedData = localStorage.getItem('reminders_data_xlsx');
+                    const savedData = localStorage.getItem('reminders_app_data');
                     
                     if (savedData) {
-                        // Parse the saved data
                         const parsedData = JSON.parse(savedData);
                         reminders = parsedData.reminders || [];
                         kanbanTasks = parsedData.kanbanTasks || [];
                         
-                        fileStatus.textContent = `Loaded ${reminders.length} reminders from data.xlsx`;
+                        // Update timestamps to Date objects
+                        reminders.forEach(reminder => {
+                            if (reminder.dueAt && typeof reminder.dueAt === 'string') {
+                                reminder.dueAt = new Date(reminder.dueAt).toISOString();
+                            }
+                            if (reminder.createdAt && typeof reminder.createdAt === 'string') {
+                                reminder.createdAt = new Date(reminder.createdAt).toISOString();
+                            }
+                            if (reminder.nextRenewal && typeof reminder.nextRenewal === 'string') {
+                                reminder.nextRenewal = new Date(reminder.nextRenewal).toISOString();
+                            }
+                        });
+                        
+                        kanbanTasks.forEach(task => {
+                            if (task.dueAt && typeof task.dueAt === 'string') {
+                                task.dueAt = new Date(task.dueAt).toISOString();
+                            }
+                        });
+                        
+                        const reminderCount = reminders.length;
+                        const kanbanCount = kanbanTasks.length;
+                        
+                        fileStatus.textContent = `Loaded ${reminderCount} reminders, ${kanbanCount} kanban tasks`;
                         updateLastSaveTime(parsedData.timestamp);
                         
-                        console.log(`Auto-loaded ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks from data.xlsx`);
+                        console.log(`Loaded ${reminderCount} reminders and ${kanbanCount} kanban tasks from local storage`);
                     } else {
                         // Create some sample data if no saved data exists
                         createSampleData();
-                        autoSaveToExcel();
-                        fileStatus.textContent = 'Created new data.xlsx with sample data';
+                        saveToLocalStorage();
+                        fileStatus.textContent = 'Created sample data';
                     }
                 } catch (error) {
-                    console.error('Error auto-loading from Excel:', error);
-                    fileStatus.textContent = 'Error loading data.xlsx, using fresh data';
+                    console.error('Error loading from local storage:', error);
+                    fileStatus.textContent = 'Error loading data, using fresh data';
                     fileStatus.style.color = '#dc2626';
                     
                     // Create fresh data if loading fails
                     createSampleData();
+                    saveToLocalStorage();
+                }
+            }
+            
+            // Save data to local storage
+            function saveToLocalStorage() {
+                try {
+                    const saveData = {
+                        reminders: reminders,
+                        kanbanTasks: kanbanTasks,
+                        timestamp: new Date().toISOString(),
+                        version: "1.0"
+                    };
+                    
+                    localStorage.setItem('reminders_app_data', JSON.stringify(saveData));
+                    
+                    lastSaveTimestamp = new Date();
+                    updateLastSaveTime(lastSaveTimestamp);
+                    
+                    // Update storage info
+                    updateStorageInfo();
+                    
+                    // Flash the status bar
+                    statusText.textContent = 'Auto-saved locally';
+                    setTimeout(() => {
+                        statusText.textContent = 'Auto-saving enabled';
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('Error saving to local storage:', error);
+                    fileStatus.textContent = 'Error saving data';
+                    fileStatus.style.color = '#dc2626';
+                    statusText.textContent = 'Error saving data';
+                    statusText.style.color = '#dc2626';
+                    setTimeout(() => {
+                        statusText.textContent = 'Auto-saving enabled';
+                        statusText.style.color = '';
+                    }, 3000);
+                }
+            }
+            
+            // Update storage usage info
+            function updateStorageInfo() {
+                try {
+                    // Calculate approximate storage usage
+                    const dataStr = JSON.stringify({
+                        reminders: reminders,
+                        kanbanTasks: kanbanTasks
+                    });
+                    
+                    const dataSize = new Blob([dataStr]).size;
+                    const maxSize = 5 * 1024 * 1024; // 5MB typical for localStorage
+                    const usagePercent = Math.min(100, (dataSize / maxSize) * 100);
+                    
+                    storageText.textContent = `Storage: ${(dataSize / 1024).toFixed(1)}KB (${usagePercent.toFixed(1)}% used)`;
+                    storageFill.style.width = `${usagePercent}%`;
+                    
+                    // Change color based on usage
+                    if (usagePercent > 90) {
+                        storageFill.style.backgroundColor = '#ef4444';
+                    } else if (usagePercent > 70) {
+                        storageFill.style.backgroundColor = '#f59e0b';
+                    } else {
+                        storageFill.style.backgroundColor = '#10b981';
+                    }
+                    
+                } catch (error) {
+                    console.error('Error updating storage info:', error);
+                }
+            }
+            
+            // Update last save time display
+            function updateLastSaveTime(timestamp) {
+                if (!timestamp) {
+                    lastSaveTime.textContent = 'Last saved: Never';
+                    return;
+                }
+                
+                const saveDate = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - saveDate;
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                
+                if (diffSecs < 10) {
+                    lastSaveTime.textContent = 'Last saved: Just now';
+                } else if (diffSecs < 60) {
+                    lastSaveTime.textContent = `Last saved: ${diffSecs} seconds ago`;
+                } else if (diffMins < 60) {
+                    lastSaveTime.textContent = `Last saved: ${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+                } else {
+                    const diffHours = Math.floor(diffMins / 60);
+                    lastSaveTime.textContent = `Last saved: ${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
                 }
             }
             
@@ -436,43 +593,8 @@
                 ];
             }
             
-            // Auto-save to Excel (simulated file system using localStorage)
-            function autoSaveToExcel() {
-                try {
-                    const saveData = {
-                        reminders: reminders,
-                        kanbanTasks: kanbanTasks,
-                        timestamp: new Date().toISOString(),
-                        version: "1.0"
-                    };
-                    
-                    // Save to localStorage (simulating file system)
-                    localStorage.setItem('reminders_data_xlsx', JSON.stringify(saveData));
-                    
-                    // Also trigger a download of the actual Excel file
-                    saveToExcelFile();
-                    
-                    lastSaveTimestamp = new Date();
-                    updateLastSaveTime(lastSaveTimestamp);
-                    
-                    fileStatus.textContent = `Auto-saved ${reminders.length} reminders to data.xlsx`;
-                    fileStatus.style.color = '#10b981';
-                    
-                    // Flash the status bar
-                    statusText.textContent = 'Auto-saved to data.xlsx';
-                    setTimeout(() => {
-                        statusText.textContent = 'Auto-saving to data.xlsx';
-                    }, 2000);
-                    
-                } catch (error) {
-                    console.error('Error auto-saving to Excel:', error);
-                    fileStatus.textContent = 'Error saving to data.xlsx';
-                    fileStatus.style.color = '#dc2626';
-                }
-            }
-            
-            // Manual save to Excel file (triggered by button)
-            function saveToExcelFile() {
+            // Export data to Excel file (manual download)
+            function exportToExcelFile() {
                 try {
                     if (typeof XLSX === 'undefined') {
                         throw new Error('XLSX library not loaded');
@@ -521,6 +643,13 @@
                         ]);
                     });
                     
+                    // Add metadata
+                    excelData.push([]);
+                    excelData.push(['=== METADATA ===']);
+                    excelData.push(['Export Date', new Date().toISOString()]);
+                    excelData.push(['Total Reminders', reminders.length]);
+                    excelData.push(['Total Kanban Tasks', kanbanTasks.length]);
+                    
                     // Create workbook
                     const ws = XLSX.utils.aoa_to_sheet(excelData);
                     const wb = XLSX.utils.book_new();
@@ -534,60 +663,39 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'data.xlsx';
+                    
+                    // Use timestamp to create unique filename
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+                    a.download = `reminders-backup-${timestamp}.xlsx`;
+                    
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
                     // Update status
-                    lastSaveTimestamp = new Date();
-                    updateLastSaveTime(lastSaveTimestamp);
-                    
-                    fileStatus.textContent = `Saved ${reminders.length} reminders to data.xlsx`;
+                    fileStatus.textContent = `Exported ${reminders.length} reminders to Excel`;
                     fileStatus.style.color = '#10b981';
                     
-                    statusText.textContent = 'Data saved to data.xlsx';
+                    statusText.textContent = 'Data exported to Excel file';
                     setTimeout(() => {
-                        statusText.textContent = 'Auto-saving to data.xlsx';
+                        statusText.textContent = 'Auto-saving enabled';
                     }, 3000);
                     
                 } catch (error) {
-                    console.error('Error saving to Excel:', error);
-                    fileStatus.textContent = 'Error saving to data.xlsx';
+                    console.error('Error exporting to Excel:', error);
+                    fileStatus.textContent = 'Error exporting to Excel';
                     fileStatus.style.color = '#dc2626';
-                    statusText.textContent = 'Error saving Excel file';
+                    statusText.textContent = 'Error exporting Excel file';
                     statusText.style.color = '#dc2626';
                     setTimeout(() => {
-                        statusText.textContent = 'Auto-saving to data.xlsx';
+                        statusText.textContent = 'Auto-saving enabled';
                         statusText.style.color = '';
                     }, 3000);
                 }
             }
             
-            // Update last save time display
-            function updateLastSaveTime(timestamp) {
-                if (!timestamp) {
-                    lastSaveTime.textContent = 'Last saved: Never';
-                    return;
-                }
-                
-                const saveDate = new Date(timestamp);
-                const now = new Date();
-                const diffMs = now - saveDate;
-                const diffMins = Math.floor(diffMs / 60000);
-                
-                if (diffMins < 1) {
-                    lastSaveTime.textContent = 'Last saved: Just now';
-                } else if (diffMins < 60) {
-                    lastSaveTime.textContent = `Last saved: ${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
-                } else {
-                    const diffHours = Math.floor(diffMins / 60);
-                    lastSaveTime.textContent = `Last saved: ${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-                }
-            }
-            
-            // Import data from Excel file (manual import)
+            // Import data from Excel file
             function importFromExcelFile(file) {
                 try {
                     if (typeof XLSX === 'undefined') {
@@ -633,7 +741,7 @@
                                     // Parse kanban task
                                     if (row.length >= 9) {
                                         const task = {
-                                            id: row[0] || Date.now(),
+                                            id: row[0] || Date.now() + Math.random(),
                                             text: row[1] || '',
                                             date: row[2] || new Date().toISOString().split('T')[0],
                                             time: row[3] || '09:00',
@@ -654,7 +762,7 @@
                                 } else if (!hasPassedSeparator && row.length >= 11) {
                                     // Parse reminder from table section
                                     const reminder = {
-                                        id: row[0] || Date.now(),
+                                        id: row[0] || Date.now() + Math.random(),
                                         text: row[1] || '',
                                         date: row[2] || new Date().toISOString().split('T')[0],
                                         time: row[3] || '09:00',
@@ -678,14 +786,14 @@
                             
                             updateTable();
                             updateKanban();
-                            autoSaveToExcel(); // Auto-save after import
+                            saveToLocalStorage(); // Save imported data to local storage
                             
                             fileStatus.textContent = `Imported ${reminders.length} reminders and ${kanbanTasks.length} kanban tasks`;
                             fileStatus.style.color = '#10b981';
                             
-                            statusText.textContent = 'Data imported and saved to data.xlsx';
+                            statusText.textContent = 'Data imported and saved locally';
                             setTimeout(() => {
-                                statusText.textContent = 'Auto-saving to data.xlsx';
+                                statusText.textContent = 'Auto-saving enabled';
                             }, 3000);
                             
                         } catch (parseError) {
@@ -695,7 +803,7 @@
                             statusText.textContent = 'Error importing Excel file';
                             statusText.style.color = '#dc2626';
                             setTimeout(() => {
-                                statusText.textContent = 'Auto-saving to data.xlsx';
+                                statusText.textContent = 'Auto-saving enabled';
                                 statusText.style.color = '';
                             }, 3000);
                         }
@@ -710,7 +818,7 @@
                     statusText.textContent = 'Error importing Excel file';
                     statusText.style.color = '#dc2626';
                     setTimeout(() => {
-                        statusText.textContent = 'Auto-saving to data.xlsx';
+                        statusText.textContent = 'Auto-saving enabled';
                         statusText.style.color = '';
                     }, 3000);
                 }
@@ -723,7 +831,7 @@
                 const formattedDate = tomorrow.toISOString().split('T')[0];
                 
                 const newReminder = {
-                    id: Date.now(),
+                    id: Date.now() + Math.random(),
                     text: "",
                     date: formattedDate,
                     time: "09:00",
@@ -740,11 +848,11 @@
                 updateTable();
                 
                 // Auto-save after adding new row
-                autoSaveToExcel();
+                saveToLocalStorage();
                 
-                statusText.textContent = 'New reminder row added and auto-saved';
+                statusText.textContent = 'New reminder row added';
                 setTimeout(() => {
-                    statusText.textContent = 'Auto-saving to data.xlsx';
+                    statusText.textContent = 'Auto-saving enabled';
                 }, 2000);
                 
                 // Scroll to the new row
@@ -753,6 +861,11 @@
                     rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
+            
+            // [All other functions remain the same as before: updateTable, updateKanban, createKanbanCard, 
+            // calculateNextDueDate, checkReminders, renewRecurringTask, showNotification, playNotificationSound, 
+            // startReminderChecker, setupEventListeners, addTableEventListeners, addDragAndDropListeners,
+            // dragStart, dragEnd, dragOver, dragEnter, dragLeave, dragDrop]
             
             // Update the table display
             function updateTable() {
@@ -1036,11 +1149,11 @@
                     updateKanban();
                     
                     // Auto-save after moving reminders to kanban
-                    autoSaveToExcel();
+                    saveToLocalStorage();
                     
-                    statusText.textContent = `${dueReminders.length} reminder(s) moved to Kanban Todo and auto-saved`;
+                    statusText.textContent = `${dueReminders.length} reminder(s) moved to Kanban Todo`;
                     setTimeout(() => {
-                        statusText.textContent = 'Auto-saving to data.xlsx';
+                        statusText.textContent = 'Auto-saving enabled';
                     }, 5000);
                 }
             }
@@ -1068,11 +1181,11 @@
                     updateKanban();
                     
                     // Auto-save after renewal
-                    autoSaveToExcel();
+                    saveToLocalStorage();
                     
-                    statusText.textContent = 'Recurring task renewed for next period and auto-saved';
+                    statusText.textContent = 'Recurring task renewed for next period';
                     setTimeout(() => {
-                        statusText.textContent = 'Auto-saving to data.xlsx';
+                        statusText.textContent = 'Auto-saving enabled';
                     }, 3000);
                 }
             }
@@ -1169,11 +1282,11 @@
                         updateTable();
                         
                         // Auto-save after clearing completed
-                        autoSaveToExcel();
+                        saveToLocalStorage();
                         
-                        statusText.textContent = `Cleared ${completedCount} non-recurring completed reminder(s) and auto-saved`;
+                        statusText.textContent = `Cleared ${completedCount} non-recurring completed reminder(s)`;
                         setTimeout(() => {
-                            statusText.textContent = 'Auto-saving to data.xlsx';
+                            statusText.textContent = 'Auto-saving enabled';
                         }, 3000);
                     });
                 }
@@ -1185,9 +1298,14 @@
                     });
                 }
                 
-                // Save Excel button
-                if (saveExcelBtn) {
-                    saveExcelBtn.addEventListener('click', saveToExcelFile);
+                // Save Data button
+                if (saveDataBtn) {
+                    saveDataBtn.addEventListener('click', saveToLocalStorage);
+                }
+                
+                // Export Excel button
+                if (exportExcelBtn) {
+                    exportExcelBtn.addEventListener('click', exportToExcelFile);
                 }
                 
                 // File input change (for manual import)
@@ -1218,6 +1336,13 @@
                         }
                     });
                 }
+                
+                // Save data before page unload
+                window.addEventListener('beforeunload', function() {
+                    if (isInitialized) {
+                        saveToLocalStorage();
+                    }
+                });
             }
             
             // Add event listeners to table cells
@@ -1228,7 +1353,7 @@
                         const row = e.target.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         // Check if it's a recurring task
@@ -1247,11 +1372,11 @@
                         updateKanban();
                         
                         // Auto-save after deletion
-                        autoSaveToExcel();
+                        saveToLocalStorage();
                         
-                        statusText.textContent = 'Reminder deleted from both Table and Kanban and auto-saved';
+                        statusText.textContent = 'Reminder deleted';
                         setTimeout(() => {
-                            statusText.textContent = 'Auto-saving to data.xlsx';
+                            statusText.textContent = 'Auto-saving enabled';
                         }, 2000);
                     });
                 });
@@ -1262,7 +1387,7 @@
                         const row = e.target.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         if (reminder) {
@@ -1312,11 +1437,11 @@
                                 updateKanban();
                                 
                                 // Auto-save after update
-                                autoSaveToExcel();
+                                saveToLocalStorage();
                                 
-                                statusText.textContent = 'Reminder updated and auto-saved';
+                                statusText.textContent = 'Reminder updated';
                                 setTimeout(() => {
-                                    statusText.textContent = 'Auto-saving to data.xlsx';
+                                    statusText.textContent = 'Auto-saving enabled';
                                 }, 2000);
                             }
                         }
@@ -1341,7 +1466,7 @@
                     const row = input.closest('tr');
                     if (!row) return;
                     
-                    const id = parseInt(row.getAttribute('data-id'));
+                    const id = parseFloat(row.getAttribute('data-id'));
                     const reminder = reminders.find(r => r.id === id);
                     
                     if (reminder) {
@@ -1380,7 +1505,7 @@
                         updateKanban();
                         
                         // Auto-save after debounced update
-                        autoSaveToExcel();
+                        saveToLocalStorage();
                     }
                 }, 800); // 800ms delay after user stops typing
                 
@@ -1400,7 +1525,7 @@
                         const row = this.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         if (reminder) {
@@ -1439,7 +1564,7 @@
                             updateKanban();
                             
                             // Auto-save on blur
-                            autoSaveToExcel();
+                            saveToLocalStorage();
                         }
                     });
                 });
@@ -1454,7 +1579,7 @@
                         const row = this.closest('tr');
                         if (!row) return;
                         
-                        const id = parseInt(row.getAttribute('data-id'));
+                        const id = parseFloat(row.getAttribute('data-id'));
                         const reminder = reminders.find(r => r.id === id);
                         
                         if (reminder) {
@@ -1477,7 +1602,7 @@
                             updateKanban();
                             
                             // Auto-save on change
-                            autoSaveToExcel();
+                            saveToLocalStorage();
                         }
                     });
                 });
@@ -1506,7 +1631,7 @@
                         const card = this.closest('.kanban-card');
                         if (!card) return;
                         
-                        const id = parseInt(card.getAttribute('data-id'));
+                        const id = parseFloat(card.getAttribute('data-id'));
                         const action = this.getAttribute('data-action');
                         const taskIndex = kanbanTasks.findIndex(task => task.id === id);
                         
@@ -1527,10 +1652,10 @@
                             updateKanban();
                             
                             // Auto-save after kanban action
-                            autoSaveToExcel();
+                            saveToLocalStorage();
                             
                             setTimeout(() => {
-                                statusText.textContent = 'Auto-saving to data.xlsx';
+                                statusText.textContent = 'Auto-saving enabled';
                             }, 2000);
                         }
                         
@@ -1568,7 +1693,7 @@
                 
                 if (dragCard) {
                     const newStatus = this.getAttribute('data-status');
-                    const cardId = parseInt(dragCard.getAttribute('data-id'));
+                    const cardId = parseFloat(dragCard.getAttribute('data-id'));
                     const taskIndex = kanbanTasks.findIndex(task => task.id === cardId);
                     
                     if (taskIndex !== -1) {
@@ -1587,11 +1712,11 @@
                         updateKanban();
                         
                         // Auto-save after drag and drop
-                        autoSaveToExcel();
+                        saveToLocalStorage();
                         
-                        statusText.textContent = `Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'inprogress' ? 'In Progress' : 'Done'} and auto-saved`;
+                        statusText.textContent = `Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'inprogress' ? 'In Progress' : 'Done'}`;
                         setTimeout(() => {
-                            statusText.textContent = 'Auto-saving to data.xlsx';
+                            statusText.textContent = 'Auto-saving enabled';
                         }, 2000);
                     }
                 }
