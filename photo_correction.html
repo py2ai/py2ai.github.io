@@ -1,0 +1,298 @@
+---
+layout: none
+title: Online Photo Perspective Correction
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Online Photo Perspective Correction</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #121212;
+  color: #f1f1f1;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  text-align: center;
+  padding: 15px;
+  background: #1e1e1e;
+  border-bottom: 2px solid #0f0;
+}
+
+h1 { margin: 0; font-size: 1.5em; color: #0f0; }
+
+.controls {
+  text-align: center;
+  padding: 10px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #0f0;
+}
+
+input, button {
+  margin: 5px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #0f0;
+  background: #111;
+  color: #0f0;
+  cursor: pointer;
+}
+
+#container, #outputContainer {
+  position: relative;
+  margin: 10px auto;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#sourceWrapper, #outputWrapper {
+  position: relative;
+  display: inline-block;
+  width: 90%; /* scaled to screen */
+  max-width: 600px;
+}
+
+#sourceImage, #outputCanvas {
+  width: 100%;
+  display: block;
+  border: 2px solid #0f0;
+  border-radius: 8px;
+}
+
+.corner {
+  width: 20px;
+  height: 20px;
+  background: #0f0;
+  border-radius: 50%;
+  position: absolute;
+  touch-action: none;
+  cursor: grab;
+  z-index: 2;
+  border: 2px solid #000;
+}
+
+#overlayCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+#downloadBtn {
+  margin-top: 10px;
+  background: #0f0;
+  color: #000;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Online Photo Perspective Correction</h1>
+</header>
+
+<div class="controls">
+  <input type="file" accept="image/*" id="fileInput">
+  <button id="downloadBtn">Download Full-Resolution</button>
+</div>
+
+<div id="container">
+  <div id="sourceWrapper">
+    <img id="sourceImage">
+    <canvas id="overlayCanvas"></canvas>
+    <div class="corner" id="tl"></div>
+    <div class="corner" id="tr"></div>
+    <div class="corner" id="bl"></div>
+    <div class="corner" id="br"></div>
+  </div>
+</div>
+
+<div id="outputContainer">
+  <div id="outputWrapper">
+    <canvas id="outputCanvas"></canvas>
+  </div>
+</div>
+
+<script>
+const img = document.getElementById("sourceImage");
+const container = document.getElementById("container");
+const overlay = document.getElementById("overlayCanvas");
+const ctxOverlay = overlay.getContext("2d");
+const canvas = document.getElementById("outputCanvas");
+const ctx = canvas.getContext("2d");
+const downloadBtn = document.getElementById("downloadBtn");
+
+const corners = {
+  tl: document.getElementById("tl"),
+  tr: document.getElementById("tr"),
+  bl: document.getElementById("bl"),
+  br: document.getElementById("br")
+};
+
+let draggingCorner = null;
+let offsetX = 0, offsetY = 0;
+
+document.getElementById("fileInput").onchange = loadImage;
+downloadBtn.onclick = downloadFullResolution;
+
+function loadImage(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{ 
+    img.onload = initCorners;
+    img.src = reader.result; 
+  };
+  reader.readAsDataURL(file);
+}
+
+// Initialize corners
+function initCorners(){
+  const rect = img.getBoundingClientRect();
+  overlay.width = rect.width;
+  overlay.height = rect.height;
+
+  corners.tl.style.left = "10px"; corners.tl.style.top = "10px";
+  corners.tr.style.left = rect.width-30 + "px"; corners.tr.style.top = "10px";
+  corners.bl.style.left = "10px"; corners.bl.style.top = rect.height-30 + "px";
+  corners.br.style.left = rect.width-30 + "px"; corners.br.style.top = rect.height-30 + "px";
+
+  drawOverlay();
+  updateOutput();
+}
+
+// Corner dragging
+for(let key in corners){
+  const c = corners[key];
+  c.addEventListener("pointerdown", e=>{
+    draggingCorner = key;
+    offsetX = e.clientX - c.offsetLeft;
+    offsetY = e.clientY - c.offsetTop;
+    c.setPointerCapture(e.pointerId);
+  });
+  c.addEventListener("pointermove", e=>{
+    if(!draggingCorner) return;
+    let x = e.clientX - offsetX;
+    let y = e.clientY - offsetY;
+    const rect = img.getBoundingClientRect();
+    x = Math.max(0, Math.min(x, rect.width-20));
+    y = Math.max(0, Math.min(y, rect.height-20));
+    corners[draggingCorner].style.left = x + "px";
+    corners[draggingCorner].style.top = y + "px";
+    drawOverlay();
+    updateOutput();
+  });
+  c.addEventListener("pointerup", ()=>draggingCorner=null);
+  c.addEventListener("pointercancel", ()=>draggingCorner=null);
+}
+
+// Draw green rubber-band lines
+function drawOverlay(){
+  const rect = img.getBoundingClientRect();
+  overlay.style.width = rect.width + "px";
+  overlay.style.height = rect.height + "px";
+  ctxOverlay.clearRect(0,0,overlay.width,overlay.height);
+  ctxOverlay.strokeStyle = "#0f0";
+  ctxOverlay.lineWidth = 2;
+  ctxOverlay.beginPath();
+  const pts = [corners.tl, corners.tr, corners.br, corners.bl];
+  ctxOverlay.moveTo(parseFloat(pts[0].style.left)+10, parseFloat(pts[0].style.top)+10);
+  for(let i=1;i<pts.length;i++){
+    ctxOverlay.lineTo(parseFloat(pts[i].style.left)+10, parseFloat(pts[i].style.top)+10);
+  }
+  ctxOverlay.closePath();
+  ctxOverlay.stroke();
+}
+
+// Update live output
+function updateOutput(){
+  if(!img.naturalWidth) return;
+  const rect = img.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+
+  const sx = img.naturalWidth / rect.width;
+  const sy = img.naturalHeight / rect.height;
+
+  const src = ['tl','tr','br','bl'].map(k=>[
+    (parseFloat(corners[k].style.left)+10)*sx,
+    (parseFloat(corners[k].style.top)+10)*sy
+  ]);
+
+  warpCanvas(img, src, canvas.width, canvas.height, ctx);
+}
+
+// Warp function
+function warpCanvas(img, src, w, h, ctxTarget){
+  const temp = document.createElement("canvas");
+  temp.width = img.naturalWidth; temp.height = img.naturalHeight;
+  const tctx = temp.getContext("2d");
+  tctx.drawImage(img,0,0);
+  const sData = tctx.getImageData(0,0,temp.width,temp.height);
+  const dstData = ctxTarget.createImageData(w,h);
+
+  function lerp(a,b,t){ return a*(1-t)+b*t; }
+
+  for(let y=0;y<h;y++){
+    const ty = y/(h-1);
+    const leftX = lerp(src[0][0], src[3][0], ty);
+    const leftY = lerp(src[0][1], src[3][1], ty);
+    const rightX = lerp(src[1][0], src[2][0], ty);
+    const rightY = lerp(src[1][1], src[2][1], ty);
+
+    for(let x=0;x<w;x++){
+      const tx = x/(w-1);
+      const srcX = lerp(leftX,rightX,tx);
+      const srcY = lerp(leftY,rightY,tx);
+
+      const sx = Math.floor(Math.max(0,Math.min(sData.width-1,srcX)));
+      const sy = Math.floor(Math.max(0,Math.min(sData.height-1,srcY)));
+      const sIdx = (sy*sData.width+sx)*4;
+      const dIdx = (y*w+x)*4;
+      dstData.data[dIdx] = sData.data[sIdx];
+      dstData.data[dIdx+1] = sData.data[sIdx+1];
+      dstData.data[dIdx+2] = sData.data[sIdx+2];
+      dstData.data[dIdx+3] = 255;
+    }
+  }
+  ctxTarget.putImageData(dstData,0,0);
+}
+
+// Download full-resolution
+function downloadFullResolution(){
+  if(!img.naturalWidth) return;
+  const fullWidth = img.naturalWidth;
+  const fullHeight = Math.round(fullWidth*53.98/85.6);
+  const fullCanvas = document.createElement("canvas");
+  fullCanvas.width = fullWidth;
+  fullCanvas.height = fullHeight;
+  const fullCtx = fullCanvas.getContext("2d");
+
+  const rect = img.getBoundingClientRect();
+  const sx = img.naturalWidth / rect.width;
+  const sy = img.naturalHeight / rect.height;
+
+  const src = ['tl','tr','br','bl'].map(k=>[
+    (parseFloat(corners[k].style.left)+10)*sx,
+    (parseFloat(corners[k].style.top)+10)*sy
+  ]);
+
+  warpCanvas(img, src, fullCanvas.width, fullCanvas.height, fullCtx);
+
+  const link = document.createElement("a");
+  link.href = fullCanvas.toDataURL("image/png");
+  link.download = "ID_Card.png";
+  link.click();
+}
+</script>
+</body>
+</html>
