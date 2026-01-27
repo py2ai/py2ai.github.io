@@ -17,6 +17,19 @@ keywords:
 Seamlessly copy and paste **text, files, and folders** between devices on the same local network —  
 **no cloud, no login, no tracking**.
 
+<div class="video-container">
+  <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/Dw-Y_B5mzRQ" 
+    title="YouTube video player" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+
 Think *AirDrop*, but **cross‑platform**, **private**, and **under your control**.
 
 ---
