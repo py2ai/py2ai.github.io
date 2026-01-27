@@ -43,7 +43,7 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 
 ### 🍎 macOS
 - **Intel Macs**  
-    [Download for macOS]({{ site.baseurl }}/assets/downloads/pyshine_clipboard.app)
+    [Download for macOS]({{ site.baseurl }}/assets/downloads/pyshine_clipboard)
 
 
 > Compatible with macOS 11 (Big Sur) and above
