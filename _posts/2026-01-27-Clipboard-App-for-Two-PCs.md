@@ -36,16 +36,20 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 ### Windows (64-bit)
 
 - **Installer (.exe)**  
+
 [Download for Windows]({{ site.baseurl }}/assets/downloads/pyshne_clipboard.exe)
+
 > Compatible with Windows 10 and above
 
 ---
 
 ### macOS
 - **Intel Macs**  
+
 [Download for macOS]({{ site.baseurl }}/assets/downloads/pyshine_clipboard.zip)
 
 Unzip pyshine_clipboard on macOS and then press option key and then click and select Open.
+
 > Compatible with macOS 11 (Big Sur) and above
 
 ⚠️ On first launch, you may need to:
