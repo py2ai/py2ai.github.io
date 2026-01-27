@@ -45,7 +45,7 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 - **Intel Macs**  
 [Download for macOS]({{ site.baseurl }}/assets/downloads/pyshine_clipboard.zip)
 
-
+Unzip pyshine_clipboard on macOS and then press option key and then click and select Open.
 > Compatible with macOS 11 (Big Sur) and above
 
 ⚠️ On first launch, you may need to:
@@ -53,6 +53,7 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 - Allow network access when prompted
 
 Use ipconfig on windows pc to find your IP address and use ifconfig en0 on MacOs to find the IP. Open both apps on both PCs, and enter the target IP. For example in Windows PC app the target IP is of MacOs IP and vice-versa.
+
 ---
 
 ## How It Works (Quick)
