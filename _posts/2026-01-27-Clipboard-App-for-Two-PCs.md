@@ -12,7 +12,7 @@ keywords:
 - instant copy paste text 
 ---
 
-# 📋 PyShine Clipboard Pro
+# PyShine Clipboard
 
 Seamlessly copy and paste **text, files, and folders** between devices on the same local network —  
 **no cloud, no login, no tracking**.
@@ -23,17 +23,17 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 
 ## Features
 
-- 🔁 Real-time clipboard sync
-- 📁 File & folder transfer with progress bar
-- 🔒 Works fully offline (Wifi or LAN)
-- 🖥️ Cross-platform (Windows & macOS)
-- ⚡ Fast, lightweight, and secure
+- Real-time clipboard sync
+- File & folder transfer with progress bar
+- Works fully offline (Wifi or LAN)
+- Cross-platform (Windows & macOS)
+- Fast, lightweight, and secure
 
 ---
 
-## 💻 Download Installers
+## Download Installers
 
-### 🪟 Windows (64-bit)
+### Windows (64-bit)
 
 - **Installer (.exe)**  
 [Download for Windows]({{ site.baseurl }}/assets/downloads/pyshne_clipboard.exe)
@@ -41,9 +41,9 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 
 ---
 
-### 🍎 macOS
+### macOS
 - **Intel Macs**  
-[Download for macOS]({{ site.baseurl }}/assets/downloads/pyshine_clipboard)
+[Download for macOS]({{ site.baseurl }}/assets/downloads/pyshine_clipboard.zip)
 
 
 > Compatible with macOS 11 (Big Sur) and above
@@ -55,25 +55,25 @@ Think *AirDrop*, but **cross‑platform**, **private**, and **under your control
 Use ipconfig on windows pc to find your IP address and use ifconfig en0 on MacOs to find the IP. Open both apps on both PCs, and enter the target IP. For example in Windows PC app the target IP is of MacOs IP and vice-versa.
 ---
 
-## 🔧 How It Works (Quick)
+## How It Works (Quick)
 
 1. Install Clipboard Pro on both machines
 2. Make sure both are on the same Wi‑Fi / LAN
 3. Launch the app on both devices
-4. Copy on one → Paste on the other 🎉
+4. Copy on one → Paste on the other
 
 ---
 
-## 🛡️ Privacy First
+## Privacy First
 
-- ❌ No cloud servers
-- ❌ No accounts
-- ❌ No telemetry
-- ✅ Your data stays on your network
+- No cloud servers
+- No accounts
+- No telemetry
+- Your data stays on your network
 
 ---
 
-## 📦 Support & Updates
+## Support & Updates
 
 - Website: https://www.pyshine.com
 
