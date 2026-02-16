@@ -1,26 +1,32 @@
 ---
-categories:
-- GUI tutorial series
-description: "Hello friends, here is the code for the simple matplotlib GUI. Save it as main.py and run it to load the csv files. Enjoy, and do \ngive back your feedback an..."
+layout: post
+title: "How to Make a Matplotlib and PyQt5 GUI - Complete Tutorial"
+description: "Learn to build interactive data visualization GUIs with Matplotlib and PyQt5. Load CSV files, create plots with multiple themes, and customize your data visualization."
 featured-img: pyqt6
 keywords:
-- based
-- development
-- matplotlib
-- code
-- gui
-- programming
-- tutorial
+- matplotlib pyqt5
+- python gui
+- data visualization
+- csv plotting
+- matplotlib themes
+- pyqt5 tutorial
+- interactive plots
+categories:
+- GUI tutorial series
+tags:
 - python
-layout: post
+- matplotlib
+- pyqt5
+- gui
+- data visualization
+- csv
+- tutorial
 mathjax: true
-title: How to make a Matplotlib and PyQt5 based GUI
 ---
 
+# How to Make a Matplotlib and PyQt5 GUI
 
-
-
-Hello friends, here is the code for the simple matplotlib GUI. Save it as main.py and run it to load the csv files. Enjoy, and do 
+Hello friends, here is the code for the simple matplotlib GUI. Save it as main.py and run it to load the csv files. Enjoy, and do
 give back your feedback and suggestions. Also please make sure, you are using Matplotlib version 3.2.1 or above. For more detail visit pyshine youtube channel.
 
 <br>
@@ -229,3 +235,10 @@ if __name__ == "__main__":
 ```
 
 [Download sample csv data files](https://drive.google.com/file/d/10gvk-A0orWWktIaHkw7WMAGzYcoMkB9t/view?usp=sharing)
+
+## Related Posts
+
+- [Interactive Matplotlib GUI with Data Cursors]({{ site.baseurl }}{% post_url 2021-04-05-Interactive-Matplotib-GUI-with-data-cursors %})
+- [Getting Started with PySide6 Part 1]({{ site.baseurl }}{% post_url 2024-03-12-Getting-started-with-PySide6-part1 %})
+- [PyQt5 Terminal Console]({{ site.baseurl }}{% post_url 2022-02-03-Command-Terminal-in-PyQt5 %})
+

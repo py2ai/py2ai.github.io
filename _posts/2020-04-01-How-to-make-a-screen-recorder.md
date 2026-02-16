@@ -1,23 +1,30 @@
 ---
-categories:
-- GUI tutorial series
-description: Making of an audio and video screen recorder in Python
+layout: post
+title: "How to Make a Screen Recorder in Python with PyQt5 - Complete Tutorial"
+description: "Build a professional audio and video screen recorder using Python, PyQt5, and FFmpeg. Learn to capture screen, record audio, and save videos on Windows 10."
 featured-img: screen
 keywords:
-- development
-- recorder
-- programming
-- code
-- tutorial
+- python screen recorder
+- pyqt5 screen capture
+- ffmpeg video recording
+- python audio recording
+- screen recording tutorial
+- pyqt5 gui
+- python video capture
+categories:
+- GUI tutorial series
+tags:
 - python
 - pyqt5
-- screen
-layout: post
+- screen recorder
+- ffmpeg
+- audio recording
+- video capture
+- gui
 mathjax: true
-title: How to make screen recorder in PyQt5
 ---
 
-
+# How to Make a Screen Recorder in Python with PyQt5
 
 Alright friends welcome back, lets make a very flexible screen recorder today. The target platform for this GUI is Windows 10. For direct installation to windows 10, please download these three parts in a folder and then extract (using winRAR) the PyShine Recorder setup.zip file:
 
@@ -333,6 +340,13 @@ if __name__ == "__main__":
 [PyShine Recorder setup.zip]:https://drive.google.com/file/d/1ZD4X0kB4qdx8q9jJ1Y_7ROwp83oBR6ko/view?usp=sharing
 [PyShine Recorder setup.z02]:https://drive.google.com/file/d/1JoXwLJa6E8hWCWhBTZTL4mOTeeK22xju/view?usp=sharing
 [PyShine Recorder setup.z01]:https://drive.google.com/file/d/1n9tbv8nymdBFc_qQtbcWkJRszsllwBCZ/view?usp=sharing
+
+## Related Posts
+
+- [Faster Video Transfer Over WiFi Using ZeroMQ]({{ site.baseurl }}{% post_url 2021-01-01-Faster-video-transfer-over-wifi %})
+- [How to Play Piano with Python]({{ site.baseurl }}{% post_url 2020-02-02-How-to-play-piano-using-Python %})
+- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
+
 
 
 

@@ -1,25 +1,29 @@
 ---
-categories:
-- GUI tutorial series
-description: Hi friends, this quick intro is about the Terminal console using PyQt5. The code is self explanatory. We will use two Widgets as small windows in the main gu...
+layout: post
+title: "PyQt5 Terminal Console - Build a Command Line Interface in Python"
+description: "Learn to build a terminal console GUI using PyQt5. Create a command-line interface with command history, drag-and-drop support, and custom styling."
 featured-img: pexels-negative-space-97077
 keywords:
-- PyQt5
-- Terminal
-- Console
-- GUI
-- Python
-- Tutorial
-layout: post
-mathjax: true
+- pyqt5 terminal
+- python terminal
+- command line interface
+- qt console
+- python gui terminal
+- command history
+- terminal emulator
+categories:
+- GUI tutorial series
 tags:
 - PyQt5
 - Terminal
 - Console
 - GUI
 - Python
-title: PytQt5 terminal console
+- Tutorial
+mathjax: true
 ---
+
+# PyQt5 Terminal Console
 
 Hi friends, this quick intro is about the Terminal console using PyQt5. The code is self explanatory. We will use two Widgets as small windows in the main gui namely,
 `self.cmdWindow` and `self.textWindow`. The former is responsible for entering the commands and the later is for displaying the output as the user will press Enter key.

@@ -1,18 +1,19 @@
 ---
-description: Welcome back to our PySide6 tutorial series! In the previous tutorial, we explored the fundamentals of PySide6 by creating a simple Todo List application. No...
+layout: post
+title: "Building a Calculator Application with PySide6 Part 2 - Complete Tutorial"
+description: "Learn to build a fully functional calculator GUI with PySide6. Handle user input, perform calculations, and create a clean calculator interface."
 featured-img: 26072022-python-logo
 keywords:
-- PySide6 calculator
-- Calculator app PySide6
-- PySide6 GUI tutorial
-- Python calculator example
-- Qt calculator application
-- PySide6 widgets
-- GUI design Python
-- Building calculator with PySide6
-- Advanced PySide6 tutorial
-layout: post
-mathjax: true
+- pyside6 calculator
+- python calculator
+- pyside6 gui tutorial
+- calculator app python
+- pyside6 widgets
+- gui design python
+- pyside6 tutorial
+- python calculator example
+categories:
+- PySide6 tutorial series
 tags:
 - Python
 - PySide6
@@ -22,8 +23,11 @@ tags:
 - Application Design
 - Programming
 - Qt
-title: Building a Calculator Application with PySide6 (Part 2)
+- Tutorial
+mathjax: true
 ---
+
+# Building a Calculator Application with PySide6 Part 2
 
 Welcome back to our PySide6 tutorial series! In the previous tutorial, we explored the fundamentals of PySide6 by creating a simple Todo List application. Now, let's take our PySide6 skills to the next level by building a calculator application. A calculator is a classic example of a GUI application that involves handling user input and performing calculations.
 
@@ -127,6 +131,13 @@ You should see the calculator application window with the numeric input buttons,
 ## Conclusion
 
 In this tutorial, we built a simple calculator application using PySide6. We designed the UI layout and added functionality to handle user input and perform calculations. You can further customize and enhance this application by adding more features such as support for parentheses, memory functions, or scientific operations. Experiment with the code and explore the possibilities of PySide6 to create even more advanced GUI applications!
+
+## Related Posts
+
+- [Getting Started with PySide6 Part 1]({{ site.baseurl }}{% post_url 2024-03-12-Getting-started-with-PySide6-part1 %})
+- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
+- [PyQt5 Terminal Console]({{ site.baseurl }}{% post_url 2022-02-03-Command-Terminal-in-PyQt5 %})
+
 
 
 

@@ -1,27 +1,32 @@
 ---
-categories:
-- Socket programming tutorial series
-description: This tutorial is short and simple implementation of server client modules in Publish/Subscribe mode to transfer video frames
+layout: post
+title: "Faster Video Transfer Over WiFi Using ZeroMQ - Python Tutorial"
+description: "Learn how to transfer video over WiFi at 30+ FPS using ZeroMQ Publish/Subscribe pattern. Complete Python tutorial with server and client code."
 featured-img: pubsub
 keywords:
-- Python
-- Socket Programming
-- Publish-Subscribe
-- ZeroMQ
-- Video Streaming
-layout: post
-mathjax: true
+- video streaming
+- zeromq python
+- publish subscribe
+- socket programming
+- wifi video transfer
+- python video
+- zmq tutorial
+- real-time video
+categories:
+- Socket programming tutorial series
 tags:
 - Python
 - Socket Programming
-- Publish-Subscribe
 - ZeroMQ
 - Video Streaming
-title: How to publish-subscribe video using socket programming...
+- Publish-Subscribe
+- Tutorial
+mathjax: true
 ---
 
+# Faster Video Transfer Over WiFi Using ZeroMQ
 
-Hi friends HAPPY NEW YEAR 2021! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket 
+Hi friends HAPPY NEW YEAR 2021! In a previous tutorial we used opencv to obtain video frames of webcam and send them over wifi to server/client. Below is the video about basics of socket
 programming.
 
 <br>
@@ -171,3 +176,10 @@ python3 client.py
 ```
 
 Thats it! If you have questions, suggestions please do comment. Have a nice day!
+
+## Related Posts
+
+- [How to Make a Screen Recorder in Python with PyQt5]({{ site.baseurl }}{% post_url 2020-04-01-How-to-make-a-screen-recorder %})
+- [Socket Programming Save Videos Multiple Clients]({{ site.baseurl }}{% post_url 2022-04-17-Socket-Programming-Save-Videos-Multiple-Clients %})
+- [Video and bidirectional text streaming]({{ site.baseurl }}{% post_url 2021-05-04-Video-and-bidirectional-text-streaming %})
+

@@ -1,29 +1,31 @@
 ---
-categories:
-- GUI tutorial series
-description: Matplotlib GUI with data cursors showing values where you click
+layout: post
+title: "Interactive Matplotlib GUI with Data Cursors - PyQt5 Tutorial"
+description: "Build interactive data visualization GUIs with Matplotlib and PyQt5 using mpldatacursor. Click on plots to see data values with clickable annotations."
 featured-img: datacursor
 keywords:
-- Matplotlib GUI
-- PyQt5
-- Data Cursor
+- matplotlib data cursor
 - mpldatacursor
-- Python tutorial
-layout: post
-mathjax: true
+- pyqt5 matplotlib
+- interactive plots
+- data visualization
+- clickable annotations
+- python gui
+categories:
+- GUI tutorial series
 tags:
 - Python
 - PyQt5
 - Matplotlib
 - mpldatacursor
 - Data Visualization
-title: Interactive Matplotlib GUI with data cursors
+- Tutorial
+mathjax: true
 ---
 
+# Interactive Matplotlib GUI with Data Cursors
 
-
-
-Hello friends! I hope you are doing great with the PyQt5 learning series. Thank you for your valuable comments and appreciation. Alright, let's discuss today's GUI, which is a continuation of our previous Matplotlib based GUI series. Today we will use the GUI of part 15 and integrate the exciting yet straightforward feature of the data cursor. It means that whenever the user clicks on the plot, a small label window will popup on the canvas showing the x and y data.
+Hello friends! I hope you are doing great with your PyQt5 learning series. Thank you for your valuable comments and appreciation. Alright, let's discuss today's GUI, which is a continuation of our previous Matplotlib based GUI series. Today we will use the GUI of part 15 and integrate the exciting yet straightforward feature of the data cursor. It means that whenever the user clicks on the plot, a small label window will popup on the canvas showing the x and y data.
 Alright, so all the changes only need to be made in the main.py. The rest of the code is the same as before. We will use ```mpldatacursor```
 library, which provides interactive data cursors (that are clickable annotation boxes) for Matplotlib. However, currently, it is only supported for the Matplotlib version 3.1.2. It would not work for the latest version of Matplotlib. However, you are free to give it a try.
 
@@ -417,4 +419,10 @@ if __name__ == "__main__":
 
 
 ```
-We used the mpldatacursors in the above code and only in the ```def Update(self,value)``` function. Try your csv file and enjoy interactive data visualization. Please do give your feedback which is very important for us. Thank you
+We used mpldatacursors in the above code and only in the ```def Update(self,value)``` function. Try your csv file and enjoy interactive data visualization. Please do give your feedback which is very important for us. Thank you
+
+## Related Posts
+
+- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
+- [Getting Started with PySide6 Part 1]({{ site.baseurl }}{% post_url 2024-03-12-Getting-started-with-PySide6-part1 %})
+- [PyQt5 Terminal Console]({{ site.baseurl }}{% post_url 2022-02-03-Command-Terminal-in-PyQt5 %})

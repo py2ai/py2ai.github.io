@@ -1,19 +1,19 @@
 ---
-description: Welcome to the world of PySide6! PySide6 is a powerful Python module that allows you to create cross-platform graphical user interfaces (GUIs) with ease. Whe...
+layout: post
+title: "Getting Started with PySide6 Part 1 - Build Your First GUI Application"
+description: "Learn PySide6 from scratch! Build your first GUI application with buttons and message boxes. Complete beginner's tutorial with code examples."
 featured-img: 26072022-python-logo
 keywords:
-- PySide6 tutorial
-- Simple GUI PySide6
-- PySide6 application
-- Python GUI development
-- PySide6 basics
-- First PySide6 app
-- PySide6 QPushButton
-- PySide6 QMessageBox
-- PySide6 window
-- Introduction to PySide6
-layout: post
-mathjax: true
+- pyside6 tutorial
+- python gui
+- pyside6 beginner
+- qt for python
+- pyside6 installation
+- pyside6 button
+- pyside6 messagebox
+- first gui app
+categories:
+- PySide6 tutorial series
 tags:
 - Python
 - PySide6
@@ -22,9 +22,12 @@ tags:
 - Application Development
 - Programming
 - Qt
-title: Building Your First Simple GUI (Part 1)
+- Tutorial
+mathjax: true
 ---
 
+
+# Getting Started with PySide6 Part 1 - Build Your First GUI Application
 
 Welcome to the world of PySide6! PySide6 is a powerful Python module that allows you to create cross-platform graphical user interfaces (GUIs) with ease. Whether you're a beginner or an experienced developer, PySide6 provides a straightforward way to build interactive applications for desktop and mobile platforms.
 
@@ -94,6 +97,13 @@ To run the application, save the code to a file (e.g., simple_gui.py) and execut
 You should see a window with a button labeled "Click Me!". Clicking the button will display a message box with the text "Hello, PySide6!".
 
 Congratulations! You've successfully created your first PySide6 GUI application. In the next part of this tutorial series, we'll explore more advanced features of PySide6 and build upon what we've learned here. Stay tuned for more!
+
+## Related Posts
+
+- [Building a Calculator Application with PySide6 Part 2]({{ site.baseurl }}{% post_url 2024-03-12-Make-a-simple-calculator-in-PySide6-with-python-part2 %})
+- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
+- [Interactive Matplotlib GUI with Data Cursors]({{ site.baseurl }}{% post_url 2021-04-05-Interactive-Matplotib-GUI-with-data-cursors %})
+
 
 
 

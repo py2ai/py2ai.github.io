@@ -1,26 +1,33 @@
 ---
-categories:
-- Python tutorial series
-description: A quick tutorial on multi threading in python to play twinkle twinkle little start poem
+layout: post
+title: "How to Play Piano with Python - Twinkle Twinkle Little Star Tutorial"
+description: "Learn how to play piano music using Python and pygame. This tutorial teaches you to play Twinkle Twinkle Little Star with multi-threading and audio files."
 featured-img: piano
 keywords:
-- piano
-- development
-- code
-- programming
-- tutorial
-- playing
+- python piano
+- pygame audio
+- play music with python
+- python threading
+- twinkle twinkle little star
+- python music tutorial
+- pygame mixer
+categories:
+- Python tutorial series
+tags:
 - python
-layout: post
+- pygame
+- audio
+- music
+- threading
+- tutorial
 mathjax: true
-title: Playing piano with Python
 ---
 
-# Piano Playing Tutorial
+# How to Play Piano with Python
 
-Hi there! 
+Hi there!
 
-Hello everyone 
+Hello everyone
 Welcome to Pyshine and today we will play a poem
 By using the wav files for each note of the Piano
 I have a folder of wave files 
