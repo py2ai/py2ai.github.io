@@ -364,9 +364,18 @@ class FlappyBirdGame {
   }
   
   bindEvents() {
-    document.getElementById('start-btn').addEventListener('click', () => this.startGame());
-    document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
-    document.getElementById('home-btn').addEventListener('click', () => {
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const homeBtn = document.getElementById('home-btn');
+    
+    if (!startBtn || !restartBtn || !homeBtn) {
+      console.error('Game buttons not found in DOM');
+      return;
+    }
+    
+    startBtn.addEventListener('click', () => this.startGame());
+    restartBtn.addEventListener('click', () => this.restartGame());
+    homeBtn.addEventListener('click', () => {
       window.location.href = '/games';
     });
     
@@ -426,8 +435,8 @@ class FlappyBirdGame {
       width: 40,
       height: 30,
       velocity: 0,
-      gravity: 0.6,
-      jumpStrength: -10
+      gravity: 0.3,
+      jumpStrength: -6
     };
     
     this.pipes = [];
@@ -737,6 +746,11 @@ class FlappyBirdGame {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  new FlappyBirdGame();
+  try {
+    const game = new FlappyBirdGame();
+    console.log('Flappy Bird game initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Flappy Bird game:', error);
+  }
 });
 </script>
