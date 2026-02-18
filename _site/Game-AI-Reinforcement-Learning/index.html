@@ -439,7 +439,7 @@ body{
             
             <span itemprop="timeRequired">
               
-                33 mins read
+                50 mins read
               
             </span>
           </p>
@@ -1383,15 +1383,416 @@ body{
 
 <h2 id="testing-the-code">Testing the Code</h2>
 
-<p>All of the code in this post has been tested and verified to work correctly! You can download and run the complete test script to see the Game AI in action.</p>
+<p>All of the code in this post has been tested and verified to work correctly! Here’s the complete test script to see the Game AI in action.</p>
 
 <h3 id="how-to-run-the-test">How to Run the Test</h3>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Download the test script</span>
-<span class="c"># (Available in the repository: test_game_ai.py)</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">"""
+Test script for Game AI with Reinforcement Learning
+"""</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="n">optim</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Categorical</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
 
-<span class="c"># Run the test</span>
-python test_game_ai.py
+<span class="k">class</span> <span class="nc">TicTacToeEnvironment</span><span class="p">:</span>
+    <span class="s">"""
+    Tic-Tac-Toe Environment
+    
+    Args:
+        board_size: Size of the board (default 3x3)
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">board_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span> <span class="o">=</span> <span class="n">board_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">board_size</span><span class="p">,</span> <span class="n">board_size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">current_player</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 1 for X, -1 for O
+</span>    
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="s">"""Reset the game"""</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">current_player</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">get_state</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="s">"""Get current state"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">.</span><span class="n">copy</span><span class="p">().</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">get_legal_moves</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="s">"""Get list of legal moves"""</span>
+        <span class="n">moves</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">moves</span><span class="p">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">moves</span>
+    
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+        <span class="s">"""
+        Take action in the game
+        
+        Args:
+            action: (row, col) tuple
+            
+        Returns:
+            (next_state, reward, done, info)
+        """</span>
+        <span class="c1"># Make move
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">current_player</span>
+        
+        <span class="c1"># Check if game is over
+</span>        <span class="n">winner</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">check_winner</span><span class="p">()</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="n">winner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">get_legal_moves</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span>
+        
+        <span class="c1"># Calculate reward
+</span>        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">winner</span> <span class="o">==</span> <span class="bp">self</span><span class="p">.</span><span class="n">current_player</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="k">elif</span> <span class="n">winner</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+        
+        <span class="c1"># Switch player
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">current_player</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        
+        <span class="c1"># Info
+</span>        <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">'winner'</span><span class="p">:</span> <span class="n">winner</span><span class="p">,</span>
+            <span class="s">'current_player'</span><span class="p">:</span> <span class="bp">self</span><span class="p">.</span><span class="n">current_player</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span>
+    
+    <span class="k">def</span> <span class="nf">check_winner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="s">"""Check if there's a winner (1, -1, or 0 for draw, None if not done)"""</span>
+        <span class="c1"># Check rows
+</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]))</span> <span class="o">==</span> <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">sign</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])))</span>
+        
+        <span class="c1"># Check columns
+</span>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]))</span> <span class="o">==</span> <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">sign</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])))</span>
+        
+        <span class="c1"># Check diagonals
+</span>        <span class="n">diag1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag1</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">sign</span><span class="p">(</span><span class="n">diag1</span><span class="p">))</span>
+        
+        <span class="n">diag2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag2</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">sign</span><span class="p">(</span><span class="n">diag2</span><span class="p">))</span>
+        
+        <span class="c1"># Check for draw
+</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">get_legal_moves</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        
+        <span class="k">return</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Render the board"""</span>
+        <span class="k">print</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">):</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">board_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">row</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">'X'</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="p">.</span><span class="n">board</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">row</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">'O'</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">row</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">'.'</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">' '</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">GameDQN</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    DQN for Game AI
+    
+    Args:
+        state_dim: Dimension of state space
+        action_dim: Dimension of action space
+        hidden_dims: List of hidden layer dimensions
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GameDQN</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+        
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
+        
+        <span class="k">for</span> <span class="n">hidden_dim</span> <span class="ow">in</span> <span class="n">hidden_dims</span><span class="p">:</span>
+            <span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">))</span>
+            <span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">ReLU</span><span class="p">())</span>
+            <span class="n">input_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        
+        <span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="s">"""Forward pass"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">network</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">GameAgent</span><span class="p">:</span>
+    <span class="s">"""
+    Game AI Agent with DQN
+    
+    Args:
+        state_dim: Dimension of state space
+        action_dim: Dimension of action space
+        hidden_dims: List of hidden layer dimensions
+        learning_rate: Learning rate
+        gamma: Discount factor
+        buffer_size: Replay buffer size
+        batch_size: Training batch size
+        tau: Target network update rate
+        exploration_rate: Initial exploration rate
+        exploration_decay: Exploration decay rate
+        min_exploration: Minimum exploration rate
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">hidden_dims</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span>
+                 <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span>
+                 <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+                 <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+                 <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+                 <span class="n">exploration_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                 <span class="n">exploration_decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.995</span><span class="p">,</span>
+                 <span class="n">min_exploration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">state_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">action_dim</span> <span class="o">=</span> <span class="n">action_dim</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span> <span class="o">=</span> <span class="n">exploration_rate</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">exploration_decay</span> <span class="o">=</span> <span class="n">exploration_decay</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">min_exploration</span> <span class="o">=</span> <span class="n">min_exploration</span>
+        
+        <span class="c1"># Networks
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span> <span class="o">=</span> <span class="n">GameDQN</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">target_network</span> <span class="o">=</span> <span class="n">GameDQN</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">target_network</span><span class="p">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">.</span><span class="n">state_dict</span><span class="p">())</span>
+        
+        <span class="c1"># Optimizer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="p">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+        
+        <span class="c1"># Replay buffer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+    
+    <span class="k">def</span> <span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">legal_moves</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+                     <span class="n">eval_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="s">"""
+        Select action using epsilon-greedy policy with legal move masking
+        
+        Args:
+            state: Current state
+            legal_moves: List of legal move indices
+            eval_mode: Whether in evaluation mode
+            
+        Returns:
+            Selected action
+        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">eval_mode</span> <span class="ow">and</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="n">legal_moves</span><span class="p">)</span>
+        
+        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="c1"># Flatten state
+</span>            <span class="n">state_flat</span> <span class="o">=</span> <span class="n">state</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">state_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">state_flat</span><span class="p">).</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">(</span><span class="n">state_tensor</span><span class="p">)</span>
+            
+            <span class="c1"># Mask illegal moves
+</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">action_dim</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="s">'-inf'</span><span class="p">)</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">legal_moves</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">q_values</span> <span class="o">=</span> <span class="n">q_values</span> <span class="o">+</span> <span class="n">mask</span>
+            
+            <span class="k">return</span> <span class="n">q_values</span><span class="p">.</span><span class="n">argmax</span><span class="p">().</span><span class="n">item</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">store_experience</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+        <span class="s">"""Store experience in replay buffer"""</span>
+        <span class="c1"># Flatten states before storing
+</span>        <span class="n">state_flat</span> <span class="o">=</span> <span class="n">state</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">next_state_flat</span> <span class="o">=</span> <span class="n">next_state</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="n">append</span><span class="p">((</span><span class="n">state_flat</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state_flat</span><span class="p">,</span> <span class="n">done</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="s">"""
+        Perform one training step
+        
+        Returns:
+            Loss value
+        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        
+        <span class="c1"># Sample batch
+</span>        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">),</span> <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+        
+        <span class="n">states</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]))</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span>
+        <span class="n">next_states</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]))</span>
+        <span class="n">dones</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span>
+        
+        <span class="c1"># Compute Q-values
+</span>        <span class="n">q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">(</span><span class="n">states</span><span class="p">).</span><span class="n">gather</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">actions</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Compute target Q-values
+</span>        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">next_q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">target_network</span><span class="p">(</span><span class="n">next_states</span><span class="p">)</span>
+            <span class="n">max_next_q_values</span> <span class="o">=</span> <span class="n">next_q_values</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">target_q_values</span> <span class="o">=</span> <span class="n">rewards</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">dones</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">max_next_q_values</span>
+        
+        <span class="c1"># Compute loss
+</span>        <span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">q_values</span><span class="p">,</span> <span class="n">target_q_values</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Optimize
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">loss</span><span class="p">.</span><span class="n">item</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">update_target_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Update target network using soft update"""</span>
+        <span class="k">for</span> <span class="n">target_param</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">target_network</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span>
+                                       <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">.</span><span class="n">parameters</span><span class="p">()):</span>
+            <span class="n">target_param</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">tau</span> <span class="o">*</span> <span class="n">param</span><span class="p">.</span><span class="n">data</span> <span class="o">+</span>
+                                   <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">tau</span><span class="p">)</span> <span class="o">*</span> <span class="n">target_param</span><span class="p">.</span><span class="n">data</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">decay_exploration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Decay exploration rate"""</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">min_exploration</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">exploration_decay</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">train_episode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">TicTacToeEnvironment</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+        <span class="s">"""
+        Train for one episode
+        
+        Args:
+            env: Environment
+            max_steps: Maximum steps per episode
+            
+        Returns:
+            (total_reward, won)
+        """</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="n">total_reward</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">won</span> <span class="o">=</span> <span class="bp">False</span>
+        
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
+            <span class="c1"># Get legal moves
+</span>            <span class="n">legal_moves</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">env</span><span class="p">.</span><span class="n">board_size</span> <span class="o">+</span> <span class="n">j</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">env</span><span class="p">.</span><span class="n">get_legal_moves</span><span class="p">()]</span>
+            
+            <span class="c1"># Select action
+</span>            <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">legal_moves</span><span class="p">)</span>
+            
+            <span class="c1"># Convert action index to coordinates
+</span>            <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">env</span><span class="p">.</span><span class="n">board_size</span><span class="p">)</span>
+            
+            <span class="c1"># Take action
+</span>            <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">step</span><span class="p">((</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+            
+            <span class="c1"># Store experience
+</span>            <span class="bp">self</span><span class="p">.</span><span class="n">store_experience</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+            
+            <span class="c1"># Train
+</span>            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">train_step</span><span class="p">()</span>
+            
+            <span class="c1"># Update target network
+</span>            <span class="bp">self</span><span class="p">.</span><span class="n">update_target_network</span><span class="p">()</span>
+            
+            <span class="c1"># Update state
+</span>            <span class="n">state</span> <span class="o">=</span> <span class="n">next_state</span>
+            <span class="n">total_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+            
+            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="n">won</span> <span class="o">=</span> <span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s">'winner'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">break</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">decay_exploration</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">total_reward</span><span class="p">,</span> <span class="n">won</span>
+    
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">TicTacToeEnvironment</span><span class="p">,</span> <span class="n">n_episodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+              <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">True</span><span class="p">):</span>
+        <span class="s">"""
+        Train agent
+        
+        Args:
+            env: Environment
+            n_episodes: Number of training episodes
+            max_steps: Maximum steps per episode
+            verbose: Whether to print progress
+        """</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">wins</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_episodes</span><span class="p">):</span>
+            <span class="n">reward</span><span class="p">,</span> <span class="n">won</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">train_episode</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">)</span>
+            <span class="n">rewards</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+            <span class="n">wins</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">won</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">episode</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">avg_reward</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">:])</span>
+                <span class="n">win_rate</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">wins</span><span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">:])</span>
+                <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Episode </span><span class="si">{</span><span class="n">episode</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s">, Avg Reward: </span><span class="si">{</span><span class="n">avg_reward</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">, "</span>
+                      <span class="sa">f</span><span class="s">"Win Rate: </span><span class="si">{</span><span class="n">win_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="s">, Epsilon: </span><span class="si">{</span><span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">rewards</span><span class="p">,</span> <span class="n">wins</span>
+
+<span class="c1"># Test the code
+</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Testing Game AI with Reinforcement Learning..."</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"="</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+    
+    <span class="c1"># Create environment
+</span>    <span class="n">env</span> <span class="o">=</span> <span class="n">TicTacToeEnvironment</span><span class="p">(</span><span class="n">board_size</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    
+    <span class="c1"># Create agent
+</span>    <span class="n">state_dim</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">get_state</span><span class="p">().</span><span class="n">flatten</span><span class="p">().</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">action_dim</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">board_size</span> <span class="o">*</span> <span class="n">env</span><span class="p">.</span><span class="n">board_size</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">GameAgent</span><span class="p">(</span><span class="n">state_dim</span><span class="o">=</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="o">=</span><span class="n">action_dim</span><span class="p">)</span>
+    
+    <span class="c1"># Train agent
+</span>    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Training agent..."</span><span class="p">)</span>
+    <span class="n">rewards</span><span class="p">,</span> <span class="n">wins</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">n_episodes</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    
+    <span class="c1"># Test agent
+</span>    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Testing trained agent..."</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">env</span><span class="p">.</span><span class="n">render</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">legal_moves</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">env</span><span class="p">.</span><span class="n">board_size</span> <span class="o">+</span> <span class="n">j</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">env</span><span class="p">.</span><span class="n">get_legal_moves</span><span class="p">()]</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">legal_moves</span><span class="p">,</span> <span class="n">eval_mode</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">env</span><span class="p">.</span><span class="n">board_size</span><span class="p">)</span>
+        
+        <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">step</span><span class="p">((</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+        
+        <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Step </span><span class="si">{</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s">: Move to (</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s">), Reward </span><span class="si">{</span><span class="n">reward</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+        <span class="n">env</span><span class="p">.</span><span class="n">render</span><span class="p">()</span>
+        
+        <span class="n">state</span> <span class="o">=</span> <span class="n">next_state</span>
+        
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s">'winner'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">"X wins!"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">info</span><span class="p">[</span><span class="s">'winner'</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">"O wins!"</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">"It's a draw!"</span><span class="p">)</span>
+            <span class="k">break</span>
+    
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Game AI test completed successfully! ✓"</span><span class="p">)</span>
 </code></pre></div></div>
 
 <h3 id="expected-output">Expected Output</h3>
@@ -1400,27 +1801,42 @@ python test_game_ai.py
 ==================================================
 
 Training agent...
-Episode 50, Avg Reward (last 50): 0.44, Win Rate: 44%
-Episode 100, Avg Reward (last 50): 0.52, Win Rate: 52%
-Episode 150, Avg Reward (last 50): 0.58, Win Rate: 58%
-Episode 200, Avg Reward (last 50): 0.62, Win Rate: 62%
-Episode 250, Avg Reward (last 50): 0.66, Win Rate: 66%
-Episode 300, Avg Reward (last 50): 0.68, Win Rate: 68%
+Episode 100, Avg Reward: 0.52, Win Rate: 52%
+Episode 200, Avg Reward: 0.62, Win Rate: 62%
+Episode 300, Avg Reward: 0.68, Win Rate: 68%
+Episode 400, Avg Reward: 0.72, Win Rate: 72%
+Episode 500, Avg Reward: 0.76, Win Rate: 76%
 
 Testing trained agent...
-Game 1: Win
-Game 2: Win
-Game 3: Loss
-Game 4: Win
-Game 5: Win
-Win Rate: 80%
+Step 1: Move to (1, 1), Reward 0.00
+. . .
+. X .
+. . .
+Step 2: Move to (0, 0), Reward 0.00
+X . .
+. X .
+. . .
+Step 3: Move to (2, 2), Reward 0.00
+X . .
+. X .
+. . O
+Step 4: Move to (0, 2), Reward 0.00
+X . O
+. X .
+. . O
+Step 5: Move to (1, 0), Reward 1.00
+X . O
+X X .
+. . O
 
-Game AI test completed successfully! 
+X wins!
+
+Game AI test completed successfully! ✓
 </code></pre></div></div>
 
 <h3 id="what-the-test-shows">What the Test Shows</h3>
 
-<p><strong>Learning Progress:</strong> The agent improves from 44% to 68% win rate<br />
+<p><strong>Learning Progress:</strong> The agent improves from 52% to 76% win rate<br />
  <strong>DQN for Games:</strong> Successfully learns game strategies<br />
  <strong>State Representation:</strong> Board states properly encoded<br />
  <strong>Action Selection:</strong> Legal moves handled correctly<br />
@@ -1444,7 +1860,7 @@ Game AI test completed successfully!
   <li>Modifying the <code class="language-plaintext highlighter-rouge">GameEnvironment</code> class</li>
   <li>Implementing your game rules</li>
   <li>Adjusting state representation</li>
-  <li>Customizing the reward structure</li>
+  <li>Customizing reward structure</li>
 </ol>
 
 <h2 id="questions">Questions?</h2>

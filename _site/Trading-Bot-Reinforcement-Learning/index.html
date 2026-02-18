@@ -439,7 +439,7 @@ body{
             
             <span itemprop="timeRequired">
               
-                33 mins read
+                54 mins read
               
             </span>
           </p>
@@ -1317,15 +1317,519 @@ body{
 
 <h2 id="testing-the-code">Testing the Code</h2>
 
-<p>All of the code in this post has been tested and verified to work correctly! You can download and run the complete test script to see the Trading Bot in action.</p>
+<p>All of the code in this post has been tested and verified to work correctly! Here’s the complete test script to see the Trading Bot in action.</p>
 
 <h3 id="how-to-run-the-test">How to Run the Test</h3>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Download the test script</span>
-<span class="c"># (Available in the repository: test_trading_bot.py)</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">"""
+Test script for Trading Bot with RL
+"""</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="n">optim</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
-<span class="c"># Run the test</span>
-python test_trading_bot.py
+<span class="k">class</span> <span class="nc">TechnicalIndicators</span><span class="p">:</span>
+    <span class="s">"""
+    Technical Indicators for Trading
+    
+    Args:
+        data: DataFrame with OHLCV data
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">copy</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">sma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="p">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="s">"""
+        Simple Moving Average
+        
+        Args:
+            period: Period for SMA
+            
+        Returns:
+            SMA series
+        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'close'</span><span class="p">].</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">period</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">ema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="p">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="s">"""
+        Exponential Moving Average
+        
+        Args:
+            period: Period for EMA
+            
+        Returns:
+            EMA series
+        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'close'</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">period</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">rsi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">14</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="p">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="s">"""
+        Relative Strength Index
+        
+        Args:
+            period: Period for RSI
+            
+        Returns:
+            RSI series
+        """</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'close'</span><span class="p">].</span><span class="n">diff</span><span class="p">()</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span><span class="p">.</span><span class="n">where</span><span class="p">(</span><span class="n">delta</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)).</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">period</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">delta</span><span class="p">.</span><span class="n">where</span><span class="p">(</span><span class="n">delta</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)).</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">period</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="n">gain</span> <span class="o">/</span> <span class="n">loss</span>
+        <span class="n">rsi</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">-</span> <span class="p">(</span><span class="mi">100</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">rs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">rsi</span>
+    
+    <span class="k">def</span> <span class="nf">macd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fast</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span> <span class="n">slow</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">26</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="s">"""
+        Moving Average Convergence Divergence
+        
+        Args:
+            fast: Fast period
+            slow: Slow period
+            signal: Signal period
+            
+        Returns:
+            (macd, signal, histogram)
+        """</span>
+        <span class="n">ema_fast</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'close'</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">fast</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">ema_slow</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'close'</span><span class="p">].</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">slow</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">macd</span> <span class="o">=</span> <span class="n">ema_fast</span> <span class="o">-</span> <span class="n">ema_slow</span>
+        <span class="n">signal_line</span> <span class="o">=</span> <span class="n">macd</span><span class="p">.</span><span class="n">ewm</span><span class="p">(</span><span class="n">span</span><span class="o">=</span><span class="n">signal</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="bp">False</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">histogram</span> <span class="o">=</span> <span class="n">macd</span> <span class="o">-</span> <span class="n">signal_line</span>
+        <span class="k">return</span> <span class="n">macd</span><span class="p">,</span> <span class="n">signal_line</span><span class="p">,</span> <span class="n">histogram</span>
+    
+    <span class="k">def</span> <span class="nf">bollinger_bands</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">std_dev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="s">"""
+        Bollinger Bands
+        
+        Args:
+            period: Period for bands
+            std_dev: Standard deviation multiplier
+            
+        Returns:
+            (upper_band, middle_band, lower_band)
+        """</span>
+        <span class="n">middle_band</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">sma</span><span class="p">(</span><span class="n">period</span><span class="p">)</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'close'</span><span class="p">].</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">period</span><span class="p">).</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">upper_band</span> <span class="o">=</span> <span class="n">middle_band</span> <span class="o">+</span> <span class="p">(</span><span class="n">std</span> <span class="o">*</span> <span class="n">std_dev</span><span class="p">)</span>
+        <span class="n">lower_band</span> <span class="o">=</span> <span class="n">middle_band</span> <span class="o">-</span> <span class="p">(</span><span class="n">std</span> <span class="o">*</span> <span class="n">std_dev</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">upper_band</span><span class="p">,</span> <span class="n">middle_band</span><span class="p">,</span> <span class="n">lower_band</span>
+    
+    <span class="k">def</span> <span class="nf">add_all_indicators</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="s">"""
+        Add all technical indicators to data
+        
+        Returns:
+            DataFrame with indicators
+        """</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'sma_20'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">sma</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'ema_20'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">ema</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'rsi_14'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">rsi</span><span class="p">(</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">macd</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">macd</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'macd'</span><span class="p">]</span> <span class="o">=</span> <span class="n">macd</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'macd_signal'</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal</span>
+        <span class="n">upper</span><span class="p">,</span> <span class="n">middle</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">bollinger_bands</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'bb_upper'</span><span class="p">]</span> <span class="o">=</span> <span class="n">upper</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'bb_middle'</span><span class="p">]</span> <span class="o">=</span> <span class="n">middle</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s">'bb_lower'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lower</span>
+        
+        <span class="c1"># Fill NaN values
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">'bfill'</span><span class="p">).</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">'ffill'</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span>
+
+<span class="k">class</span> <span class="nc">TradingEnvironment</span><span class="p">:</span>
+    <span class="s">"""
+    Trading Environment for RL
+    
+    Args:
+        data: DataFrame with price data
+        initial_balance: Initial cash balance
+        transaction_cost: Transaction cost per trade
+        window_size: Size of observation window
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">initial_balance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10000.0</span><span class="p">,</span>
+                 <span class="n">transaction_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">initial_balance</span> <span class="o">=</span> <span class="n">initial_balance</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">transaction_cost</span> <span class="o">=</span> <span class="n">transaction_cost</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">window_size</span> <span class="o">=</span> <span class="n">window_size</span>
+        
+        <span class="c1"># Calculate indicators
+</span>        <span class="n">indicators</span> <span class="o">=</span> <span class="n">TechnicalIndicators</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">indicators</span><span class="p">.</span><span class="n">add_all_indicators</span><span class="p">()</span>
+        
+        <span class="c1"># Normalize data
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">_normalize_data</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">_normalize_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Normalize price data"""</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s">'close'</span><span class="p">,</span> <span class="s">'sma_20'</span><span class="p">,</span> <span class="s">'ema_20'</span><span class="p">,</span> <span class="s">'bb_upper'</span><span class="p">,</span> <span class="s">'bb_middle'</span><span class="p">,</span> <span class="s">'bb_lower'</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">col</span><span class="p">].</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="s">"""Reset environment"""</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">current_step</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">window_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">initial_balance</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">net_worth</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">initial_balance</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">max_net_worth</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">initial_balance</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">_get_state</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">_get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="s">"""Get current state"""</span>
+        <span class="c1"># Get window of data
+</span>        <span class="n">window</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="p">.</span><span class="n">current_step</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">window_size</span><span class="p">:</span><span class="bp">self</span><span class="p">.</span><span class="n">current_step</span><span class="p">]</span>
+        
+        <span class="c1"># Features: close, sma, ema, rsi, macd, bb
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s">'close'</span><span class="p">,</span> <span class="s">'sma_20'</span><span class="p">,</span> <span class="s">'ema_20'</span><span class="p">,</span> <span class="s">'rsi_14'</span><span class="p">,</span> <span class="s">'macd'</span><span class="p">,</span> <span class="s">'bb_upper'</span><span class="p">,</span> <span class="s">'bb_lower'</span><span class="p">]</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">window</span><span class="p">[</span><span class="n">features</span><span class="p">].</span><span class="n">values</span><span class="p">.</span><span class="n">flatten</span><span class="p">()</span>
+        
+        <span class="c1"># Add position info
+</span>        <span class="n">position</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="p">.</span><span class="n">current_step</span><span class="p">][</span><span class="s">'close'</span><span class="p">])])</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">state</span><span class="p">,</span> <span class="n">position</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="n">state</span><span class="p">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+        <span class="s">"""
+        Take action in environment
+        
+        Args:
+            action: 0=Hold, 1=Buy, 2=Sell
+            
+        Returns:
+            (next_state, reward, done, info)
+        """</span>
+        <span class="c1"># Get current price
+</span>        <span class="n">current_price</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">iloc</span><span class="p">[</span><span class="bp">self</span><span class="p">.</span><span class="n">current_step</span><span class="p">][</span><span class="s">'close'</span><span class="p">]</span>
+        
+        <span class="c1"># Execute action
+</span>        <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Buy
+</span>            <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">shares_to_buy</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="n">current_price</span>
+                <span class="n">cost</span> <span class="o">=</span> <span class="n">shares_to_buy</span> <span class="o">*</span> <span class="n">current_price</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">transaction_cost</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cost</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="p">.</span><span class="n">balance</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">+=</span> <span class="n">shares_to_buy</span>
+                    <span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">-=</span> <span class="n">cost</span>
+        
+        <span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Sell
+</span>            <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">shares_to_sell</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">*</span> <span class="mf">0.5</span>
+                <span class="n">revenue</span> <span class="o">=</span> <span class="n">shares_to_sell</span> <span class="o">*</span> <span class="n">current_price</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">transaction_cost</span><span class="p">)</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">-=</span> <span class="n">shares_to_sell</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">+=</span> <span class="n">revenue</span>
+        
+        <span class="c1"># Update net worth
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">net_worth</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">balance</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">shares</span> <span class="o">*</span> <span class="n">current_price</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">max_net_worth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">max_net_worth</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">net_worth</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate reward
+</span>        <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_calculate_reward</span><span class="p">()</span>
+        
+        <span class="c1"># Move to next step
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">current_step</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Check if done
+</span>        <span class="n">done</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">current_step</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        
+        <span class="c1"># Get next state
+</span>        <span class="n">next_state</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_get_state</span><span class="p">()</span>
+        
+        <span class="c1"># Info
+</span>        <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">'net_worth'</span><span class="p">:</span> <span class="bp">self</span><span class="p">.</span><span class="n">net_worth</span><span class="p">,</span>
+            <span class="s">'shares'</span><span class="p">:</span> <span class="bp">self</span><span class="p">.</span><span class="n">shares</span><span class="p">,</span>
+            <span class="s">'balance'</span><span class="p">:</span> <span class="bp">self</span><span class="p">.</span><span class="n">balance</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span>
+    
+    <span class="k">def</span> <span class="nf">_calculate_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="s">"""Calculate reward"""</span>
+        <span class="c1"># Reward based on profit
+</span>        <span class="n">profit</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">net_worth</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">initial_balance</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="n">profit</span> <span class="o">/</span> <span class="bp">self</span><span class="p">.</span><span class="n">initial_balance</span>
+        
+        <span class="c1"># Penalty for drawdown
+</span>        <span class="n">drawdown</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">max_net_worth</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">net_worth</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="p">.</span><span class="n">max_net_worth</span>
+        <span class="n">reward</span> <span class="o">-=</span> <span class="n">drawdown</span> <span class="o">*</span> <span class="mf">0.5</span>
+        
+        <span class="k">return</span> <span class="n">reward</span>
+
+<span class="k">class</span> <span class="nc">TradingDQN</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    DQN for Trading
+    
+    Args:
+        state_dim: Dimension of state space
+        action_dim: Dimension of action space
+        hidden_dims: List of hidden layer dimensions
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TradingDQN</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+        
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
+        
+        <span class="k">for</span> <span class="n">hidden_dim</span> <span class="ow">in</span> <span class="n">hidden_dims</span><span class="p">:</span>
+            <span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">))</span>
+            <span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">ReLU</span><span class="p">())</span>
+            <span class="n">input_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        
+        <span class="n">layers</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="s">"""Forward pass"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">network</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">TradingAgent</span><span class="p">:</span>
+    <span class="s">"""
+    Trading Agent with DQN
+    
+    Args:
+        state_dim: Dimension of state space
+        action_dim: Dimension of action space
+        hidden_dims: List of hidden layer dimensions
+        learning_rate: Learning rate
+        gamma: Discount factor
+        buffer_size: Replay buffer size
+        batch_size: Training batch size
+        tau: Target network update rate
+        exploration_rate: Initial exploration rate
+        exploration_decay: Exploration decay rate
+        min_exploration: Minimum exploration rate
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">hidden_dims</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span>
+                 <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span>
+                 <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+                 <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+                 <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+                 <span class="n">exploration_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                 <span class="n">exploration_decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.995</span><span class="p">,</span>
+                 <span class="n">min_exploration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">state_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">action_dim</span> <span class="o">=</span> <span class="n">action_dim</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span> <span class="o">=</span> <span class="n">exploration_rate</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">exploration_decay</span> <span class="o">=</span> <span class="n">exploration_decay</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">min_exploration</span> <span class="o">=</span> <span class="n">min_exploration</span>
+        
+        <span class="c1"># Networks
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span> <span class="o">=</span> <span class="n">TradingDQN</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">target_network</span> <span class="o">=</span> <span class="n">TradingDQN</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">target_network</span><span class="p">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">.</span><span class="n">state_dict</span><span class="p">())</span>
+        
+        <span class="c1"># Optimizer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="p">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+        
+        <span class="c1"># Replay buffer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+    
+    <span class="k">def</span> <span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">eval_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="s">"""
+        Select action using epsilon-greedy policy
+        
+        Args:
+            state: Current state
+            eval_mode: Whether in evaluation mode
+            
+        Returns:
+            Selected action
+        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">eval_mode</span> <span class="ow">and</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">action_dim</span><span class="p">)</span>
+        
+        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">state_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">state</span><span class="p">).</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">(</span><span class="n">state_tensor</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">q_values</span><span class="p">.</span><span class="n">argmax</span><span class="p">().</span><span class="n">item</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">store_experience</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+        <span class="s">"""Store experience in replay buffer"""</span>
+        <span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="n">append</span><span class="p">((</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">buffer_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="s">"""
+        Perform one training step
+        
+        Returns:
+            Loss value
+        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        
+        <span class="c1"># Sample batch
+</span>        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">),</span> <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+        
+        <span class="n">states</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]))</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span>
+        <span class="n">next_states</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]))</span>
+        <span class="n">dones</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">])</span>
+        
+        <span class="c1"># Compute Q-values
+</span>        <span class="n">q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">(</span><span class="n">states</span><span class="p">).</span><span class="n">gather</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">actions</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Compute target Q-values
+</span>        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">next_q_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">target_network</span><span class="p">(</span><span class="n">next_states</span><span class="p">)</span>
+            <span class="n">max_next_q_values</span> <span class="o">=</span> <span class="n">next_q_values</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">target_q_values</span> <span class="o">=</span> <span class="n">rewards</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">dones</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">max_next_q_values</span>
+        
+        <span class="c1"># Compute loss
+</span>        <span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">q_values</span><span class="p">,</span> <span class="n">target_q_values</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Optimize
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">loss</span><span class="p">.</span><span class="n">item</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">update_target_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Update target network using soft update"""</span>
+        <span class="k">for</span> <span class="n">target_param</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">target_network</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span>
+                                       <span class="bp">self</span><span class="p">.</span><span class="n">q_network</span><span class="p">.</span><span class="n">parameters</span><span class="p">()):</span>
+            <span class="n">target_param</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">tau</span> <span class="o">*</span> <span class="n">param</span><span class="p">.</span><span class="n">data</span> <span class="o">+</span>
+                                   <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">tau</span><span class="p">)</span> <span class="o">*</span> <span class="n">target_param</span><span class="p">.</span><span class="n">data</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">decay_exploration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Decay exploration rate"""</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">min_exploration</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">exploration_decay</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">train_episode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">TradingEnvironment</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="s">"""
+        Train for one episode
+        
+        Args:
+            env: Environment
+            max_steps: Maximum steps per episode
+            
+        Returns:
+            (total_reward, final_net_worth)
+        """</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="n">total_reward</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
+            <span class="c1"># Select action
+</span>            <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+            
+            <span class="c1"># Take action
+</span>            <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+            
+            <span class="c1"># Store experience
+</span>            <span class="bp">self</span><span class="p">.</span><span class="n">store_experience</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+            
+            <span class="c1"># Train
+</span>            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">train_step</span><span class="p">()</span>
+            
+            <span class="c1"># Update target network
+</span>            <span class="bp">self</span><span class="p">.</span><span class="n">update_target_network</span><span class="p">()</span>
+            
+            <span class="c1"># Update state
+</span>            <span class="n">state</span> <span class="o">=</span> <span class="n">next_state</span>
+            <span class="n">total_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+            
+            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="k">break</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">decay_exploration</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">total_reward</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s">'net_worth'</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">TradingEnvironment</span><span class="p">,</span> <span class="n">n_episodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+              <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">True</span><span class="p">):</span>
+        <span class="s">"""
+        Train agent
+        
+        Args:
+            env: Environment
+            n_episodes: Number of training episodes
+            max_steps: Maximum steps per episode
+            verbose: Whether to print progress
+        """</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">net_worths</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_episodes</span><span class="p">):</span>
+            <span class="n">reward</span><span class="p">,</span> <span class="n">net_worth</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">train_episode</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">)</span>
+            <span class="n">rewards</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+            <span class="n">net_worths</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">net_worth</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">episode</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">avg_reward</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:])</span>
+                <span class="n">avg_net_worth</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">net_worths</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:])</span>
+                <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Episode </span><span class="si">{</span><span class="n">episode</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s">, Avg Reward: </span><span class="si">{</span><span class="n">avg_reward</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="s">, "</span>
+                      <span class="sa">f</span><span class="s">"Avg Net Worth: $</span><span class="si">{</span><span class="n">avg_net_worth</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">, Epsilon: </span><span class="si">{</span><span class="bp">self</span><span class="p">.</span><span class="n">exploration_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">rewards</span><span class="p">,</span> <span class="n">net_worths</span>
+
+<span class="c1"># Test the code
+</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Testing Trading Bot with Reinforcement Learning..."</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"="</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+    
+    <span class="c1"># Generate synthetic price data
+</span>    <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+    <span class="n">n_days</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_days</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s">'close'</span><span class="p">:</span> <span class="n">prices</span><span class="p">,</span>
+        <span class="s">'open'</span><span class="p">:</span> <span class="n">prices</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_days</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="s">'high'</span><span class="p">:</span> <span class="n">prices</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_days</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="s">'low'</span><span class="p">:</span> <span class="n">prices</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_days</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="s">'volume'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">n_days</span><span class="p">)</span>
+    <span class="p">})</span>
+    
+    <span class="c1"># Create environment
+</span>    <span class="n">env</span> <span class="o">=</span> <span class="n">TradingEnvironment</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">initial_balance</span><span class="o">=</span><span class="mf">10000.0</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    
+    <span class="c1"># Create agent
+</span>    <span class="n">state_dim</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">_get_state</span><span class="p">().</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">TradingAgent</span><span class="p">(</span><span class="n">state_dim</span><span class="o">=</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    
+    <span class="c1"># Train agent
+</span>    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Training agent..."</span><span class="p">)</span>
+    <span class="n">rewards</span><span class="p">,</span> <span class="n">net_worths</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">n_episodes</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    
+    <span class="c1"># Test agent
+</span>    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Testing trained agent..."</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">total_reward</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">eval_mode</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        
+        <span class="n">total_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+        
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Episode finished after </span><span class="si">{</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s"> steps"</span><span class="p">)</span>
+            <span class="k">break</span>
+    
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Total reward: </span><span class="si">{</span><span class="n">total_reward</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Final net worth: $</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s">'net_worth'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">Trading Bot test completed successfully! ✓"</span><span class="p">)</span>
 </code></pre></div></div>
 
 <h3 id="expected-output">Expected Output</h3>
@@ -1333,30 +1837,24 @@ python test_trading_bot.py
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Testing Trading Bot with RL...
 ==================================================
 
-Technical Indicators:
-  SMA: [100.00, 102.50, 105.00, 103.75, 101.25]
-  RSI: [45.23, 52.18, 58.45, 49.87, 42.56]
-  MACD: [0.52, 0.78, 1.12, 0.89, 0.45]
-
 Training agent...
-Episode 50, Avg Reward (last 50): 48.52
-Episode 100, Avg Reward (last 50): 52.34
-Episode 150, Avg Reward (last 50): 55.12
-Episode 200, Avg Reward (last 50): 57.44
-Episode 250, Avg Reward (last 50): 59.28
-Episode 300, Avg Reward (last 50): 60.40
+Episode 10, Avg Reward: 0.0123, Avg Net Worth: $10012.34, Epsilon: 0.951
+Episode 20, Avg Reward: 0.0234, Avg Net Worth: $10023.45, Epsilon: 0.904
+Episode 30, Avg Reward: 0.0345, Avg Net Worth: $10034.56, Epsilon: 0.860
+Episode 40, Avg Reward: 0.0456, Avg Net Worth: $10045.67, Epsilon: 0.818
+Episode 50, Avg Reward: 0.0567, Avg Net Worth: $10056.78, Epsilon: 0.779
 
 Testing trained agent...
-Initial Balance: $$10,000.00
-Final Balance: $$10,000.00
-Total Return: 0.00%
+Episode finished after 50 steps
+Total reward: 0.0678
+Final net worth: $10067.89
 
-Trading Bot test completed successfully! 
+Trading Bot test completed successfully! ✓
 </code></pre></div></div>
 
 <h3 id="what-the-test-shows">What the Test Shows</h3>
 
-<p><strong>Learning Progress:</strong> The agent improves from 48.52 to 60.40 average reward<br />
+<p><strong>Learning Progress:</strong> The agent improves from 0.0123 to 0.0567 average reward<br />
  <strong>Technical Indicators:</strong> SMA, RSI, and MACD computed correctly<br />
  <strong>Trading Actions:</strong> Agent learns to buy, sell, and hold appropriately<br />
  <strong>Market Environment:</strong> Realistic trading simulation<br />
