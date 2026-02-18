@@ -22,8 +22,7 @@ permalink: /games/snake/
     </div>
     
     <div id="game-start-screen" class="start-screen">
-      <h2>Enter Your Name</h2>
-      <input type="text" id="player-name" placeholder="Your name" maxlength="20" />
+      <h2>Snake Game</h2>
       <button id="start-btn" class="start-btn">Start Game</button>
       <div class="instructions">
         <p class="instructions-title">How to Play:</p>
@@ -50,13 +49,6 @@ permalink: /games/snake/
         <button class="control-btn down-btn" data-direction="down">▼</button>
         <button class="control-btn right-btn" data-direction="right">▶</button>
       </div>
-    </div>
-  </div>
-  
-  <div class="leaderboard">
-    <h2>🏆 Top 20 Leaderboard</h2>
-    <div id="leaderboard-list" class="leaderboard-list">
-      <p class="no-scores">No scores yet. Be the first!</p>
     </div>
   </div>
 </div>
@@ -220,81 +212,6 @@ permalink: /games/snake/
   color: #667eea;
 }
 
-.leaderboard {
-  max-width: 600px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.leaderboard h2 {
-  text-align: center;
-  font-size: 2em;
-  margin-bottom: 25px;
-  color: #333;
-}
-
-.leaderboard-list {
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.leaderboard-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.leaderboard-item:hover {
-  transform: translateX(5px);
-}
-
-.leaderboard-item:nth-child(1) {
-  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-}
-
-.leaderboard-item:nth-child(2) {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-}
-
-.leaderboard-item:nth-child(3) {
-  background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
-}
-
-.rank {
-  font-size: 1.5em;
-  font-weight: bold;
-  width: 40px;
-  text-align: center;
-}
-
-.player-name {
-  flex: 1;
-  font-weight: bold;
-  color: #333;
-  margin-left: 15px;
-}
-
-.player-score {
-  font-size: 1.3em;
-  font-weight: bold;
-  color: #667eea;
-}
-
-.no-scores {
-  text-align: center;
-  color: #999;
-  font-size: 1.1em;
-  padding: 20px;
-}
-
 .mobile-controls {
   display: none;
   margin-top: 20px;
@@ -412,15 +329,22 @@ class SnakeGame {
   
   init() {
     this.loadHighScore();
-    this.loadLeaderboard();
-    this.loadPlayerName();
     this.bindEvents();
   }
   
   bindEvents() {
-    document.getElementById('start-btn').addEventListener('click', () => this.startGame());
-    document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
-    document.getElementById('home-btn').addEventListener('click', () => {
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const homeBtn = document.getElementById('home-btn');
+    
+    if (!startBtn || !restartBtn || !homeBtn) {
+      console.error('Snake game buttons not found in DOM');
+      return;
+    }
+    
+    startBtn.addEventListener('click', () => this.startGame());
+    restartBtn.addEventListener('click', () => this.restartGame());
+    homeBtn.addEventListener('click', () => {
       window.location.href = '/games';
     });
     
@@ -538,21 +462,6 @@ class SnakeGame {
   }
   
   startGame() {
-    let playerName = document.getElementById('player-name').value.trim();
-    
-    if (!playerName) {
-      const savedName = localStorage.getItem('snakePlayerName');
-      if (savedName) {
-        playerName = savedName;
-      } else {
-        alert('Please enter your name!');
-        return;
-      }
-    }
-    
-    this.playerName = playerName;
-    localStorage.setItem('snakePlayerName', playerName);
-    
     this.resetGame();
     
     document.getElementById('game-start-screen').style.display = 'none';
@@ -713,9 +622,6 @@ class SnakeGame {
     
     document.getElementById('final-score').textContent = this.score;
     document.getElementById('game-over-screen').style.display = 'block';
-    
-    this.saveScore();
-    this.loadLeaderboard();
   }
   
   restartGame() {
@@ -737,60 +643,14 @@ class SnakeGame {
       document.getElementById('high-score').textContent = this.highScore;
     }
   }
-  
-  loadPlayerName() {
-    const savedName = localStorage.getItem('snakePlayerName');
-    if (savedName) {
-      document.getElementById('player-name').value = savedName;
-    }
-  }
-  
-  saveScore() {
-    let leaderboard = this.getLeaderboard();
-    
-    leaderboard.push({
-      name: this.playerName,
-      score: this.score,
-      date: new Date().toISOString()
-    });
-    
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 20);
-    
-    localStorage.setItem('snakeLeaderboard', JSON.stringify(leaderboard));
-  }
-  
-  getLeaderboard() {
-    const savedLeaderboard = localStorage.getItem('snakeLeaderboard');
-    return savedLeaderboard ? JSON.parse(savedLeaderboard) : [];
-  }
-  
-  loadLeaderboard() {
-    const leaderboard = this.getLeaderboard();
-    const leaderboardList = document.getElementById('leaderboard-list');
-    
-    if (leaderboard.length === 0) {
-      leaderboardList.innerHTML = '<p class="no-scores">No scores yet. Be the first!</p>';
-      return;
-    }
-    
-    leaderboardList.innerHTML = leaderboard.map((entry, index) => `
-      <div class="leaderboard-item">
-        <span class="rank">${index + 1}</span>
-        <span class="player-name">${this.escapeHtml(entry.name)}</span>
-        <span class="player-score">${entry.score}</span>
-      </div>
-    `).join('');
-  }
-  
-  escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  new SnakeGame();
+  try {
+    const game = new SnakeGame();
+    console.log('Snake game initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Snake game:', error);
+  }
 });
 </script>
