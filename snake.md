@@ -137,21 +137,6 @@ permalink: /games/snake/
   color: #333;
 }
 
-#player-name {
-  width: 100%;
-  padding: 15px;
-  font-size: 1.1em;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-sizing: border-box;
-}
-
-#player-name:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
 .start-btn, .restart-btn, .home-btn {
   padding: 12px 30px;
   font-size: 1.1em;
