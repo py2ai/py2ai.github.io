@@ -21,16 +21,6 @@ permalink: /games/flappy-bird/
       </div>
     </div>
     
-    <div id="game-start-screen" class="start-screen">
-      <h2>Flappy Bird</h2>
-      <button id="start-btn" class="start-btn">Start Game</button>
-      <div class="instructions">
-        <p class="instructions-title">How to Play:</p>
-        <p class="desktop-instructions">🖥️ <strong>Desktop:</strong> Press Space or Click to flap</p>
-        <p class="mobile-instructions">📱 <strong>Mobile:</strong> Tap anywhere to flap</p>
-      </div>
-    </div>
-    
     <div id="game-over-screen" class="game-over-screen" style="display: none;">
       <h2>Game Over!</h2>
       <p>Your Score: <strong id="final-score">0</strong></p>
@@ -107,7 +97,7 @@ permalink: /games/flappy-bird/
   cursor: pointer;
 }
 
-.start-screen, .game-over-screen {
+.game-over-screen {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -121,28 +111,13 @@ permalink: /games/flappy-bird/
   min-width: 300px;
 }
 
-.start-screen h2, .game-over-screen h2 {
+.game-over-screen h2 {
   font-size: 2em;
   margin-bottom: 20px;
   color: #333;
 }
 
-#player-name {
-  width: 100%;
-  padding: 15px;
-  font-size: 1.1em;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-sizing: border-box;
-}
-
-#player-name:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.start-btn, .restart-btn, .home-btn {
+.restart-btn, .home-btn {
   padding: 12px 30px;
   font-size: 1.1em;
   border: none;
@@ -153,7 +128,7 @@ permalink: /games/flappy-bird/
   margin: 5px;
 }
 
-.start-btn, .restart-btn {
+.restart-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
@@ -163,38 +138,13 @@ permalink: /games/flappy-bird/
   color: white;
 }
 
-.start-btn:hover, .restart-btn:hover {
+.restart-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
 .home-btn:hover {
   background: #5a6268;
-}
-
-.instructions {
-  margin-top: 20px;
-  text-align: left;
-}
-
-.instructions-title {
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.desktop-instructions,
-.mobile-instructions {
-  font-size: 0.95em;
-  color: #666;
-  margin: 8px 0;
-  line-height: 1.5;
-}
-
-.desktop-instructions strong,
-.mobile-instructions strong {
-  color: #667eea;
 }
 
 #final-score {
@@ -220,16 +170,6 @@ permalink: /games/flappy-bird/
   .game-description p {
     margin: 8px 0;
     font-size: 0.95em;
-  }
-  
-  .instructions-title {
-    font-size: 1em;
-  }
-  
-  .desktop-instructions,
-  .mobile-instructions {
-    font-size: 0.9em;
-    margin: 6px 0;
   }
 }
 </style>
@@ -268,25 +208,19 @@ class FlappyBirdGame {
   init() {
     this.loadHighScore();
     this.bindEvents();
+    this.startGame();
   }
   
   bindEvents() {
-    const startBtn = document.getElementById('start-btn');
     const restartBtn = document.getElementById('restart-btn');
     const homeBtn = document.getElementById('home-btn');
     
-    if (!startBtn || !restartBtn || !homeBtn) {
+    if (!restartBtn || !homeBtn) {
       console.error('Flappy Bird game buttons not found in DOM');
       return;
     }
     
     console.log('Flappy Bird - Adding event listeners to buttons');
-    
-    startBtn.addEventListener('click', (e) => {
-      console.log('Flappy Bird - Start button clicked');
-      e.preventDefault();
-      this.startGame();
-    });
     
     restartBtn.addEventListener('click', (e) => {
       console.log('Flappy Bird - Restart button clicked');
@@ -326,7 +260,6 @@ class FlappyBirdGame {
   startGame() {
     this.resetGame();
     
-    document.getElementById('game-start-screen').style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'none';
     
     this.isGameRunning = true;
