@@ -337,14 +337,30 @@ class SnakeGame {
     const restartBtn = document.getElementById('restart-btn');
     const homeBtn = document.getElementById('home-btn');
     
+    console.log('Snake game - Looking for buttons:', { startBtn, restartBtn, homeBtn });
+    
     if (!startBtn || !restartBtn || !homeBtn) {
       console.error('Snake game buttons not found in DOM');
       return;
     }
     
-    startBtn.addEventListener('click', () => this.startGame());
-    restartBtn.addEventListener('click', () => this.restartGame());
-    homeBtn.addEventListener('click', () => {
+    console.log('Snake game - Adding event listeners to buttons');
+    
+    startBtn.addEventListener('click', (e) => {
+      console.log('Snake game - Start button clicked');
+      e.preventDefault();
+      this.startGame();
+    });
+    
+    restartBtn.addEventListener('click', (e) => {
+      console.log('Snake game - Restart button clicked');
+      e.preventDefault();
+      this.restartGame();
+    });
+    
+    homeBtn.addEventListener('click', (e) => {
+      console.log('Snake game - Home button clicked');
+      e.preventDefault();
       window.location.href = '/games';
     });
     
