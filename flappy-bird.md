@@ -8,8 +8,9 @@ permalink: /games/flappy-bird/
   <h1>🐦 Flappy Bird</h1>
   
   <div class="game-description">
-    <p><strong>Objective:</strong> Help the bird fly through the gaps between pipes!</p>
-    <p><strong>Controls:</strong> Click/tap or press Space/Up Arrow to flap wings and fly up</p>
+    <p><strong>Objective:</strong> Help the bird fly through the gaps between pipes and survive as long as possible!</p>
+    <p><strong>How to Play:</strong> Click or tap anywhere on the canvas, or press Space/Up Arrow to flap wings and fly up. The bird falls due to gravity when not flapping.</p>
+    <p><strong>Rules:</strong> Avoid hitting the pipes (top and bottom) and the ground/ceiling. Each pipe passed earns you 1 point.</p>
     <p><strong>Scoring:</strong> +1 point for each pipe passed. Try to beat your high score!</p>
   </div>
   

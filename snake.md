@@ -9,7 +9,8 @@ permalink: /games/snake/
   
   <div class="game-description">
     <p><strong>Objective:</strong> Guide the snake to eat food and grow as long as possible without hitting yourself!</p>
-    <p><strong>Rules:</strong> The snake wraps around walls - use this to your advantage!</p>
+    <p><strong>How to Play:</strong> Use arrow keys (↑↓←→) or WASD to control the snake's direction. On mobile, use the on-screen buttons or swipe on the canvas.</p>
+    <p><strong>Rules:</strong> The snake wraps around walls - use this to your advantage! Avoid hitting your own body.</p>
     <p><strong>Scoring:</strong> +10 points for each food eaten. The game speeds up as you score more!</p>
   </div>
   
@@ -253,7 +254,7 @@ class SnakeGame {
     this.score = 0;
     this.highScore = 0;
     this.gameLoop = null;
-    this.gameSpeed = 100;
+    this.gameSpeed = 200;
     this.isGameRunning = false;
     
     this.init();
@@ -504,12 +505,11 @@ class SnakeGame {
     this.ctx.fillStyle = '#1a1a1a';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
-    this.ctx.fillStyle = '#667eea';
     this.snake.forEach((segment, index) => {
       if (index === 0) {
-        this.ctx.fillStyle = '#764ba2';
+        this.ctx.fillStyle = '#228B22';
       } else {
-        this.ctx.fillStyle = '#667eea';
+        this.ctx.fillStyle = '#32CD32';
       }
       
       this.ctx.fillRect(
@@ -552,7 +552,7 @@ class SnakeGame {
   
   restartGame() {
     document.getElementById('game-over-screen').style.display = 'none';
-    this.gameSpeed = 100;
+    this.gameSpeed = 200;
     this.resetGame();
     this.isGameRunning = true;
     this.gameLoop = setInterval(() => this.update(), this.gameSpeed);
