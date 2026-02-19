@@ -31,6 +31,10 @@ permalink: /games/snake/
     <canvas id="game-canvas" width="400" height="400"></canvas>
     
     <div class="mobile-controls">
+      <div class="control-header">
+        <button id="lock-toggle" class="lock-toggle" title="Lock/Unlock Controls">🔓</button>
+        <span id="lock-status" class="lock-status">Unlocked</span>
+      </div>
       <div class="control-row">
         <button class="control-btn up-btn" data-direction="up">▲</button>
       </div>
@@ -87,7 +91,7 @@ permalink: /games/snake/
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1a1a1a;
+  background: #0d0d0d;
   padding: 12px 20px;
   border-radius: 10px 10px 0 0;
   border: 4px solid #667eea;
@@ -211,6 +215,49 @@ permalink: /games/snake/
   user-select: none;
   touch-action: none;
   z-index: 1000;
+}
+
+.mobile-controls.locked {
+  cursor: default;
+}
+
+.control-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.lock-toggle {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.lock-toggle:active {
+  transform: scale(0.95);
+}
+
+.lock-status {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 4px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .control-row {
@@ -674,12 +721,37 @@ class SnakeGame {
   
   setupDraggableControls() {
     const controls = document.querySelector('.mobile-controls');
-    if (!controls) return;
+    const lockToggle = document.getElementById('lock-toggle');
+    const lockStatus = document.getElementById('lock-status');
+    if (!controls || !lockToggle || !lockStatus) return;
     
+    let isLocked = false;
     let isDragging = false;
     let startX, startY, initialX, initialY;
     
+    const updateLockState = () => {
+      isLocked = !isLocked;
+      controls.classList.toggle('locked', isLocked);
+      lockToggle.textContent = isLocked ? '🔒' : '🔓';
+      lockStatus.textContent = isLocked ? 'Locked' : 'Unlocked';
+    };
+    
+    lockToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      updateLockState();
+    });
+    
+    lockToggle.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      updateLockState();
+    });
+    
     const startDrag = (e) => {
+      if (isLocked) return;
+      if (e.target === lockToggle) return;
+      
       isDragging = true;
       const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
       const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
@@ -691,7 +763,7 @@ class SnakeGame {
     };
     
     const drag = (e) => {
-      if (!isDragging) return;
+      if (!isDragging || isLocked) return;
       e.preventDefault();
       
       const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
@@ -717,7 +789,9 @@ class SnakeGame {
     
     const endDrag = () => {
       isDragging = false;
-      controls.style.cursor = 'move';
+      if (!isLocked) {
+        controls.style.cursor = 'move';
+      }
     };
     
     controls.addEventListener('mousedown', startDrag);
