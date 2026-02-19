@@ -250,6 +250,7 @@ class FlappyBirdGame {
     
     restartBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      this.initAudioContext();
       this.restartGame();
     });
     
@@ -260,18 +261,24 @@ class FlappyBirdGame {
     
     soundToggle.addEventListener('click', (e) => {
       e.preventDefault();
+      this.initAudioContext();
       this.toggleSound();
     });
     
-    document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+    document.addEventListener('keydown', (e) => {
+      this.initAudioContext();
+      this.handleKeyPress(e);
+    });
     
     this.canvas.addEventListener('click', (e) => {
       e.preventDefault();
+      this.initAudioContext();
       this.flap();
     });
     
     this.canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      this.initAudioContext();
       this.flap();
     }, { passive: false });
   }
@@ -528,6 +535,16 @@ class FlappyBirdGame {
     }
   }
   
+  initAudioContext() {
+    if (!this.audioContext) {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume();
+    }
+  }
+  
   toggleSound() {
     this.soundEnabled = !this.soundEnabled;
     const soundToggle = document.getElementById('sound-toggle');
@@ -540,6 +557,10 @@ class FlappyBirdGame {
     try {
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
       }
       
       const oscillator = this.audioContext.createOscillator();

@@ -318,6 +318,7 @@ class SnakeGame {
     
     restartBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      this.initAudioContext();
       this.restartGame();
     });
     
@@ -328,20 +329,26 @@ class SnakeGame {
     
     soundToggle.addEventListener('click', (e) => {
       e.preventDefault();
+      this.initAudioContext();
       this.toggleSound();
     });
     
-    document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+    document.addEventListener('keydown', (e) => {
+      this.initAudioContext();
+      this.handleKeyPress(e);
+    });
     
     document.querySelectorAll('.control-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        this.initAudioContext();
         const direction = btn.dataset.direction;
         this.handleMobileControl(direction);
       });
       
       btn.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        this.initAudioContext();
         const direction = btn.dataset.direction;
         this.handleMobileControl(direction);
       });
@@ -618,6 +625,16 @@ class SnakeGame {
     }
   }
   
+  initAudioContext() {
+    if (!this.audioContext) {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume();
+    }
+  }
+  
   toggleSound() {
     this.soundEnabled = !this.soundEnabled;
     const soundToggle = document.getElementById('sound-toggle');
@@ -630,6 +647,10 @@ class SnakeGame {
     try {
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
       }
       
       const oscillator = this.audioContext.createOscillator();
