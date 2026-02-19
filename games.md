@@ -12,7 +12,7 @@ permalink: /games/
     <div class="game-card">
       <div class="game-icon">🐍</div>
       <h2>Snake Game</h2>
-      <p>Classic snake game with leaderboard</p>
+      <p>Classic snake game with high scores</p>
       <a href="/games/snake" class="btn">Play Now</a>
     </div>
     
@@ -21,6 +21,34 @@ permalink: /games/
       <h2>Flappy Bird</h2>
       <p>Help the bird fly through pipes</p>
       <a href="/games/flappy-bird" class="btn">Play Now</a>
+    </div>
+    
+    <div class="game-card">
+      <div class="game-icon">🧱</div>
+      <h2>Tetris</h2>
+      <p>Classic block-stacking puzzle game</p>
+      <a href="/games/tetris" class="btn">Play Now</a>
+    </div>
+    
+    <div class="game-card">
+      <div class="game-icon">🎴</div>
+      <h2>Memory Match</h2>
+      <p>Find matching pairs of cards</p>
+      <a href="/games/memory-match" class="btn">Play Now</a>
+    </div>
+    
+    <div class="game-card">
+      <div class="game-icon">🏓</div>
+      <h2>Pong</h2>
+      <p>Classic arcade game with 10 levels</p>
+      <a href="/games/pong" class="btn">Play Now</a>
+    </div>
+    
+    <div class="game-card">
+      <div class="game-icon">🔢</div>
+      <h2>2048</h2>
+      <p>Combine tiles to reach 2048!</p>
+      <a href="/games/2048" class="btn">Play Now</a>
     </div>
   </div>
 </div>
