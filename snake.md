@@ -17,6 +17,7 @@ permalink: /games/snake/
   <div class="game-wrapper">
     <div class="score-display">
       <span class="score-left">Score: <strong id="current-score">0</strong></span>
+      <button id="sound-toggle" class="sound-toggle" title="Toggle Sound">🔊</button>
       <span class="score-right">Top Score: <strong id="high-score">0</strong></span>
     </div>
     
@@ -96,6 +97,8 @@ permalink: /games/snake/
   font-weight: bold;
   width: 408px;
   margin: 0 auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .score-left, .score-right {
@@ -108,6 +111,24 @@ permalink: /games/snake/
 
 .score-right {
   text-align: right;
+}
+
+.sound-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 0 10px;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.sound-toggle:hover {
+  transform: scale(1.2);
+}
+
+.sound-toggle:active {
+  transform: scale(0.9);
 }
 
 #game-canvas {
@@ -219,7 +240,7 @@ permalink: /games/snake/
   background: #f0f0f0;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 1024px) {
   .snake-game-container h1 {
     font-size: 2em;
   }
@@ -227,6 +248,10 @@ permalink: /games/snake/
   #game-canvas {
     width: 100%;
     height: auto;
+  }
+  
+  .score-display {
+    width: 100%;
   }
   
   .mobile-controls {
@@ -268,6 +293,8 @@ class SnakeGame {
     this.gameLoop = null;
     this.gameSpeed = 200;
     this.isGameRunning = false;
+    this.soundEnabled = true;
+    this.audioContext = null;
     
     this.init();
   }
@@ -281,8 +308,9 @@ class SnakeGame {
   bindEvents() {
     const restartBtn = document.getElementById('restart-btn');
     const homeBtn = document.getElementById('home-btn');
+    const soundToggle = document.getElementById('sound-toggle');
     
-    if (!restartBtn || !homeBtn) {
+    if (!restartBtn || !homeBtn || !soundToggle) {
       console.error('Snake game buttons not found in DOM');
       return;
     }
@@ -295,6 +323,11 @@ class SnakeGame {
     homeBtn.addEventListener('click', (e) => {
       e.preventDefault();
       window.location.href = '/games';
+    });
+    
+    soundToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.toggleSound();
     });
     
     document.addEventListener('keydown', (e) => this.handleKeyPress(e));
@@ -467,6 +500,7 @@ class SnakeGame {
       this.score += 10;
       this.updateScoreDisplay();
       this.increaseSpeed();
+      this.playEatSound();
       this.placeFood();
     } else {
       this.snake.pop();
@@ -579,6 +613,39 @@ class SnakeGame {
     if (savedHighScore) {
       this.highScore = parseInt(savedHighScore);
       document.getElementById('high-score').textContent = this.highScore;
+    }
+  }
+  
+  toggleSound() {
+    this.soundEnabled = !this.soundEnabled;
+    const soundToggle = document.getElementById('sound-toggle');
+    soundToggle.textContent = this.soundEnabled ? '🔊' : '🔇';
+  }
+  
+  playEatSound() {
+    if (!this.soundEnabled) return;
+    
+    try {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'square';
+      
+      gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+      
+      oscillator.start(this.audioContext.currentTime);
+      oscillator.stop(this.audioContext.currentTime + 0.1);
+    } catch (error) {
+      console.error('Error playing sound:', error);
     }
   }
 }

@@ -434,6 +434,10 @@ body{
   </div>
   
   <div class="game-wrapper">
+    <div class="score-display">
+      <button id="sound-toggle" class="sound-toggle" title="Toggle Sound">🔊</button>
+    </div>
+    
     <div id="game-over-screen" class="game-over-screen" style="display: none;">
       <h2>Game Over!</h2>
       <p>Your Score: <strong id="final-score">0</strong></p>
@@ -485,12 +489,49 @@ body{
   position: relative;
 }
 
+.score-display {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 12px 20px;
+  border-radius: 10px 10px 0 0;
+  border: 4px solid #667eea;
+  border-bottom: none;
+  color: white;
+  font-size: 1.1em;
+  font-weight: bold;
+  width: 400px;
+  margin: 0 auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sound-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 0 10px;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.sound-toggle:hover {
+  transform: scale(1.2);
+}
+
+.sound-toggle:active {
+  transform: scale(0.9);
+}
+
 #game-canvas {
   display: block;
   margin: 0 auto;
   background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
   border: 4px solid #667eea;
-  border-radius: 10px;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
@@ -550,7 +591,7 @@ body{
   color: #667eea;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 1024px) {
   .flappy-bird-container h1 {
     font-size: 2em;
   }
@@ -558,6 +599,10 @@ body{
   #game-canvas {
     width: 100%;
     height: auto;
+  }
+  
+  .score-display {
+    width: 100%;
   }
   
   .game-description {
@@ -580,7 +625,7 @@ class FlappyBirdGame {
     
     this.bird = {
       x: 80,
-      y: 250,
+      y: 150,
       width: 35,
       height: 25,
       velocity: 0,
@@ -600,6 +645,8 @@ class FlappyBirdGame {
     this.highScore = 0;
     this.isGameRunning = false;
     this.gameLoop = null;
+    this.soundEnabled = true;
+    this.audioContext = null;
     
     this.init();
   }
@@ -613,8 +660,9 @@ class FlappyBirdGame {
   bindEvents() {
     const restartBtn = document.getElementById('restart-btn');
     const homeBtn = document.getElementById('home-btn');
+    const soundToggle = document.getElementById('sound-toggle');
     
-    if (!restartBtn || !homeBtn) {
+    if (!restartBtn || !homeBtn || !soundToggle) {
       console.error('Flappy Bird game buttons not found in DOM');
       return;
     }
@@ -627,6 +675,11 @@ class FlappyBirdGame {
     homeBtn.addEventListener('click', (e) => {
       e.preventDefault();
       window.location.href = '/games';
+    });
+    
+    soundToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.toggleSound();
     });
     
     document.addEventListener('keydown', (e) => this.handleKeyPress(e));
@@ -662,7 +715,7 @@ class FlappyBirdGame {
   resetGame() {
     this.bird = {
       x: 80,
-      y: 250,
+      y: 150,
       width: 35,
       height: 25,
       velocity: 0,
@@ -696,6 +749,7 @@ class FlappyBirdGame {
       if (!pipe.passed && pipe.x + this.pipeWidth < this.bird.x) {
         pipe.passed = true;
         this.score++;
+        this.playScoreSound();
         this.updateScoreDisplay();
       }
     });
@@ -890,6 +944,39 @@ class FlappyBirdGame {
     const savedHighScore = localStorage.getItem('flappyBirdHighScore');
     if (savedHighScore) {
       this.highScore = parseInt(savedHighScore);
+    }
+  }
+  
+  toggleSound() {
+    this.soundEnabled = !this.soundEnabled;
+    const soundToggle = document.getElementById('sound-toggle');
+    soundToggle.textContent = this.soundEnabled ? '🔊' : '🔇';
+  }
+  
+  playScoreSound() {
+    if (!this.soundEnabled) return;
+    
+    try {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      oscillator.frequency.value = 600;
+      oscillator.type = 'square';
+      
+      gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
+      
+      oscillator.start(this.audioContext.currentTime);
+      oscillator.stop(this.audioContext.currentTime + 0.15);
+    } catch (error) {
+      console.error('Error playing sound:', error);
     }
   }
 }
