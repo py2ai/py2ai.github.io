@@ -15,13 +15,6 @@ permalink: /games/flappy-bird/
   </div>
   
   <div class="game-wrapper">
-    <div class="game-info">
-      <div class="score-display">
-        <span>Score: <strong id="current-score">0</strong></span>
-        <span>High Score: <strong id="high-score">0</strong></span>
-      </div>
-    </div>
-    
     <div id="game-over-screen" class="game-over-screen" style="display: none;">
       <h2>Game Over!</h2>
       <p>Your Score: <strong id="final-score">0</strong></p>
@@ -71,21 +64,6 @@ permalink: /games/flappy-bird/
   max-width: 500px;
   margin: 0 auto 40px;
   position: relative;
-}
-
-.game-info {
-  margin-bottom: 15px;
-}
-
-.score-display {
-  display: flex;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 15px 25px;
-  border-radius: 10px;
-  color: white;
-  font-size: 1.2em;
-  font-weight: bold;
 }
 
 #game-canvas {
@@ -187,8 +165,8 @@ class FlappyBirdGame {
       width: 35,
       height: 25,
       velocity: 0,
-      gravity: 0.35,
-      jumpStrength: -7,
+      gravity: 0.175,
+      jumpStrength: -3.5,
       wingAngle: 0
     };
     
@@ -269,8 +247,8 @@ class FlappyBirdGame {
       width: 35,
       height: 25,
       velocity: 0,
-      gravity: 0.35,
-      jumpStrength: -7,
+      gravity: 0.175,
+      jumpStrength: -3.5,
       wingAngle: 0
     };
     
@@ -354,6 +332,25 @@ class FlappyBirdGame {
     this.drawBackground();
     this.drawPipes();
     this.drawBird();
+    this.drawScore();
+  }
+  
+  drawScore() {
+    this.ctx.font = 'bold 24px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'top';
+    
+    this.ctx.fillStyle = 'white';
+    this.ctx.strokeStyle = 'black';
+    this.ctx.lineWidth = 3;
+    
+    this.ctx.strokeText(this.score.toString(), this.canvas.width / 2, 15);
+    this.ctx.fillText(this.score.toString(), this.canvas.width / 2, 15);
+    
+    this.ctx.font = 'bold 16px Arial';
+    this.ctx.textAlign = 'left';
+    this.ctx.strokeText('Top Score: ' + this.highScore.toString(), 10, 15);
+    this.ctx.fillText('Top Score: ' + this.highScore.toString(), 10, 15);
   }
   
   drawBackground() {
@@ -444,11 +441,8 @@ class FlappyBirdGame {
   }
   
   updateScoreDisplay() {
-    document.getElementById('current-score').textContent = this.score;
-    
     if (this.score > this.highScore) {
       this.highScore = this.score;
-      document.getElementById('high-score').textContent = this.highScore;
       this.saveHighScore();
     }
   }
@@ -477,7 +471,6 @@ class FlappyBirdGame {
     const savedHighScore = localStorage.getItem('flappyBirdHighScore');
     if (savedHighScore) {
       this.highScore = parseInt(savedHighScore);
-      document.getElementById('high-score').textContent = this.highScore;
     }
   }
 }

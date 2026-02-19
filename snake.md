@@ -15,11 +15,9 @@ permalink: /games/snake/
   </div>
   
   <div class="game-wrapper">
-    <div class="game-info">
-      <div class="score-display">
-        <span>Score: <strong id="current-score">0</strong></span>
-        <span>High Score: <strong id="high-score">0</strong></span>
-      </div>
+    <div class="score-display">
+      <span class="score-left">Score: <strong id="current-score">0</strong></span>
+      <span class="score-right">Top Score: <strong id="high-score">0</strong></span>
     </div>
     
     <div id="game-over-screen" class="game-over-screen" style="display: none;">
@@ -84,19 +82,32 @@ permalink: /games/snake/
   position: relative;
 }
 
-.game-info {
-  margin-bottom: 15px;
-}
-
 .score-display {
   display: flex;
   justify-content: space-between;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 15px 25px;
-  border-radius: 10px;
+  align-items: center;
+  background: #1a1a1a;
+  padding: 12px 20px;
+  border-radius: 10px 10px 0 0;
+  border: 4px solid #667eea;
+  border-bottom: none;
   color: white;
-  font-size: 1.2em;
+  font-size: 1.1em;
   font-weight: bold;
+  width: 408px;
+  margin: 0 auto;
+}
+
+.score-left, .score-right {
+  flex: 1;
+}
+
+.score-left {
+  text-align: left;
+}
+
+.score-right {
+  text-align: right;
 }
 
 #game-canvas {
@@ -104,7 +115,8 @@ permalink: /games/snake/
   margin: 0 auto;
   background: #1a1a1a;
   border: 4px solid #667eea;
-  border-radius: 10px;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -507,9 +519,9 @@ class SnakeGame {
     
     this.snake.forEach((segment, index) => {
       if (index === 0) {
-        this.ctx.fillStyle = '#228B22';
-      } else {
         this.ctx.fillStyle = '#32CD32';
+      } else {
+        this.ctx.fillStyle = '#228B22';
       }
       
       this.ctx.fillRect(
@@ -520,7 +532,7 @@ class SnakeGame {
       );
     });
     
-    this.ctx.fillStyle = '#ff6b6b';
+    this.ctx.fillStyle = '#ff0000';
     this.ctx.beginPath();
     this.ctx.arc(
       this.food.x * this.gridSize + this.gridSize / 2,
