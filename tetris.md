@@ -39,14 +39,13 @@ permalink: /games/tetris/
     </div>
     
     <div class="mobile-controls">
-      <div class="control-header">
-        <button id="lock-toggle" class="lock-toggle" title="Lock/Unlock Controls">🔓</button>
-        <span id="lock-status" class="lock-status">Unlocked</span>
-      </div>
-      <div class="control-row">
+      <div class="control-grid">
+        <div></div>
         <button class="control-btn rotate-btn" data-action="rotate">↻</button>
-      </div>
-      <div class="control-row">
+        <div class="lock-container">
+          <button id="lock-toggle" class="lock-toggle" title="Lock/Unlock Controls">🔓</button>
+          <span id="lock-status" class="lock-status">UNLOCKED</span>
+        </div>
         <button class="control-btn left-btn" data-action="left">◀</button>
         <button class="control-btn down-btn" data-action="down">▼</button>
         <button class="control-btn right-btn" data-action="right">▶</button>
@@ -239,7 +238,7 @@ permalink: /games/tetris/
   bottom: 20px;
   right: 20px;
   margin-top: 20px;
-  padding: 20px;
+  padding: 12px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
   border-radius: 20px;
   backdrop-filter: blur(10px);
@@ -254,20 +253,28 @@ permalink: /games/tetris/
   cursor: default;
 }
 
-.control-header {
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 8px;
+  align-items: center;
+}
+
+.lock-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  margin-bottom: 10px;
+  align-items: center;
+  justify-content: center;
 }
 
 .lock-toggle {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -285,9 +292,9 @@ permalink: /games/tetris/
 }
 
 .lock-status {
-  font-size: 11px;
+  font-size: 9px;
   color: rgba(255, 255, 255, 0.8);
-  margin-top: 4px;
+  margin-top: 2px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
