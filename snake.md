@@ -18,7 +18,7 @@ permalink: /games/snake/
     <div class="score-display">
       <span class="score-left">Score: <strong id="current-score">0</strong></span>
       <button id="sound-toggle" class="sound-toggle" title="Toggle Sound">🔊</button>
-      <span class="score-right">Top Score: <strong id="high-score">0</strong></span>
+      <span class="score-right">Top: <strong id="high-score">0</strong></span>
     </div>
     
     <div id="game-over-screen" class="game-over-screen" style="display: none;">
