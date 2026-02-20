@@ -71,6 +71,13 @@ permalink: /games/
       <p>Classic strategy board game</p>
       <a href="/games/chess" class="btn">Play Now</a>
     </div>
+    
+    <div class="game-card">
+      <div class="game-icon">🚁</div>
+      <h2>Copter Game</h2>
+      <p>Fly helicopter through obstacles!</p>
+      <a href="/games/copter" class="btn">Play Now</a>
+    </div>
   </div>
 </div>
 
