@@ -50,6 +50,20 @@ permalink: /games/
       <p>Combine tiles to reach 2048!</p>
       <a href="/games/2048" class="btn">Play Now</a>
     </div>
+    
+    <div class="game-card">
+      <div class="game-icon">⚓</div>
+      <h2>Battleship</h2>
+      <p>Sink all enemy ships to win!</p>
+      <a href="/games/battleship" class="btn">Play Now</a>
+    </div>
+    
+    <div class="game-card">
+      <div class="game-icon">⚫⚪</div>
+      <h2>GO Game</h2>
+      <p>Classic strategy board game</p>
+      <a href="/games/go" class="btn">Play Now</a>
+    </div>
   </div>
 </div>
 
