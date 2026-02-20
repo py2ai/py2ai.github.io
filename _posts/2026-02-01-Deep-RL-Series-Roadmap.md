@@ -536,7 +536,7 @@ class CustomEnv(gym.Env):
 
 ## Stay Connected
 
-- **YouTube:** [PyShine Official](https://www.youtube.com/@pyshine_official/videos)
+- **YouTube:** [PyShine Official](https://www.youtube.com/@pyshine_official/shorts)
 - **Comments:** Share your questions and progress below
 
 ---
