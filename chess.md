@@ -637,6 +637,11 @@ class ChessGame {
     
     const legalMoves = [];
     for (const move of moves) {
+      const targetPiece = this.board[move.row][move.col];
+      if (targetPiece && targetPiece.type === 'K') {
+        continue;
+      }
+      
       if (!this.wouldLeaveKingInCheck(piece, move.row, move.col)) {
         legalMoves.push(move);
       }
@@ -823,7 +828,7 @@ class ChessGame {
   }
   
   getKingMoves(piece, moves) {
-    const { row, col } = piece;
+    const { row, col, color } = piece;
     const offsets = [
       { dr: -1, dc: -1 }, { dr: -1, dc: 0 }, { dr: -1, dc: 1 },
       { dr: 0, dc: -1 }, { dr: 0, dc: 1 },
@@ -841,6 +846,48 @@ class ChessGame {
         }
       }
     }
+    
+    if (!this.isInCheck(color)) {
+      if (this.castlingRights[color].kingSide && col === 4) {
+        if (!this.board[row][5] && !this.board[row][6]) {
+          const rook = this.board[row][7];
+          if (rook && rook.type === 'R') {
+            if (!this.isSquareAttacked(row, 5, color) && !this.isSquareAttacked(row, 6, color)) {
+              moves.push({ row, col: 6 });
+            }
+          }
+        }
+      }
+      
+      if (this.castlingRights[color].queenSide && col === 4) {
+        if (!this.board[row][1] && !this.board[row][2] && !this.board[row][3]) {
+          const rook = this.board[row][0];
+          if (rook && rook.type === 'R') {
+            if (!this.isSquareAttacked(row, 2, color) && !this.isSquareAttacked(row, 3, color)) {
+              moves.push({ row, col: 2 });
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  isSquareAttacked(row, col, defendingColor) {
+    const attackingColor = defendingColor === 'white' ? 'black' : 'white';
+    
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const piece = this.board[r][c];
+        if (piece && piece.color === attackingColor) {
+          const moves = this.getPseudoLegalMoves(piece);
+          if (moves.some(move => move.row === row && move.col === col)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
   }
   
   makeMove(piece, toRow, toCol) {
@@ -855,10 +902,12 @@ class ChessGame {
     
     let capturedPawn = null;
     const oldEnPassantTarget = this.enPassantTarget;
+    let promoted = false;
     
     if (piece.type === 'P') {
       if ((piece.color === 'white' && toRow === 0) || (piece.color === 'black' && toRow === 7)) {
-        this.board[toRow][toCol] = { color: piece.color, type: 'Q', row: toRow, col: toCol };
+        piece.type = 'Q';
+        promoted = true;
       }
       
       if (oldEnPassantTarget && 
@@ -873,16 +922,41 @@ class ChessGame {
     }
     
     if (piece.type === 'K' && Math.abs(toCol - fromCol) === 2) {
+      if (this.isInCheck(piece.color)) {
+        this.board[fromRow][fromCol] = piece;
+        this.board[toRow][toCol] = capturedPiece;
+        piece.row = fromRow;
+        piece.col = fromCol;
+        return;
+      }
+      
       const rookCol = toCol > fromCol ? 7 : 0;
       const rook = this.board[fromRow][rookCol];
-      if (rook && rook.type === 'R') {
-        this.board[fromRow][rookCol] = null;
-        this.board[fromRow][(fromCol + toCol) / 2] = rook;
-        rook.row = fromRow;
-        rook.col = (fromCol + toCol) / 2;
-        this.castlingRights[piece.color].kingSide = false;
-        this.castlingRights[piece.color].queenSide = false;
+      
+      if (!rook || rook.type !== 'R') {
+        this.board[fromRow][fromCol] = piece;
+        this.board[toRow][toCol] = capturedPiece;
+        piece.row = fromRow;
+        piece.col = fromCol;
+        return;
       }
+      
+      const passThroughCol = (fromCol + toCol) / 2;
+      const passThroughPiece = this.board[fromRow][passThroughCol];
+      if (passThroughPiece) {
+        this.board[fromRow][fromCol] = piece;
+        this.board[toRow][toCol] = capturedPiece;
+        piece.row = fromRow;
+        piece.col = fromCol;
+        return;
+      }
+      
+      this.board[fromRow][rookCol] = null;
+      this.board[fromRow][(fromCol + toCol) / 2] = rook;
+      rook.row = fromRow;
+      rook.col = (fromCol + toCol) / 2;
+      this.castlingRights[piece.color].kingSide = false;
+      this.castlingRights[piece.color].queenSide = false;
     }
     
     if (piece.type === 'P' && Math.abs(toRow - fromRow) === 2) {
@@ -917,7 +991,10 @@ class ChessGame {
       fromCol,
       toRow,
       toCol,
-      captured: capturedPiece
+      captured: capturedPiece,
+      capturedPawn: capturedPawn,
+      oldEnPassantTarget: oldEnPassantTarget,
+      promoted: promoted
     });
     
     this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
@@ -947,23 +1024,60 @@ class ChessGame {
   undo() {
     if (this.moveHistory.length === 0 || this.gameOver) return;
     
-    const lastMove = this.moveHistory.pop();
-    const { piece, fromRow, fromCol, toRow, toCol, captured } = lastMove;
-    
-    this.board[fromRow][fromCol] = piece;
-    this.board[toRow][toCol] = captured;
-    
-    if (captured) {
-      if (piece.color === 'white') {
-        this.whiteCaptures--;
-        this.removeCapturedPiece('white', captured);
-      } else {
-        this.blackCaptures--;
-        this.removeCapturedPiece('black', captured);
+    const undoOneMove = () => {
+      if (this.moveHistory.length === 0) return false;
+      
+      const lastMove = this.moveHistory.pop();
+      const { piece, fromRow, fromCol, toRow, toCol, captured, capturedPawn, oldEnPassantTarget, promoted } = lastMove;
+      
+      this.board[fromRow][fromCol] = piece;
+      this.board[toRow][toCol] = captured;
+      
+      piece.row = fromRow;
+      piece.col = fromCol;
+      
+      if (promoted) {
+        piece.type = 'P';
       }
+      
+      if (capturedPawn) {
+        const capturedPawnRow = piece.color === 'white' ? toRow + 1 : toRow - 1;
+        this.board[capturedPawnRow][toCol] = capturedPawn;
+      }
+      
+      this.enPassantTarget = oldEnPassantTarget;
+      
+      if (captured) {
+        if (piece.color === 'white') {
+          this.whiteCaptures--;
+          this.removeCapturedPiece('white', captured);
+        } else {
+          this.blackCaptures--;
+          this.removeCapturedPiece('black', captured);
+        }
+      }
+      
+      if (capturedPawn) {
+        if (piece.color === 'white') {
+          this.whiteCaptures--;
+          this.removeCapturedPiece('white', capturedPawn);
+        } else {
+          this.blackCaptures--;
+          this.removeCapturedPiece('black', capturedPawn);
+        }
+      }
+      
+      this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
+      return true;
+    };
+    
+    if (this.gameMode === 'ai') {
+      undoOneMove();
+      undoOneMove();
+    } else {
+      undoOneMove();
     }
     
-    this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
     this.selectedPiece = null;
     this.updateDisplay();
     this.draw();
@@ -997,11 +1111,25 @@ class ChessGame {
   }
   
   restart() {
-    this.resetBoard();
-    this.draw();
+    this.moveHistory = [];
+    this.whiteCaptures = 0;
+    this.blackCaptures = 0;
+    this.gameOver = false;
+    this.currentPlayer = 'white';
+    this.selectedPiece = null;
+    this.aiThinking = false;
+    
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('captured-white').innerHTML = '';
     document.getElementById('captured-black').innerHTML = '';
+    
+    const aiThinking = document.getElementById('ai-thinking');
+    if (aiThinking) {
+      aiThinking.style.display = 'none';
+    }
+    
+    this.resetBoard();
+    this.draw();
   }
   
   updateDisplay() {
