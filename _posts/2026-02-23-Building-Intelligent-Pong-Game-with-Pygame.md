@@ -1,5 +1,5 @@
 ---
-description: In this tutorial, we'll build a complete Pong game using Pygame with intelligent rule-based AI opponents. The game features two modes: Player vs Machine and Machine vs Machine, with sophisticated ball prediction algorithms and multiple difficulty levels.
+description: In this tutorial, we'll build a complete Pong game using Pygame with intelligent AI opponents. 
 featured-img: 2026-feb-pong-game/2026-feb-pong-game
 keywords:
 - Pong game
