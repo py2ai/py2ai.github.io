@@ -32,7 +32,7 @@ mathjax: true
 
 Python is one of the most versatile and beginner-friendly programming languages. Whether you're just starting out or looking to refresh your memory, this comprehensive cheatsheet will save you hours of time searching for syntax and common patterns. Keep this guide handy as your quick reference!
 
-## 📊 Quick Reference Table
+## Quick Reference Table
 
 | Category | Concept | Syntax | Example |
 |-----------|-----------|---------|----------|
@@ -134,7 +134,7 @@ Python is one of the most versatile and beginner-friendly programming languages.
 | | To tuple | `tuple([1, 2, 3])` | `tuple([1, 2, 3])` |
 | | To set | `set([1, 2, 2])` | `set([1, 2, 2])` |
 
-## 🚀 Essential Code Snippets
+## Essential Code Snippets
 
 ### 1. String Manipulation
 
@@ -388,7 +388,7 @@ with open("output.json", "w") as file:
     json.dump(data, file, indent=2)
 ```
 
-## 📚 Common Import Statements
+## Common Import Statements
 
 | Purpose | Import Statement |
 |---------|----------------|
@@ -510,7 +510,7 @@ if path.exists():
     content = path.read_text()
 ```
 
-## 🎯 Best Practices
+## Best Practices
 
 1. **Use meaningful variable names**
    ```python
