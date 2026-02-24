@@ -36,103 +36,103 @@ Python is one of the most versatile and beginner-friendly programming languages.
 
 | Category | Concept | Syntax | Example |
 |-----------|-----------|---------|----------|
-| **Variables** | Assignment | `x = 5` |
-| | Multiple assignment | `a, b = 1, 2` |
-| **Data Types** | String | `text = "Hello"` |
-| | Integer | `num = 42` |
-| | Float | `pi = 3.14` |
-| | Boolean | `is_true = True` |
-| | List | `items = [1, 2, 3]` |
-| | Tuple | `coords = (x, y)` |
-| | Dictionary | `data = {"key": "value"}` |
-| | Set | `unique = {1, 2, 3}` |
-| **String Operations** | Concatenation | `"Hello" + " World"` |
-| | Repetition | `"Ha" * 3` |
-| | Slicing | `text[0:5]` |
-| | Length | `len(text)` |
-| | Upper/Lower | `text.upper()` / `text.lower()` |
-| | Strip whitespace | `text.strip()` |
-| | Replace | `text.replace("old", "new")` |
-| | Split | `text.split(",")` |
-| | Join | `", ".join(list)` |
-| **List Operations** | Append | `list.append(item)` |
-| | Extend | `list.extend([1, 2])` |
-| | Insert | `list.insert(0, item)` |
-| | Remove | `list.remove(item)` |
-| | Pop | `list.pop()` / `list.pop(index)` |
-| | Index | `list.index(item)` |
-| | Count | `list.count(item)` |
-| | Sort | `list.sort()` / `sorted(list)` |
-| | Reverse | `list.reverse()` |
-| | List comprehension | `[x*2 for x in list]` |
-| **Dictionary Operations** | Access value | `dict["key"]` |
-| | Get with default | `dict.get("key", default)` |
-| | Add key-value | `dict["new"] = "value"` |
-| | Remove key | `del dict["key"]` |
-| | Get keys | `dict.keys()` |
-| | Get values | `dict.values()` |
-| | Get items | `dict.items()` |
-| | Check key exists | `"key" in dict` |
-| **Control Flow** | If statement | `if condition:` |
-| | If-else | `if condition: else:` |
-| | If-elif-else | `if: elif: else:` |
-| | For loop | `for item in iterable:` |
-| | While loop | `while condition:` |
-| | Break | `break` |
-| | Continue | `continue` |
-| **Loops & Iteration** | Range | `for i in range(5):` |
-| | Enumerate | `for i, val in enumerate(list):` |
-| | Zip | `for a, b in zip(list1, list2):` |
-| | List comprehension | `[x for x in list if condition]` |
-| **Functions** | Define function | `def func_name(params):` |
-| | Return value | `return value` |
-| | Default parameter | `def func(param="default"):` |
-| | *args | `def func(*args):` |
-| | **kwargs | `def func(**kwargs):` |
-| | Lambda | `lambda x: x*2` |
-| | Map | `list(map(func, iterable))` |
-| | Filter | `list(filter(func, iterable))` |
-| | Reduce | `from functools import reduce` |
-| **File Operations** | Open file | `open("file.txt", "r")` |
-| | Read file | `file.read()` / `file.readlines()` |
-| | Write file | `file.write("text")` |
-| | Close file | `file.close()` |
-| | Context manager | `with open("file") as f:` |
-| **Exception Handling** | Try-except | `try: except:` |
-| | Specific exception | `except ValueError:` |
-| | Finally | `finally:` |
-| | Raise exception | `raise Exception("msg")` |
-| **Classes & OOP** | Define class | `class MyClass:` |
-| | Constructor | `def __init__(self):` |
-| | Method | `def method(self):` |
-| | Inheritance | `class Child(Parent):` |
-| | Super class | `super().__init__()` |
-| | Class variable | `class_var = value` |
-| | Instance variable | `self.var = value` |
-| **Modules** | Import module | `import module` |
-| | Import specific | `from module import func` |
-| | Import with alias | `import module as alias` |
-| | Import all | `from module import *` |
-| **String Formatting** | f-string | `f"Value: {var}"` |
-| | Format method | `"{}".format(var)` |
-| | Percent formatting | `"%s" % var` |
-| **Math Operations** | Power | `2 ** 3` |
-| | Floor division | `7 // 2` |
-| | Modulo | `7 % 2` |
-| | Absolute value | `abs(-5)` |
-| | Round | `round(3.14159, 2)` |
-| | Max/Min | `max([1, 2, 3])` / `min([1, 2, 3])` |
-| | Sum | `sum([1, 2, 3])` |
-| **Boolean Operations** | And | `condition1 and condition2` |
-| | Or | `condition1 or condition2` |
-| | Not | `not condition` |
-| | Comparison | `==`, `!=`, `>`, `<`, `>=`, `<=` |
-| **Type Conversion** | To string | `str(123)` |
-| | To integer | `int("123")` |
-| | To float | `float("3.14")` |
-| | To list | `list("abc")` |
-| | To tuple | `tuple([1, 2, 3])` |
-| | To set | `set([1, 2, 2])` |
+| **Variables** | Assignment | `x = 5` | `x = 5` |
+| | Multiple assignment | `a, b = 1, 2` | `a, b = 1, 2` |
+| **Data Types** | String | `text = "Hello"` | `text = "Hello"` |
+| | Integer | `num = 42` | `num = 42` |
+| | Float | `pi = 3.14` | `pi = 3.14` |
+| | Boolean | `is_true = True` | `is_true = True` |
+| | List | `items = [1, 2, 3]` | `items = [1, 2, 3]` |
+| | Tuple | `coords = (x, y)` | `coords = (10, 20)` |
+| | Dictionary | `data = {"key": "value"}` | `data = {"name": "Alice"}` |
+| | Set | `unique = {1, 2, 3}` | `unique = {1, 2, 3}` |
+| **String Operations** | Concatenation | `"Hello" + " World"` | `"Hello" + " World"` |
+| | Repetition | `"Ha" * 3` | `"Ha" * 3` |
+| | Slicing | `text[0:5]` | `text = "Hello"; text[0:5]` |
+| | Length | `len(text)` | `len("Hello")` |
+| | Upper/Lower | `text.upper()` / `text.lower()` | `"hello".upper()` |
+| | Strip whitespace | `text.strip()` | `"  text  ".strip()` |
+| | Replace | `text.replace("old", "new")` | `"Hello World".replace("World", "Python")` |
+| | Split | `text.split(",")` | `"a,b,c".split(",")` |
+| | Join | `", ".join(list)` | `", ".join(["a", "b", "c"])` |
+| **List Operations** | Append | `list.append(item)` | `items = [1, 2]; items.append(3)` |
+| | Extend | `list.extend([1, 2])` | `items = [1]; items.extend([2, 3])` |
+| | Insert | `list.insert(0, item)` | `items = [1, 2]; items.insert(0, 0)` |
+| | Remove | `list.remove(item)` | `items = [1, 2, 3]; items.remove(2)` |
+| | Pop | `list.pop()` / `list.pop(index)` | `items = [1, 2, 3]; items.pop()` |
+| | Index | `list.index(item)` | `items = [1, 2, 3]; items.index(2)` |
+| | Count | `list.count(item)` | `items = [1, 2, 2, 3]; items.count(2)` |
+| | Sort | `list.sort()` / `sorted(list)` | `items = [3, 1, 2]; items.sort()` |
+| | Reverse | `list.reverse()` | `items = [1, 2, 3]; items.reverse()` |
+| | List comprehension | `[x*2 for x in list]` | `[x*2 for x in [1, 2, 3]]` |
+| **Dictionary Operations** | Access value | `dict["key"]` | `person = {"name": "Alice"}; person["name"]` |
+| | Get with default | `dict.get("key", default)` | `person.get("age", 25)` |
+| | Add key-value | `dict["new"] = "value"` | `person["city"] = "NY"` |
+| | Remove key | `del dict["key"]` | `del person["age"]` |
+| | Get keys | `dict.keys()` | `list(person.keys())` |
+| | Get values | `dict.values()` | `list(person.values())` |
+| | Get items | `dict.items()` | `list(person.items())` |
+| | Check key exists | `"key" in dict` | `"name" in person` |
+| **Control Flow** | If statement | `if condition:` | `if x > 5:` |
+| | If-else | `if condition: else:` | `if x > 5: print("Big")` |
+| | If-elif-else | `if: elif: else:` | `if x > 5: print("Big") elif x < 0: print("Small")` |
+| | For loop | `for item in iterable:` | `for i in range(5):` |
+| | While loop | `while condition:` | `while x < 10: x += 1` |
+| | Break | `break` | `for i in range(10): if i == 5: break` |
+| | Continue | `continue` | `for i in range(10): if i % 2 == 0: continue` |
+| **Loops & Iteration** | Range | `for i in range(5):` | `for i in range(5):` |
+| | Enumerate | `for i, val in enumerate(list):` | `for i, val in enumerate(["a", "b", "c"]):` |
+| | Zip | `for a, b in zip(list1, list2):` | `for a, b in zip([1, 2], [3, 4]):` |
+| | List comprehension | `[x for x in list if condition]` | `[x for x in range(10) if x % 2 == 0]` |
+| **Functions** | Define function | `def func_name(params):` | `def greet(name):` |
+| | Return value | `return value` | `return "Hello"` |
+| | Default parameter | `def func(param="default"):` | `def greet(name="World"):` |
+| | *args | `def func(*args):` | `def sum_all(*args):` |
+| | **kwargs | `def func(**kwargs):` | `def create(**kwargs):` |
+| | Lambda | `lambda x: x*2` | `square = lambda x: x**2` |
+| | Map | `list(map(func, iterable))` | `list(map(str, [1, 2, 3]))` |
+| | Filter | `list(filter(func, iterable))` | `list(filter(lambda x: x > 5, [1, 2, 3, 6]))` |
+| | Reduce | `from functools import reduce` | `reduce(lambda x, y: x + y, [1, 2, 3])` |
+| **File Operations** | Open file | `open("file.txt", "r")` | `open("data.txt", "r")` |
+| | Read file | `file.read()` / `file.readlines()` | `file.read()` |
+| | Write file | `file.write("text")` | `file.write("Hello")` |
+| | Close file | `file.close()` | `file.close()` |
+| | Context manager | `with open("file") as f:` | `with open("data.txt", "r") as f:` |
+| **Exception Handling** | Try-except | `try: except:` | `try: x = 1/0 except: print("Error")` |
+| | Specific exception | `except ValueError:` | `except ValueError as e:` |
+| | Finally | `finally:` | `finally: print("Done")` |
+| | Raise exception | `raise Exception("msg")` | `raise ValueError("Invalid input")` |
+| **Classes & OOP** | Define class | `class MyClass:` | `class Dog:` |
+| | Constructor | `def __init__(self):` | `def __init__(self, name):` |
+| | Method | `def method(self):` | `def bark(self):` |
+| | Inheritance | `class Child(Parent):` | `class Puppy(Dog):` |
+| | Super class | `super().__init__()` | `super().__init__()` |
+| | Class variable | `class_var = value` | `species = "Canis"` |
+| | Instance variable | `self.var = value` | `self.name = "Buddy"` |
+| **Modules** | Import module | `import module` | `import math` |
+| | Import specific | `from module import func` | `from math import sqrt` |
+| | Import with alias | `import module as alias` | `import numpy as np` |
+| | Import all | `from module import *` | `from math import *` |
+| **String Formatting** | f-string | `f"Value: {var}"` | `f"Name: {name}"` |
+| | Format method | `"{}".format(var)` | `"Hello {}".format(name)` |
+| | Percent formatting | `"%s" % var` | `"Hello %s" % name` |
+| **Math Operations** | Power | `2 ** 3` | `2 ** 3` |
+| | Floor division | `7 // 2` | `7 // 2` |
+| | Modulo | `7 % 2` | `7 % 2` |
+| | Absolute value | `abs(-5)` | `abs(-5)` |
+| | Round | `round(3.14159, 2)` | `round(3.14159, 2)` |
+| | Max/Min | `max([1, 2, 3])` / `min([1, 2, 3])` | `max([1, 2, 3])` |
+| | Sum | `sum([1, 2, 3])` | `sum([1, 2, 3])` |
+| **Boolean Operations** | And | `condition1 and condition2` | `x > 5 and x < 10` |
+| | Or | `condition1 or condition2` | `x < 5 or x > 10` |
+| | Not | `not condition` | `not x > 5` |
+| | Comparison | `==`, `!=`, `>`, `<`, `>=`, `<=` | `x == 5`, `x != 5`, `x > 5` |
+| **Type Conversion** | To string | `str(123)` | `str(123)` |
+| | To integer | `int("123")` | `int("123")` |
+| | To float | `float("3.14")` | `float("3.14")` |
+| | To list | `list("abc")` | `list("abc")` |
+| | To tuple | `tuple([1, 2, 3])` | `tuple([1, 2, 3])` |
+| | To set | `set([1, 2, 2])` | `set([1, 2, 2])` |
 
 ## 🚀 Essential Code Snippets
 
