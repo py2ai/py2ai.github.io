@@ -75,23 +75,15 @@ AI coding assistant frameworks are software libraries and platforms that provide
 # Install via VS Code Extensions
 code --install-extension cline.cline
 
-# Or use npm for CLI
-npm install -g @cline/cline
-
-# Or via pip
-pip install cline
+# Or install from VS Code Extension Marketplace
+# Search for "Cline" and click Install
 ```
 
 **Usage:**
 ```bash
-# Start Cline in your project directory
-cline
-
-# Use with specific model
-cline --model gpt-4
-
-# Interactive mode
-cline --interactive
+# Cline runs as a VS Code extension
+# Open VS Code and use the Cline sidebar panel
+# Press Ctrl+Shift+P (Cmd+Shift+P on Mac) and type "Cline"
 ```
 
 **Why It's Great:**
@@ -997,7 +989,7 @@ opencode test "Create unit tests for api.py"
 | OpenHands | ✅ | Multiple | ✅ | ❌ | Serverless AI coding |
 | OpenCode | ✅ | Multiple | ✅ | ✅ | Terminal-based AI assistant |
 
-> **⚠️ Disclaimer:** The information in this comparison table is accurate as of **February 28, 2026**. Framework features, capabilities, and availability may change over time. Please verify the latest information on each framework's official website before making decisions.
+> **⚠️ Disclaimer:** Framework features, capabilities, and availability may change over time. Please verify the latest information on each framework's official website before making decisions.
 
 ---
 
