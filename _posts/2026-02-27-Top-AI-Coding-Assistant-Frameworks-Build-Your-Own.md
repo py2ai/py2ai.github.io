@@ -978,24 +978,26 @@ opencode test "Create unit tests for api.py"
 
 ## Comparison Table
 
-| Framework | Open Source | LLM Support | Terminal | Git | Best For | Reference |
-|----------|-------------|---------------|----------|------|-----------|-----------|
-| [Cline](https://github.com/cline/cline) | ✅ | Multiple | ✅ | ✅ | Terminal workflows |
-| [TRAE](https://github.com/trae-ai/trae) | ✅ | Multiple | ✅ | ✅ | Custom tools & Full automation |
-| [OpenAI Responses API](https://platform.openai.com/docs/assistants) | ❌ | OpenAI | ❌ | ❌ | Official integration |
-| [LangChain](https://python.langchain.com) | ✅ | Multiple | ✅ | ❌ | Complex apps |
-| [AutoGPT](https://github.com/Significant-Gravitas/Auto-GPT) | ✅ | Multiple | ✅ | ❌ | Autonomous tasks |
-| [Continue](https://github.com/continuedev/continue) | ✅ | Multiple | ❌ | ❌ | VS Code users |
-| [Aider](https://github.com/paul-gauthier/aider) | ✅ | Multiple | ✅ | ✅ | Git workflows |
-| [Cursor AI](https://cursor.sh) | ❌ | Multiple | ❌ | ❌ | Deep understanding |
-| [Codeium](https://codeium.com) | ❌ | Multiple | ❌ | ❌ | Fast completion |
-| [OpenDevin](https://github.com/OpenDevin/OpenDevin) | ✅ | Multiple | ✅ | ❌ | Autonomous coding |
-| [Superpowers](https://github.com/obra/superpowers) | ✅ | Multiple | ✅ | ✅ | Professional AI workflows |
-| [GitHub Copilot SDK](https://github.com/github/copilot-sdk) | ❌ | GitHub | ✅ | ✅ | Official GitHub integration |
-| [Microsoft AutoGen](https://microsoft.github.io/autogen) | ✅ | Multiple | ✅ | ❌ | Multi-agent collaboration |
-| [CrewAI](https://www.crewai.com) | ✅ | Multiple | ✅ | ❌ | Role-based agent teams |
-| [OpenHands](https://github.com/All-Hands-AI/OpenHands) | ✅ | Multiple | ✅ | ❌ | Serverless AI coding |
-| [OpenCode](https://github.com/opencode-ai/opencode) | ✅ | Multiple | ✅ | ✅ | Terminal-based AI assistant |
+| Framework | Open Source | LLM Support | Terminal | Git | Best For |
+|----------|-------------|---------------|----------|------|-----------|
+| Cline | ✅ | Multiple | ✅ | ✅ | Terminal workflows |
+| TRAE | ✅ | Multiple | ✅ | ✅ | Custom tools & Full automation |
+| OpenAI Responses API | ❌ | OpenAI | ❌ | ❌ | Official integration |
+| LangChain | ✅ | Multiple | ✅ | ❌ | Complex apps |
+| AutoGPT | ✅ | Multiple | ✅ | ❌ | Autonomous tasks |
+| Continue | ✅ | Multiple | ❌ | ❌ | VS Code users |
+| Aider | ✅ | Multiple | ✅ | ✅ | Git workflows |
+| Cursor AI | ❌ | Multiple | ❌ | ❌ | Deep understanding |
+| Codeium | ❌ | Multiple | ❌ | ❌ | Fast completion |
+| OpenDevin | ✅ | Multiple | ✅ | ❌ | Autonomous coding |
+| Superpowers | ✅ | Multiple | ✅ | ✅ | Professional AI workflows |
+| GitHub Copilot SDK | ❌ | GitHub | ✅ | ✅ | Official GitHub integration |
+| Microsoft AutoGen | ✅ | Multiple | ✅ | ❌ | Multi-agent collaboration |
+| CrewAI | ✅ | Multiple | ✅ | ❌ | Role-based agent teams |
+| OpenHands | ✅ | Multiple | ✅ | ❌ | Serverless AI coding |
+| OpenCode | ✅ | Multiple | ✅ | ✅ | Terminal-based AI assistant |
+
+> **⚠️ Disclaimer:** The information in this comparison table is accurate as of **February 28, 2026**. Framework features, capabilities, and availability may change over time. Please verify the latest information on each framework's official website before making decisions.
 
 ---
 
