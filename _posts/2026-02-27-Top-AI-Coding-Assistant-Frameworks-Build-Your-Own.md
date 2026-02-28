@@ -102,7 +102,7 @@ cline --interactive
 - Regular updates and improvements
 - Plan/Act mode for better task planning
 
-**GitHub:** [https://github.com/cline/cline](https://github.com/cline/cline)
+{% link_preview https://github.com/cline/cline %}
 
 ---
 
@@ -169,7 +169,7 @@ trae run "npm install"
 - Supports multiple AI providers
 - Great for building custom tools
 
-**Website:** [https://github.com/trae-ai/trae](https://github.com/trae-ai/trae)
+{% link_preview https://github.com/trae-ai/trae %}
 
 ---
 
@@ -233,7 +233,7 @@ run = client.beta.threads.runs.create(
 - Excellent documentation
 - Regular updates and improvements
 
-**Documentation:** [https://platform.openai.com/docs/assistants](https://platform.openai.com/docs/assistants)
+{% link_preview https://platform.openai.com/docs/assistants %}
 
 ---
 
@@ -285,7 +285,7 @@ result = agent.run("Create a new Python file with a hello world function")
 - Highly flexible and extensible
 - Supports multiple languages
 
-**GitHub:** [https://github.com/langchain-ai/langchain](https://github.com/langchain-ai/langchain)
+{% link_preview https://python.langchain.com %}
 
 ---
 
@@ -328,7 +328,7 @@ python -m autogpt
 - Open-source and free
 - Great for learning AI agent development
 
-**GitHub:** [https://github.com/Significant-Gravitas/Auto-GPT](https://github.com/Significant-Gravitas/Auto-GPT)
+{% link_preview https://github.com/Significant-Gravitas/Auto-GPT %}
 
 ---
 
@@ -373,7 +373,7 @@ continue generate "Create a REST API endpoint"
 - Free and open-source
 - Active community
 
-**GitHub:** [https://github.com/continuedev/continue](https://github.com/continuedev/continue)
+{% link_preview https://github.com/continuedev/continue %}
 
 ---
 
@@ -418,7 +418,7 @@ aider "Refactor the main function to use async"
 - Free and open-source
 - Great for experienced developers
 
-**GitHub:** [https://github.com/paul-gauthier/aider](https://github.com/paul-gauthier/aider)
+{% link_preview https://github.com/paul-gauthier/aider %}
 
 ---
 
@@ -463,7 +463,7 @@ cursor generate "Create a user authentication module"
 - Supports multiple languages
 - Active development
 
-**Website:** [https://cursor.sh](https://cursor.sh)
+{% link_preview https://cursor.sh %}
 
 ---
 
@@ -508,7 +508,7 @@ codeium explain "How does this function work?"
 - Easy to integrate
 - Regular updates
 
-**GitHub:** [https://github.com/Exafunction/codeium](https://github.com/Exafunction/codeium)
+{% link_preview https://codeium.com %}
 
 ---
 
@@ -551,7 +551,7 @@ python opendevin.py --task "Create a web scraper for news articles"
 - Active development
 - Great for learning AI engineering
 
-**Website:** [https://github.com/OpenDevin/OpenDevin](https://github.com/OpenDevin/OpenDevin)
+{% link_preview https://github.com/OpenDevin/OpenDevin %}
 
 ---
 
@@ -612,7 +612,7 @@ superpowers create <skill-name>
 - Supports multiple AI programming tools
 - Great for learning professional AI development
 
-**GitHub:** [https://github.com/obra/superpowers](https://github.com/obra/superpowers)
+{% link_preview https://github.com/obra/superpowers %}
 
 ---
 
@@ -688,7 +688,7 @@ await copilot.memory.save('project-context', {
 - Active development and regular updates
 - Excellent documentation and community support
 
-**Website:** [https://github.com/github/copilot-sdk](https://github.com/github/copilot-sdk)
+{% link_preview https://github.com/github/copilot-sdk %}
 
 ---
 
@@ -757,7 +757,7 @@ user_proxy.initiate_chat(
 - Supports human-in-the-loop workflows
 - Integration with Microsoft ecosystem
 
-**Website:** [https://microsoft.github.io/autogen](https://microsoft.github.io/autogen)
+{% link_preview https://microsoft.github.io/autogen %}
 
 ---
 
@@ -841,7 +841,7 @@ result = crew.kickoff()
 - Active community and development
 - Perfect for team-based AI workflows
 
-**Website:** [https://www.crewai.com](https://www.crewai.com)
+{% link_preview https://www.crewai.com %}
 
 ---
 
@@ -903,7 +903,7 @@ openhands run "npm install && npm test"
 - Active community (650k+ monthly users)
 - Great for rapid development
 
-**GitHub:** [https://github.com/All-Hands-AI/OpenHands](https://github.com/All-Hands-AI/OpenHands)
+{% link_preview https://github.com/All-Hands-AI/OpenHands %}
 
 ---
 
@@ -972,7 +972,7 @@ opencode test "Create unit tests for api.py"
 - Excellent for developers who prefer CLI
 - Active development and regular updates
 
-**Website:** [https://github.com/opencode-ai/opencode](https://github.com/opencode-ai/opencode)
+{% link_preview https://github.com/opencode-ai/opencode %}
 
 ---
 

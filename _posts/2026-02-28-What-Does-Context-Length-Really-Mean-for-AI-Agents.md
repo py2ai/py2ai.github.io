@@ -265,10 +265,13 @@ Whether you're building AI agents or using them, understanding context length is
 
 ## Additional Resources
 
-- [OpenAI Tokenizer](https://platform.openai.com/tokenizer) - Test how text converts to tokens
-- [Anthropic Context Window Guide](https://docs.anthropic.com/claude/docs/context-windows) - Understanding Claude's context
-- [Google AI Context Limits](https://ai.google.dev/docs/context-limits) - Gemini context documentation
-- [Understanding LLM Context Windows](https://arxiv.org/abs/2309.10617) - Academic paper on context windows
+{% link_preview https://platform.openai.com/tokenizer %}
+
+{% link_preview https://docs.anthropic.com/claude/docs/context-windows %}
+
+{% link_preview https://ai.google.dev/docs/context-limits %}
+
+{% link_preview https://arxiv.org/abs/2309.10617 %}
 
 ---
 
