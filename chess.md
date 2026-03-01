@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Chess Game
-permalink: /chess/
+permalink: /games/chess/
 ---
 
 <div class="chess-game-container">

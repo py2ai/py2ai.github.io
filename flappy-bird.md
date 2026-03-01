@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Flappy Bird
-permalink: /flappy-bird/
+permalink: /games/flappy-bird/
 ---
 
 <div class="flappy-bird-container">

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Battleship
-permalink: /battleship/
+permalink: /games/battleship/
 ---
 
 <div class="battleship-game-container">

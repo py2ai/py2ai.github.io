@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Memory Match
-permalink: /memory-match/
+permalink: /games/memory-match/
 ---
 
 <div class="memory-container">
