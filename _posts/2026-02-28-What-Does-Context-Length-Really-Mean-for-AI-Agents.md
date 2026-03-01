@@ -265,13 +265,9 @@ Whether you're building AI agents or using them, understanding context length is
 
 ## Additional Resources
 
-{% link_preview https://platform.openai.com/tokenizer %}
 
-{% link_preview https://docs.anthropic.com/claude/docs/context-windows %}
 
-{% link_preview https://ai.google.dev/docs/context-limits %}
 
-{% link_preview https://arxiv.org/abs/2309.10617 %}
 
 ---
 
