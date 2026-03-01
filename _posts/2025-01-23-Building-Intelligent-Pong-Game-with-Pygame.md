@@ -13,6 +13,8 @@ keywords:
 layout: post
 mathjax: true
 permalink: /Building-Intelligent-Pong-Game-with-Pygame/
+redirect_from:
+  - /2026-02-23-Building-Intelligent-Pong-Game-with-Pygame/
 published: true
 tags:
 - Python
