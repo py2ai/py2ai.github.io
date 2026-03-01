@@ -84,6 +84,21 @@ layout: compress
         </div>
       </section>
 
+      <!-- Template for dynamic post rendering -->
+      <template id="post-card-template">
+        <div class="post-card" itemprop="blogPosts" itemscope="" itemtype="http://schema.org/BlogPosting">
+          <a class="post-card__inner" href="">
+            <div class="post-card__header">
+              <h2></h2>
+              <span class="post-card__meta">
+                <time></time>
+              </span>
+            </div>
+            <p></p>
+          </a>
+        </div>
+      </template>
+
     </main>
 
     {% include footer.html %}
@@ -139,12 +154,13 @@ layout: compress
     </style>
 
     <script>
-      const posts = [
+      const allPosts = [
         {% for post in site.posts %}
         {
           title: "{{ post.title | escape }}",
           url: "{{ post.url | relative_url }}",
-          summary: "{{ post.summary | default: post.content | strip_html | truncatewords: 30 | escape }}"
+          summary: "{{ post.summary | default: post.content | strip_html | truncatewords: 30 | escape }}",
+          date: "{{ post.date | date: '%b %-d, %Y' }}"
         }{% unless forloop.last %},{% endunless %}
         {% endfor %}
       ];
@@ -153,44 +169,70 @@ layout: compress
       const searchButton = document.getElementById('search-button');
       const searchResults = document.getElementById('search-results');
       const noResults = document.getElementById('no-results');
+      const template = document.getElementById('post-card-template');
+      let isSearching = false;
 
       function performSearch(query) {
         const normalizedQuery = query.toLowerCase().trim();
         
         if (normalizedQuery === '') {
-          showAllPosts();
+          showDefaultPosts();
           return;
         }
 
-        const filteredPosts = posts.filter(post => 
+        const filteredPosts = allPosts.filter(post => 
           post.title.toLowerCase().includes(normalizedQuery) ||
           post.summary.toLowerCase().includes(normalizedQuery)
         );
 
-        displayResults(filteredPosts);
+        displaySearchResults(filteredPosts);
       }
 
-      function showAllPosts() {
-        const allPosts = document.querySelectorAll('.post-card');
-        allPosts.forEach(post => post.style.display = 'block');
+      function showDefaultPosts() {
+        isSearching = false;
+        const currentCards = searchResults.querySelectorAll('.post-card');
+        currentCards.forEach(card => card.remove());
+        
+        const defaultPosts = allPosts.slice(0, 12);
+        defaultPosts.forEach(post => {
+          const card = createPostCard(post);
+          searchResults.appendChild(card);
+        });
+        
         noResults.style.display = 'none';
       }
 
-      function displayResults(posts) {
-        const allPosts = document.querySelectorAll('.post-card');
-        const postTitles = Array.from(document.querySelectorAll('.post-card h2')).map(h2 => h2.textContent.toLowerCase());
+      function displaySearchResults(posts) {
+        isSearching = true;
+        const currentCards = searchResults.querySelectorAll('.post-card');
+        currentCards.forEach(card => card.remove());
         
-        allPosts.forEach(post => {
-          const title = post.querySelector('h2').textContent.toLowerCase();
-          const matches = posts.some(p => p.title.toLowerCase() === title);
-          post.style.display = matches ? 'block' : 'none';
-        });
-
         if (posts.length === 0) {
           noResults.style.display = 'block';
-        } else {
-          noResults.style.display = 'none';
+          return;
         }
+
+        noResults.style.display = 'none';
+        posts.forEach(post => {
+          const card = createPostCard(post);
+          searchResults.appendChild(card);
+        });
+      }
+
+      function createPostCard(post) {
+        const clone = template.content.cloneNode(true);
+        const card = clone.querySelector('.post-card');
+        const link = card.querySelector('.post-card__inner');
+        const title = card.querySelector('h2');
+        const date = card.querySelector('time');
+        const summary = card.querySelector('p');
+        
+        link.href = post.url;
+        title.textContent = post.title;
+        date.textContent = post.date;
+        summary.textContent = post.summary;
+        
+        return card;
       }
 
       searchInput.addEventListener('input', (e) => performSearch(e.target.value));
