@@ -96,8 +96,6 @@ code --install-extension cline.cline
 - Regular updates and improvements
 - Plan/Act mode for better task planning
 
-{% link_preview https://github.com/cline/cline %}
-
 ---
 
 ### 2. TRAE
@@ -163,7 +161,6 @@ trae run "npm install"
 - Supports multiple AI providers
 - Great for building custom tools
 
-{% link_preview https://github.com/trae-ai/trae %}
 
 ---
 
@@ -227,7 +224,6 @@ run = client.beta.threads.runs.create(
 - Excellent documentation
 - Regular updates and improvements
 
-{% link_preview https://platform.openai.com/docs/assistants %}
 
 ---
 
@@ -279,7 +275,6 @@ result = agent.run("Create a new Python file with a hello world function")
 - Highly flexible and extensible
 - Supports multiple languages
 
-{% link_preview https://python.langchain.com %}
 
 ---
 
@@ -322,7 +317,6 @@ python -m autogpt
 - Open-source and free
 - Great for learning AI agent development
 
-{% link_preview https://github.com/Significant-Gravitas/Auto-GPT %}
 
 ---
 
@@ -367,7 +361,6 @@ continue generate "Create a REST API endpoint"
 - Free and open-source
 - Active community
 
-{% link_preview https://github.com/continuedev/continue %}
 
 ---
 
@@ -412,7 +405,6 @@ aider "Refactor the main function to use async"
 - Free and open-source
 - Great for experienced developers
 
-{% link_preview https://github.com/paul-gauthier/aider %}
 
 ---
 
@@ -457,7 +449,6 @@ cursor generate "Create a user authentication module"
 - Supports multiple languages
 - Active development
 
-{% link_preview https://cursor.sh %}
 
 ---
 
@@ -502,7 +493,6 @@ codeium explain "How does this function work?"
 - Easy to integrate
 - Regular updates
 
-{% link_preview https://codeium.com %}
 
 ---
 
@@ -545,7 +535,6 @@ python opendevin.py --task "Create a web scraper for news articles"
 - Active development
 - Great for learning AI engineering
 
-{% link_preview https://github.com/OpenDevin/OpenDevin %}
 
 ---
 
@@ -606,7 +595,6 @@ superpowers create <skill-name>
 - Supports multiple AI programming tools
 - Great for learning professional AI development
 
-{% link_preview https://github.com/obra/superpowers %}
 
 ---
 
@@ -682,7 +670,6 @@ await copilot.memory.save('project-context', {
 - Active development and regular updates
 - Excellent documentation and community support
 
-{% link_preview https://github.com/github/copilot-sdk %}
 
 ---
 
@@ -751,7 +738,6 @@ user_proxy.initiate_chat(
 - Supports human-in-the-loop workflows
 - Integration with Microsoft ecosystem
 
-{% link_preview https://microsoft.github.io/autogen %}
 
 ---
 
@@ -835,7 +821,6 @@ result = crew.kickoff()
 - Active community and development
 - Perfect for team-based AI workflows
 
-{% link_preview https://www.crewai.com %}
 
 ---
 
@@ -897,7 +882,6 @@ openhands run "npm install && npm test"
 - Active community (650k+ monthly users)
 - Great for rapid development
 
-{% link_preview https://github.com/All-Hands-AI/OpenHands %}
 
 ---
 
@@ -966,7 +950,6 @@ opencode test "Create unit tests for api.py"
 - Excellent for developers who prefer CLI
 - Active development and regular updates
 
-{% link_preview https://github.com/opencode-ai/opencode %}
 
 ---
 
