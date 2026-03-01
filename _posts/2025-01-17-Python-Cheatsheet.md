@@ -3,7 +3,7 @@ date: 2025-01-17
 layout: post
 title: "Python Cheatsheet Every Learner Must Know - Save Hours of Time"
 description: "Master Python programming with this comprehensive cheatsheet. From basic syntax to advanced concepts, save hours of time with quick reference tables and code examples."
-featured-img: 2026-cheetsheet/2026-cheetsheet
+featured-img: 2026-cheatsheet/2026-cheatsheet
 keywords:
 - python cheatsheet
 - python reference

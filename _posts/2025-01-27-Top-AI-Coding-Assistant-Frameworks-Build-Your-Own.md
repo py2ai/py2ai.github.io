@@ -19,7 +19,7 @@ keywords:
 - AI integration
 layout: post
 mathjax: true
-permalink: /2026-02-27-Top-AI-Coding-Assistant-Frameworks-Build-Your-Own/
+permalink: /Top-AI-Coding-Assistant-Frameworks-Build-Your-Own/
 tags:
 - AI
 - Frameworks

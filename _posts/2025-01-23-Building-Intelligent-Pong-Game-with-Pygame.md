@@ -12,7 +12,7 @@ keywords:
 - Python tutorial
 layout: post
 mathjax: true
-permalink: /2026-02-23-Building-Intelligent-Pong-Game-with-Pygame/
+permalink: /Building-Intelligent-Pong-Game-with-Pygame/
 published: true
 tags:
 - Python
