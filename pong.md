@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Pong
-permalink: /games/pong/
+permalink: /pong/
 ---
 
 <div class="pong-container">

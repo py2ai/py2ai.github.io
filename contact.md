@@ -9,3 +9,11 @@ Feel free to use the form below to drop me an e-mail. It may take a little while
 {% include form.html %}
 
 {% include modal.html %}
+
+---
+
+## Quick Links
+
+- [About Us]({{ site.baseurl }}/about)
+- [Privacy Policy]({{ site.baseurl }}/privacy)
+- [Disclaimer]({{ site.baseurl }}/disclaimer)

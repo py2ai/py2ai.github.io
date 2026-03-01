@@ -1,7 +1,7 @@
 ---
 layout: page
 title: GO Game
-permalink: /games/go/
+permalink: /go/
 ---
 
 <div class="go-game-container">

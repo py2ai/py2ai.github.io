@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Tetris
-permalink: /games/tetris/
+permalink: /tetris/
 ---
 
 <div class="tetris-container">

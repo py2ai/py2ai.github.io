@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Copter Game
-permalink: /games/copter/
+permalink: /copter/
 ---
 
 <div class="copter-game-container">

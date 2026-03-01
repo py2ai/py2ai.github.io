@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Snake Game
-permalink: /games/snake/
+permalink: /snake/
 ---
 
 <div class="snake-game-container">
