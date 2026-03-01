@@ -31,7 +31,7 @@ tags:
 - Coding Assistants
 - Python
 - JavaScript
-title: "Top 16 AI Coding Assistant Frameworks: Build Your Own Intelligent Coding Assistant (2026)"
+title: "Top AI Coding Assistant Frameworks: Build Your Own Intelligent Coding Assistant (2026)"
 ---
 # Top AI Coding Assistant Frameworks: Build Your Own Intelligent Coding Assistant (2026)
 
