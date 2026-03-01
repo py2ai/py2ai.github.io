@@ -1,4 +1,5 @@
 ---
+date: 2025-01-27
 description: "Discover the top 16 AI coding assistant frameworks that enable developers to build intelligent coding assistants. Learn about CLINE, TRAE, Superpowers, GitHub Copilot SDK, Microsoft AutoGen, CrewAI, OpenHands, OpenCode, and more powerful frameworks for 2026."
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 keywords:
@@ -18,6 +19,7 @@ keywords:
 - AI integration
 layout: post
 mathjax: true
+permalink: /2026-02-27-Top-AI-Coding-Assistant-Frameworks-Build-Your-Own/
 tags:
 - AI
 - Frameworks

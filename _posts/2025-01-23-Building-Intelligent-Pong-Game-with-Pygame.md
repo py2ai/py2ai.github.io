@@ -1,4 +1,5 @@
 ---
+date: 2025-01-23
 description: In this tutorial, we'll build a complete Pong game using Pygame with intelligent AI opponents. 
 featured-img: 2026-feb-pong-game/2026-feb-pong-game
 keywords:
@@ -11,6 +12,8 @@ keywords:
 - Python tutorial
 layout: post
 mathjax: true
+permalink: /2026-02-23-Building-Intelligent-Pong-Game-with-Pygame/
+published: true
 tags:
 - Python
 - Pygame
