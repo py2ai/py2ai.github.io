@@ -137,7 +137,7 @@ Enable debug mode for more information:
 
 1. Check the Output panel: View → Output → PS Smart Agent
 2. Check Developer Tools: Help → Toggle Developer Tools → Console
-3. Report issues at [GitHub](https://github.com/pyshine-labs/smart-agent/issues)
+3. Visit [pyshine.com](https://pyshine.com) for more tutorials and support
 
 ---
 

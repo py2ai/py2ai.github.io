@@ -69,7 +69,7 @@ Extend PS Smart Agent's capabilities with MCP servers:
 4. Click Install
 
 ### From VSIX File
-1. Download the VSIX from [GitHub Releases](https://github.com/pyshine-labs/smart-agent/releases)
+1. Download the VSIX from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=PyShine.smart-agent)
 2. In VS Code, press `Ctrl+Shift+P`
 3. Type "Install from VSIX" and select the downloaded file
 4. Reload VS Code
@@ -164,7 +164,6 @@ PS Smart Agent is actively maintained with regular updates, new features, and bu
 ## Links
 
 - **Marketplace**: [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=PyShine.smart-agent)
-- **GitHub**: [pyshine-labs/smart-agent](https://github.com/pyshine-labs/smart-agent)
 - **Publisher**: [PyShine](https://pyshine.com)
 
 ## Conclusion
