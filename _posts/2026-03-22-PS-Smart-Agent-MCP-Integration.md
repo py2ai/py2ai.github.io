@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - MCP Integration Guide"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/mcp
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to extend PS Smart Agent with MCP (Model Context Protocol) servers for database connections, API integrations, and custom tools."
 keywords:
 - PS Smart Agent

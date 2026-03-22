@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - Getting Started with API Providers"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/api-providers
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to connect PS Smart Agent to various AI providers including Ollama, OpenAI, Anthropic, DeepSeek, and more."
 keywords:
 - PS Smart Agent

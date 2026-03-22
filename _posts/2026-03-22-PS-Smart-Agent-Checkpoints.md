@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - Checkpoints and Version Control"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/checkpoints
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to use PS Smart Agent's checkpoint system to safely experiment with code changes and restore when needed."
 keywords:
 - PS Smart Agent

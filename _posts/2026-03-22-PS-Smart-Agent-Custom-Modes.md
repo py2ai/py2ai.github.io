@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - Custom Modes Guide"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/custom-modes
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Create custom modes in PS Smart Agent for specialized workflows like TDD, security auditing, and documentation writing."
 keywords:
 - PS Smart Agent

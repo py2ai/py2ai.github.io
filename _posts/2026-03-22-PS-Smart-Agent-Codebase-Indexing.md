@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - Codebase Indexing for Fast Search"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/codebase-indexing
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to use PS Smart Agent's codebase indexing feature for fast semantic search across your project."
 keywords:
 - PS Smart Agent

@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - AI-Powered Autonomous Coding Assistant for VS Code"
 date: 2026-03-22
 categories: [AI, VS Code, Python, Development, LLM]
-featured-img: ps-smart-agent/ps-smart-agent
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "PS Smart Agent is a powerful VS Code extension that provides an autonomous AI coding assistant with MCP support, multi-provider LLM integration including local Ollama models, and intelligent workflow automation for agentic coding."
 keywords:
 - PS Smart Agent

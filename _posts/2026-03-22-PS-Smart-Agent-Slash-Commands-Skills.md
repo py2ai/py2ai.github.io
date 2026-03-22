@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - Slash Commands and Skills"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/slash-commands
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to use slash commands and skills in PS Smart Agent to automate common tasks and extend functionality."
 keywords:
 - PS Smart Agent

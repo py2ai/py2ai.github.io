@@ -3,7 +3,7 @@ layout: post
 title: "PS Smart Agent - Using Modes for Different Tasks"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial]
-featured-img: ps-smart-agent/modes
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to use different modes in PS Smart Agent for coding, architecture planning, debugging, and more."
 keywords:
 - PS Smart Agent
