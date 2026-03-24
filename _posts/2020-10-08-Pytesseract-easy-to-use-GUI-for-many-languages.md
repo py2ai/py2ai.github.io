@@ -17,25 +17,26 @@ mathjax: true
 title: How to make an image to text converter GUI in Python
 ---
 
-
-
-
 Hello friends, here is the code for the new idea of making pytesseract based GUI for all languages in PyQt5. This tutorial is about creating a multi-language OCR GUI in PyQt5 in Python. We start from very basic GUI in the Qt designer. We have tested various languages for image to text extraction process of pytesseract. These languages are tested for OCR: 
-ARABIC, BENGALI, BULGARIAN, CHINESE(TRADITIONAL), CHINESE(SIMPLIFIED), DANISH, ENGLISH, FINNISH, FRENCH, GERMAN, GREEK, GUJRATI,
-HINDI, HUNGRARIAN, IGBO, ITALIAN, JAPANESE, KANNADA, KAZAKH, KHMER, KOREAN, LAO, MACEDONIAN, MALAYALAM, MARATHI, NEPALI, RUSSIAN,  TURKISH, URDU.
+
+ARABIC, BENGALI, BULGARIAN, CHINESE(TRADITIONAL), CHINESE(SIMPLIFIED), DANISH, ENGLISH, FINNISH, FRENCH, GERMAN, GREEK, GUJRATI, HINDI, HUNGRARIAN, IGBO, ITALIAN, JAPANESE, KANNADA, KAZAKH, KHMER, KOREAN, LAO, MACEDONIAN, MALAYALAM, MARATHI, NEPALI, RUSSIAN, TURKISH, URDU.
+
 <p align="center">
   <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyshineTessGui.gif?raw=true" width="350" title="PyShine OCR GUI">
 </p>
 
-In this tutorial you will learn:
-How to use OpenCV in PyQt5 GUI?
-How to use tesseract optical character recognition in PyQt5 GUI?
-How to use event filter in PyQt5 GUI?
-How to use Dock widget and Q Rubber band in PyQt5?
-How to Perform OCR on multiple languages?
-How to make use of .ui file without converting it to .py file?
-Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
+## What You Will Learn
 
+In this tutorial you will learn:
+
+- How to use OpenCV in PyQt5 GUI?
+- How to use tesseract optical character recognition in PyQt5 GUI?
+- How to use event filter in PyQt5 GUI?
+- How to use Dock widget and Q Rubber band in PyQt5?
+- How to Perform OCR on multiple languages?
+- How to make use of .ui file without converting it to .py file?
+
+**Link to tesseract-OCR:** [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
 
 <br>
 <div align="center">
@@ -43,16 +44,36 @@ Link to tesseract-OCR: https://github.com/UB-Mannheim/tesseract/wiki
 </div>
 <br>
 
-# To run this application, you require python 3. Copy the below main.ui file and save it in a new directory  as main.ui
+## Prerequisites
 
-## Also save the gui.py file in that directory and run the gui.py file. Open any image of your language of interest and play with it. If you have questions,
-### suggestions please comment, share and subscribe to PyShine youtube channel
+To run this application, you require:
 
-No more wait! Here is the ui file:
+- Python 3.x
+- PyQt5
+- OpenCV (`cv2`)
+- pytesseract
+- PIL (Pillow)
 
-## main.ui
+Install the required packages:
+
+```bash
+pip install PyQt5 opencv-python pytesseract Pillow
+```
+
+## Getting Started
+
+Copy the below `main.ui` file and save it in a new directory as `main.ui`. Also save the `gui.py` file in that directory and run the `gui.py` file. Open any image of your language of interest and play with it.
+
+> **Note:** If you have questions or suggestions, please comment, share and subscribe to PyShine YouTube channel.
+
+---
+
+## Files
+
+### main.ui
+
 {% include codeHeader.html %}
-```python
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
@@ -171,146 +192,162 @@ No more wait! Here is the ui file:
  <resources/>
  <connections/>
 </ui>
-
 ```
-## gui.py
+
+---
+
+### gui.py
+
 {% include codeHeader.html %}
 ```python
-## Welcome to PyShine
+# Welcome to PyShine
 import pytesseract
-import cv2, os,sys
+import cv2, os, sys
 from PIL import Image
 import PyQt5
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5 import uic
-from PyQt5 import QtCore,QtGui,QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 import glob
 
-## Here we will get the path of the tessdata
-## For 64 bit installation of tesseract OCR 
+# Here we will get the path of the tessdata
+# For 64 bit installation of tesseract OCR 
 language_path = 'C:\\Program Files\\Tesseract-OCR\\tessdata\\'
-language_path_list = glob.glob(language_path+"*.traineddata")
-
-
+language_path_list = glob.glob(language_path + "*.traineddata")
 
 language_names_list = []
 
 for path in language_path_list:
-	base_name =  os.path.basename(path)
-	base_name = os.path.splitext(base_name)[0]
-	language_names_list.append(base_name)
-
-
+    base_name = os.path.basename(path)
+    base_name = os.path.splitext(base_name)[0]
+    language_names_list.append(base_name)
 
 font_list = []
 font = 2
 
 for font in range(110):
-	font+=2
-	font_list.append(str(font))
+    font += 2
+    font_list.append(str(font))
 
-## print('Font list:',font_list)
+# print('Font list:', font_list)
 
 class PyShine_OCR_APP(QtWidgets.QMainWindow):
-	def __init__(self):
-		QtWidgets.QMainWindow.__init__(self)
-		self.ui = uic.loadUi('main.ui',self)
-		self.image = None
-		
-		self.ui.pushButton.clicked.connect(self.open)
-		self.rubberBand = QRubberBand(QRubberBand.Rectangle,self)
-		self.ui.label_2.setMouseTracking(True)
-		self.ui.label_2.installEventFilter(self)
-		self.ui.label_2.setAlignment(PyQt5.QtCore.Qt.AlignTop)
-		
-		self.language = 'eng'
-		self.comboBox.addItems(language_names_list)
-		self.comboBox.currentIndexChanged['QString'].connect(self.update_now)
-		self.comboBox.setCurrentIndex(language_names_list.index(self.language))
-		
-		self.font_size = '20'
-		self.text = ''
-		self.comboBox_2.addItems(font_list)
-		self.comboBox_2.currentIndexChanged['QString'].connect(self.update_font_size)
-		self.comboBox_2.setCurrentIndex(font_list.index(self.font_size))
-		
-		self.ui.textEdit.setFontPointSize(int(self.font_size))
-		self.setAcceptDrops(True)
-		
-		
-	def update_now(self,value):
-		self.language = value
-		print('Language Selected as:',self.language)
-	
-	def update_font_size(self,value):
-		self.font_size = value
-		self.ui.textEdit.setFontPointSize(int(self.font_size))
-		self.ui.textEdit.setText(str(self.text))
-	
-	
-	def open(self):
-		filename = QFileDialog.getOpenFileName(self,'Select File')
-		self.image = cv2.imread(str(filename[0]))
-		frame = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-		image =  QImage(frame,frame.shape[1],frame.shape[0],frame.strides[0],QImage.Format_RGB888)
-		self.ui.label_2.setPixmap(QPixmap.fromImage(image))
-	
-	
-	def image_to_text(self,crop_cvimage):
-		gray = cv2.cvtColor(crop_cvimage,cv2.COLOR_BGR2GRAY)
-		gray = cv2.medianBlur(gray,1)
-		crop = Image.fromarray(gray)
-		text = pytesseract.image_to_string(crop,lang = self.language)
-		print('Text:',text)
-		return text
-	
-	def eventFilter(self,source,event):
-		width = 0
-		height = 0
-		if (event.type() == QEvent.MouseButtonPress and source is self.ui.label_2):
-			self.org = self.mapFromGlobal(event.globalPos())
-			self.left_top = event.pos()
-			self.rubberBand.setGeometry(QRect(self.org,QSize()))
-			self.rubberBand.show()
-		elif (event.type() == QEvent.MouseMove and source is self.ui.label_2):
-			if self.rubberBand.isVisible():
-				self.rubberBand.setGeometry(QRect(self.org,self.mapFromGlobal(event.globalPos())).normalized())
-		elif(event.type() == QEvent.MouseButtonRelease and source is self.ui.label_2):
-			if self.rubberBand.isVisible():
-				self.rubberBand.hide()
-				rect = self.rubberBand.geometry()
-				self.x1 = self.left_top.x()
-				self.y1 = self. left_top.y()
-				width = rect.width()
-				height = rect.height()
-				self.x2 = self.x1+ width
-				self.y2 = self.y1+ height
-			if width >=10 and height >= 10  and self.image is not None:
-				self.crop = self.image[self.y1:self.y2, self.x1:self.x2]
-				cv2.imwrite('cropped.png',self.crop)
-				self.text = self.image_to_text(self.crop)
-				self.ui.textEdit.setText(str(self.text))
-			else:
-				self.rubberBand.hide()
-		else:
-			return 0
-		return QWidget.eventFilter(self,source,event)
-	
-## www.pyshine.com
+    def __init__(self):
+        QtWidgets.QMainWindow.__init__(self)
+        self.ui = uic.loadUi('main.ui', self)
+        self.image = None
+        
+        self.ui.pushButton.clicked.connect(self.open)
+        self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
+        self.ui.label_2.setMouseTracking(True)
+        self.ui.label_2.installEventFilter(self)
+        self.ui.label_2.setAlignment(PyQt5.QtCore.Qt.AlignTop)
+        
+        self.language = 'eng'
+        self.comboBox.addItems(language_names_list)
+        self.comboBox.currentIndexChanged['QString'].connect(self.update_now)
+        self.comboBox.setCurrentIndex(language_names_list.index(self.language))
+        
+        self.font_size = '20'
+        self.text = ''
+        self.comboBox_2.addItems(font_list)
+        self.comboBox_2.currentIndexChanged['QString'].connect(self.update_font_size)
+        self.comboBox_2.setCurrentIndex(font_list.index(self.font_size))
+        
+        self.ui.textEdit.setFontPointSize(int(self.font_size))
+        self.setAcceptDrops(True)
+        
+    def update_now(self, value):
+        self.language = value
+        print('Language Selected as:', self.language)
+    
+    def update_font_size(self, value):
+        self.font_size = value
+        self.ui.textEdit.setFontPointSize(int(self.font_size))
+        self.ui.textEdit.setText(str(self.text))
+    
+    def open(self):
+        filename = QFileDialog.getOpenFileName(self, 'Select File')
+        self.image = cv2.imread(str(filename[0]))
+        frame = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        image = QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format_RGB888)
+        self.ui.label_2.setPixmap(QPixmap.fromImage(image))
+    
+    def image_to_text(self, crop_cvimage):
+        gray = cv2.cvtColor(crop_cvimage, cv2.COLOR_BGR2GRAY)
+        gray = cv2.medianBlur(gray, 1)
+        crop = Image.fromarray(gray)
+        text = pytesseract.image_to_string(crop, lang=self.language)
+        print('Text:', text)
+        return text
+    
+    def eventFilter(self, source, event):
+        width = 0
+        height = 0
+        if (event.type() == QEvent.MouseButtonPress and source is self.ui.label_2):
+            self.org = self.mapFromGlobal(event.globalPos())
+            self.left_top = event.pos()
+            self.rubberBand.setGeometry(QRect(self.org, QSize()))
+            self.rubberBand.show()
+        elif (event.type() == QEvent.MouseMove and source is self.ui.label_2):
+            if self.rubberBand.isVisible():
+                self.rubberBand.setGeometry(QRect(self.org, self.mapFromGlobal(event.globalPos())).normalized())
+        elif(event.type() == QEvent.MouseButtonRelease and source is self.ui.label_2):
+            if self.rubberBand.isVisible():
+                self.rubberBand.hide()
+                rect = self.rubberBand.geometry()
+                self.x1 = self.left_top.x()
+                self.y1 = self.left_top.y()
+                width = rect.width()
+                height = rect.height()
+                self.x2 = self.x1 + width
+                self.y2 = self.y1 + height
+            if width >= 10 and height >= 10 and self.image is not None:
+                self.crop = self.image[self.y1:self.y2, self.x1:self.x2]
+                cv2.imwrite('cropped.png', self.crop)
+                self.text = self.image_to_text(self.crop)
+                self.ui.textEdit.setText(str(self.text))
+            else:
+                self.rubberBand.hide()
+        else:
+            return 0
+        return QWidget.eventFilter(self, source, event)
+
+# www.pyshine.com
 app = QtWidgets.QApplication(sys.argv)
 mainWindow = PyShine_OCR_APP()
 mainWindow.show()
 sys.exit(app.exec_())
-
 ```
 
-After saving both files, follow the video tutorial above to run the GUI
+---
 
-```
+## How to Run
+
+1. Save both files (`main.ui` and `gui.py`) in the same directory
+2. Make sure you have Tesseract OCR installed on your system
+3. Update the `language_path` variable in `gui.py` to point to your Tesseract tessdata directory
+4. Run the application:
+
+```bash
 python gui.py
 ```
 
+## How It Works
 
+1. **Open Image**: Click the "Open Image" button to load an image
+2. **Select Language**: Choose the OCR language from the dropdown
+3. **Select Region**: Click and drag on the image to select the text region
+4. **Extract Text**: The selected region will be processed and text will appear in the text area
 
+## Troubleshooting
+
+- **Tesseract not found**: Make sure Tesseract OCR is installed and the path is correct
+- **Language not available**: Download the required language data from [Tesseract OCR](https://github.com/tesseract-ocr/tessdata)
+- **No text extracted**: Try selecting a clearer region or adjust the image quality
+
+---
+
+*For more tutorials, visit [PyShine](https://www.pyshine.com)*
