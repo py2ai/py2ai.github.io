@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunshine Intensity Map - Solar Panel Optimizer | PyShine</title>
+    <meta name="description" content="Interactive map visualization of sunshine intensity and solar panel optimization using OpenStreetMap.">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SunCalc library for solar calculations -->
+    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+    
+    <style>
+        #map { height: 100%; width: 100%; }
+        .sun-intensity-legend {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .sun-intensity-legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .sun-intensity-legend .color-scale {
+            display: flex;
+            height: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .sun-intensity-legend .color-scale div {
+            flex: 1;
+        }
+        .sun-intensity-legend .labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            min-width: 200px;
+        }
+        .info-box h5 {
+            margin: 0 0 10px 0;
+            color: #0d6efd;
+            font-size: 14px;
+        }
+        .info-box .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        .info-box .stat-value {
+            font-weight: 600;
+        }
+        .sun-overlay {
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <header class="py-2 px-3 bg-primary text-white">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <h1 class="h5 mb-0">
+                    <i class="fas fa-sun me-2"></i>Sunshine Intensity Map
+                </h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span id="current-time-display" class="badge bg-light text-dark">
+                        <i class="fas fa-clock me-1"></i> --:--
+                    </span>
+                    <span id="sun-status" class="badge bg-warning text-dark">
+                        <i class="fas fa-sun me-1"></i> Loading...
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <div class="row g-0" style="height: calc(100vh - 50px);">
+            <!-- Left sidebar: controls -->
+            <aside class="col-md-3 col-lg-2 p-3 bg-light border-end overflow-auto" id="controls-sidebar">
+                <h2 class="h6 mb-3"><i class="fas fa-sliders-h me-2"></i>Controls</h2>
+                
+                <!-- Location Search -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Location Search</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" id="location-search" placeholder="Search location...">
+                        <button class="btn btn-outline-primary" type="button" id="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div id="location-results" class="mt-2"></div>
+                </div>
+
+                <!-- Date Picker -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Date</label>
+                    <input type="date" class="form-control form-control-sm" id="date-picker">
+                </div>
+
+                <!-- Circular Clock Slider -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Time of Day</label>
+                    <div class="clock-slider-container">
+                        <div class="clock-slider" id="clock-slider">
+                            <div class="clock-face">
+                                <div class="hour-marker" style="--rotation: 0deg;"><span>12</span></div>
+                                <div class="hour-marker" style="--rotation: 30deg;"><span>1</span></div>
+                                <div class="hour-marker" style="--rotation: 60deg;"><span>2</span></div>
+                                <div class="hour-marker" style="--rotation: 90deg;"><span>3</span></div>
+                                <div class="hour-marker" style="--rotation: 120deg;"><span>4</span></div>
+                                <div class="hour-marker" style="--rotation: 150deg;"><span>5</span></div>
+                                <div class="hour-marker" style="--rotation: 180deg;"><span>6</span></div>
+                                <div class="hour-marker" style="--rotation: 210deg;"><span>7</span></div>
+                                <div class="hour-marker" style="--rotation: 240deg;"><span>8</span></div>
+                                <div class="hour-marker" style="--rotation: 270deg;"><span>9</span></div>
+                                <div class="hour-marker" style="--rotation: 300deg;"><span>10</span></div>
+                                <div class="hour-marker" style="--rotation: 330deg;"><span>11</span></div>
+                                <div class="clock-hand" id="clock-hand">
+                                    <div class="clock-hand-knob"></div>
+                                </div>
+                                <div class="clock-center">
+                                    <span id="time-display">12:00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clock-am-pm" id="clock-am-pm">PM</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Solar Info Panel -->
+                <div class="mb-3">
+                    <h3 class="h6 fw-bold"><i class="fas fa-sun me-2"></i>Solar Info</h3>
+                    <div class="small bg-white p-2 rounded border">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><i class="fas fa-angle-up text-warning"></i> Sun Altitude:</span>
+                            <span id="solar-altitude" class="fw-bold">--°</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><i class="fas fa-compass text-primary"></i> Sun Azimuth:</span>
+                            <span id="solar-azimuth" class="fw-bold">--°</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><i class="fas fa-bolt text-success"></i> Irradiance:</span>
+                            <span id="solar-irradiance" class="fw-bold">-- W/m²</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-clock text-info"></i> Daylight:</span>
+                            <span id="daylight-hours" class="fw-bold">-- hrs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sun Intensity Overlay -->
+                <div class="mb-3">
+                    <h3 class="h6 fw-bold"><i class="fas fa-layer-group me-2"></i>Overlay</h3>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="precise-location-mode">
+                        <label class="form-check-label small" for="precise-location-mode">
+                            <i class="fas fa-crosshairs text-primary"></i> Precise Location Mode
+                        </label>
+                        <div class="form-text small text-muted">Click on map to select a location</div>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="sun-path-overlay">
+                        <label class="form-check-label small" for="sun-path-overlay">
+                            Show Sun Path
+                        </label>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Quick Actions -->
+                <div class="mb-3">
+                    <h3 class="h6 fw-bold"><i class="fas fa-bolt me-2"></i>Quick Actions</h3>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-outline-primary" id="btn-noon">
+                            <i class="fas fa-sun"></i> Solar Noon
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="btn-sunrise">
+                            <i class="fas fa-arrow-up"></i> Sunrise
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="btn-sunset">
+                            <i class="fas fa-arrow-down"></i> Sunset
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" id="btn-now">
+                            <i class="fas fa-clock"></i> Current Time
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Map Info -->
+                <div class="mt-3 small text-muted">
+                    <p class="mb-1"><strong>Map Controls:</strong></p>
+                    <ul class="mb-0 ps-3">
+                        <li>Scroll to zoom</li>
+                        <li>Drag to pan</li>
+                        <li>Click for location info</li>
+                    </ul>
+                </div>
+                
+                <hr>
+                
+                <!-- Yearly Energy Calculation Note -->
+                <div class="mt-3 small">
+                    <p class="mb-1 fw-bold"><i class="fas fa-info-circle text-info me-1"></i>Energy Calculation Method</p>
+                    <div class="text-muted" style="font-size: 11px;">
+                        <p class="mb-1">The <strong>Approximate Yearly Energy</strong> is calculated using:</p>
+                        <ul class="mb-1 ps-3">
+                            <li>Daily solar declination angles</li>
+                            <li>Day length variations</li>
+                            <li>Atmospheric transmittance</li>
+                            <li>Optimal panel tilt factor</li>
+                            <li>75% system efficiency</li>
+                        </ul>
+                        <p class="mb-0 fst-italic">Note: This is an estimate. Actual output varies by weather, shading, panel type, and maintenance.</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main map viewer -->
+            <main class="col-md-9 col-lg-10 position-relative">
+                <div id="map"></div>
+                
+                <!-- Info popup -->
+                <div id="location-info" class="info-box position-absolute" style="top: 10px; right: 10px; z-index: 1000; display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Location Info</h5>
+                        <button type="button" class="btn-close btn-sm" id="close-info-box" aria-label="Close"></button>
+                    </div>
+                    <div class="stat">
+                        <span>Coordinates:</span>
+                        <span class="stat-value" id="info-coords">--</span>
+                    </div>
+                    <div class="stat">
+                        <span>Sun Altitude:</span>
+                        <span class="stat-value" id="info-altitude">--</span>
+                    </div>
+                    <div class="stat">
+                        <span>Sun Azimuth:</span>
+                        <span class="stat-value" id="info-azimuth">--</span>
+                    </div>
+                    <div class="stat">
+                        <span>Solar Power:</span>
+                        <span class="stat-value" id="info-power">--</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="stat">
+                        <span><i class="fas fa-solar-panel text-warning"></i> Optimal Tilt:</span>
+                        <span class="stat-value" id="info-tilt">--</span>
+                    </div>
+                    <div class="stat">
+                        <span><i class="fas fa-compass text-primary"></i> Panel Azimuth:</span>
+                        <span class="stat-value" id="info-panel-azimuth">--</span>
+                    </div>
+                    <div class="stat">
+                        <span><i class="fas fa-bolt text-success"></i> Approx Yearly Energy:</span>
+                        <span class="stat-value" id="info-yearly-energy">--</span>
+                    </div>
+                    <div class="stat">
+                        <span><i class="fas fa-calendar-alt text-info"></i> Monthly Avg:</span>
+                        <span class="stat-value" id="info-monthly-energy">--</span>
+                    </div>
+                    <div class="stat">
+                        <span><i class="fas fa-sun text-warning"></i> Daily Avg:</span>
+                        <span class="stat-value" id="info-daily-energy">--</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="stat">
+                        <span><i class="fas fa-check-circle text-success"></i> Tilt Range:</span>
+                        <span class="stat-value" id="info-tilt-range">--</span>
+                    </div>
+                    <div class="stat">
+                        <span><i class="fas fa-exclamation-triangle text-warning"></i> Tilt Status:</span>
+                        <span class="stat-value" id="info-tilt-status">--</span>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main Application JS -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
