@@ -82,6 +82,11 @@ function initMap() {
     
     // Create sun intensity layer separately (not in layer control)
     sunIntensityLayer = L.layerGroup().addTo(map);
+    
+    // Initialize sun path overlay (checked by default)
+    if (document.getElementById('sun-path-overlay').checked) {
+        drawSunPath();
+    }
 
     // Add scale control
     L.control.scale({ position: 'bottomleft' }).addTo(map);
@@ -226,8 +231,6 @@ function initControls() {
     // Close info box button
     document.getElementById('close-info-box').addEventListener('click', () => {
         document.getElementById('location-info').style.display = 'none';
-        // Uncheck precise mode
-        document.getElementById('precise-location-mode').checked = false;
         // Clear selection
         selectedLocation = null;
         if (marker) {
@@ -420,10 +423,38 @@ function setToSunrise() {
         targetLat = center.lat;
         targetLon = center.lng;
     }
-    const date = new Date(currentDate);
+    
+    // Get date from picker and create date at noon UTC for SunCalc
+    const dateStr = document.getElementById('date-picker').value;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    
     const times = SunCalc.getTimes(date, targetLat, targetLon);
     const sunrise = times.sunrise;
-    setTime(sunrise.getHours() * 60 + sunrise.getMinutes());
+    
+    // Convert to local time at the selected location
+    // Calculate timezone offset from longitude (15 degrees = 1 hour)
+    const timezoneOffset = targetLon / 15;
+    
+    // Get UTC hours and minutes, then apply local timezone
+    const utcHours = sunrise.getUTCHours();
+    const utcMinutes = sunrise.getUTCMinutes();
+    
+    // Calculate local time at the location (in hours with decimal)
+    const localTimeHours = utcHours + utcMinutes / 60 + timezoneOffset;
+    
+    // Convert to hours and minutes
+    let localHours = Math.floor(localTimeHours);
+    const localMinutes = Math.round((localTimeHours - Math.floor(localTimeHours)) * 60);
+    
+    // Handle day overflow
+    if (localHours < 0) localHours += 24;
+    if (localHours >= 24) localHours -= 24;
+    
+    const totalMinutes = localHours * 60 + localMinutes;
+    
+    console.log('Sunrise at location:', 'UTC', utcHours + ':' + utcMinutes, 'Timezone offset:', timezoneOffset.toFixed(2), 'Local:', localHours + ':' + localMinutes, 'Minutes:', totalMinutes);
+    setTime(totalMinutes);
 }
 
 // Set to sunset
@@ -437,10 +468,38 @@ function setToSunset() {
         targetLat = center.lat;
         targetLon = center.lng;
     }
-    const date = new Date(currentDate);
+    
+    // Get date from picker and create date at noon UTC for SunCalc
+    const dateStr = document.getElementById('date-picker').value;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    
     const times = SunCalc.getTimes(date, targetLat, targetLon);
     const sunset = times.sunset;
-    setTime(sunset.getHours() * 60 + sunset.getMinutes());
+    
+    // Convert to local time at the selected location
+    // Calculate timezone offset from longitude (15 degrees = 1 hour)
+    const timezoneOffset = targetLon / 15;
+    
+    // Get UTC hours and minutes, then apply local timezone
+    const utcHours = sunset.getUTCHours();
+    const utcMinutes = sunset.getUTCMinutes();
+    
+    // Calculate local time at the location (in hours with decimal)
+    const localTimeHours = utcHours + utcMinutes / 60 + timezoneOffset;
+    
+    // Convert to hours and minutes
+    let localHours = Math.floor(localTimeHours);
+    const localMinutes = Math.round((localTimeHours - Math.floor(localTimeHours)) * 60);
+    
+    // Handle day overflow
+    if (localHours < 0) localHours += 24;
+    if (localHours >= 24) localHours -= 24;
+    
+    const totalMinutes = localHours * 60 + localMinutes;
+    
+    console.log('Sunset at location:', 'UTC', utcHours + ':' + utcMinutes, 'Timezone offset:', timezoneOffset.toFixed(2), 'Local:', localHours + ':' + localMinutes, 'Minutes:', totalMinutes);
+    setTime(totalMinutes);
 }
 
 // Set to current time
@@ -464,8 +523,14 @@ function updateSolarData() {
         targetLon = center.lng;
     }
     
-    const date = new Date(currentDate);
-    date.setHours(Math.floor(currentMinutes / 60), currentMinutes % 60, 0, 0);
+    // Get date from picker and create proper UTC date
+    const dateStr = document.getElementById('date-picker').value;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const hours = Math.floor(currentMinutes / 60);
+    const mins = currentMinutes % 60;
+    
+    // Create date in UTC for SunCalc
+    const date = new Date(Date.UTC(year, month - 1, day, hours, mins, 0));
     
     const sunPos = calculateSunPosition(targetLat, targetLon, date);
     const irradiance = calculateSolarIrradiance(sunPos.altitude, date);
@@ -489,7 +554,8 @@ function updateSolarData() {
     
     // Calculate daylight hours
     try {
-        const times = SunCalc.getTimes(date, targetLat, targetLon);
+        const dayDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+        const times = SunCalc.getTimes(dayDate, targetLat, targetLon);
         const daylightHours = (times.sunset - times.sunrise) / (1000 * 60 * 60);
         document.getElementById('daylight-hours').textContent = `${daylightHours.toFixed(1)} hrs`;
     } catch (e) {
@@ -539,19 +605,14 @@ function updateInfoBox(lat, lon, sunPos, irradiance) {
     document.getElementById('info-coords').textContent = `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
     document.getElementById('info-altitude').textContent = `${sunPos.altitude.toFixed(1)}°`;
     document.getElementById('info-azimuth').textContent = `${sunPos.azimuth.toFixed(1)}°`;
-    document.getElementById('info-power').textContent = `${irradiance.total.toFixed(0)} W/m²`;
     
     // Calculate optimal solar panel settings
     const panelInfo = calculateOptimalPanelSettings(lat, lon);
     document.getElementById('info-tilt').textContent = `${panelInfo.optimalTilt.toFixed(1)}°`;
     document.getElementById('info-panel-azimuth').textContent = `${panelInfo.optimalAzimuth.toFixed(0)}°`;
-    document.getElementById('info-yearly-energy').textContent = `${panelInfo.yearlyEnergy.toFixed(0)} kWh/m²`;
     
-    // Calculate and display monthly and daily averages
-    const monthlyAvg = panelInfo.yearlyEnergy / 12;
-    const dailyAvg = panelInfo.yearlyEnergy / 365;
-    document.getElementById('info-monthly-energy').textContent = `${monthlyAvg.toFixed(1)} kWh/m²`;
-    document.getElementById('info-daily-energy').textContent = `${dailyAvg.toFixed(2)} kWh/m²`;
+    // Show current irradiance (updates with time slider)
+    document.getElementById('info-irradiance').textContent = `${irradiance.total.toFixed(0)} W/m²`;
     
     // Tilt angle verification
     const tiltVerification = verifyTiltAngle(panelInfo.optimalTilt, lat);
@@ -566,13 +627,10 @@ function updateInfoBox(lat, lon, sunPos, irradiance) {
             <b>Location:</b> ${lat.toFixed(4)}°, ${lon.toFixed(4)}°<br>
             <b>Sun Altitude:</b> ${sunPos.altitude.toFixed(1)}°<br>
             <b>Sun Azimuth:</b> ${sunPos.azimuth.toFixed(1)}°<br>
-            <b>Solar Power:</b> ${irradiance.total.toFixed(0)} W/m²<br>
             <hr>
             <b>Optimal Tilt:</b> ${panelInfo.optimalTilt.toFixed(1)}°<br>
             <b>Panel Azimuth:</b> ${panelInfo.optimalAzimuth.toFixed(0)}°<br>
-            <b>Yearly Energy:</b> ${panelInfo.yearlyEnergy.toFixed(0)} kWh/m²<br>
-            <b>Monthly Avg:</b> ${monthlyAvg.toFixed(1)} kWh/m²<br>
-            <b>Daily Avg:</b> ${dailyAvg.toFixed(2)} kWh/m²<br>
+            <b>Irradiance:</b> ${irradiance.total.toFixed(0)} W/m²<br>
             <hr>
             <b>Tilt Range:</b> ${tiltVerification.minTilt.toFixed(0)}° - ${tiltVerification.maxTilt.toFixed(0)}°<br>
             <b>Status:</b> ${tiltVerification.status}
@@ -626,6 +684,77 @@ function verifyTiltAngle(optimalTilt, lat) {
         status: status,
         statusClass: statusClass
     };
+}
+
+// Calculate energy for a specific month
+function calculateMonthlyEnergy(lat, lon, tilt, azimuth, month) {
+    const year = 2024;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let totalEnergy = 0;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayEnergy = calculateDailyEnergyForDate(lat, lon, tilt, azimuth, year, month, day);
+        totalEnergy += dayEnergy;
+    }
+    
+    return totalEnergy;
+}
+
+// Calculate energy for a specific day
+function calculateDailyEnergy(lat, lon, tilt, azimuth, date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    return calculateDailyEnergyForDate(lat, lon, tilt, azimuth, year, month, day);
+}
+
+// Calculate energy for a specific date (internal function)
+function calculateDailyEnergyForDate(lat, lon, tilt, azimuth, year, month, day) {
+    const solarConstant = 1367;
+    const date = new Date(year, month, day);
+    const dayOfYear = Math.floor((date - new Date(year, 0, 0)) / (1000 * 60 * 60 * 24));
+    
+    // Calculate declination angle
+    const declination = 23.45 * Math.sin((360/365) * (dayOfYear - 81) * Math.PI / 180);
+    
+    // Calculate sunrise/sunset times
+    const latRad = lat * Math.PI / 180;
+    const declRad = declination * Math.PI / 180;
+    
+    let cosHourAngle = -Math.tan(latRad) * Math.tan(declRad);
+    cosHourAngle = Math.max(-1, Math.min(1, cosHourAngle));
+    const hourAngle = Math.acos(cosHourAngle);
+    
+    const dayLength = 2 * hourAngle * 180 / Math.PI / 15;
+    
+    if (dayLength <= 0 || isNaN(dayLength)) {
+        return 0;
+    }
+    
+    const sinElevation = Math.sin(latRad) * Math.sin(declRad) + 
+                        Math.cos(latRad) * Math.cos(declRad) * Math.sin(hourAngle) / hourAngle;
+    const avgElevation = Math.asin(Math.max(-1, Math.min(1, sinElevation))) * 180 / Math.PI;
+    
+    const effectiveElevation = Math.max(avgElevation, 5);
+    const avgAirMass = 1 / (Math.sin(effectiveElevation * Math.PI / 180) + 0.50572 * Math.pow(96.07995 - effectiveElevation, -1.6364));
+    const atmosphericTransmittance = Math.pow(0.7, Math.pow(avgAirMass, 0.678));
+    
+    const peakIrradiance = solarConstant * atmosphericTransmittance / 1000;
+    const dailyInsolation = peakIrradiance * dayLength * 0.5;
+    
+    const tiltRad = tilt * Math.PI / 180;
+    const latRad2 = lat * Math.PI / 180;
+    const declRad2 = declination * Math.PI / 180;
+    
+    const cosIncidence = 
+        Math.sin(declRad2) * (Math.sin(latRad2) * Math.cos(tiltRad) - Math.cos(latRad2) * Math.sin(tiltRad)) +
+        Math.cos(declRad2) * Math.cos(latRad2 - tiltRad);
+    
+    const denominator = Math.cos(latRad2 - declRad2 * 0.5);
+    const tiltFactor = denominator !== 0 ? Math.max(0, cosIncidence / denominator) : 1;
+    
+    const dailyEnergy = dailyInsolation * Math.min(tiltFactor, 1.5) * 0.75;
+    return Math.max(0, dailyEnergy);
 }
 
 // Calculate optimal solar panel settings for yearly energy generation
@@ -738,10 +867,38 @@ function calculateSunPosition(lat, lon, date) {
         return { altitude: 45, azimuth: 180 };
     }
     
-    const position = SunCalc.getPosition(date, lat, lon);
+    // The date passed in is in UTC but represents local solar time at the location
+    // We need to convert: if slider shows 6:00 (solar time), that means sun is at horizon
+    // SunCalc.getPosition expects UTC time, so we need to adjust for the longitude
+    
+    // Calculate timezone offset from longitude (15 degrees = 1 hour)
+    const timezoneOffset = lon / 15;
+    
+    // The slider shows local solar time, stored as UTC in the date object
+    // To get actual UTC for SunCalc, we subtract the timezone offset
+    const solarHours = date.getUTCHours() + date.getUTCMinutes() / 60;
+    const actualUtcHours = solarHours - timezoneOffset;
+    
+    // Create the actual UTC date for SunCalc
+    const utcDate = new Date(date);
+    const totalMinutes = Math.round(actualUtcHours * 60);
+    const finalHours = Math.floor(totalMinutes / 60);
+    const finalMinutes = totalMinutes % 60;
+    
+    utcDate.setUTCHours(finalHours, finalMinutes, 0, 0);
+    
+    // Handle day overflow
+    if (totalMinutes < 0) {
+        utcDate.setUTCDate(utcDate.getUTCDate() - 1);
+    } else if (totalMinutes >= 1440) {
+        utcDate.setUTCDate(utcDate.getUTCDate() + 1);
+    }
+    
+    const position = SunCalc.getPosition(utcDate, lat, lon);
     const altitudeDeg = position.altitude * (180 / Math.PI);
+    // SunCalc azimuth is from South (0°=South, 90°=West), convert to compass (0°=North, 90°=East)
     const azimuthDeg = position.azimuth * (180 / Math.PI);
-    const normalizedAzimuth = (azimuthDeg + 360) % 360;
+    const normalizedAzimuth = (azimuthDeg + 180) % 360;
     return {
         altitude: altitudeDeg,
         azimuth: normalizedAzimuth
@@ -806,7 +963,7 @@ function updateSunIntensityOverlay(sunPos, irradiance) {
         color: '#0d6efd',
         fillColor: '#0d6efd',
         fillOpacity: 0.2,
-        weight: 2
+        weight: 4
     });
     sunIntensityLayer.addLayer(locationCircle);
     
@@ -825,19 +982,19 @@ function updateSunIntensityOverlay(sunPos, irradiance) {
     const isNight = sunPos.altitude <= 0;
     const sunLine = L.polyline([[lat, lon], [sunLat, sunLon]], {
         color: isNight ? '#6c757d' : '#f39c12',
-        weight: 3,
+        weight: 5,
         opacity: isNight ? 0.5 : 0.8,
-        dashArray: '5, 5'
+        dashArray: '10, 5'
     });
     
     sunIntensityLayer.addLayer(sunLine);
     
     // Sun position marker - different style for day/night
     const sunMarker = L.circleMarker([sunLat, sunLon], {
-        radius: isNight ? 8 : 10,
+        radius: isNight ? 12 : 15,
         fillColor: isNight ? '#6c757d' : '#f1c40f',
         color: isNight ? '#495057' : '#f39c12',
-        weight: 2,
+        weight: 3,
         fillOpacity: isNight ? 0.5 : 0.8
     });
     sunIntensityLayer.addLayer(sunMarker);
@@ -862,14 +1019,16 @@ function drawSunPath() {
         targetLon = center.lng;
     }
     
-    const date = new Date(currentDate);
+    // Get date from picker
+    const dateStr = document.getElementById('date-picker').value;
+    const [year, month, day] = dateStr.split('-').map(Number);
     const pathPoints = [];
     
     // Calculate sun position every 30 minutes
     for (let hour = 0; hour < 24; hour++) {
         for (let min = 0; min < 60; min += 30) {
-            const testDate = new Date(date);
-            testDate.setHours(hour, min, 0, 0);
+            // Create date in UTC representing local solar time
+            const testDate = new Date(Date.UTC(year, month - 1, day, hour, min, 0));
             const sunPos = calculateSunPosition(targetLat, targetLon, testDate);
             
             if (sunPos.altitude > 0) {
@@ -884,9 +1043,9 @@ function drawSunPath() {
     if (pathPoints.length > 1) {
         const pathLine = L.polyline(pathPoints, {
             color: '#f39c12',
-            weight: 2,
+            weight: 4,
             opacity: 0.6,
-            dashArray: '3, 3'
+            dashArray: '5, 5'
         });
         sunPathLayer.addLayer(pathLine);
     }
