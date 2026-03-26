@@ -412,8 +412,108 @@ function setTime(minutes) {
     updateSolarData();
 }
 
-// Set to sunrise
-function setToSunrise() {
+// Get timezone for coordinates using free API
+async function getTimezoneOffset(lat, lon, dateStr) {
+    try {
+        const timestamp = Math.floor(new Date(dateStr).getTime() / 1000);
+        const response = await fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lon}&timestamp=${timestamp}&key=free`);
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Get timezone offset for a location
+async function getLocationTimezoneOffset(lat, lon, date) {
+    // Use a simple but accurate timezone calculation based on longitude
+    // with known timezone exceptions for specific regions
+    
+    // Pakistan (UTC+5)
+    if (lon >= 60 && lon <= 80 && lat >= 23 && lat <= 37) {
+        return 5 * 60; // UTC+5, no DST
+    }
+    
+    // India (UTC+5:30)
+    if (lon >= 68 && lon <= 97 && lat >= 6 && lat <= 35) {
+        return 5.5 * 60; // UTC+5:30, no DST
+    }
+    
+    // China (UTC+8) - single timezone for entire country
+    if (lon >= 73 && lon <= 135 && lat >= 18 && lat <= 53) {
+        // Kyrgyzstan exception (UTC+6)
+        if (lon >= 73 && lon <= 80 && lat >= 39 && lat <= 44) {
+            return 6 * 60;
+        }
+        return 8 * 60; // UTC+8, no DST
+    }
+    
+    // Japan (UTC+9)
+    if (lon >= 122 && lon <= 154 && lat >= 24 && lat <= 46) {
+        return 9 * 60; // UTC+9, no DST
+    }
+    
+    // Australia - multiple timezones
+    if (lat < -10 && lon > 110 && lon < 155) {
+        // Eastern Australia (Sydney, Melbourne, Brisbane)
+        if (lon > 140) {
+            const month = date.getUTCMonth();
+            // DST: Oct-Apr in southern hemisphere
+            const isDST = month < 4 || month > 9;
+            return (isDST ? 11 : 10) * 60;
+        }
+        // Central Australia
+        if (lon > 129 && lon <= 140) {
+            const month = date.getUTCMonth();
+            const isDST = month < 4 || month > 9;
+            return (isDST ? 10.5 : 9.5) * 60;
+        }
+        // Western Australia
+        return 8 * 60;
+    }
+    
+    // USA timezones
+    if (lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66) {
+        const month = date.getUTCMonth();
+        const day = date.getUTCDate();
+        // DST: Mar 8 - Nov 1 (rough)
+        const isDST = (month > 2 && month < 10) || (month === 2 && day >= 8) || (month === 10 && day < 7);
+        
+        if (lon >= -125 && lon < -110) return (isDST ? -7 : -8) * 60; // Pacific
+        if (lon >= -110 && lon < -100) return (isDST ? -6 : -7) * 60; // Mountain
+        if (lon >= -100 && lon < -85) return (isDST ? -5 : -6) * 60;  // Central
+        return (isDST ? -4 : -5) * 60; // Eastern
+    }
+    
+    // Europe (rough approximation)
+    if (lat >= 35 && lat <= 70 && lon >= -10 && lon <= 40) {
+        const month = date.getUTCMonth();
+        const isDST = month > 2 && month < 10;
+        const baseOffset = Math.round(lon / 15) * 60;
+        return baseOffset + (isDST ? 60 : 0);
+    }
+    
+    // Default: Use longitude-based timezone with DST for northern/southern regions
+    const lonOffset = Math.round(lon / 15);
+    const baseOffset = lonOffset * 60;
+    
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+    
+    let isDST = false;
+    if (lat > 23.5) {
+        // Northern hemisphere (above Tropic of Cancer)
+        isDST = (month > 2 && month < 10) || (month === 2 && day >= 8) || (month === 10 && day < 7);
+    } else if (lat < -23.5) {
+        // Southern hemisphere (below Tropic of Capricorn)
+        isDST = month < 4 || month > 9;
+    }
+    // Tropical regions (between Tropics) typically don't observe DST
+    
+    return baseOffset + (isDST ? 60 : 0);
+}
+
+// Set to sunrise using sunrise-sunset.org API with timezone
+async function setToSunrise() {
     let targetLat, targetLon;
     if (selectedLocation) {
         targetLat = selectedLocation.lat;
@@ -424,41 +524,59 @@ function setToSunrise() {
         targetLon = center.lng;
     }
     
-    // Get date from picker and create date at noon UTC for SunCalc
     const dateStr = document.getElementById('date-picker').value;
+    
+    try {
+        const response = await fetch(`https://api.sunrise-sunset.org/json?lat=${targetLat}&lng=${targetLon}&date=${dateStr}&formatted=0`);
+        const data = await response.json();
+        
+        if (data.status === 'OK') {
+            const sunriseUTC = new Date(data.results.sunrise);
+            
+            // Get local time offset
+            const localOffsetMinutes = await getLocationTimezoneOffset(targetLat, targetLon, sunriseUTC);
+            
+            // Convert UTC to local clock time
+            const localHours = sunriseUTC.getUTCHours() + sunriseUTC.getUTCMinutes() / 60 + localOffsetMinutes / 60;
+            
+            let normalizedHours = localHours;
+            while (normalizedHours < 0) normalizedHours += 24;
+            while (normalizedHours >= 24) normalizedHours -= 24;
+            
+            const hours = Math.floor(normalizedHours);
+            const minutes = Math.round((normalizedHours - hours) * 60);
+            const totalMinutes = hours * 60 + minutes;
+            
+            console.log('Sunrise UTC:', data.results.sunrise, '-> Local time:', hours + ':' + minutes.toString().padStart(2,'0'), '(offset:', localOffsetMinutes/60, 'hours)');
+            setTime(totalMinutes);
+        }
+    } catch (error) {
+        console.error('Failed to fetch sunrise time:', error);
+        setToSunriseFallback(targetLat, targetLon, dateStr);
+    }
+}
+
+// Fallback sunrise using SunCalc
+function setToSunriseFallback(targetLat, targetLon, dateStr) {
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    
     const times = SunCalc.getTimes(date, targetLat, targetLon);
     const sunrise = times.sunrise;
     
-    // Convert to local time at the selected location
-    // Calculate timezone offset from longitude (15 degrees = 1 hour)
-    const timezoneOffset = targetLon / 15;
+    const utcHours = sunrise.getUTCHours() + sunrise.getUTCMinutes() / 60;
+    const solarHours = utcHours + targetLon / 15;
     
-    // Get UTC hours and minutes, then apply local timezone
-    const utcHours = sunrise.getUTCHours();
-    const utcMinutes = sunrise.getUTCMinutes();
+    let normalizedSolarHours = solarHours;
+    while (normalizedSolarHours < 0) normalizedSolarHours += 24;
+    while (normalizedSolarHours >= 24) normalizedSolarHours -= 24;
     
-    // Calculate local time at the location (in hours with decimal)
-    const localTimeHours = utcHours + utcMinutes / 60 + timezoneOffset;
-    
-    // Convert to hours and minutes
-    let localHours = Math.floor(localTimeHours);
-    const localMinutes = Math.round((localTimeHours - Math.floor(localTimeHours)) * 60);
-    
-    // Handle day overflow
-    if (localHours < 0) localHours += 24;
-    if (localHours >= 24) localHours -= 24;
-    
-    const totalMinutes = localHours * 60 + localMinutes;
-    
-    console.log('Sunrise at location:', 'UTC', utcHours + ':' + utcMinutes, 'Timezone offset:', timezoneOffset.toFixed(2), 'Local:', localHours + ':' + localMinutes, 'Minutes:', totalMinutes);
-    setTime(totalMinutes);
+    const hours = Math.floor(normalizedSolarHours);
+    const minutes = Math.round((normalizedSolarHours - hours) * 60);
+    setTime(hours * 60 + minutes);
 }
 
-// Set to sunset
-function setToSunset() {
+// Set to sunset using sunrise-sunset.org API with timezone
+async function setToSunset() {
     let targetLat, targetLon;
     if (selectedLocation) {
         targetLat = selectedLocation.lat;
@@ -469,37 +587,55 @@ function setToSunset() {
         targetLon = center.lng;
     }
     
-    // Get date from picker and create date at noon UTC for SunCalc
     const dateStr = document.getElementById('date-picker').value;
+    
+    try {
+        const response = await fetch(`https://api.sunrise-sunset.org/json?lat=${targetLat}&lng=${targetLon}&date=${dateStr}&formatted=0`);
+        const data = await response.json();
+        
+        if (data.status === 'OK') {
+            const sunsetUTC = new Date(data.results.sunset);
+            
+            // Get local time offset
+            const localOffsetMinutes = await getLocationTimezoneOffset(targetLat, targetLon, sunsetUTC);
+            
+            // Convert UTC to local clock time
+            const localHours = sunsetUTC.getUTCHours() + sunsetUTC.getUTCMinutes() / 60 + localOffsetMinutes / 60;
+            
+            let normalizedHours = localHours;
+            while (normalizedHours < 0) normalizedHours += 24;
+            while (normalizedHours >= 24) normalizedHours -= 24;
+            
+            const hours = Math.floor(normalizedHours);
+            const minutes = Math.round((normalizedHours - hours) * 60);
+            const totalMinutes = hours * 60 + minutes;
+            
+            console.log('Sunset UTC:', data.results.sunset, '-> Local time:', hours + ':' + minutes.toString().padStart(2,'0'), '(offset:', localOffsetMinutes/60, 'hours)');
+            setTime(totalMinutes);
+        }
+    } catch (error) {
+        console.error('Failed to fetch sunset time:', error);
+        setToSunsetFallback(targetLat, targetLon, dateStr);
+    }
+}
+
+// Fallback sunset using SunCalc
+function setToSunsetFallback(targetLat, targetLon, dateStr) {
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    
     const times = SunCalc.getTimes(date, targetLat, targetLon);
     const sunset = times.sunset;
     
-    // Convert to local time at the selected location
-    // Calculate timezone offset from longitude (15 degrees = 1 hour)
-    const timezoneOffset = targetLon / 15;
+    const utcHours = sunset.getUTCHours() + sunset.getUTCMinutes() / 60;
+    const solarHours = utcHours + targetLon / 15;
     
-    // Get UTC hours and minutes, then apply local timezone
-    const utcHours = sunset.getUTCHours();
-    const utcMinutes = sunset.getUTCMinutes();
+    let normalizedSolarHours = solarHours;
+    while (normalizedSolarHours < 0) normalizedSolarHours += 24;
+    while (normalizedSolarHours >= 24) normalizedSolarHours -= 24;
     
-    // Calculate local time at the location (in hours with decimal)
-    const localTimeHours = utcHours + utcMinutes / 60 + timezoneOffset;
-    
-    // Convert to hours and minutes
-    let localHours = Math.floor(localTimeHours);
-    const localMinutes = Math.round((localTimeHours - Math.floor(localTimeHours)) * 60);
-    
-    // Handle day overflow
-    if (localHours < 0) localHours += 24;
-    if (localHours >= 24) localHours -= 24;
-    
-    const totalMinutes = localHours * 60 + localMinutes;
-    
-    console.log('Sunset at location:', 'UTC', utcHours + ':' + utcMinutes, 'Timezone offset:', timezoneOffset.toFixed(2), 'Local:', localHours + ':' + localMinutes, 'Minutes:', totalMinutes);
-    setTime(totalMinutes);
+    const hours = Math.floor(normalizedSolarHours);
+    const minutes = Math.round((normalizedSolarHours - hours) * 60);
+    setTime(hours * 60 + minutes);
 }
 
 // Set to current time
@@ -854,6 +990,72 @@ function updateCurrentTimeDisplay() {
         `<i class="fas fa-clock me-1"></i> ${now.toLocaleTimeString()}`;
 }
 
+// Synchronous timezone offset calculation (same logic as async version)
+function getTimezoneOffsetSync(lat, lon, date) {
+    // Pakistan (UTC+5)
+    if (lon >= 60 && lon <= 80 && lat >= 23 && lat <= 37) {
+        return 5;
+    }
+    // India (UTC+5:30)
+    if (lon >= 68 && lon <= 97 && lat >= 6 && lat <= 35) {
+        return 5.5;
+    }
+    // China (UTC+8) - single timezone for entire country
+    if (lon >= 73 && lon <= 135 && lat >= 18 && lat <= 53) {
+        // Kyrgyzstan exception (UTC+6)
+        if (lon >= 73 && lon <= 80 && lat >= 39 && lat <= 44) {
+            return 6;
+        }
+        return 8;
+    }
+    // Japan (UTC+9)
+    if (lon >= 122 && lon <= 154 && lat >= 24 && lat <= 46) {
+        return 9;
+    }
+    // Australia - multiple timezones
+    if (lat < -10 && lon > 110 && lon < 155) {
+        if (lon > 140) {
+            const month = date.getUTCMonth();
+            const isDST = month < 4 || month > 9;
+            return isDST ? 11 : 10;
+        }
+        if (lon > 129 && lon <= 140) {
+            const month = date.getUTCMonth();
+            const isDST = month < 4 || month > 9;
+            return isDST ? 10.5 : 9.5;
+        }
+        return 8;
+    }
+    // USA timezones
+    if (lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66) {
+        const month = date.getUTCMonth();
+        const day = date.getUTCDate();
+        const isDST = (month > 2 && month < 10) || (month === 2 && day >= 8) || (month === 10 && day < 7);
+        if (lon >= -125 && lon < -110) return isDST ? -7 : -8;
+        if (lon >= -110 && lon < -100) return isDST ? -6 : -7;
+        if (lon >= -100 && lon < -85) return isDST ? -5 : -6;
+        return isDST ? -4 : -5;
+    }
+    // Europe
+    if (lat >= 35 && lat <= 70 && lon >= -10 && lon <= 40) {
+        const month = date.getUTCMonth();
+        const isDST = month > 2 && month < 10;
+        const baseOffset = Math.round(lon / 15);
+        return baseOffset + (isDST ? 1 : 0);
+    }
+    // Default: longitude-based with DST
+    const lonOffset = Math.round(lon / 15);
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+    let isDST = false;
+    if (lat > 23.5) {
+        isDST = (month > 2 && month < 10) || (month === 2 && day >= 8) || (month === 10 && day < 7);
+    } else if (lat < -23.5) {
+        isDST = month < 4 || month > 9;
+    }
+    return lonOffset + (isDST ? 1 : 0);
+}
+
 // Calculate sun position
 function calculateSunPosition(lat, lon, date) {
     // Validate inputs
@@ -867,17 +1069,16 @@ function calculateSunPosition(lat, lon, date) {
         return { altitude: 45, azimuth: 180 };
     }
     
-    // The date passed in is in UTC but represents local solar time at the location
-    // We need to convert: if slider shows 6:00 (solar time), that means sun is at horizon
-    // SunCalc.getPosition expects UTC time, so we need to adjust for the longitude
+    // The slider shows local clock time (timezone-based)
+    // We need to convert to UTC for SunCalc
     
-    // Calculate timezone offset from longitude (15 degrees = 1 hour)
-    const timezoneOffset = lon / 15;
+    // Get timezone offset in hours
+    const tzOffset = getTimezoneOffsetSync(lat, lon, date);
     
-    // The slider shows local solar time, stored as UTC in the date object
+    // The slider shows local time, stored as UTC in the date object
     // To get actual UTC for SunCalc, we subtract the timezone offset
-    const solarHours = date.getUTCHours() + date.getUTCMinutes() / 60;
-    const actualUtcHours = solarHours - timezoneOffset;
+    const localHours = date.getUTCHours() + date.getUTCMinutes() / 60;
+    const actualUtcHours = localHours - tzOffset;
     
     // Create the actual UTC date for SunCalc
     const utcDate = new Date(date);
@@ -896,7 +1097,6 @@ function calculateSunPosition(lat, lon, date) {
     
     const position = SunCalc.getPosition(utcDate, lat, lon);
     const altitudeDeg = position.altitude * (180 / Math.PI);
-    // SunCalc azimuth is from South (0°=South, 90°=West), convert to compass (0°=North, 90°=East)
     const azimuthDeg = position.azimuth * (180 / Math.PI);
     const normalizedAzimuth = (azimuthDeg + 180) % 360;
     return {
@@ -968,9 +1168,12 @@ function updateSunIntensityOverlay(sunPos, irradiance) {
     sunIntensityLayer.addLayer(locationCircle);
     
     // Calculate sun position on the horizon (even if below)
+    // Azimuth: 0°=North, 90°=East, 180°=South, 270°=West
+    // Line should point FROM observer TO the sun
     const displayAltitude = Math.max(sunPos.altitude, 0);
-    const sunLat = lat + sunDistance * Math.cos(displayAltitude * Math.PI / 180) * Math.cos((sunPos.azimuth - 180) * Math.PI / 180);
-    const sunLon = lon + sunDistance * Math.cos(displayAltitude * Math.PI / 180) * Math.sin((sunPos.azimuth - 180) * Math.PI / 180);
+    const azimuthRad = sunPos.azimuth * Math.PI / 180;
+    const sunLat = lat + sunDistance * Math.cos(displayAltitude * Math.PI / 180) * Math.cos(azimuthRad);
+    const sunLon = lon + sunDistance * Math.cos(displayAltitude * Math.PI / 180) * Math.sin(azimuthRad);
     
     // Validate calculated sun position
     if (isNaN(sunLat) || isNaN(sunLon)) {
@@ -1033,8 +1236,9 @@ function drawSunPath() {
             
             if (sunPos.altitude > 0) {
                 const sunDistance = 0.03;
-                const sunLat = targetLat + sunDistance * Math.cos(sunPos.altitude * Math.PI / 180) * Math.cos((sunPos.azimuth - 180) * Math.PI / 180);
-                const sunLon = targetLon + sunDistance * Math.cos(sunPos.altitude * Math.PI / 180) * Math.sin((sunPos.azimuth - 180) * Math.PI / 180);
+                const azimuthRad = sunPos.azimuth * Math.PI / 180;
+                const sunLat = targetLat + sunDistance * Math.cos(sunPos.altitude * Math.PI / 180) * Math.cos(azimuthRad);
+                const sunLon = targetLon + sunDistance * Math.cos(sunPos.altitude * Math.PI / 180) * Math.sin(azimuthRad);
                 pathPoints.push([sunLat, sunLon]);
             }
         }
