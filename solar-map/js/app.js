@@ -471,6 +471,23 @@ async function getLocationTimezoneOffset(lat, lon, date) {
         return 8 * 60;
     }
     
+    // Canada timezones (more accurate than longitude-based)
+    if (lat >= 41 && lat <= 84 && lon >= -141 && lon <= -52) {
+        const month = date.getUTCMonth();
+        const day = date.getUTCDate();
+        const isDST = (month > 2 && month < 10) || (month === 2 && day >= 8) || (month === 10 && day < 7);
+        // Pacific: British Columbia (west)
+        if (lon >= -141 && lon < -125) return (isDST ? -7 : -8) * 60;
+        // Mountain: Alberta, BC interior, Yukon, Northwest Territories
+        if (lon >= -125 && lon < -102) return (isDST ? -6 : -7) * 60;
+        // Central: Saskatchewan, Manitoba, Nunavut (west)
+        if (lon >= -102 && lon < -85) return (isDST ? -5 : -6) * 60;
+        // Eastern: Ontario, Quebec, Nunavut (east)
+        if (lon >= -85 && lon < -66) return (isDST ? -4 : -5) * 60;
+        // Atlantic: Maritime provinces
+        return (isDST ? -3 : -4) * 60;
+    }
+    
     // USA timezones
     if (lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66) {
         const month = date.getUTCMonth();
@@ -1025,6 +1042,22 @@ function getTimezoneOffsetSync(lat, lon, date) {
             return isDST ? 10.5 : 9.5;
         }
         return 8;
+    }
+    // Canada timezones (more accurate than longitude-based)
+    if (lat >= 41 && lat <= 84 && lon >= -141 && lon <= -52) {
+        const month = date.getUTCMonth();
+        const day = date.getUTCDate();
+        const isDST = (month > 2 && month < 10) || (month === 2 && day >= 8) || (month === 10 && day < 7);
+        // Pacific: British Columbia (west)
+        if (lon >= -141 && lon < -125) return isDST ? -7 : -8;
+        // Mountain: Alberta, BC interior, Yukon, Northwest Territories
+        if (lon >= -125 && lon < -102) return isDST ? -6 : -7;
+        // Central: Saskatchewan, Manitoba, Nunavut (west)
+        if (lon >= -102 && lon < -85) return isDST ? -5 : -6;
+        // Eastern: Ontario, Quebec, Nunavut (east)
+        if (lon >= -85 && lon < -66) return isDST ? -4 : -5;
+        // Atlantic: Maritime provinces
+        return isDST ? -3 : -4;
     }
     // USA timezones
     if (lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66) {
