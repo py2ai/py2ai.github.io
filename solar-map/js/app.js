@@ -428,6 +428,19 @@ async function getLocationTimezoneOffset(lat, lon, date) {
     // Use a simple but accurate timezone calculation based on longitude
     // with known timezone exceptions for specific regions
     
+    // Iran (UTC+3:30) - specific to Iran only
+    if (lon >= 44 && lon <= 64 && lat >= 25 && lat <= 40) {
+        // Exclude UAE and other Gulf states (they use UTC+4)
+        if (lon >= 51 && lon <= 57 && lat >= 22 && lat <= 26) {
+            return 4 * 60; // UAE uses UTC+4
+        }
+        // Exclude Turkmenistan (uses UTC+5)
+        if (lat >= 35 && lon >= 52 && lon <= 67) {
+            return 5 * 60; // Turkmenistan uses UTC+5
+        }
+        return 3.5 * 60; // UTC+3:30, no DST
+    }
+    
     // Pakistan (UTC+5)
     if (lon >= 60 && lon <= 80 && lat >= 23 && lat <= 37) {
         return 5 * 60; // UTC+5, no DST
@@ -1009,6 +1022,19 @@ function updateCurrentTimeDisplay() {
 
 // Synchronous timezone offset calculation (same logic as async version)
 function getTimezoneOffsetSync(lat, lon, date) {
+    // Iran (UTC+3:30) - specific to Iran only
+    if (lon >= 44 && lon <= 64 && lat >= 25 && lat <= 40) {
+        // Exclude UAE and other Gulf states (they use UTC+4)
+        if (lon >= 51 && lon <= 57 && lat >= 22 && lat <= 26) {
+            return 4;
+        }
+        // Exclude Turkmenistan (uses UTC+5)
+        if (lat >= 35 && lon >= 52 && lon <= 67) {
+            return 5;
+        }
+        return 3.5;
+    }
+    
     // Pakistan (UTC+5)
     if (lon >= 60 && lon <= 80 && lat >= 23 && lat <= 37) {
         return 5;
