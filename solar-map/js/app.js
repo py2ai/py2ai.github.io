@@ -191,6 +191,9 @@ function initControls() {
 
     // Search
     initSearch();
+    
+    // Geolocation
+    initGeolocation();
 
     // Quick action buttons
     document.getElementById('btn-noon').addEventListener('click', () => setTime(12 * 60));
@@ -392,6 +395,72 @@ async function initSearch() {
     searchBtn.addEventListener('click', performSearch);
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') performSearch();
+    });
+}
+
+// Initialize geolocation button
+function initGeolocation() {
+    const getLocationBtn = document.getElementById('get-location-btn');
+    const searchInput = document.getElementById('location-search');
+    
+    if (!getLocationBtn) return;
+    
+    getLocationBtn.addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+        
+        getLocationBtn.disabled = true;
+        getLocationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                map.setView([lat, lon], 14);
+                
+                if (selectedLocation) {
+                    selectedLocation = { lat, lon };
+                }
+                
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+                marker = L.marker([lat, lon]).addTo(map);
+                marker.bindPopup(`<b>Your Location</b><br>Lat: ${lat.toFixed(4)}<br>Lon: ${lon.toFixed(4)}`).openPopup();
+                
+                searchInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                
+                getLocationBtn.disabled = false;
+                getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>';
+                
+                updateSolarData();
+            },
+            function(error) {
+                let errorMsg = 'Unable to get your location';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = 'Location permission denied. Please enable location access.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = 'Location request timed out.';
+                        break;
+                }
+                alert(errorMsg);
+                getLocationBtn.disabled = false;
+                getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>';
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
     });
 }
 
