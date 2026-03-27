@@ -122,16 +122,19 @@ function addLegend() {
         div.innerHTML = `
             <h4><i class="fas fa-sun"></i> Sun Intensity</h4>
             <div class="color-scale">
-                <div style="background: #1a1a2e;"></div>
-                <div style="background: #2c3e50;"></div>
-                <div style="background: #34495e;"></div>
-                <div style="background: #f39c12;"></div>
-                <div style="background: #f1c40f;"></div>
-                <div style="background: #f9e79f;"></div>
+                <div style="background: #1a1a2e;" title="0 W/m²"></div>
+                <div style="background: #2c3e50;" title="200 W/m²"></div>
+                <div style="background: #34495e;" title="400 W/m²"></div>
+                <div style="background: #f39c12;" title="600 W/m²"></div>
+                <div style="background: #f1c40f;" title="800 W/m²"></div>
+                <div style="background: #f9e79f;" title="1000 W/m²"></div>
             </div>
             <div class="labels">
-                <span>0 W/m²</span>
-                <span>500</span>
+                <span>0</span>
+                <span>200</span>
+                <span>400</span>
+                <span>600</span>
+                <span>800</span>
                 <span>1000 W/m²</span>
             </div>
         `;
