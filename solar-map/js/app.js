@@ -10,6 +10,7 @@ let currentDate = new Date();
 let currentMinutes = 720; // 12:00 noon
 let sunIntensityLayer = null;
 let sunPathLayer = null;
+let panelGridLayer = null;
 let marker = null;
 let selectedLocation = null; // Store clicked location
 
@@ -34,44 +35,97 @@ function initMap() {
         zoomControl: true
     });
 
-    // Base layers
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    });
+    const tileProviders = [
+        {
+            name: 'OpenStreetMap HOT',
+            url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
+        },
+        {
+            name: 'OpenStreetMap',
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        },
+        {
+            name: 'CartoDB Light',
+            url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        },
+        {
+            name: 'Esri Satellite',
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }
+    ];
 
-    const osmHotLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
-    });
+    let currentProviderIndex = 0;
+    let currentLayer = null;
+    let fallbackTimeout = null;
+    let tileErrorCount = 0;
+    const MAX_TILE_ERRORS = 5;
 
-    const cartoDBLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    });
+    function createTileLayer(providerIndex) {
+        const provider = tileProviders[providerIndex];
+        const layer = L.tileLayer(provider.url, {
+            maxZoom: 19,
+            attribution: provider.attribution
+        });
+        
+        layer.on('tileerror', function(error) {
+            tileErrorCount++;
+            console.warn(`Tile error on ${provider.name} (${tileErrorCount} errors)`);
+            
+            if (tileErrorCount >= MAX_TILE_ERRORS && providerIndex < tileProviders.length - 1) {
+                console.log(`Switching from ${provider.name} to ${tileProviders[providerIndex + 1].name}`);
+                switchToFallback(providerIndex + 1);
+            }
+        });
+        
+        layer.on('tileload', function() {
+            tileErrorCount = 0;
+        });
+        
+        return layer;
+    }
 
+    function switchToFallback(newIndex) {
+        if (newIndex >= tileProviders.length) {
+            console.error('All tile providers failed');
+            return;
+        }
+        
+        if (currentLayer) {
+            map.removeLayer(currentLayer);
+        }
+        
+        currentProviderIndex = newIndex;
+        tileErrorCount = 0;
+        currentLayer = createTileLayer(newIndex);
+        currentLayer.addTo(map);
+        
+        console.log(`Now using: ${tileProviders[newIndex].name}`);
+    }
+
+    currentLayer = createTileLayer(0);
+    currentLayer.addTo(map);
+
+    const osmHotLayer = currentLayer;
+    const osmLayer = createTileLayer(1);
+    const cartoDBLayer = createTileLayer(2);
     const cartoDBDarkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     });
-
-    const esriSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    });
-
+    const esriSatelliteLayer = createTileLayer(3);
     const esriTopoLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
         attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
     });
 
-    // Add default layer
-    osmLayer.addTo(map);
-
     // Layer control
     const baseLayers = {
-        'OpenStreetMap': osmLayer,
         'OpenStreetMap HOT': osmHotLayer,
+        'OpenStreetMap': osmLayer,
         'CartoDB Light': cartoDBLayer,
         'CartoDB Dark': cartoDBDarkLayer,
         'Esri Satellite': esriSatelliteLayer,
@@ -160,6 +214,11 @@ function onMapClick(e) {
     // Store selected location
     selectedLocation = { lat, lon };
     
+    // Update tilt slider to optimal value (minimum 1 degree)
+    const optimalTilt = Math.max(1, Math.abs(lat).toFixed(0));
+    document.getElementById('tilt-slider').value = optimalTilt;
+    document.getElementById('tilt-value').textContent = optimalTilt;
+    
     // Remove existing marker
     if (marker) {
         map.removeLayer(marker);
@@ -194,6 +253,10 @@ function initControls() {
     
     // Geolocation
     initGeolocation();
+    
+    // Solar panel controls
+    initPanelControls();
+    updateSystemSummary();
 
     // Quick action buttons
     document.getElementById('btn-noon').addEventListener('click', () => setTime(12 * 60));
@@ -421,9 +484,12 @@ function initGeolocation() {
                 
                 map.setView([lat, lon], 14);
                 
-                if (selectedLocation) {
-                    selectedLocation = { lat, lon };
-                }
+                selectedLocation = { lat, lon };
+                
+                // Update tilt slider to optimal value (minimum 1 degree)
+                const optimalTilt = Math.max(1, Math.abs(lat).toFixed(0));
+                document.getElementById('tilt-slider').value = optimalTilt;
+                document.getElementById('tilt-value').textContent = optimalTilt;
                 
                 if (marker) {
                     map.removeLayer(marker);
@@ -818,10 +884,16 @@ function updateSolarData() {
         drawSunPath();
     }
     
+    // Update panel grid if visible
+    drawPanelGrid();
+    
     // Update info box if location is selected
     if (selectedLocation) {
         updateInfoBox(selectedLocation.lat, selectedLocation.lon, sunPos, irradiance);
     }
+    
+    // Update energy displays
+    updateEnergyDisplays();
 }
 
 // Update info box for selected location
@@ -1083,6 +1155,366 @@ function calculateYearlyEnergy(lat, lon, tilt, azimuth) {
     }
     
     return totalEnergy;
+}
+
+// Get solar panel configuration from UI
+function getPanelConfig() {
+    const width = parseFloat(document.getElementById('panel-width').value) || 0;
+    const height = parseFloat(document.getElementById('panel-height').value) || 0;
+    const rows = parseInt(document.getElementById('grid-rows').value) || 0;
+    const cols = parseInt(document.getElementById('grid-cols').value) || 0;
+    
+    return {
+        width: Math.max(0, width),
+        height: Math.max(0, height),
+        rows: Math.max(0, rows),
+        cols: Math.max(0, cols),
+        wattage: parseFloat(document.getElementById('panel-wattage').value) || 400,
+        efficiency: parseFloat(document.getElementById('panel-efficiency').value) || 20,
+        tilt: parseFloat(document.getElementById('tilt-slider').value) || 34,
+        azimuth: parseFloat(document.getElementById('azimuth-slider').value) || 180
+    };
+}
+
+// Get direction name from azimuth angle
+function getAzimuthDirectionName(azimuth) {
+    if (azimuth >= 337.5 || azimuth < 22.5) return 'North';
+    if (azimuth >= 22.5 && azimuth < 67.5) return 'NE';
+    if (azimuth >= 67.5 && azimuth < 112.5) return 'East';
+    if (azimuth >= 112.5 && azimuth < 157.5) return 'SE';
+    if (azimuth >= 157.5 && azimuth < 202.5) return 'South';
+    if (azimuth >= 202.5 && azimuth < 247.5) return 'SW';
+    if (azimuth >= 247.5 && azimuth < 292.5) return 'West';
+    if (azimuth >= 292.5 && azimuth < 337.5) return 'NW';
+    return 'North';
+}
+
+// Calculate system summary
+function updateSystemSummary() {
+    const config = getPanelConfig();
+    const totalPanels = config.rows * config.cols;
+    const totalArea = (config.width * config.height * totalPanels).toFixed(1);
+    const systemCapacity = (config.wattage * totalPanels / 1000).toFixed(1);
+    
+    document.getElementById('total-panels').textContent = totalPanels;
+    document.getElementById('total-area').textContent = `${totalArea} m²`;
+    document.getElementById('system-capacity').textContent = `${systemCapacity} kWp`;
+    
+    return { totalPanels, totalArea, systemCapacity };
+}
+
+// Calculate current power output based on sun position
+function calculateCurrentPower(lat, tilt) {
+    if (!selectedLocation) return 0;
+    
+    const config = getPanelConfig();
+    
+    // Return 0 if any dimension is 0
+    if (config.width <= 0 || config.height <= 0 || config.rows <= 0 || config.cols <= 0) {
+        return 0;
+    }
+    
+    const panelAzimuth = config.azimuth;
+    
+    const dateStr = document.getElementById('date-picker').value;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, currentMinutes / 60, currentMinutes % 60, 0));
+    
+    const sunPos = calculateSunPosition(lat, selectedLocation.lon, date);
+    
+    if (sunPos.altitude <= 0) return 0;
+    
+    const solarConstant = 1367;
+    const altitudeRad = sunPos.altitude * Math.PI / 180;
+    const airMass = 1 / (Math.sin(altitudeRad) + 0.50572 * Math.pow(96.07995 - sunPos.altitude, -1.6364));
+    const atmosphericTransmittance = Math.pow(0.7, Math.pow(airMass, 0.678));
+    
+    const irradiance = solarConstant * atmosphericTransmittance * Math.sin(altitudeRad);
+    
+    const tiltRad = tilt * Math.PI / 180;
+    const panelAzimuthRad = panelAzimuth * Math.PI / 180;
+    const sunAzimuthRad = sunPos.azimuth * Math.PI / 180;
+    
+    const cosIncidence = Math.sin(altitudeRad) * Math.cos(tiltRad) + 
+                         Math.cos(altitudeRad) * Math.sin(tiltRad) * Math.cos(sunAzimuthRad - panelAzimuthRad);
+    
+    const incidenceAngle = Math.acos(Math.max(-1, Math.min(1, cosIncidence)));
+    
+    const effectiveIrradiance = irradiance * Math.cos(incidenceAngle);
+    const panelEfficiency = config.efficiency / 100;
+    const systemEfficiency = 0.85;
+    
+    const totalPanels = config.rows * config.cols;
+    const panelArea = config.width * config.height;
+    const totalArea = totalPanels * panelArea;
+    
+    const power = (effectiveIrradiance * totalArea * panelEfficiency * systemEfficiency) / 1000;
+    
+    return Math.max(0, power);
+}
+
+// Calculate daily energy for selected date with panel config
+function calculateDailyEnergyForPanel(lat, tilt) {
+    if (!selectedLocation) return 0;
+    
+    const config = getPanelConfig();
+    
+    // Return 0 if any dimension is 0
+    if (config.width <= 0 || config.height <= 0 || config.rows <= 0 || config.cols <= 0) {
+        return 0;
+    }
+    
+    const panelAzimuth = config.azimuth;
+    
+    const dateStr = document.getElementById('date-picker').value;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    
+    let totalEnergy = 0;
+    
+    for (let hour = 0; hour < 24; hour++) {
+        for (let min = 0; min < 60; min += 15) {
+            const date = new Date(Date.UTC(year, month - 1, day, hour, min, 0));
+            const sunPos = calculateSunPosition(lat, selectedLocation.lon, date);
+            
+            if (sunPos.altitude > 0) {
+                const solarConstant = 1367;
+                const altitudeRad = sunPos.altitude * Math.PI / 180;
+                const airMass = 1 / (Math.sin(altitudeRad) + 0.50572 * Math.pow(96.07995 - sunPos.altitude, -1.6364));
+                const atmosphericTransmittance = Math.pow(0.7, Math.pow(airMass, 0.678));
+                
+                const irradiance = solarConstant * atmosphericTransmittance * Math.sin(altitudeRad);
+                
+                const tiltRad = tilt * Math.PI / 180;
+                const panelAzimuthRad = panelAzimuth * Math.PI / 180;
+                const sunAzimuthRad = sunPos.azimuth * Math.PI / 180;
+                
+                const cosIncidence = Math.sin(altitudeRad) * Math.cos(tiltRad) + 
+                                     Math.cos(altitudeRad) * Math.sin(tiltRad) * Math.cos(sunAzimuthRad - panelAzimuthRad);
+                
+                const incidenceAngle = Math.acos(Math.max(-1, Math.min(1, cosIncidence)));
+                
+                const effectiveIrradiance = irradiance * Math.cos(incidenceAngle);
+                const panelEfficiency = config.efficiency / 100;
+                const systemEfficiency = 0.85;
+                
+                const totalPanels = config.rows * config.cols;
+                const panelArea = config.width * config.height;
+                const totalArea = totalPanels * panelArea;
+                
+                const power = (effectiveIrradiance * totalArea * panelEfficiency * systemEfficiency) / 1000;
+                totalEnergy += power * (15 / 60);
+            }
+        }
+    }
+    
+    return Math.max(0, totalEnergy);
+}
+
+// Calculate annual energy with custom tilt
+function calculateAnnualEnergyWithTilt(lat, tilt) {
+    const config = getPanelConfig();
+    
+    // Return 0 if any dimension is 0
+    if (config.width <= 0 || config.height <= 0 || config.rows <= 0 || config.cols <= 0) {
+        return 0;
+    }
+    
+    const azimuth = config.azimuth;
+    const baseEnergy = calculateYearlyEnergy(lat, selectedLocation ? selectedLocation.lon : 0, tilt, azimuth);
+    
+    const totalPanels = config.rows * config.cols;
+    const panelArea = config.width * config.height;
+    const totalArea = totalPanels * panelArea;
+    const panelEfficiency = config.efficiency / 100;
+    
+    const annualEnergy = baseEnergy * totalArea * panelEfficiency * 0.85;
+    
+    return annualEnergy;
+}
+
+// Update all energy displays
+function updateEnergyDisplays() {
+    if (!selectedLocation) {
+        document.getElementById('current-power').textContent = '-- kW';
+        document.getElementById('today-energy').textContent = '-- kWh';
+        document.getElementById('monthly-energy').textContent = '-- kWh';
+        document.getElementById('annual-energy').textContent = '-- kWh';
+        return;
+    }
+    
+    const config = getPanelConfig();
+    const lat = selectedLocation.lat;
+    
+    const currentPower = calculateCurrentPower(lat, config.tilt);
+    const dailyEnergy = calculateDailyEnergyForPanel(lat, config.tilt);
+    const annualEnergy = calculateAnnualEnergyWithTilt(lat, config.tilt);
+    const monthlyEnergy = annualEnergy / 12;
+    
+    document.getElementById('current-power').textContent = `${currentPower.toFixed(2)} kW`;
+    document.getElementById('today-energy').textContent = `${dailyEnergy.toFixed(1)} kWh`;
+    document.getElementById('monthly-energy').textContent = `${monthlyEnergy.toFixed(0)} kWh`;
+    document.getElementById('annual-energy').textContent = `${annualEnergy.toFixed(0)} kWh`;
+}
+
+// Initialize solar panel controls
+function initPanelControls() {
+    const tiltSlider = document.getElementById('tilt-slider');
+    const tiltValue = document.getElementById('tilt-value');
+    const resetTiltBtn = document.getElementById('reset-tilt');
+    
+    tiltSlider.addEventListener('input', function() {
+        tiltValue.textContent = this.value;
+        updateEnergyDisplays();
+        drawPanelGrid();
+    });
+    
+    resetTiltBtn.addEventListener('click', function() {
+        if (selectedLocation) {
+            const optimalTilt = Math.max(1, Math.abs(selectedLocation.lat).toFixed(0));
+            tiltSlider.value = optimalTilt;
+            tiltValue.textContent = optimalTilt;
+            updateEnergyDisplays();
+            drawPanelGrid();
+        }
+    });
+    
+    const azimuthSlider = document.getElementById('azimuth-slider');
+    const azimuthValue = document.getElementById('azimuth-value');
+    const azimuthDirection = document.getElementById('azimuth-direction');
+    const resetAzimuthBtn = document.getElementById('reset-azimuth');
+    
+    azimuthSlider.addEventListener('input', function() {
+        azimuthValue.textContent = this.value;
+        azimuthDirection.textContent = getAzimuthDirectionName(parseFloat(this.value));
+        updateEnergyDisplays();
+        drawPanelGrid();
+    });
+    
+    resetAzimuthBtn.addEventListener('click', function() {
+        if (selectedLocation) {
+            const optimalAzimuth = selectedLocation.lat >= 0 ? 180 : 0;
+            azimuthSlider.value = optimalAzimuth;
+            azimuthValue.textContent = optimalAzimuth;
+            azimuthDirection.textContent = getAzimuthDirectionName(optimalAzimuth);
+            updateEnergyDisplays();
+            drawPanelGrid();
+        }
+    });
+    
+    const inputs = ['panel-width', 'panel-height', 'grid-rows', 'grid-cols', 'panel-wattage', 'panel-efficiency'];
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            updateSystemSummary();
+            updateEnergyDisplays();
+            drawPanelGrid();
+        });
+    });
+    
+    document.getElementById('show-panel-grid').addEventListener('change', function() {
+        drawPanelGrid();
+    });
+}
+
+// Draw solar panel grid on map
+function drawPanelGrid() {
+    if (panelGridLayer) {
+        map.removeLayer(panelGridLayer);
+    }
+    
+    if (!selectedLocation || !document.getElementById('show-panel-grid').checked) {
+        return;
+    }
+    
+    const config = getPanelConfig();
+    
+    // Don't draw if any dimension is 0
+    if (config.width <= 0 || config.height <= 0 || config.rows <= 0 || config.cols <= 0) {
+        return;
+    }
+    
+    panelGridLayer = L.layerGroup().addTo(map);
+    
+    const lat = selectedLocation.lat;
+    const lon = selectedLocation.lon;
+    const tilt = config.tilt;
+    const azimuth = config.azimuth;
+    
+    const panelWidthM = config.width;
+    const panelHeightM = config.height;
+    const rows = config.rows;
+    const cols = config.cols;
+    
+    const metersPerDegreeLat = 111320;
+    const metersPerDegreeLon = 111320 * Math.cos(lat * Math.PI / 180);
+    
+    const panelWidthDegLon = panelWidthM / metersPerDegreeLon;
+    const panelHeightDegLat = panelHeightM / metersPerDegreeLat;
+    
+    const gapM = 0.1;
+    const gapDegLat = gapM / metersPerDegreeLat;
+    const gapDegLon = gapM / metersPerDegreeLon;
+    
+    const tiltRad = tilt * Math.PI / 180;
+    const cosTilt = Math.cos(tiltRad);
+    
+    const projectedWidthDeg = panelWidthDegLon;
+    const projectedHeightDeg = panelHeightDegLat * cosTilt;
+    
+    const cellSpacingEW = panelWidthDegLon + gapDegLon;
+    const cellSpacingNS = panelHeightDegLat + gapDegLat;
+    
+    const azimuthRad = azimuth * Math.PI / 180;
+    const cosAz = Math.cos(azimuthRad);
+    const sinAz = Math.sin(azimuthRad);
+    
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const offsetEW = (col - (cols - 1) / 2) * cellSpacingEW;
+            const offsetNS = (row - (rows - 1) / 2) * cellSpacingNS;
+            
+            const rotatedOffsetEW = offsetEW * cosAz - offsetNS * sinAz;
+            const rotatedOffsetNS = offsetEW * sinAz + offsetNS * cosAz;
+            
+            const panelCenterLat = lat - rotatedOffsetNS;
+            const panelCenterLon = lon + rotatedOffsetEW;
+            
+            const halfWidthEW = projectedWidthDeg / 2;
+            const halfHeightNS = projectedHeightDeg / 2;
+            
+            const cornerOffsets = [
+                [-halfHeightNS, -halfWidthEW],
+                [-halfHeightNS, halfWidthEW],
+                [halfHeightNS, halfWidthEW],
+                [halfHeightNS, -halfWidthEW]
+            ];
+            
+            const corners = cornerOffsets.map(([offsetNS, offsetEW]) => {
+                const rotEW = offsetEW * cosAz - offsetNS * sinAz;
+                const rotNS = offsetEW * sinAz + offsetNS * cosAz;
+                return [panelCenterLat - rotNS, panelCenterLon + rotEW];
+            });
+            
+            const panelColor = `hsl(${45 - tilt * 0.3}, 80%, 50%)`;
+            
+            const panelRect = L.polygon(corners, {
+                color: '#2c3e50',
+                weight: 1,
+                fillColor: panelColor,
+                fillOpacity: 0.7
+            });
+            
+            const directionName = getAzimuthDirectionName(azimuth);
+            
+            panelRect.bindPopup(`
+                <b>Panel ${row + 1}-${col + 1}</b><br>
+                Size: ${panelWidthM}m × ${panelHeightM}m<br>
+                Tilt: ${tilt}°<br>
+                Azimuth: ${azimuth}° (${directionName})
+            `);
+            
+            panelGridLayer.addLayer(panelRect);
+        }
+    }
 }
 
 // Update current time display
