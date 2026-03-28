@@ -1200,14 +1200,22 @@ function calculateYearlyEnergy(lat, lon, tilt, azimuth) {
 function getPanelConfig() {
     const width = parseFloat(document.getElementById('panel-width').value) || 0;
     const height = parseFloat(document.getElementById('panel-height').value) || 0;
-    const rows = parseInt(document.getElementById('grid-rows').value) || 0;
-    const cols = parseInt(document.getElementById('grid-cols').value) || 0;
+    let rows = parseInt(document.getElementById('grid-rows').value) || 0;
+    let cols = parseInt(document.getElementById('grid-cols').value) || 0;
+    
+    // Limit grid size for performance (max 80x80 = 6400 panels)
+    rows = Math.min(80, Math.max(1, rows));
+    cols = Math.min(80, Math.max(1, cols));
+    
+    // Update input fields if values were clamped
+    document.getElementById('grid-rows').value = rows;
+    document.getElementById('grid-cols').value = cols;
     
     return {
         width: Math.max(0, width),
         height: Math.max(0, height),
-        rows: Math.max(0, rows),
-        cols: Math.max(0, cols),
+        rows: rows,
+        cols: cols,
         wattage: parseFloat(document.getElementById('panel-wattage').value) || 400,
         efficiency: parseFloat(document.getElementById('panel-efficiency').value) || 20,
         tilt: parseFloat(document.getElementById('tilt-slider').value) || 34,
