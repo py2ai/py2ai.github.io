@@ -16,8 +16,6 @@ let selectedLocation = null; // Store clicked location
 
 // Initialize the application
 function initApp() {
-    console.log('Initializing Sunshine Intensity Map...');
-    
     initMap();
     initControls();
     updateSolarData();
@@ -73,16 +71,18 @@ function initMap() {
         
         layer.on('tileerror', function(error) {
             tileErrorCount++;
-            console.warn(`Tile error on ${provider.name} (${tileErrorCount} errors)`);
             
             if (tileErrorCount >= MAX_TILE_ERRORS && providerIndex < tileProviders.length - 1) {
-                console.log(`Switching from ${provider.name} to ${tileProviders[providerIndex + 1].name}`);
                 switchToFallback(providerIndex + 1);
             }
         });
         
         layer.on('tileload', function() {
             tileErrorCount = 0;
+            const loadingStatus = document.getElementById('loading-status');
+            if (loadingStatus) {
+                loadingStatus.style.display = 'none';
+            }
         });
         
         return layer;
@@ -90,7 +90,6 @@ function initMap() {
 
     function switchToFallback(newIndex) {
         if (newIndex >= tileProviders.length) {
-            console.error('All tile providers failed');
             return;
         }
         
@@ -102,8 +101,6 @@ function initMap() {
         tileErrorCount = 0;
         currentLayer = createTileLayer(newIndex);
         currentLayer.addTo(map);
-        
-        console.log(`Now using: ${tileProviders[newIndex].name}`);
     }
 
     currentLayer = createTileLayer(0);
@@ -161,7 +158,6 @@ function initMap() {
                 updateSolarData();
             },
             (error) => {
-                console.log('Geolocation error:', error);
             }
         );
     }
@@ -209,8 +205,6 @@ function onMapClick(e) {
         return; // Don't do anything if checkbox is not checked
     }
     
-    console.log('Map clicked at:', lat, lon);
-    
     // Store selected location
     selectedLocation = { lat, lon };
     
@@ -226,7 +220,11 @@ function onMapClick(e) {
     
     // Add new marker with popup
     marker = L.marker([lat, lon]).addTo(map);
-    marker.bindPopup(`<b>Loading...</b>`).openPopup();
+    
+    const showTooltips = document.getElementById('show-tooltips');
+    if (!showTooltips || showTooltips.checked) {
+        marker.bindPopup(`<b>Loading...</b>`).openPopup();
+    }
     
     // Show info box
     document.getElementById('location-info').style.display = 'block';
@@ -406,53 +404,94 @@ function initClockSlider() {
 }
 
 // Initialize search
-async function initSearch() {
+function initSearch() {
     const searchInput = document.getElementById('location-search');
     const searchBtn = document.getElementById('search-btn');
     const resultsContainer = document.getElementById('location-results');
+
+    if (!searchInput || !searchBtn || !resultsContainer) {
+        return;
+    }
 
     async function performSearch() {
         const query = searchInput.value.trim();
         if (!query) return;
 
-        // Check for coordinates
+        resultsContainer.innerHTML = '<div class="small text-muted">Searching...</div>';
+
         const coordMatch = query.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
         if (coordMatch) {
             const lat = parseFloat(coordMatch[1]);
             const lon = parseFloat(coordMatch[2]);
+            selectedLocation = { lat, lon };
             map.setView([lat, lon], 14);
             resultsContainer.innerHTML = '';
+            updateSolarData();
             return;
         }
 
-        // Use Nominatim for geocoding
+        let results = null;
+
+        // Try Photon API first (better CORS support)
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
-            const results = await response.json();
-            
-            if (results.length === 0) {
-                resultsContainer.innerHTML = '<div class="alert alert-warning py-1 small">No results found</div>';
-                return;
+            const photonResponse = await fetch(
+                `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`
+            );
+            if (photonResponse.ok) {
+                const photonData = await photonResponse.json();
+                if (photonData.features && photonData.features.length > 0) {
+                    results = photonData.features.map(f => ({
+                        lat: f.geometry.coordinates[1],
+                        lon: f.geometry.coordinates[0],
+                        display_name: f.properties.name + 
+                            (f.properties.city ? ', ' + f.properties.city : '') + 
+                            (f.properties.state ? ', ' + f.properties.state : '') +
+                            (f.properties.country ? ', ' + f.properties.country : '')
+                    }));
+                }
             }
-
-            resultsContainer.innerHTML = results.map(r => `
-                <div class="list-group-item list-group-item-action py-1 small" 
-                     data-lat="${r.lat}" data-lon="${r.lon}" style="cursor: pointer;">
-                    ${r.display_name.substring(0, 50)}...
-                </div>
-            `).join('');
-
-            resultsContainer.querySelectorAll('.list-group-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const lat = parseFloat(item.dataset.lat);
-                    const lon = parseFloat(item.dataset.lon);
-                    map.setView([lat, lon], 14);
-                    resultsContainer.innerHTML = '';
-                });
-            });
-        } catch (error) {
-            resultsContainer.innerHTML = '<div class="alert alert-danger py-1 small">Search failed</div>';
+        } catch (e) {
         }
+
+        // Fallback to Nominatim if Photon fails
+        if (!results || results.length === 0) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+                );
+                if (response.ok) {
+                    results = await response.json();
+                }
+            } catch (e) {
+            }
+        }
+        
+        if (!results || results.length === 0) {
+            resultsContainer.innerHTML = '<div class="alert alert-warning py-1 small">No results found</div>';
+            return;
+        }
+
+        resultsContainer.innerHTML = results.map(r => `
+            <div class="list-group-item list-group-item-action py-1 small" 
+                 data-lat="${r.lat}" data-lon="${r.lon}" style="cursor: pointer;">
+                ${r.display_name.substring(0, 50)}...
+            </div>
+        `).join('');
+
+        resultsContainer.querySelectorAll('.list-group-item').forEach(item => {
+            const handleSelect = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const lat = parseFloat(item.dataset.lat);
+                const lon = parseFloat(item.dataset.lon);
+                selectedLocation = { lat, lon };
+                map.setView([lat, lon], 14);
+                resultsContainer.innerHTML = '';
+                updateSolarData();
+            };
+            item.addEventListener('click', handleSelect);
+            item.addEventListener('touchend', handleSelect);
+        });
     }
 
     searchBtn.addEventListener('click', performSearch);
@@ -495,7 +534,11 @@ function initGeolocation() {
                     map.removeLayer(marker);
                 }
                 marker = L.marker([lat, lon]).addTo(map);
-                marker.bindPopup(`<b>Your Location</b><br>Lat: ${lat.toFixed(4)}<br>Lon: ${lon.toFixed(4)}`).openPopup();
+                
+                const showTooltipsGeo = document.getElementById('show-tooltips');
+                if (!showTooltipsGeo || showTooltipsGeo.checked) {
+                    marker.bindPopup(`<b>Your Location</b><br>Lat: ${lat.toFixed(4)}<br>Lon: ${lon.toFixed(4)}`).openPopup();
+                }
                 
                 searchInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
                 
@@ -715,11 +758,9 @@ async function setToSunrise() {
             const minutes = Math.round((normalizedHours - hours) * 60);
             const totalMinutes = hours * 60 + minutes;
             
-            console.log('Sunrise UTC:', data.results.sunrise, '-> Local time:', hours + ':' + minutes.toString().padStart(2,'0'), '(offset:', localOffsetMinutes/60, 'hours)');
             setTime(totalMinutes);
         }
     } catch (error) {
-        console.error('Failed to fetch sunrise time:', error);
         setToSunriseFallback(targetLat, targetLon, dateStr);
     }
 }
@@ -778,11 +819,9 @@ async function setToSunset() {
             const minutes = Math.round((normalizedHours - hours) * 60);
             const totalMinutes = hours * 60 + minutes;
             
-            console.log('Sunset UTC:', data.results.sunset, '-> Local time:', hours + ':' + minutes.toString().padStart(2,'0'), '(offset:', localOffsetMinutes/60, 'hours)');
             setTime(totalMinutes);
         }
     } catch (error) {
-        console.error('Failed to fetch sunset time:', error);
         setToSunsetFallback(targetLat, targetLon, dateStr);
     }
 }
@@ -1413,6 +1452,10 @@ function initPanelControls() {
     document.getElementById('show-panel-grid').addEventListener('change', function() {
         drawPanelGrid();
     });
+    
+    document.getElementById('show-tooltips').addEventListener('change', function() {
+        drawPanelGrid();
+    });
 }
 
 // Draw solar panel grid on map
@@ -1494,23 +1537,25 @@ function drawPanelGrid() {
                 return [panelCenterLat - rotNS, panelCenterLon + rotEW];
             });
             
-            const panelColor = `hsl(${45 - tilt * 0.3}, 80%, 50%)`;
+            const panelColor = `hsl(220, 70%, ${25 + tilt * 0.2}%)`;
             
             const panelRect = L.polygon(corners, {
-                color: '#2c3e50',
+                color: '#1a1a2e',
                 weight: 1,
                 fillColor: panelColor,
-                fillOpacity: 0.7
+                fillOpacity: 0.85
             });
             
-            const directionName = getAzimuthDirectionName(azimuth);
-            
-            panelRect.bindPopup(`
-                <b>Panel ${row + 1}-${col + 1}</b><br>
-                Size: ${panelWidthM}m × ${panelHeightM}m<br>
-                Tilt: ${tilt}°<br>
-                Azimuth: ${azimuth}° (${directionName})
-            `);
+            const showTooltipsPanel = document.getElementById('show-tooltips');
+            if (!showTooltipsPanel || showTooltipsPanel.checked) {
+                const directionName = getAzimuthDirectionName(azimuth);
+                panelRect.bindPopup(`
+                    <b>Panel ${row + 1}-${col + 1}</b><br>
+                    Size: ${panelWidthM}m × ${panelHeightM}m<br>
+                    Tilt: ${tilt}°<br>
+                    Azimuth: ${azimuth}° (${directionName})
+                `);
+            }
             
             panelGridLayer.addLayer(panelRect);
         }
