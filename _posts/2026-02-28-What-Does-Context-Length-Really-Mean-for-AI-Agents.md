@@ -23,7 +23,7 @@ tags:
 - Context Window
 - Tokens
 - AI Agents
-title: "What Does Context Length Really Mean for AI Agents? Understanding AI Working Memory"
+title: "Context Length in AI Agents - Understanding AI Working Memory"
 ---
 
 # What Does Context Length Really Mean for AI Agents? Understanding AI Working Memory

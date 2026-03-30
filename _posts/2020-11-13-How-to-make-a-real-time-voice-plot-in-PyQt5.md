@@ -22,7 +22,7 @@ tags:
 - GUI
 - Real-time Data
 - Microphone
-title: PyQt5 GUI to Plot Live Audio Data from Microphone in Real-Time
+title: PyQt5 GUI to Plot Live Audio from Microphone in Real-Time
 ---
 
 

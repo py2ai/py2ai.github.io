@@ -22,7 +22,7 @@ tags:
 - Job Prep
 - Coding
 - Career
-title: Python Programming Interview Questions and Answers - Complete Guide
+title: Python Programming Interview Questions and Answers
 ---
 
 

@@ -22,7 +22,7 @@ tags:
 - Audio
 - Visualization
 - Real-time
-title: How to Make a Real-Time Voice Plot in Python with Matplotlib
+title: Real-Time Voice Plot in Python with Matplotlib
 ---
 
 

@@ -23,7 +23,7 @@ tags:
 - Data Visualization
 - GUI
 - Drag and Drop
-title: How to Make a Drag and Drop CSV File GUI with Matplotlib and PyQt5
+title: Drag and Drop CSV File GUI with Matplotlib and PyQt5
 ---
 ## PyQt5 and Matplotlib
 

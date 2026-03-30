@@ -22,7 +22,7 @@ tags:
 - Networking
 - Drone
 - Socket Programming
-title: How to Build a Cache Server to Broadcast Drone Video to Multiple Clients
+title: Build a Cache Server to Broadcast Drone Video in Python
 ---
 
 

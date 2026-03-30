@@ -23,7 +23,7 @@ tags:
 - Python
 - Computer Science
 - Optimization
-title: NP Problems Explained - Traveling Salesman, Knapsack, and SAT in Python
+title: NP Problems - Traveling Salesman, Knapsack, and SAT in Python
 ---
 
 

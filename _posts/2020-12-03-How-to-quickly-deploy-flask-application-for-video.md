@@ -22,7 +22,7 @@ tags:
 - PythonAnywhere
 - Web Deployment
 - Python
-title: How to Deploy a Flask Video Processing Application on PythonAnywhere
+title: Deploy Flask Video Processing App on PythonAnywhere
 ---
 
 

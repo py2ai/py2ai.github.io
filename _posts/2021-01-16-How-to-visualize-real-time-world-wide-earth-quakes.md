@@ -22,7 +22,7 @@ tags:
 - Folium
 - Data Visualization
 - Maps
-title: How to Visualize Real-Time Worldwide Earthquakes in Python with Folium
+title: Visualize Real-Time Worldwide Earthquakes in Python with Folium
 ---
 
 

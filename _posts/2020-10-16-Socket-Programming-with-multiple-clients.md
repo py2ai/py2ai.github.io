@@ -22,7 +22,7 @@ tags:
 - OpenCV
 - Video Streaming
 - Multi-client
-title: How to Transfer Video Over Sockets from Multiple Clients in Python
+title: Transfer Video Over Sockets from Multiple Clients in Python
 ---
 
 

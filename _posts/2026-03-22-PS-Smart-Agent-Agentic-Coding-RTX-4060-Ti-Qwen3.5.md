@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "PS Smart Agent - FREE Forever Local Agentic Coding with NVIDIA RTX 4060 Ti 16GB and Qwen3.5:9B"
+title: "PS Smart Agent - FREE Local Agentic Coding with RTX 4060 Ti"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial, Ollama, GPU]
 featured-img: ai-coding-frameworks/ai-coding-frameworks

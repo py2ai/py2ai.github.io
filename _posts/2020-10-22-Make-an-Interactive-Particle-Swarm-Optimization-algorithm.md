@@ -22,7 +22,7 @@ tags:
 - Machine Learning
 - Matplotlib
 - Algorithm
-title: How to Make an Interactive Particle Swarm Optimization Algorithm in Python
+title: Interactive Particle Swarm Optimization Algorithm in Python
 ---
 <br>
 <div align="center">

@@ -22,7 +22,7 @@ tags:
 - Python
 - Audio Capture
 - Audio Recording
-title: How to Get Audio Frames from Microphone in Python - 5 Lines of Code
+title: Get Audio Frames from Microphone in Python - 5 Lines of Code
 ---
 
 Hi friends! Install pyshine version 0.0.6 in Windows OS as:

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "PS Smart Agent - Using Ollama Local and Remote Models with Tool Support"
+title: "PS Smart Agent - Ollama Local and Remote Models Guide"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial, Ollama]
 featured-img: ai-coding-frameworks/ai-coding-frameworks

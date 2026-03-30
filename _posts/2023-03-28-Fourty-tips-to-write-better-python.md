@@ -25,7 +25,7 @@ tags:
 - Python Modules
 - Code Optimization
 - Debugging
-title: 40 Essential Tips to Write Better Python Code - Complete Guide
+title: 40 Essential Tips to Write Better Python Code
 ---
 
 

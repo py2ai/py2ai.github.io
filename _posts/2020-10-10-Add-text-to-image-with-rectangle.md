@@ -21,7 +21,7 @@ tags:
 - Image Processing
 - Computer Vision
 - Annotation
-title: How to Add Text with Transparent Rectangle Background on Images in OpenCV
+title: Add Text with Transparent Rectangle Background in OpenCV
 ---
 
 

@@ -21,7 +21,7 @@ tags:
 - Windows
 - File Management
 - Desktop Organizer
-title: How to Automatically Clean and Organize Windows Desktop with Python
+title: Automatically Clean and Organize Windows Desktop with Python
 ---
 
 

@@ -22,7 +22,7 @@ tags:
 - GUI Design
 - Python
 - Computer Vision
-title: PyQt5 GUI Design and Video Processing with OpenCV - Complete Tutorial
+title: PyQt5 GUI Design and Video Processing with OpenCV
 ---
 
 
