@@ -1,5 +1,5 @@
 ---
-description: "Learn Singular Value Decomposition (SVD) in Python with step-by-step tutorial. Understand matrix factorization, dimensionality reduction, and data compression using NumPy with practical examples."
+description: "Learn Singular Value Decomposition (SVD) in Python with step-by-step tutorial. Understand matrix factorization and dimensionality reduction."
 featured-img: 26072022-python-logo
 keywords:
 - Singular Value Decomposition

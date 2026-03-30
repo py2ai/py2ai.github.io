@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Audio Processing
-description: "Get audio frames from microphone in Python with just 5 lines of code using PyShine library. Simple audio capture tutorial for beginners with step-by-step examples."
+description: "Get audio frames from microphone in Python with 5 lines of code using PyShine library. Simple audio capture tutorial."
 featured-img: audio_in_five_lines
 keywords:
 - python audio capture

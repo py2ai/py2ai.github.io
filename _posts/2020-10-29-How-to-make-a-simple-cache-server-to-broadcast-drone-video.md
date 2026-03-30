@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Networking
-description: "Build a cache server to broadcast drone video to multiple clients in Python. Learn video streaming, socket programming, and multi-client architecture for real-time drone footage."
+description: "Build a cache server to broadcast drone video to multiple clients in Python. Learn video streaming and socket programming."
 featured-img: drone
 keywords:
 - python cache server

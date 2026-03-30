@@ -1,5 +1,5 @@
 ---
-description: "Understanding context length in AI agents and LLMs. Learn what context window means, how tokens work, and how much code you can fit into 128K tokens. Practical examples for developers working with AI coding assistants."
+description: "Understanding context length in AI agents and LLMs. Learn what context window means, how tokens work, and practical examples for developers."
 featured-img: ai-context-length/ai-context-length
 keywords:
 - Context length

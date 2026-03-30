@@ -1,5 +1,5 @@
 ---
-description: "40 essential tips to write better Python code. Learn best practices for IDE setup, debugging, code quality, data structures, functions, performance optimization, and clean code principles."
+description: "40 essential tips to write better Python code. Learn best practices for IDE setup, debugging, code quality, and performance optimization."
 featured-img: 26072022-python-logo
 keywords:
 - python best practices

@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Tools
-description: "Free audio and video screen recorder for Windows 10. Record your screen with system audio and microphone using PyShine Recorder - a Python-based screen capture tool."
+description: "Free audio and video screen recorder for Windows 10. Record screen with system audio and microphone using PyShine Recorder."
 featured-img: free_recorder
 keywords:
 - free screen recorder

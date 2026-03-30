@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Machine Learning
-description: "Build an interactive Particle Swarm Optimization (PSO) algorithm in Python with Matplotlib. Drag targets in real-time and watch particles optimize their path to find the goal."
+description: "Build an interactive Particle Swarm Optimization algorithm in Python with Matplotlib. Drag targets and watch particles optimize."
 featured-img: pso2
 keywords:
 - particle swarm optimization

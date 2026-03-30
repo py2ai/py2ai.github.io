@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Computer Vision
-description: "Learn to add text with transparent rectangle background on images using OpenCV in Python. Perfect for object detection labels, attendance systems, and video annotations."
+description: "Add text with transparent rectangle background on images using OpenCV in Python. Perfect for object detection labels."
 featured-img: putBText
 keywords:
 - opencv text on image

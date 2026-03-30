@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Audio Processing
-description: "Build a PyQt5 GUI to plot live audio data from microphone in real-time. Learn to use Matplotlib with PyQt5 for audio visualization and real-time data plotting."
+description: "Build a PyQt5 GUI to plot live audio from microphone in real-time. Learn Matplotlib with PyQt5 for audio visualization."
 featured-img: audiolive
 keywords:
 - pyqt5 audio plot

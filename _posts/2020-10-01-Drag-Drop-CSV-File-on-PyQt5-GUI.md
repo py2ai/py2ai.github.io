@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Data Visualization
-description: "Create a drag-and-drop CSV file GUI with Matplotlib and PyQt5. Load data files easily, visualize with multiple plot themes, and build interactive data visualization apps."
+description: "Create a drag-and-drop CSV file GUI with Matplotlib and PyQt5. Load data files and visualize with multiple plot themes."
 featured-img: pyqt7
 keywords:
 - pyqt5 drag drop

@@ -1,5 +1,5 @@
 ---
-description: "Prepare for Python programming job interviews with common questions and answers. Learn Python concepts, coding challenges, and technical interview tips for software developer positions."
+description: "Prepare for Python programming job interviews with common questions and answers. Learn Python concepts and technical interview tips."
 featured-img: 26072022-python-logo
 keywords:
 - python interview questions

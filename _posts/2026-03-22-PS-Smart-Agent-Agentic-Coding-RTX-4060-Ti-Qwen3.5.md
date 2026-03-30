@@ -4,7 +4,7 @@ title: "PS Smart Agent - FREE Local Agentic Coding with RTX 4060 Ti"
 date: 2026-03-22
 categories: [AI, VS Code, Tutorial, Ollama, GPU]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-description: "100% FREE and OFFLINE agentic coding with PS Smart Agent, local Ollama on NVIDIA RTX 4060 Ti 16GB VRAM using Qwen3.5:9B. No API costs, complete privacy, works without internet."
+description: "FREE offline agentic coding with PS Smart Agent, Ollama on RTX 4060 Ti 16GB using Qwen3.5:9B. No API costs, complete privacy."
 keywords:
 - PS Smart Agent
 - Ollama

@@ -2,7 +2,7 @@
 categories:
 - GUI tutorial series
 - Automation
-description: "Automatically organize and clean your Windows desktop with Python. Sort files by extension into folders, remove clutter, and keep your desktop tidy with this automation script."
+description: "Automatically organize and clean your Windows desktop with Python. Sort files by extension and remove clutter."
 featured-img: desktop
 keywords:
 - python desktop organizer
