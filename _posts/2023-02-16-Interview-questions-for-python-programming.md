@@ -1,15 +1,18 @@
 ---
-description: How to answer job interviews for Python related questions
+description: "Prepare for Python programming job interviews with common questions and answers. Learn Python concepts, coding challenges, and technical interview tips for software developer positions."
 featured-img: 26072022-python-logo
 keywords:
-- Python interview questions
-- Python programming jobs
-- Coding interview tips
-- Python job preparation
-- Python coding questions
-- Python programming
-- Python job interview
-- Technical interview questions
+- python interview questions
+- python job interview
+- python coding interview
+- software developer interview
+- python programming questions
+- technical interview python
+- python interview prep
+- coding interview tips
+categories:
+- Python tutorial series
+- Career
 layout: post
 mathjax: true
 tags:
@@ -18,7 +21,8 @@ tags:
 - Programming
 - Job Prep
 - Coding
-title: Interview questions for python programming jobs
+- Career
+title: Python Programming Interview Questions and Answers - Complete Guide
 ---
 
 
