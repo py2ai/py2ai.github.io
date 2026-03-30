@@ -1,19 +1,29 @@
 ---
 categories:
 - GUI tutorial series
-description: This code will track Mario game character using opencv and python
+- Computer Vision
+- Game Development
+description: "Learn to track Mario game character using OpenCV and Python. Build a real-time object tracking system with computer vision techniques for game automation and analysis."
 featured-img: mario
 keywords:
-- mario
-- development
-- track
-- code
-- programming
-- tutorial
-- python
+- opencv object tracking
+- python game tracking
+- mario tracking opencv
+- computer vision game
+- object detection python
+- opencv tutorial
+- game automation python
+- real-time tracking
 layout: post
 mathjax: true
-title: How to track Mario in Python
+tags:
+- OpenCV
+- Python
+- Computer Vision
+- Game Development
+- Object Tracking
+- Mario
+title: How to Track Mario Game Character with OpenCV and Python
 ---
 
 

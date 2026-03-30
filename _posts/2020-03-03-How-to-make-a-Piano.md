@@ -1,19 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: Hi there! Today we will make a basic piano application. Below is the complete tutorial video which consists of four parts.
+- Game Development
+description: "Create a fully functional piano application in Python using Pygame. Learn to handle keyboard events, play sounds, and build an interactive music app with step-by-step tutorial."
 featured-img: piano
 keywords:
-- piano
-- development
-- code
-- programming
-- tutorial
-- python
-- make
+- python piano
+- pygame piano
+- python music app
+- pygame sound
+- python keyboard events
+- music application python
+- pygame tutorial
+- python game development
 layout: post
 mathjax: true
-title: How to make a piano in Python
+tags:
+- Python
+- Pygame
+- Music
+- GUI
+- Sound
+- Game Development
+title: How to Make a Piano Application in Python with Pygame
 ---
 
 

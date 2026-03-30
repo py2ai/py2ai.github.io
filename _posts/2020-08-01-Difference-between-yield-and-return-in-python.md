@@ -1,20 +1,28 @@
 ---
 categories:
-- GUI tutorial series
-description: This code will demonstrate the key differences between yield and return statements in python
+- Python tutorial series
+- Python Basics
+description: "Understand the key differences between yield and return statements in Python. Learn how generators work, when to use yield vs return, with practical code examples."
 featured-img: yield
 keywords:
-- yield
-- statements
-- development
-- what
-- code
-- programming
-- tutorial
-- are
+- python yield vs return
+- yield statement python
+- python generators
+- return vs yield
+- python iterator
+- generator function python
+- yield keyword python
+- python tutorial
 layout: post
 mathjax: true
-title: What are yield and return statements in Python
+tags:
+- Python
+- Generators
+- Yield
+- Return
+- Iterator
+- Python Basics
+title: Difference Between Yield and Return in Python - Complete Guide
 ---
 
 yield keyword means: 

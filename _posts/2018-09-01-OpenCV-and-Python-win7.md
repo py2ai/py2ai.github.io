@@ -1,20 +1,26 @@
 ---
 categories:
-- tutorial
-description: A quick tutorial to install python and opencv in windows7
+- Python tutorial series
+- Computer Vision
+description: "Complete guide to install OpenCV and Python on Windows 7, 10, and 11. Step-by-step instructions with environment setup, pip installation, and verification."
 featured-img: opencvandpythoninstall
 keywords:
-- opencv
-- development
-- code
-- programming
-- windows
-- tutorial
-- python
-- install
+- install opencv python
+- opencv windows
+- python opencv setup
+- computer vision python
+- opencv installation guide
+- python windows
+- cv2 install
 layout: post
 mathjax: true
-title: How to install OpenCV and Python in windows
+tags:
+- OpenCV
+- Python
+- Windows
+- Installation
+- Computer Vision
+title: How to install OpenCV and Python in Windows
 ---
 
 

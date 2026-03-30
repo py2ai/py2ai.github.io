@@ -1,20 +1,27 @@
 ---
 categories:
 - Python tutorial series
-description: A quick tutorial on Microsoft Excel .xlsx file operations in python
+- Data Processing
+description: "Learn how to read, write, and manipulate Excel .xlsx files in Python using pandas, openpyxl, and xlwings. Complete guide with code examples for data analysis."
 featured-img: xls
 keywords:
-- file
-- read
-- write
-- development
-- code
-- programming
-- xlsx
-- using
+- python excel
+- read xlsx python
+- write excel python
+- pandas excel
+- python xlsx
+- openpyxl tutorial
+- excel automation python
+- xlwings
 layout: post
 mathjax: true
-title: How to read and write in xlsx file using python
+tags:
+- Python
+- Excel
+- Pandas
+- Data Processing
+- XLSX
+title: How to Read and Write Excel XLSX Files in Python
 ---
 
 Welcome to Pyshine  
