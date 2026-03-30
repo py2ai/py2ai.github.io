@@ -1,14 +1,18 @@
 ---
 categories:
 - GUI tutorial series
-description: This tutorial is about using sqlite3 to create, insert data and update SQL table
+- Database
+description: "Learn SQL database basics in Python using sqlite3. Create tables, insert data, update records, and build database-driven applications with this comprehensive SQLite tutorial."
 featured-img: sqlite3
 keywords:
-- SQLite
-- Python SQL
-- Database Tutorial
-- sqlite3
-- SQL Basics
+- python sqlite3 tutorial
+- sql database python
+- sqlite python
+- python database
+- sql basics python
+- sqlite3 create table
+- python db tutorial
+- sql operations python
 layout: post
 mathjax: true
 tags:
@@ -17,7 +21,8 @@ tags:
 - SQL
 - Database
 - Tutorial
-title: Basics about SQL database in Python
+- sqlite3
+title: SQL Database Basics in Python - Complete SQLite3 Tutorial
 ---
 
 

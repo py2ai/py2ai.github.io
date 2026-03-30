@@ -1,14 +1,29 @@
 ---
-description: Hello friends! Lets first talk about NP problems and then get to the coding part.
+description: "Understand NP problems in computer science with Python examples. Learn about Traveling Salesman Problem, Knapsack Problem, and SAT Problem with practical implementations."
 featured-img: 26072022-python-logo
-keywords: NP problems, Traveling Salesman Problem, Knapsack Problem, SAT Problem
+keywords:
+- np problems python
+- traveling salesman problem
+- knapsack problem python
+- computational complexity
+- np complete problems
+- algorithm complexity
+- sat problem
+- computer science theory
+categories:
+- Python tutorial series
+- Computer Science
+- Algorithms
 layout: post
 mathjax: true
 tags:
-- NP problems
-- computational theory
-- algorithms
-title: What are NP problems
+- NP Problems
+- Computational Theory
+- Algorithms
+- Python
+- Computer Science
+- Optimization
+title: NP Problems Explained - Traveling Salesman, Knapsack, and SAT in Python
 ---
 
 

@@ -1,18 +1,27 @@
 ---
-description: Hello friends! There are several variations of the quicksort algorithm, each with its own approach to choosing the pivot element, partitioning the data, and ...
+description: "Learn Quicksort algorithms in Python with multiple partition schemes. Understand Hoare, Lomuto, randomized, and tail recursive quicksort implementations with code examples."
 featured-img: 26072022-python-logo
 keywords:
-- quicksort
-- sorting algorithms
-- Python
+- quicksort python
+- sorting algorithms python
+- hoare partition
+- lomuto partition
+- python sorting
+- quicksort implementation
+- algorithm tutorial
+- python algorithms
+categories:
+- Python tutorial series
+- Algorithms
 layout: post
 mathjax: true
 tags:
-- algorithms
-- quicksort
-- sorting
-- python
-title: How to sort a list using Quicksort algorithms
+- Algorithms
+- Quicksort
+- Sorting
+- Python
+- Computer Science
+title: Quicksort Algorithms in Python - Complete Guide with Multiple Schemes
 ---
 
 

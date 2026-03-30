@@ -1,23 +1,28 @@
 ---
 categories:
-- tutorial
-description: A quick tutorial to divide your pdf file into multiple pages in a folder
+- Python tutorial series
+- Tools
+description: "Split and cut PDF files into individual pages in Python using PyPDF2. Extract specific pages, divide large PDFs, and automate PDF manipulation with this step-by-step tutorial."
 featured-img: 2021-12-24-pdf-paper
 keywords:
-- split PDF in Python
-- PyPDF2 tutorial
-- divide PDF into pages
-- PDF manipulation Python
-- Python script PDF
+- python split pdf
+- pypdf2 tutorial
+- cut pdf pages python
+- pdf manipulation python
+- extract pdf pages
+- python pdf cutter
+- divide pdf file
+- pypdf2 split
 layout: post
 mathjax: true
 tags:
 - Python
 - PDF
 - PyPDF2
-- tutorial
-- script
-title: How to split a pdf into pages in Python
+- Tutorial
+- Script
+- PDF Tools
+title: How to Split a PDF into Pages in Python with PyPDF2
 ---
 
 

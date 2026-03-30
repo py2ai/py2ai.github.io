@@ -1,12 +1,18 @@
 ---
-description: Hi friends! In this part we will learn how to get a list of files in a directory. How to rename the extensions of specific type of files. Imagine you have a ...
+description: "Learn Python file handling tips: list files in directory, batch rename file extensions, and automate file management with glob and os modules. Practical Python automation tutorial."
 featured-img: 26072022-python-logo
 keywords:
-- Python
-- File Handling
-- Renaming Files
-- glob
-- os
+- python rename files
+- batch file rename python
+- python glob tutorial
+- python file handling
+- change file extension python
+- python os module
+- automate file renaming
+- python file management
+categories:
+- Python tutorial series
+- Automation
 layout: post
 mathjax: true
 tags:
@@ -14,7 +20,9 @@ tags:
 - File Handling
 - glob
 - os
-title: Learn Python Tips and Tricks Part 02
+- Automation
+- Batch Processing
+title: Python File Handling - Batch Rename Files and Change Extensions
 ---
 
 
