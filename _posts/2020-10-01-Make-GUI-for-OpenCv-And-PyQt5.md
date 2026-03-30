@@ -1,20 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: Making an OpenCv GUI with brightness and blur adjustment
+- Computer Vision
+description: "Build an OpenCV and PyQt5 GUI application for image processing. Learn to adjust brightness, apply blur effects, and create interactive photo editing tools in Python."
 featured-img: pyqt5
 keywords:
-- based
-- opencv
-- development
-- code
-- gui
-- image
-- programming
-- tutorial
+- opencv pyqt5 gui
+- python image processing
+- photo editor python
+- pyqt5 opencv tutorial
+- image brightness adjustment
+- python blur image
+- gui image processing
+- pyqt5 photo editor
 layout: post
 mathjax: true
-title: How to make OpenCV and PyQt5 based GUI for image...
+tags:
+- Python
+- PyQt5
+- OpenCV
+- GUI
+- Image Processing
+- Photo Editor
+title: How to Make an OpenCV and PyQt5 GUI for Image Processing
 ---
 
 

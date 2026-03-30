@@ -1,22 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: 'PyShine GUI series Lab-1
-
-  Lets import the required libraries'
+- Data Visualization
+description: "Build a Python GUI application with Pyqtgraph for real-time plotting of sine and cosine waves. Learn PyQt5 integration, animations, and interactive graphs."
 featured-img: gui
 keywords:
-- cosine
-- sine
-- development
-- making
-- code
-- gui
-- programming
-- tutorial
+- pyqtgraph tutorial
+- python gui plotting
+- pyqt5 graph
+- real-time plot python
+- sine cosine plot
+- python data visualization
+- pyqtgraph example
+- python gui development
 layout: post
 mathjax: true
-title: Making Python GUI for sine and cosine
+tags:
+- Python
+- PyQt5
+- Pyqtgraph
+- GUI
+- Data Visualization
+- Plotting
+title: Making a Python GUI for Sine and Cosine Plots with Pyqtgraph
 ---
 
 

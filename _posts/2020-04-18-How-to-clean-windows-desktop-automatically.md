@@ -1,20 +1,27 @@
 ---
 categories:
 - GUI tutorial series
-description: This code will arrange files in folders according to their extension to keep windows desktop nice and tidy
+- Automation
+description: "Automatically organize and clean your Windows desktop with Python. Sort files by extension into folders, remove clutter, and keep your desktop tidy with this automation script."
 featured-img: desktop
 keywords:
-- icons
-- development
-- code
-- programming
-- arrange
-- automatically
-- desktop
-- tutorial
+- python desktop organizer
+- automatic file organizer
+- python automation
+- clean desktop script
+- organize files python
+- windows desktop cleaner
+- file management python
+- python script automation
 layout: post
 mathjax: true
-title: How to automatically arrange the desktop icons
+tags:
+- Python
+- Automation
+- Windows
+- File Management
+- Desktop Organizer
+title: How to Automatically Clean and Organize Windows Desktop with Python
 ---
 
 

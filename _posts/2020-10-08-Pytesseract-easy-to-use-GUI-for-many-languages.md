@@ -1,20 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: Making a GUI to extract text of various languages by using the trained model of the specific language
+- OCR
+description: "Build a multi-language OCR GUI in Python using Pytesseract and PyQt5. Extract text from images in 30+ languages including Arabic, Chinese, Hindi, and more with this step-by-step tutorial."
 featured-img: pyqt8
 keywords:
-- text
-- development
-- code
-- gui
-- image
-- python
-- tutorial
-- programming
+- pytesseract gui
+- python ocr
+- image to text python
+- multi-language ocr
+- pyqt5 ocr
+- tesseract python
+- text extraction python
+- ocr multiple languages
 layout: post
 mathjax: true
-title: How to make an image to text converter GUI in Python
+tags:
+- Python
+- Pytesseract
+- OCR
+- PyQt5
+- GUI
+- Text Extraction
+title: How to Make a Multi-Language OCR GUI with Pytesseract and PyQt5
 ---
 
 Hello friends, here is the code for the new idea of making pytesseract based GUI for all languages in PyQt5. This tutorial is about creating a multi-language OCR GUI in PyQt5 in Python. We start from very basic GUI in the Qt designer. We have tested various languages for image to text extraction process of pytesseract. These languages are tested for OCR: 

@@ -1,20 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: Alright friends welcome back, lets plot some sound on the matplotlib.
+- Audio Processing
+description: "Create a real-time voice plot in Python using matplotlib and PyAudio. Learn to capture audio from microphone and visualize sound waves with live plotting."
 featured-img: voiceplot
 keywords:
-- plot
-- development
-- real
-- time
-- programming
-- code
-- tutorial
-- voice
+- python voice plot
+- real-time audio visualization
+- matplotlib audio
+- pyaudio python
+- sound wave plot
+- python audio processing
+- live plot python
+- microphone visualization
 layout: post
 mathjax: true
-title: How to make a real time voice plot
+tags:
+- Python
+- Matplotlib
+- PyAudio
+- Audio
+- Visualization
+- Real-time
+title: How to Make a Real-Time Voice Plot in Python with Matplotlib
 ---
 
 

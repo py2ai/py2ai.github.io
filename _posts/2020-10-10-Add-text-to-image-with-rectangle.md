@@ -1,20 +1,27 @@
 ---
 categories:
 - GUI tutorial series
-description: How to add transparent box behind text in an open cv image
+- Computer Vision
+description: "Learn to add text with transparent rectangle background on images using OpenCV in Python. Perfect for object detection labels, attendance systems, and video annotations."
 featured-img: putBText
 keywords:
-- text
-- transparent
-- add
-- development
-- code
-- programming
-- image
-- tutorial
+- opencv text on image
+- transparent rectangle opencv
+- add text to image python
+- opencv annotation
+- python image text
+- cv2 puttext background
+- opencv label image
+- python image overlay
 layout: post
 mathjax: true
-title: Add text with transparent rectangle on an image
+tags:
+- Python
+- OpenCV
+- Image Processing
+- Computer Vision
+- Annotation
+title: How to Add Text with Transparent Rectangle Background on Images in OpenCV
 ---
 
 

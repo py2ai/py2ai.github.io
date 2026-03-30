@@ -1,14 +1,18 @@
 ---
 categories:
 - GUI tutorial series
-description: How to make a GUI in PyQt5 for video processing applications
+- Computer Vision
+description: "Create a professional video processing GUI with PyQt5 and OpenCV in Python. Build applications for video editing, filtering, and real-time processing with this complete tutorial."
 featured-img: pyqt509
 keywords:
-- PyQt5
-- OpenCV
-- Video Processing
-- GUI Design
-- Python
+- pyqt5 video processing
+- opencv gui python
+- video editor python
+- pyqt5 opencv tutorial
+- python video gui
+- opencv video processing
+- pyqt5 multimedia
+- video filter python
 layout: post
 mathjax: true
 tags:
@@ -17,7 +21,8 @@ tags:
 - Video Processing
 - GUI Design
 - Python
-title: PytQt5 GUI design and Video processing with OpenCV
+- Computer Vision
+title: PyQt5 GUI Design and Video Processing with OpenCV - Complete Tutorial
 ---
 
 

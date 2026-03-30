@@ -1,20 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: Socket programming with multiple clients and OpenCV in Python
+- Networking
+description: "Learn socket programming with multiple clients in Python. Transfer video over sockets from multiple clients to a single server using OpenCV and threading for real-time streaming."
 featured-img: mclients
 keywords:
-- video
-- sockets
-- multiple
-- development
-- code
-- clients
-- programming
-- tutorial
+- python socket programming
+- multiple clients socket
+- video streaming python
+- opencv socket
+- python networking
+- multi-client server
+- video transfer python
+- socket threading
 layout: post
 mathjax: true
-title: Transfer video over sockets from multiple clients
+tags:
+- Python
+- Socket Programming
+- Networking
+- OpenCV
+- Video Streaming
+- Multi-client
+title: How to Transfer Video Over Sockets from Multiple Clients in Python
 ---
 
 

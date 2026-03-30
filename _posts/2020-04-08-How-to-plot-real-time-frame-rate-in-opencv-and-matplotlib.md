@@ -1,20 +1,28 @@
 ---
 categories:
 - GUI tutorial series
-description: Making of an OpenCV and Matplotlib data processing and visualization in Python
+- Computer Vision
+description: "Learn to plot real-time frame rate of webcam in Python using OpenCV and Matplotlib. Detect faces with Haar cascade and monitor FPS performance for video processing."
 featured-img: face_youtube
 keywords:
-- plot
-- rate
-- camera
-- frame
-- development
-- code
-- programming
-- python
+- opencv frame rate
+- python fps plot
+- real-time video fps
+- opencv performance
+- matplotlib real-time plot
+- webcam frame rate
+- haar cascade face detection
+- opencv tutorial
 layout: post
 mathjax: true
-title: How to plot realtime frame rate of a web camera
+tags:
+- OpenCV
+- Python
+- Matplotlib
+- Computer Vision
+- FPS
+- Face Detection
+title: How to Plot Real-Time Frame Rate of a Webcam in Python with OpenCV
 ---
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. Today we will learn, how to detect a Human face using Open CV library in Python, from a real-time web camera. We will also learn, how to plot the real-time frame rate of the camera.
 
