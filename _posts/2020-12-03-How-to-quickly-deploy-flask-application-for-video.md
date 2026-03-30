@@ -1,14 +1,18 @@
 ---
 categories:
 - Web development tutorial series
-description: We will use Flask and OpenCv to change blur and brightness of the video and serve it on the network
+- Deployment
+description: "Deploy a Flask video processing application on PythonAnywhere. Learn to build web-based video filters with OpenCV, Flask, and host your Python web app online."
 featured-img: flask
 keywords:
-- Flask
-- OpenCV
-- Video Processing
-- PythonAnywhere
-- Web Deployment
+- flask video processing
+- pythonanywhere deployment
+- flask opencv
+- python web app deployment
+- video processing web app
+- flask video streaming
+- python web hosting
+- opencv flask tutorial
 layout: post
 mathjax: true
 tags:
@@ -17,7 +21,8 @@ tags:
 - Video Processing
 - PythonAnywhere
 - Web Deployment
-title: How to deploy Python video processing application on the...
+- Python
+title: How to Deploy a Flask Video Processing Application on PythonAnywhere
 ---
 
 

@@ -1,15 +1,18 @@
 ---
 categories:
 - GUI tutorial series
-description: This tutorial is about making a GUI in PyQt5 using Dlib and OpenCV for changing color of lips.
+- Computer Vision
+description: "Build a virtual lipstick try-on app in PyQt5 using Dlib and OpenCV. Detect facial landmarks, apply lipstick colors in real-time, and create an interactive beauty app."
 featured-img: howtomakelipstickgui
 keywords:
-- PyQt5
-- Dlib
-- OpenCV
-- Lipstick Color Picker
-- GUI
-- Image Processing
+- virtual try on python
+- lipstick app python
+- facial landmarks dlib
+- pyqt5 beauty app
+- opencv face detection
+- virtual makeup python
+- dlib facial features
+- python beauty filter
 layout: post
 mathjax: true
 tags:
@@ -18,7 +21,9 @@ tags:
 - OpenCV
 - GUI
 - Image Processing
-title: Lipstick color picker GUI in PyQt5
+- Virtual Try-on
+- Face Detection
+title: Virtual Lipstick Try-On App with PyQt5, Dlib and OpenCV
 ---
 
 

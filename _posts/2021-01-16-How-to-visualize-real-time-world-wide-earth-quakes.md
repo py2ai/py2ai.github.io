@@ -1,14 +1,18 @@
 ---
 categories:
 - Python learning series
-description: This tutorial is about visualization of the most recent earthquakes on the planet Earth.
+- Data Visualization
+description: "Visualize real-time worldwide earthquakes in Python using Folium and QuakeFeed API. Create interactive maps with earthquake data, magnitude indicators, and location markers."
 featured-img: earthquakes
 keywords:
-- Python
-- Earthquake Visualization
-- QuakeFeed
-- Folium
-- Data Visualization
+- python earthquake visualization
+- folium map python
+- real-time earthquake data
+- python data visualization
+- quakefeed api
+- earthquake map python
+- interactive map python
+- geospatial python
 layout: post
 mathjax: true
 tags:
@@ -16,7 +20,9 @@ tags:
 - Earthquake Visualization
 - QuakeFeed
 - Folium
-title: How to visualize Earthquakes in Python
+- Data Visualization
+- Maps
+title: How to Visualize Real-Time Worldwide Earthquakes in Python with Folium
 ---
 
 
