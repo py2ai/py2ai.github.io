@@ -26,6 +26,12 @@ Skills transform general-purpose Claude into a specialist for your domain. Unlik
 - **Compose together** for complex workflows
 - **Scale across teams** via version control
 
+## Skills Workflow Overview
+
+![Skills Workflow](/assets/img/posts/claude-code/skills-workflow.png)
+
+The diagram shows how skill definitions with triggers and prompt templates are matched against user requests, then invoked by Claude Code to complete tasks.
+
 ## How Skills Work: Progressive Disclosure
 
 Skills use a three-level loading system for efficiency:

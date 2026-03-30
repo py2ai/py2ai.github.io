@@ -27,6 +27,12 @@ Subagents enable delegated task execution by:
 - Preventing **context pollution** from complex tasks
 - Enabling **parallel execution** of multiple tasks
 
+## Subagents Architecture Overview
+
+![Subagents Architecture](/assets/img/posts/claude-code/subagents-architecture.png)
+
+The main Claude Code agent delegates tasks to specialized subagents (Architect, Engineer, Reviewer, Tester) which return aggregated results for the completed project.
+
 ## Key Benefits
 
 | Benefit | Description |

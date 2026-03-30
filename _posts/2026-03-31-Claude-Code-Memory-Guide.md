@@ -27,6 +27,12 @@ Memory in Claude Code provides persistent context that carries across multiple s
 - Import external documentation
 - Version control memory as part of your project
 
+## Memory System Overview
+
+![Memory System Flow](/assets/img/posts/claude-code/memory-system-flow.png)
+
+The memory system loads project and user memory files, builds a context window with project information and preferences, and enables context-aware responses.
+
 ## Quick Start: Initialize Memory
 
 ### The `/init` Command

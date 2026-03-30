@@ -49,6 +49,12 @@ Claude → Filesystem MCP → Local Files
       → Google Docs MCP → Google Drive
 ```
 
+## MCP Architecture Overview
+
+![MCP Architecture](/assets/img/posts/claude-code/mcp-architecture.png)
+
+Claude Code communicates through the MCP Protocol Layer to various MCP servers (GitHub, Database, Slack, Filesystem), which then connect to their respective external APIs and services.
+
 ## Installation Methods
 
 ### HTTP Transport (Recommended)

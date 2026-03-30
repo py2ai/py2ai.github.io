@@ -26,6 +26,12 @@ Claude Code supports several types of slash commands:
 3. **Plugin Commands**: Commands from installed plugins
 4. **MCP Prompts**: Commands from MCP servers
 
+## Command Flow Overview
+
+![Slash Commands Flow](/assets/img/posts/claude-code/slash-commands-flow.png)
+
+The diagram shows how user commands are parsed and routed to built-in commands, custom skills, or MCP server tools.
+
 ## Essential Built-in Commands
 
 ### Session Management

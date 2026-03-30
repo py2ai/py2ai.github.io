@@ -33,6 +33,12 @@ Claude Code is a command-line tool that brings Claude's intelligence directly in
 - **Subagents**: Specialized AI assistants for different tasks
 - **MCP Integration**: Connect to external tools and APIs
 
+## Architecture Overview
+
+![Claude Code Architecture](/assets/img/posts/claude-code/claude-code-architecture.png)
+
+The diagram above shows how Claude Code processes user input through its tool system, interacts with local files and MCP servers, and uses memory (CLAUDE.md) to maintain context.
+
 ## Prerequisites
 
 Before installing Claude Code, you need the following:

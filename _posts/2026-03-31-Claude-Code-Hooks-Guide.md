@@ -29,6 +29,12 @@ Hooks are automated actions that execute automatically when specific events occu
 - Support for command, HTTP, prompt, and agent hook types
 - Pattern matching for tool-specific hooks
 
+## Hooks Flow Overview
+
+![Hooks Flow](/assets/img/posts/claude-code/hooks-flow.png)
+
+Hook events trigger pattern matching, which routes to different hook types (Command, HTTP, Prompt, Agent). Each hook can return allow, block, or modify decisions.
+
 ## Hook Types
 
 Claude Code supports four hook types:
