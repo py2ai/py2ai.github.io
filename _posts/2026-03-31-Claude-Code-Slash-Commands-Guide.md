@@ -28,7 +28,7 @@ Claude Code supports several types of slash commands:
 
 ## Command Flow Overview
 
-![Slash Commands Flow](/assets/img/posts/claude-code/slash-commands-flow.png)
+![Slash Commands Flow](/assets/img/posts/claude-code/slash-commands-flow.svg)
 
 The diagram shows how user commands are parsed and routed to built-in commands, custom skills, or MCP server tools.
 

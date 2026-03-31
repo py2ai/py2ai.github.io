@@ -51,7 +51,7 @@ Claude → Filesystem MCP → Local Files
 
 ## MCP Architecture Overview
 
-![MCP Architecture](/assets/img/posts/claude-code/mcp-architecture.png)
+![MCP Architecture](/assets/img/posts/claude-code/mcp-architecture.svg)
 
 Claude Code communicates through the MCP Protocol Layer to various MCP servers (GitHub, Database, Slack, Filesystem), which then connect to their respective external APIs and services.
 

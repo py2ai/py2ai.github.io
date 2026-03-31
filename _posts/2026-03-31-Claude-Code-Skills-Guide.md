@@ -28,7 +28,7 @@ Skills transform general-purpose Claude into a specialist for your domain. Unlik
 
 ## Skills Workflow Overview
 
-![Skills Workflow](/assets/img/posts/claude-code/skills-workflow.png)
+![Skills Workflow](/assets/img/posts/claude-code/skills-workflow.svg)
 
 The diagram shows how skill definitions with triggers and prompt templates are matched against user requests, then invoked by Claude Code to complete tasks.
 

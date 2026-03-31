@@ -35,7 +35,7 @@ Claude Code is a command-line tool that brings Claude's intelligence directly in
 
 ## Architecture Overview
 
-![Claude Code Architecture](/assets/img/posts/claude-code/claude-code-architecture.png)
+![Claude Code Architecture](/assets/img/posts/claude-code/claude-code-architecture.svg)
 
 The diagram above shows how Claude Code processes user input through its tool system, interacts with local files and MCP servers, and uses memory (CLAUDE.md) to maintain context.
 

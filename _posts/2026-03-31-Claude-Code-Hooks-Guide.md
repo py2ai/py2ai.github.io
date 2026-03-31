@@ -31,7 +31,7 @@ Hooks are automated actions that execute automatically when specific events occu
 
 ## Hooks Flow Overview
 
-![Hooks Flow](/assets/img/posts/claude-code/hooks-flow.png)
+![Hooks Flow](/assets/img/posts/claude-code/hooks-flow.svg)
 
 Hook events trigger pattern matching, which routes to different hook types (Command, HTTP, Prompt, Agent). Each hook can return allow, block, or modify decisions.
 

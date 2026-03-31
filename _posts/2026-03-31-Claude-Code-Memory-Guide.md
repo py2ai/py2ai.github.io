@@ -29,7 +29,7 @@ Memory in Claude Code provides persistent context that carries across multiple s
 
 ## Memory System Overview
 
-![Memory System Flow](/assets/img/posts/claude-code/memory-system-flow.png)
+![Memory System Flow](/assets/img/posts/claude-code/memory-system-flow.svg)
 
 The memory system loads project and user memory files, builds a context window with project information and preferences, and enables context-aware responses.
 
