@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code Subagents - Specialized AI Assistants"
 date: 2026-03-31
+permalink: /claude-code-subagents-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn to create and use Claude Code subagents - specialized AI assistants for different tasks. Complete guide with examples."

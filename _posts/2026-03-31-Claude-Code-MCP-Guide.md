@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code MCP Guide - Complete Model Context Protocol Reference"
 date: 2026-03-31
+permalink: /claude-code-mcp-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Master MCP (Model Context Protocol) with Claude Code. Connect to GitHub, databases, Slack, and 20+ external services with OAuth, stdio, HTTP, and WebSocket transports."

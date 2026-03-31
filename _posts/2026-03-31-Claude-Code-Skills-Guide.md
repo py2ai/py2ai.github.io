@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code Skills Guide - Build Reusable AI Workflows"
 date: 2026-03-31
+permalink: /claude-code-skills-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn to create Claude Code skills - reusable AI workflows that specialize Claude for your domain. Complete guide with examples."

@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code - Complete Guide to AI-Powered Coding Assistant"
 date: 2026-03-31
+permalink: /claude-code-complete-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Master Claude Code in a weekend. Learn slash commands, memory, skills, subagents, MCP servers, and hooks with this comprehensive guide."

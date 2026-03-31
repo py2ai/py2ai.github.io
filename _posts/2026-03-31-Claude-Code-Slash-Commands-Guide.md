@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code Slash Commands - Complete Reference Guide"
 date: 2026-03-31
+permalink: /claude-code-slash-commands-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Master Claude Code slash commands with this complete reference. Learn built-in commands, custom commands, and best practices."

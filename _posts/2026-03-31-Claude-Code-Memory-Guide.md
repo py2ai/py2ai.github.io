@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code Memory Guide - Persistent Context with CLAUDE.md"
 date: 2026-03-31
+permalink: /claude-code-memory-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Learn how to use Claude Code memory system with CLAUDE.md files. Persistent context across sessions for better AI assistance."

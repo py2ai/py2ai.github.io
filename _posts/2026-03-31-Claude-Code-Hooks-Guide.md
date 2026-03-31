@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Code Hooks - Complete Event-Driven Automation Guide"
 date: 2026-03-31
+permalink: /claude-code-hooks-guide/
 categories: [AI, Tools, Tutorial, Claude Code]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Master Claude Code hooks for event-driven automation. Learn all 25 hook events, 4 hook types, and practical examples for validation, logging, and automation."
