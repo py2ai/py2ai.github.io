@@ -16,7 +16,7 @@ keywords:
 - MCP servers
 ---
 
-# Claude Code - Complete Guide to AI-Powered Coding Assistant
+## Claude Code - Complete Guide to AI-Powered Coding Assistant
 
 Claude Code is Anthropic's official AI coding assistant that runs in your terminal. It's a powerful tool that can read your codebase, write code, execute commands, and help you build software faster than ever before.
 

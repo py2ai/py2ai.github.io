@@ -18,7 +18,7 @@ keywords:
 - offline
 ---
 
-# FREE Forever Local Agentic Coding with NVIDIA RTX 4060 Ti 16GB and Qwen3.5:9B
+## FREE Forever Local Agentic Coding with NVIDIA RTX 4060 Ti 16GB and Qwen3.5:9B
 
 ## 🎉 100% FREE • Completely OFFLINE • GPU-Powered • No API Keys Required
 

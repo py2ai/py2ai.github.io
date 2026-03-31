@@ -14,7 +14,7 @@ keywords:
 - database
 ---
 
-# MCP Integration in PS Smart Agent
+## MCP Integration in PS Smart Agent
 
 The Model Context Protocol (MCP) allows you to extend PS Smart Agent with external tools, databases, and APIs. This guide shows you how to set up and use MCP servers.
 

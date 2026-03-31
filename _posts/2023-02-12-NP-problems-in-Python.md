@@ -29,7 +29,7 @@ title: NP Problems - Traveling Salesman, Knapsack, and SAT in Python
 
 Hello friends! Lets first talk about NP problems and then get to the coding part.
 
-# NP problems
+## NP problems
 NP (Nondeterministic Polynomial time) problems are a class of computational problems for which no efficient solution algorithm has been found, but for which it is believed that a solution can be verified quickly. In other words, the problem can be solved in an exponential amount of time, but the solution can be checked in polynomial time.
 
 Examples of NP problems include:

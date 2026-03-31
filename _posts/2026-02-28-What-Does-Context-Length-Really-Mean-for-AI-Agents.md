@@ -26,7 +26,7 @@ tags:
 title: "Context Length in AI Agents - Understanding AI Working Memory"
 ---
 
-# What Does Context Length Really Mean for AI Agents? Understanding AI Working Memory
+## What Does Context Length Really Mean for AI Agents? Understanding AI Working Memory
 
 When working with AI agents and coding assistants, you'll often hear about "context length" or "context window." But what does this actually mean for developers? Let's break down this crucial concept that determines how much information an AI can process at once.
 

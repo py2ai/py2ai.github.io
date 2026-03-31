@@ -38,7 +38,7 @@ Hello friends, today we will design a very basic GUI that will use the Model-Vie
 The user can change blur and brightness of the video frames and take pictures to save images. Additional text labels are also
 part of this tutorial as shown in the code. You will notice how the code is reused here from the Tutorial 05 of PyQt5 learning series.
 
-# Requirements
+## Requirements
 cv2
 pyshine
 numpy

@@ -15,7 +15,7 @@ keywords:
 - configuration
 ---
 
-# Getting Started with API Providers
+## Getting Started with API Providers
 
 PS Smart Agent supports multiple AI providers, giving you flexibility to choose the best model for your needs. This guide will help you connect to your preferred provider.
 

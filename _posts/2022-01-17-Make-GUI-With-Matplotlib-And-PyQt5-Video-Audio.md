@@ -34,7 +34,7 @@ run `python3 gui.py`
 
 [![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
 
-# main.ui
+## main.ui
 {% include codeHeader.html %}
 ```python
 

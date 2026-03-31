@@ -28,7 +28,7 @@ title: Exploring Input Widgets in PySide6 (Part 5)
 
 In this tutorial, we'll dive into the usage of various input widgets in PySide6 to allow users to interact with our GUI applications. Input widgets provide users with different ways to input data, such as sliders, spin boxes, and more. We'll build a simple example application to demonstrate how to incorporate different input widgets in PySide6.
 
-# Prerequisites
+## Prerequisites
 Before we begin, ensure you have Python and PySide6 installed on your system. You can install PySide6 using pip:
 
 `pip install PySide6`

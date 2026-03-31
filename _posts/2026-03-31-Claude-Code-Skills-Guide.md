@@ -14,7 +14,7 @@ keywords:
 - skill development
 ---
 
-# Claude Code Skills Guide - Build Reusable AI Workflows
+## Claude Code Skills Guide - Build Reusable AI Workflows
 
 Skills are reusable, filesystem-based capabilities that extend Claude's functionality. They package domain-specific expertise, workflows, and best practices into discoverable components.
 

@@ -14,7 +14,7 @@ keywords:
 - fix
 ---
 
-# Troubleshooting Shell Integration
+## Troubleshooting Shell Integration
 
 Having issues with command execution in PS Smart Agent? This guide covers common problems and solutions.
 

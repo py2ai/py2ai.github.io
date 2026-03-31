@@ -20,7 +20,7 @@ keywords:
 - DeepSeek
 ---
 
-# PS Smart Agent - AI-Powered Autonomous Coding Assistant for VS Code
+## PS Smart Agent - AI-Powered Autonomous Coding Assistant for VS Code
 
 **PS Smart Agent** is a powerful VS Code extension that provides an autonomous AI coding assistant capable of planning, coding, debugging, and executing tasks directly in your editor. With support for multiple LLM providers including **local Ollama models**, **OpenAI**, **Anthropic Claude**, **DeepSeek**, and more, PS Smart Agent brings the power of AI-driven development to your fingertips.
 

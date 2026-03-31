@@ -13,7 +13,7 @@ keywords:
 - vector search
 ---
 
-# Codebase Indexing in PS Smart Agent
+## Codebase Indexing in PS Smart Agent
 
 Codebase indexing enables fast semantic search across your project. Instead of searching by text, you can search by meaning.
 

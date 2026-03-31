@@ -44,7 +44,7 @@ We can plot the FFT of generated array using `fft` function from `from scipy.fft
 The use of f-string will help us to dynamically generate name (string) as `plt.savefig(f'tone_{freq}_Hz.png')`. Once the png image is saved, we will proceed to use `pygame.sndarray.make_sound(arr2)` and get
 the sound object and give a delay of 300ms (which will pause for a given number of milliseconds). The `pygame.time.delay(300)` function will use the processor (rather than sleeping) in order to make the delay
 more accurate than `pygame.time.wait()`. The final portion of our code is to save the sound raw data to a .wav file for each frequency.
-# main.py
+## main.py
 {% include codeHeader.html %}
 ```python
 import numpy

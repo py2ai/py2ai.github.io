@@ -14,7 +14,7 @@ keywords:
 - safety
 ---
 
-# Checkpoints in PS Smart Agent
+## Checkpoints in PS Smart Agent
 
 Checkpoints provide a safety net for your coding sessions. They allow you to experiment freely and restore your code if something goes wrong.
 

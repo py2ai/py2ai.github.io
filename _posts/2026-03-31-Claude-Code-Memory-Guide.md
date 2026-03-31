@@ -14,7 +14,7 @@ keywords:
 - Claude memory
 ---
 
-# Claude Code Memory Guide - Persistent Context with CLAUDE.md
+## Claude Code Memory Guide - Persistent Context with CLAUDE.md
 
 Memory is one of Claude Code's most powerful features. It allows Claude to retain context across sessions, understand your project conventions, and provide more relevant assistance.
 

@@ -14,7 +14,7 @@ keywords:
 - Claude agents
 ---
 
-# Claude Code Subagents - Specialized AI Assistants
+## Claude Code Subagents - Specialized AI Assistants
 
 Subagents are specialized AI assistants that Claude Code can delegate tasks to. Each subagent has a specific purpose, uses its own context window, and can be configured with specific tools.
 

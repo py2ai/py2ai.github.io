@@ -35,7 +35,7 @@ Hi friends! Today's tutorial is Part 01 of the Raspberry Pi learning series. You
 </div>
 <br>
 
-# Installation 
+## Installation 
 1) cv2 
 You can easily install opencv as cv2 by following the tutorial here:
 

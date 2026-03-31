@@ -27,7 +27,7 @@ tags:
 mathjax: true
 ---
 
-# Spring-Mass System Simulation with Pygame - Hooke's Law Physics
+## Spring-Mass System Simulation with Pygame - Hooke's Law Physics
 
 Create an interactive physics simulation demonstrating Hooke's Law using Pygame! This tutorial will guide you through building a spring-mass system that responds to mouse interaction, showing real-time physics with damping effects.
 

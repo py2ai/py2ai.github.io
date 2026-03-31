@@ -36,7 +36,7 @@ title: Add Text with Transparent Rectangle Background in OpenCV
 
 Hello friends, today we will put some text with a background box behind it. It looks awesome and conveys to the point information on the image as well. It can be used in various outputs of computer vision applications e.g. object detection results, office or school auto-attendence system. You can use it for Python3.
 
-# Requirements
+## Requirements
 cv2
 pyshine
 numpy

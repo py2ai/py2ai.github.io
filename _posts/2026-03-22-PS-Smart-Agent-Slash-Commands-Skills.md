@@ -13,7 +13,7 @@ keywords:
 - shortcuts
 ---
 
-# Slash Commands and Skills in PS Smart Agent
+## Slash Commands and Skills in PS Smart Agent
 
 Slash commands and skills provide quick shortcuts for common tasks. This guide shows you how to use and create them.
 

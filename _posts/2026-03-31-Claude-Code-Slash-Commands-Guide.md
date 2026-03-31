@@ -14,7 +14,7 @@ keywords:
 - Claude skills
 ---
 
-# Claude Code Slash Commands - Complete Reference Guide
+## Claude Code Slash Commands - Complete Reference Guide
 
 Slash commands are the primary way to interact with Claude Code. They provide shortcuts for common actions and let you control Claude's behavior during interactive sessions.
 

@@ -16,7 +16,7 @@ keywords:
 - PostToolUse
 ---
 
-# Claude Code Hooks - Complete Event-Driven Automation Guide
+## Claude Code Hooks - Complete Event-Driven Automation Guide
 
 Hooks are automated scripts that execute in response to specific events during Claude Code sessions. They enable automation, validation, permission management, and custom workflows.
 

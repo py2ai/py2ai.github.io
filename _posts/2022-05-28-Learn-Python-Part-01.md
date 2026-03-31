@@ -24,11 +24,11 @@ tags:
 mathjax: true
 ---
 
-# Learn Python Part 01 - Complete Beginner's Guide
+## Learn Python Part 01 - Complete Beginner's Guide
 
 Hi friends! We are starting free Python learning course. If you are new to Python and want to quickly grasp the knowledge of this language, then this course is for you. 
 
-# Python Installation
+## Python Installation
 
 Go ahead and download Python from here https://www.python.org/downloads/ according to your Operating System, i.e., Windows, Mac OS or Linux, etc. We will use Python 3.8.5 version. 
 

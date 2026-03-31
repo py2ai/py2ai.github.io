@@ -16,7 +16,7 @@ keywords:
 - database MCP
 ---
 
-# Claude Code MCP Guide - Complete Model Context Protocol Reference
+## Claude Code MCP Guide - Complete Model Context Protocol Reference
 
 MCP (Model Context Protocol) is a standardized way for Claude to access external tools, APIs, and real-time data sources. Unlike Memory, MCP provides live access to changing data.
 

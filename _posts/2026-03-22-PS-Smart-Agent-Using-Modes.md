@@ -14,7 +14,7 @@ keywords:
 - custom modes
 ---
 
-# Using Modes in PS Smart Agent
+## Using Modes in PS Smart Agent
 
 PS Smart Agent offers specialized modes for different development tasks. Each mode is optimized for specific workflows, helping you get better results.
 

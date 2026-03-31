@@ -15,7 +15,7 @@ keywords:
 - AI models
 ---
 
-# Using Ollama Local and Remote Models with Tool Support
+## Using Ollama Local and Remote Models with Tool Support
 
 PS Smart Agent v3.0.2 introduces enhanced Ollama support with automatic tool detection, remote server connectivity, and a clear visual indication of which models support agentic coding workflows.
 

@@ -14,7 +14,7 @@ keywords:
 - workflow
 ---
 
-# Creating Custom Modes in PS Smart Agent
+## Creating Custom Modes in PS Smart Agent
 
 Custom modes allow you to tailor PS Smart Agent for specific workflows. This guide shows you how to create and use custom modes.
 
