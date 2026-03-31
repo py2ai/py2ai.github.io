@@ -2,6 +2,7 @@
 layout: page
 title: Chess Game
 permalink: /games/chess/
+canonical: https://pyshine.com/games/chess/
 ---
 
 <div class="chess-game-container">

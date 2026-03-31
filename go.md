@@ -2,6 +2,7 @@
 layout: page
 title: GO Game
 permalink: /games/go/
+canonical: https://pyshine.com/games/go/
 ---
 
 <div class="go-game-container">

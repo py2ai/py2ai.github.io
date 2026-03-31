@@ -2,6 +2,7 @@
 layout: page
 title: Snake Game
 permalink: /games/snake/
+canonical: https://pyshine.com/games/snake/
 ---
 
 <div class="snake-game-container">

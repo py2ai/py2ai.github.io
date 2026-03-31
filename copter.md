@@ -2,6 +2,7 @@
 layout: page
 title: Copter Game
 permalink: /games/copter/
+canonical: https://pyshine.com/games/copter/
 ---
 
 <div class="copter-game-container">

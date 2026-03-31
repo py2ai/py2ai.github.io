@@ -2,6 +2,7 @@
 layout: page
 title: Pong
 permalink: /games/pong/
+canonical: https://pyshine.com/games/pong/
 ---
 
 <div class="pong-container">

@@ -2,6 +2,7 @@
 layout: page
 title: Memory Match
 permalink: /games/memory-match/
+canonical: https://pyshine.com/games/memory-match/
 ---
 
 <div class="memory-container">

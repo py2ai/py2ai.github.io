@@ -1,3 +1,9 @@
+---
+layout: page
+title: Privacy Policy
+permalink: /privacy/
+canonical: https://pyshine.com/privacy/
+---
 # Privacy Policy
 
 We may collect information entered by you on our website, which will be your email address, name or your website URL address.

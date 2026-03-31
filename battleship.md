@@ -2,6 +2,7 @@
 layout: page
 title: Battleship
 permalink: /games/battleship/
+canonical: https://pyshine.com/games/battleship/
 ---
 
 <div class="battleship-game-container">

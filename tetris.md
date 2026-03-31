@@ -2,6 +2,7 @@
 layout: page
 title: Tetris
 permalink: /games/tetris/
+canonical: https://pyshine.com/games/tetris/
 ---
 
 <div class="tetris-container">

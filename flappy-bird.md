@@ -2,6 +2,7 @@
 layout: page
 title: Flappy Bird
 permalink: /games/flappy-bird/
+canonical: https://pyshine.com/games/flappy-bird/
 ---
 
 <div class="flappy-bird-container">

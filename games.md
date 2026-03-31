@@ -2,6 +2,7 @@
 layout: page
 title: Games
 permalink: /games/
+canonical_url: https://pyshine.com/games/
 ---
 
 <div class="games-container">
