@@ -313,6 +313,74 @@ Supported tools include:
 
 ---
 
+## Visual Representation
+
+### Main Structure Diagram
+
+![Agency-Agents Structure Diagram]({{ site.baseurl }}/assets/img/posts/2026-apr/agency_orthogonal.svg)
+
+*Clean architectural diagram showing the repository structure*
+
+**Key Features:**
+- **Structured Layout**: Organized division hierarchy
+- **Color Coding**: Consistent with division color scheme
+- **Grid Design**: Clean, readable architecture visualization
+- **Clear Connections**: Well-defined relationships between divisions
+
+
+### Agent Workflow Diagram
+
+![Agent Workflow Diagram]({{ site.baseurl }}/assets/img/posts/2026-apr/agent_workflow.svg)
+
+*Visualizing the complete workflow of an AI agent from inputs to outputs*
+
+**Key Components:**
+- **Inputs**: User requests, context, tools, memory, and constraints
+- **Process**: Agent's specialized processing, decision-making, and execution
+- **Outputs**: Code, documentation, designs, strategies, and measurable outcomes
+- **Feedback Loop**: Continuous improvement through memory and experience
+- **Clean Layout**: Structured visualization for easy understanding
+
+### Integration Architecture Diagram
+
+![Integration Architecture]({{ site.baseurl }}/assets/img/posts/2026-apr/integration_architecture.svg)
+
+*How agency-agents integrate with various AI tools and platforms*
+
+**Integration Points:**
+- **AI Coding Assistants**: Claude Code, Cursor, Aider, Windsurf, Copilot
+- **Development Environments**: VS Code, JetBrains, terminal integration
+- **Memory Systems**: MCP memory, context preservation, experience tracking
+- **Tool Chains**: Git, CI/CD, testing frameworks, deployment pipelines
+
+### Agent File Structure Diagram
+
+![Agent File Structure]({{ site.baseurl }}/assets/img/posts/2026-apr/agent_file_structure.svg)
+
+*Standardized file format and organization for all 157 agents*
+
+**File Structure Components:**
+- **Identity & Memory**: Agent personality, experience, communication style
+- **Core Competencies**: Primary skills and specialized knowledge areas
+- **Workflow Examples**: Step-by-step implementation guides
+- **Success Metrics**: Measurable outcomes and quality standards
+- **Tool Integration**: Supported tools and platform compatibility
+
+### Data Flow Diagram
+
+![Data Flow Diagram]({{ site.baseurl }}/assets/img/posts/2026-apr/data_flow.svg)
+
+*Information transformation through the agent ecosystem*
+
+**Data Flow Stages:**
+1. **Input Processing**: User requirements → structured tasks
+2. **Agent Selection**: Task routing to appropriate specialists
+3. **Execution Phase**: Tool usage, code generation, content creation
+4. **Output Generation**: Deliverables with quality validation
+5. **Feedback Integration**: Results → memory → improvement
+
+---
+
 ## Usage and Integration
 
 ### Quick Start Guide
