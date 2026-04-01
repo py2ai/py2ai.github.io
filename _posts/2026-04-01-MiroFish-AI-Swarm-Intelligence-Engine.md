@@ -331,6 +331,97 @@ cp .env.example .env
 docker compose up -d
 ```
 
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. `uv` Command Not Found
+
+If you get an error that `uv` is not recognized, use Python's module syntax instead:
+
+```bash
+# Instead of: uv sync
+python -m uv sync
+
+# Instead of: uv run python run.py
+python -m uv run python run.py
+```
+
+Or install uv to your user path:
+
+```bash
+pip install uv
+# Restart your terminal after installation
+```
+
+#### 2. npm Vulnerabilities
+
+The frontend may report npm vulnerabilities. These are typically in development dependencies and don't affect functionality:
+
+```bash
+# Optional: Fix vulnerabilities
+cd frontend
+npm audit fix
+```
+
+#### 3. Python Version Issues
+
+MiroFish requires Python 3.11 or 3.12. Check your version:
+
+```bash
+python --version
+```
+
+If you have multiple Python versions, use a specific one:
+
+```bash
+py -3.11 -m uv sync  # Windows
+python3.11 -m uv sync  # Linux/Mac
+```
+
+#### 4. API Key Errors
+
+If you see authentication errors:
+
+- **LLM API**: Ensure your API key is valid and has sufficient credits
+- **Zep Cloud**: Sign up at [app.getzep.com](https://app.getzep.com/) for a free API key
+- **DeepSeek**: Use `https://api.deepseek.com` as the base URL with your DeepSeek API key
+
+#### 5. Port Already in Use
+
+If ports 3000 or 5001 are in use:
+
+```bash
+# Kill processes on Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# Or change ports in the configuration files
+```
+
+#### 6. Virtual Environment Issues
+
+If the backend virtual environment has issues:
+
+```bash
+cd backend
+# Remove and recreate
+rmdir /s .venv  # Windows
+python -m uv sync
+```
+
+### Supported LLM Providers
+
+MiroFish supports any OpenAI SDK-compatible API:
+
+| Provider | Base URL | Model Examples |
+|----------|----------|----------------|
+| OpenAI | `https://api.openai.com/v1` | gpt-4, gpt-3.5-turbo |
+| DeepSeek | `https://api.deepseek.com` | deepseek-chat, deepseek-coder |
+| Alibaba Qwen | `https://dashscope.aliyuncs.com/compatible-mode/v1` | qwen-plus, qwen-turbo |
+| Azure OpenAI | `https://YOUR_RESOURCE.openai.azure.com` | Your deployed models |
+| Local LLMs | `http://localhost:11434/v1` | Any Ollama model |
+
 ## API Reference
 
 ### Graph Building API
