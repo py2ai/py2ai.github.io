@@ -355,7 +355,7 @@ Supported tools include:
 
 ### Agent File Structure Diagram
 
-![Agent File Structure]({{ site.baseurl }}/assets/img/posts/2026-apr/agent_file_structure.svg)
+![Agent File Structure]({{ site.baseurl }}/assets/img/posts/2026-apr/agent_file_structure.png)
 
 *Standardized file format and organization for all 157 agents*
 
