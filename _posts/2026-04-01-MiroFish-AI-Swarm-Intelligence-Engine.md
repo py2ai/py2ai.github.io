@@ -34,17 +34,30 @@ MiroFish is a next-generation AI prediction engine powered by multi-agent techno
 | **4. Report Generation** | ReportAgent with rich toolset for deep analysis |
 | **5. Deep Interaction** | Chat with any agent in the simulated world |
 
-### Functional Flow Diagram
+### Functional Flow Diagrams
 
-![MiroFish Functional Flow]({{ site.baseurl }}/assets/img/posts/2026-apr/mirofish-flow-diagram.svg)
+The MiroFish workflow is divided into two main phases for better visualization:
 
-The diagram above illustrates the complete data flow through MiroFish's 5-step workflow:
+#### Part 1: Data Preparation & Agent Setup
+
+![MiroFish Flow Part 1 - Data Preparation]({{ site.baseurl }}/assets/img/posts/2026-apr/mirofish-flow-part1.svg)
+
+This phase covers the initial data processing and agent creation:
 
 1. **Input Layer** - Users upload documents (news, reports, novels) and describe prediction requirements
-2. **Graph Building** - Text processing, knowledge graph construction via Zep Cloud, and entity memory injection
-3. **Environment Setup** - Entity extraction, persona generation, and agent profile configuration
-4. **Simulation** - OASIS engine runs Twitter/Reddit simulations with multi-agent interactions
-5. **Output** - Prediction reports and interactive chat with simulated agents
+2. **Step 1: Graph Building** - Text processing, knowledge graph construction via Zep Cloud, and entity memory injection
+3. **Step 2: Environment Setup** - Entity extraction, persona generation, and agent profile configuration
+
+#### Part 2: Simulation & Output
+
+![MiroFish Flow Part 2 - Simulation & Output]({{ site.baseurl }}/assets/img/posts/2026-apr/mirofish-flow-part2.svg)
+
+This phase covers the simulation execution and results:
+
+4. **Step 3: Simulation** - OASIS engine runs Twitter/Reddit simulations with multi-agent interactions and temporal memory updates
+5. **Step 4: Report Generation** - ReportAgent analyzes simulation data and generates prediction reports
+6. **Step 5: Deep Interaction** - Chat interface for interacting with simulated agents
+7. **Output** - Final prediction results and interactive digital world
 
 ## Technical Architecture
 
