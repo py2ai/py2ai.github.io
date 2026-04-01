@@ -3,7 +3,7 @@ layout: post
 title: "MiroFish - AI Swarm Intelligence Engine for Predicting the Future"
 date: 2026-04-01
 categories: [AI, Machine Learning, Multi-Agent Systems, Python]
-featured-img: 2026-apr/mirofish
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Explore MiroFish, an open-source multi-agent AI prediction engine that simulates thousands of intelligent agents to predict future outcomes. Learn how to build digital sandboxes for scenario simulation."
 ---
 
@@ -24,87 +24,226 @@ MiroFish is a next-generation AI prediction engine powered by multi-agent techno
 
 ## How It Works
 
-### 5-Step Workflow
+### Complete Workflow
 
-| Step | Description |
-|------|-------------|
-| **1. Graph Building** | Seed extraction, memory injection, GraphRAG construction |
-| **2. Environment Setup** | Entity relationship extraction, persona generation, agent configuration |
-| **3. Simulation** | Dual-platform parallel simulation (Twitter + Reddit), dynamic memory updates |
-| **4. Report Generation** | ReportAgent with rich toolset for deep analysis |
-| **5. Deep Interaction** | Chat with any agent in the simulated world |
+| Step | Component | Description |
+|------|-----------|-------------|
+| **0** | Text Processing | Document parsing, preprocessing, and chunking |
+| **1** | Ontology Generation | LLM-based entity and relationship type definition |
+| **2** | Graph Building | Zep Cloud knowledge graph construction with GraphRAG |
+| **3** | Entity Extraction | Filter and enrich entities from knowledge graph |
+| **4** | Profile Generation | LLM + Zep search for detailed agent personas |
+| **5** | Simulation Config | LLM-based simulation parameter generation |
+| **6** | OASIS Simulation | Dual-platform parallel simulation (Twitter + Reddit) |
+| **7** | Report Generation | ReACT-based ReportAgent with Zep tools |
+| **8** | Deep Interaction | Chat with simulated agents and ReportAgent |
 
 ### Functional Flow Diagrams
 
 The MiroFish workflow is divided into two main phases for better visualization:
 
-#### Part 1: Data Preparation & Agent Setup
+#### Part 1: Data Preparation & Knowledge Graph Construction
 
 ![MiroFish Flow Part 1 - Data Preparation]({{ site.baseurl }}/assets/img/posts/2026-apr/mirofish-flow-part1.svg)
 
-This phase covers the initial data processing and agent creation:
+**Phase 1 Components:**
 
-1. **Input Layer** - Users upload documents (news, reports, novels) and describe prediction requirements
-2. **Step 1: Graph Building** - Text processing, knowledge graph construction via Zep Cloud, and entity memory injection
-3. **Step 2: Environment Setup** - Entity extraction, persona generation, and agent profile configuration
+1. **Input Layer** - Users upload documents (news, reports, novels) and describe prediction requirements in natural language
+2. **Text Processor** - FileParser extracts text, preprocessing cleans and normalizes, chunking splits into 500-character segments
+3. **Ontology Generator** - LLM analyzes content to define 10 entity types (Person, Organization, etc.) and 6-10 edge types
+4. **Zep Cloud** - Creates unique graph ID, sets ontology, uploads episodes in batches, performs GraphRAG extraction
+5. **Entity Reader** - Filters entities by defined types, enriches with edges and relationships, outputs filtered entities
 
-#### Part 2: Simulation & Output
+#### Part 2: Simulation & Output Generation
 
 ![MiroFish Flow Part 2 - Simulation & Output]({{ site.baseurl }}/assets/img/posts/2026-apr/mirofish-flow-part2.svg)
 
-This phase covers the simulation execution and results:
+**Phase 2 Components:**
 
-4. **Step 3: Simulation** - OASIS engine runs Twitter/Reddit simulations with multi-agent interactions and temporal memory updates
-5. **Step 4: Report Generation** - ReportAgent analyzes simulation data and generates prediction reports
-6. **Step 5: Deep Interaction** - Chat interface for interacting with simulated agents
-7. **Output** - Final prediction results and interactive digital world
+6. **Profile Generator** - Uses Zep hybrid search + LLM to generate detailed personas (age, MBTI, country, interests)
+7. **Config Generator** - LLM generates simulation parameters (rounds, active hours, posting frequency)
+8. **OASIS Engine** - CAMEL-AI powered social simulation on Twitter and Reddit platforms
+9. **Report Agent** - ReACT pattern with InsightForge, Panorama, and Interview tools
+10. **Chat Interface** - Interact with simulated agents or ask ReportAgent questions
 
 ## Technical Architecture
 
-### Backend (Python + Flask)
+### Backend Services (Python + Flask)
 
 ```
 backend/
 ├── app/
-│   ├── api/           # REST API endpoints
-│   ├── models/        # Data models
-│   ├── services/      # Core services
-│   │   ├── simulation_manager.py    # OASIS simulation management
-│   │   ├── graph_builder.py         # Knowledge graph construction
-│   │   ├── report_agent.py          # Report generation
-│   │   └── oasis_profile_generator.py # Agent persona creation
-│   └── utils/         # Utilities
+│   ├── api/                    # REST API endpoints
+│   │   ├── graph.py           # Graph building API
+│   │   ├── simulation.py      # Simulation management API
+│   │   └── report.py          # Report generation API
+│   ├── models/                 # Data models
+│   │   ├── project.py         # Project model
+│   │   └── task.py            # Task management
+│   ├── services/               # Core services
+│   │   ├── text_processor.py          # Document parsing & chunking
+│   │   ├── ontology_generator.py      # LLM-based ontology definition
+│   │   ├── graph_builder.py           # Zep Cloud graph construction
+│   │   ├── zep_entity_reader.py       # Entity extraction & filtering
+│   │   ├── oasis_profile_generator.py # Agent persona generation
+│   │   ├── simulation_config_generator.py # LLM-based config
+│   │   ├── simulation_manager.py      # Simulation orchestration
+│   │   ├── simulation_runner.py       # Script execution
+│   │   ├── report_agent.py            # ReACT report generation
+│   │   └── zep_tools.py               # Zep search tools
+│   └── utils/                  # Utilities
+│       ├── file_parser.py      # Multi-format file parsing
+│       ├── llm_client.py       # LLM API client
+│       └── logger.py           # Logging utilities
 ```
 
-### Frontend (Vue.js + Vite)
+### Frontend Components (Vue.js + Vite)
 
 ```
 frontend/
 ├── src/
-│   ├── components/    # Vue components
-│   │   ├── Step1GraphBuild.vue
-│   │   ├── Step2EnvSetup.vue
-│   │   ├── Step3Simulation.vue
-│   │   ├── Step4Report.vue
-│   │   └── Step5Interaction.vue
-│   └── views/         # Page views
+│   ├── components/             # Vue components
+│   │   ├── Step1GraphBuild.vue    # Document upload & graph building
+│   │   ├── Step2EnvSetup.vue      # Entity extraction & profile generation
+│   │   ├── Step3Simulation.vue    # Simulation configuration & execution
+│   │   ├── Step4Report.vue        # Report viewing & download
+│   │   └── Step5Interaction.vue   # Chat interface
+│   ├── views/                  # Page views
+│   │   ├── MainView.vue        # Main workflow view
+│   │   ├── SimulationView.vue  # Simulation monitoring
+│   │   └── InteractionView.vue # Chat interface
+│   └── api/                    # API clients
+│       ├── graph.js            # Graph API
+│       ├── simulation.js       # Simulation API
+│       └── report.js           # Report API
 ```
 
 ### Key Dependencies
 
-| Package | Purpose |
-|---------|---------|
-| `camel-oasis` | Social media simulation engine |
-| `camel-ai` | Multi-agent framework |
-| `zep-cloud` | Long-term memory management |
-| `openai` | LLM API integration |
-| `flask` | Backend web framework |
+| Package | Purpose | Version |
+|---------|---------|---------|
+| `camel-oasis` | Social media simulation engine | Latest |
+| `camel-ai` | Multi-agent framework | Latest |
+| `zep-cloud` | Long-term memory & knowledge graph | Latest |
+| `openai` | LLM API integration | Latest |
+| `langchain` | ReACT agent framework | Latest |
+| `flask` | Backend web framework | 3.x |
+| `vue.js` | Frontend framework | 3.x |
+
+## Core Components Deep Dive
+
+### 1. Text Processor (`text_processor.py`)
+
+Handles document ingestion and preparation:
+
+- **FileParser**: Extracts text from PDF, DOCX, TXT, MD files
+- **Preprocessing**: Removes excess whitespace, normalizes line endings
+- **Chunking**: Splits text into 500-character chunks with 50-character overlap
+
+```python
+class TextProcessor:
+    @staticmethod
+    def split_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]:
+        return split_text_into_chunks(text, chunk_size, overlap)
+```
+
+### 2. Ontology Generator (`ontology_generator.py`)
+
+LLM-powered entity and relationship type definition:
+
+- **Entity Types**: Exactly 10 types including Person and Organization fallbacks
+- **Edge Types**: 6-10 relationship types (WORKS_FOR, STUDIES_AT, etc.)
+- **Validation**: Ensures Zep API compatibility (max 10 types each)
+
+```python
+class OntologyGenerator:
+    def generate(self, document_texts: List[str], simulation_requirement: str) -> Dict[str, Any]:
+        # Returns entity_types, edge_types, analysis_summary
+```
+
+### 3. Graph Builder (`graph_builder.py`)
+
+Zep Cloud knowledge graph construction:
+
+- **Create Graph**: Generates unique graph ID (`mirofish_<uuid>`)
+- **Set Ontology**: Dynamically creates Pydantic models for entities/edges
+- **Add Episodes**: Batch uploads text chunks (default 3 per batch)
+- **Wait for Processing**: Monitors episode processing status
+- **GraphRAG**: Automatic entity and relationship extraction
+
+```python
+class GraphBuilderService:
+    def build_graph_async(self, text: str, ontology: Dict, ...) -> str:
+        # Returns task_id for async processing
+```
+
+### 4. Entity Reader (`zep_entity_reader.py`)
+
+Extracts and enriches entities from knowledge graph:
+
+- **Filter by Type**: Only includes entities matching defined types
+- **Enrich with Edges**: Adds related facts and relationships
+- **Pagination**: Handles large graphs with paging
+
+```python
+class ZepEntityReader:
+    def filter_defined_entities(self, graph_id: str, defined_entity_types: List[str]) -> FilteredEntities:
+        # Returns filtered entities with enriched context
+```
+
+### 5. Profile Generator (`oasis_profile_generator.py`)
+
+Creates detailed agent personas:
+
+- **Zep Hybrid Search**: Searches nodes and edges for context
+- **LLM Persona**: Generates age, MBTI, country, profession, interests
+- **Individual vs Group**: Different prompts for persons vs organizations
+- **Output Formats**: Twitter CSV and Reddit JSON
+
+```python
+class OasisProfileGenerator:
+    def generate_profile_from_entity(self, entity: EntityNode, user_id: int, use_llm: bool = True) -> OasisAgentProfile:
+        # Returns detailed agent profile
+```
+
+### 6. Simulation Manager (`simulation_manager.py`)
+
+Orchestrates the entire simulation:
+
+- **State Management**: Tracks simulation status (created, preparing, running, completed)
+- **Platform Support**: Twitter and Reddit dual-platform simulation
+- **Progress Callbacks**: Real-time progress updates
+
+```python
+class SimulationStatus(str, Enum):
+    CREATED = "created"
+    PREPARING = "preparing"
+    READY = "ready"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+```
+
+### 7. Report Agent (`report_agent.py`)
+
+ReACT-based report generation with Zep tools:
+
+- **InsightForge**: Deep insight retrieval with multi-dimensional analysis
+- **Panorama Search**: Broad overview of simulation results
+- **Quick Search**: Simple fact lookup
+- **Interview Agents**: Real interviews with simulated agents
+
+```python
+class ReportAgent:
+    def generate_report(self, simulation_id: str, graph_id: str, simulation_requirement: str) -> Report:
+        # Returns structured prediction report
+```
 
 ## Use Cases
 
 ### 1. Public Opinion Prediction
 
-Upload news articles or social media data to simulate how public sentiment might evolve. The system can predict:
+Upload news articles or social media data to simulate how public sentiment might evolve:
 
 - Viral content spread patterns
 - Crisis communication outcomes
@@ -112,7 +251,7 @@ Upload news articles or social media data to simulate how public sentiment might
 
 ### 2. Financial Market Simulation
 
-Feed financial reports and market signals to create agent-based market simulations:
+Feed financial reports and market signals for agent-based market simulations:
 
 - Investor behavior modeling
 - Market sentiment analysis
@@ -120,7 +259,7 @@ Feed financial reports and market signals to create agent-based market simulatio
 
 ### 3. Creative Writing
 
-Upload the first 80 chapters of a novel (like Dream of the Red Chamber) and let MiroFish predict the lost ending based on character personalities and plot dynamics.
+Upload the first 80 chapters of a novel and let MiroFish predict the lost ending based on character personalities and plot dynamics.
 
 ### 4. Policy Impact Assessment
 
@@ -192,81 +331,48 @@ cp .env.example .env
 docker compose up -d
 ```
 
-## Core Concepts
+## API Reference
 
-### Agent Personas
+### Graph Building API
 
-Each agent in MiroFish has:
+```http
+POST /api/graph/build
+Content-Type: application/json
 
-- **Independent personality** - Unique traits and behavioral patterns
-- **Long-term memory** - Persistent context through Zep Cloud
-- **Behavioral logic** - Consistent decision-making framework
-- **Social relationships** - Connections with other agents
-
-### GraphRAG Integration
-
-MiroFish uses Graph-based Retrieval Augmented Generation:
-
-- Extracts entities from seed materials
-- Builds relationship graphs
-- Enables context-aware agent interactions
-- Supports temporal memory updates
-
-### Dual-Platform Simulation
-
-Simulates social dynamics across:
-
-- **Twitter-like platform** - Short-form, viral content
-- **Reddit-like platform** - Long-form, community discussions
-
-## Example: Predicting Novel Endings
-
-MiroFish can analyze literary works and predict plausible continuations:
-
-```python
-# Upload first 80 chapters of Dream of the Red Chamber
-# System extracts:
-# - Character relationships
-# - Plot dynamics
-# - Thematic elements
-# - Character motivations
-
-# Agents simulate character behaviors
-# Generate prediction report with:
-# - Multiple possible endings
-# - Character arc conclusions
-# - Thematic resolution
+{
+  "documents": ["file1.pdf", "file2.docx"],
+  "simulation_requirement": "Predict public reaction to policy X",
+  "chunk_size": 500,
+  "chunk_overlap": 50
+}
 ```
 
-## Project Structure Deep Dive
+### Simulation API
 
-### Simulation Manager
+```http
+POST /api/simulation/create
+Content-Type: application/json
 
-```python
-class SimulationStatus(str, Enum):
-    CREATED = "created"
-    PREPARING = "preparing"
-    READY = "ready"
-    RUNNING = "running"
-    PAUSED = "paused"
-    STOPPED = "stopped"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-class PlatformType(str, Enum):
-    TWITTER = "twitter"
-    REDDIT = "reddit"
+{
+  "project_id": "proj_123",
+  "graph_id": "mirofish_abc123",
+  "enable_twitter": true,
+  "enable_reddit": true
+}
 ```
 
-### Agent Profile Generation
+### Report API
 
-The `OasisProfileGenerator` creates detailed agent personas:
+```http
+POST /api/report/generate
+Content-Type: application/json
 
-- Demographics and background
-- Personality traits (Big Five model)
-- Interests and expertise
-- Social connections
-- Communication style
+{
+  "simulation_id": "sim_456",
+  "graph_id": "mirofish_abc123",
+  "simulation_requirement": "Analyze public sentiment trends"
+}
+```
 
 ## Why MiroFish Matters
 
