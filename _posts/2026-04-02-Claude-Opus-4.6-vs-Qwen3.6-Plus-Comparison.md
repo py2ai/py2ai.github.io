@@ -40,8 +40,6 @@ The comparison tests both models across 48 distinct categories, including:
 
 Our comprehensive analysis of both models reveals distinct performance patterns across different test categories:
 
-![Claude Opus 4.6 vs Qwen3.6 Plus Performance Comparison]({{ site.baseurl }}/assets/img/posts/2026-apr/claude-qwen-performance.svg)
-
 ### Notable Performance Areas
 
 | Test Category | Claude Opus 4.6 | Qwen3.6 Plus Preview | Notes |
@@ -100,8 +98,6 @@ Our comprehensive analysis of both models reveals distinct performance patterns 
 
 Based on the official Qwen 3.6 blog, here are the key highlights of this impressive model:
 
-![Qwen 3.6 Key Features]({{ site.baseurl }}/assets/img/posts/2026-apr/qwen36-features.svg)
-
 ### 1. Multilingual Excellence
 Qwen 3.6 offers native-level fluency in over 100 languages, with particularly strong performance in Chinese, English, and other major languages. The model demonstrates cultural understanding and context awareness across different linguistic contexts, making it an ideal choice for global applications.
 
@@ -118,8 +114,6 @@ The model demonstrates advanced coding capabilities across multiple programming 
 One of Qwen 3.6's most significant advantages is its free availability. Users can access its full capabilities without any cost, making advanced AI technology accessible to a wider audience.
 
 ## Feature Comparison
-
-![Claude Opus 4.6 vs Qwen3.6 Plus Feature Comparison]({{ site.baseurl }}/assets/img/posts/2026-apr/claude-qwen-features.svg)
 
 ## Comparative Analysis
 
