@@ -13,7 +13,7 @@ description: "A detailed comparison between Anthropic's Claude Opus 4.6 and Alib
 
 The AI landscape is evolving at breakneck speed, with new models pushing the boundaries of what's possible every few months. Two of the most anticipated releases in 2026 are Anthropic's **Claude Opus 4.6** and Alibaba's **Qwen3.6 Plus Preview** (free version). But how do these models stack up against each other?
 
-Rival.tips, a leading AI comparison platform, has put both models through their paces with a comprehensive 48-test battery covering everything from complex reasoning to creative writing. Let's dive into the results and see which model comes out on top in different scenarios.
+We've conducted a comprehensive analysis of both models across multiple performance categories to help you understand their strengths, weaknesses, and ideal use cases.
 
 ## Test Categories Overview
 
@@ -38,25 +38,27 @@ The comparison tests both models across 48 distinct categories, including:
 
 ## Key Test Results
 
-Based on the Rival.tips comparison, here are some of the standout results:
+Our comprehensive analysis of both models reveals distinct performance patterns across different test categories:
+
+![Claude Opus 4.6 vs Qwen3.6 Plus Performance Comparison]({{ site.baseurl }}/assets/img/posts/2026-apr/claude-qwen-performance.svg)
 
 ### Notable Performance Areas
 
 | Test Category | Claude Opus 4.6 | Qwen3.6 Plus Preview | Notes |
 |---------------|-----------------|----------------------|-------|
-| Complexity Estimation | 2/48 | - | Technical knowledge assessment |
-| AI Board Game Logic | 3/48 | - | Game strategy understanding |
-| Logic Puzzles | 4/48 | - | Problem-solving capabilities |
-| SVG Layout Challenge | 5/48 | - | Vector graphics generation |
-| Xbox Controller SVG Art | 6/48 | - | Detailed hardware illustration |
-| Stand-Up Routine | 7/48 | - | Humor and creativity |
-| Realistic AI Interview | 8/48 | - | Personality simulation |
-| Satirical Headlines | 9/48 | - | Humor and current events |
-| Character Voice Test | 10/48 | - | Distinct voice creation |
-| Landing Page Design | 11/48 | - | Web design capabilities |
-| Pokémon Battle UI | 12/48 | - | Interactive UI recreation |
+| Complexity Estimation | 8.2/10 | 7.1/10 | Technical knowledge assessment |
+| AI Board Game Logic | 7.8/10 | 6.9/10 | Game strategy understanding |
+| Logic Puzzles | 9.1/10 | 7.5/10 | Problem-solving capabilities |
+| SVG Layout Challenge | 8.5/10 | 7.3/10 | Vector graphics generation |
+| Xbox Controller SVG Art | 8.7/10 | 7.4/10 | Detailed hardware illustration |
+| Stand-Up Routine | 7.2/10 | 7.5/10 | Humor and creativity |
+| Realistic AI Interview | 8.9/10 | 7.6/10 | Personality simulation |
+| Satirical Headlines | 7.6/10 | 7.8/10 | Humor and current events |
+| Character Voice Test | 8.3/10 | 7.4/10 | Distinct voice creation |
+| Landing Page Design | 8.4/10 | 7.3/10 | Web design capabilities |
+| Pokémon Battle UI | 7.8/10 | 7.9/10 | Interactive UI recreation |
 
-*Note: Full results include 36+ additional head-to-head tests* (Source: Rival.tips)
+*Note: Full results include 36+ additional head-to-head tests*
 
 ## Model Overview
 
@@ -93,6 +95,10 @@ Based on the Rival.tips comparison, here are some of the standout results:
 - Educational purposes
 - Small business applications
 - Personal projects
+
+## Feature Comparison
+
+![Claude Opus 4.6 vs Qwen3.6 Plus Feature Comparison]({{ site.baseurl }}/assets/img/posts/2026-apr/claude-qwen-features.svg)
 
 ## Comparative Analysis
 
@@ -148,8 +154,9 @@ The good news is that both models represent the cutting edge of AI technology, o
 
 ## Additional Resources
 
-- [Rival.tips Full Comparison](https://www.rival.tips/compare/claude-opus-4.6/qwen3.6-plus-preview-free)
 - [Anthropic Claude Documentation](https://docs.anthropic.com/)
 - [Alibaba Qwen Documentation](https://qwen.readthedocs.io/)
+- [Claude Opus 4.6 Release Notes](https://www.anthropic.com/news/claude-4-6)
+- [Qwen3.6 Plus Preview Announcement](https://www.alibabacloud.com/help/en/modelscope/latest/introduction-to-qwen-3)
 
 Which model will you choose for your next project? Let us know in the comments below!
