@@ -13,6 +13,20 @@ description: "Explore agency-agents, an open-source repository of 157 specialize
 
 Imagine having instant access to 157 specialized experts who never sleep, never take breaks, and are always ready to tackle any task you throw at them. That's exactly what the **agency-agents repository** delivers - a complete AI agency at your fingertips, ready to transform how you work, create, and solve problems.
 
+### The Genesis of Agency-Agents
+
+Born from a Reddit thread and months of iteration, the **agency-agents** project represents a revolutionary approach to AI assistance. Unlike generic AI tools that try to be everything to everyone, this repository takes a different approach: specialization. Each agent is meticulously crafted with deep domain expertise, unique personality traits, and proven workflows that deliver measurable results.
+
+### What Makes This Different?
+
+What sets **agency-agents** apart from other AI collections is its focus on **personality-driven expertise**. Each agent isn't just a set of instructions - it's a complete professional with:
+
+- **Specialized Knowledge**: Deep expertise in a specific domain
+- **Unique Personality**: Distinct communication style and approach
+- **Proven Workflows**: Battle-tested processes that deliver results
+- **Measurable Outcomes**: Clear success metrics for each task
+- **Production Readiness**: Ready to use in real-world projects
+
 ### What Is This For?
 
 **agency-agents** is not just another collection of AI prompts. It's a meticulously organized ecosystem of 157 specialized AI agents across 17 professional divisions, each designed to handle specific tasks with expert-level precision. Whether you're:
@@ -499,3 +513,11 @@ The **agency-agents** repository represents a significant advancement in practic
 - Open-source ecosystem encouraging community collaboration
 
 Whether you're a developer, marketer, designer, or business professional, **agency-agents** gives you the power to work smarter, not harder, by leveraging the collective expertise of 157 specialized AI professionals - all available at your fingertips, 24/7.
+
+## Source Code
+
+The **agency-agents** repository is open-source and available on GitHub:
+
+[https://github.com/msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)
+
+Feel free to explore, contribute, and adapt the agents to your specific needs!
