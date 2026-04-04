@@ -167,7 +167,7 @@ hermes model set openrouter:deepseek-3  # Switch to DeepSeek via OpenRouter
 hermes model set anthropic:claude-3-5-sonnet  # Switch to Claude
 ```
 
-## ⏰ Scheduled Automations
+## Scheduled Automations
 
 Hermes includes a built-in cron scheduler with **natural language task definition**:
 
@@ -182,7 +182,7 @@ hermes schedule list
 hermes schedule delete <task-id>
 ```
 
-## 🐳 Deployment Flexibility
+## Deployment Flexibility
 
 Run Hermes wherever you need it:
 
@@ -249,7 +249,7 @@ hermes mcp-server
 # Now any MCP client can connect
 ```
 
-## 🔒 Security Hardening
+## Security Hardening
 
 Hermes Agent takes security seriously with multiple protection layers:
 
