@@ -305,7 +305,7 @@ docker run -it nousresearch/hermes-agent:latest hermes run
 
 ## 🏗️ Architecture Overview
 
-![Hermes Agent Architecture]({{ site.baseurl }}/assets/img/diagrams/hermes_architecture.png)
+![Hermes Agent Architecture]({{ site.baseurl }}/assets/img/diagrams/hermes_architecture.svg)
 
 ### System Flow Diagram
 
@@ -366,13 +366,13 @@ The following diagrams show the key architectural components of Hermes Agent usi
 
 ### Architecture Diagram Preview
 
-![Hermes Agent Architecture]({{ site.baseurl }}/assets/img/diagrams/hermes_architecture.png)
+![Hermes Agent Architecture]({{ site.baseurl }}/assets/img/diagrams/hermes_architecture.svg)
 
 *Figure 1: Hermes Agent System Architecture showing the five main layers and data flow from inputs to outputs.*
 
 ### Self-Improving Loop Diagram
 
-![Hermes Learning Loop]({{ site.baseurl }}/assets/img/diagrams/hermes_learning_loop.png)
+![Hermes Learning Loop]({{ site.baseurl }}/assets/img/diagrams/hermes_learning_loop.svg)
 
 *Figure 2: The closed feedback loop that enables Hermes to continuously learn and improve from task outcomes.*
 
