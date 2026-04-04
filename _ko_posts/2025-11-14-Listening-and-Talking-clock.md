@@ -960,5 +960,13 @@ if __name__ == "__main__":
 
 ```
 
+## 사용 가능한 번역 / Available Translations / 可用翻译
+
+- [English Version](https://pyshine.com/Listening-and-Talking-clock/)
+- [中文版本](https://pyshine.com/zh/Listening-and-Talking-clock/)
+- [한국어 버전](https://pyshine.com/ko/Listening-and-Talking-clock/)
+
+---
+
 **웹사이트:** https://www.pyshine.com
 **저자:** 파이샤인

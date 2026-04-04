@@ -1011,5 +1011,13 @@ if __name__ == "__main__":
 
 ---
 
+## Available Translations / 其他语言 / 다른 언어
+
+- [English Version](https://pyshine.com/Listening-and-Talking-clock/)
+- [中文版本](https://pyshine.com/zh/Listening-and-Talking-clock/)
+- [한국어 버전](https://pyshine.com/ko/Listening-and-Talking-clock/)
+
+---
+
 **Website:** https://www.pyshine.com
 **Author:** PyShine
