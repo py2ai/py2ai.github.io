@@ -26,7 +26,7 @@ In the rapidly evolving landscape of AI assistants, most tools remain static—c
 
 This isn't science fiction. Hermes Agent is production-ready, mobile-first, and cloud-native, running everywhere from a $5 VPS to a GPU cluster. It connects to your favorite messaging platforms while the agent works autonomously on remote cloud infrastructure.
 
-## 🤖 The Self-Improving Learning Loop
+## The Self-Improving Learning Loop
 
 What truly sets Hermes Agent apart is its闭环反馈 system that enables genuine self-improvement:
 
@@ -56,7 +56,7 @@ hermes.interact("Explain async/await in Python")
 # → Responds with detailed explanations AND code examples automatically
 ```
 
-## 🖥️ Full Terminal Interface
+## Full Terminal Interface
 
 For developers and power users, Hermes provides a rich terminal interface that rivals modern IDEs:
 
@@ -79,7 +79,7 @@ hermes run
 /schedule       # Set up automated tasks
 ```
 
-## 💬 Multi-Platform Messaging Gateway
+## Multi-Platform Messaging Gateway
 
 Hermes Agent connects seamlessly to over **12 messaging platforms**, enabling you to interact with your AI assistant wherever you communicate:
 
@@ -115,7 +115,7 @@ gateway:
       bot_token: ${SLACK_BOT_TOKEN}
 ```
 
-## 🛠️ Extensive Tool System
+## Extensive Tool System
 
 With **40+ built-in tools**, Hermes Agent can accomplish virtually any digital task:
 
@@ -146,7 +146,7 @@ hermes mcp enable  # Enable specific servers
 hermes mcp disable # Disable servers
 ```
 
-## 🔄 Flexible Model Support
+## Flexible Model Support
 
 One of Hermes's greatest strengths is its **provider-agnostic architecture**. Use any LLM you prefer:
 
@@ -268,7 +268,7 @@ hermes config set security.strict_mode=true
 hermes config set security.allow_dangerous_commands=false
 ```
 
-## 🚀 Installation
+## Installation
 
 Get started with Hermes Agent in seconds:
 
@@ -295,7 +295,7 @@ docker pull nousresearch/hermes-agent:latest
 docker run -it nousresearch/hermes-agent:latest hermes run
 ```
 
-## 📈 Version History
+## Version History
 
 | Version | Key Features |
 |---------|--------------|
@@ -303,7 +303,7 @@ docker run -it nousresearch/hermes-agent:latest hermes run
 | **v0.5.0** | Hugging Face provider, Telegram chat topics, Modal SDK |
 | **v0.4.0** | Signal, DingTalk, SMS, Mattermost, Matrix adapters, API server |
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ![Hermes Agent Architecture]({{ site.baseurl }}/assets/img/diagrams/hermes_architecture.svg)
 
@@ -340,7 +340,7 @@ Provides the agent with capabilities to interact with the outside world through 
 #### Backend Environments
 Flexible deployment options allowing Hermes to run locally for development, in Docker for production, on Modal for serverless GPU workloads, via SSH on remote servers, on Daytona for managed dev environments, or on Singularity for HPC clusters.
 
-## 🔗 Resources & Links
+## Resources and Links
 
 - **Documentation**: [hermes-agent.nousresearch.com/docs](https://hermes-agent.nousresearch.com/docs)
 - **GitHub Repository**: [github.com/NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)
@@ -348,7 +348,7 @@ Flexible deployment options allowing Hermes to run locally for development, in D
 - **Skills Hub**: [agentskills.io](https://agentskills.io)
 - **Nous Research**: [nousresearch.com](https://nousresearch.com)
 
-## 📊 Architecture Diagrams
+## Architecture Diagrams
 
 The following diagrams show the key architectural components of Hermes Agent using orthogonal routing (no diagonal lines) for clean, professional visualizations.
 
@@ -394,7 +394,7 @@ To regenerate the architecture diagrams yourself, use the **Hermes Agent Diagram
 
 This skill provides the pydot-based diagram generation script with orthogonal routing for professional visualizations.
 
-## 🎯 Conclusion
+## Conclusion
 
 Hermes Agent represents a fundamental shift in how we think about AI assistants. Rather than static tools that perform predefined tasks, Hermes is a truly dynamic agent that grows alongside its users—creating skills from experience, remembering important details, and continuously improving its approach based on outcomes.
 
