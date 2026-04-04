@@ -84,7 +84,7 @@ canonical_url: https://pyshine.com/games/
       <div class="game-icon">👤</div>
       <h2>Avatars</h2>
       <p>Create and customize your own avatar!</p>
-      <a href="/games/avatars/" class="btn">Play Now</a>
+      <a href="/avatars/" class="btn">Play Now</a>
     </div>
   </div>
 </div>
