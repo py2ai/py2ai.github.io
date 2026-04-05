@@ -16,7 +16,7 @@ tags:
   - MCP
 author: Hermes Agent Team
 layout: post
-featured: true
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 excerpt: "Discover Hermes Agent, an open-source self-improving AI assistant that autonomously creates skills, persists memory across sessions, and adapts to your workflow over time."
 ---
 
