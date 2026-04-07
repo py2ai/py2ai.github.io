@@ -22,6 +22,46 @@ The agent skill ecosystem is exploding - over 200,000+ skills are now publicly a
 
 ![AgentSkillOS Architecture](/assets/img/diagrams/agentskillos-architecture.svg)
 
+### Understanding the Architecture Diagram
+
+The architecture diagram above illustrates the complete AgentSkillOS system, designed as a layered operating system for managing AI agent skills at scale. Let's break down each component and understand how they work together.
+
+#### Entry Points Layer
+
+At the top of the architecture, we find three distinct entry points that make AgentSkillOS accessible to different user types and use cases:
+
+- **Web UI**: A browser-based graphical interface that provides visual workflow management, real-time execution monitoring, and human-in-the-loop intervention capabilities. This is ideal for developers who want visual feedback and control over skill orchestration.
+
+- **Batch CLI**: A command-line interface designed for automated, headless execution of multiple tasks. Perfect for CI/CD pipelines, scheduled jobs, or bulk processing scenarios where manual intervention isn't needed.
+
+- **Python API**: A programmatic interface for developers who want to integrate AgentSkillOS directly into their applications. This enables custom workflows, embedded skill orchestration, and programmatic control over all system features.
+
+#### Manager Layer: The Brain of Skill Discovery
+
+The Manager Layer is responsible for discovering and selecting relevant skills from the vast skill pool. It implements two complementary approaches:
+
+- **Tree-based Manager**: This innovative approach organizes skills into a hierarchical capability tree. Instead of relying solely on semantic similarity, it navigates through skill categories and subcategories, enabling discovery of non-obvious but functionally relevant skills. For example, when searching for "image processing," it might discover skills in "data visualization" or "document generation" that could enhance the workflow.
+
+- **Vector-based Manager**: A traditional semantic search approach using embedding models. Skills are converted to vector representations, and similarity search finds the closest matches. This is fast and effective for known skill patterns but may miss creative combinations.
+
+#### Orchestrator Layer: Coordinating Complex Workflows
+
+The Orchestrator Layer takes selected skills and coordinates their execution. It offers three distinct execution strategies:
+
+- **DAG Engine**: The most sophisticated orchestrator that builds directed acyclic graphs to manage complex dependencies. It automatically determines execution order, handles parallel execution where possible, and manages data flow between skills.
+
+- **Direct Engine**: A simpler approach for straightforward tasks where skills execute sequentially without complex dependency management.
+
+- **Freestyle Engine**: Inspired by Claude Code's execution model, this engine provides more flexible, conversational-style skill invocation for dynamic scenarios.
+
+#### Runtime Layer: Where Skills Execute
+
+At the bottom of the architecture sits the Runtime Layer, which handles the actual execution of skills. It supports multiple LLM backends including Claude Code and other providers through the cc-switch utility. This abstraction allows developers to use their preferred AI models while maintaining consistent skill execution interfaces.
+
+#### Data Flow Through the System
+
+When a user submits a task through any entry point, the request flows downward through the layers. The Manager Layer discovers relevant skills, the Orchestrator Layer plans and coordinates execution, and the Runtime Layer executes each skill. Results flow back upward, with logging and state management at each level ensuring observability and debugging capabilities.
+
 ## Introduction
 
 AgentSkillOS addresses a fundamental challenge in the AI agent ecosystem: skill discovery and orchestration at scale. With hundreds of thousands of skills available across platforms like GitHub, npm, and PyPI, finding the right combination of tools for complex tasks has become increasingly difficult.
@@ -52,6 +92,53 @@ Traditional approaches rely on semantic search, which often misses skills that l
 AgentSkillOS follows a modular architecture with pluggable retrieval and orchestration components.
 
 ![Skill Retrieval](/assets/img/diagrams/agentskillos-skill-retrieval.svg)
+
+### Understanding the Skill Retrieval Flow
+
+The skill retrieval diagram above demonstrates how AgentSkillOS discovers relevant skills from its vast pool of 200,000+ available skills. This process is critical because finding the right skills determines the quality and efficiency of the entire workflow execution.
+
+#### The Challenge of Skill Discovery at Scale
+
+With over 200,000 skills available across platforms like GitHub, npm, and PyPI, traditional keyword search falls short. A simple query like "process images" might return hundreds of results, many of which are tangentially related but not truly useful for the specific task at hand. AgentSkillOS addresses this through two complementary retrieval mechanisms.
+
+#### Tree-Based Retrieval: Navigating the Capability Hierarchy
+
+The tree-based approach organizes skills into a hierarchical capability structure. Imagine a tree where:
+
+- **Root nodes** represent broad capability categories like "Data Processing," "Content Generation," or "System Operations"
+- **Branch nodes** represent sub-categories like "Image Manipulation" under "Data Processing"
+- **Leaf nodes** contain the actual skills with their descriptions and metadata
+
+When a user submits a task, the LLM doesn't just search for keywords—it navigates this tree intelligently. For example, a task to "create a marketing video from product images" might traverse:
+
+1. **Content Generation** → **Video Production** → skills for video editing
+2. **Data Processing** → **Image Manipulation** → skills for image preparation
+3. **Content Generation** → **Marketing** → skills for promotional content
+
+This traversal surfaces skills that semantic search might miss—skills that are functionally relevant even if their descriptions don't match the query textually.
+
+#### Vector-Based Retrieval: Semantic Similarity Search
+
+The vector-based approach converts skill descriptions into dense vector embeddings using models like OpenAI's text-embedding-3-large. When a query comes in:
+
+1. The query text is converted to a vector representation
+2. Similarity search (typically cosine similarity) finds the closest skill vectors
+3. Top-k results are returned as candidate skills
+
+This approach excels at finding skills with similar meanings even when using different terminology. However, it can miss skills that are functionally complementary but semantically distant.
+
+#### Hybrid Retrieval: Best of Both Worlds
+
+AgentSkillOS can combine both approaches for optimal results. The tree-based method provides creative, non-obvious skill suggestions, while vector-based search ensures no relevant skills are missed due to vocabulary gaps. This hybrid approach significantly outperforms either method alone, as demonstrated in the benchmark results.
+
+#### Practical Implications for Developers
+
+For developers building AI agent workflows, this retrieval system means:
+
+- **Less manual skill hunting**: The system automatically surfaces relevant skills
+- **More creative solutions**: Non-obvious skill combinations lead to innovative workflows
+- **Better task coverage**: Complex tasks get decomposed into appropriate skill sequences
+- **Scalable architecture**: The system handles skill pools from 50 to 200,000+ without degradation
 
 ### Core Components
 
@@ -95,6 +182,119 @@ AgentSkillOS uses LLM + Skill Tree to navigate the capability hierarchy, surfaci
 ## DAG Orchestration
 
 ![DAG Orchestration](/assets/img/diagrams/agentskillos-dag-orchestration.svg)
+
+### Understanding DAG Orchestration
+
+The DAG (Directed Acyclic Graph) orchestration diagram above illustrates how AgentSkillOS coordinates multiple skills into coherent, executable workflows. This is where the magic happens—transforming a list of relevant skills into a coordinated execution plan.
+
+#### What is DAG Orchestration?
+
+A Directed Acyclic Graph is a mathematical structure where:
+
+- **Nodes** represent individual skills or operations
+- **Edges** represent dependencies between skills
+- **Directed** means edges have a direction (A → B means B depends on A)
+- **Acyclic** means there are no circular dependencies (no infinite loops)
+
+This structure is perfect for skill orchestration because it naturally captures the dependencies between tasks while enabling parallel execution where possible.
+
+#### The Orchestration Pipeline
+
+The orchestration process follows a sophisticated pipeline:
+
+**1. Task Analysis Phase**
+
+When a user submits a task like "Create a bug diagnosis report for a mobile app," the orchestrator first analyzes the requirements. It breaks down the high-level goal into sub-tasks:
+
+- Bug reproduction and localization
+- Error log analysis
+- Fix suggestion generation
+- Visual documentation creation
+- Report compilation
+
+**2. Skill Selection Phase**
+
+From the retrieved skills, the orchestrator selects the most appropriate ones for each sub-task. This selection considers:
+
+- Skill capabilities and specializations
+- Input/output compatibility between skills
+- Historical performance metrics
+- Resource requirements
+
+**3. Dependency Resolution Phase**
+
+The orchestrator determines which skills must run before others. For example:
+
+- Bug localization must complete before fix suggestion
+- Visual documentation requires both bug evidence and fix results
+- Report compilation depends on all previous outputs
+
+**4. Plan Generation Phase**
+
+The final DAG structure is generated, optimizing for:
+
+- **Parallelism**: Independent skills run simultaneously
+- **Resource efficiency**: Minimize redundant computations
+- **Fault tolerance**: Isolate failures to prevent cascade effects
+
+#### Execution Strategies: Quality vs. Speed vs. Simplicity
+
+AgentSkillOS offers three distinct orchestration strategies:
+
+**Quality-First Strategy**
+
+This strategy builds deep, multi-stage pipelines with extensive validation and refinement steps. Each skill's output is verified before passing to the next stage. Ideal for:
+
+- Production deployments requiring high accuracy
+- Complex tasks with significant consequences for errors
+- Scenarios where iteration and refinement add value
+
+**Efficiency-First Strategy**
+
+This strategy maximizes parallel execution, running as many skills simultaneously as possible. Dependencies are minimized to reduce wait times. Ideal for:
+
+- Time-sensitive tasks
+- Batch processing scenarios
+- When approximate results are acceptable
+
+**Simplicity-First Strategy**
+
+This strategy uses only essential skills, avoiding complex pipelines. It's the "minimum viable workflow" approach. Ideal for:
+
+- Simple, well-defined tasks
+- Quick prototyping and testing
+- When complexity overhead isn't justified
+
+#### Real-World Example: Bug Diagnosis Workflow
+
+Consider a bug diagnosis task. The DAG might look like:
+
+```
+[Mobile Bug Report]
+       ↓
+[Parse Stack Trace] ←→ [Extract Error Logs]
+       ↓                      ↓
+[Localize Bug] ←─────── [Analyze Patterns]
+       ↓
+[Generate Fix Suggestion]
+       ↓
+[Create Visual Evidence] ←→ [Validate Fix]
+       ↓
+[Compile Report]
+```
+
+This DAG shows parallel execution opportunities (Parse Stack Trace and Extract Error Logs can run simultaneously) while maintaining necessary dependencies (Localize Bug needs both inputs).
+
+#### Human-in-the-Loop Control
+
+A key feature of AgentSkillOS orchestration is human oversight. At each stage:
+
+- Users can review the generated plan before execution
+- Intermediate results can be inspected and approved
+- Manual intervention can redirect or modify the workflow
+- Execution can be paused, resumed, or terminated
+
+This control is essential for production systems where AI autonomy must be balanced with human judgment.
 
 ### Plan Generation
 
