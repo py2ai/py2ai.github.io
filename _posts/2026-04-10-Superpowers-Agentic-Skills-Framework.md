@@ -4,7 +4,7 @@ title: "Superpowers: The Complete Agentic Skills Framework for AI Coding Assista
 date: 2026-04-10 10:00:00 +0800
 categories: [AI, Development, Tools]
 tags: [ai-agents, coding-assistants, tdd, workflow, skills-framework]
-featured-img: superpowers-workflow
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Explore obra/superpowers - a comprehensive skills framework that transforms AI coding assistants into disciplined software engineers with test-driven development, systematic debugging, and subagent-driven development workflows."
 author: "PyShine"
 ---

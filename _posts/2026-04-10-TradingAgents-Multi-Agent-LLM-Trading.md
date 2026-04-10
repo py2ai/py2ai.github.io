@@ -3,7 +3,7 @@ layout: post
 title: "TradingAgents: Multi-Agent LLM Financial Trading Framework"
 date: 2026-04-10
 categories: [AI, Finance, Trading, Multi-Agent Systems]
-featured-img: tradingagents-architecture
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Explore TradingAgents, a 49K-star multi-agent LLM framework that mirrors real-world trading firms with specialized AI agents for fundamental analysis, sentiment analysis, news monitoring, and risk management."
 ---
 
