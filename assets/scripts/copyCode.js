@@ -84,7 +84,8 @@
     });
 
     // Then, add buttons to code blocks that don't have one
-    const codeBlocks = document.querySelectorAll('.highlighter-rouge, div.highlight');
+    // Only process .highlighter-rouge elements (not nested div.highlight)
+    const codeBlocks = document.querySelectorAll('.highlighter-rouge');
     
     codeBlocks.forEach((codeBlock) => {
       // Skip if already has a code-header sibling (legacy posts with include)
@@ -92,8 +93,40 @@
         return;
       }
       
-      // Skip inline code elements
-      if (codeBlock.tagName === 'CODE' && !codeBlock.closest('pre')) {
+      // Create the copy button container
+      const header = document.createElement('div');
+      header.className = 'code-header';
+      
+      // Create the copy button
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-code-button';
+      copyButton.textContent = 'Copy code to clipboard';
+      copyButton.setAttribute('type', 'button');
+      copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+      copyButton.setAttribute('data-handler-attached', 'true');
+      
+      header.appendChild(copyButton);
+      
+      // Insert header before code block
+      codeBlock.parentNode.insertBefore(header, codeBlock);
+      
+      // Add click handler
+      copyButton.addEventListener('click', async function() {
+        const codeText = getCodeText(codeBlock);
+        await copyToClipboard(codeText, copyButton);
+      });
+    });
+
+    // Also handle standalone div.highlight elements (not inside .highlighter-rouge)
+    const standaloneHighlights = document.querySelectorAll('div.highlight');
+    standaloneHighlights.forEach((codeBlock) => {
+      // Skip if inside a .highlighter-rouge (already handled above)
+      if (codeBlock.closest('.highlighter-rouge')) {
+        return;
+      }
+      
+      // Skip if already has a code-header sibling
+      if (hasExistingButton(codeBlock)) {
         return;
       }
       
