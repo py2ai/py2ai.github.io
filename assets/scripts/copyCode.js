@@ -1,5 +1,6 @@
 // This assumes that you're using Rouge; if not, update the selector
-const codeBlocks = document.querySelectorAll('.code-header + .highlighter-rouge');
+// Rouge generates .highlight class, not .highlighter-rouge
+const codeBlocks = document.querySelectorAll('.code-header + .highlight, .code-header + div.highlight');
 const copyCodeButtons = document.querySelectorAll('.copy-code-button');
 
 copyCodeButtons.forEach((copyCodeButton, index) => {
