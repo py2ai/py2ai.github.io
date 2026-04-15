@@ -18,7 +18,7 @@ author: "PyShine"
 
 Voicebox is a **local-first voice cloning studio** — a free and open-source alternative to ElevenLabs. Clone voices from a few seconds of audio, generate speech in 23 languages across 5 TTS engines, apply post-processing effects, and compose multi-voice projects with a timeline editor.
 
-![Voicebox Interface](/assets/img/diagrams/voicebox-interface.svg)
+![Voicebox Architecture](/assets/img/diagrams/voicebox-architecture.svg)
 
 ## Key Features
 
