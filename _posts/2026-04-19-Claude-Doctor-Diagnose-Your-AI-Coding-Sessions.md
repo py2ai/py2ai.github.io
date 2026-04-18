@@ -1,0 +1,185 @@
+---
+layout: post
+title: "Claude Doctor: Diagnose Your AI Coding Sessions for Anti-Patterns"
+description: "Claude Doctor is a 418-star open-source CLI tool that analyzes your Claude Code transcripts for behavioral anti-patterns, sentiment drift, and structural issues, then generates actionable rules for CLAUDE.md and AGENTS.md."
+date: 2026-04-19
+header-img: "img/post-bg.jpg"
+permalink: /Claude-Doctor-Diagnose-Your-AI-Coding-Sessions/
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+tags:
+  - Open Source
+  - AI Tools
+  - TypeScript
+  - Developer Experience
+  - Claude Code
+author: "PyShine"
+---
+
+# Claude Doctor: Diagnose Your AI Coding Sessions for Anti-Patterns
+
+Claude Doctor is an open-source CLI tool that analyzes your `~/.claude/` transcripts for behavioral anti-patterns, sentiment drift, and structural issues -- then generates actionable rules you can paste directly into your `CLAUDE.md` or `AGENTS.md`. With 418 stars on GitHub, it has quickly become an essential diagnostic tool for developers working with Claude Code and other AI coding agents.
+
+If you have ever found yourself repeatedly correcting an AI agent, watching it edit the same file over and over, or noticing your messages getting shorter and more frustrated, Claude Doctor can identify those patterns and help you fix them.
+
+![Claude Doctor Signal Detection](/assets/img/diagrams/claude-doctor/claude-doctor-signals.svg)
+
+## The Problem: AI Sessions Go Wrong in Predictable Ways
+
+When working with AI coding agents, sessions often degrade in recognizable patterns. You might not notice that you have been saying "no, wrong" in 20% of your messages, or that the agent has edited the same file 7 times in a single session. These anti-patterns waste time, tokens, and patience.
+
+Claude Doctor reads your Claude Code session transcripts and detects three categories of signals:
+
+### Structural Signals
+
+These are patterns in how the session unfolds, independent of what you type:
+
+| Signal | Detection |
+|---|---|
+| `edit-thrashing` | Same file edited 5+ times in one session |
+| `error-loop` | 3+ consecutive tool failures without changing approach |
+| `excessive-exploration` | Read-to-edit ratio above 10:1 |
+| `restart-cluster` | Multiple sessions started within 30 minutes |
+| `high-abandonment-rate` | Most sessions have fewer than 3 user messages |
+
+### Behavioral Signals
+
+These are patterns in how you interact with the agent:
+
+| Signal | Detection |
+|---|---|
+| `correction-heavy` | 20%+ of user messages start with "no", "wrong", "wait" |
+| `keep-going-loop` | User repeatedly says "keep going" / "continue" |
+| `repeated-instructions` | Same instruction rephrased within 5 turns (Jaccard >60%) |
+| `negative-drift` | Messages get shorter and more corrective over time |
+| `rapid-corrections` | User responds within 10 seconds of agent output |
+| `high-turn-ratio` | User sends 1.5x+ messages per agent response |
+
+### Lexical Signals
+
+AFINN-165 sentiment scoring with custom agent tokens (`undo`, `revert`, `wrong`, `broken`, etc.) that track the emotional trajectory of your sessions.
+
+## How It Works
+
+![Claude Doctor Workflow](/assets/img/diagrams/claude-doctor/claude-doctor-workflow.svg)
+
+The workflow is straightforward:
+
+**1. Parse Transcripts** -- Claude Doctor reads your `~/.claude/` session files (JSONL format) and extracts all user messages, agent responses, tool calls, and timestamps.
+
+**2. Detect Anti-Patterns** -- The 13 signal detectors analyze your sessions for structural, behavioral, and lexical patterns. Each signal has a clear threshold (e.g., edit-thrashing requires 5+ edits to the same file).
+
+**3. Score Sentiment and Drift** -- AFINN-165 sentiment analysis with custom agent-specific tokens tracks how your messages change over time. Negative drift (messages getting shorter and more corrective) is a strong indicator that the session is going off track.
+
+**4. Generate Rules and Reports** -- The `--rules` flag produces ready-to-paste rules for your `CLAUDE.md` or `AGENTS.md`, derived from the specific patterns found in your sessions.
+
+## Quick Start
+
+Install globally or run directly with npx (requires [Node.js](https://nodejs.org/en/) 18+):
+
+```bash
+# Install globally
+npm i -g claude-doctor
+
+# Or run directly
+npx claude-doctor
+```
+
+## Usage
+
+```bash
+# Analyze all sessions (default)
+claude-doctor
+
+# Check a specific session
+claude-doctor <session-id>
+
+# Check a specific session file
+claude-doctor <path/to.jsonl>
+
+# Filter to a project
+claude-doctor -p myproject
+
+# Generate rules for CLAUDE.md / AGENTS.md
+claude-doctor --rules
+
+# Save model to .claude-doctor/
+claude-doctor --save
+
+# Output as JSON
+claude-doctor --json
+```
+
+## The --rules Flag: Your Prescription
+
+The most powerful feature is `--rules`, which generates ready-to-paste rules from your session history:
+
+```bash
+claude-doctor --rules
+```
+
+Output:
+
+```
+## Rules (auto-generated by claude-doctor)
+
+Based on analysis of 838 sessions. Paste into your CLAUDE.md or AGENTS.md.
+
+- Read the full file before editing. Plan all changes, then make ONE complete edit.
+- After 2 consecutive tool failures, stop and change your approach entirely.
+- When the user corrects you, stop and re-read their message.
+- Complete the FULL task before stopping.
+- Every few turns, re-read the original request to make sure you haven't drifted.
+```
+
+These rules are not generic advice. They are derived from the specific anti-patterns found in your sessions. If Claude Doctor detects edit-thrashing, it generates a rule about planning edits. If it detects error-loops, it generates a rule about changing approach after failures.
+
+## The --save Flag: Persistent Model
+
+```bash
+claude-doctor --save
+```
+
+Writes a model to `.claude-doctor/`:
+
+- `model.json` -- signal baselines and project profiles
+- `guidance.md` -- agent-readable rules for hooks or CLAUDE.md inclusion
+
+This allows you to track how your sessions improve over time. Run `claude-doctor --save` weekly, and you can see whether your correction-heavy percentage is decreasing or your edit-thrashing incidents are going down.
+
+## Why This Matters
+
+AI coding agents are powerful, but they are also prone to specific failure modes that compound over time. A session that starts with a small misunderstanding can spiral into edit-thrashing, error-loops, and increasingly frustrated corrections. Claude Doctor makes these patterns visible so you can fix them.
+
+The tool is particularly valuable for teams: if multiple developers are using Claude Code on the same project, running `claude-doctor -p projectname --rules` can generate project-specific rules that address the most common anti-patterns for that codebase.
+
+## Development
+
+Claude Doctor is a pnpm monorepo built with TypeScript:
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build
+pnpm build
+
+# Run tests
+pnpm test
+
+# Lint and format
+pnpm check
+```
+
+The project uses `commander` for CLI argument parsing and `sentiment` for AFINN-165 scoring. The architecture is clean and modular, making it easy to add new signal detectors.
+
+## Key Takeaways
+
+Claude Doctor fills a gap that most AI development tools ignore: the quality of the human-agent interaction itself. By analyzing your session transcripts for behavioral anti-patterns, it gives you concrete, actionable rules that improve how you work with AI coding agents.
+
+The three signal categories -- structural, behavioral, and lexical -- cover the full spectrum of what can go wrong in an AI coding session. And the `--rules` output gives you a direct path to fixing those issues, not just identifying them.
+
+If you are using Claude Code (or any AI coding agent) regularly, running `claude-doctor --rules` once a week and pasting the output into your `CLAUDE.md` is one of the highest-ROI things you can do to improve your AI-assisted development workflow.
+
+**Repository:** [github.com/millionco/claude-doctor](https://github.com/millionco/claude-doctor)
+
+**npm:** [npmjs.com/package/claude-doctor](https://www.npmjs.com/package/claude-doctor)
