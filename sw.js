@@ -207,25 +207,14 @@ self.addEventListener('activate', function(event) {
 });
 
 
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  
-  // Skip caching or interference for /converter.html
-  if (url.pathname === '/converter.html') {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
-});
-
-
-
 self.addEventListener('fetch', function(event) {
   if (event.request.method === 'GET') {
+    // Skip caching or interference for /converter.html
+    var reqUrl = new URL(event.request.url);
+    if (reqUrl.pathname === '/converter.html') {
+      return;
+    }
+
     // Should we call event.respondWith() inside this fetch event handler?
     // This needs to be determined synchronously, which will give other fetch
     // handlers a chance to handle the request if need be.
@@ -270,7 +259,9 @@ self.addEventListener('fetch', function(event) {
           // Fall back to just fetch()ing the request if some unexpected error
           // prevented the cached response from being valid.
           console.warn('Couldn\'t serve response for "%s" from cache: %O', event.request.url, e);
-          return fetch(event.request);
+          return fetch(event.request).catch(function() {
+            return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
+          });
         })
       );
     }

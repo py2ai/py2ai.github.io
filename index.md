@@ -6,4 +6,5 @@
 #
 layout: default
 title:
+hide_ads: true
 ---
