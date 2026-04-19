@@ -215,6 +215,28 @@ self.addEventListener('fetch', function(event) {
       return;
     }
 
+    // For navigation requests (HTML pages), use network-first strategy
+    if (event.request.mode === 'navigate' || event.request.headers.get('Accept').includes('text/html')) {
+      event.respondWith(
+        fetch(event.request).then(function(response) {
+          // Cache the new response for future use
+          if (response.ok) {
+            var responseToCache = response.clone();
+            caches.open(cacheName).then(function(cache) {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        }).catch(function() {
+          // If network fails, serve from cache
+          return caches.open(cacheName).then(function(cache) {
+            return cache.match(event.request);
+          });
+        })
+      );
+      return;
+    }
+
     // Should we call event.respondWith() inside this fetch event handler?
     // This needs to be determined synchronously, which will give other fetch
     // handlers a chance to handle the request if need be.
