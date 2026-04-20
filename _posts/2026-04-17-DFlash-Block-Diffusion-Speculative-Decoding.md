@@ -377,6 +377,7 @@ With 14+ pre-trained draft models, support for four major inference backends, an
 
 **Citation:**
 
+{% raw %}
 ```bibtex
 @article{chen2026dflash,
   title   = {{DFlash: Block Diffusion for Flash Speculative Decoding}},
@@ -385,6 +386,7 @@ With 14+ pre-trained draft models, support for four major inference backends, an
   year    = {2026}
 }
 ```
+{% endraw %}
 
 ## Related Posts
 
