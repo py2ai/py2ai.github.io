@@ -5,7 +5,7 @@ description: "Langflow is an open-source visual framework that lets developers b
 date: 2026-04-20
 header-img: "assets/img/ai-coding-frameworks/ai-coding-frameworks"
 permalink: /blog/2026/04/20/Langflow-Visual-Framework-Multi-Agent-RAG/
-featured-img: "assets/img/ai-coding-frameworks/ai-coding-frameworks"
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [langflow, ai-agents, rag, visual-builder, llm, mcp, langchain, open-source]
 author: "PyShine"
 ---
