@@ -1,4 +1,282 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-04-21T01:33:18+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Tradclaw: AI Household Manager for Agentic Parenting</title><link href="https://pyshine.com/Tradclaw-AI-Household-Manager-Agentic-Parenting/" rel="alternate" type="text/html" title="Tradclaw: AI Household Manager for Agentic Parenting" /><published>2026-04-21T00:00:00+00:00</published><updated>2026-04-21T00:00:00+00:00</updated><id>https://pyshine.com/Tradclaw-AI-Household-Manager-Agentic-Parenting</id><content type="html" xml:base="https://pyshine.com/Tradclaw-AI-Household-Manager-Agentic-Parenting/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-04-21T05:17:22+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">PyShine Screen Recorder: High-Performance Desktop Recording with PyQt6</title><link href="https://pyshine.com/PyShine-Screen-Recorder-High-Performance-Desktop-Recording/" rel="alternate" type="text/html" title="PyShine Screen Recorder: High-Performance Desktop Recording with PyQt6" /><published>2026-04-21T00:00:00+00:00</published><updated>2026-04-21T00:00:00+00:00</updated><id>https://pyshine.com/PyShine-Screen-Recorder-High-Performance-Desktop-Recording</id><content type="html" xml:base="https://pyshine.com/PyShine-Screen-Recorder-High-Performance-Desktop-Recording/"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>Screen recording is a fundamental tool for content creators, educators, bug reporters, and developers who need to capture and share what happens on their desktops. While commercial tools like OBS Studio dominate the landscape, they come with complexity overhead and platform-specific limitations that can frustrate users who just want a simple, fast recording experience.</p>
+
+<p><strong>PyShine Screen Recorder</strong> enters this space as an open-source, Python-based alternative that prioritizes performance and usability. Built on PyQt6 for the GUI and PyAV for media encoding, it delivers professional-grade screen capture with hardware-accelerated video encoding, dual audio source recording, and a polished dark theme interface. The application supports configurable frame rates from 1 to 120 FPS, region selection with an interactive overlay, and multi-monitor awareness – all packaged in a clean, modular architecture.</p>
+
+<p>What sets PyShine Screen Recorder apart from other Python recording tools is its commitment to production quality: automatic hardware encoder detection with graceful fallback (NVENC to QSV to AMF to libx264), WASAPI loopback capture for system audio on Windows, real-time audio level monitoring with stereo peak indicators, and proper PTS management for audio/video synchronization in the output MP4. These are not toy features – they represent the same engineering concerns that professional recording software must address.</p>
+
+<p>In this post, we will explore the architecture behind PyShine Screen Recorder, walk through its recording pipeline, understand how it detects and selects the best hardware encoder, and examine the region selector state machine that makes area capture intuitive and precise.</p>
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/pyshine-screen-recorder-architecture.svg" alt="Architecture Overview" /></p>
+
+<p>The architecture of PyShine Screen Recorder follows a centralized orchestrator pattern built around the <code class="language-plaintext highlighter-rouge">ScreenRecorderApp</code> class in <code class="language-plaintext highlighter-rouge">app.py</code>. This central orchestrator owns all major subsystems and coordinates their lifecycle through PyQt6’s signal/slot mechanism, which provides thread-safe communication across the application’s modules. The design ensures that no module directly calls methods on another module; instead, they emit signals that the orchestrator or other components connect to, creating a loosely coupled system where components can be modified or replaced independently.</p>
+
+<p>At the top level, the application is divided into five functional layers. The <strong>GUI layer</strong> contains the main window, system tray icon, preview widget, audio meter, recorder controls, settings panel, history panel, source selector, and status bar. Each GUI component is a self-contained widget that exposes its state through signals and responds to slots connected by the orchestrator. The <strong>capture layer</strong> handles screen capture via the <code class="language-plaintext highlighter-rouge">mss</code> library, multi-monitor detection through <code class="language-plaintext highlighter-rouge">display_info.py</code>, and the interactive region selector overlay. The <strong>audio layer</strong> manages microphone capture through <code class="language-plaintext highlighter-rouge">sounddevice</code>, system audio capture through <code class="language-plaintext highlighter-rouge">pyaudiowpatch</code> (WASAPI loopback), audio mixing with per-channel volume and mute controls, and audio device enumeration. The <strong>encoding layer</strong> contains the video encoder (with hardware acceleration auto-detection), the audio encoder (AAC via PyAV), and the output writer that muxes audio and video into an MP4 container with proper PTS synchronization. Finally, the <strong>config layer</strong> provides settings persistence with JSON and QSettings fallback, recording history stored as JSON metadata, and global hotkey management via <code class="language-plaintext highlighter-rouge">pynput</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">RecordingState</code> enum defines three states – <code class="language-plaintext highlighter-rouge">IDLE</code>, <code class="language-plaintext highlighter-rouge">RECORDING</code>, and <code class="language-plaintext highlighter-rouge">PAUSED</code> – that govern the entire application’s behavior. When the state transitions, the orchestrator emits a signal that all connected components receive, allowing them to update their UI, start or stop capture threads, and manage encoding resources accordingly. This state machine approach prevents race conditions and ensures that the application always behaves predictably regardless of the order in which the user triggers actions.</p>
+
+<p>The module structure is organized under <code class="language-plaintext highlighter-rouge">src/screen_recorder/</code> with subpackages for <code class="language-plaintext highlighter-rouge">audio/</code>, <code class="language-plaintext highlighter-rouge">capture/</code>, <code class="language-plaintext highlighter-rouge">config/</code>, <code class="language-plaintext highlighter-rouge">encoding/</code>, <code class="language-plaintext highlighter-rouge">gui/</code>, and <code class="language-plaintext highlighter-rouge">utils/</code>. Each subpackage has a clear responsibility boundary, and the orchestrator imports and wires together only the interfaces it needs. This separation makes the codebase approachable for contributors who want to add features or fix bugs in a specific area without needing to understand the entire system.</p>
+
+<h2 id="recording-pipeline">Recording Pipeline</h2>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/pyshine-screen-recorder-recording-pipeline.svg" alt="Recording Pipeline" /></p>
+
+<p>The recording pipeline is the heart of PyShine Screen Recorder, and understanding its data flow reveals how the application achieves real-time performance while maintaining audio/video synchronization. The pipeline operates as a multi-threaded producer-consumer system where capture threads produce raw frames and audio samples, and the encoding thread consumes them to produce the final MP4 output.</p>
+
+<p>The pipeline begins with <strong>screen capture</strong>. The <code class="language-plaintext highlighter-rouge">screen_capture.py</code> module uses the <code class="language-plaintext highlighter-rouge">mss</code> library to grab the screen content as a BGRA numpy array. The capture thread runs in a loop at the configured FPS, sleeping for the appropriate interval between frames. Each captured frame is converted from BGRA to RGB color space (required by the H.264 encoder) and placed into a frame queue. The <code class="language-plaintext highlighter-rouge">mss</code> library is chosen specifically because it provides fast, dependency-free screen capture on Windows, macOS, and Linux without requiring native library installations.</p>
+
+<p>In parallel, <strong>audio capture</strong> runs on separate threads. The microphone input is captured through <code class="language-plaintext highlighter-rouge">sounddevice</code>, which provides a cross-platform PortAudio wrapper. On Windows, system audio is captured through <code class="language-plaintext highlighter-rouge">pyaudiowpatch</code>, which wraps the Windows Audio Session API (WASAPI) loopback endpoint. WASAPI loopback is a Windows-specific feature that allows capturing audio that is being played through any output device – this is how the recorder captures system sounds without requiring a virtual audio cable. The <code class="language-plaintext highlighter-rouge">audio_mixer.py</code> module receives both audio streams, applies per-channel volume and mute settings, and mixes them into a single interleaved PCM buffer that the audio encoder consumes.</p>
+
+<p>The <strong>video encoder</strong> (<code class="language-plaintext highlighter-rouge">video_encoder.py</code>) pulls frames from the frame queue and encodes them using the best available hardware encoder. It creates a PyAV stream with the appropriate codec context (NVENC, QSV, AMF, or libx264), sets the frame rate, pixel format, and quality parameters, then encodes each frame into H.264 NAL units. The <strong>audio encoder</strong> (<code class="language-plaintext highlighter-rouge">audio_encoder.py</code>) similarly pulls mixed audio buffers and encodes them into AAC frames using PyAV’s AAC encoder.</p>
+
+<p>The critical synchronization challenge is handled by the <strong>output writer</strong> (<code class="language-plaintext highlighter-rouge">output_writer.py</code>). Video PTS (presentation timestamp) values are derived from wall-clock elapsed time since recording started, accounting for pause periods. Audio PTS values are derived from cumulative sample counting, ensuring that audio timestamps are monotonically increasing regardless of capture timing variations. The output writer muxes both streams into an MP4 container using PyAV’s muxer, writing interleaved audio and video packets to maintain proper playback order. When the user pauses recording, the output writer records the pause timestamp and adjusts subsequent video PTS values to skip the paused duration, while audio PTS continues from where it left off – this ensures seamless playback after resume.</p>
+
+<h2 id="hardware-encoder-auto-detection">Hardware Encoder Auto-Detection</h2>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/pyshine-screen-recorder-encoder-detection.svg" alt="Encoder Detection" /></p>
+
+<p>One of the most impressive engineering features of PyShine Screen Recorder is its automatic hardware encoder detection system. Rather than requiring users to know whether their GPU supports NVENC, QSV, or AMF, the application probes each encoder in sequence and automatically selects the best available option. This fallback chain – NVENC (NVIDIA) to QSV (Intel) to AMF (AMD) to libx264 (CPU) – ensures that every user gets the best encoding performance their hardware supports without manual configuration.</p>
+
+<p>The detection process works by attempting to create a test PyAV stream with each hardware encoder in priority order. For <strong>NVENC</strong>, the application tries to create an <code class="language-plaintext highlighter-rouge">h264_nvenc</code> codec context. If the system has an NVIDIA GPU with NVENC support (most GeForce cards from Maxwell architecture onward), this succeeds and NVENC is selected. NVENC offloads the entire H.264 encoding workload to the GPU’s dedicated video encoding hardware, leaving the CPU free for screen capture and audio processing. This is the ideal encoder for most users with NVIDIA hardware.</p>
+
+<p>If NVENC fails, the application tries <strong>QSV</strong> (Quick Sync Video) using the <code class="language-plaintext highlighter-rouge">h264_qsv</code> codec. QSV is Intel’s hardware-accelerated video encoding technology built into integrated and discrete Intel GPUs. It provides excellent encoding quality at low power consumption, making it a strong choice for laptops and systems with Intel integrated graphics. The QSV encoder leverages Intel’s fixed-function video encoding hardware on the GPU.</p>
+
+<p>If both NVENC and QSV fail, the application attempts <strong>AMF</strong> (Advanced Media Framework) using the <code class="language-plaintext highlighter-rouge">h264_amf</code> codec. AMF is AMD’s hardware encoding API for Radeon GPUs. Like NVENC and QSV, AMF provides GPU-accelerated H.264 encoding that offloads work from the CPU. The detection creates a test stream to verify that the AMF runtime is properly installed and the GPU supports the required features.</p>
+
+<p>Finally, if no hardware encoder is available, the application falls back to <strong>libx264</strong>, the industry-standard open-source H.264 encoder that runs entirely on the CPU. While libx264 produces excellent quality output, it consumes significant CPU resources during encoding, which can compete with the screen capture and audio processing threads. The application adjusts the encoding preset based on the selected encoder – hardware encoders use quality-based VBR targeting, while libx264 uses a faster preset to minimize CPU impact.</p>
+
+<p>The auto-detection result is cached for the application session, so the probe only runs once. Users can also override the automatic selection in the settings panel, choosing a specific encoder if they have reasons to prefer one over another (for example, using libx264 for maximum quality when CPU resources are abundant).</p>
+
+<h2 id="region-selector">Region Selector</h2>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/pyshine-screen-recorder-region-selector.svg" alt="Region Selector State Machine" /></p>
+
+<p>The region selector is one of the most sophisticated UI components in PyShine Screen Recorder. It implements a full state machine with four states – <code class="language-plaintext highlighter-rouge">IDLE</code>, <code class="language-plaintext highlighter-rouge">DRAWING</code>, <code class="language-plaintext highlighter-rouge">ADJUSTING</code>, and <code class="language-plaintext highlighter-rouge">CONFIRMED</code> – that governs how the user interacts with the fullscreen overlay to define a capture region. This state machine approach ensures that every user action produces a predictable outcome regardless of the current context.</p>
+
+<p>The flow begins in the <strong>IDLE</strong> state, where the region selector overlay is not visible. When the user initiates a region selection (either through the source selector or keyboard shortcut), the overlay appears as a semi-transparent fullscreen window covering the entire screen. The overlay darkens the screen content to provide visual contrast for the selection area.</p>
+
+<p>In the <strong>DRAWING</strong> state, the user clicks and drags to define the initial rectangular region. As the mouse moves, the selection rectangle is drawn with a bright border, and the area inside the rectangle shows the original screen content at full brightness while the area outside remains dimmed. Real-time dimension labels display the width and height of the selection in pixels, and position labels show the X/Y coordinates of the top-left corner. This immediate visual feedback helps users precisely target the area they want to capture.</p>
+
+<p>Once the user releases the mouse button, the state transitions to <strong>ADJUSTING</strong>. In this state, eight resize handles appear at the corners and edge midpoints of the selection rectangle. The user can drag any handle to resize the region from any direction, or click and drag inside the rectangle to move the entire selection. The handles are rendered as small squares with contrasting colors to ensure visibility against any background. Two buttons appear near the selection: a confirm button (green checkmark) and a cancel button (red X). A live preview thumbnail in the corner of the overlay shows what the captured region will look like, updating in real time as the user adjusts the boundaries.</p>
+
+<p>When the user clicks the confirm button (or presses Enter), the state transitions to <strong>CONFIRMED</strong>. The overlay closes, and the selected region coordinates are emitted as a signal that the orchestrator receives and passes to the screen capture module. The capture module then uses these coordinates to configure <code class="language-plaintext highlighter-rouge">mss</code> to grab only the specified region of the screen, significantly reducing the data that needs to be processed and encoded when capturing a small area rather than the full display.</p>
+
+<p>If the user clicks cancel (or presses Escape), the state returns to <strong>IDLE</strong> and the overlay closes without capturing. The state machine also handles edge cases: double-clicking in DRAWING state creates a default region, and right-clicking at any point cancels the operation. The region selector preserves the last used region coordinates so users can quickly re-select the same area in subsequent recordings.</p>
+
+<h2 id="installation">Installation</h2>
+
+<p>Setting up PyShine Screen Recorder is straightforward. The project uses a standard Python package structure with <code class="language-plaintext highlighter-rouge">pyproject.toml</code>, so installation follows the familiar pattern of cloning, creating a virtual environment, and installing dependencies.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/pyshine-labs/PyShine-Screen-Recorder.git
+<span class="nb">cd </span>screen-recorder-pyqt
+
+<span class="c"># Create and activate a virtual environment</span>
+python <span class="nt">-m</span> venv .venv
+
+<span class="c"># On Windows:</span>
+.venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+
+<span class="c"># On Linux/macOS:</span>
+<span class="c"># source .venv/bin/activate</span>
+
+<span class="c"># Install the package in editable mode</span>
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="nb">.</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">pip install -e .</code> command installs the package in editable mode, which means any changes to the source code are immediately reflected without reinstalling. This is the recommended approach for development and customization.</p>
+
+<p>For global hotkey support (F9 to start/stop, F10 to pause/resume), install the optional <code class="language-plaintext highlighter-rouge">pynput</code> dependency:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install</span> <span class="nt">-e</span> <span class="s2">".[hotkeys]"</span>
+</code></pre></div></div>
+
+<p>This installs <code class="language-plaintext highlighter-rouge">pynput</code> which enables global keyboard shortcut detection even when the application window is not focused. Without this dependency, the application still functions fully but only responds to in-window keyboard shortcuts (Ctrl+R, Ctrl+S, Ctrl+P, Ctrl+Q, Esc).</p>
+
+<p><strong>System Requirements:</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Requirement</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Python</td>
+      <td>3.10 or later</td>
+    </tr>
+    <tr>
+      <td>Operating System</td>
+      <td>Windows 10+ (primary), Linux (partial)</td>
+    </tr>
+    <tr>
+      <td>GPU</td>
+      <td>Optional – hardware encoders require NVIDIA (NVENC), Intel (QSV), or AMD (AMF) GPU</td>
+    </tr>
+    <tr>
+      <td>Audio</td>
+      <td>WASAPI loopback requires Windows; microphone capture works on all platforms</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="usage">Usage</h2>
+
+<p>After installation, launch the application from the command line:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> screen_recorder
+</code></pre></div></div>
+
+<p>The main window presents a clean interface with a preview area, recording controls, and a status bar. Here is the typical workflow:</p>
+
+<ol>
+  <li><strong>Select a capture source</strong> – Choose a display for full-screen capture, or click “Select Region” to define a custom area using the region selector overlay.</li>
+  <li><strong>Configure audio</strong> – In the settings panel, select your microphone device and optionally enable system audio capture (WASAPI loopback on Windows).</li>
+  <li><strong>Start recording</strong> – Press Ctrl+R or click the record button. The status bar shows the recording duration and estimated file size.</li>
+  <li><strong>Pause/resume</strong> – Press Ctrl+P to pause the recording. The preview border changes color to indicate the paused state. Press Ctrl+P again to resume.</li>
+  <li><strong>Stop recording</strong> – Press Ctrl+S or click the stop button. The MP4 file is finalized and saved to the configured output directory.</li>
+</ol>
+
+<h3 id="keyboard-shortcuts">Keyboard Shortcuts</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shortcut</th>
+      <th>Action</th>
+      <th>Scope</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ctrl+R</td>
+      <td>Start recording</td>
+      <td>In-window</td>
+    </tr>
+    <tr>
+      <td>Ctrl+S</td>
+      <td>Stop recording</td>
+      <td>In-window</td>
+    </tr>
+    <tr>
+      <td>Ctrl+P</td>
+      <td>Pause/Resume recording</td>
+      <td>In-window</td>
+    </tr>
+    <tr>
+      <td>Ctrl+Q</td>
+      <td>Quit application</td>
+      <td>In-window</td>
+    </tr>
+    <tr>
+      <td>Esc</td>
+      <td>Cancel region selection</td>
+      <td>In-window</td>
+    </tr>
+    <tr>
+      <td>F9</td>
+      <td>Start/Stop toggle</td>
+      <td>Global (requires pynput)</td>
+    </tr>
+    <tr>
+      <td>F10</td>
+      <td>Pause/Resume toggle</td>
+      <td>Global (requires pynput)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The system tray icon provides an alternative way to control recording without switching to the main window. Right-click the tray icon to access start, stop, pause, and quit actions. The tray icon also changes appearance to indicate the current recording state.</p>
+
+<h2 id="features-overview">Features Overview</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Configurable FPS</td>
+      <td>Capture at 1-120 FPS depending on use case and hardware capability</td>
+    </tr>
+    <tr>
+      <td>Region Selection</td>
+      <td>Interactive overlay with 8 resize handles, drag-to-move, confirm/cancel buttons, live preview, and dimension labels</td>
+    </tr>
+    <tr>
+      <td>Multi-Monitor Support</td>
+      <td>Detects and enumerates all connected displays for source selection</td>
+    </tr>
+    <tr>
+      <td>Hardware Encoding</td>
+      <td>Auto-detects NVENC, QSV, AMF with libx264 fallback for maximum compatibility</td>
+    </tr>
+    <tr>
+      <td>Dual Audio Sources</td>
+      <td>Simultaneous microphone and system audio (WASAPI loopback) recording</td>
+    </tr>
+    <tr>
+      <td>Audio Level Meter</td>
+      <td>Real-time stereo L/R RMS and peak monitoring with green-yellow-red gradient</td>
+    </tr>
+    <tr>
+      <td>Pause/Resume</td>
+      <td>Pause and resume recording without creating separate files</td>
+    </tr>
+    <tr>
+      <td>Live Preview</td>
+      <td>Frame-skipped preview during recording with state-dependent border colors</td>
+    </tr>
+    <tr>
+      <td>System Tray</td>
+      <td>Minimize to tray with context menu recording controls</td>
+    </tr>
+    <tr>
+      <td>Settings Persistence</td>
+      <td>Dual-layer persistence using JSON (primary) and QSettings (fallback)</td>
+    </tr>
+    <tr>
+      <td>Recording History</td>
+      <td>JSON-persisted metadata including duration, file size, dimensions, and FPS</td>
+    </tr>
+    <tr>
+      <td>Global Hotkeys</td>
+      <td>F9 start/stop and F10 pause/resume via pynput (optional dependency)</td>
+    </tr>
+    <tr>
+      <td>Dark Theme</td>
+      <td>Catppuccin-inspired dark stylesheet for comfortable extended use</td>
+    </tr>
+    <tr>
+      <td>MP4 Output</td>
+      <td>Properly muxed MP4 with synchronized audio/video via PyAV</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>PyShine Screen Recorder demonstrates that a Python-based desktop application can deliver professional-grade screen recording with the same engineering rigor as native C++ tools. Its modular architecture, built around PyQt6’s signal/slot system, cleanly separates concerns across capture, audio, encoding, GUI, and configuration layers. The automatic hardware encoder detection ensures that every user gets the best performance their hardware supports without manual configuration, while the sophisticated region selector state machine provides an intuitive capture experience.</p>
+
+<p>The dual audio recording capability – combining microphone input with WASAPI loopback system audio capture – addresses a common pain point in screen recording software where capturing both voice and system sounds requires virtual audio cables or complex routing. PyShine Screen Recorder handles this natively through its audio mixer with per-channel volume and mute controls.</p>
+
+<p>Whether you are recording tutorials, reporting bugs, capturing gameplay, or creating presentation videos, PyShine Screen Recorder provides a well-engineered, open-source solution that respects both your hardware capabilities and your workflow preferences. The codebase is structured for extensibility, making it an excellent reference for anyone building PyQt6 applications that involve real-time media processing.</p>
+
+<p><strong>Links:</strong></p>
+
+<ul>
+  <li>Repository: <a href="https://github.com/pyshine-labs/PyShine-Screen-Recorder">https://github.com/pyshine-labs/PyShine-Screen-Recorder</a></li>
+  <li>Package: <a href="https://pypi.org/project/screen-recorder-pyqt/">screen-recorder-pyqt on PyPI</a></li>
+  <li>License: MIT</li>
+</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Python" /><category term="PyQt6" /><category term="Screen Recording" /><category term="Desktop Application" /><summary type="html"><![CDATA[Learn how PyShine Screen Recorder delivers professional-grade screen recording with hardware-accelerated encoding, WASAPI loopback audio, and an elegant PyQt6 dark theme interface.]]></summary></entry><entry><title type="html">Tradclaw: AI Household Manager for Agentic Parenting</title><link href="https://pyshine.com/Tradclaw-AI-Household-Manager-Agentic-Parenting/" rel="alternate" type="text/html" title="Tradclaw: AI Household Manager for Agentic Parenting" /><published>2026-04-21T00:00:00+00:00</published><updated>2026-04-21T00:00:00+00:00</updated><id>https://pyshine.com/Tradclaw-AI-Household-Manager-Agentic-Parenting</id><content type="html" xml:base="https://pyshine.com/Tradclaw-AI-Household-Manager-Agentic-Parenting/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p>Managing a household is a full-time job that most parents juggle alongside their actual full-time jobs. Between school deadlines, meal planning, homework tracking, home maintenance, and the endless stream of messages from teachers and PTA groups, the cognitive load on modern parents is staggering. What if an AI agent could shoulder that burden – not as a generic chatbot, but as a household-aware system that understands your family’s rhythms, priorities, and boundaries?</p>
 
@@ -1664,104 +1942,4 @@ cargo <span class="nb">test</span> <span class="nt">--workspace</span>
 
 <p>The broader implication is that autonomous software development is not a future possibility but a present reality. The nine lanes that reached parity were not coded by human hands – they were coded by claws, each working in its own branch, each subject to the same permission and policy engine that governs human operation. The system does not need to be perfect; it needs to be self-correcting, and that is exactly what the recovery recipe system and policy engine provide.</p>
 
-<p>For developers interested in the intersection of AI agents and systems programming, claw-code-parity offers a concrete, production-grade reference implementation. The code is open source, the architecture is documented, and the development process is transparent. Whether you are building your own agent harness or evaluating the state of autonomous development, the repository is worth studying: <a href="https://github.com/ultraworkers/claw-code-parity">https://github.com/ultraworkers/claw-code-parity</a></p>]]></content><author><name>PyShine</name></author><category term="Rust" /><category term="AI-Agent" /><category term="Claude-Code" /><category term="Autonomous-Development" /><category term="Open-Source" /><summary type="html"><![CDATA[An in-depth look at claw-code-parity — a Rust port of the Claude Code CLI system that is autonomously maintained by AI agents, featuring a 9-crate architecture, worker boot state machines, recovery recipes, and a three-part autonomous development ecosystem.]]></summary></entry><entry><title type="html">CodeBurn: See Where Your AI Coding Tokens Go</title><link href="https://pyshine.com/codeburn-see-where-your-ai-coding-tokens-go/" rel="alternate" type="text/html" title="CodeBurn: See Where Your AI Coding Tokens Go" /><published>2026-04-20T00:00:00+00:00</published><updated>2026-04-20T00:00:00+00:00</updated><id>https://pyshine.com/CodeBurn-See-Where-Your-AI-Coding-Tokens-Go</id><content type="html" xml:base="https://pyshine.com/codeburn-see-where-your-ai-coding-tokens-go/"><![CDATA[<p>Every AI coding session burns tokens. But where do they actually go? Which tasks eat the most budget? Where does the AI nail it first try versus burning tokens on edit-test-fix retry loops? <strong>CodeBurn</strong> from <a href="https://github.com/getagentseal/codeburn">getagentseal/codeburn</a> answers these questions with an interactive TUI dashboard that reads session data directly from disk – no wrapper, no proxy, no API keys required.</p>
-
-<p>With over 2,800 stars on GitHub and support for seven AI coding providers, CodeBurn has quickly become the go-to tool for developers who want to understand and optimize their AI coding spend.</p>
-
-<h2 id="how-codeburn-works">How CodeBurn Works</h2>
-
-<p>CodeBurn operates on a simple but powerful principle: read session data directly from the local disk where AI coding tools already store it. There is no wrapper to install, no proxy to configure, and no API keys to manage. The tool reads JSONL and SQLite files, deduplicates messages, filters by date range, classifies each turn into one of 13 task categories, calculates costs using LiteLLM pricing data, and presents everything in an interactive terminal dashboard.</p>
-
-<p><img src="/assets/img/diagrams/codeburn/codeburn-architecture.svg" alt="CodeBurn Architecture" /></p>
-
-<p>The diagram above illustrates the complete data pipeline. Session data lives on local disk in provider-specific directories. The Provider Plugin System (7 providers, each a single file) reads these files and feeds them into the Parser, which handles JSONL and SQLite parsing, deduplication, and date filtering. From there, the data flows two ways: the Classifier assigns each turn to one of 13 task categories using deterministic rules (no LLM calls), while the Pricing Engine calculates costs using LiteLLM model prices auto-cached for 24 hours. The Currency module supports 162 currencies with exchange rates from the European Central Bank.</p>
-
-<p>The classified and priced data then flows to six output modes: the interactive TUI Dashboard (built with Ink/React for terminals), the compact Status one-liner, CSV/JSON Export, the Optimize waste scanner, the Compare model comparison tool, and the native macOS Menu Bar app built with SwiftUI. The menu bar app receives its data via a JSON payload from the CLI, refreshing live via FSEvents plus a 15-second poll.</p>
-
-<h2 id="seven-providers-one-dashboard">Seven Providers, One Dashboard</h2>
-
-<p>CodeBurn auto-detects which AI coding tools you use and combines their data into a unified view. Press <code class="language-plaintext highlighter-rouge">p</code> in the dashboard to toggle between providers, or use the <code class="language-plaintext highlighter-rouge">--provider</code> flag on any command.</p>
-
-<p><img src="/assets/img/diagrams/codeburn/codeburn-providers.svg" alt="CodeBurn Providers" /></p>
-
-<p>The diagram above shows all seven supported providers radiating from the central CodeBurn Provider Registry. <strong>Claude Code</strong> reads JSONL session transcripts from <code class="language-plaintext highlighter-rouge">~/.claude/projects/</code>. <strong>Claude Desktop</strong> reads from <code class="language-plaintext highlighter-rouge">~/Library/Application Support/Claude/local-agent-mode-sessions/</code>. <strong>Codex (OpenAI)</strong> reads JSONL from <code class="language-plaintext highlighter-rouge">~/.codex/sessions/</code> with tool names normalized to match Claude conventions. <strong>Cursor</strong> reads from its SQLite database at <code class="language-plaintext highlighter-rouge">state.vscdb</code>, extracting token counts and language information. <strong>OpenCode</strong> reads from SQLite databases at <code class="language-plaintext highlighter-rouge">~/.local/share/opencode/</code>. <strong>Pi</strong> reads JSONL from <code class="language-plaintext highlighter-rouge">~/.pi/agent/sessions/</code> with lowercase tool names normalized to the standard set. <strong>GitHub Copilot</strong> reads from <code class="language-plaintext highlighter-rouge">~/.copilot/session-state/</code> but only tracks output tokens.</p>
-
-<p>The provider plugin system makes adding a new provider a single file. Each provider implements session discovery, JSONL parsing, tool normalization, and model display names. The <code class="language-plaintext highlighter-rouge">src/providers/codex.ts</code> file serves as a reference example. Amp is listed as planned for future support.</p>
-
-<h2 id="13-task-categories">13 Task Categories</h2>
-
-<p>CodeBurn classifies every turn into one of 13 task categories using deterministic rules based on tool usage patterns and user message keywords. No LLM calls are involved – the classification is fully deterministic and instant.</p>
-
-<p><img src="/assets/img/diagrams/codeburn/codeburn-categories.svg" alt="CodeBurn Categories" /></p>
-
-<p>The diagram above organizes the 13 categories into four groups. The <strong>Code-Focused</strong> group includes Coding (triggered by Edit and Write tools), Debugging (error/fix keywords plus tool usage), Feature Dev (“add”, “create”, “implement” keywords), Refactoring (“refactor”, “rename”, “simplify”), and Testing (pytest, vitest, jest in Bash). The <strong>Exploration</strong> group includes Exploration (Read, Grep, WebSearch without edits), Planning (EnterPlanMode, TaskCreate tools), and Brainstorming (“brainstorm”, “what if”, “design” keywords). The <strong>Operations</strong> group includes Git Ops (git push/commit/merge), Build/Deploy (npm build, docker, pm2), and Delegation (Agent tool spawns). The <strong>Other</strong> group covers Conversation (no tools, pure text exchange) and General (Skill tool, uncategorized).</p>
-
-<p>The One-Shot Rate note at the bottom explains the key metric: for categories involving code edits, CodeBurn detects edit/test/fix retry cycles (Edit -&gt; Bash -&gt; Edit patterns). The one-shot column shows the percentage of edit turns that succeeded without retries. Coding at 90% means the AI got it right first try 9 out of 10 times.</p>
-
-<h2 id="reading-the-dashboard">Reading the Dashboard</h2>
-
-<p>CodeBurn surfaces the data; you read the story. The dashboard shows daily cost charts, per-project breakdowns, per-model token counts (Opus, Sonnet, Haiku, GPT-5, GPT-4o, Gemini), per-activity breakdowns with one-shot rates, core tools, shell commands, and MCP servers. Several diagnostic signals are worth knowing:</p>
-
-<ul>
-  <li><strong>Cache hit below 80%</strong>: System prompt or context is not stable, or caching is not enabled</li>
-  <li><strong>Lots of Read calls per session</strong>: Agent re-reading same files, missing context</li>
-  <li><strong>Low one-shot rate (Coding 30%)</strong>: Agent struggling with edits, retry loops</li>
-  <li><strong>Opus 4.6 dominating cost on small turns</strong>: Overpowered model for simple tasks</li>
-  <li><strong>dispatch_agent / task heavy</strong>: Sub-agent fan-out, expected or excessive</li>
-  <li><strong>No MCP usage shown</strong>: Either you do not use MCP servers, or your config is broken</li>
-  <li><strong>Bash dominated by git status, ls</strong>: Agent exploring instead of executing</li>
-  <li><strong>Conversation category dominant</strong>: Agent talking instead of doing</li>
-</ul>
-
-<p>These are starting points, not verdicts. A 60% cache hit on a single experimental session is fine. A persistent 60% cache hit across weeks of work is a config issue.</p>
-
-<h2 id="optimize-find-waste-get-fixes">Optimize: Find Waste, Get Fixes</h2>
-
-<p>Once you know what to look for, <code class="language-plaintext highlighter-rouge">codeburn optimize</code> scans your sessions and your <code class="language-plaintext highlighter-rouge">~/.claude/</code> setup for the most common waste patterns and returns exact, copy-paste fixes. It never writes to your files.</p>
-
-<p><img src="/assets/img/diagrams/codeburn/codeburn-optimize-compare.svg" alt="CodeBurn Optimize and Compare" /></p>
-
-<p>The diagram above shows the two analytical features. The <strong>Optimize</strong> scanner detects seven waste patterns: Re-read Files (same content across sessions), Low Read:Edit Ratio (editing without reading leads to retries), Wasted Bash Output (uncapped <code class="language-plaintext highlighter-rouge">BASH_MAX_OUTPUT_LENGTH</code>, trailing noise), Unused MCP Servers (paying tool-schema overhead every session), Ghost Agents/Skills/Commands (defined but never invoked), Bloated CLAUDE.md Files (with @-import expansion counted), and Cache Creation Overhead (junk directory reads). Each finding shows estimated token and dollar savings plus a ready-to-paste fix. Findings are ranked by urgency and rolled up into an A-F setup health grade. Repeat runs classify each finding as new, improving, or resolved against a 48-hour recent window.</p>
-
-<p>The <strong>Compare</strong> feature provides side-by-side model comparison across any two models in your session data. It compares three metric groups: Performance (one-shot rate, retry rate, self-correction), Efficiency (cost per call, cost per edit, output tokens per call, cache hit rate), and Working Style (delegation rate, planning rate, average tools per turn, fast mode usage). Per-category one-shot rates break down success by task type so you can see where each model excels or struggles. All metrics are computed from your local session data with no LLM calls.</p>
-
-<h2 id="getting-started">Getting Started</h2>
-
-<p>Install globally:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install</span> <span class="nt">-g</span> codeburn
-</code></pre></div></div>
-
-<p>Or run without installing:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx codeburn
-</code></pre></div></div>
-
-<p>Basic commands:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>codeburn                        <span class="c"># interactive dashboard (default: 7 days)</span>
-codeburn today                  <span class="c"># today's usage</span>
-codeburn month                  <span class="c"># this month's usage</span>
-codeburn status                 <span class="c"># compact one-liner (today + month)</span>
-codeburn optimize               <span class="c"># find waste, get copy-paste fixes</span>
-codeburn compare                <span class="c"># interactive model comparison</span>
-codeburn <span class="nb">export</span>                 <span class="c"># CSV with today, 7 days, 30 days</span>
-codeburn currency GBP           <span class="c"># set display currency</span>
-</code></pre></div></div>
-
-<p>Arrow keys switch between Today / 7 Days / 30 Days / Month / All Time. Press <code class="language-plaintext highlighter-rouge">q</code> to quit, <code class="language-plaintext highlighter-rouge">1</code>-<code class="language-plaintext highlighter-rouge">5</code> as shortcuts, <code class="language-plaintext highlighter-rouge">c</code> to open model comparison, <code class="language-plaintext highlighter-rouge">o</code> to open optimize, <code class="language-plaintext highlighter-rouge">p</code> to toggle providers.</p>
-
-<h2 id="the-macos-menu-bar-app">The macOS Menu Bar App</h2>
-
-<p>For macOS users, CodeBurn includes a native Swift + SwiftUI menu bar app that shows today’s cost with a flame icon and opens a popover with agent tabs, period switcher, trend/forecast/pulse/stats/plan insights, activity and model breakdowns, optimize findings, and CSV/JSON export. Install it with one command:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx codeburn menubar
-</code></pre></div></div>
-
-<p>The menu bar app refreshes live via FSEvents plus a 15-second poll, includes a currency picker with 17 common currencies, and supports any of the 162 ISO 4217 currencies via the CLI.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>CodeBurn fills a critical gap in the AI coding workflow: visibility. As developers increasingly rely on AI agents for coding, debugging, testing, and deployment, the cost of token consumption grows silently. CodeBurn makes that cost visible, categorizable, and optimizable. Its zero-proxy architecture (reading directly from disk), deterministic classification (no LLM calls), multi-provider support, and actionable optimization suggestions make it an essential tool for any developer using AI coding agents.</p>
-
-<p>The project is open source (MIT license) and actively maintained at <a href="https://github.com/getagentseal/codeburn">github.com/getagentseal/codeburn</a>.</p>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Claude-Code" /><category term="Codex" /><category term="Cursor" /><category term="Token-Tracking" /><category term="Cost-Optimization" /><category term="Developer-Tools" /><category term="TUI" /><summary type="html"><![CDATA[An open-source TUI dashboard that tracks AI coding costs across Claude Code, Codex, Cursor, OpenCode, Pi, and GitHub Copilot -- with 13 task categories, one-shot rate tracking, waste detection, and model comparison.]]></summary></entry></feed>
+<p>For developers interested in the intersection of AI agents and systems programming, claw-code-parity offers a concrete, production-grade reference implementation. The code is open source, the architecture is documented, and the development process is transparent. Whether you are building your own agent harness or evaluating the state of autonomous development, the repository is worth studying: <a href="https://github.com/ultraworkers/claw-code-parity">https://github.com/ultraworkers/claw-code-parity</a></p>]]></content><author><name>PyShine</name></author><category term="Rust" /><category term="AI-Agent" /><category term="Claude-Code" /><category term="Autonomous-Development" /><category term="Open-Source" /><summary type="html"><![CDATA[An in-depth look at claw-code-parity — a Rust port of the Claude Code CLI system that is autonomously maintained by AI agents, featuring a 9-crate architecture, worker boot state machines, recovery recipes, and a three-part autonomous development ecosystem.]]></summary></entry></feed>
