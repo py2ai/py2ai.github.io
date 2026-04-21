@@ -20,7 +20,9 @@ What sets CC Design apart from generic AI code generation is its verification-fi
 
 ## Progressive Disclosure Architecture
 
-{% include figure path="/assets/img/diagrams/cc-design/cc-design-progressive-disclosure-architecture.svg" alt="CC Design Progressive Disclosure Architecture" caption="CC Design's progressive disclosure architecture keeps the core SKILL.md concise while loading references and templates on demand" %}
+![CC Design Progressive Disclosure Architecture](/assets/img/diagrams/cc-design/cc-design-progressive-disclosure-architecture.svg)
+
+*CC Design's progressive disclosure architecture keeps the core SKILL.md concise while loading references and templates on demand*
 
 The progressive disclosure architecture is the backbone of CC Design's efficiency. At its center sits the SKILL.md file, deliberately kept under 200 lines as the always-loaded core. This file contains only the essential workflow steps, the routing table, and high-level rules. By keeping the core compact, CC Design avoids consuming precious context window tokens with information that may not be relevant to the current task.
 
@@ -36,7 +38,9 @@ This architecture minimizes context window consumption by ensuring that only the
 
 ## The 7-Step Design Workflow
 
-{% include figure path="/assets/img/diagrams/cc-design/cc-design-workflow.svg" alt="CC Design Workflow" caption="The seven-step design workflow with task-type routing and verification feedback loop" %}
+![CC Design Workflow](/assets/img/diagrams/cc-design/cc-design-workflow.svg)
+
+*The seven-step design workflow with task-type routing and verification feedback loop*
 
 The seven-step design workflow provides a disciplined sequence from initial request to final deliverable. Each step has clear inputs, outputs, and decision criteria, ensuring that no critical design activity is skipped.
 
@@ -58,7 +62,9 @@ The feedback loop from Verify back to Build is what makes this workflow reliable
 
 ## Three-Phase Verification Protocol
 
-{% include figure path="/assets/img/diagrams/cc-design/cc-design-verification-protocol.svg" alt="CC Design Verification Protocol" caption="The three-phase verification protocol ensures structural integrity, visual quality, and design excellence" %}
+![CC Design Verification Protocol](/assets/img/diagrams/cc-design/cc-design-verification-protocol.svg)
+
+*The three-phase verification protocol ensures structural integrity, visual quality, and design excellence*
 
 The three-phase verification protocol is CC Design's quality gate. No design reaches the delivery stage without passing all three phases, and the protocol enforces a strict ordering: structural checks must pass before visual checks begin, and visual checks must pass before design excellence evaluation.
 
@@ -74,7 +80,9 @@ Anti-slop rules prevent common AI design mistakes. No aggressive gradients that 
 
 ## Export Pipeline
 
-{% include figure path="/assets/img/diagrams/cc-design/cc-design-export-pipeline.svg" alt="CC Design Export Pipeline" caption="Three export paths transform HTML designs into PPTX, self-contained HTML, and PDF deliverables" %}
+![CC Design Export Pipeline](/assets/img/diagrams/cc-design/cc-design-export-pipeline.svg)
+
+*Three export paths transform HTML designs into PPTX, self-contained HTML, and PDF deliverables*
 
 The export pipeline transforms the verified HTML design into the deliverable format requested by the user. Three distinct export paths serve different delivery needs, each implemented as a standalone Node.js script that can be invoked from the command line.
 

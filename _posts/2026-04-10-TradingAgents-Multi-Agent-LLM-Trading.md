@@ -17,7 +17,7 @@ The framework is designed for research purposes and supports multiple LLM provid
 
 The TradingAgents framework implements a sophisticated multi-agent architecture that decomposes complex trading tasks into specialized roles. This approach ensures robust, scalable market analysis and decision-making by leveraging the strengths of different agent types.
 
-{% include figure.html path="/assets/img/diagrams/tradingagents-architecture.svg" alt="TradingAgents Architecture" class="img-fluid" %}
+![TradingAgents Architecture](/assets/img/diagrams/tradingagents-architecture.svg)
 
 The architecture follows a hierarchical design where information flows from market data through various analysis layers before reaching a final trading decision. Each layer adds specialized expertise, creating a comprehensive evaluation pipeline that mimics how professional trading firms operate.
 
@@ -37,7 +37,7 @@ The Analyst Team forms the foundation of the TradingAgents framework, comprising
 
 - **Technical Analyst**: Utilizes technical indicators like MACD and RSI to detect trading patterns and forecast price movements. This agent applies quantitative analysis to identify entry and exit points based on historical price patterns.
 
-{% include figure.html path="/assets/img/diagrams/tradingagents-dataflow.svg" alt="TradingAgents Data Flow" class="img-fluid" %}
+![TradingAgents Data Flow](/assets/img/diagrams/tradingagents-dataflow.svg)
 
 The data flow diagram illustrates how market data from various sources flows through the Dataflows module to the Analyst Team. Each analyst receives relevant data streams and processes them according to their specialized analysis methodology. The outputs from these analysts then feed into the Researcher Team for further evaluation.
 
@@ -55,7 +55,7 @@ Through structured debates, these researchers ensure that all perspectives are c
 
 The Trader Agent serves as the central decision-making component, composing reports from analysts and researchers to make informed trading decisions. It determines the timing and magnitude of trades based on comprehensive market insights gathered from all upstream agents.
 
-{% include figure.html path="/assets/img/diagrams/tradingagents-workflow.svg" alt="TradingAgents Workflow" class="img-fluid" %}
+![TradingAgents Workflow](/assets/img/diagrams/tradingagents-workflow.svg)
 
 The workflow diagram shows the complete trading decision process, from initial ticker selection through final execution. The process includes multiple checkpoints where proposals can be rejected or modified based on risk assessment outcomes.
 
@@ -75,7 +75,7 @@ The Risk Management Team continuously evaluates portfolio risk by assessing mark
 
 One of TradingAgents' key strengths is its support for multiple LLM providers, allowing users to choose the best model for their specific use case. The framework implements a unified client factory that abstracts away provider-specific implementation details.
 
-{% include figure.html path="/assets/img/diagrams/tradingagents-llm-providers.svg" alt="TradingAgents LLM Providers" class="img-fluid" %}
+![TradingAgents LLM Providers](/assets/img/diagrams/tradingagents-llm-providers.svg)
 
 The LLM provider architecture supports both cloud-based and local models. Cloud providers include OpenAI (GPT-5.x series), Google (Gemini 3.x), Anthropic (Claude 4.x), xAI (Grok 4.x), and OpenRouter. For users preferring local deployment, Ollama integration allows running models on-premises.
 
