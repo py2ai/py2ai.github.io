@@ -160,6 +160,7 @@ Ollama organizes models using a manifest and layer system similar to container i
 
 Here is an example of a Modelfile, Ollama's equivalent of a Dockerfile for models:
 
+{% raw %}
 ```bash
 # Create a custom model from a base model
 # Save this as Modelfile
@@ -188,6 +189,7 @@ TEMPLATE """
 Assistant:
 """
 ```
+{% endraw %}
 
 Commands for model conversion and creation:
 

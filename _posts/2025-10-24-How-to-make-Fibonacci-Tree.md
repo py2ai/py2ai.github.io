@@ -1,4 +1,5 @@
 ---
+canonical: "https://pyshine.com/How-to-make-Fibonacci-Tree/"
 description: '> A detailed, step-by-step tutorial explaining a Pygame program that draws a Fibonacci-based tree. This tutorial shows how the original recursive growth work...'
 featured-img: 26072022-python-logo
 keywords:
