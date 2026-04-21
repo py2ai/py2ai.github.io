@@ -129,6 +129,7 @@ This installs `pynput` which enables global keyboard shortcut detection even whe
 After installation, launch the application from the command line:
 
 ```bash
+cd src
 python -m screen_recorder
 ```
 
