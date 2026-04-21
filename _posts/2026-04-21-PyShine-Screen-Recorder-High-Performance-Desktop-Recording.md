@@ -184,5 +184,4 @@ Whether you are recording tutorials, reporting bugs, capturing gameplay, or crea
 **Links:**
 
 - Repository: [https://github.com/pyshine-labs/PyShine-Screen-Recorder](https://github.com/pyshine-labs/PyShine-Screen-Recorder)
-- Package: [screen-recorder-pyqt on PyPI](https://pypi.org/project/screen-recorder-pyqt/)
 - License: MIT
