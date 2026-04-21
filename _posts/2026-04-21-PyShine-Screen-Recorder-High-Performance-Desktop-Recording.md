@@ -90,7 +90,7 @@ Setting up PyShine Screen Recorder is straightforward. The project uses a standa
 ```bash
 # Clone the repository
 git clone https://github.com/pyshine-labs/PyShine-Screen-Recorder.git
-cd screen-recorder-pyqt
+cd PyShine-Screen-Recorder
 
 # Create and activate a virtual environment
 python -m venv .venv
