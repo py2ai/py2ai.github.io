@@ -179,7 +179,7 @@ Phase 14 of the Hue pipeline runs an automated self-validation check before any 
 
 **YAML Parse Verification** confirms that `design-model.yaml` is syntactically valid and can be loaded without errors. Malformed YAML -- unclosed brackets, incorrect indentation, missing colons -- is caught here before it propagates to token formats or HTML previews.
 
-**Placeholder Detection** scans all generated files for unresolved template placeholders like `{{COLOR_PRIMARY}}` or `TODO: fill in`. Any placeholder that was not replaced with an actual value during generation is flagged as an error, preventing incomplete design tokens from reaching production.
+**Placeholder Detection** scans all generated files for unresolved template placeholders like `{% raw %}{{COLOR_PRIMARY}}{% endraw %}` or `TODO: fill in`. Any placeholder that was not replaced with an actual value during generation is flagged as an error, preventing incomplete design tokens from reaching production.
 
 **CSS Selector Coverage** verifies that every semantic token defined in the YAML has a corresponding CSS custom property in the generated `tokens.css` file. If a token is defined in the YAML but missing from the CSS, the validation fails and the pipeline reports the gap.
 

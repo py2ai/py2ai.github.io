@@ -428,13 +428,14 @@ The LLM-powered email composition system generates personalized outreach message
 
 The system supports template-based messaging with dynamic placeholders:
 
-- `{{COMPANY_NAME}}`: Automatically replaced with actual business name
-- `{{SERVICE_TYPE}}`: Populated based on business category
-- `{{LOCATION}}`: Geographic reference for local businesses
+- `{% raw %}{{COMPANY_NAME}}{% endraw %}`: Automatically replaced with actual business name
+- `{% raw %}{{SERVICE_TYPE}}{% endraw %}`: Populated based on business category
+- `{% raw %}{{LOCATION}}{% endraw %}`: Geographic reference for local businesses
 
 **Email Template Example**
 
 ```html
+{% raw %}
 <!-- outreach_message.html -->
 <html>
 <body>
@@ -448,6 +449,7 @@ your offerings. I wanted to reach out because...</p>
 <p>Best regards,<br>Your Name</p>
 </body>
 </html>
+{% endraw %}
 ```
 
 **SMTP Configuration**
