@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Agents.md: Making Coding Agents Think Like Senior Engineers"
-description: "Explore Agents.md, a drop-in configuration file that transforms AI coding agents from sycophantic assistants into disciplined senior engineers with verification loops, confidence checks, and quality-first behavior."
+description: "Agents.md is a drop-in config file that makes AI coding agents think like senior engineers with anti-sycophancy rules, verification loops, and surgical change discipline across Claude Code and Codex."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Agents-MD-Making-Coding-Agents-Think-Like-Senior-Engineers/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Agents
-  - Best Practices
-  - Code Quality
+categories: [AI Agents, Developer Tools, Code Quality]
+tags: [Open Source, AI Agents, Best Practices, Code Quality, Claude Code, Anti-Sycophancy, Verification Loops, Developer Tools, Software Engineering, AGENTS.md]
+keywords: "how to make AI coding agents better, agents.md configuration file, AI agent anti-sycophancy rules, Claude Code best practices, AI coding agent verification loops, senior engineer AI agent behavior, improve AI code quality, AI agent discipline rules, AGENTS.md open standard, coding agent instruction file"
 author: "PyShine"
 ---
 

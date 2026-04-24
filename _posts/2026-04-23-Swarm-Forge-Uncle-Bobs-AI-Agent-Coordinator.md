@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Swarm Forge: Uncle Bob's AI Agent Coordinator"
-description: "Explore Swarm Forge, a simple shell-based tool by Uncle Bob Martin for coordinating multiple AI agents with defined roles, shared constitutions, and parallel execution for software development tasks."
+description: "Swarm Forge by Uncle Bob Martin is a lightweight tmux-based orchestration platform that coordinates swarms of AI agents with role-based prompts, shared constitutions, and git worktrees for disciplined software development."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Swarm-Forge-Uncle-Bobs-AI-Agent-Coordinator/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Agents
-  - Shell Scripting
-  - Software Engineering
+categories: [AI Agents, Software Engineering, Developer Tools]
+tags: [Open Source, AI Agents, Shell Scripting, Software Engineering, tmux, Git Worktrees, Clean Code, Developer Tools, Multi-Agent, Orchestration]
+keywords: "Swarm Forge Uncle Bob AI agents, how to coordinate multiple AI agents, tmux AI agent orchestration, AI agent swarm coordination, Clean Code AI agent rules, git worktree AI development, multi-agent AI development tool, AI agent constitution system, shell-based AI agent manager, disciplined AI coding agents"
 author: "PyShine"
 ---
 

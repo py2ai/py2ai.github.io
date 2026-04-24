@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Google Design.md: Visual Identity Specification for Coding Agents"
-description: "Explore Google's DESIGN.md specification - a standardized format for describing visual identity to coding agents, featuring a CLI tool, linter rules, DTCG conformance, and Tailwind CSS integration."
+description: "Google DESIGN.md is a standardized format for describing visual identity to AI coding agents, with design tokens, linter rules, DTCG conformance, and Tailwind CSS export for consistent UI generation."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Google-Design-MD-Visual-Identity-Specification/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - Google
-  - Design Systems
-  - AI Agents
+categories: [Design Systems, AI Agents, Developer Tools]
+tags: [Open Source, Google, Design Systems, AI Agents, Design Tokens, Tailwind CSS, Developer Tools, WCAG Accessibility, TypeScript, DTCG]
+keywords: "Google DESIGN.md specification, design tokens for AI agents, how to describe visual identity to AI, design system for coding agents, Tailwind CSS design tokens export, DTCG design tokens standard, AI UI generation design system, WCAG contrast ratio linter, design.md CLI tool, AI coding agent design specification"
 author: "PyShine"
 ---
 

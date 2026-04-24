@@ -1,17 +1,14 @@
 ---
 layout: post
 title: "CrewAI: Multi-Agent Orchestration Framework for Autonomous AI Collaboration"
-description: "Learn how CrewAI enables developers to build production-ready multi-agent systems with role-playing autonomous agents, event-driven Flows, and seamless LLM integration - 49K stars on GitHub."
+description: "CrewAI is a Python framework for building production-ready multi-agent systems with role-playing autonomous agents, event-driven Flows, and seamless LLM integration, with 49K GitHub stars and 100K+ certified developers."
 date: 2026-04-24
 header-img: "img/post-bg.jpg"
 permalink: /CrewAI-Multi-Agent-Orchestration-Framework/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - Python
-  - AI Agents
-  - Multi-Agent Systems
-  - LLM
+categories: [AI Agents, Python, Developer Tools]
+tags: [Open Source, Python, AI Agents, Multi-Agent Systems, LLM, Orchestration, CrewAI, Developer Tools, Automation, Framework]
+keywords: "CrewAI multi-agent framework tutorial, how to build multi-agent AI systems, CrewAI Python framework guide, AI agent orchestration Python, CrewAI vs LangChain comparison, multi-agent AI collaboration framework, CrewAI Flows event-driven, autonomous AI agent teams Python, CrewAI getting started guide, production AI agent framework"
 author: "PyShine"
 ---
 

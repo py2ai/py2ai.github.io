@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Mercury Agent: Soul-Driven AI with Permission-Hardened Tools"
-description: "Explore Mercury Agent, a soul-driven AI agent featuring permission-hardened tools, token budgets, and multi-channel access through CLI and Telegram for safe and controlled AI autonomy."
+description: "Mercury Agent is a soul-driven AI agent with permission-hardened tools, token budgets, and multi-channel access via CLI and Telegram, designed for safe and controlled AI autonomy on your local machine."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Mercury-Agent-Soul-Driven-AI-with-Permission-Hardened-Tools/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Agent
-  - TypeScript
-  - Security
+categories: [AI Agents, Security, Developer Tools]
+tags: [Open Source, AI Agent, TypeScript, Security, Telegram Bot, CLI Tools, Permission System, Token Budget, Developer Tools, Autonomous AI]
+keywords: "Mercury AI agent permission system, soul-driven AI agent, how to build safe AI agents, AI agent token budget, permission-hardened AI tools, Telegram AI agent bot, CLI AI agent TypeScript, safe autonomous AI agent, AI agent security permissions, local AI agent with soul"
 author: "PyShine"
 ---
 

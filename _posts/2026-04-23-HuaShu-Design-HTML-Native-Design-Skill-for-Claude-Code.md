@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "HuaShu Design: HTML-Native Design Skill for Claude Code"
-description: "Explore HuaShu Design, an HTML-native design skill for Claude Code that brings 20 design philosophies, high-fidelity prototypes, slides, animations, and professional export capabilities to AI-assisted development."
+description: "HuaShu Design is an HTML-native design skill for Claude Code that brings 20 design philosophies, high-fidelity prototypes, slide decks, animations, and professional export to AI-assisted development."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /HuaShu-Design-HTML-Native-Design-Skill/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - Claude Code
-  - Design
-  - AI Skills
+categories: [AI Design, Developer Tools, Web Development]
+tags: [Open Source, Claude Code, Design, AI Skills, HTML, Prototyping, Animation, Web Development, UI Design, Presentation]
+keywords: "HuaShu Design skill for Claude Code, AI HTML design skill, how to create prototypes with AI, AI slide deck generator, HTML-native design for coding agents, Claude Code design skill, AI animation generator, AI UI prototyping tool, design philosophies for AI agents, SKILL.md design system"
 author: "PyShine"
 ---
 

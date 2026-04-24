@@ -1,17 +1,14 @@
 ---
 layout: post
 title: "MoneyPrinterTurbo: AI-Powered One-Click Short Video Generation"
-description: "Explore MoneyPrinterTurbo, the open-source AI video generation tool with 56K GitHub stars that automates script writing, TTS, footage sourcing, subtitles, and background music into HD short videos."
+description: "MoneyPrinterTurbo is an open-source AI video generation tool with 56K stars that automates script writing, TTS voiceover, footage sourcing, subtitles, and background music into HD short videos from a single topic."
 date: 2026-04-24
 header-img: "img/post-bg.jpg"
 permalink: /MoneyPrinterTurbo-AI-Powered-Video-Generation/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - Python
-  - AI Video Generation
-  - TTS
-  - LLM
+categories: [AI Video, Content Creation, Python]
+tags: [Open Source, Python, AI Video Generation, TTS, LLM, Content Creation, Short Video, Automation, Streamlit, FastAPI]
+keywords: "MoneyPrinterTurbo AI video generator, how to create short videos with AI, AI video generation open source, automated video creation tool, AI short video maker Python, TTS video generation tool, AI video from text topic, open source video automation, AI video script generator, MoneyPrinterTurbo tutorial"
 author: "PyShine"
 ---
 

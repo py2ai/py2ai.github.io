@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "OpenCode: The Open Source AI Coding Agent"
-description: "Explore OpenCode, the 148K-star open source AI coding agent that runs in your terminal with 20+ LLM providers, dual agent modes, LSP integration, and a client/server architecture."
+description: "OpenCode is an open-source AI coding agent with 148K stars that runs in your terminal with 20+ LLM providers, dual agent modes, LSP integration, and a client/server architecture for remote development."
 date: 2026-04-24
 header-img: "img/post-bg.jpg"
 permalink: /OpenCode-Open-Source-Coding-Agent/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Coding Agent
-  - Developer Tools
-  - LLM
+categories: [AI Coding, Developer Tools, Open Source]
+tags: [Open Source, AI Coding Agent, Developer Tools, LLM, Terminal, Go, TypeScript, LSP, Multi-Provider, OpenCode]
+keywords: "OpenCode open source coding agent, AI coding agent terminal tool, open source alternative to Claude Code, OpenCode vs GitHub Copilot, AI coding agent multiple LLM providers, terminal-based AI coding assistant, OpenCode 148K stars, LSP integration AI coding, client server AI coding agent, best open source AI coding tool"
 author: "PyShine"
 ---
 

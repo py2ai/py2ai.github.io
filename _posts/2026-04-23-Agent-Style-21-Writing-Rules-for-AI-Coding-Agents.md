@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Agent Style: 21 Writing Rules for AI Coding Agents"
-description: "Explore Agent Style, a comprehensive set of 21 writing rules that serve as a drop-in style guide for AI coding agents like Claude Code, Codex, and Copilot, ensuring consistent and high-quality code output."
+description: "Agent Style provides 21 writing rules for AI coding agents like Claude Code and Copilot, eliminating passive voice, filler phrases, and AI tells from generated technical prose."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Agent-Style-21-Writing-Rules-for-AI-Coding-Agents/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Agents
-  - Code Style
-  - Best Practices
+categories: [AI Agents, Developer Tools, Best Practices]
+tags: [Open Source, AI Agents, Code Style, Best Practices, Claude Code, Writing Quality, AI Writing, LLM Output, Developer Tools, Technical Writing]
+keywords: "AI coding agent writing rules, how to improve AI code quality, agent style guide for LLMs, Claude Code writing rules, AI agent output quality, technical writing for AI agents, reduce AI sycophancy in code, AI code style linter, LLM writing best practices, agent style npm package"
 author: "PyShine"
 ---
 

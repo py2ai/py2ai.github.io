@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Skills Manage: Desktop App for AI Agent Skill Management"
-description: "Explore Skills Manage, a cross-platform desktop app built with Tauri that lets you browse, install, configure, and manage AI coding agent skills across Claude Code, Cursor, and Gemini CLI from a single interface."
+description: "Skills Manage is a cross-platform Tauri desktop app for browsing, installing, and managing AI coding agent skills across Claude Code, Cursor, Gemini CLI, and 25+ platforms from a single interface."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Skills-Manage-Desktop-App-for-AI-Agent-Skill-Management/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Skills
-  - Desktop App
-  - Tauri
+categories: [Developer Tools, AI Skills, Desktop Apps]
+tags: [Open Source, AI Skills, Desktop App, Tauri, Claude Code, Cursor, Developer Tools, Skill Management, React, SQLite]
+keywords: "Skills Manage desktop app, AI agent skill manager, how to manage Claude Code skills, AI coding agent skills manager, Tauri desktop app for AI skills, install skills for AI agents, Claude Code skill management, Cursor skills manager, AI agent skill marketplace, multi-platform AI skill installer"
 author: "PyShine"
 ---
 

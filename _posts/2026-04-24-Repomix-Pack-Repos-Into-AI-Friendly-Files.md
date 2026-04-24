@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Repomix: Pack Repos Into AI-Friendly Files"
-description: "Learn how Repomix packs entire repositories into single AI-friendly files for LLM context, with security checks, token counting, and multiple output formats."
+description: "Repomix packs entire repositories into single AI-friendly files with security checks, token counting, and multiple output formats, making it easy to feed code context to Claude, ChatGPT, and other LLMs."
 date: 2026-04-24
 header-img: "img/post-bg.jpg"
 permalink: /Repomix-Pack-Repos-Into-AI-Friendly-Files/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Tools
-  - Developer Tools
-  - LLM
+categories: [AI Tools, Developer Tools, Open Source]
+tags: [Open Source, AI Tools, Developer Tools, LLM, Code Packaging, Security, Token Counting, MCP, Repomix, TypeScript]
+keywords: "Repomix pack repos for AI, how to feed code to LLMs, AI-friendly code packaging tool, Repomix vs alternatives, pack repository into single file for AI, Repomix security check code, token counting for LLM context, MCP server for code context, Repomix tutorial guide, best tool for LLM code context"
 author: "PyShine"
 ---
 

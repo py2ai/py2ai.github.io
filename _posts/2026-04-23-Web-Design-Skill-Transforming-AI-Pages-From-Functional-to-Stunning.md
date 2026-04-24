@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Web Design Skill: Transforming AI Pages From Functional to Stunning"
-description: "Explore Web Design Skill, an AI agent skill that transforms AI-generated web pages from functional to stunning using a comprehensive design system with oklch colors, typography scales, and animation libraries."
+description: "Web Design Skill is an AI agent skill that transforms AI-generated web pages from functional to stunning using oklch colors, typography scales, animation libraries, and a comprehensive anti-slop design system."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Web-Design-Skill-Transforming-AI-Pages-From-Functional-to-Stunning/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Design
-  - CSS
-  - Web Development
+categories: [Web Development, AI Design, Developer Tools]
+tags: [Open Source, AI Design, CSS, Web Development, Design System, oklch, Typography, Animation, UI Design, SKILL.md]
+keywords: "web design skill for AI agents, how to improve AI-generated web pages, AI design system skill, oklch color system for AI, AI anti-slop design rules, Claude Code web design skill, AI CSS design system, transform AI pages to stunning, AI web page design quality, SKILL.md design skill"
 author: "PyShine"
 ---
 

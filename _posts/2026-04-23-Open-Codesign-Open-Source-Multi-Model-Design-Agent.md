@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "Open Codesign: Open-Source Multi-Model Design Agent"
-description: "Explore Open Codesign, an open-source alternative to Claude Design that supports multiple LLM providers (Claude, GPT, Gemini, Ollama) with BYOK pricing and local-first architecture for AI-powered design generation."
+description: "Open CoDesign is an open-source multi-model design agent supporting Claude, GPT, Gemini, and Ollama with BYOK pricing, local-first architecture, and 12 design skill modules for AI-powered design generation."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /Open-Codesign-Open-Source-Multi-Model-Design-Agent/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - AI Design
-  - Multi-Model
-  - TypeScript
+categories: [AI Design, Open Source, Developer Tools]
+tags: [Open Source, AI Design, Multi-Model, TypeScript, Electron, Design Skills, BYOK, Local First, Developer Tools, UI Generation]
+keywords: "Open CoDesign open source design agent, multi-model AI design tool, Claude Design open source alternative, BYOK AI design agent, local-first AI design tool, AI HTML prototype generator, AI slide deck generator, open source AI design software, Electron AI design app, AI-powered UI generation tool"
 author: "PyShine"
 ---
 

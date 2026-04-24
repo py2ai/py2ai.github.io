@@ -1,16 +1,14 @@
 ---
 layout: post
 title: "LLM Wiki: Persistent Knowledge Vaults on Your Desktop"
-description: "Explore LLM Wiki, a cross-platform desktop app implementing Karpathy's LLM Wiki pattern that transforms documents into persistent, compoundable knowledge vaults with semantic search and LLM enhancement."
+description: "LLM Wiki is a cross-platform desktop app implementing Karpathy's LLM Wiki pattern that transforms documents into persistent, compoundable knowledge vaults with semantic search and LLM enhancement."
 date: 2026-04-23
 header-img: "img/post-bg.jpg"
 permalink: /LLM-Wiki-Desktop-Persistent-Knowledge-Vaults/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-tags:
-  - Open Source
-  - LLM
-  - Knowledge Management
-  - Desktop App
+categories: [Knowledge Management, AI Tools, Desktop Apps]
+tags: [Open Source, LLM, Knowledge Management, Desktop App, Tauri, React, Semantic Search, AI Tools, Markdown, Research]
+keywords: "LLM Wiki desktop app, persistent knowledge vault for AI, Karpathy LLM Wiki pattern, how to build knowledge base with LLM, AI knowledge management tool, Tauri desktop knowledge app, LLM document summarization, compound knowledge base AI, semantic search knowledge vault, AI research assistant desktop"
 author: "PyShine"
 ---
 
