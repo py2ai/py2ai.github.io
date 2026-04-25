@@ -6,6 +6,7 @@ categories: [Cybersecurity, Penetration Testing, Open Source]
 tags: [hacking-tool, penetration-testing, security-research, kali-linux, cybersecurity, red-team, vulnerability-scanning]
 keywords: "HackingTool, penetration testing toolkit, security research tools, Kali Linux tools, ethical hacking, vulnerability scanner, red team tools, cybersecurity framework"
 description: "HackingTool is an all-in-one penetration testing toolkit with 185+ tools across 20 categories. Features smart search, tag filtering, batch install, and Docker support."
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 image: /assets/img/diagrams/hackingtool/hackingtool-architecture.svg
 ---
 

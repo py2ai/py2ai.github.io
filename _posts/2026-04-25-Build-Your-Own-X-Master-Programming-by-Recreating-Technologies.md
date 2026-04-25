@@ -6,6 +6,7 @@ categories: [Programming, Education, Open Source]
 tags: [programming-tutorials, learn-by-building, from-scratch, computer-science, coding-education, open-source-learning]
 keywords: "Build Your Own X, programming tutorials, learn by building, recreate technologies from scratch, coding education, computer science fundamentals, programming languages tutorials"
 description: "Build Your Own X is a curated collection of step-by-step guides for recreating popular technologies from scratch. Learn programming by building databases, browsers, operating systems, and more."
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 image: /assets/img/diagrams/build-your-own-x/build-your-own-x-paths.svg
 ---
 

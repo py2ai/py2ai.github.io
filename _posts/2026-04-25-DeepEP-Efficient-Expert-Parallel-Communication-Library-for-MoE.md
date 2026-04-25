@@ -6,6 +6,7 @@ categories: [AI, Deep Learning, GPU]
 tags: [deepseek, moe, expert-parallelism, gpu, cuda, rdma, nvlink, distributed-training, inference]
 keywords: "DeepEP, Mixture of Experts, MoE communication, expert parallelism, GPU all-to-all, DeepSeek, NVLink, RDMA, low-latency kernel, FP8 dispatch"
 description: "DeepEP is a high-performance communication library for Mixture-of-Experts (MoE) and expert parallelism, providing high-throughput and low-latency all-to-all GPU kernels with FP8 support."
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 author: "PyShine"
 ---
 

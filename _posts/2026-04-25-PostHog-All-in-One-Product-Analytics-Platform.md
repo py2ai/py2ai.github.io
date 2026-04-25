@@ -6,6 +6,7 @@ categories: [Analytics, Product Development, Open Source]
 tags: [product-analytics, session-replay, feature-flags, ab-testing, open-source, data-warehouse, error-tracking]
 keywords: "PostHog, product analytics platform, open source analytics, session replay, feature flags, A/B testing, data warehouse, error tracking, product development tools"
 description: "PostHog is an all-in-one open source platform providing product analytics, web analytics, session replay, feature flags, experiments, error tracking, surveys, and data warehouse."
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 image: /assets/img/diagrams/posthog/posthog-architecture.svg
 ---
 

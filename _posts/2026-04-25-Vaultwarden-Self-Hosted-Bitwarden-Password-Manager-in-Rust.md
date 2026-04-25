@@ -6,6 +6,7 @@ categories: [Security, Self-Hosting, Rust]
 tags: [vaultwarden, bitwarden, password-manager, rust, self-hosted, docker, security, 2fa, open-source]
 keywords: "Vaultwarden, Bitwarden alternative, self-hosted password manager, Rust password vault, Docker password manager, 2FA authentication, open source security"
 description: "Vaultwarden is an unofficial Bitwarden server implementation written in Rust, offering a lightweight, self-hosted password management solution compatible with all official Bitwarden clients."
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 author: "PyShine"
 ---
 
