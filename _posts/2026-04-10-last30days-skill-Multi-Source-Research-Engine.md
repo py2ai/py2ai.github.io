@@ -267,9 +267,3 @@ Whether you are preparing for a meeting, researching a topic, comparing tools, o
 **Repository**: [github.com/mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill)
 
 **Stars**: 19,637+ (GitHub Trending #1 Repository of the Day)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

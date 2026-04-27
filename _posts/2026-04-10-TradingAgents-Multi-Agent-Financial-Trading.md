@@ -450,9 +450,3 @@ TradingAgents represents a significant advancement in AI-powered trading framewo
 The framework is designed for research purposes, and trading performance may vary based on factors including chosen backbone language models, model temperature, trading periods, and data quality. It is not intended as financial, investment, or trading advice.
 
 For more information, visit the [GitHub repository](https://github.com/TauricResearch/TradingAgents) or read the [technical paper](https://arxiv.org/abs/2412.20138).
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [Learn Claude Code: Nano Agent Harness](/Learn-Claude-Code-Nano-Agent-Harness/)

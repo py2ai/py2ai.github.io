@@ -502,8 +502,3 @@ The modular architecture allows plugging in different retrieval methods and orch
 - **Documentation**: [https://ynulihao.github.io/AgentSkillOS/](https://ynulihao.github.io/AgentSkillOS/)
 - **Paper**: [arXiv:2603.02176](https://arxiv.org/abs/2603.02176)
 - **Dataset**: [Hugging Face](https://huggingface.co/datasets/NPULH/agentskillos-benchmark)
-
-## Related Posts
-
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-- [AI Coding Frameworks Comparison](/ai-coding-frameworks/)

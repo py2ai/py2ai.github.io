@@ -266,10 +266,3 @@ As we progress through 2026, expect to see:
 The AI landscape in 2026 offers unprecedented choices for developers, businesses, and creators. Whether you need general-purpose assistance, specialized coding help, or creative generation, there's an AI model perfectly suited to your needs.
 
 Stay updated with these developments, as the field continues to evolve rapidly. The key is understanding your specific requirements and choosing the model that best addresses them.
-
-## Related Posts
-
-- [How to Make a ChatGPT-like Application with FlexGen]({{ site.baseurl }}{% post_url 2023-02-23-How-to-make-chat-GPT-like-application %})
-- [Lab1 of FastAPI for Beginners]({{ site.baseurl }}{% post_url 2025-11-17-Lab1-of-FastAPI-for-Beginners %})
-- [Lab2 - Personalized Jokes API with Categories]({{ site.baseurl }}{% post_url 2025-11-20-Lab2-Personalized-Jokes-API-with-Categories %})
-- [Lab3 - FastAPI Todo List]({{ site.baseurl }}{% post_url 2025-11-23-Lab3-FastAPI-Todo-List %})

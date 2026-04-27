@@ -489,9 +489,3 @@ Whether you're an individual developer looking to improve your AI-assisted workf
 - **Documentation**: [Getting Started](https://yeachan-heo.github.io/oh-my-codex-website/getting-started)
 - **Discord**: [Join Community](https://discord.gg/PUwSMR9XNk)
 - **NPM Package**: [oh-my-codex](https://www.npmjs.com/package/oh-my-codex)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

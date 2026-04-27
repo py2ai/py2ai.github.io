@@ -393,9 +393,3 @@ Whether you're looking for a free alternative to Claude Code, want to run AI cod
 - [Discord Community](https://discord.gg/opencode)
 - [X.com / Twitter](https://x.com/opencode)
 - [npm Package](https://www.npmjs.com/package/opencode-ai)
-
-## Related Posts
-
-- [CrewAI: Multi-Agent Orchestration Framework](/CrewAI-Multi-Agent-Orchestration-Framework/)
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [Claude Code: AI-Powered Terminal Coding](/Claude-Code-AI-Powered-Terminal-Coding/)

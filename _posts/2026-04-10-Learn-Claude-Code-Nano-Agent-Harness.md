@@ -319,13 +319,6 @@ Permissions aren't a simple yes/no check. They're a multi-stage pipeline that co
 
 Every mechanism in the course ultimately serves to manage context. Skills load on demand to save tokens. Subagents isolate work to keep contexts clean. Compaction removes irrelevant history. Memory persists only what matters. Understanding context management is understanding agent design.
 
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-- [Superpowers: Agentic Skills Framework](/Superpowers-Agentic-Skills-Framework/)
-
 ## Conclusion
 
 Learn Claude Code represents a significant contribution to AI agent education. By reconstructing the essential mechanisms of production-grade coding agents in a clean, teachable form, it enables developers to understand not just what agents do, but how they work. The four-stage architecture, from core single-agent to platform, provides a clear learning path that builds understanding progressively. Whether you're building your first agent or seeking to understand the internals of existing systems, this repository offers invaluable insights into the design backbone of modern AI coding assistants.

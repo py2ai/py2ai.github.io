@@ -262,12 +262,6 @@ Whether you are a developer looking to streamline coding workflows, a marketer a
 
 Start exploring today by cloning the repository, installing your first skill, and discovering how Claude Skills can revolutionize your daily workflows.
 
-## Related Posts
-
-- [Claude Code: Architecture and Development Workflow](/Claude-Code-Architecture-Development-Workflow/)
-- [Claude Cookbooks: Agent Patterns and Integrations](/Claude-Cookbooks-Agent-Patterns-Integrations/)
-- [CrewAI Multi-Agent Orchestration Framework](/CrewAI-Multi-Agent-Orchestration-Framework/)
-
 ## Links
 
 - [GitHub Repository](https://github.com/ComposioHQ/awesome-claude-skills)

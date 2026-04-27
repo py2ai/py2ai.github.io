@@ -341,9 +341,3 @@ Free Claude Code democratizes access to Claude Code's powerful interface by enab
 - [LM Studio](https://lmstudio.ai)
 - [llama.cpp](https://github.com/ggerganov/llama.cpp)
 - [Claude Code Official Repository](https://github.com/anthropics/claude-code)
-
-## Related Posts
-
-- [Claude Code Best Practices](/Claude-Code-Best-Practices/)
-- [Claude HowTo: Mastering Claude Code](/Claude-HowTo-Mastering-Claude-Code/)
-- [RTK: Reduce LLM Token Consumption by 60-90%](/RTK-Rust-Token-Killer-LLM-Optimization/)

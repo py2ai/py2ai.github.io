@@ -267,10 +267,3 @@ If you spend significant time with AI coding agents, Caveman is one of those too
 **Repository**: [github.com/JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman)
 
 **License**: MIT
-
-## Related Posts
-
-- [Claude Code Best Practices](/Claude-Code-Best-Practices/)
-- [Andrej Karpathy Skills: LLM Coding Guidelines](/Andrej-Karpathy-Skills-LLM-Coding-Guidelines/)
-- [Claude HowTo: Mastering Claude Code](/Claude-HowTo-Mastering-Claude-Code/)
-- [Agent Skills: Production-Grade Engineering for AI](/Agent-Skills-Production-Grade-Engineering-for-AI/)

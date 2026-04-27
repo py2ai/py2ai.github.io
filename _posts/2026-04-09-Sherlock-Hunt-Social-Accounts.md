@@ -759,12 +759,6 @@ The tool's architecture demonstrates thoughtful design choices:
 
 With over 80,000 GitHub stars and active community maintenance, Sherlock continues to evolve alongside the social media landscape. Whether conducting authorized penetration tests, investigating digital identities, or researching your own online presence, Sherlock provides the capabilities needed for thorough OSINT research.
 
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-
 ## Resources
 
 - [Sherlock GitHub Repository](https://github.com/sherlock-project/sherlock)

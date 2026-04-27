@@ -196,9 +196,3 @@ Licensed under the Apache License, Version 2.0. See the [LICENSE](https://github
 Google AI Edge Gallery represents a significant step forward in bringing powerful AI capabilities to mobile devices. With features like Agent Skills, Thinking Mode, and complete offline functionality, it demonstrates the future of on-device AI - private, fast, and accessible to everyone.
 
 For more information and updates, visit the [official GitHub repository](https://github.com/google-ai-edge/gallery).
-
-## Related Posts
-
-- [Deep-Live-Cam: Real-Time Face Swap](/Deep-Live-Cam-Real-Time-Face-Swap/)
-- [OpenScreen: Free Screen Recording Studio](/OpenScreen-Free-Screen-Recording-Studio/)
-- [Hermes Agent: Self-Improving AI Agent](/Hermes-Agent-Self-Improving-AI-Agent/)

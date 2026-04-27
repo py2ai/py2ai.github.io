@@ -235,10 +235,3 @@ if __name__ == "__main__":
 ```
 
 [Download sample csv data files](https://drive.google.com/file/d/10gvk-A0orWWktIaHkw7WMAGzYcoMkB9t/view?usp=sharing)
-
-## Related Posts
-
-- [Interactive Matplotlib GUI with Data Cursors]({{ site.baseurl }}{% post_url 2021-04-05-Interactive-Matplotib-GUI-with-data-cursors %})
-- [Getting Started with PySide6 Part 1]({{ site.baseurl }}{% post_url 2024-03-12-Getting-started-with-PySide6-part1 %})
-- [PyQt5 Terminal Console]({{ site.baseurl }}{% post_url 2022-02-03-Command-Terminal-in-PyQt5 %})
-

@@ -463,9 +463,3 @@ With over 1,400 APIs across 50+ categories, you're likely to find exactly what y
 - [APILayer Products](https://apilayer.com/products)
 - [Public APIs Discord](https://discord.com/invite/hgjA78638n)
 - [Contributing Guide](https://github.com/public-apis/public-apis/blob/master/CONTRIBUTING.md)
-
-## Related Posts
-
-- [Building REST APIs with FastAPI](/FastAPI-REST-API-Tutorial/)
-- [API Security Best Practices](/API-Security-Best-Practices/)
-- [Understanding API Rate Limiting](/API-Rate-Limiting-Guide/)

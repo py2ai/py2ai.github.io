@@ -361,10 +361,3 @@ The key insight is that harness-agnosticism is the point. Your preferences, lear
 **Links:**
 - GitHub: [https://github.com/codejunkie99/agentic-stack](https://github.com/codejunkie99/agentic-stack)
 - Article: [The Agentic Stack](https://x.com/Av1dlive/status/2044453102703841645)
-
-## Related Posts
-
-- [Claude Code Complete Guide](/Claude-Code-Complete-Guide/)
-- [Claude Code Skills Guide](/Claude-Code-Skills-Guide/)
-- [Everything Claude Code](/Everything-Claude-Code-AI-Agent-Harness/)
-- [Oh My Codex Multi-Agent Orchestration](/Oh-My-Codex-Multi-Agent-Orchestration/)

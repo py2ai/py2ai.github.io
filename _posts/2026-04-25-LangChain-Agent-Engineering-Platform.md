@@ -201,9 +201,3 @@ Whether you are prototyping a simple RAG pipeline or deploying a complex multi-a
 - [LangSmith Platform](https://www.langchain.com/langsmith)
 - [LangChain Academy](https://academy.langchain.com/)
 - [PyPI Package](https://pypi.org/project/langchain/)
-
-## Related Posts
-
-- [CrewAI Multi-Agent Orchestration Framework](/CrewAI-Multi-Agent-Orchestration-Framework/)
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [Claude HowTo: Extensible Hook System](/Claude-HowTo-Extensible-Hook-System/)

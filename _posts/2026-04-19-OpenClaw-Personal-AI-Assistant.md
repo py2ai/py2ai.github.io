@@ -333,9 +333,3 @@ The project's 359K+ stars on GitHub reflect the community's enthusiasm for a pri
 - [Documentation](https://docs.openclaw.ai)
 - [ClawHub Skills Marketplace](https://clawhub.com)
 - [Discord Community](https://discord.gg/clawd)
-
-## Related Posts
-
-- [Khoj: AI Second Brain Personal Assistant](/Khoj-AI-Second-Brain-Personal-Assistant/)
-- [Goose: Open Source AI Agent Builder](/Goose-Open-Source-AI-Agent-Builder/)
-- [Onyx: Open Source AI Platform](/Onyx-Open-Source-AI-Platform/)

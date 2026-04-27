@@ -456,12 +456,6 @@ The key innovation of separating the agent from the sandbox enables independent 
 
 Whether you're building a coding assistant, an automated code review system, or a continuous integration agent, Open Agents provides the building blocks you need to get started quickly while maintaining the flexibility to customize for your specific use case.
 
-## Related Posts
-
-- [Building AI Agents with Workflow SDKs](/building-ai-agents-workflow-sdks/)
-- [Sandbox Isolation for AI Code Execution](/sandbox-isolation-ai-code-execution/)
-- [GitHub Integration for AI Agents](/github-integration-ai-agents/)
-
 ## Links
 
 - [GitHub Repository](https://github.com/vercel-labs/open-agents)

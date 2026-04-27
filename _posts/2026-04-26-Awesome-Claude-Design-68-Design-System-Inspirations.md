@@ -267,9 +267,3 @@ Whether you are building a developer tool, a fintech dashboard, or a media platf
 - [Claude Design](https://claude.ai/design)
 - [getdesign.md - DESIGN.md format reference](https://getdesign.md/)
 - [VoltAgent](https://github.com/VoltAgent)
-
-## Related Posts
-
-- [Awesome Design Systems: Tag-Based Design System Discovery](/Awesome-Design-Systems-Tag-Based-Discovery/)
-- [Claude Code Templates: Production-Ready AI Coding Templates](/Claude-Code-Templates-Production-Ready-AI-Coding-Templates/)
-- [Everything Claude Code: Comprehensive AI Coding Guide](/Everything-Claude-Code-Comprehensive-AI-Coding-Guide/)

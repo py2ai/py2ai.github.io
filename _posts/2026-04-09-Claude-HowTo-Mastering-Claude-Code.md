@@ -489,9 +489,3 @@ The modular architecture, progressive disclosure patterns, and comprehensive exa
 **Repository:** [https://github.com/luongnv89/claude-howto](https://github.com/luongnv89/claude-howto)
 
 **Stars:** 22,950+ | **Forks:** 2,757+ | **Language:** Multi-language support
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN-md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

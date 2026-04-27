@@ -393,12 +393,6 @@ VoxCPM2 represents a significant advancement in text-to-speech technology. Its t
 
 Whether you're building voice assistants, creating audiobooks, or developing accessibility tools, VoxCPM2 provides a powerful and flexible foundation. The growing ecosystem of community projects ensures broad deployment options from edge devices to high-throughput servers.
 
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [AI Hedge Fund: Multi-Agent Investment System](/AI-Hedge-Fund-Multi-Agent-Investment-System/)
-- [Archon: Open Source AI Harness Builder](/Archon-Open-Source-AI-Harness-Builder/)
-
 ## References
 
 - [VoxCPM GitHub Repository](https://github.com/OpenBMB/VoxCPM)

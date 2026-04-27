@@ -385,13 +385,6 @@ $trace               # Show execution history
 | Hooks Extension | Plugin system for custom functionality |
 | Model Routing | Automatic model selection based on task complexity |
 
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [Everything Claude Code: Architecture Deep Dive](/Everything-Claude-Code-Architecture-Deep-Dive/)
-- [Learn Claude Code: Tool Dispatch System](/Learn-Claude-Code-Tool-Dispatch-System/)
-
 ## Conclusion
 
 oh-my-codex represents a significant step forward in AI-assisted development workflows. By providing structured clarification, planning, and execution phases, it transforms ad-hoc prompting into a systematic approach that produces better results with fewer iterations.

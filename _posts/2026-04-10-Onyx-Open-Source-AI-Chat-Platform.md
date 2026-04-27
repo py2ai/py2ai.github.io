@@ -463,9 +463,3 @@ Looking to contribute? Check out the [Contribution Guide](https://github.com/ony
 Onyx represents a significant advancement in open-source AI chat platforms. With its comprehensive feature set, flexible deployment options, and enterprise-ready architecture, it's an excellent choice for organizations looking to implement AI-powered chat and search capabilities. The platform's modular design, extensive connector ecosystem, and support for all major LLM providers make it a versatile solution for a wide range of use cases.
 
 Whether you're a developer exploring AI chat for the first time or an enterprise architect building a production deployment, Onyx provides the tools and flexibility needed to succeed. The active community and comprehensive documentation ensure you'll have support throughout your journey.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

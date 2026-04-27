@@ -219,9 +219,3 @@ Whether you are a researcher experimenting with models, a developer building AI-
 - [Wiki and Documentation](https://github.com/oobabooga/textgen/wiki)
 - [Extensions Directory](https://github.com/oobabooga/textgen-extensions)
 - [Hugging Face Models](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf)
-
-## Related Posts
-
-- [Ollama: Run LLMs Locally with Ease](/Ollama-Local-LLM-Runner/)
-- [Open WebUI: Self-Hosted AI Interface](/Open-WebUI-Self-Hosted-AI-Interface/)
-- [LangChain: Build Applications with LLMs](/LangChain-LLM-Application-Framework/)

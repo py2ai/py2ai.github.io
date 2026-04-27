@@ -419,9 +419,3 @@ Whether you are building a small project with a single AI coding agent or managi
 - **GitHub Repository**: [https://github.com/google-labs-code/design.md](https://github.com/google-labs-code/design.md)
 - **npm Package**: [https://www.npmjs.com/package/@google/design.md](https://www.npmjs.com/package/@google/design.md)
 - **W3C Design Tokens Format**: [https://tr.designtokens.org/format/](https://tr.designtokens.org/format/)
-
-## Related Posts
-
-- [AI Design Quality Framework for Generated UI](/AI-Design-Quality-Framework/)
-- [Design Token Systems for Modern Web Development](/Design-Token-Systems-Web-Development/)
-- [How to Build Consistent UI with AI Coding Agents](/Consistent-UI-AI-Coding-Agents/)

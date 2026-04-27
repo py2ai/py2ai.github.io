@@ -387,9 +387,3 @@ With 14+ pre-trained draft models, support for four major inference backends, an
 }
 ```
 {% endraw %}
-
-## Related Posts
-
-- [BitNet: 1-bit LLMs for Efficient Inference](/BitNet-1-bit-LLMs-Efficient-Inference/)
-- [TimesFM: Time Series Foundation Model by Google Research](/TimesFM-Time-Series-Foundation-Model/)
-- [Harbor: Open Source Container Registry](/Harbor-Open-Source-Container-Registry/)

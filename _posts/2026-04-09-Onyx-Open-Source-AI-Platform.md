@@ -604,9 +604,3 @@ Onyx represents a significant advancement in open-source AI platforms, providing
 The platform's modular architecture allows organizations to start small and scale as needed, with deployment options ranging from simple Docker Compose setups to enterprise Kubernetes clusters. The comprehensive feature set, including voice interaction, image generation, and code execution, positions Onyx as a complete solution for AI-powered knowledge management and automation.
 
 With its rapidly growing community and active development, Onyx is poised to remain at the forefront of open-source AI platforms. Organizations looking to implement AI capabilities while maintaining control over their data should consider Onyx as a compelling option.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [AI Hedge Fund: Multi-Agent Investment System](/AI-Hedge-Fund-Multi-Agent-Investment-System/)

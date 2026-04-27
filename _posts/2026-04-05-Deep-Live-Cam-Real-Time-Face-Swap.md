@@ -355,8 +355,3 @@ Always obtain proper consent before swapping someone's face into content, especi
 Deep-Live-Cam represents an impressive advancement in real-time face swapping technology. With support for multiple platforms and GPU backends, it makes AI-powered face manipulation accessible to everyone. Whether you're a content creator, developer, or just experimenting with AI, Deep-Live-Cam offers a powerful and user-friendly solution.
 
 For more information and updates, visit the [official GitHub repository](https://github.com/hacksider/Deep-Live-Cam).
-
-## Related Posts
-
-- [Hermes Agent: Self-Improving AI Agent](/Hermes-Agent-Self-Improving-AI-Agent/)
-- [Listening and Talking Clock](/Listening-and-Talking-clock/)

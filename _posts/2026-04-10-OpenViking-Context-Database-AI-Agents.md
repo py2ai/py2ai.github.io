@@ -602,9 +602,3 @@ OpenViking represents a paradigm shift in how we approach context management for
 With over 21,000 GitHub stars and rapid adoption, OpenViking is positioned to become the standard for AI agent context management. Whether you're building simple chatbots or complex multi-agent systems, OpenViking provides the infrastructure needed to manage context efficiently and effectively.
 
 The journey has just begun, and the project welcomes contributions from developers passionate about AI agent technology. By defining and building the future of AI Agent context management together, we can enable the next generation of intelligent, context-aware agents.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [DESIGN-md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)

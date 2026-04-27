@@ -750,9 +750,3 @@ With over 21,000 stars on GitHub and active development, OpenViking has establis
 - [Documentation](https://github.com/volcengine/OpenViking#readme)
 - [Examples](https://github.com/volcengine/OpenViking/tree/main/examples)
 - [Community Discussions](https://github.com/volcengine/OpenViking/discussions)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

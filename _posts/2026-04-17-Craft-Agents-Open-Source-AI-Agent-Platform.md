@@ -285,9 +285,3 @@ With 4,189 stars and 622 forks, the project has strong community momentum. The m
 - GitHub: [https://github.com/lukilabs/craft-agents-oss](https://github.com/lukilabs/craft-agents-oss)
 - Documentation: Available in the repository README
 - License: Check repository for license details
-
-## Related Posts
-
-- [Claude Code Architecture Deep Dive](/Claude-Code-Architecture-Deep-Dive/)
-- [AI Agent Frameworks Comparison](/AI-Agent-Frameworks-Comparison/)
-- [MCP Server Development Guide](/MCP-Server-Development-Guide/)

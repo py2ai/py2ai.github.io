@@ -425,9 +425,3 @@ The integration with Hugging Face Transformers and support for vLLM inference ma
 - [Hugging Face Collection](https://huggingface.co/collections/microsoft/vibevoice-68a2ef24a875c44be47b034f)
 - [ASR Playground](https://aka.ms/vibevoice-asr)
 - [Colab Notebook](https://colab.research.google.com/github/microsoft/VibeVoice/blob/main/demo/vibevoice_realtime_colab.ipynb)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)

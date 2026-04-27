@@ -176,10 +176,3 @@ python3 client.py
 ```
 
 Thats it! If you have questions, suggestions please do comment. Have a nice day!
-
-## Related Posts
-
-- [How to Make a Screen Recorder in Python with PyQt5]({{ site.baseurl }}{% post_url 2020-04-01-How-to-make-a-screen-recorder %})
-- [Socket Programming Save Videos Multiple Clients]({{ site.baseurl }}{% post_url 2022-04-17-Socket-Programming-Save-Videos-Multiple-Clients %})
-- [Video and bidirectional text streaming]({{ site.baseurl }}{% post_url 2021-05-04-Video-and-bidirectional-text-streaming %})
-

@@ -254,8 +254,3 @@ OpenScreen is licensed under the [MIT License](./LICENSE). Use it freely for per
 OpenScreen provides a powerful, free alternative for creating professional screen recordings. With features like automatic zoom, annotations, background customization, and multiple export formats, it's perfect for creating product demos, tutorials, and walkthroughs without the subscription cost.
 
 For more information and updates, visit the [official GitHub repository](https://github.com/siddharthvaddem/openscreen).
-
-## Related Posts
-
-- [Deep-Live-Cam: Real-Time Face Swap](/Deep-Live-Cam-Real-Time-Face-Swap/)
-- [Hermes Agent: Self-Improving AI Agent](/Hermes-Agent-Self-Improving-AI-Agent/)

@@ -265,9 +265,3 @@ The project is still in its early stages, so now is a great time to get involved
 - **GitHub Repository:** [https://github.com/pingdotgg/t3code](https://github.com/pingdotgg/t3code)
 - **Discord Community:** [https://discord.gg/jn4EGJjrvv](https://discord.gg/jn4EGJjrvv)
 - **npm Package:** [https://www.npmjs.com/package/t3](https://www.npmjs.com/package/t3)
-
-## Related Posts
-
-- [OpenAI Agents Python: Build Multi-Agent Systems](/OpenAI-Agents-Python-Multi-Agent-Framework/)
-- [Claude Code: AI-Powered Development in Your Terminal](/Claude-Code-AI-Powered-Development-Terminal/)
-- [Sherlock: Hunt Down Social Media Accounts](/Sherlock-Hunt-Down-Social-Media-Accounts/)

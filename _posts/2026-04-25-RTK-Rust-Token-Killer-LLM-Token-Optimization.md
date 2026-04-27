@@ -280,9 +280,3 @@ RTK (Rust Token Killer) solves one of the most expensive problems in AI-assisted
 - [Architecture Documentation](https://github.com/rtk-ai/rtk/blob/master/ARCHITECTURE.md)
 - [Discord Community](https://discord.gg/RySmvNF5kF)
 - [Homebrew Formula](https://formulae.brew.sh/formula/rtk)
-
-## Related Posts
-
-- [Claude Code Best Practices](/Claude-Code-Best-Practices/)
-- [Claude HowTo: Mastering Claude Code](/Claude-HowTo-Mastering-Claude-Code/)
-- [OpenCode: Open Source Coding Agent](/Opencode-Open-Source-Coding-Agent/)

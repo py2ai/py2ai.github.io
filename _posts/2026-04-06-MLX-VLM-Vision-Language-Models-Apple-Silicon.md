@@ -262,9 +262,3 @@ Whether you're building an image analysis tool, OCR system, or multimodal chat a
 - [GitHub Repository](https://github.com/Blaizzy/mlx-vlm)
 - [MLX Framework](https://github.com/ml-explore/mlx)
 - [Model Documentation](https://github.com/Blaizzy/mlx-vlm/tree/main/mlx_vlm/models)
-
-## Related Posts
-
-- [Running Local LLMs on Apple Silicon](/Local-LLMs-Apple-Silicon/)
-- [Introduction to Vision Language Models](/Vision-Language-Models-Intro/)
-- [Fine-Tuning with LoRA](/LoRA-Fine-Tuning-Guide/)

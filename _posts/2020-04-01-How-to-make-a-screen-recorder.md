@@ -340,16 +340,3 @@ if __name__ == "__main__":
 [PyShine Recorder setup.zip]:https://drive.google.com/file/d/1ZD4X0kB4qdx8q9jJ1Y_7ROwp83oBR6ko/view?usp=sharing
 [PyShine Recorder setup.z02]:https://drive.google.com/file/d/1JoXwLJa6E8hWCWhBTZTL4mOTeeK22xju/view?usp=sharing
 [PyShine Recorder setup.z01]:https://drive.google.com/file/d/1n9tbv8nymdBFc_qQtbcWkJRszsllwBCZ/view?usp=sharing
-
-## Related Posts
-
-- [Faster Video Transfer Over WiFi Using ZeroMQ]({{ site.baseurl }}{% post_url 2021-01-01-Faster-video-transfer-over-wifi %})
-- [How to Play Piano with Python]({{ site.baseurl }}{% post_url 2020-02-02-How-to-play-piano-using-Python %})
-- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
-
-
-
-
-
-	
-

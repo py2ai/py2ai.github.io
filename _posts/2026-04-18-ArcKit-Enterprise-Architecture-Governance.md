@@ -404,8 +404,3 @@ The toolkit's multi-platform approach is particularly noteworthy. Rather than fo
 For teams working on UK Government projects, ArcKit's coverage of TCoP, GDS Service Standard, NCSC frameworks, and HM Treasury business case methodologies provides a ready-made governance framework that would otherwise require months to establish from scratch. The G-Cloud and DOS procurement commands further streamline the vendor selection process, reducing procurement timelines from weeks to days.
 
 To get started with ArcKit, visit the [GitHub repository](https://github.com/tractorjuice/arc-kit) or the [ArcKit documentation site](https://arckit.org/) for installation guides, command references, and workflow examples.
-
-## Related Posts
-
-- [AI Coding Frameworks](/ai-coding-frameworks/)
-- [Claude Code Architecture](/Claude-Code-Architecture/)

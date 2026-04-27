@@ -237,9 +237,3 @@ Evolver represents a significant step forward in how we manage AI agent behavior
 Whether you are running a single AI agent for personal projects or managing a fleet of agents in a production environment, Evolver gives you the tools to keep your agents healthy, optimized, and innovative without sacrificing control. The strategy presets let you dial the risk profile up or down depending on your needs, and the audit trail ensures that every change is recorded and traceable.
 
 To get started with Evolver, visit the GitHub repository at [https://github.com/EvoMap/evolver](https://github.com/EvoMap/evolver). For more information about the EvoMap platform and the GEP Protocol, visit [https://evomap.ai](https://evomap.ai) or check the GEP Wiki at [https://evomap.ai/wiki](https://evomap.ai/wiki).
-
-## Related Posts
-
-- [Open Agents: Building Autonomous AI Agent Frameworks](/Open-Agents-Autonomous-Framework/)
-- [Claude Code: AI-Powered Development in the Terminal](/Claude-Code-AI-Powered-Development/)
-- [Archon: The AI Agent That Designs AI Agents](/Archon-AI-Agent-Designs-Agents/)

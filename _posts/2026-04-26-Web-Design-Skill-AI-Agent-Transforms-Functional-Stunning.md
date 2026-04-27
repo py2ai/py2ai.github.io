@@ -381,9 +381,3 @@ The web-design-engineer skill demonstrates that AI coding agents can produce pro
 - **GitHub Repository**: [https://github.com/ConardLi/web-design-skill](https://github.com/ConardLi/web-design-skill)
 - **Agent Skills Spec**: [https://agentskills.io](https://agentskills.io)
 - **Anthropic Skills Reference**: [https://github.com/anthropics/skills](https://github.com/anthropics/skills)
-
-## Related Posts
-
-- [Skills Manage: Desktop App for AI Agent Skills Across 27 Platforms](/Skills-Manage-Desktop-App-AI-Agent-Skills-20-Platforms/)
-- [Superpowers: Curated Agent Skills for Claude Code](/Superpowers-Curated-Agent-Skills-Claude-Code/)
-- [AI Design Quality: Systematic Framework for AI-Generated HTML](/AI-Design-Quality-Systematic-Framework-AI-Generated-HTML/)

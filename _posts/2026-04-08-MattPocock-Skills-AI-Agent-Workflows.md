@@ -358,8 +358,3 @@ The skills approach addresses a fundamental challenge in AI-assisted development
 For teams adopting AI-assisted development, this repository offers a starting point that embodies best practices from software engineering research. The TDD skill alone incorporates decades of testing wisdom, from Kent Beck's original TDD concepts to contemporary insights about integration testing and module design.
 
 Whether you're new to AI-assisted development or looking to improve your existing workflows, MattPocock's skills provide a comprehensive toolkit for building better software with AI assistance.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

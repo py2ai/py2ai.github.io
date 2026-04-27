@@ -314,9 +314,3 @@ The open-source Apache 2.0 license, active community, and growing ecosystem of M
 - **Documentation**: [https://docs.roocode.com](https://docs.roocode.com)
 - **VS Code Marketplace**: [https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline](https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline)
 - **Discord Community**: [https://discord.gg/roocode](https://discord.gg/roocode)
-
-## Related Posts
-
-- [CrewAI: Multi-Agent Orchestration Framework](/CrewAI-Multi-Agent-Orchestration-Framework/)
-- [OpenCode: Open Source Coding Agent](/Opencode-Open-Source-Coding-Agent/)
-- [Archon: Open Source AI Agent Builder](/Archon-Open-Source-AI-Harness-Builder/)

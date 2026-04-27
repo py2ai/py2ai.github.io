@@ -468,9 +468,3 @@ Ralph represents a significant advancement in AI-assisted software development. 
 The key innovations - fresh context per iteration, persistent memory through files, structured PRD workflow, and quality gates - combine to create a system that can reliably implement entire features from requirements to completion. While not suitable for every task, Ralph excels at well-defined features with clear acceptance criteria and existing test infrastructure.
 
 For teams looking to leverage AI for more than code suggestions, Ralph provides a production-ready framework for autonomous development workflows. The skills system makes it easy to integrate into existing processes, and the support for both Amp and Claude Code provides flexibility for different development environments.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

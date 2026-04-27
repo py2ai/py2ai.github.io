@@ -528,9 +528,3 @@ The key takeaways are:
 For more information, visit the [Claude Code Best Practices repository](https://github.com/shanraisshan/claude-code-best-practice) and explore the official [Claude Code documentation](https://code.claude.com/docs).
 
 ---
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

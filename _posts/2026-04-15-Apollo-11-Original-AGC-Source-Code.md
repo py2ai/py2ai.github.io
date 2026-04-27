@@ -367,12 +367,6 @@ The Apollo 11 AGC source code represents a remarkable achievement in software en
 
 The preservation of this code on GitHub and in the Software Heritage archive ensures that future generations can study and learn from this pioneering work. Whether you're interested in space history, software engineering, or embedded systems, the Apollo 11 source code offers invaluable insights into one of humanity's greatest technological achievements.
 
-## Related Posts
-
-- [Pascal Editor: 3D Architectural Building Tool](/Pascal-Editor-3D-Architectural-Building-Tool/)
-- [Software Heritage: Preserving Open Source History](/)
-- [Real-Time Systems: Lessons from Apollo](/)
-
 ## Links
 
 - [GitHub Repository](https://github.com/chrislgarry/Apollo-11)

@@ -273,9 +273,3 @@ For teams looking to integrate AI into their development workflow, Superpowers p
 As AI coding assistants continue to evolve, frameworks like Superpowers will become essential infrastructure for teams that want to leverage AI's capabilities while maintaining engineering standards. The 144,000+ GitHub stars suggest that the developer community recognizes this need.
 
 ---
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System]({{ site.baseurl }}/2026/04/08/AgentSkillOS-Skill-Orchestration-System.html) - Another approach to AI agent skill management
-- [MattPocock Skills: AI Agent Workflows]({{ site.baseurl }}/2026/04/08/MattPocock-Skills-AI-Agent-Workflows.html) - Skill patterns for TypeScript projects
-- [DESIGN.md: AI-Powered Design Systems]({{ site.baseurl }}/2026/04/07/DESIGN-md-AI-Powered-Design-Systems.html) - Using AI for design system development

@@ -330,7 +330,3 @@ For developers who prefer working in terminals over design tools, Huashu Design 
 - **Creator - Huasheng (Alchain)**: [https://www.huasheng.ai/](https://www.huasheng.ai/)
 - **X/Twitter**: [@AlchainHust](https://x.com/AlchainHust)
 - **Install Skill**: `npx skills add alchaincyf/huashu-design`
-
-## Related Posts
-
-- [Design MD: Visual Identity Specification for AI Coding Agents](/Design-MD-Visual-Identity-Specification-AI-Coding-Agents/)

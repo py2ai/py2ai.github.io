@@ -466,9 +466,3 @@ With over 17,672 GitHub stars and active development, Claude HUD has become an e
 - [GitHub Repository](https://github.com/jarrodwatts/claude-hud)
 - [Documentation](https://github.com/jarrodwatts/claude-hud#readme)
 - [Claude Code](https://claude.ai/code)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

@@ -328,9 +328,3 @@ The synchronized playhead shows exactly where playback is in the timeline. This 
 Voicebox represents a significant advancement in open-source voice synthesis. By combining multiple state-of-the-art TTS engines with professional audio effects and a native desktop application, it provides a compelling alternative to commercial services like ElevenLabs — with the added benefit of complete privacy through local processing.
 
 The API-first architecture makes it easy to integrate into existing workflows, while the Stories Editor enables complex multi-voice productions. Whether you're creating podcasts, game dialogue, accessibility tools, or content automation, Voicebox provides the tools you need with the flexibility of open-source software.
-
-## Related Posts
-
-- [Hermes Agent: Self-Improving AI Agent](/Hermes-Agent-Self-Improving-AI-Agent/)
-- [VibeVoice: Open-Source Frontier Voice AI](/VibeVoice-Open-Source-Frontier-Voice-AI/)
-- [Google AI Edge Gallery: On-Device AI for Mobile](/Google-AI-Edge-Gallery-On-Device-AI-Mobile/)

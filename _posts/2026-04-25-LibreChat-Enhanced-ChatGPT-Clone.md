@@ -168,9 +168,3 @@ LibreChat stands out as a comprehensive, self-hosted alternative to ChatGPT that
 - **Documentation:** [librechat.ai/docs](https://librechat.ai/docs)
 - **RAG API:** [github.com/danny-avila/rag_api](https://github.com/danny-avila/rag_api)
 - **Discord Community:** [discord.librechat.ai](https://discord.librechat.ai)
-
-## Related Posts
-
-- [TextGen WebUI: Local LLM Interface](/TextGen-Local-LLM-Interface/)
-- [CrewAI Multi-Agent Orchestration Framework](/CrewAI-Multi-Agent-Orchestration-Framework/)
-- [Open WebUI: Self-Hosted AI Chat Interface](/Open-WebUI-Self-Hosted-AI-Chat/)

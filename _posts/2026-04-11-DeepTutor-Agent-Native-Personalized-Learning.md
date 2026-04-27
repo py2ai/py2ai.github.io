@@ -431,9 +431,3 @@ The project's rapid growth - reaching 15,000+ stars in just months - demonstrate
 **Star the project on GitHub**: [https://github.com/HKUDS/DeepTutor](https://github.com/HKUDS/DeepTutor)
 
 **Join the community**: [Discord](https://discord.gg/eRsjPgMU4t) | [WeChat](https://github.com/HKUDS/DeepTutor/issues/78) | [Discussions](https://github.com/HKUDS/DeepTutor/discussions)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)

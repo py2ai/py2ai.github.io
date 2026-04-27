@@ -288,8 +288,3 @@ With eight document types, three language paths, twelve inline diagram types, an
 - GitHub: [https://github.com/tw93/Kami](https://github.com/tw93/Kami)
 - Kami Skill: `npx skills add tw93/kami`
 - License: MIT (code and templates); TsangerJinKai02 requires a commercial license
-
-## Related Posts
-
-- [PikPak API Integration Guide](/PikPak-API-Integration-Guide/)
-- [Open Source AI Agent Frameworks](/Open-Source-AI-Agent-Frameworks/)

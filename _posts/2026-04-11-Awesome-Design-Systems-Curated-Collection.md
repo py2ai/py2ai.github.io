@@ -302,9 +302,3 @@ Design systems have become essential tools for modern product development. They 
 As you explore these design systems, remember that the best choice depends on your specific context. Consider your technology stack, team expertise, accessibility requirements, and customization needs. The right design system can accelerate your development and elevate your user experience.
 
 The open source nature of many design systems in this collection demonstrates the collaborative spirit of the design and development community. By sharing their systems publicly, organizations contribute to the collective knowledge and help raise the bar for digital experiences everywhere.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

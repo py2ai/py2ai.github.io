@@ -473,9 +473,3 @@ Whether you're a small team looking to augment your development capacity or an o
 - [Multica Cloud](https://multica.ai)
 - [Documentation](https://github.com/multica-ai/multica/blob/main/README.md)
 - [Contributing Guide](https://github.com/multica-ai/multica/blob/main/CONTRIBUTING.md)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)

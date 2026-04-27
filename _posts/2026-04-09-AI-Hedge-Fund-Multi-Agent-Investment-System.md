@@ -801,9 +801,3 @@ The use of LangGraph for orchestration enables sophisticated workflow management
 Whether you're a quantitative researcher exploring multi-agent systems, a developer learning about LangGraph, or an investor interested in AI-powered analysis, this project offers valuable insights and practical implementations. The modular architecture makes it easy to extend with new agents, and the extensive documentation helps users understand each component.
 
 As AI continues to transform financial markets, projects like the AI Hedge Fund demonstrate how machine learning and large language models can augment human decision-making. The future of investment analysis lies not in replacing human judgment, but in providing sophisticated tools that aggregate diverse perspectives and surface insights that might otherwise be missed.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

@@ -493,9 +493,3 @@ Agency Agents represents a significant advancement in AI-assisted development. B
 The NEXUS workflow system provides a structured approach to work that mirrors professional practices. Quality gates ensure deliverables meet standards before delivery. The multi-tool support means you can use Agency Agents with your preferred AI coding assistant.
 
 Whether you're a solo developer looking for specialized expertise or a team seeking consistent practices, Agency Agents provides the framework to elevate your AI-assisted development. Clone the repository, choose your agents, and experience the difference that specialized expertise makes.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

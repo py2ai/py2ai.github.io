@@ -571,9 +571,3 @@ The project demonstrates that production AI agents are not magic - they are care
 For developers looking to understand modern AI agent architecture, learn-claude-code provides the roadmap. Start with the loop, add tools, plan sessions, delegate subtasks, load skills, compress context, gate permissions, hook extensions, persist memory, assemble prompts, recover from errors, schedule tasks, coordinate teams, and route capabilities. That is the journey from a bare API call to a production agent platform.
 
 ---
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

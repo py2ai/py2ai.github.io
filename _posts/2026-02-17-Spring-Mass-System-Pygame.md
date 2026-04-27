@@ -467,10 +467,3 @@ This spring-mass simulation demonstrates fundamental physics principles through 
 Experiment with different parameters to see how they affect the motion. This simulation provides a foundation for more complex physics projects and real-world applications.
 
 Keep exploring, keep coding, and enjoy the beautiful physics of harmonic motion!
-
-## Related Posts
-
-- [Python Cheatsheet Every Learner Must Know - Save Hours of Time]({{ site.baseurl }}{% post_url 2025-01-17-Python-Cheatsheet %})
-- [Top 10 AI Models You Need to Know in 2026 - Complete Guide]({{ site.baseurl }}{% post_url 2026-02-16-Top-10-AI-Models %})
-- [How to Make a Zombie Shooter Game in Pygame (Beginner Tutorial)]({{ site.baseurl }}{% post_url 2025-02-07-How-to-make-Zombie-Shooter-game %})
-- [Let's Build a Simple "Battleship" Game]({{ site.baseurl }}{% post_url 2024-05-30-Make-a-battleship-game %})

@@ -241,9 +241,3 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 BlenderMCP represents a significant advancement in AI-assisted 3D content creation. By bridging Claude's natural language understanding with Blender's powerful 3D capabilities, it democratizes 3D modeling and makes scene creation accessible to everyone, regardless of their technical expertise.
 
 The integration with Poly Haven, Hyper3D Rodin, Sketchfab, and Hunyuan3D provides a comprehensive ecosystem for sourcing and generating 3D assets. Whether you're a professional 3D artist looking to speed up your workflow or a beginner wanting to explore 3D creation, BlenderMCP offers an intuitive and powerful solution.
-
-## Related Posts
-
-- [Hermes Agent: Self-Improving AI Agent](/Hermes-Agent-Self-Improving-AI-Agent/)
-- [Superpowers: Agentic Skills Framework](/Superpowers-Agentic-Skills-Framework/)
-- [Archon: Open-Source AI Harness Builder](/Archon-Open-Source-AI-Harness-Builder/)

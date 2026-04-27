@@ -474,9 +474,3 @@ Scores normalized to [0, 1]. Higher is better for accuracy, lower is better for 
 OpenDataLoader PDF represents a paradigm shift in PDF processing for AI applications. By combining deterministic parsing with AI-powered analysis, it achieves best-in-class accuracy while maintaining complete data privacy. The upcoming accessibility automation features will make PDF compliance achievable at scale, eliminating the manual remediation bottleneck.
 
 Whether you're building RAG pipelines, extracting structured data, or preparing documents for accessibility compliance, OpenDataLoader PDF provides the tools you need with open-source transparency and enterprise-grade capabilities.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

@@ -291,9 +291,3 @@ Context Mode solves one of the most pressing problems in AI-assisted development
 - [Discord Community](https://discord.gg/DCN9jUgN5v)
 - [Benchmark Data](https://github.com/mksglu/context-mode/blob/main/BENCHMARK.md)
 - [Platform Support Documentation](https://github.com/mksglu/context-mode/blob/main/docs/platform-support.md)
-
-## Related Posts
-
-- [Claude Code Best Practices](/Claude-Code-Best-Practices/)
-- [RTK: Reduce LLM Token Consumption by 60-90%](/RTK-Rust-Token-Killer-LLM-Optimization/)
-- [Free Claude Code: Use Claude Code for Free](/Free-Claude-Code-Use-Claude-Code-for-Free/)

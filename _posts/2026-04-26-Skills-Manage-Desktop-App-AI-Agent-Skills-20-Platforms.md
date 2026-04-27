@@ -418,9 +418,3 @@ With support for 27+ platforms, 2,500+ marketplace skills from 50+ publishers, a
 - Latest Release: [https://github.com/iamzhihuix/skills-manage/releases/latest](https://github.com/iamzhihuix/skills-manage/releases/latest)
 - Agent Skills Pattern: [https://github.com/anthropics/agent-skills](https://github.com/anthropics/agent-skills)
 - Tauri v2 Documentation: [https://v2.tauri.app/](https://v2.tauri.app/)
-
-## Related Posts
-
-- [Claude Code Skills: How to Create and Manage Agent Skills](/Claude-Code-Skills-Agent-Skill-Creation/)
-- [Open Source AI Coding Agents: A Comprehensive Guide](/Open-Source-AI-Coding-Agents-Guide/)
-- [Tauri v2: Building Desktop Apps with Rust and React](/Tauri-v2-Desktop-Apps-Rust-React/)

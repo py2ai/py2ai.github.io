@@ -239,9 +239,3 @@ Project N.O.M.A.D. represents a significant step toward digital self-sufficiency
 Whether you're a prepper building an emergency information system, a remote worker needing reliable offline access, or simply someone who values privacy and local control over their data, N.O.M.A.D. offers a comprehensive and well-designed solution.
 
 The modular architecture allows you to start small and expand as needed, while the Docker-based deployment ensures consistency and ease of maintenance. With active development and a growing community, Project N.O.M.A.D. is positioned to become an essential tool for offline knowledge management.
-
-## Related Posts
-
-- [Hermes Agent: Self-Improving AI Agent](/Hermes-Agent-Self-Improving-AI-Agent/)
-- [DeerFlow: SuperAgent Harness](/DeerFlow-SuperAgent-Harness/)
-- [Everything Claude Code: AI Agent Harness](/Everything-Claude-Code-AI-Agent-Harness/)

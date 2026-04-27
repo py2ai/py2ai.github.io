@@ -713,9 +713,3 @@ With its open-source nature and active community, MoneyPrinterV2 continues to ev
 - **Documentation**: Available in the `docs/` directory
 - **Discord Community**: Join via the badge in README
 - **Related Projects**: MoneyPrinterTurbo (Chinese version)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

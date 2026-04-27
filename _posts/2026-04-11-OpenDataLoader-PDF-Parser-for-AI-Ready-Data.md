@@ -453,9 +453,3 @@ Whether you're building RAG pipelines, processing scanned documents, or ensuring
 - [Documentation](https://opendataloader.org/docs/quick-start-python)
 - [Benchmarks](https://github.com/opendataloader-project/opendataloader-bench)
 - [LangChain Integration](https://docs.langchain.com/oss/python/integrations/document_loaders/opendataloader_pdf)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

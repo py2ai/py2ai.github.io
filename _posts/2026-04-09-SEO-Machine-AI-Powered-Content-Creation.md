@@ -541,9 +541,3 @@ The open-source nature of the project means it can be customized to fit specific
 - **Claude Code Documentation**: [docs.claude.com/claude-code](https://docs.claude.com/claude-code)
 - **Stars**: 4,250+
 - **Forks**: 681
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

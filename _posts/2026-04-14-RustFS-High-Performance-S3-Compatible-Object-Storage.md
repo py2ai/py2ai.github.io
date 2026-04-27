@@ -415,12 +415,6 @@ RustFS represents a significant advancement in open-source object storage. By co
 
 The 2.3x performance improvement over MinIO, combined with Apache 2.0 licensing and memory safety guarantees, makes RustFS an excellent choice for organizations seeking a high-performance, business-friendly object storage solution.
 
-## Related Posts
-
-- [Understanding Object Storage Architecture](/object-storage-architecture/)
-- [S3 API Deep Dive](/s3-api-deep-dive/)
-- [Rust for Cloud Infrastructure](/rust-cloud-infrastructure/)
-
 ## Links
 
 - [RustFS Documentation](https://docs.rustfs.com)

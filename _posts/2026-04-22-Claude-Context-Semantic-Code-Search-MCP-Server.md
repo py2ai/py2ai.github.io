@@ -247,9 +247,3 @@ The project's architecture is well-designed for real-world use: structure-aware 
 - **npm Package**: `@zilliz/claude-context-mcp`
 - **VSCode Extension**: Search for `zilliz.semanticcodesearch` in VSCode Marketplace
 - **Zilliz Cloud**: [https://zilliz.com/cloud](https://zilliz.com/cloud)
-
-## Related Posts
-
-- [Claude Code MCP Guide](/Claude-Code-MCP-Guide/)
-- [Claude Code Complete Guide](/Claude-Code-Complete-Guide/)
-- [RAG-Anything: All-in-One Multimodal RAG Framework](/RAG-Anything-All-in-One-Multimodal-RAG-Framework/)

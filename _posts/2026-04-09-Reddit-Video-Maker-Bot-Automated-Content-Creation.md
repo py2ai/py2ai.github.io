@@ -306,9 +306,3 @@ The project's active development community continues to add features and improve
 **GitHub Repository:** [https://github.com/elebumm/RedditVideoMakerBot](https://github.com/elebumm/RedditVideoMakerBot)
 
 **Documentation:** [https://reddit-video-maker-bot.netlify.app/](https://reddit-video-maker-bot.netlify.app/)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

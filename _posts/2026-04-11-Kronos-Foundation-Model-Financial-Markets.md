@@ -748,9 +748,3 @@ The open-source release includes:
 - Comprehensive documentation
 
 Whether you're building trading systems, conducting research, or exploring financial ML, Kronos provides a powerful foundation for your work.
-
-## Related Posts
-
-- [TimesFM: Time Series Foundation Model](/TimesFM-Time-Series-Foundation-Model/)
-- [AI Hedge Fund: Multi-Agent Investment Analysis](/AI-Hedge-Fund-Multi-Agent-Investment-Analysis/)
-- [TradingAgents: AI-Powered Trading Strategies](/TradingAgents-AI-Powered-Trading-Strategies/)

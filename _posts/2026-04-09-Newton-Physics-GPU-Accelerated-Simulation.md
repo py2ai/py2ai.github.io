@@ -775,9 +775,3 @@ For roboticists and simulation researchers, Newton provides the tools needed to 
 - [Documentation](https://newton-physics.readthedocs.io/)
 - [Examples](https://github.com/newton-physics/newton/tree/main/examples)
 - [Community Discord](https://discord.gg/newton-physics)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

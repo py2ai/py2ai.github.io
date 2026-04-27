@@ -353,8 +353,3 @@ Whether you are an individual who values privacy, a team that needs self-hosted 
 - GitHub: [https://github.com/thunderbird/thunderbolt](https://github.com/thunderbird/thunderbolt)
 - Documentation: [Architecture](https://github.com/thunderbird/thunderbolt/blob/main/docs/architecture.md) | [FAQ](https://github.com/thunderbird/thunderbolt/blob/main/docs/faq.md) | [Deployment](https://github.com/thunderbird/thunderbolt/blob/main/deploy/README.md)
 - License: Mozilla Public License 2.0
-
-## Related Posts
-
-- [Claude Code: Architecture and Skills](/Claude-Code-Architecture-and-Skills/)
-- [Open Source AI Tools for Developers](/Open-Source-AI-Tools-for-Developers/)

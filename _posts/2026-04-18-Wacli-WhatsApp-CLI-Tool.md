@@ -383,9 +383,3 @@ wacli fills an important gap in the WhatsApp ecosystem by providing a powerful, 
 The project's rapid growth -- over 1,800 stars and +831 stars per week -- speaks to the demand for a tool like this. With its clean codebase, comprehensive feature set, and thoughtful design decisions like best-effort sync, panic recovery, and process locking, wacli is production-ready for both personal and professional use.
 
 Check out the [wacli GitHub repository](https://github.com/steipete/wacli) to get started, and join the growing community of developers using WhatsApp from the command line.
-
-## Related Posts
-
-- [Understanding WhatsApp Web Protocol](/WhatsApp-Web-Protocol/)
-- [CLI Tools for Modern Communication](/CLI-Tools-Modern-Communication/)
-- [SQLite FTS5 for Fast Text Search](/SQLite-FTS5-Fast-Text-Search/)

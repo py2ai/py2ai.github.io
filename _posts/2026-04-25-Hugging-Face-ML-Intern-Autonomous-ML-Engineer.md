@@ -292,9 +292,3 @@ As the project continues to evolve, expect expanded tool integrations, improved 
 - [smolagents Framework](https://github.com/huggingface/smolagents)
 - [LiteLLM Documentation](https://docs.litellm.ai/)
 - [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
-
-## Related Posts
-
-- [CrewAI: Multi-Agent Orchestration Framework](/CrewAI-Multi-Agent-Orchestration-Framework/)
-- [OpenAI Agents Python SDK](/OpenAI-Agents-Python-SDK/)
-- [LangChain Agent Engineering Platform](/LangChain-Agent-Engineering-Platform/)

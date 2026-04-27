@@ -205,9 +205,3 @@ To get started, simply add the MCP server configuration to your preferred client
 - GitHub: [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp)
 - npm: [chrome-devtools-mcp](https://www.npmjs.com/package/chrome-devtools-mcp)
 - MCP Specification: [modelcontextprotocol.io](https://modelcontextprotocol.io/)
-
-## Related Posts
-
-- [AI Hedge Fund: Multi-Agent Investment Analysis](/AI-Hedge-Fund-Multi-Agent-Investment-Analysis/)
-- [Open SWE: AI-Powered Software Engineering](/Open-SWE-AI-Powered-Software-Engineering/)
-- [Page Agent: AI-Powered Web Automation](/Page-Agent-AI-Powered-Web-Automation/)

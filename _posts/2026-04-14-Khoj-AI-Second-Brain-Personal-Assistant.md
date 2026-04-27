@@ -621,9 +621,3 @@ Whether you're a researcher managing academic papers, a developer maintaining do
 The ability to self-host ensures your data remains private, while the flexible architecture supports scaling from personal use to enterprise deployment. With support for multiple LLM providers and local models, you're never locked into a single vendor.
 
 Try Khoj today at [app.khoj.dev](https://app.khoj.dev) or self-host for complete control over your AI second brain.
-
-## Related Posts
-
-- [Project NOMAD: Offline Knowledge Server](/Project-NOMAD-Offline-Knowledge-Server/)
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [Open SWE: AI-Powered Software Engineering](/Open-SWE-AI-Powered-Software-Engineering/)

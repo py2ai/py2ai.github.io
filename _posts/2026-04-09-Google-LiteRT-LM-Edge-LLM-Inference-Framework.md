@@ -570,9 +570,3 @@ Google's LiteRT-LM represents a significant milestone in bringing production-gra
 The framework's production heritage, powering millions of devices through Chrome, Chromebook Plus, and Pixel Watch, provides confidence in its reliability and performance. With comprehensive documentation, active development, and growing community support, LiteRT-LM is positioned to become the standard for edge LLM deployment.
 
 Whether you're building mobile apps, web applications, desktop software, or IoT solutions, LiteRT-LM provides the tools needed to bring AI capabilities directly to users while maintaining privacy, reducing latency, and eliminating cloud dependency.
-
-## Related Posts
-
-- [Andrej Karpathy Skills: LLM Coding Guidelines](/Andrej-Karpathy-Skills-LLM-Coding-Guidelines/)
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)

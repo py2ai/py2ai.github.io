@@ -240,13 +240,6 @@ The project welcomes contributions from the community. Whether fixing bugs, impr
 
 TradingAgents is designed for research purposes. Trading performance may vary based on many factors, including the chosen backbone language models, model temperature, trading periods, the quality of data, and other non-deterministic factors. It is not intended as financial, investment, or trading advice.
 
-## Related Posts
-
-- [AI Hedge Fund: Multi-Agent Investment Analysis](/ai-hedge-fund-multi-agent-investment-analysis)
-- [Everything Claude Code: Architecture and Skills](/everything-claude-code-architecture-skills)
-- [AgentSkillOS: Skill Orchestration System](/agentskillos-skill-orchestration-system)
-- [Deer Flow: Workflow Automation](/deer-flow-workflow-automation)
-
 ## Conclusion
 
 TradingAgents represents a significant advancement in applying multi-agent LLM systems to financial trading. By mirroring the structure of real-world trading firms with specialized agents for different analysis tasks, the framework provides a robust platform for research and experimentation. The support for multiple LLM providers, combined with the modular architecture, makes it accessible to researchers and practitioners alike.

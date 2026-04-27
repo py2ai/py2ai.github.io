@@ -393,9 +393,3 @@ The model's architecture - converting an autoregressive pretrained checkpoint in
 - Model Weights: [https://huggingface.co/openai/privacy-filter](https://huggingface.co/openai/privacy-filter)
 - Interactive Demo: [https://huggingface.co/spaces/openai/privacy-filter](https://huggingface.co/spaces/openai/privacy-filter)
 - Model Card: [OpenAI Privacy Filter Model Card (PDF)](https://cdn.openai.com/pdf/c66281ed-b638-456a-8ce1-97e9f5264a90/OpenAI-Privacy-Filter-Model-Card.pdf)
-
-## Related Posts
-
-- [OpenAI Agents Python: Building Multi-Agent Systems](/OpenAI-Agents-Python-Building-Multi-Agent-Systems/)
-- [Repomix: Packing Repositories for LLM Context](/Repomix-Packing-Repositories-for-LLM-Context/)
-- [Magika: AI-Powered File Type Detection](/Magika-AI-Powered-File-Type-Detection/)

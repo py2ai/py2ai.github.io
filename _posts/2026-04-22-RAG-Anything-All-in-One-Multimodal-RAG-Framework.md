@@ -199,9 +199,3 @@ The framework's modular architecture makes it easy to extend with custom process
 - [GitHub Repository](https://github.com/HKUDS/RAG-Anything)
 - [ArXiv Paper](https://arxiv.org/abs/2510.12323)
 - [Discord Community](https://discord.gg/yF2MmDJyGJ)
-
-## Related Posts
-
-- [LightRAG: Simple and Fast Retrieval-Augmented Generation](/LightRAG-Simple-and-Fast-Retrieval-Augmented-Generation/)
-- [Ollama: Run Large Language Models Locally](/Ollama-Run-Large-Language-Models-Locally/)
-- [Open WebUI: User-Friendly AI Interface](/Open-WebUI-User-Friendly-AI-Interface/)

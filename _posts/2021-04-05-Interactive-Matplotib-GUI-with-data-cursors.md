@@ -420,9 +420,3 @@ if __name__ == "__main__":
 
 ```
 We used mpldatacursors in the above code and only in the ```def Update(self,value)``` function. Try your csv file and enjoy interactive data visualization. Please do give your feedback which is very important for us. Thank you
-
-## Related Posts
-
-- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
-- [Getting Started with PySide6 Part 1]({{ site.baseurl }}{% post_url 2024-03-12-Getting-started-with-PySide6-part1 %})
-- [PyQt5 Terminal Console]({{ site.baseurl }}{% post_url 2022-02-03-Command-Terminal-in-PyQt5 %})

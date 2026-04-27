@@ -460,9 +460,3 @@ With an active community of contributors, daily automated release tracking, and 
 - GitHub Repository: [https://github.com/aaddrick/claude-desktop-debian](https://github.com/aaddrick/claude-desktop-debian)
 - Releases: [https://github.com/aaddrick/claude-desktop-debian/releases](https://github.com/aaddrick/claude-desktop-debian/releases)
 - Documentation: [Building](https://github.com/aaddrick/claude-desktop-debian/blob/main/docs/BUILDING.md) | [Configuration](https://github.com/aaddrick/claude-desktop-debian/blob/main/docs/CONFIGURATION.md) | [Troubleshooting](https://github.com/aaddrick/claude-desktop-debian/blob/main/docs/TROUBLESHOOTING.md)
-
-## Related Posts
-
-- [Claude Code Architecture](/Claude-Code-Architecture/)
-- [Claude Cookbooks Overview](/Claude-Cookbooks-Overview/)
-- [Claude HUD Architecture](/Claude-HUD-Architecture/)

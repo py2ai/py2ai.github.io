@@ -253,9 +253,3 @@ The architecture demonstrates several important principles:
 4. **Graceful wins** - Clean shutdowns prevent data loss
 
 With nearly 50,000 GitHub stars, Claude-Mem has clearly resonated with developers looking to enhance their AI coding workflows. The open-source nature ensures transparency and allows community contributions to improve the system further.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN-md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

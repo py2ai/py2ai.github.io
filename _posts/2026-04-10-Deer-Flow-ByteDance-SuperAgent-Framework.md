@@ -469,9 +469,3 @@ The framework's rapid adoption (60,000+ stars, fastest growing in its category) 
 - [Official Website](https://deerflow.tech)
 - [Documentation](https://github.com/bytedance/deer-flow#documentation)
 - [Contributing Guide](https://github.com/bytedance/deer-flow/blob/main/CONTRIBUTING.md)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

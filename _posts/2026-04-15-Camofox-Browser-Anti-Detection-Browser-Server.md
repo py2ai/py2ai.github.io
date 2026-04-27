@@ -375,12 +375,6 @@ Camofox Browser represents a significant advancement in browser automation for A
 
 Whether you're building web-scraping agents, automated testing tools, or AI assistants that need to interact with the real web, Camofox Browser provides the foundation for undetected, reliable browser automation. The multiple deployment options and comprehensive API make it suitable for everything from local development to production cloud deployments.
 
-## Related Posts
-
-- [Pascal Editor: 3D Architectural Building Tool](/Pascal-Editor-3D-Architectural-Building-Tool/)
-- [Apollo 11: Original AGC Source Code](/Apollo-11-Original-AGC-Source-Code/)
-- [ChinaTextbook: Comprehensive Educational Resource](/ChinaTextbook-Comprehensive-Educational-Resource/)
-
 ## Links
 
 - [GitHub Repository](https://github.com/jo-inc/camofox-browser)

@@ -97,17 +97,3 @@ To run the application, save the code to a file (e.g., simple_gui.py) and execut
 You should see a window with a button labeled "Click Me!". Clicking the button will display a message box with the text "Hello, PySide6!".
 
 Congratulations! You've successfully created your first PySide6 GUI application. In the next part of this tutorial series, we'll explore more advanced features of PySide6 and build upon what we've learned here. Stay tuned for more!
-
-## Related Posts
-
-- [Building a Calculator Application with PySide6 Part 2]({{ site.baseurl }}{% post_url 2024-03-12-Make-a-simple-calculator-in-PySide6-with-python-part2 %})
-- [How to Make a Matplotlib and PyQt5 GUI]({{ site.baseurl }}{% post_url 2020-10-01-Make-GUI-With-Matplotlib-And-PyQt5 %})
-- [Interactive Matplotlib GUI with Data Cursors]({{ site.baseurl }}{% post_url 2021-04-05-Interactive-Matplotib-GUI-with-data-cursors %})
-
-
-
-
-
-
-
-

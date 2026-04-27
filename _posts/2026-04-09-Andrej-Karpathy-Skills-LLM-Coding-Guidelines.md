@@ -501,9 +501,3 @@ The `andrej-karpathy-skills` repository provides a practical solution to common 
 These principles aren't about restricting LLM capabilities; they're about channeling those capabilities more effectively. When LLMs surface assumptions, write simple code, make targeted changes, and work toward verifiable goals, they become more reliable coding partners.
 
 The repository is available at [https://github.com/forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) and can be installed as a Claude Code plugin or added to any project as a `CLAUDE.md` file.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

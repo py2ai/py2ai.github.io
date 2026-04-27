@@ -362,9 +362,3 @@ Superpowers represents a significant advancement in AI-assisted software develop
 With 140,708 GitHub stars and active development by Jesse Vincent and the Prime Radiant team, Superpowers has proven its value to the developer community. Whether you're using Claude Code, Gemini CLI, Cursor, or another AI coding platform, Superpowers provides the structure needed to produce high-quality, maintainable code consistently.
 
 The framework's innovative approach to subagent-driven development, combined with its two-stage review process and iron laws, ensures that AI agents follow the same rigorous practices that experienced software engineers have developed over decades. As AI continues to transform software development, Superpowers provides the guardrails needed to harness that power responsibly.
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

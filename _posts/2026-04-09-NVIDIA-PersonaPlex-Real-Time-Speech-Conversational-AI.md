@@ -515,9 +515,3 @@ With its sophisticated persona control system, efficient streaming pipeline, and
 - [Documentation](https://github.com/NVIDIA/personaplex/blob/main/README.md)
 - [Model Weights](https://github.com/NVIDIA/personaplex/releases)
 - [NVIDIA AI Research](https://www.nvidia.com/en-us/ai/)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

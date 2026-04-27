@@ -199,9 +199,3 @@ The combination of 84+ connectors, column-level lineage, no-code data quality te
 - [OpenMetadata Documentation](https://docs.open-metadata.org/)
 - [OpenMetadata Sandbox](http://sandbox.open-metadata.org)
 - [OpenMetadata Slack Community](https://slack.open-metadata.org/)
-
-## Related Posts
-
-- [OSV Scanner: Google Vulnerability Scanner for Open Source](/OSV-Scanner-Google-Vulnerability-Scanner-for-Open-Source/)
-- [RustDesk: Open Source Remote Desktop](/RustDesk-Open-Source-Remote-Desktop/)
-- [n8n: Secure Workflow Automation for Technical Teams](/n8n-Secure-Workflow-Automation-for-Technical-Teams/)

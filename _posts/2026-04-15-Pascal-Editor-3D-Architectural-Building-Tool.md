@@ -544,12 +544,6 @@ The monorepo structure with separate packages for core functionality, viewing, a
 
 Whether you're an architect looking for a browser-based design tool, a developer interested in 3D web applications, or a contributor wanting to improve open-source software, Pascal Editor offers something valuable. The clean codebase, comprehensive documentation, and active community make it an excellent project to learn from and contribute to.
 
-## Related Posts
-
-- [Voicebox: Open Source Voice Synthesis Studio](/Voicebox-Open-Source-Voice-Synthesis-Studio/)
-- [Understanding React Three Fiber for 3D Web Applications](/)
-- [Modern State Management with Zustand](/)
-
 ## Links
 
 - [GitHub Repository](https://github.com/pascalorg/editor)

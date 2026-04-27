@@ -539,14 +539,6 @@ Key takeaways:
 
 Whether you are building your first Claude integration or scaling to production, the cookbooks provide the guidance you need to succeed.
 
-## Related Posts
-
-- [Claude Code Complete Guide](/Claude-Code-Complete-Guide/)
-- [Claude Code Skills Guide](/Claude-Code-Skills-Guide/)
-- [Claude Code MCP Guide](/Claude-Code-MCP-Guide/)
-- [Claude Code Memory Guide](/Claude-Code-Memory-Guide/)
-- [Claude Code Hooks Guide](/Claude-Code-Hooks-Guide/)
-
 ## Resources
 
 - [Claude Cookbooks Repository](https://github.com/anthropics/claude-cookbooks)

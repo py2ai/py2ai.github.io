@@ -757,9 +757,3 @@ With over 146,000 stars on GitHub, Everything Claude Code has proven its value t
 - [GitHub Repository](https://github.com/affaan-m/everything-claude-code)
 - [Documentation](https://github.com/affaan-m/everything-claude-code/wiki)
 - [Issue Tracker](https://github.com/affaan-m/everything-claude-code/issues)
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN.md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

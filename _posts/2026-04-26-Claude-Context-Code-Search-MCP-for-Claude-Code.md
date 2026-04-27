@@ -321,9 +321,3 @@ The project is open source under the MIT license and actively maintained by Zill
 - [Zilliz Cloud](https://zilliz.com/cloud)
 - [npm: @zilliz/claude-context-core](https://www.npmjs.com/package/@zilliz/claude-context-core)
 - [npm: @zilliz/claude-context-mcp](https://www.npmjs.com/package/@zilliz/claude-context-mcp)
-
-## Related Posts
-
-- [Claude Code: The AI Coding Agent Revolution](/Claude-Code-AI-Coding-Agent-Revolution/)
-- [Milvus: Open Source Vector Database for AI Applications](/Milvus-Vector-Database-AI-Applications/)
-- [MCP Protocol: Connecting AI Agents to Tools](/MCP-Protocol-Connecting-AI-Agents-Tools/)

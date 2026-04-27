@@ -449,9 +449,3 @@ With packages for React, Vue, vanilla JavaScript, in-browser Bash, and markdown 
 - **Documentation**: [https://wterm.dev](https://wterm.dev)
 - **npm Packages**: @wterm/core, @wterm/dom, @wterm/react, @wterm/vue, @wterm/just-bash, @wterm/markdown
 - **License**: Apache-2.0
-
-## Related Posts
-
-- [Understanding WebAssembly for Web Development](/WebAssembly-Web-Development/)
-- [Building Terminal Applications with Zig](/Zig-Terminal-Applications/)
-- [React Component Patterns for Complex UIs](/React-Component-Patterns/)

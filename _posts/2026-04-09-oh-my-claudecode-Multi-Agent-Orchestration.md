@@ -757,9 +757,3 @@ With over 26,000 GitHub stars and rapid adoption, oh-my-claudecode has proven it
 For more information, visit the [GitHub repository](https://github.com/Yeachan-Heo/oh-my-claudecode) and explore the documentation.
 
 ---
-
-## Related Posts
-
-- [AgentSkillOS: Skill Orchestration System](/AgentSkillOS-Skill-Orchestration-System/)
-- [MattPocock Skills: AI Agent Workflows](/MattPocock-Skills-AI-Agent-Workflows/)
-- [DESIGN-md: AI-Powered Design Systems](/DESIGN-md-AI-Powered-Design-Systems/)

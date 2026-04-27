@@ -391,9 +391,3 @@ If you are tired of AI-generated diagrams that look like they came from a templa
 
 - **GitHub Repository**: [https://github.com/cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 - **Live Gallery**: Open `skills/diagram-design/assets/index.html` in your browser after cloning
-
-## Related Posts
-
-- [Claude Code Skills: Building Custom AI Capabilities](/Claude-Code-Skills-Custom-AI-Capabilities/)
-- [SVG Diagram Best Practices for Technical Documentation](/SVG-Diagram-Best-Practices/)
-- [AI Design Quality: Preventing Slop in Generated Content](/AI-Design-Quality-Anti-Slop-Rules/)

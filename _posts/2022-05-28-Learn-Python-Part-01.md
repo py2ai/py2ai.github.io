@@ -372,10 +372,3 @@ To find the last occurence or highest index of a sub-string in a string.
 ## Summary
 
 We saw that we can either run Python script via interpreter or using python file. Throughout this course we will continue to use anyone of them...
-
-## Related Posts
-
-- [Python Tips and Tricks You Must Know]({{ site.baseurl }}{% post_url 2024-05-21-Python-tips-you-must-know %})
-- [75+ Good Python Coding Examples for Software Development]({{ site.baseurl }}{% post_url 2023-02-12-Quick-Python-Tips %})
-- [How to Earn Money Online Using Python Programming Skills]({{ site.baseurl }}{% post_url 2024-01-30-How-to-earn-money-online-using-python-programming-skills %})
-

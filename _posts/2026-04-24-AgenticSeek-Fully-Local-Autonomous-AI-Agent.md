@@ -255,9 +255,3 @@ If you have a GPU with sufficient VRAM and want an AI assistant that truly belon
 - **GitHub Repository**: [https://github.com/Fosowl/agenticSeek](https://github.com/Fosowl/agenticSeek)
 - **Project Website**: [https://fosowl.github.io/agenticSeek.html](https://fosowl.github.io/agenticSeek.html)
 - **Discord Community**: [https://discord.gg/8hGDaME3TC](https://discord.gg/8hGDaME3TC)
-
-## Related Posts
-
-- [AutoGPT: Building Autonomous AI Agents with Block-Based Architecture](/AutoGPT-Platform-Autonomous-AI-Agent/)
-- [Ollama: Run Large Language Models Locally](/Ollama-Run-LLMs-Locally/)
-- [DeepSeek: Open Source Reasoning Models](/DeepSeek-Open-Source-Reasoning-Models/)

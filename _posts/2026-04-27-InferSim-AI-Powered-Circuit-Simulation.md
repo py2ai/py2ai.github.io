@@ -278,10 +278,3 @@ The simulation accuracy is within 15% for prefill and 10% for decode, making Inf
 InferSim represents a significant contribution to the AI infrastructure tooling ecosystem. By providing a lightweight, dependency-free simulator that accurately predicts LLM inference performance, it enables researchers and engineers to make informed decisions about model architecture and deployment configurations without expensive hardware testing. The support for modern architectures like MLA, hybrid linear attention, and DeepEP parallelism makes it particularly relevant for next-generation LLM design.
 
 The project's pure Python implementation and zero-dependency philosophy make it accessible to anyone working in LLM inference optimization. Whether you are designing a new MoE architecture, planning GPU procurement, or optimizing an existing deployment, InferSim provides the analytical framework to predict performance before committing resources.
-
-## Related Posts
-
-- [DeepEP: High-Performance Expert Parallelism for MoE Models](/DeepEP-High-Performance-Expert-Parallelism/)
-- [Understanding LLM Inference: From Prefill to Decode](/LLM-Inference-Prefill-Decode/)
-- [FP8 Quantization for LLM Serving](/FP8-Quantization-LLM-Serving/)
-- [FlashAttention and Efficient Attention Mechanisms](/FlashAttention-Efficient-Attention/)
