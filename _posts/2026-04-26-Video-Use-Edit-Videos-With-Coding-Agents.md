@@ -2,6 +2,8 @@
 layout: post
 title: "Video Use: Edit Videos With Coding Agents"
 date: 2026-04-26
+permalink: /Video-Use-Edit-Videos-With-Coding-Agents/
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [ai, video-editing, open-source, coding-agents]
 tags: [video-editing, claude-code, llm, ffmpeg, elevenlabs, manim, open-source]
 author: PyShine
