@@ -1,4 +1,312 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-04-27T00:59:42+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers</title><link href="https://pyshine.com/Agentic-Inbox-Self-Hosted-AI-Email-Client-Cloudflare-Workers/" rel="alternate" type="text/html" title="Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers" /><published>2026-04-26T00:00:00+00:00</published><updated>2026-04-26T00:00:00+00:00</updated><id>https://pyshine.com/Agentic-Inbox-Self-Hosted-AI-Email-Client-Cloudflare-Workers</id><content type="html" xml:base="https://pyshine.com/Agentic-Inbox-Self-Hosted-AI-Email-Client-Cloudflare-Workers/"><![CDATA[<h1 id="agentic-inbox-self-hosted-ai-email-client-on-cloudflare-workers">Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-04-27T12:53:37+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">InferSim: AI-Powered Circuit Simulation by Alibaba</title><link href="https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation/" rel="alternate" type="text/html" title="InferSim: AI-Powered Circuit Simulation by Alibaba" /><published>2026-04-27T00:00:00+00:00</published><updated>2026-04-27T00:00:00+00:00</updated><id>https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation</id><content type="html" xml:base="https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation/"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>InferSim is a lightweight, AI-powered circuit simulation framework developed by Alibaba’s Alimama AI Infra Team and Future Living Lab. While traditional circuit simulation tools like SPICE rely on numerical solvers for analog circuit analysis, InferSim takes a fundamentally different approach: it simulates the inference performance of Large Language Models (LLMs) on GPU hardware. In the context of AI-powered circuit simulation, InferSim bridges the gap between model architecture design and deployment planning by calculating critical metrics such as TTFT (Time To First Token), TPOT (Time Per Output Token), and TGS (Tokens per GPU per Second) without requiring actual hardware execution.</p>
+
+<p>Written in pure Python with zero third-party dependencies, InferSim leverages computation complexity analysis (FLOPs), GPU hardware specifications (FLOPS, memory bandwidth), and benchmark-driven Model FLOPs Utilization (MFU) data to produce highly accurate performance estimates. The simulator has demonstrated remarkable accuracy, achieving within 15% of actual measured throughput on models like DeepSeek-V3, Qwen3-30B-A3B, and Qwen3-8B across H20 and H800 GPU platforms.</p>
+
+<h2 id="what-is-infersim">What is InferSim?</h2>
+
+<p>InferSim is an LLM inference performance simulator that answers a critical question in AI infrastructure: “How will this model perform on this hardware configuration?” Rather than running expensive benchmarks on actual GPUs, InferSim uses analytical modeling to predict:</p>
+
+<ul>
+  <li><strong>TTFT</strong> - Time To First Token during the prefill phase</li>
+  <li><strong>TPOT</strong> - Time Per Output Token during the decode phase</li>
+  <li><strong>TGS</strong> - Tokens per GPU per Second, the key throughput metric</li>
+</ul>
+
+<p>The simulator supports a wide range of model architectures including MHA/GQA attention (used by Qwen models), MLA attention (used by DeepSeek-V3), and hybrid linear attention with GDN (Gated Delta Network) layers. It handles MoE (Mixture of Experts) models, dense FFN models, and models with shared experts, making it applicable to virtually all modern LLM architectures.</p>
+
+<h2 id="architecture">Architecture</h2>
+
+<p><img src="/assets/img/diagrams/infersim/infersim-architecture.svg" alt="InferSim System Architecture" /></p>
+
+<p>The architecture diagram above illustrates the modular design of InferSim. At the top level, the <code class="language-plaintext highlighter-rouge">main.py</code> entry point accepts a HuggingFace model configuration JSON and CLI arguments, then dispatches to either a standard <code class="language-plaintext highlighter-rouge">Model</code> or <code class="language-plaintext highlighter-rouge">HybridModel</code> class depending on whether the architecture uses linear attention layers.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">ModelConfig</code> class parses the HuggingFace configuration JSON and extracts all relevant architectural parameters: attention type (MHA/GQA or MLA), MoE configuration (number of routed experts, shared experts, experts per token), and layer dimensions. For hybrid models, it also detects the presence of linear attention layers through the <code class="language-plaintext highlighter-rouge">full_attention_interval</code> parameter.</p>
+
+<p>The core simulation modules form a clean dependency graph. The <code class="language-plaintext highlighter-rouge">flops</code> module computes per-token per-layer GFLOPs for attention cores, MoE/FFN operations, and other projections. The <code class="language-plaintext highlighter-rouge">mfu</code> module looks up benchmark-driven MFU values from CSV data files, matching against batch size, sequence length, and hardware configuration. The <code class="language-plaintext highlighter-rouge">params</code> module calculates weight sizes for attention and expert parameters, while the <code class="language-plaintext highlighter-rouge">kvcache</code> module estimates KV cache memory requirements. The <code class="language-plaintext highlighter-rouge">comm</code> module handles inter-GPU communication estimation using NVLink and RDMA bandwidth parameters.</p>
+
+<p>The layer implementations – <code class="language-plaintext highlighter-rouge">attn.py</code> for MHA/MLA, <code class="language-plaintext highlighter-rouge">moe.py</code> for MoE, and <code class="language-plaintext highlighter-rouge">linear_attn.py</code> for GDN – each combine FLOPs calculations with MFU lookups to produce latency estimates. The <code class="language-plaintext highlighter-rouge">hardware/gpu.py</code> module provides GPU specifications for H20, H800, H200, and GB200, including FP16/FP8 TFLOPS, memory capacity, memory bandwidth, and NVLink/RDMA bandwidth.</p>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<p><img src="/assets/img/diagrams/infersim/infersim-simulation-pipeline.svg" alt="InferSim Simulation Pipeline" /></p>
+
+<p>The simulation pipeline diagram above shows the four-phase process that InferSim follows to produce performance estimates.</p>
+
+<p><strong>Phase 1: Setup</strong> begins with loading the HuggingFace model configuration and selecting a GPU profile. The configuration file specifies the model architecture – number of layers, hidden dimensions, attention heads, expert counts, and other parameters. The GPU profile provides hardware specifications including peak FLOPS, memory capacity, and bandwidth numbers.</p>
+
+<p><strong>Phase 2: Model Analysis</strong> calculates three critical quantities. First, it determines the per-GPU parameter memory footprint, accounting for attention weights, expert weights, and whether FP8 quantization is used. Second, it estimates the available KV cache space by subtracting parameter memory and runtime overhead (approximately 20GB reserved) from total GPU memory. Third, it computes per-token per-layer GFLOPs for attention core operations, MoE/FFN computations, and other projections.</p>
+
+<p><strong>Phase 3: Prefill Simulation</strong> models the time-to-first-token computation. For each layer, it calculates the attention core latency (using MFU from benchmark data), the attention projection latency (QKV and output projections), and the MoE/FFN latency (including expert weight loading time). Communication overhead is estimated based on the parallelism strategy – AllReduce for standard tensor parallelism, or DeepEP dispatch/combine for expert parallelism. If Two-Batch Overlap (TBO) is enabled, the simulator accounts for overlapping computation and communication.</p>
+
+<p><strong>Phase 4: Decode Simulation</strong> follows a similar pattern but with decode-specific MFU values and batch size considerations. The decode phase is typically memory-bandwidth bound, so the simulator takes the maximum of compute time and memory loading time for each operation. The final TPOT is computed by summing all per-layer latencies and adding a small scheduler overhead (5ms).</p>
+
+<h2 id="data-flow">Data Flow</h2>
+
+<p><img src="/assets/img/diagrams/infersim/infersim-data-flow.svg" alt="InferSim Data Flow" /></p>
+
+<p>The data flow diagram illustrates how inputs are transformed into the three key output metrics. On the left side, three input sources feed into the simulation: the HuggingFace configuration JSON (model architecture), CLI arguments (hardware and deployment parameters), and benchmark CSV data (kernel MFU profiles).</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">ModelConfig</code> parser transforms the raw JSON into structured architecture parameters, while the GPU profile provides hardware specifications. These feed into five computation modules:</p>
+
+<ol>
+  <li><strong>Weight Calculator</strong> – Determines per-GPU parameter sizes for attention and expert weights</li>
+  <li><strong>KV Cache Estimator</strong> – Calculates available memory and per-token cache requirements</li>
+  <li><strong>FLOPs Calculator</strong> – Computes per-token GFLOPs for attention, MoE, and other operations</li>
+  <li><strong>MFU Lookup</strong> – Matches benchmark data against the model configuration to find compute efficiency values</li>
+  <li><strong>Communication Estimator</strong> – Estimates NVLink and RDMA transfer times for multi-GPU deployments</li>
+</ol>
+
+<p>These computation modules feed into two parallel latency computation paths: prefill latency and decode latency. Each path combines attention time, MoE time, and communication time, multiplied by the number of hidden layers. The prefill path produces TTFT and prefill TGS, while the decode path produces TPOT and decode TGS.</p>
+
+<h2 id="supported-features">Supported Features</h2>
+
+<p><img src="/assets/img/diagrams/infersim/infersim-features.svg" alt="InferSim Supported Features" /></p>
+
+<p>The features diagram provides a comprehensive overview of InferSim’s capabilities organized into five categories.</p>
+
+<p><strong>Attention Mechanisms</strong>: InferSim supports three attention types. MHA/GQA (Multi-Head Attention / Grouped Query Attention) is the standard attention mechanism used by most LLMs, benchmarked on FlashInfer and FlashAttention-3. MLA (Multi-head Latent Attention) is the low-rank attention architecture used by DeepSeek models, benchmarked on FlashMLA with KV absorption optimization. Linear Attention (GDN) is the newest addition, supporting Gated Delta Network layers with convolution and SSM state tracking, used in hybrid models like Qwen3.5.</p>
+
+<p><strong>Compute Kernels</strong>: The simulator models two primary kernel types. GEMM (General Matrix Multiply) handles dense projections and is benchmarked on DeepGEMM with both FP8 and FP16 support. GroupedGEMM handles MoE expert computations with variable batch sizes per expert, also benchmarked on DeepGEMM.</p>
+
+<p><strong>Parallelism</strong>: Three parallelism strategies are supported. DP Attention uses data parallelism for attention layers. EP MoE uses expert parallelism for MoE layers. DeepEP provides efficient dispatch and combine operations with both normal mode (for prefill) and low-latency mode (for decode).</p>
+
+<p><strong>Optimizations</strong>: Three key optimizations can be toggled. FP8 GEMM doubles compute throughput by using 8-bit floating point. FP8 KV Cache reduces memory consumption by 50% for KV storage. Two-Batch Overlap (TBO) overlaps computation and communication for improved throughput.</p>
+
+<p><strong>GPU Support</strong>: Four NVIDIA GPU platforms are supported with detailed specifications: H20 (96GB, 148 TF FP16), H800 (80GB, 989 TF FP16), H200 (141GB, 989 TF FP16), and GB200 (192GB, 2500 TF FP16).</p>
+
+<h2 id="installation">Installation</h2>
+
+<p>InferSim requires no third-party dependencies – it uses only Python standard library modules. To get started:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/alibaba/InferSim.git
+<span class="nb">cd </span>InferSim
+
+<span class="c"># No installation needed - just run directly</span>
+python3 main.py <span class="nt">--help</span>
+</code></pre></div></div>
+
+<p>Since InferSim is pure Python with no external dependencies, there is no <code class="language-plaintext highlighter-rouge">pip install</code> step or <code class="language-plaintext highlighter-rouge">requirements.txt</code> file. Simply clone and run.</p>
+
+<h2 id="usage">Usage</h2>
+
+<h3 id="basic-simulation">Basic Simulation</h3>
+
+<p>To simulate a model’s inference performance, you need a HuggingFace configuration JSON file and a target GPU type:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Simulate Qwen3-30B-A3B decode on 4x H20 GPUs</span>
+python3 main.py <span class="se">\</span>
+    <span class="nt">--config-path</span> hf_configs/qwen3-30B-A3B_config.json <span class="se">\</span>
+    <span class="nt">--device-type</span> H20 <span class="se">\</span>
+    <span class="nt">--world-size</span> 4 <span class="se">\</span>
+    <span class="nt">--decode-only</span>
+</code></pre></div></div>
+
+<h3 id="prefill-simulation">Prefill Simulation</h3>
+
+<p>To simulate the prefill (time-to-first-token) phase:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Simulate DeepSeek-V3 prefill on 8x H800 GPUs</span>
+python3 main.py <span class="se">\</span>
+    <span class="nt">--config-path</span> hf_configs/deepseek_v3_config.json <span class="se">\</span>
+    <span class="nt">--device-type</span> H800 <span class="se">\</span>
+    <span class="nt">--world-size</span> 8 <span class="se">\</span>
+    <span class="nt">--prefill-only</span>
+</code></pre></div></div>
+
+<h3 id="full-simulation-with-fp8">Full Simulation with FP8</h3>
+
+<p>To run a complete simulation with FP8 quantization for both GEMM and KV cache:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python3 main.py <span class="se">\</span>
+    <span class="nt">--config-path</span> hf_configs/qwen3-30B-A3B_config.json <span class="se">\</span>
+    <span class="nt">--device-type</span> H20 <span class="se">\</span>
+    <span class="nt">--world-size</span> 4 <span class="se">\</span>
+    <span class="nt">--use-fp8-gemm</span> <span class="se">\</span>
+    <span class="nt">--use-fp8-kv</span>
+</code></pre></div></div>
+
+<h3 id="deepep-with-two-batch-overlap">DeepEP with Two-Batch Overlap</h3>
+
+<p>For multi-node deployments with expert parallelism:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python3 main.py <span class="se">\</span>
+    <span class="nt">--config-path</span> hf_configs/deepseek_v3_config.json <span class="se">\</span>
+    <span class="nt">--device-type</span> H800 <span class="se">\</span>
+    <span class="nt">--world-size</span> 8 <span class="se">\</span>
+    <span class="nt">--num-nodes</span> 2 <span class="se">\</span>
+    <span class="nt">--enable-deepep</span> <span class="se">\</span>
+    <span class="nt">--enable-tbo</span>
+</code></pre></div></div>
+
+<h3 id="understanding-the-output">Understanding the Output</h3>
+
+<p>When you run a simulation, InferSim produces a detailed breakdown:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>================== Simulator Result ===================
+Device type:                             H20
+World size:                              4
+Attn type:                               MHA/GQA
+Use FP8 GEMM:                            0
+Use FP8 KV:                              0
+------------------Model Weights-------------------
+One attn params size (MB):               36.00
+One expert params size (MB):             9.00
+Per GPU params size (GB):                15.19
+---------------------KV Cache---------------------
+KV cache space (GB):                     60.81
+Input seq len:                           4096
+Output seq len:                          2048
+Target decode batchsize:                 100
+Target per-token KV cache size (KB):     103.79
+Current per-token KV cache size (KB):    96.00
+----------------------FLOPs-----------------------
+Num hidden layers:                       48
+Per-token per-layer attn core (GFLOPs):  0.08
+Per-token per-layer MoE/FFN (GFLOPs):    0.08
+Per-token per-layer others (GFLOPs):      0.04
+Per-token attn core (GFLOPs):            4.03
+Per-token MoE (GFLOPs):                  3.62
+Per-token others (GFLOPs):               1.81
+Per-token total (GFLOPs):                9.46
+---------------------Decoding---------------------
+Attn core MFU:                           0.15
+Attn core latency (us):                  361.77
+KV loading latency (us):                 298.02
+QKV_proj latency (us):                   31.03
+O_proj latency (us):                     16.95
+Routed experts/FFN MFU:                  0.18
+Routed experts/FFN latency (us):          269.28
+Experts loading latency (us):            85.83
+Comm before MoE/FFN (us):                4.24
+Comm after MoE/FFN (us):                  4.24
+TPOT (ms):                               38.00
+Throughput (TGS):                        2632
+</code></pre></div></div>
+
+<p>Each section provides actionable insights. The Model Weights section shows memory allocation per GPU. The KV Cache section validates that the model fits within available memory. The FLOPs section breaks down computational requirements. The Decoding section reveals per-operation latencies and identifies bottlenecks – in this example, attention core latency (361.77us) dominates over MoE computation (269.28us), indicating the decode phase is memory-bandwidth bound.</p>
+
+<h2 id="key-features-in-detail">Key Features in Detail</h2>
+
+<h3 id="model-sys-co-design">Model-Sys Co-Design</h3>
+
+<p>InferSim excels at model-system co-design, allowing researchers to predict how architectural changes affect inference performance before building or training models. By modifying parameters in the HuggingFace config JSON, you can explore trade-offs between model quality and serving cost. For example, increasing the number of experts per token improves model quality but increases MoE latency, while reducing KV cache rank decreases memory usage but may impact attention quality.</p>
+
+<h3 id="performance-bottleneck-analysis">Performance Bottleneck Analysis</h3>
+
+<p>The simulator identifies whether each phase is compute-bound or memory-bound. During decode, the <code class="language-plaintext highlighter-rouge">max(attn_core_time, kv_load_time)</code> comparison reveals whether attention is limited by compute throughput or memory bandwidth. Similarly, the <code class="language-plaintext highlighter-rouge">max(routed_experts_latency, moe_load_time)</code> comparison shows whether MoE is compute-bound or weight-loading-bound. This analysis guides optimization efforts toward the actual bottleneck.</p>
+
+<h3 id="benchmark-driven-mfu">Benchmark-Driven MFU</h3>
+
+<p>Unlike simple roofline models, InferSim uses real kernel benchmark data stored in CSV files under <code class="language-plaintext highlighter-rouge">bench_data/</code>. These profiles capture the actual MFU achieved by state-of-the-art kernels like FlashInfer, FlashAttention-3, FlashMLA, and DeepGEMM on specific GPU configurations. This approach produces significantly more accurate estimates than theoretical peak calculations.</p>
+
+<h3 id="hybrid-model-support">Hybrid Model Support</h3>
+
+<p>For models that combine full attention layers with linear attention layers (like Qwen3.5), InferSim provides the <code class="language-plaintext highlighter-rouge">HybridModel</code> class. This class separately computes latency for full attention layers (using KV cache) and linear attention layers (using SSM state tracking), then combines them based on the layer count ratio specified by <code class="language-plaintext highlighter-rouge">full_attention_interval</code>.</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="warning-benchmark-data-not-found">Warning: Benchmark Data Not Found</h3>
+
+<p>If you see warnings like <code class="language-plaintext highlighter-rouge">Warning: bench_data/mha/decode/H20/32-4-128.csv not exists</code>, InferSim falls back to default MFU values. To improve accuracy, you can contribute benchmark data by running the kernel benchmarks in <code class="language-plaintext highlighter-rouge">kernel_benchmark/</code> and appending results to the appropriate CSV files.</p>
+
+<h3 id="error-need-smaller-kv-cache">Error: Need Smaller KV Cache</h3>
+
+<p>If the output shows <code class="language-plaintext highlighter-rouge">!Error: need smaller kvcache</code>, the model’s KV cache requirements exceed available GPU memory. Solutions include:</p>
+
+<ul>
+  <li>Using <code class="language-plaintext highlighter-rouge">--use-fp8-kv</code> to halve KV cache size</li>
+  <li>Increasing <code class="language-plaintext highlighter-rouge">--world-size</code> to distribute the model across more GPUs</li>
+  <li>Reducing <code class="language-plaintext highlighter-rouge">--target-tgs</code> to decrease batch size and KV cache demand</li>
+</ul>
+
+<h3 id="error-tpot-greater-than-slo">Error: TPOT Greater Than SLO</h3>
+
+<p>If <code class="language-plaintext highlighter-rouge">!Error: TPOT &gt; SLO, need smaller GFLOPs to speedup</code>, the model cannot meet the target latency. Consider:</p>
+
+<ul>
+  <li>Using <code class="language-plaintext highlighter-rouge">--use-fp8-gemm</code> to double compute throughput</li>
+  <li>Increasing <code class="language-plaintext highlighter-rouge">--world-size</code> for more parallelism</li>
+  <li>Reducing model size or expert count in the configuration</li>
+</ul>
+
+<h3 id="adding-new-gpu-support">Adding New GPU Support</h3>
+
+<p>To add support for a new GPU, create a new <code class="language-plaintext highlighter-rouge">GPU</code> dataclass instance in <code class="language-plaintext highlighter-rouge">hardware/gpu.py</code> with the following parameters:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">new_gpu</span> <span class="o">=</span> <span class="n">GPU</span><span class="p">(</span>
+    <span class="n">fp16_tflops</span><span class="o">=</span><span class="p">...,</span>    <span class="c1"># FP16 peak TFLOPS
+</span>    <span class="n">fp8_tflops</span><span class="o">=</span><span class="p">...,</span>     <span class="c1"># FP8 peak TFLOPS
+</span>    <span class="n">mfu</span><span class="o">=</span><span class="p">...,</span>             <span class="c1"># Default MFU (0.0-1.0)
+</span>    <span class="n">mem</span><span class="o">=</span><span class="p">...,</span>             <span class="c1"># Memory in GB
+</span>    <span class="n">mem_bw</span><span class="o">=</span><span class="p">...,</span>          <span class="c1"># Memory bandwidth in GB/s
+</span>    <span class="n">nvlink_bw</span><span class="o">=</span><span class="p">...,</span>       <span class="c1"># NVLink bandwidth in GB/s (unidirectional)
+</span>    <span class="n">rdma_bw</span><span class="o">=</span><span class="p">...,</span>         <span class="c1"># RDMA bandwidth in GB/s (unidirectional)
+</span><span class="p">)</span>
+<span class="n">gpu_map</span><span class="p">[</span><span class="s">"NEW_GPU"</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_gpu</span>
+</code></pre></div></div>
+
+<h2 id="simulation-accuracy">Simulation Accuracy</h2>
+
+<p>InferSim has been validated against real-world inference measurements:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Model</th>
+      <th style="text-align: center">GPU</th>
+      <th style="text-align: center">Prefill TGS (Actual)</th>
+      <th style="text-align: center">Prefill TGS (Sim)</th>
+      <th style="text-align: center">Decode TGS (Actual)</th>
+      <th style="text-align: center">Decode TGS (Sim)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">DeepSeek-V3</td>
+      <td style="text-align: center">H800</td>
+      <td style="text-align: center">7839</td>
+      <td style="text-align: center">9034</td>
+      <td style="text-align: center">2324</td>
+      <td style="text-align: center">2675</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Qwen3-30B-A3B</td>
+      <td style="text-align: center">H20</td>
+      <td style="text-align: center">16594</td>
+      <td style="text-align: center">17350</td>
+      <td style="text-align: center">2749</td>
+      <td style="text-align: center">2632</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Qwen3-8B</td>
+      <td style="text-align: center">H20</td>
+      <td style="text-align: center">15061</td>
+      <td style="text-align: center">16328</td>
+      <td style="text-align: center">2682</td>
+      <td style="text-align: center">2581</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The simulation accuracy is within 15% for prefill and 10% for decode, making InferSim a reliable tool for capacity planning and architecture exploration.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>InferSim represents a significant contribution to the AI infrastructure tooling ecosystem. By providing a lightweight, dependency-free simulator that accurately predicts LLM inference performance, it enables researchers and engineers to make informed decisions about model architecture and deployment configurations without expensive hardware testing. The support for modern architectures like MLA, hybrid linear attention, and DeepEP parallelism makes it particularly relevant for next-generation LLM design.</p>
+
+<p>The project’s pure Python implementation and zero-dependency philosophy make it accessible to anyone working in LLM inference optimization. Whether you are designing a new MoE architecture, planning GPU procurement, or optimizing an existing deployment, InferSim provides the analytical framework to predict performance before committing resources.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/DeepEP-High-Performance-Expert-Parallelism/">DeepEP: High-Performance Expert Parallelism for MoE Models</a></li>
+  <li><a href="/LLM-Inference-Prefill-Decode/">Understanding LLM Inference: From Prefill to Decode</a></li>
+  <li><a href="/FP8-Quantization-LLM-Serving/">FP8 Quantization for LLM Serving</a></li>
+  <li><a href="/FlashAttention-Efficient-Attention/">FlashAttention and Efficient Attention Mechanisms</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="EDA" /><category term="VLSI" /><category term="Open Source" /><category term="InferSim" /><category term="circuit simulation" /><category term="AI" /><category term="VLSI" /><category term="EDA" /><category term="machine learning" /><category term="analog simulation" /><category term="Alibaba" /><category term="open source" /><category term="deep learning" /><summary type="html"><![CDATA[Learn how InferSim by Alibaba uses AI to accelerate circuit simulation. This guide covers installation, architecture, and real-world applications for VLSI design.]]></summary></entry><entry><title type="html">Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers</title><link href="https://pyshine.com/Agentic-Inbox-Self-Hosted-AI-Email-Client-Cloudflare-Workers/" rel="alternate" type="text/html" title="Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers" /><published>2026-04-26T00:00:00+00:00</published><updated>2026-04-26T00:00:00+00:00</updated><id>https://pyshine.com/Agentic-Inbox-Self-Hosted-AI-Email-Client-Cloudflare-Workers</id><content type="html" xml:base="https://pyshine.com/Agentic-Inbox-Self-Hosted-AI-Email-Client-Cloudflare-Workers/"><![CDATA[<h1 id="agentic-inbox-self-hosted-ai-email-client-on-cloudflare-workers">Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers</h1>
 
 <p>Agentic Inbox is an open-source, self-hosted email client with a built-in AI agent that runs entirely on Cloudflare Workers. It lets you send, receive, and manage emails through a modern web interface, with an AI-powered agent that can read your inbox, search conversations, and draft replies automatically. Every component – from the email storage to the AI inference – runs on your own Cloudflare account, giving you complete control over your data.</p>
 
@@ -3979,686 +4287,4 @@ You:     "yes, apply it"
   <li><a href="/Claude-Code-Skills-Custom-AI-Capabilities/">Claude Code Skills: Building Custom AI Capabilities</a></li>
   <li><a href="/SVG-Diagram-Best-Practices/">SVG Diagram Best Practices for Technical Documentation</a></li>
   <li><a href="/AI-Design-Quality-Anti-Slop-Rules/">AI Design Quality: Preventing Slop in Generated Content</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Tools" /><category term="Developer Tools" /><category term="Open Source" /><category term="diagram design" /><category term="Claude Code" /><category term="editorial diagrams" /><category term="SVG diagrams" /><category term="AI coding" /><category term="HTML SVG" /><category term="design systems" /><category term="technical diagrams" /><category term="AI skills" /><category term="open source" /><summary type="html"><![CDATA[Learn how cathrynlavery/diagram-design provides 13 editorial-quality diagram types as self-contained HTML+SVG for Claude Code, with progressive disclosure, brand onboarding, and a taste gate that prevents AI slop.]]></summary></entry><entry><title type="html">Google Agents CLI: Building and Evaluating AI Agents with Gemini ADK</title><link href="https://pyshine.com/Google-Agents-CLI-Creating-Evaluating-AI-Agents-Gemini-ADK/" rel="alternate" type="text/html" title="Google Agents CLI: Building and Evaluating AI Agents with Gemini ADK" /><published>2026-04-26T00:00:00+00:00</published><updated>2026-04-26T00:00:00+00:00</updated><id>https://pyshine.com/Google-Agents-CLI-Creating-Evaluating-AI-Agents-Gemini-ADK</id><content type="html" xml:base="https://pyshine.com/Google-Agents-CLI-Creating-Evaluating-AI-Agents-Gemini-ADK/"><![CDATA[<h1 id="google-agents-cli-building-and-evaluating-ai-agents-with-gemini-adk">Google Agents CLI: Building and Evaluating AI Agents with Gemini ADK</h1>
-
-<p>Google Agents CLI is a command-line tool and skills toolkit that transforms your favorite coding assistant into an expert at building, evaluating, and deploying AI agents on Google Cloud. Built on top of the Agent Development Kit (ADK), it provides a structured workflow from project creation through production deployment, with built-in evaluation and observability at every stage.</p>
-
-<p>Whether you are using Gemini CLI, Claude Code, Codex, or any other coding agent, <code class="language-plaintext highlighter-rouge">agents-cli</code> gives it the skills and commands to build enterprise-grade agents on the Gemini Enterprise Agent Platform – so you do not have to learn every CLI and service yourself.</p>
-
-<p><img src="/assets/img/diagrams/agents-cli/agents-cli-architecture.svg" alt="Architecture Overview" /></p>
-
-<h2 id="understanding-the-architecture">Understanding the Architecture</h2>
-
-<p>The architecture diagram above illustrates how Google Agents CLI fits into the broader Gemini ADK ecosystem. Let us break down each component:</p>
-
-<p><strong>Developer and Coding Agents Layer</strong>
-At the top, developers interact with coding agents like Gemini CLI, Claude Code, Codex, or Antigravity. These coding agents are the interface through which developers issue commands and receive assistance. The <code class="language-plaintext highlighter-rouge">agents-cli setup</code> command installs the skills into these coding agents, making them ADK-aware.</p>
-
-<p><strong>Agents CLI Core</strong>
-The central blue node represents the <code class="language-plaintext highlighter-rouge">agents-cli</code> toolkit itself. It serves as the bridge between coding agents and the ADK framework. When you run <code class="language-plaintext highlighter-rouge">uvx google-agents-cli setup</code>, it installs seven specialized skills into your coding agent, each covering a distinct phase of the agent development lifecycle.</p>
-
-<p><strong>Seven Specialized Skills</strong>
-The orange nodes represent the seven skills that <code class="language-plaintext highlighter-rouge">agents-cli</code> provides. Each skill is a self-contained knowledge module that teaches your coding agent how to handle a specific aspect of ADK development:</p>
-
-<ul>
-  <li><strong>Workflow Skill</strong> – The development lifecycle guide covering build-evaluate-deploy phases</li>
-  <li><strong>Scaffold Skill</strong> – Project creation with <code class="language-plaintext highlighter-rouge">create</code>, <code class="language-plaintext highlighter-rouge">enhance</code>, and <code class="language-plaintext highlighter-rouge">upgrade</code> commands</li>
-  <li><strong>ADK Code Skill</strong> – The Python API reference for agents, tools, callbacks, and state management</li>
-  <li><strong>Eval Skill</strong> – Evaluation methodology with metrics, evalsets, and LLM-as-judge scoring</li>
-  <li><strong>Deploy Skill</strong> – Deployment targets including Agent Runtime, Cloud Run, and GKE</li>
-  <li><strong>Publish Skill</strong> – Gemini Enterprise registration for making agents discoverable</li>
-  <li><strong>Observability Skill</strong> – Cloud Trace, logging, and BigQuery Analytics for production monitoring</li>
-</ul>
-
-<p><strong>ADK Framework and Google Cloud</strong>
-Below the skills layer sits the Agent Development Kit (ADK) Python SDK, which provides the programmatic foundation for building agents. The ADK connects to the Google Cloud Agent Platform, which hosts the deployed agents and provides managed infrastructure for scaling, session management, and monitoring.</p>
-
-<p><strong>Production-Ready Agent Output</strong>
-The red output node represents the final product: a production-ready AI agent that has been scaffolded, built, evaluated, deployed, and observed through the complete <code class="language-plaintext highlighter-rouge">agents-cli</code> workflow.</p>
-
-<h2 id="getting-started">Getting Started</h2>
-
-<h3 id="prerequisites">Prerequisites</h3>
-
-<p>Before installing <code class="language-plaintext highlighter-rouge">agents-cli</code>, ensure you have the following prerequisites:</p>
-
-<ul>
-  <li><strong>Python 3.11+</strong> – The CLI requires a modern Python runtime</li>
-  <li><strong>uv</strong> – The fast Python package installer (<a href="https://docs.astral.sh/uv/getting-started/installation/">install guide</a>)</li>
-  <li><strong>Node.js</strong> – Required for the skills installation process</li>
-</ul>
-
-<h3 id="installation">Installation</h3>
-
-<p>Install <code class="language-plaintext highlighter-rouge">agents-cli</code> and set up skills for your coding agent:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uvx google-agents-cli setup
-</code></pre></div></div>
-
-<p>This single command installs the CLI and deploys all seven skills to your coding agent. If you only want the skills without authentication setup:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uvx google-agents-cli setup <span class="nt">--skip-auth</span>
-</code></pre></div></div>
-
-<p>Alternatively, you can add just the skills to your coding agent without the full CLI:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx skills add google/agents-cli
-</code></pre></div></div>
-
-<h3 id="authentication">Authentication</h3>
-
-<p>Authenticate with Google Cloud or AI Studio:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Interactive browser-based authentication</span>
-agents-cli login <span class="nt">--interactive</span>
-
-<span class="c"># Check authentication status</span>
-agents-cli login <span class="nt">--status</span>
-</code></pre></div></div>
-
-<p>For local development, you can use an AI Studio API key instead of full Google Cloud authentication. This allows you to run Gemini with ADK locally without a cloud project.</p>
-
-<h2 id="cli-commands">CLI Commands</h2>
-
-<p>The <code class="language-plaintext highlighter-rouge">agents-cli</code> provides a comprehensive set of commands covering the entire agent lifecycle:</p>
-
-<h3 id="setup-and-scaffolding">Setup and Scaffolding</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Command</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli setup</code></td>
-      <td>Install CLI + skills to coding agents</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli scaffold &lt;name&gt;</code></td>
-      <td>Create a new agent project</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli scaffold enhance</code></td>
-      <td>Add deployment, CI/CD, or RAG to an existing project</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli scaffold upgrade</code></td>
-      <td>Upgrade project to a newer agents-cli version</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="development">Development</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Command</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli run "prompt"</code></td>
-      <td>Run agent with a single prompt (quick smoke test)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli playground</code></td>
-      <td>Open interactive web-based playground</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli install</code></td>
-      <td>Install project dependencies</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli lint</code></td>
-      <td>Run code quality checks (Ruff)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli lint --fix</code></td>
-      <td>Auto-fix linting issues</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="evaluation">Evaluation</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Command</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli eval run</code></td>
-      <td>Run agent evaluations</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli eval run --evalset F</code></td>
-      <td>Run a specific evalset</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli eval run --all</code></td>
-      <td>Run all evalsets</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli eval compare BASE CAND</code></td>
-      <td>Compare two eval result files</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="deployment-and-publishing">Deployment and Publishing</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Command</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli deploy</code></td>
-      <td>Deploy to Google Cloud</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli publish gemini-enterprise</code></td>
-      <td>Register with Gemini Enterprise</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli infra single-project</code></td>
-      <td>Provision single-project infrastructure</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli infra cicd</code></td>
-      <td>Set up CI/CD pipeline</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="data-and-info">Data and Info</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Command</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli infra datastore</code></td>
-      <td>Provision datastore infrastructure for RAG</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli data-ingestion</code></td>
-      <td>Run data ingestion pipeline</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli info</code></td>
-      <td>Show project config and CLI version</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli update</code></td>
-      <td>Reinstall skills to all IDEs</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="the-development-workflow">The Development Workflow</h2>
-
-<p><img src="/assets/img/diagrams/agents-cli/agents-cli-workflow.svg" alt="Agent Development Workflow" /></p>
-
-<h3 id="understanding-the-development-workflow">Understanding the Development Workflow</h3>
-
-<p>The workflow diagram above shows the complete 8-phase development lifecycle that <code class="language-plaintext highlighter-rouge">agents-cli</code> guides you through. Each phase has specific commands and deliverables:</p>
-
-<p><strong>Phase 0: Understand Requirements</strong>
-Before writing any code, the workflow skill enforces a requirements clarification step. You must answer four key questions: What problem will the agent solve? What external APIs or data sources are needed? What safety constraints apply? What is the deployment preference? The output is a <code class="language-plaintext highlighter-rouge">DESIGN_SPEC.md</code> that serves as the source of truth throughout development.</p>
-
-<p><strong>Phase 1: Study Reference Samples</strong>
-Google provides reference agent samples for common patterns: scheduled/ambient agents, OAuth-protected agents, RAG agents, deep-search agents, and more. Cloning and studying these samples before scaffolding saves significant development time by reusing proven patterns.</p>
-
-<p><strong>Phase 2: Scaffold the Project</strong>
-The <code class="language-plaintext highlighter-rouge">agents-cli scaffold create</code> command generates a complete project structure with all necessary boilerplate. You choose from three templates: <code class="language-plaintext highlighter-rouge">adk</code> (standard), <code class="language-plaintext highlighter-rouge">adk_a2a</code> (agent-to-agent protocol), or <code class="language-plaintext highlighter-rouge">agentic_rag</code> (RAG with data ingestion). The <code class="language-plaintext highlighter-rouge">--prototype</code> flag lets you skip deployment scaffolding for quick iteration.</p>
-
-<p><strong>Phase 3: Build and Implement</strong>
-Write agent code in the scaffolded project directory. Use <code class="language-plaintext highlighter-rouge">agents-cli run "prompt"</code> for quick smoke tests and <code class="language-plaintext highlighter-rouge">agents-cli playground</code> for interactive testing. The ADK Code skill provides the Python API reference for agents, tools, callbacks, and state management.</p>
-
-<p><strong>Phase 4: Evaluate Agent Behavior</strong>
-This is the most critical phase. The eval skill provides a structured methodology for testing agent behavior using evalsets, metrics, and LLM-as-judge scoring. Expect 5-10+ iterations of the eval-fix loop before reaching production quality.</p>
-
-<p><strong>Phase 5: Deploy to Production</strong>
-Once evaluation thresholds are met, deploy with <code class="language-plaintext highlighter-rouge">agents-cli deploy</code>. Choose from three deployment targets: Agent Runtime (managed, minimal ops), Cloud Run (container-based, more control), or GKE (full Kubernetes control).</p>
-
-<p><strong>Phase 6: Publish (Optional)</strong>
-Register your deployed agent with Gemini Enterprise using <code class="language-plaintext highlighter-rouge">agents-cli publish gemini-enterprise</code>. This makes the agent discoverable and accessible through the Gemini Enterprise platform.</p>
-
-<p><strong>Phase 7: Observe in Production</strong>
-Monitor your deployed agent using Cloud Trace, prompt-response logging, and BigQuery Analytics. The observability skill covers all monitoring and debugging needs.</p>
-
-<h2 id="project-scaffolding">Project Scaffolding</h2>
-
-<p>Creating a new agent project is straightforward with the scaffold command:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create a standard ADK agent (prototype mode)</span>
-agents-cli scaffold create my-agent <span class="nt">--agent</span> adk <span class="nt">--prototype</span>
-
-<span class="c"># Create an A2A protocol agent</span>
-agents-cli scaffold create my-a2a-agent <span class="nt">--agent</span> adk_a2a <span class="nt">--deployment-target</span> cloud_run
-
-<span class="c"># Create a RAG agent with vector search</span>
-agents-cli scaffold create my-rag-agent <span class="nt">--agent</span> agentic_rag <span class="nt">--datastore</span> agent_platform_vector_search
-</code></pre></div></div>
-
-<h3 id="template-options">Template Options</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Template</th>
-      <th>Deployment Options</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">adk</code></td>
-      <td>Agent Runtime, Cloud Run, GKE</td>
-      <td>Standard ADK agent (default)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">adk_a2a</code></td>
-      <td>Agent Runtime, Cloud Run, GKE</td>
-      <td>Agent-to-agent coordination (A2A protocol)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agentic_rag</code></td>
-      <td>Agent Runtime, Cloud Run, GKE</td>
-      <td>RAG with data ingestion pipeline</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="the-prototype-first-pattern">The Prototype-First Pattern</h3>
-
-<p>The recommended approach is to start with <code class="language-plaintext highlighter-rouge">--prototype</code> to skip CI/CD and Terraform, focus on getting the agent working, then add deployment later:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Step 1: Create a prototype</span>
-agents-cli scaffold create my-agent <span class="nt">--agent</span> adk <span class="nt">--prototype</span>
-
-<span class="c"># Step 2: Iterate on the agent code...</span>
-
-<span class="c"># Step 3: Add deployment when ready</span>
-agents-cli scaffold enhance <span class="nb">.</span> <span class="nt">--deployment-target</span> agent_runtime
-</code></pre></div></div>
-
-<h3 id="enhancing-existing-projects">Enhancing Existing Projects</h3>
-
-<p>If you already have an ADK agent project, you can add deployment and CI/CD support:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Add deployment to an existing project</span>
-agents-cli scaffold enhance <span class="nb">.</span> <span class="nt">--deployment-target</span> agent_runtime
-
-<span class="c"># Add CI/CD pipeline (GitHub Actions or Cloud Build)</span>
-agents-cli scaffold enhance <span class="nb">.</span> <span class="nt">--cicd-runner</span> github_actions
-</code></pre></div></div>
-
-<h2 id="building-agents-with-adk">Building Agents with ADK</h2>
-
-<p>The Agent Development Kit (ADK) provides the Python SDK for building agents. Here is a quick reference for the most common patterns:</p>
-
-<h3 id="creating-an-agent">Creating an Agent</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">google.adk.agents</span> <span class="kn">import</span> <span class="n">Agent</span>
-
-<span class="n">root_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s">"my_agent"</span><span class="p">,</span>
-    <span class="n">model</span><span class="o">=</span><span class="s">"gemini-flash-latest"</span><span class="p">,</span>
-    <span class="n">instruction</span><span class="o">=</span><span class="s">"You are a helpful assistant that helps users find information."</span><span class="p">,</span>
-    <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">my_tool</span><span class="p">],</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<h3 id="defining-a-tool">Defining a Tool</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">google.adk.tools</span> <span class="kn">import</span> <span class="n">FunctionTool</span>
-
-<span class="k">def</span> <span class="nf">get_weather</span><span class="p">(</span><span class="n">city</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="s">"""Get current weather for a city."""</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s">"city"</span><span class="p">:</span> <span class="n">city</span><span class="p">,</span> <span class="s">"temp"</span><span class="p">:</span> <span class="s">"22C"</span><span class="p">,</span> <span class="s">"condition"</span><span class="p">:</span> <span class="s">"sunny"</span><span class="p">}</span>
-
-<span class="n">weather_tool</span> <span class="o">=</span> <span class="n">FunctionTool</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">get_weather</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h3 id="using-callbacks-for-state-initialization">Using Callbacks for State Initialization</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">google.adk.agents.callback_context</span> <span class="kn">import</span> <span class="n">CallbackContext</span>
-
-<span class="k">async</span> <span class="k">def</span> <span class="nf">initialize_state</span><span class="p">(</span><span class="n">callback_context</span><span class="p">:</span> <span class="n">CallbackContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">callback_context</span><span class="p">.</span><span class="n">state</span>
-    <span class="k">if</span> <span class="s">"history"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="p">:</span>
-        <span class="n">state</span><span class="p">[</span><span class="s">"history"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-<span class="n">root_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s">"my_agent"</span><span class="p">,</span>
-    <span class="n">model</span><span class="o">=</span><span class="s">"gemini-flash-latest"</span><span class="p">,</span>
-    <span class="n">instruction</span><span class="o">=</span><span class="s">"..."</span><span class="p">,</span>
-    <span class="n">before_agent_callback</span><span class="o">=</span><span class="n">initialize_state</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<h2 id="the-skills-system-and-evaluation-pipeline">The Skills System and Evaluation Pipeline</h2>
-
-<p><img src="/assets/img/diagrams/agents-cli/agents-cli-skills-eval.svg" alt="Skills and Evaluation Pipeline" /></p>
-
-<h3 id="understanding-the-skills-and-evaluation-system">Understanding the Skills and Evaluation System</h3>
-
-<p>The diagram above illustrates two key aspects of <code class="language-plaintext highlighter-rouge">agents-cli</code>: the seven specialized skills and the evaluation pipeline that validates agent behavior.</p>
-
-<p><strong>The Seven Agent Skills</strong></p>
-
-<p>The skills system is the core innovation of <code class="language-plaintext highlighter-rouge">agents-cli</code>. Rather than providing a monolithic tool, Google has decomposed the agent development lifecycle into seven focused skills, each loaded on-demand by your coding agent:</p>
-
-<ol>
-  <li>
-    <p><strong>Workflow Skill</strong> – The entry point that provides the full development lifecycle, coding guidelines, and operational rules. It coordinates the other skills and ensures you follow the correct phase sequence.</p>
-  </li>
-  <li>
-    <p><strong>Scaffold Skill</strong> – Handles project creation with <code class="language-plaintext highlighter-rouge">agents-cli scaffold create</code>, enhancement with <code class="language-plaintext highlighter-rouge">scaffold enhance</code>, and upgrades with <code class="language-plaintext highlighter-rouge">scaffold upgrade</code>. It maps user requirements to CLI flags and template options.</p>
-  </li>
-  <li>
-    <p><strong>ADK Code Skill</strong> – The Python API reference for writing agent code. Covers agent creation, tool definitions, callbacks, state management, orchestration patterns, and the experimental ADK 2.0 Workflow API.</p>
-  </li>
-  <li>
-    <p><strong>Eval Skill</strong> – Provides the evaluation methodology including evalset schema, metrics configuration, LLM-as-judge criteria, and the eval-fix loop. This is the most critical skill for ensuring agent quality.</p>
-  </li>
-  <li>
-    <p><strong>Deploy Skill</strong> – Covers deployment targets (Agent Runtime, Cloud Run, GKE), CI/CD pipelines, service accounts, secrets management, and rollback procedures.</p>
-  </li>
-  <li>
-    <p><strong>Publish Skill</strong> – Handles Gemini Enterprise registration with ADK and A2A modes, auto-detection from deployment metadata, and interactive/programmatic usage.</p>
-  </li>
-  <li>
-    <p><strong>Observability Skill</strong> – Cloud Trace integration, prompt-response logging, BigQuery Agent Analytics, and third-party integrations (AgentOps, Phoenix, MLflow, etc.).</p>
-  </li>
-</ol>
-
-<p><strong>The Evaluation Pipeline</strong></p>
-
-<p>The evaluation pipeline is where <code class="language-plaintext highlighter-rouge">agents-cli</code> truly differentiates itself from other agent frameworks. It provides a structured, iterative approach to validating agent behavior:</p>
-
-<ol>
-  <li>
-    <p><strong>EvalSet JSON</strong> – You define test cases with expected inputs, tool trajectories, and expected outputs. Each eval case specifies the conversation, expected tool calls, and expected responses.</p>
-  </li>
-  <li>
-    <p><strong>eval_config.json</strong> – You configure evaluation criteria with thresholds. The supported metrics include tool trajectory scoring, response matching, rubric-based quality assessment, hallucination detection, and safety compliance.</p>
-  </li>
-  <li>
-    <p><strong>agents-cli eval run</strong> – The CLI runs your agent against the evalsets and scores each case against the configured criteria. Results show which cases pass and which fail, with detailed scoring breakdowns.</p>
-  </li>
-  <li><strong>Evaluation Metrics</strong> – Five built-in metrics cover different aspects of agent quality:
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">tool_trajectory_avg_score</code> – Validates that the agent calls the right tools in the right order</li>
-      <li><code class="language-plaintext highlighter-rouge">response_match_score</code> – Checks response content against expected outputs</li>
-      <li><code class="language-plaintext highlighter-rouge">rubric_based_final_response_quality_v1</code> – Uses LLM-as-judge for semantic quality assessment</li>
-      <li><code class="language-plaintext highlighter-rouge">hallucinations_v1</code> – Detects when the agent makes claims not supported by tool output</li>
-      <li><code class="language-plaintext highlighter-rouge">safety_v1</code> – Validates safety compliance</li>
-    </ul>
-  </li>
-  <li>
-    <p><strong>The Eval-Fix Loop</strong> – When scores fall below thresholds, you diagnose the cause, fix the code or prompts, and rerun. This iterative process typically requires 5-10+ iterations. The key insight: never lower thresholds to make tests pass. Fix the agent, not the test.</p>
-  </li>
-  <li><strong>Comparison</strong> – <code class="language-plaintext highlighter-rouge">agents-cli eval compare</code> lets you compare baseline and candidate results side by side, making it easy to see whether changes improved or regressed agent behavior.</li>
-</ol>
-
-<h3 id="evaluation-configuration-example">Evaluation Configuration Example</h3>
-
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"criteria"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="nl">"tool_trajectory_avg_score"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"threshold"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"match_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"IN_ORDER"</span><span class="w">
-    </span><span class="p">},</span><span class="w">
-    </span><span class="nl">"final_response_match_v2"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"threshold"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"judge_model_options"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="nl">"judge_model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gemini-flash-latest"</span><span class="p">,</span><span class="w">
-        </span><span class="nl">"num_samples"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">},</span><span class="w">
-    </span><span class="nl">"rubric_based_final_response_quality_v1"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"threshold"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"rubrics"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="nl">"rubric_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"professionalism"</span><span class="p">,</span><span class="w">
-          </span><span class="nl">"rubric_content"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="nl">"text_property"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The response must be professional and helpful."</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">]</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
-
-<h3 id="evalset-schema-example">EvalSet Schema Example</h3>
-
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"eval_set_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my_eval_set"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"My Eval Set"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Tests core capabilities"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"eval_cases"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-    </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"eval_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"search_test"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"conversation"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="nl">"invocation_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inv_1"</span><span class="p">,</span><span class="w">
-          </span><span class="nl">"user_content"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="nl">"parts"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Find a flight to NYC"</span><span class="p">}]</span><span class="w">
-          </span><span class="p">},</span><span class="w">
-          </span><span class="nl">"final_response"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="nl">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model"</span><span class="p">,</span><span class="w">
-            </span><span class="nl">"parts"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"I found a flight for $500. Want to book?"</span><span class="p">}]</span><span class="w">
-          </span><span class="p">},</span><span class="w">
-          </span><span class="nl">"intermediate_data"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="nl">"tool_uses"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-              </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"search_flights"</span><span class="p">,</span><span class="w"> </span><span class="nl">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"destination"</span><span class="p">:</span><span class="w"> </span><span class="s2">"NYC"</span><span class="p">}}</span><span class="w">
-            </span><span class="p">]</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">],</span><span class="w">
-      </span><span class="nl">"session_input"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="nl">"app_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my_app"</span><span class="p">,</span><span class="w">
-        </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user_1"</span><span class="p">,</span><span class="w">
-        </span><span class="nl">"state"</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">]</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
-
-<h2 id="deployment-targets">Deployment Targets</h2>
-
-<p><code class="language-plaintext highlighter-rouge">agents-cli</code> supports three deployment targets, each with different trade-offs:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Criteria</th>
-      <th>Agent Runtime</th>
-      <th>Cloud Run</th>
-      <th>GKE</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Languages</strong></td>
-      <td>Python</td>
-      <td>Python</td>
-      <td>Python + others</td>
-    </tr>
-    <tr>
-      <td><strong>Scaling</strong></td>
-      <td>Managed auto-scaling</td>
-      <td>Fully configurable</td>
-      <td>Full Kubernetes</td>
-    </tr>
-    <tr>
-      <td><strong>Session state</strong></td>
-      <td>Native persistent sessions</td>
-      <td>In-memory, Cloud SQL, or Agent Platform</td>
-      <td>In-memory, Cloud SQL, or Agent Platform</td>
-    </tr>
-    <tr>
-      <td><strong>Setup complexity</strong></td>
-      <td>Lower (managed)</td>
-      <td>Medium</td>
-      <td>Higher</td>
-    </tr>
-    <tr>
-      <td><strong>Best for</strong></td>
-      <td>Minimal ops, managed infra</td>
-      <td>Custom infra, event-driven</td>
-      <td>Full Kubernetes control</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="deploying-to-agent-runtime">Deploying to Agent Runtime</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Deploy to Agent Runtime (managed)</span>
-agents-cli deploy
-
-<span class="c"># Deploy with secrets</span>
-agents-cli deploy <span class="nt">--secrets</span> <span class="s2">"API_KEY=my-api-key,DB_PASS=db-password:2"</span>
-
-<span class="c"># Check deployment status</span>
-agents-cli deploy <span class="nt">--status</span>
-</code></pre></div></div>
-
-<h3 id="deploying-to-cloud-run">Deploying to Cloud Run</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Add Cloud Run deployment to existing project</span>
-agents-cli scaffold enhance <span class="nb">.</span> <span class="nt">--deployment-target</span> cloud_run
-
-<span class="c"># Deploy</span>
-agents-cli deploy
-</code></pre></div></div>
-
-<h2 id="observability">Observability</h2>
-
-<p>After deployment, <code class="language-plaintext highlighter-rouge">agents-cli</code> provides comprehensive observability through multiple tiers:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Tier</th>
-      <th>What It Does</th>
-      <th>Default State</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Cloud Trace</strong></td>
-      <td>Distributed tracing via OpenTelemetry</td>
-      <td>Always enabled</td>
-    </tr>
-    <tr>
-      <td><strong>Prompt-Response Logging</strong></td>
-      <td>GenAI interactions to GCS and BigQuery</td>
-      <td>Disabled locally, enabled when deployed</td>
-    </tr>
-    <tr>
-      <td><strong>BigQuery Agent Analytics</strong></td>
-      <td>Structured agent events for dashboards</td>
-      <td>Opt-in (<code class="language-plaintext highlighter-rouge">--bq-analytics</code> at scaffold)</td>
-    </tr>
-    <tr>
-      <td><strong>Third-Party Integrations</strong></td>
-      <td>AgentOps, Phoenix, MLflow, etc.</td>
-      <td>Opt-in, per-provider setup</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
-
-<p><strong>Is agents-cli an alternative to Gemini CLI, Claude Code, or Codex?</strong></p>
-
-<p>No. <code class="language-plaintext highlighter-rouge">agents-cli</code> is a tool <em>for</em> coding agents, not a coding agent itself. It provides the CLI commands and skills that make your coding agent better at building, evaluating, and deploying ADK agents on Google Cloud.</p>
-
-<p><strong>How is this different from just using ADK directly?</strong></p>
-
-<p>ADK is an agent framework. <code class="language-plaintext highlighter-rouge">agents-cli</code> gives your coding agent the skills and tools to build, evaluate, and deploy ADK agents end-to-end. It handles project scaffolding, evaluation methodology, deployment configuration, and observability setup – things that ADK alone does not provide.</p>
-
-<p><strong>Do I need Google Cloud?</strong></p>
-
-<p>For local development (<code class="language-plaintext highlighter-rouge">create</code>, <code class="language-plaintext highlighter-rouge">run</code>, <code class="language-plaintext highlighter-rouge">eval</code>), no. You can use an AI Studio API key to run Gemini with ADK locally. For deployment and cloud features, yes.</p>
-
-<p><strong>Can I use this with an existing agent project?</strong></p>
-
-<p>Yes. <code class="language-plaintext highlighter-rouge">agents-cli scaffold enhance</code> adds deployment and CI/CD to existing projects.</p>
-
-<h2 id="troubleshooting">Troubleshooting</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Issue</th>
-      <th>Solution</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">agents-cli</code> command not found</td>
-      <td>Run <code class="language-plaintext highlighter-rouge">uv tool install google-agents-cli</code> or check PATH</td>
-    </tr>
-    <tr>
-      <td>Model returns 404</td>
-      <td>Check <code class="language-plaintext highlighter-rouge">GOOGLE_CLOUD_LOCATION</code> – run the model listing command to verify availability</td>
-    </tr>
-    <tr>
-      <td>Eval scores fluctuate</td>
-      <td>Set <code class="language-plaintext highlighter-rouge">temperature=0</code> or use rubric-based metrics for deterministic evaluation</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">tool_trajectory_avg_score</code> always 0</td>
-      <td>Agent may use <code class="language-plaintext highlighter-rouge">google_search</code> (model-internal tool) – remove trajectory metric or switch to <code class="language-plaintext highlighter-rouge">rubric_based_tool_use_quality_v1</code></td>
-    </tr>
-    <tr>
-      <td>“Session not found” error</td>
-      <td>Ensure <code class="language-plaintext highlighter-rouge">App(name=...)</code> matches the directory name containing your agent</td>
-    </tr>
-    <tr>
-      <td>Agent Runtime deploy timeout</td>
-      <td>Deployments take 5-10 minutes; use <code class="language-plaintext highlighter-rouge">agents-cli deploy --status</code> to check progress</td>
-    </tr>
-    <tr>
-      <td>403 on deploy</td>
-      <td>Check <code class="language-plaintext highlighter-rouge">deployment/terraform/iam.tf</code> for correct service account permissions</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Google Agents CLI represents a significant step forward in AI agent development tooling. By providing a structured workflow with seven specialized skills, it transforms any coding agent into an expert at building, evaluating, and deploying ADK agents on Google Cloud. The eval-fix loop methodology ensures production quality, while the deployment and observability skills handle the operational concerns that often derail agent projects.</p>
-
-<p>The prototype-first pattern, combined with the scaffold-enhance-upgrade workflow, means you can start building quickly and add production infrastructure only when you are ready. Whether you are building a simple assistant or a complex multi-agent system with RAG and A2A protocols, <code class="language-plaintext highlighter-rouge">agents-cli</code> provides the scaffolding, evaluation, and deployment tooling to take your agent from idea to production.</p>
-
-<h2 id="links">Links</h2>
-
-<ul>
-  <li><strong>GitHub Repository</strong>: <a href="https://github.com/google/agents-cli">https://github.com/google/agents-cli</a></li>
-  <li><strong>Documentation</strong>: <a href="https://google.github.io/agents-cli/">https://google.github.io/agents-cli/</a></li>
-  <li><strong>ADK Documentation</strong>: <a href="https://adk.dev">https://adk.dev</a></li>
-  <li><strong>PyPI Package</strong>: <a href="https://pypi.org/project/google-agents-cli/">https://pypi.org/project/google-agents-cli/</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Developer Tools" /><category term="Google Cloud" /><category term="Google Agents CLI" /><category term="Gemini ADK" /><category term="AI agents" /><category term="agent development" /><category term="Google Cloud" /><category term="CLI tools" /><category term="agent evaluation" /><category term="ADK" /><category term="agent deployment" /><category term="coding agents" /><summary type="html"><![CDATA[Learn how to use Google Agents CLI to build, evaluate, and deploy AI agents on the Gemini Enterprise Agent Platform. This guide covers the 7 skills system, CLI commands, evaluation pipeline, and deployment workflow.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI Tools" /><category term="Developer Tools" /><category term="Open Source" /><category term="diagram design" /><category term="Claude Code" /><category term="editorial diagrams" /><category term="SVG diagrams" /><category term="AI coding" /><category term="HTML SVG" /><category term="design systems" /><category term="technical diagrams" /><category term="AI skills" /><category term="open source" /><summary type="html"><![CDATA[Learn how cathrynlavery/diagram-design provides 13 editorial-quality diagram types as self-contained HTML+SVG for Claude Code, with progressive disclosure, brand onboarding, and a taste gate that prevents AI slop.]]></summary></entry></feed>
