@@ -8,13 +8,13 @@ permalink: /InferSim-AI-Powered-Circuit-Simulation/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, EDA, VLSI, Open Source]
 tags: [InferSim, circuit simulation, AI, VLSI, EDA, machine learning, analog simulation, Alibaba, open source, deep learning]
-keywords: "InferSim AI circuit simulation, how to use InferSim, InferSim installation guide, AI-powered VLSI simulation, InferSim vs SPICE comparison, Alibaba InferSim tutorial, machine learning circuit simulation, fast analog simulation tool, InferSim open source setup, neural network EDA tool"
+keywords: "InferSim simulation, how to use InferSim, InferSim installation guide, AI-powered VLSI simulation, Alibaba InferSim tutorial, machine learning inference simulation, fast analog simulation tool, InferSim open source setup, neural network EDA tool"
 author: "PyShine"
 ---
 
 ## Introduction
 
-InferSim is a lightweight, AI-powered circuit simulation framework developed by Alibaba's Alimama AI Infra Team and Future Living Lab. While traditional circuit simulation tools like SPICE rely on numerical solvers for analog circuit analysis, InferSim takes a fundamentally different approach: it simulates the inference performance of Large Language Models (LLMs) on GPU hardware. In the context of AI-powered circuit simulation, InferSim bridges the gap between model architecture design and deployment planning by calculating critical metrics such as TTFT (Time To First Token), TPOT (Time Per Output Token), and TGS (Tokens per GPU per Second) without requiring actual hardware execution.
+InferSim is a lightweight, simulation framework developed by Alibaba's Alimama AI Infra Team and Future Living Lab. While traditional circuit simulation tools like SPICE rely on numerical solvers for analog circuit analysis, InferSim takes a fundamentally different approach: it simulates the inference performance of Large Language Models (LLMs) on GPU hardware. In the context of AI-powered circuit simulation, InferSim bridges the gap between model architecture design and deployment planning by calculating critical metrics such as TTFT (Time To First Token), TPOT (Time Per Output Token), and TGS (Tokens per GPU per Second) without requiring actual hardware execution.
 
 Written in pure Python with zero third-party dependencies, InferSim leverages computation complexity analysis (FLOPs), GPU hardware specifications (FLOPS, memory bandwidth), and benchmark-driven Model FLOPs Utilization (MFU) data to produce highly accurate performance estimates. The simulator has demonstrated remarkable accuracy, achieving within 15% of actual measured throughput on models like DeepSeek-V3, Qwen3-30B-A3B, and Qwen3-8B across H20 and H800 GPU platforms.
 
