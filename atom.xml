@@ -1,4 +1,476 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-04-27T13:10:48+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">InferSim: AI-Powered Circuit Simulation by Alibaba</title><link href="https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation/" rel="alternate" type="text/html" title="InferSim: AI-Powered Circuit Simulation by Alibaba" /><published>2026-04-27T00:00:00+00:00</published><updated>2026-04-27T00:00:00+00:00</updated><id>https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation</id><content type="html" xml:base="https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-04-28T00:20:42+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Vidur: Microsoft’s LLM Inference System Simulator</title><link href="https://pyshine.com/Vidur-Microsoft-LLM-Inference-System-Simulator/" rel="alternate" type="text/html" title="Vidur: Microsoft’s LLM Inference System Simulator" /><published>2026-04-28T00:00:00+00:00</published><updated>2026-04-28T00:00:00+00:00</updated><id>https://pyshine.com/Vidur-Microsoft-LLM-Inference-System-Simulator</id><content type="html" xml:base="https://pyshine.com/Vidur-Microsoft-LLM-Inference-System-Simulator/"><![CDATA[<h1 id="vidur-microsofts-llm-inference-system-simulator">Vidur: Microsoft’s LLM Inference System Simulator</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Vidur is a high-fidelity LLM inference system simulator developed by Microsoft Research that enables engineers and researchers to study LLM deployment performance without requiring access to expensive GPU hardware. Published at MLSys’24 (paper available at <a href="https://arxiv.org/abs/2405.05465">arxiv.org/abs/2405.05465</a>), Vidur addresses a critical gap in the LLM infrastructure space: the ability to predict and optimize inference system behavior before committing resources to physical deployments.</p>
+
+<p>Deploying large language models at scale is expensive and complex. A single misconfigured parameter can lead to wasted GPU hours, poor user experience, or both. Traditional approaches require running actual workloads on real hardware, which is costly and time-consuming. Vidur changes this equation by providing a discrete-event simulation framework that accurately models inference system behavior using only a brief GPU profiling phase. The simulator captures key performance metrics including Time to First Token (TTFT), Time per Output Token (TPOT), request end-to-end latency, and batch size dynamics across different scheduling strategies and hardware configurations.</p>
+
+<p>The project is open source under the MIT license and available on <a href="https://github.com/microsoft/vidur">GitHub</a>. It supports multiple scheduling policies including Sarathi, vLLM, Orca, LightLLM, and FasterTransformer, making it possible to compare strategies head-to-head without physical infrastructure. Whether you are a researcher testing new scheduling algorithms or an operations team planning GPU capacity for the next quarter, Vidur provides the analytical foundation to make informed decisions.</p>
+
+<h2 id="how-vidur-works">How Vidur Works</h2>
+
+<p><img src="/assets/img/diagrams/vidur/vidur-architecture.svg" alt="Vidur Architecture" /></p>
+
+<h3 id="understanding-the-vidur-architecture">Understanding the Vidur Architecture</h3>
+
+<p>Vidur’s architecture is built around a discrete-event simulation engine that models the complete lifecycle of LLM inference requests. At the highest level, the system accepts configuration parameters that define the hardware setup, model choice, scheduling strategy, and workload characteristics, then produces detailed performance metrics and execution traces without ever running the actual model on GPUs.</p>
+
+<p><strong>Simulation Engine Core</strong></p>
+
+<p>The simulation engine uses a priority queue (Python’s <code class="language-plaintext highlighter-rouge">heapq</code>) to manage events in chronological order. Each event represents a discrete state change in the system, such as a request arriving, a batch beginning execution, or a token generation step completing. The engine processes events one at a time, advancing the simulation clock to each event’s timestamp. This approach ensures deterministic, reproducible simulations that can be run repeatedly with different parameters to explore the configuration space efficiently.</p>
+
+<p><strong>Request Generator</strong></p>
+
+<p>The request generator creates synthetic or trace-driven workloads that feed into the simulator. Vidur supports multiple request generation strategies: synthetic workloads with configurable inter-arrival distributions (Poisson, constant), and trace-driven workloads that replay real production request patterns from CSV files. The length generator controls both prompt and decode token counts, supporting uniform, zipf, and trace-based distributions. This flexibility allows engineers to model realistic traffic patterns or stress-test specific scenarios.</p>
+
+<p><strong>Replica Model</strong></p>
+
+<p>Each replica in the simulation represents a GPU server running a copy of the model. Replicas are configured with specific GPU types (A100 80GB, H100, A40), tensor parallelism degrees, and pipeline parallelism stages. The replica model tracks memory allocation for KV cache, manages batch composition, and interfaces with the execution time predictor to estimate how long each operation will take. Multiple replicas can be simulated simultaneously to study distributed serving scenarios.</p>
+
+<p><strong>Scheduler Component</strong></p>
+
+<p>The scheduler is the pluggable component that determines how requests are assigned to batches and when batches are executed. Vidur implements several scheduling strategies as separate classes, each with distinct policies for batch formation, preemption, and chunk size management. The Sarathi scheduler, for example, uses chunked prefill to balance TTFT and throughput, while the vLLM scheduler implements continuous batching with preemption based on KV cache pressure. Switching between schedulers requires only a configuration change, enabling direct comparisons.</p>
+
+<p><strong>Execution Time Predictor</strong></p>
+
+<p>Rather than running actual model computations, Vidur uses ML-based predictors trained on a small set of GPU profiling measurements. The predictor takes operation parameters (batch size, sequence lengths, model dimensions) and returns estimated execution times for prefill and decode steps. This is what makes Vidur GPU-free after the initial profiling phase. Random Forest and Linear Regression models are supported, with the former providing higher accuracy for non-linear execution time patterns.</p>
+
+<p><strong>Metrics Collector</strong></p>
+
+<p>Throughout the simulation, a metrics collector aggregates performance data at both the request level and the system level. Request-level metrics include TTFT, TPOT, and end-to-end latency for each individual request. System-level metrics track throughput, GPU utilization, batch size distributions, and KV cache usage over time. All metrics are exported in structured formats for analysis and visualization.</p>
+
+<h2 id="event-driven-simulation">Event-Driven Simulation</h2>
+
+<p><img src="/assets/img/diagrams/vidur/vidur-simulation-flow.svg" alt="Simulation Flow" /></p>
+
+<h3 id="understanding-the-event-driven-simulation-flow">Understanding the Event-Driven Simulation Flow</h3>
+
+<p>Vidur’s discrete-event simulation engine is the heart of the system, and understanding its flow is essential to interpreting simulation results correctly. The simulation proceeds through a well-defined sequence of events, each triggering state transitions that model how a real inference system would behave under the specified workload and configuration.</p>
+
+<p><strong>Initialization Phase</strong></p>
+
+<p>The simulation begins by parsing the YAML configuration file that specifies all parameters: model name, GPU type, parallelism settings, scheduler type, request generation strategy, and output options. During initialization, the engine creates the replica objects, instantiates the chosen scheduler, loads the execution time predictor model, and prepares the metrics collector. The request generator is seeded with the specified random seed to ensure reproducibility across runs.</p>
+
+<p><strong>Request Arrival Events</strong></p>
+
+<p>Requests enter the system through arrival events generated by the request interval generator. For Poisson-distributed arrivals, the inter-arrival times follow an exponential distribution parameterized by the target queries-per-second (QPS) rate. Each request carries a prompt length and a decode length, either drawn from the configured length distribution or read from a trace file. When a request arrives, it is placed in the waiting queue maintained by the scheduler, and the next arrival event is scheduled based on the interval distribution.</p>
+
+<p><strong>Scheduling Decisions</strong></p>
+
+<p>At each scheduling opportunity, the scheduler examines the waiting queue and the currently running batch to decide which requests to admit, preempt, or keep running. Different schedulers implement different policies. The Sarathi scheduler uses a chunked prefill approach where new requests are added to the batch in small chunks, preventing long prefill sequences from blocking decode steps. The vLLM scheduler implements continuous batching with preemption, evicting requests when KV cache memory is insufficient. The Orca scheduler uses iteration-level scheduling for fine-grained control. Each scheduling decision produces a batch composition that is passed to the execution time predictor.</p>
+
+<p><strong>Execution Time Estimation</strong></p>
+
+<p>Once the scheduler has formed a batch, the execution time predictor estimates how long the current step will take. For prefill steps, the predictor considers the total number of tokens being processed across all requests in the batch. For decode steps, it considers the batch size and the per-request decode progress. The predicted time is used to schedule a completion event at the appropriate future simulation time. This approach decouples the simulation from actual GPU execution, enabling rapid exploration of many configurations.</p>
+
+<p><strong>Batch Completion and Token Generation</strong></p>
+
+<p>When a batch completion event is processed, the engine checks each request in the batch. If a request has completed all its decode tokens, it is marked as finished and its end-to-end metrics are recorded. If a request still has tokens to generate, it remains in the batch for the next decode step. The scheduler may also use this opportunity to add new requests from the waiting queue or preempt existing ones based on its policy. This cycle continues until all requests have been processed.</p>
+
+<p><strong>Termination and Output</strong></p>
+
+<p>The simulation terminates when all requests have been completed and no more events remain in the priority queue. At this point, the metrics collector produces final summaries including average TTFT, average TPOT, throughput in requests per second, and percentile latency distributions. If Chrome trace export is enabled, a JSON file is generated that can be loaded in Chrome’s trace viewer (chrome://tracing) to visualize the simulation timeline, showing exactly when each request was processed and how batches were composed over time.</p>
+
+<h2 id="ml-based-execution-time-prediction">ML-Based Execution Time Prediction</h2>
+
+<p><img src="/assets/img/diagrams/vidur/vidur-execution-prediction.svg" alt="Execution Prediction" /></p>
+
+<h3 id="understanding-ml-based-execution-time-prediction">Understanding ML-Based Execution Time Prediction</h3>
+
+<p>One of Vidur’s most innovative features is its use of machine learning models to predict GPU execution times, eliminating the need for actual GPU access during simulation runs. This section explains how the prediction pipeline works, from the initial profiling phase through model training to inference-time estimation.</p>
+
+<p><strong>GPU Profiling Phase</strong></p>
+
+<p>Before simulations can run, Vidur requires a one-time profiling phase on the target GPU type. During this phase, the system executes a carefully designed set of microbenchmarks that measure execution times for various combinations of batch sizes, sequence lengths, and model operations. The profiling script runs prefill operations with different prompt lengths and decode operations with different batch sizes, collecting timing data for each configuration. This data is stored as CSV files and typically takes only a few hours on a single GPU. Once collected, the profiling data can be reused for all subsequent simulations targeting that GPU type, meaning you never need to run the profiling again for the same hardware.</p>
+
+<p><strong>Feature Engineering</strong></p>
+
+<p>The profiling measurements are transformed into features for the ML models. For prefill operations, the primary features include the total number of tokens in the batch, the number of sequences being prefilled, and the model’s hidden dimension size. For decode operations, features include the batch size (number of active sequences), the current sequence lengths, and the KV cache memory usage. Vidur also computes derived features such as the ratio of prefill to decode tokens and the memory utilization fraction, which help the models capture non-linear execution time patterns.</p>
+
+<p><strong>Random Forest Predictor</strong></p>
+
+<p>Vidur’s default predictor uses a Random Forest regression model trained on the profiling data. Random Forests are well-suited for this task because they can capture the non-linear relationships between input features and execution times without requiring extensive hyperparameter tuning. The ensemble of decision trees learns to partition the feature space into regions where execution times are approximately constant, producing accurate predictions even for configurations not directly measured during profiling. The model is trained separately for prefill and decode operations, as their execution time characteristics differ significantly.</p>
+
+<p><strong>Linear Regression Predictor</strong></p>
+
+<p>For scenarios where interpretability is preferred over maximum accuracy, Vidur also provides a Linear Regression predictor. This model assumes a linear relationship between input features and execution times, which is a reasonable approximation for decode operations with moderate batch sizes. While less accurate than the Random Forest model for extreme configurations, the Linear Regression predictor offers faster inference and clearer feature importance analysis, making it useful for understanding which parameters most impact performance.</p>
+
+<p><strong>Prediction Accuracy and Validation</strong></p>
+
+<p>Vidur’s creators validated the prediction accuracy by comparing simulated metrics against real GPU measurements. The results show that the simulator achieves high fidelity, with TTFT predictions within 5-10% of actual measurements and throughput predictions within 10-15% for most configurations. This level of accuracy is sufficient for capacity planning decisions and scheduling algorithm comparisons, where relative performance differences matter more than absolute numbers. The validation covers multiple GPU types, model sizes, and scheduling strategies, demonstrating the generalizability of the approach.</p>
+
+<p><strong>Extending the Predictor</strong></p>
+
+<p>The prediction framework is designed to be extensible. Researchers can add new GPU types by running the profiling script on the target hardware and adding the resulting data to the training set. Custom prediction models can be implemented by subclassing the base predictor class and implementing the required interface. This extensibility ensures that Vidur can keep pace with the rapidly evolving GPU and model landscape without requiring changes to the simulation engine itself.</p>
+
+<h2 id="capacity-planning-and-optimization">Capacity Planning and Optimization</h2>
+
+<p><img src="/assets/img/diagrams/vidur/vidur-capacity-planning.svg" alt="Capacity Planning" /></p>
+
+<h3 id="understanding-the-config-optimizer-workflow">Understanding the Config Optimizer Workflow</h3>
+
+<p>Capacity planning is one of the most practical applications of Vidur. The Config Optimizer automates the search for the best deployment configuration by running many simulations in parallel and analyzing the results. This section walks through the optimization workflow and explains how to interpret its output.</p>
+
+<p><strong>Defining the Search Space</strong></p>
+
+<p>The optimization process begins by defining a configuration search space. This includes the GPU types to evaluate (A100 80GB, H100, A40), the tensor parallelism degrees (TP1, TP2, TP4, TP8), the number of pipeline stages, and the number of replicas. For each dimension, you specify the values to explore. The optimizer then generates all valid combinations, filtering out configurations that exceed memory limits or are otherwise infeasible. This combinatorial approach ensures that no viable configuration is overlooked.</p>
+
+<p><strong>Parallel Simulation with Ray</strong></p>
+
+<p>Vidur leverages Ray for distributed simulation execution. Each configuration in the search space is submitted as a Ray task, enabling hundreds of simulations to run concurrently across available CPU cores. This parallelism dramatically reduces the total optimization time compared to sequential execution. A search space of 50 configurations that would take hours to simulate sequentially can be completed in minutes with sufficient parallelism. The Ray integration handles task scheduling, fault tolerance, and result collection transparently.</p>
+
+<p><strong>Bottleneck Analysis</strong></p>
+
+<p>After each simulation completes, the optimizer performs a bottleneck analysis to identify the limiting factor in the configuration. Common bottlenecks include KV cache memory exhaustion (leading to preemption and increased TTFT), compute saturation (GPU utilization near 100% with increasing latency), and communication overhead (in tensor parallel configurations where all-reduce operations dominate). The bottleneck analysis provides actionable insights: if memory is the bottleneck, increasing tensor parallelism or using GPUs with more memory may help; if compute is saturated, adding replicas is the appropriate response.</p>
+
+<p><strong>Pareto-Optimal Configurations</strong></p>
+
+<p>The optimizer produces Pareto curves that show the trade-off between cost and performance. Each point on the curve represents a configuration that achieves the best possible performance for a given cost. Configurations below the Pareto front are dominated (another configuration achieves better performance at lower cost) and can be eliminated from consideration. The Pareto analysis helps decision-makers select configurations that align with their budget and latency requirements. For example, a team with strict latency SLOs might choose a configuration on the right side of the curve (higher cost, lower latency), while a cost-sensitive team might choose a configuration on the left side (lower cost, higher latency).</p>
+
+<p><strong>Streamlit Dashboard</strong></p>
+
+<p>Vidur includes a Streamlit-based dashboard for visualizing optimization results. The dashboard presents interactive charts showing throughput vs. latency, cost vs. performance, and batch size distributions across configurations. Users can filter by GPU type, parallelism degree, and QPS to narrow down the results. The dashboard also displays the Pareto front, making it easy to identify the optimal configurations at a glance. This visual approach to capacity planning is far more intuitive than poring over raw CSV data.</p>
+
+<p><strong>Practical Decision Making</strong></p>
+
+<p>The final output of the Config Optimizer is a ranked list of configurations with their predicted performance metrics and estimated costs. Each configuration includes the GPU type, parallelism settings, number of replicas, predicted TTFT, predicted TPOT, predicted throughput, and cost per thousand tokens. Decision-makers can use this information to select the configuration that best meets their SLO requirements within their budget constraints. The entire process, from defining the search space to producing the ranked list, can be completed in under an hour on a standard workstation.</p>
+
+<h2 id="supported-models-and-hardware">Supported Models and Hardware</h2>
+
+<p>Vidur supports a range of popular LLM architectures and GPU configurations. The following tables summarize the current support matrix.</p>
+
+<h3 id="supported-models">Supported Models</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model Family</th>
+      <th>Specific Models</th>
+      <th>Parameters</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Llama 2</td>
+      <td>Llama-2-7B, Llama-2-13B, Llama-2-70B</td>
+      <td>7B - 70B</td>
+      <td>Most extensively tested</td>
+    </tr>
+    <tr>
+      <td>Llama 3</td>
+      <td>Meta-Llama-3-8B, Meta-Llama-3-70B</td>
+      <td>8B - 70B</td>
+      <td>Latest support</td>
+    </tr>
+    <tr>
+      <td>CodeLlama</td>
+      <td>CodeLlama-7B, CodeLlama-13B, CodeLlama-34B, CodeLlama-70B</td>
+      <td>7B - 70B</td>
+      <td>Code generation focused</td>
+    </tr>
+    <tr>
+      <td>InternLM</td>
+      <td>InternLM-7B, InternLM-20B</td>
+      <td>7B - 20B</td>
+      <td>Bilingual (EN/ZH)</td>
+    </tr>
+    <tr>
+      <td>Phi</td>
+      <td>Phi-2</td>
+      <td>2.7B</td>
+      <td>Small model variant</td>
+    </tr>
+    <tr>
+      <td>Qwen</td>
+      <td>Qwen-7B, Qwen-14B, Qwen-72B</td>
+      <td>7B - 72B</td>
+      <td>Multilingual support</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="supported-gpu-configurations">Supported GPU Configurations</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>GPU SKU</th>
+      <th>Memory</th>
+      <th>Tensor Parallelism</th>
+      <th>Pipeline Parallelism</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NVIDIA A100 80GB</td>
+      <td>80 GB HBM2e</td>
+      <td>TP1, TP2, TP4, TP8</td>
+      <td>PP1, PP2, PP4</td>
+      <td>Primary reference GPU</td>
+    </tr>
+    <tr>
+      <td>NVIDIA H100</td>
+      <td>80 GB HBM3</td>
+      <td>TP1, TP2, TP4, TP8</td>
+      <td>PP1, PP2, PP4</td>
+      <td>Latest generation</td>
+    </tr>
+    <tr>
+      <td>NVIDIA A40</td>
+      <td>48 GB GDDR6</td>
+      <td>TP1, TP2, TP4</td>
+      <td>PP1</td>
+      <td>Cost-effective option</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="scheduling-strategies">Scheduling Strategies</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scheduler</th>
+      <th>Key Feature</th>
+      <th>Best For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Sarathi</td>
+      <td>Chunked prefill, balanced TTFT/throughput</td>
+      <td>General-purpose serving</td>
+    </tr>
+    <tr>
+      <td>vLLM</td>
+      <td>Continuous batching, PagedAttention</td>
+      <td>Memory-constrained scenarios</td>
+    </tr>
+    <tr>
+      <td>Orca</td>
+      <td>Iteration-level scheduling</td>
+      <td>Fine-grained control</td>
+    </tr>
+    <tr>
+      <td>LightLLM</td>
+      <td>Token-level scheduling</td>
+      <td>High-throughput scenarios</td>
+    </tr>
+    <tr>
+      <td>FasterTransformer</td>
+      <td>Static batching</td>
+      <td>Simple deployment patterns</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="installation">Installation</h2>
+
+<p>Vidur requires Python 3.10 and can be installed using mamba, conda, or a standard venv. Choose the method that best fits your environment.</p>
+
+<h3 id="using-mamba-recommended">Using Mamba (Recommended)</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/microsoft/vidur.git
+<span class="nb">cd </span>vidur
+
+<span class="c"># Create the conda environment from the provided file</span>
+mamba <span class="nb">env </span>create <span class="nt">-p</span> ./env <span class="nt">-f</span> ./environment.yml
+
+<span class="c"># Activate the environment</span>
+mamba activate ./env
+
+<span class="c"># Install development dependencies (optional)</span>
+mamba <span class="nb">env </span>update <span class="nt">-f</span> environment-dev.yml
+</code></pre></div></div>
+
+<h3 id="using-conda">Using Conda</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/microsoft/vidur.git
+<span class="nb">cd </span>vidur
+
+<span class="c"># Create the conda environment</span>
+conda <span class="nb">env </span>create <span class="nt">-p</span> ./env <span class="nt">-f</span> ./environment.yml
+
+<span class="c"># Activate the environment</span>
+conda activate ./env
+</code></pre></div></div>
+
+<h3 id="using-venv">Using Venv</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/microsoft/vidur.git
+<span class="nb">cd </span>vidur
+
+<span class="c"># Create a Python 3.10 virtual environment</span>
+python3.10 <span class="nt">-m</span> venv .venv
+
+<span class="c"># Activate the environment</span>
+<span class="nb">source</span> .venv/bin/activate
+
+<span class="c"># Install dependencies</span>
+python <span class="nt">-m</span> pip <span class="nb">install</span> <span class="nt">-r</span> requirements.txt
+</code></pre></div></div>
+
+<h2 id="usage">Usage</h2>
+
+<h3 id="running-a-basic-simulation">Running a Basic Simulation</h3>
+
+<p>The simplest way to run a simulation is through the command-line interface. The following example simulates a single A100 GPU serving Llama-3-8B with synthetic workload:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> vidur.main <span class="se">\</span>
+  <span class="nt">--replica_config_device</span> a100 <span class="se">\</span>
+  <span class="nt">--replica_config_model_name</span> meta-llama/Meta-Llama-3-8B <span class="se">\</span>
+  <span class="nt">--cluster_config_num_replicas</span> 1 <span class="se">\</span>
+  <span class="nt">--replica_config_tensor_parallel_size</span> 1 <span class="se">\</span>
+  <span class="nt">--replica_config_num_pipeline_stages</span> 1 <span class="se">\</span>
+  <span class="nt">--request_generator_config_type</span> synthetic <span class="se">\</span>
+  <span class="nt">--synthetic_request_generator_config_num_requests</span> 512 <span class="se">\</span>
+  <span class="nt">--length_generator_config_type</span> trace <span class="se">\</span>
+  <span class="nt">--trace_request_length_generator_config_max_tokens</span> 16384 <span class="se">\</span>
+  <span class="nt">--trace_request_length_generator_config_trace_file</span> ./data/processed_traces/splitwise_conv.csv <span class="se">\</span>
+  <span class="nt">--interval_generator_config_type</span> poisson <span class="se">\</span>
+  <span class="nt">--poisson_request_interval_generator_config_qps</span> 6.45 <span class="se">\</span>
+  <span class="nt">--replica_scheduler_config_type</span> sarathi <span class="se">\</span>
+  <span class="nt">--sarathi_scheduler_config_batch_size_cap</span> 512 <span class="se">\</span>
+  <span class="nt">--sarathi_scheduler_config_chunk_size</span> 512
+</code></pre></div></div>
+
+<h3 id="comparing-scheduling-strategies">Comparing Scheduling Strategies</h3>
+
+<p>To compare different schedulers, run separate simulations with the same workload but different scheduler configurations:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Run with Sarathi scheduler</span>
+python <span class="nt">-m</span> vidur.main <span class="se">\</span>
+  <span class="nt">--replica_config_device</span> a100 <span class="se">\</span>
+  <span class="nt">--replica_config_model_name</span> meta-llama/Meta-Llama-3-8B <span class="se">\</span>
+  <span class="nt">--cluster_config_num_replicas</span> 1 <span class="se">\</span>
+  <span class="nt">--replica_config_tensor_parallel_size</span> 1 <span class="se">\</span>
+  <span class="nt">--request_generator_config_type</span> synthetic <span class="se">\</span>
+  <span class="nt">--synthetic_request_generator_config_num_requests</span> 512 <span class="se">\</span>
+  <span class="nt">--replica_scheduler_config_type</span> sarathi <span class="se">\</span>
+  <span class="nt">--sarathi_scheduler_config_batch_size_cap</span> 512 <span class="se">\</span>
+  <span class="nt">--sarathi_scheduler_config_chunk_size</span> 512 <span class="se">\</span>
+  <span class="nt">--output_dir</span> results/sarathi
+
+<span class="c"># Run with vLLM scheduler</span>
+python <span class="nt">-m</span> vidur.main <span class="se">\</span>
+  <span class="nt">--replica_config_device</span> a100 <span class="se">\</span>
+  <span class="nt">--replica_config_model_name</span> meta-llama/Meta-Llama-3-8B <span class="se">\</span>
+  <span class="nt">--cluster_config_num_replicas</span> 1 <span class="se">\</span>
+  <span class="nt">--replica_config_tensor_parallel_size</span> 1 <span class="se">\</span>
+  <span class="nt">--request_generator_config_type</span> synthetic <span class="se">\</span>
+  <span class="nt">--synthetic_request_generator_config_num_requests</span> 512 <span class="se">\</span>
+  <span class="nt">--replica_scheduler_config_type</span> vllm <span class="se">\</span>
+  <span class="nt">--output_dir</span> results/vllm
+</code></pre></div></div>
+
+<h3 id="running-the-config-optimizer">Running the Config Optimizer</h3>
+
+<p>The Config Optimizer searches across multiple configurations to find the best deployment setup:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> vidur.config_optimizer <span class="se">\</span>
+  <span class="nt">--model_name</span> meta-llama/Meta-Llama-3-8B <span class="se">\</span>
+  <span class="nt">--devices</span> a100 h100 <span class="se">\</span>
+  <span class="nt">--tensor_parallel_sizes</span> 1 2 4 8 <span class="se">\</span>
+  <span class="nt">--num_replicas</span> 1 2 4 <span class="se">\</span>
+  <span class="nt">--target_qps</span> 10 <span class="se">\</span>
+  <span class="nt">--output_dir</span> optimization_results
+</code></pre></div></div>
+
+<h3 id="exporting-chrome-traces">Exporting Chrome Traces</h3>
+
+<p>For visual debugging and timeline analysis, enable Chrome trace export:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> vidur.main <span class="se">\</span>
+  <span class="nt">--replica_config_device</span> a100 <span class="se">\</span>
+  <span class="nt">--replica_config_model_name</span> meta-llama/Meta-Llama-3-8B <span class="se">\</span>
+  <span class="nt">--cluster_config_num_replicas</span> 1 <span class="se">\</span>
+  <span class="nt">--replica_config_tensor_parallel_size</span> 1 <span class="se">\</span>
+  <span class="nt">--request_generator_config_type</span> synthetic <span class="se">\</span>
+  <span class="nt">--synthetic_request_generator_config_num_requests</span> 256 <span class="se">\</span>
+  <span class="nt">--replica_scheduler_config_type</span> sarathi <span class="se">\</span>
+  <span class="nt">--output_dir</span> traces <span class="se">\</span>
+  <span class="nt">--export_chrome_trace</span> True
+</code></pre></div></div>
+
+<p>Open <code class="language-plaintext highlighter-rouge">chrome://tracing</code> in Chrome and load the generated JSON file to visualize the simulation timeline, showing batch composition, request scheduling, and execution timing for each simulation step.</p>
+
+<h2 id="key-features-summary">Key Features Summary</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+      <th>Benefit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Discrete-Event Simulation</td>
+      <td>Priority queue-based event processing</td>
+      <td>Deterministic, reproducible results</td>
+    </tr>
+    <tr>
+      <td>ML-Based Prediction</td>
+      <td>Random Forest and Linear Regression models</td>
+      <td>No GPU required after profiling</td>
+    </tr>
+    <tr>
+      <td>Multiple Schedulers</td>
+      <td>Sarathi, vLLM, Orca, LightLLM, FasterTransformer</td>
+      <td>Compare strategies head-to-head</td>
+    </tr>
+    <tr>
+      <td>Multi-GPU Support</td>
+      <td>Tensor and pipeline parallelism</td>
+      <td>Model distributed serving scenarios</td>
+    </tr>
+    <tr>
+      <td>Config Optimizer</td>
+      <td>Ray-based parallel search with Pareto analysis</td>
+      <td>Find optimal deployment automatically</td>
+    </tr>
+    <tr>
+      <td>Chrome Trace Export</td>
+      <td>Timeline visualization in Chrome</td>
+      <td>Debug scheduling and batch composition</td>
+    </tr>
+    <tr>
+      <td>Streamlit Dashboard</td>
+      <td>Interactive visualization of results</td>
+      <td>Intuitive capacity planning decisions</td>
+    </tr>
+    <tr>
+      <td>Trace-Driven Workloads</td>
+      <td>Replay real production traffic patterns</td>
+      <td>Realistic performance estimation</td>
+    </tr>
+    <tr>
+      <td>Synthetic Workloads</td>
+      <td>Configurable Poisson, uniform, zipf distributions</td>
+      <td>Stress-test specific scenarios</td>
+    </tr>
+    <tr>
+      <td>Extensible Architecture</td>
+      <td>Plugin-based schedulers and predictors</td>
+      <td>Easy to add new strategies and hardware</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Vidur fills a critical gap in the LLM infrastructure toolchain by enabling performance prediction and capacity planning without requiring access to production GPU clusters. Its discrete-event simulation engine, combined with ML-based execution time prediction, delivers accurate estimates of TTFT, TPOT, throughput, and latency distributions across a wide range of models, GPUs, and scheduling strategies.</p>
+
+<p>The Config Optimizer with Pareto analysis transforms what was previously a trial-and-error process into a systematic, data-driven decision. Teams can evaluate dozens of configurations in minutes, identify bottlenecks, and select the deployment setup that best meets their cost and latency requirements. The Chrome trace export and Streamlit dashboard make the results accessible to both engineers and decision-makers.</p>
+
+<p>For researchers, Vidur provides a reproducible testbed for evaluating new scheduling algorithms and optimization techniques like speculative decoding. For operations teams, it offers a reliable way to plan GPU capacity before committing budget. The project is open source under the MIT license and actively maintained by Microsoft Research. Explore the codebase at <a href="https://github.com/microsoft/vidur">github.com/microsoft/vidur</a> and read the full research paper at <a href="https://arxiv.org/abs/2405.05465">arxiv.org/abs/2405.05465</a>.</p>]]></content><author><name>PyShine</name></author><category term="AI Infrastructure" /><category term="Developer Tools" /><category term="Open Source" /><category term="Vidur" /><category term="LLM inference" /><category term="simulation" /><category term="capacity planning" /><category term="GPU optimization" /><category term="Microsoft Research" /><category term="discrete-event simulation" /><category term="scheduling algorithms" /><category term="ML prediction" /><category term="open source" /><summary type="html"><![CDATA[Learn how Vidur simulates LLM inference clusters without GPUs using discrete-event simulation, ML-based prediction, and capacity planning. Study TTFT, TPOT, and throughput for any model and GPU configuration.]]></summary></entry><entry><title type="html">InferSim: AI-Powered Circuit Simulation by Alibaba</title><link href="https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation/" rel="alternate" type="text/html" title="InferSim: AI-Powered Circuit Simulation by Alibaba" /><published>2026-04-27T00:00:00+00:00</published><updated>2026-04-27T00:00:00+00:00</updated><id>https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation</id><content type="html" xml:base="https://pyshine.com/InferSim-AI-Powered-Circuit-Simulation/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p>InferSim is a lightweight, AI-powered circuit simulation framework developed by Alibaba’s Alimama AI Infra Team and Future Living Lab. While traditional circuit simulation tools like SPICE rely on numerical solvers for analog circuit analysis, InferSim takes a fundamentally different approach: it simulates the inference performance of Large Language Models (LLMs) on GPU hardware. In the context of AI-powered circuit simulation, InferSim bridges the gap between model architecture design and deployment planning by calculating critical metrics such as TTFT (Time To First Token), TPOT (Time Per Output Token), and TGS (Tokens per GPU per Second) without requiring actual hardware execution.</p>
 
@@ -3661,580 +4133,4 @@ npx @google/design.md spec <span class="nt">--rules-only</span> <span class="nt"
   <li><strong>GitHub Repository</strong>: <a href="https://github.com/google-labs-code/design.md">https://github.com/google-labs-code/design.md</a></li>
   <li><strong>npm Package</strong>: <a href="https://www.npmjs.com/package/@google/design.md">https://www.npmjs.com/package/@google/design.md</a></li>
   <li><strong>W3C Design Tokens Format</strong>: <a href="https://tr.designtokens.org/format/">https://tr.designtokens.org/format/</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Design" /><category term="Developer Tools" /><category term="Open Source" /><category term="DESIGN.md" /><category term="design tokens" /><category term="AI coding agents" /><category term="visual identity" /><category term="Tailwind CSS" /><category term="DTCG" /><category term="design systems" /><category term="Google Labs" /><category term="front-end development" /><category term="AI-assisted coding" /><summary type="html"><![CDATA[Learn how DESIGN.md by Google Labs gives AI coding agents a persistent, structured understanding of your design system through machine-readable tokens and human-readable prose.]]></summary></entry><entry><title type="html">Diagram Design: 13 Editorial Diagram Types for Claude Code That Your Designer Will Actually Like</title><link href="https://pyshine.com/Diagram-Design-Editorial-Diagram-Types-Claude-Code/" rel="alternate" type="text/html" title="Diagram Design: 13 Editorial Diagram Types for Claude Code That Your Designer Will Actually Like" /><published>2026-04-26T00:00:00+00:00</published><updated>2026-04-26T00:00:00+00:00</updated><id>https://pyshine.com/Diagram-Design-13-Editorial-Diagram-Types-Claude-Code</id><content type="html" xml:base="https://pyshine.com/Diagram-Design-Editorial-Diagram-Types-Claude-Code/"><![CDATA[<h1 id="diagram-design-13-editorial-diagram-types-for-claude-code-that-your-designer-will-actually-like">Diagram Design: 13 Editorial Diagram Types for Claude Code That Your Designer Will Actually Like</h1>
-
-<p>Diagram Design is a Claude Code skill by Cathryn Lavery that produces editorial-quality diagrams as self-contained HTML files with inline SVG and CSS. With 1,929 stars on GitHub and growing, it solves a real problem: AI-generated diagrams typically look generic, with identical rounded boxes, no brand consistency, and visual clutter that screams “AI slop.” Diagram Design takes a fundamentally different approach, providing 13 purpose-built diagram types, a skinnable design system, and a taste gate that enforces restraint before output.</p>
-
-<h2 id="how-it-works-skill-architecture">How It Works: Skill Architecture</h2>
-
-<p>Diagram Design integrates with Claude Code through a progressive disclosure architecture. Rather than loading all 13 diagram type specifications at once, the skill only loads what you need for the current request. This keeps Claude’s working context tight and the skill fast, even with 15 reference files in the repository.</p>
-
-<p><img src="/assets/img/diagrams/diagram-design/diagram-design-architecture.svg" alt="Diagram Design Architecture" /></p>
-
-<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
-
-<p>The architecture diagram above illustrates how Diagram Design integrates with Claude Code’s skill system. Let’s break down each component:</p>
-
-<p><strong>User Prompt Entry Point</strong>
-When you ask Claude Code to create a diagram, the prompt enters the skill system. Claude recognizes the diagram request and activates the <code class="language-plaintext highlighter-rouge">diagram-design</code> skill automatically.</p>
-
-<p><strong>SKILL.md - The Lean Index</strong>
-The top-level <code class="language-plaintext highlighter-rouge">SKILL.md</code> file serves as the entry point. It contains the philosophy (“the highest-quality move is usually deletion”), the selection guide mapping use cases to diagram types, and the pre-output taste gate checklist. This file is always in context when the skill is active.</p>
-
-<p><strong>Progressive Disclosure Engine</strong>
-Rather than loading all 15 reference files, the progressive disclosure system loads only the relevant type reference. If you ask for a flowchart, only <code class="language-plaintext highlighter-rouge">type-flowchart.md</code> gets loaded alongside <code class="language-plaintext highlighter-rouge">SKILL.md</code>. This is what keeps the skill performant regardless of how many types exist.</p>
-
-<p><strong>Type References and Style Guide</strong>
-Each type reference contains layout conventions, anti-patterns specific to that diagram type, and example files. The style guide provides the single source of truth for colors, typography, and semantic tokens - every diagram draws from this file, not from hardcoded hex values.</p>
-
-<p><strong>Onboarding System</strong>
-On first use in a new project, the skill checks whether the style guide has been customized. If not, it pauses and offers three options: run URL-based onboarding to extract your brand colors and fonts, paste tokens manually, or proceed with defaults. This prevents silently shipping default-skinned diagrams into branded projects.</p>
-
-<p><strong>Self-Contained HTML Output</strong>
-The final output is always a single <code class="language-plaintext highlighter-rouge">.html</code> file with embedded CSS and inline SVG. No JavaScript, no external images, no build step. Open it in any browser and it renders correctly.</p>
-
-<h2 id="the-13-diagram-types">The 13 Diagram Types</h2>
-
-<p>Diagram Design provides 13 distinct diagram types, each with its own reference file containing layout conventions, anti-patterns, and three visual variants (minimal light, minimal dark, and full editorial).</p>
-
-<p><img src="/assets/img/diagrams/diagram-design/diagram-design-types-overview.svg" alt="Diagram Types Overview" /></p>
-
-<h3 id="understanding-the-diagram-types">Understanding the Diagram Types</h3>
-
-<p>The overview above organizes the 13 types into four categories plus two optional primitives that can be applied to any type:</p>
-
-<p><strong>System and Data Modeling (5 types)</strong></p>
-
-<p>These types handle the most common technical documentation needs:</p>
-
-<ul>
-  <li>
-    <p><strong>Architecture</strong> - Components and their connections. Best for system overviews, data-flow diagrams, integration maps, and infrastructure topology. Groups components by tier or trust boundary, with 1-2 coral focal nodes highlighting the primary integration point or key decision node.</p>
-  </li>
-  <li>
-    <p><strong>Flowchart</strong> - Decision logic with branches. When you need to show conditional paths, approval workflows, or any process with decision points. The flowchart type enforces clear decision diamonds with labeled yes/no branches.</p>
-  </li>
-  <li>
-    <p><strong>Sequence</strong> - Time-ordered messages between actors. Essential for protocol handshakes, API interactions, and any scenario where the order of communication matters. Supports lifelines, activation bars, and message arrows.</p>
-  </li>
-  <li>
-    <p><strong>State Machine</strong> - States, transitions, and guards. Perfect for modeling object lifecycle, protocol states, or any system with discrete states and transition rules. Each state is a rounded rectangle with transition arrows labeled with guards.</p>
-  </li>
-  <li>
-    <p><strong>ER / Data Model</strong> - Entities, fields, and relationships. For database schemas, API data structures, and domain models. Shows entity boxes with field lists and relationship lines with cardinality markers.</p>
-  </li>
-</ul>
-
-<p><strong>Process and Time (2 types)</strong></p>
-
-<ul>
-  <li>
-    <p><strong>Timeline</strong> - Events positioned in time. When you need to show a sequence of milestones, releases, or historical events on a horizontal or vertical axis.</p>
-  </li>
-  <li>
-    <p><strong>Swimlane</strong> - Cross-functional process with handoffs. For processes that span multiple teams, departments, or systems. Each lane represents a responsible party, and the flow moves horizontally through the lanes.</p>
-  </li>
-</ul>
-
-<p><strong>Positioning and Hierarchy (4 types)</strong></p>
-
-<ul>
-  <li>
-    <p><strong>Quadrant</strong> - Two-axis positioning and prioritization. The classic impact-vs-effort matrix, risk-vs-reward chart, or any scenario where items need positioning on two axes. Also includes a “Consultant 2x2” variant with named scenario cells.</p>
-  </li>
-  <li>
-    <p><strong>Nested</strong> - Hierarchy through containment. When relationships are best expressed by one thing being inside another - organizational structures, system boundaries, or scope relationships.</p>
-  </li>
-  <li>
-    <p><strong>Tree</strong> - Parent-to-children relationships. For org charts, file hierarchies, classification systems, or any data with clear parent-child structure.</p>
-  </li>
-  <li>
-    <p><strong>Layer Stack</strong> - Stacked abstraction levels. Perfect for technology stacks, OSI model, protocol layers, or any system where concepts build on top of each other.</p>
-  </li>
-</ul>
-
-<p><strong>Comparison and Shape (2 types)</strong></p>
-
-<ul>
-  <li>
-    <p><strong>Venn</strong> - Set overlap. When you need to show how groups intersect - feature comparisons, audience overlap, or any scenario with shared and unique elements.</p>
-  </li>
-  <li>
-    <p><strong>Pyramid / Funnel</strong> - Ranked hierarchy or conversion drop-off. For Maslow-style hierarchies, sales funnels, priority pyramids, or any data that narrows from top to bottom.</p>
-  </li>
-</ul>
-
-<p><strong>Optional Primitives (apply to any type)</strong></p>
-
-<ul>
-  <li>
-    <p><strong>Annotation Callout</strong> - Italic Instrument Serif text with dashed Bezier leaders for editorial asides that sit in the margins. Adds a human, editorial voice to any diagram.</p>
-  </li>
-  <li>
-    <p><strong>Sketchy Filter</strong> - SVG turbulence and displacement map for a hand-drawn variant. Good for essays and informal contexts, not for technical documentation.</p>
-  </li>
-</ul>
-
-<h2 id="the-design-system-one-accent-two-families-a-small-spacing-vocabulary">The Design System: One Accent, Two Families, a Small Spacing Vocabulary</h2>
-
-<p>The design system is what separates Diagram Design from generic AI diagram output. It enforces a specific visual grammar that produces consistently professional results.</p>
-
-<p><strong>Semantic Color Roles</strong></p>
-
-<p>Every color in the system is referred to by its semantic role, not its hex value. The default skin uses a cool editorial palette:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Role</th>
-      <th>Purpose</th>
-      <th>Default Light</th>
-      <th>Default Dark</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">paper</code></td>
-      <td>Page background</td>
-      <td><code class="language-plaintext highlighter-rouge">#f5f5f5</code> (white-smoke)</td>
-      <td><code class="language-plaintext highlighter-rouge">#2d3142</code> (jet-black)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">ink</code></td>
-      <td>Primary text and stroke</td>
-      <td><code class="language-plaintext highlighter-rouge">#2d3142</code> (jet-black)</td>
-      <td><code class="language-plaintext highlighter-rouge">#f5f5f5</code> (white-smoke)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">muted</code></td>
-      <td>Secondary text, default arrows</td>
-      <td><code class="language-plaintext highlighter-rouge">#4f5d75</code> (blue-slate)</td>
-      <td><code class="language-plaintext highlighter-rouge">#bfc0c0</code> (silver)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">accent</code></td>
-      <td>1-2 focal elements per diagram</td>
-      <td><code class="language-plaintext highlighter-rouge">#eb6c36</code> (atomic-tangerine)</td>
-      <td><code class="language-plaintext highlighter-rouge">#f08a59</code></td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">link</code></td>
-      <td>HTTP/API calls, external arrows</td>
-      <td><code class="language-plaintext highlighter-rouge">#2e5aa8</code></td>
-      <td><code class="language-plaintext highlighter-rouge">#6a95d8</code></td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The focal rule is critical: <code class="language-plaintext highlighter-rouge">accent</code> goes on 1-2 elements maximum. Everything else uses <code class="language-plaintext highlighter-rouge">ink</code>, <code class="language-plaintext highlighter-rouge">muted</code>, or <code class="language-plaintext highlighter-rouge">soft</code>. If you are tempted to accent 4 things, you have not decided what is focal yet.</p>
-
-<p><strong>Typography Hierarchy</strong></p>
-
-<p>Three font families, each with a specific role:</p>
-
-<ul>
-  <li><strong>Instrument Serif</strong> (1.75rem, 400) - Page titles and italic editorial callouts only</li>
-  <li><strong>Geist Sans</strong> (12px, 600) - Human-readable node names and labels</li>
-  <li><strong>Geist Mono</strong> (9px, 400) - Technical sublabels: ports, URLs, field types, arrow annotations</li>
-</ul>
-
-<p>The rule is explicit: Mono is for technical content. Names go in Geist Sans. Never use JetBrains Mono as a blanket “dev” font.</p>
-
-<p><strong>The 4px Grid</strong></p>
-
-<p>Every coordinate, width, height, gap, and font size must be divisible by 4. This is non-negotiable. It is what prevents the “AI-generated” look that comes from arbitrary pixel values. If a coordinate ends in 1, 2, 3, 5, 6, 7, or 9, it needs to be fixed.</p>
-
-<h2 id="from-prompt-to-rendered-diagram-the-workflow">From Prompt to Rendered Diagram: The Workflow</h2>
-
-<p>The workflow from user request to finished diagram follows a structured process that ensures quality and brand consistency.</p>
-
-<p><img src="/assets/img/diagrams/diagram-design/diagram-design-workflow.svg" alt="Design Workflow" /></p>
-
-<h3 id="understanding-the-workflow">Understanding the Workflow</h3>
-
-<p>The workflow diagram above shows the complete path from user request to rendered diagram:</p>
-
-<p><strong>1. User Request</strong>
-You ask Claude Code to create a diagram in natural language. For example: “Make me a flowchart of the auth process.”</p>
-
-<p><strong>2. First-Run Gate</strong>
-On first use in a new project, the skill checks whether the style guide has been customized. If the accent value is still the default <code class="language-plaintext highlighter-rouge">#b5523a</code> (rust), it pauses and asks whether you want to run onboarding, paste tokens manually, or proceed with defaults. This prevents shipping default-skinned diagrams into branded projects.</p>
-
-<p><strong>3. Onboarding (if first run)</strong>
-If you choose onboarding, the skill fetches your website, extracts the dominant color palette and font stack, maps detected values to semantic roles (paper, ink, muted, accent, link), and proposes a diff for your approval. The whole process takes about 60 seconds.</p>
-
-<p><strong>4. Type Selection</strong>
-The skill uses the selection guide in <code class="language-plaintext highlighter-rouge">SKILL.md</code> to pick the right diagram type based on what you are showing. It then loads only the relevant type reference file, keeping context tight.</p>
-
-<p><strong>5. Taste Gate Checklist</strong>
-Before producing any diagram, the skill runs a 9-criterion checklist covering type fit, the remove test (can any node, arrow, or label be removed?), signal quality (is coral used on at most 2 elements?), and technical requirements (arrows drawn before boxes, arrow labels masked, legend as a horizontal bottom strip).</p>
-
-<p><strong>6. Generation</strong>
-The skill generates a single self-contained HTML file with embedded CSS and inline SVG. No JavaScript, no external images, no build step.</p>
-
-<p><strong>7. Rendered Output</strong>
-The diagram opens directly in any browser. You can screenshot it, embed it in documentation, or iterate on it by asking Claude to modify specific elements.</p>
-
-<h2 id="installation-and-setup">Installation and Setup</h2>
-
-<h3 id="clone-and-symlink-method-recommended">Clone and Symlink Method (Recommended)</h3>
-
-<p>This method preserves your ability to customize the style guide by hand:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
-git clone https://github.com/cathrynlavery/diagram-design.git ~/code/diagram-design
-
-<span class="c"># Symlink the inner skill directory into Claude Code's skills directory</span>
-<span class="nb">ln</span> <span class="nt">-s</span> ~/code/diagram-design/skills/diagram-design ~/.claude/skills/diagram-design
-</code></pre></div></div>
-
-<p>Restart Claude Code after installation. The skill registers as <code class="language-plaintext highlighter-rouge">diagram-design</code> and activates whenever you ask Claude to make a diagram.</p>
-
-<h3 id="plugin-method-quick-try">Plugin Method (Quick Try)</h3>
-
-<p>For a quick trial without local customization:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Claude Code
-/plugin marketplace add cathrynlavery/diagram-design
-/plugin install diagram-design@diagram-design
-
-# Codex
-/plugin marketplace add cathrynlavery/diagram-design
-/plugin install diagram-design@diagram-design
-</code></pre></div></div>
-
-<p>Note that with the plugin method, edits to <code class="language-plaintext highlighter-rouge">references/style-guide.md</code> do not survive plugin updates. Use the clone method if you plan to customize the style guide.</p>
-
-<h2 id="usage-examples">Usage Examples</h2>
-
-<p>Once installed, simply ask Claude Code to create a diagram:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Architecture diagram
-"Make me an architecture diagram of my app: frontend, backend, database, Redis cache."
-
-# Quadrant prioritization
-"I need a quadrant showing Q2 projects by impact vs effort."
-
-# Sequence diagram
-"Give me a sequence diagram of the OAuth handshake."
-
-# Flowchart
-"Create a flowchart for the user registration process with email verification."
-</code></pre></div></div>
-
-<p>Claude will pick the right type, build the HTML, and save it. You can also start from a template:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Minimal light variant</span>
-<span class="nb">cp </span>assets/template.html my-diagram.html
-
-<span class="c"># Full editorial variant with summary cards</span>
-<span class="nb">cp </span>assets/template-full.html my-diagram.html
-</code></pre></div></div>
-
-<h2 id="brand-onboarding-make-it-yours-in-60-seconds">Brand Onboarding: Make It Yours in 60 Seconds</h2>
-
-<p>The onboarding flow is what makes Diagram Design genuinely useful for real projects. Instead of manually picking colors, you point the skill at your website:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>You:     "onboard diagram-design to https://yoursite.com"
-Claude:  -&gt; fetches the homepage
-         -&gt; extracts the dominant palette + font stack
-         -&gt; maps detected values to semantic roles
-         -&gt; shows a proposed diff
-         -&gt; writes your tokens to references/style-guide.md
-You:     "yes, apply it"
-</code></pre></div></div>
-
-<p>The skill extracts:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Detected from your site</th>
-      <th>Becomes</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">&lt;body&gt;</code> background</td>
-      <td><code class="language-plaintext highlighter-rouge">paper</code> token</td>
-    </tr>
-    <tr>
-      <td>Primary text color</td>
-      <td><code class="language-plaintext highlighter-rouge">ink</code> token</td>
-    </tr>
-    <tr>
-      <td>Secondary/caption text</td>
-      <td><code class="language-plaintext highlighter-rouge">muted</code> token</td>
-    </tr>
-    <tr>
-      <td>Cards or containers</td>
-      <td><code class="language-plaintext highlighter-rouge">paper-2</code> token</td>
-    </tr>
-    <tr>
-      <td>Most-used brand color (CTA, link, heading)</td>
-      <td><code class="language-plaintext highlighter-rouge">accent</code> token</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">&lt;h1&gt;</code> font family</td>
-      <td><code class="language-plaintext highlighter-rouge">title</code> font</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">&lt;body&gt;</code> font family</td>
-      <td><code class="language-plaintext highlighter-rouge">node-name</code> font</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">&lt;code&gt;</code>/<code class="language-plaintext highlighter-rouge">&lt;pre&gt;</code> font family</td>
-      <td><code class="language-plaintext highlighter-rouge">sublabel</code> font</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Before writing tokens, the skill verifies WCAG AA contrast on <code class="language-plaintext highlighter-rouge">ink</code> over <code class="language-plaintext highlighter-rouge">paper</code>. If your site has a color that fails contrast at diagram sizes (9-12px), it proposes an adjusted value and explains why.</p>
-
-<h2 id="the-taste-gate-preventing-ai-slop">The Taste Gate: Preventing AI Slop</h2>
-
-<p>The pre-output checklist is what makes Diagram Design different from asking Claude to “make a diagram” without guidance. Before producing any output, the skill runs through nine criteria:</p>
-
-<p><strong>Type Fit:</strong></p>
-<ul>
-  <li>Is this the right type for what you are showing?</li>
-  <li>Would a table or paragraph do the same job? If yes, do not draw.</li>
-  <li>Has the matching type reference been loaded?</li>
-</ul>
-
-<p><strong>Remove Test:</strong></p>
-<ul>
-  <li>Can any node be removed? Would a reader still understand?</li>
-  <li>Can any two nodes be merged? Do they always travel together?</li>
-  <li>Can any arrow be removed? Is the relationship obvious from layout?</li>
-  <li>Can any label be removed? Does color or shape already signal it?</li>
-</ul>
-
-<p><strong>Signal Quality:</strong></p>
-<ul>
-  <li>Is coral used on at most 2 elements? If more, which actually deserve focal status?</li>
-  <li>Does the legend cover every type used and nothing extra?</li>
-  <li>Is the diagram within the type’s complexity budget?</li>
-</ul>
-
-<p><strong>Technical:</strong></p>
-<ul>
-  <li>Are arrows drawn before boxes (for correct z-order)?</li>
-  <li>Does every arrow label have an opaque fill behind it?</li>
-  <li>Is the legend a horizontal bottom strip, not floating?</li>
-  <li>Is there no vertical <code class="language-plaintext highlighter-rouge">writing-mode</code> text?</li>
-  <li>Is the viewBox expanded for the legend strip?</li>
-  <li>Are all font sizes, coordinates, widths, heights, and gaps divisible by 4?</li>
-</ul>
-
-<h2 id="complexity-budgets">Complexity Budgets</h2>
-
-<p>Each diagram type has a maximum complexity budget to prevent information overload:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Limit</th>
-      <th>Rule</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Max nodes</td>
-      <td>9</td>
-    </tr>
-    <tr>
-      <td>Max arrows/transitions</td>
-      <td>12</td>
-    </tr>
-    <tr>
-      <td>Max coral elements</td>
-      <td>2</td>
-    </tr>
-    <tr>
-      <td>Max lifelines (sequence)</td>
-      <td>5</td>
-    </tr>
-    <tr>
-      <td>Max lanes (swimlane)</td>
-      <td>5</td>
-    </tr>
-    <tr>
-      <td>Max items (quadrant)</td>
-      <td>12</td>
-    </tr>
-    <tr>
-      <td>Max entities (ER)</td>
-      <td>8</td>
-    </tr>
-    <tr>
-      <td>Max nesting levels (nested)</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>Max tree depth</td>
-      <td>4</td>
-    </tr>
-    <tr>
-      <td>Max layers (layer stack)</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>Max circles (venn)</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>Max layers (pyramid)</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>Max annotation callouts</td>
-      <td>2</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>If you exceed a budget, split into two diagrams: an overview and a detail view.</p>
-
-<h2 id="three-visual-variants">Three Visual Variants</h2>
-
-<p>Every diagram type ships in three variants:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Variant</th>
-      <th>File Pattern</th>
-      <th>When to Use</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Minimal light</strong> (default)</td>
-      <td><code class="language-plaintext highlighter-rouge">template.html</code>, <code class="language-plaintext highlighter-rouge">example-&lt;type&gt;.html</code></td>
-      <td>Screenshot-ready. Diagram + title. Warm paper background.</td>
-    </tr>
-    <tr>
-      <td><strong>Minimal dark</strong></td>
-      <td><code class="language-plaintext highlighter-rouge">template-dark.html</code>, <code class="language-plaintext highlighter-rouge">example-&lt;type&gt;-dark.html</code></td>
-      <td>Dark mode sites, slides, high-contrast posts.</td>
-    </tr>
-    <tr>
-      <td><strong>Full editorial</strong></td>
-      <td><code class="language-plaintext highlighter-rouge">template-full.html</code>, <code class="language-plaintext highlighter-rouge">example-&lt;type&gt;-full.html</code></td>
-      <td>Long-form posts where the diagram is the hero element. Includes summary cards.</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The quadrant type also has a special “Consultant 2x2” variant (<code class="language-plaintext highlighter-rouge">example-quadrant-consultant.html</code>) for BCG/McKinsey-style scenario matrices with named cells and clinical sans-serif styling.</p>
-
-<h2 id="anti-patterns-what-not-to-do">Anti-Patterns: What Not to Do</h2>
-
-<p>The skill explicitly calls out patterns that mark “AI slop” diagrams:</p>
-
-<ul>
-  <li><strong>Dark mode + cyan/purple glow</strong> - Looks “technical” without design decisions</li>
-  <li><strong>JetBrains Mono as blanket “dev” font</strong> - Mono is for technical content only; names go in Geist Sans</li>
-  <li><strong>Identical boxes for every node</strong> - Erases hierarchy</li>
-  <li><strong>Legend floating inside the diagram area</strong> - Collides with nodes</li>
-  <li><strong>Arrow labels with no masking rect</strong> - Text bleeds through the line</li>
-  <li><strong>Vertical <code class="language-plaintext highlighter-rouge">writing-mode</code> text on arrows</strong> - Unreadable</li>
-  <li><strong>3 equal-width summary cards as default</strong> - Generic grid; vary widths</li>
-  <li><strong>Shadow on any element</strong> - Shadows are out; borders are in</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">rounded-2xl</code> on boxes</strong> - Maximum radius is 6-10px or none</li>
-  <li><strong>Coral on every “important” node</strong> - Coral is for 1-2 editorial accents, not a signaling system</li>
-</ul>
-
-<h2 id="when-not-to-use-this-skill">When Not to Use This Skill</h2>
-
-<p>Diagram Design is explicit about when diagrams are the wrong choice:</p>
-
-<ul>
-  <li><strong>Quick unicode diagrams</strong> for tweets or terminal output - use a wiretext-style skill instead</li>
-  <li><strong>Lists of anything</strong> - a table or bullets is better</li>
-  <li><strong>Before/after comparisons</strong> - a table is better</li>
-  <li><strong>One-shape “diagrams”</strong> - a single box with a label is just a sentence</li>
-</ul>
-
-<p>The guiding question: would a reader learn more from this than from a well-written paragraph? If no, do not draw.</p>
-
-<h2 id="progressive-disclosure-architecture">Progressive Disclosure Architecture</h2>
-
-<p>The skill uses a progressive disclosure architecture that keeps Claude’s context window lean:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>You ask for…</th>
-      <th>Claude loads</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>“Make me a flowchart”</td>
-      <td><code class="language-plaintext highlighter-rouge">SKILL.md</code> + <code class="language-plaintext highlighter-rouge">references/type-flowchart.md</code></td>
-    </tr>
-    <tr>
-      <td>“Build an architecture diagram”</td>
-      <td><code class="language-plaintext highlighter-rouge">SKILL.md</code> + <code class="language-plaintext highlighter-rouge">references/type-architecture.md</code></td>
-    </tr>
-    <tr>
-      <td>“Onboard this skill to my site”</td>
-      <td><code class="language-plaintext highlighter-rouge">SKILL.md</code> + <code class="language-plaintext highlighter-rouge">references/onboarding.md</code> + <code class="language-plaintext highlighter-rouge">references/style-guide.md</code></td>
-    </tr>
-    <tr>
-      <td>“Add an editorial callout”</td>
-      <td><code class="language-plaintext highlighter-rouge">SKILL.md</code> + <code class="language-plaintext highlighter-rouge">references/primitive-annotation.md</code></td>
-    </tr>
-    <tr>
-      <td>“Give me a hand-drawn version”</td>
-      <td><code class="language-plaintext highlighter-rouge">SKILL.md</code> + <code class="language-plaintext highlighter-rouge">references/primitive-sketchy.md</code></td>
-    </tr>
-  </tbody>
-</table>
-
-<p>No matter how many types exist, Claude only reads the one you need. Add a new type tomorrow and nothing else changes.</p>
-
-<h2 id="repository-structure">Repository Structure</h2>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>diagram-design/
-  SKILL.md                         - Top-level: philosophy, selection guide, checklist
-  references/                      - Loaded only when a type or primitive is chosen
-    style-guide.md                 - Single source of truth for colors + fonts
-    onboarding.md                  - The URL-to-tokens flow
-    type-architecture.md
-    type-flowchart.md
-    type-sequence.md
-    type-state.md
-    type-er.md
-    type-timeline.md
-    type-swimlane.md
-    type-quadrant.md
-    type-nested.md
-    type-tree.md
-    type-layers.md
-    type-venn.md
-    type-pyramid.md
-    primitive-annotation.md        - Italic-serif editorial callouts
-    primitive-sketchy.md           - Hand-drawn SVG filter variant
-  assets/
-    index.html                     - Live gallery, tabbed
-    template*.html                 - Scaffolds for new diagrams
-    example-&lt;type&gt;.html             - 3 variants x 13 types
-    example-quadrant-consultant.html
-  docs/screenshots/                - README images
-</code></pre></div></div>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Diagram Design stands out in the growing ecosystem of Claude Code skills because it solves a real quality problem with a principled approach. Rather than generating generic diagrams that look like every other AI output, it enforces editorial standards through a taste gate, progressive disclosure, semantic color roles, and a 4px grid system. The brand onboarding flow means you can go from default to your own visual identity in 60 seconds, and the self-contained HTML output means zero dependencies.</p>
-
-<p>If you are tired of AI-generated diagrams that look like they came from a template factory, Diagram Design is worth adding to your Claude Code toolkit. The 13 types cover the vast majority of technical documentation needs, and the anti-pattern list alone will make your diagrams better even if you never install the skill.</p>
-
-<h2 id="links">Links</h2>
-
-<ul>
-  <li><strong>GitHub Repository</strong>: <a href="https://github.com/cathrynlavery/diagram-design">https://github.com/cathrynlavery/diagram-design</a></li>
-  <li><strong>Live Gallery</strong>: Open <code class="language-plaintext highlighter-rouge">skills/diagram-design/assets/index.html</code> in your browser after cloning</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Tools" /><category term="Developer Tools" /><category term="Open Source" /><category term="diagram design" /><category term="Claude Code" /><category term="editorial diagrams" /><category term="SVG diagrams" /><category term="AI coding" /><category term="HTML SVG" /><category term="design systems" /><category term="technical diagrams" /><category term="AI skills" /><category term="open source" /><summary type="html"><![CDATA[Learn how cathrynlavery/diagram-design provides 13 editorial-quality diagram types as self-contained HTML+SVG for Claude Code, with progressive disclosure, brand onboarding, and a taste gate that prevents AI slop.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI Design" /><category term="Developer Tools" /><category term="Open Source" /><category term="DESIGN.md" /><category term="design tokens" /><category term="AI coding agents" /><category term="visual identity" /><category term="Tailwind CSS" /><category term="DTCG" /><category term="design systems" /><category term="Google Labs" /><category term="front-end development" /><category term="AI-assisted coding" /><summary type="html"><![CDATA[Learn how DESIGN.md by Google Labs gives AI coding agents a persistent, structured understanding of your design system through machine-readable tokens and human-readable prose.]]></summary></entry></feed>
