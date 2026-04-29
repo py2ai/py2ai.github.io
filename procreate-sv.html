@@ -654,6 +654,8 @@ body {
 /* Hidden file input */
 #fileInput { display: none; }
 
+/* Hierarchy indentation */
+.hierarchy-indent { margin-left: 16px; border-left: 2px solid var(--sw-border); padding-left: 12px; }
 /* Group header */
 .group-header {
   font-weight: 700;
@@ -1067,19 +1069,32 @@ body {
     var r, g, b;
     var alpha = sw.alpha != null ? sw.alpha : 1;
 
+    // FIX: origin:1 means components store [hue, saturation, brightness] (HSB)
+    //      origin:2 means components store [R, G, B] in 0-1 range
     if (sw.components && Array.isArray(sw.components) && sw.components.length >= 3) {
-      r = Math.round(sw.components[0] * 255);
-      g = Math.round(sw.components[1] * 255);
-      b = Math.round(sw.components[2] * 255);
+      if (sw.origin === 1) {
+        // components are HSB values - convert to RGB
+        var hsbResult = hsbToRgb(sw.components[0], sw.components[1], sw.components[2]);
+        r = hsbResult[0];
+        g = hsbResult[1];
+        b = hsbResult[2];
+      } else {
+        // components are RGB values in 0-1 range
+        r = Math.round(sw.components[0] * 255);
+        g = Math.round(sw.components[1] * 255);
+        b = Math.round(sw.components[2] * 255);
+      }
     } else if (sw.hue != null && sw.saturation != null && sw.brightness != null) {
-      var rgb = hsbToRgb(sw.hue, sw.saturation, sw.brightness);
-      r = rgb[0]; g = rgb[1]; b = rgb[2];
+      var hsbFallback = hsbToRgb(sw.hue, sw.saturation, sw.brightness);
+      r = hsbFallback[0];
+      g = hsbFallback[1];
+      b = hsbFallback[2];
     } else {
       return null;
     }
 
     var hex = rgbToHex(r, g, b);
-    var name = sw.name || 'Color ' + (index + 1);
+    var name = sw.name || ('Color ' + (index + 1));
 
     return {
       name: name,
@@ -1091,26 +1106,35 @@ body {
       brightness: sw.brightness,
       h: sw.hue != null ? Math.round(sw.hue * 360) : null,
       s: sw.saturation != null ? Math.round(sw.saturation * 100) : null,
-      bv: sw.brightness != null ? Math.round(sw.brightness * 100) : null
+      bv: sw.brightness != null ? Math.round(sw.brightness * 100) : null,
     };
   }
 
-  // ── Flatten swatches (handle nested groups) ────
+  // ── Flatten swatches (handle nested groups + preserve null slots) ────
   function flattenSwatches(swatches, prefix) {
     var result = [];
     if (!Array.isArray(swatches)) return result;
 
     for (var i = 0; i < swatches.length; i++) {
       var sw = swatches[i];
-      if (!sw || typeof sw !== 'object') continue;
 
+      // FIX: Preserve null entries as intentional empty slots in the grid
+      if (sw === null || sw === undefined) {
+        result.push({ _type: 'empty' });
+        continue;
+      }
+      if (typeof sw !== 'object') continue;
+
+      // If it has nested swatches, it's a group/folder
       if (sw.swatches && Array.isArray(sw.swatches)) {
         var groupName = sw.name || 'Unnamed Group';
         result.push({ _type: 'group', name: groupName });
         var children = flattenSwatches(sw.swatches, groupName + ' / ');
-        result = result.concat(children);
+        for (var j = 0; j < children.length; j++) {
+          result.push(children[j]);
+        }
       } else {
-        var parsed = parseSwatch(sw, result.length);
+        var parsed = parseSwatch(sw, i);
         if (parsed) {
           parsed._prefix = prefix || '';
           result.push(parsed);
@@ -1145,7 +1169,7 @@ body {
 
       allSwatches = flattenSwatches(rawSwatches);
 
-      var colorOnly = allSwatches.filter(function(s) { return s._type !== 'group'; });
+      var colorOnly = allSwatches.filter(function(s) { return s._type !== 'group' && s._type !== 'empty'; });
 
       fiName.textContent = paletteName;
       fiCount.textContent = colorOnly.length + ' colors';
@@ -1174,41 +1198,47 @@ body {
     }
   }
 
-  // ── Render grid ────────────────────────────────
+  // ── Render grid (card view) ───────────────────
   function renderGrid(swatches) {
     var query = searchInput.value.toLowerCase().trim();
     var filtered = query
       ? swatches.filter(function(s) {
-          if (s._type === 'group') return false;
-          return s.name.toLowerCase().indexOf(query) !== -1 || s.hex.toLowerCase().indexOf(query) !== -1;
+          if (s._type === 'group' || s._type === 'empty') return false;
+          return s.name.toLowerCase().includes(query) || s.hex.toLowerCase().includes(query);
         })
       : swatches;
 
     colorGrid.innerHTML = '';
 
     if (filtered.length === 0) {
-      colorGrid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🔍</span><p>No colors match your search</p></div>';
+      colorGrid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">\uD83D\uDD0D</span><p>No colors match your search</p></div>';
       return;
     }
 
     for (var i = 0; i < filtered.length; i++) {
       var sw = filtered[i];
-
       if (sw._type === 'group') {
         var groupEl = document.createElement('div');
         groupEl.className = 'group-header';
-        groupEl.textContent = '📁 ' + sw.name;
+        groupEl.textContent = '\uD83D\uDCC1 ' + sw.name;
         colorGrid.appendChild(groupEl);
+        continue;
+      }
+      if (sw._type === 'empty') {
+        // Skip empty slots in card view
         continue;
       }
 
       var card = document.createElement('div');
       card.className = 'color-card';
 
+      var textColor = luminance(sw.r, sw.g, sw.b) > 0.5 ? '#1a1a2e' : '#ffffff';
+
       card.innerHTML =
-        '<div class="color-preview" style="background:' + sw.hex + ';"></div>' +
+        '<div class="color-preview" style="background:' + sw.hex + ';">' +
+        '</div>' +
         '<div class="color-info">' +
-          '<div class="color-name">' + escHtml(sw._prefix + sw.name) + '</div>' +
+          '<div class="color-name" style="color:' + textColor + '0.9">' + escHtml(sw._prefix + sw.name) + '</div>' +
           '<div class="color-values">' +
             '<div class="value-row" data-copy="' + sw.hex + '">' +
               '<span class="label">HEX</span>' +
@@ -1219,22 +1249,22 @@ body {
               '<span class="val">' + sw.r + ', ' + sw.g + ', ' + sw.b + '</span>' +
             '</div>' +
             (sw.h != null ?
-            '<div class="value-row" data-copy="hsb(' + sw.h + '°, ' + sw.s + '%, ' + sw.bv + '%)">' +
+            '<div class="value-row" data-copy="hsb(' + sw.h + '\u00B0, ' + sw.s + '%, ' + sw.bv + '%)">' +
               '<span class="label">HSB</span>' +
-              '<span class="val">' + sw.h + '°, ' + sw.s + '%, ' + sw.bv + '%</span>' +
+              '<span class="val">' + sw.h + '\u00B0, ' + sw.s + '%, ' + sw.bv + '%</span>' +
             '</div>' : '') +
           '</div>' +
         '</div>';
 
-      var rows = card.querySelectorAll('.value-row');
-      for (var j = 0; j < rows.length; j++) {
-        (function(row) {
+      // Click-to-copy on value rows
+      (function(cardEl) {
+        cardEl.querySelectorAll('.value-row').forEach(function(row) {
           row.addEventListener('click', function(e) {
             e.stopPropagation();
             copyToClipboard(row.dataset.copy);
           });
-        })(rows[j]);
-      }
+        });
+      })(card);
 
       colorGrid.appendChild(card);
     }
@@ -1372,7 +1402,7 @@ body {
 
   // ── Event: Copy All HEX ────────────────────────
   btnCopyAll.addEventListener('click', function() {
-    var colors = allSwatches.filter(function(s) { return s._type !== 'group'; });
+    var colors = allSwatches.filter(function(s) { return s._type !== 'group' && s._type !== 'empty'; });
     if (colors.length === 0) return;
     var hexes = colors.map(function(c) { return c.hex; }).join('\n');
     copyToClipboard(hexes);
@@ -1381,7 +1411,7 @@ body {
 
   // ── Event: Export CSS ──────────────────────────
   btnExportCSS.addEventListener('click', function() {
-    var colors = allSwatches.filter(function(s) { return s._type !== 'group'; });
+    var colors = allSwatches.filter(function(s) { return s._type !== 'group' && s._type !== 'empty'; });
     if (colors.length === 0) return;
     var safeName = paletteName.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').toLowerCase();
     var css = '/* ' + paletteName + ' */\n:root {\n';
@@ -1394,7 +1424,7 @@ body {
 
   // ── Event: Export JSON ─────────────────────────
   btnExportJSON.addEventListener('click', function() {
-    var colors = allSwatches.filter(function(s) { return s._type !== 'group'; });
+    var colors = allSwatches.filter(function(s) { return s._type !== 'group' && s._type !== 'empty'; });
     if (colors.length === 0) return;
     var exportData = {
       name: paletteName,
@@ -1450,19 +1480,19 @@ body {
   });
 
   // ── Render Procreate 3x10 Grid ──────────────────
+  // FIX: Now preserves null/empty slots to maintain the original palette layout
   function renderProcreateGrid(swatches) {
-    var colors = swatches.filter(function(s) { return s._type !== 'group'; });
     procreateGrid.innerHTML = '';
 
-    if (colors.length === 0) {
-      procreateGrid.innerHTML = '<div class="empty-state"><span class="empty-icon">🎨</span><p>No colors to display in grid</p></div>';
+    if (swatches.length === 0) {
+      procreateGrid.innerHTML = '<div class="empty-state"><span class="empty-icon">\uD83C\uDFA8</span><p>No colors to display in grid</p></div>';
       return;
     }
 
     var COLS = 10;
     var ROWS = 3;
     var PER_PAGE = COLS * ROWS;
-    var totalPages = Math.ceil(colors.length / PER_PAGE);
+    var totalPages = Math.ceil(swatches.length / PER_PAGE);
 
     for (var page = 0; page < totalPages; page++) {
       var pageDiv = document.createElement('div');
@@ -1471,28 +1501,45 @@ body {
       if (totalPages > 1) {
         var label = document.createElement('div');
         label.className = 'procreate-grid-page-label';
-        label.textContent = 'Page ' + (page + 1) + ' of ' + totalPages + '  (' + (page * PER_PAGE + 1) + '\u2013' + Math.min((page + 1) * PER_PAGE, colors.length) + ')';
+        label.textContent = 'Page ' + (page + 1) + ' of ' + totalPages;
         pageDiv.appendChild(label);
       }
 
       var start = page * PER_PAGE;
-      var end = Math.min(start + PER_PAGE, colors.length);
+      var end = Math.min(start + PER_PAGE, swatches.length);
 
       for (var i = start; i < start + PER_PAGE; i++) {
         var swatchDiv = document.createElement('div');
         swatchDiv.className = 'procreate-swatch';
 
         if (i < end) {
-          var c = colors[i];
-          swatchDiv.innerHTML =
-            '<div class="procreate-swatch-color" style="background:' + c.hex + ';" data-hex="' + c.hex + '" title="' + escHtml(c._prefix + c.name) + ' \u2013 ' + c.hex + '"></div>' +
-            '<div class="procreate-swatch-label">' + escHtml(c.name) + '</div>';
+          var sw = swatches[i];
 
-          (function(hex) {
-            swatchDiv.querySelector('.procreate-swatch-color').addEventListener('click', function() {
-              copyToClipboard(hex);
-            });
-          })(c.hex);
+          // FIX: Handle empty slots (null entries from original palette)
+          if (sw._type === 'empty') {
+            swatchDiv.classList.add('procreate-swatch-empty');
+            swatchDiv.innerHTML =
+              '<div class="procreate-swatch-color"></div>' +
+              '<div class="procreate-swatch-label">&nbsp;</div>';
+          } else if (sw._type === 'group') {
+            // Treat group markers as empty cells in grid view to preserve layout
+            swatchDiv.classList.add('procreate-swatch-empty');
+            swatchDiv.innerHTML =
+              '<div class="procreate-swatch-color"></div>' +
+              '<div class="procreate-swatch-label">&nbsp;</div>';
+          } else {
+            var textColor = luminance(sw.r, sw.g, sw.b) > 0.5 ? '#1a1a2e' : '#ffffff';
+
+            swatchDiv.innerHTML =
+              '<div class="procreate-swatch-color" style="background:' + sw.hex + ';" data-hex="' + sw.hex + '" title="' + escHtml(sw._prefix + sw.name) + ' \u2013 ' + sw.hex + '"></div>' +
+              '<div class="procreate-swatch-label">' + escHtml(sw.name) + '</div>';
+
+            (function(hex) {
+              swatchDiv.querySelector('.procreate-swatch-color').addEventListener('click', function() {
+                copyToClipboard(hex);
+              });
+            })(sw.hex);
+          }
         } else {
           swatchDiv.classList.add('procreate-swatch-empty');
           swatchDiv.innerHTML =
@@ -1510,8 +1557,11 @@ body {
   // ── Download Grid as PNG ────────────────────────
   function downloadGridAsPNG() {
     try {
-      var colors = allSwatches.filter(function(s) { return s._type !== 'group'; });
-      if (colors.length === 0) {
+      // Use the same data source as renderProcreateGrid — allSwatches with empty/group placeholders
+      var swatches = allSwatches;
+      // Count actual colors for display purposes
+      var colorCount = swatches.filter(function(s) { return s._type !== 'group' && s._type !== 'empty'; }).length;
+      if (colorCount === 0) {
         showError('No colors to export.');
         return;
       }
@@ -1519,7 +1569,7 @@ body {
       var COLS = 10;
       var ROWS = 3;
       var PER_PAGE = COLS * ROWS;
-      var totalPages = Math.ceil(colors.length / PER_PAGE);
+      var totalPages = Math.ceil(swatches.length / PER_PAGE);
 
       var SWATCH_SIZE = 120;
       var GAP = 4;
@@ -1540,11 +1590,15 @@ body {
       canvas.width = CANVAS_WIDTH;
       canvas.height = TOTAL_HEIGHT;
       var ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Could not create canvas 2D context');
+      if (!ctx) {
+        throw new Error('Could not create canvas 2D context');
+      }
 
+      // Background
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Helper: draw a rounded-rectangle path
       function roundedRect(x, y, w, h, r) {
         ctx.beginPath();
         ctx.moveTo(x + r, y);
@@ -1559,25 +1613,39 @@ body {
         ctx.closePath();
       }
 
+      // Helper: draw an empty placeholder cell (dashed border, subtle fill)
+      function drawEmptyCell(x, y) {
+        var emptyFill = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        var emptyStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+
+        ctx.fillStyle = emptyFill;
+        roundedRect(x, y, SWATCH_SIZE, SWATCH_SIZE, radius);
+        ctx.fill();
+
+        ctx.strokeStyle = emptyStroke;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        roundedRect(x, y, SWATCH_SIZE, SWATCH_SIZE, radius);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      var radius = 6;
+
       for (var page = 0; page < totalPages; page++) {
         var pageY = page * (PAGE_HEIGHT + 20);
 
-        // ── Header: palette name title (left) + branding URL (right) ──
+        // -- Header: palette name title (left) + branding URL (right) --
         ctx.fillStyle = textColor;
         ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-
-        var startIdx = page * PER_PAGE;
-        var endIdx = Math.min(startIdx + PER_PAGE, colors.length);
-        var rangeText = (startIdx + 1) + '\u2013' + endIdx + ' of ' + colors.length + ' colors';
-
         var headerText = totalPages > 1
-          ? paletteName + ' (Page ' + (page + 1) + ' of ' + totalPages + ')  \u2014  ' + rangeText
-          : paletteName + '  \u2014  ' + rangeText;
+          ? paletteName + ' (Page ' + (page + 1) + ' of ' + totalPages + ')'
+          : paletteName;
         ctx.fillText(headerText, PADDING_X, pageY + HEADER_HEIGHT / 2);
 
-        // Branding URL — top-right corner, theme-aware contrast
+        // Branding URL
         var urlColor = isDark ? '#eeeeee' : '#111111';
         ctx.fillStyle = urlColor;
         ctx.font = '20px "Segoe UI", system-ui, sans-serif';
@@ -1585,41 +1653,47 @@ body {
         ctx.textBaseline = 'middle';
         ctx.fillText('https://pyshine.com/procreate-sv', CANVAS_WIDTH - PADDING_X, pageY + HEADER_HEIGHT / 2);
 
-        var radius = 6;
+        // Subtitle: color count
+        var startIdx = page * PER_PAGE;
+        var endIdx = Math.min(startIdx + PER_PAGE, swatches.length);
+        ctx.fillStyle = textColor2;
+        ctx.font = '12px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(colorCount + ' colors', PADDING_X, pageY + HEADER_HEIGHT / 2 + 18);
+
+        // -- Swatches (same iteration as renderProcreateGrid) --
         for (var i = 0; i < PER_PAGE; i++) {
           var col = i % COLS;
           var row = Math.floor(i / COLS);
           var x = PADDING_X + col * (SWATCH_SIZE + GAP);
           var y = pageY + HEADER_HEIGHT + row * ROW_HEIGHT;
-          var colorIdx = startIdx + i;
 
-          if (colorIdx < endIdx) {
-            var c = colors[colorIdx];
-            if (c && c.hex) {
-              ctx.fillStyle = c.hex;
+          var swatchIdx = startIdx + i;
+          if (swatchIdx < endIdx) {
+            var sw = swatches[swatchIdx];
+
+            if (sw._type === 'empty' || sw._type === 'group') {
+              // Empty/group placeholder — draw dashed-border cell matching grid view
+              drawEmptyCell(x, y);
+            } else if (sw.hex) {
+              // Filled color swatch
+              ctx.fillStyle = sw.hex;
               roundedRect(x, y, SWATCH_SIZE, SWATCH_SIZE, radius);
               ctx.fill();
             }
           } else {
-            var emptyFill = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-            var emptyStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
-            ctx.fillStyle = emptyFill;
-            roundedRect(x, y, SWATCH_SIZE, SWATCH_SIZE, radius);
-            ctx.fill();
-            ctx.strokeStyle = emptyStroke;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([6, 4]);
-            roundedRect(x, y, SWATCH_SIZE, SWATCH_SIZE, radius);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // Beyond swatch data — draw empty cell
+            drawEmptyCell(x, y);
           }
         }
 
       }
 
+      // Build safe filename
       var safeName = paletteName.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').toLowerCase() || 'palette';
       var filename = safeName + '-grid.png';
 
+      // Helper: trigger download from a Blob
       function triggerDownload(blob) {
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
@@ -1631,25 +1705,33 @@ body {
         setTimeout(function() { URL.revokeObjectURL(url); }, 100);
       }
 
+      // Download via toBlob with fallback to toDataURL
       if (typeof canvas.toBlob === 'function') {
         canvas.toBlob(function(blob) {
-          if (!blob) { showError('Failed to generate PNG image.'); return; }
+          if (!blob) {
+            showError('Failed to generate PNG image (blob was null).');
+            return;
+          }
           triggerDownload(blob);
           showCopyToast('PNG exported: ' + filename);
         }, 'image/png');
       } else {
+        // Fallback for browsers without toBlob support
         try {
           var dataUrl = canvas.toDataURL('image/png');
           var byteString = atob(dataUrl.split(',')[1]);
           var mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
           var ab = new ArrayBuffer(byteString.length);
           var ia = new Uint8Array(ab);
-          for (var j = 0; j < byteString.length; j++) ia[j] = byteString.charCodeAt(j);
+          for (var j = 0; j < byteString.length; j++) {
+            ia[j] = byteString.charCodeAt(j);
+          }
           var fallbackBlob = new Blob([ab], { type: mimeString });
           triggerDownload(fallbackBlob);
           showCopyToast('PNG exported: ' + filename);
         } catch (fallbackErr) {
           showError('Failed to generate PNG: ' + fallbackErr.message);
+          console.error(fallbackErr);
         }
       }
     } catch (err) {
