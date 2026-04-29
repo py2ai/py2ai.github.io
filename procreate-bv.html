@@ -1076,6 +1076,11 @@ body {
       </svg>
     </button>
 
+    <!-- Upload Button -->
+    <button class="upload-btn" id="uploadBtn">
+      <span>📁</span> Open File
+    </button>
+
     <!-- Mobile Toggle -->
     <div class="header__toggle" id="mobileToggle">
       <span></span><span></span><span></span>
@@ -1199,6 +1204,7 @@ body {
   // ── DOM refs ──────────────────────────────────
   var dropzone = document.getElementById('dropzone');
   var fileInput = document.getElementById('fileInput');
+  var uploadBtn = document.getElementById('uploadBtn');
   var brushGrid = document.getElementById('brushGrid');
   var infoBar = document.getElementById('infoBar');
   var brushsetName = document.getElementById('brushsetName');
@@ -1861,9 +1867,19 @@ body {
     try {
       var zip = await JSZip.loadAsync(zipData);
 
+      // Collect only the root-level Brush.archive entry.
+      // A .brush file may contain sub-brushes (Sub01/, Sub02/, Reset/)
+      // which should NOT be displayed — only the primary brush matters.
       var archiveEntries = [];
       zip.forEach(function(relativePath, file) {
         if (relativePath.endsWith('Brush.archive') && !file.dir) {
+          // Skip Brush.archive entries inside Sub*/ or Reset/ directories
+          var pathParts = relativePath.split('/');
+          var isSubOrReset = pathParts.some(function(part) {
+            return /^Sub\d*$/i.test(part) || /^Reset$/i.test(part);
+          });
+          if (isSubOrReset) return;
+
           archiveEntries.push({ path: relativePath, file: file });
         }
       });
@@ -1872,6 +1888,7 @@ body {
         throw new Error('Invalid .brush file: no Brush.archive found');
       }
 
+      // Sort by depth — pick the shallowest (root-level) Brush.archive
       archiveEntries.sort(function(a, b) {
         var depthA = (a.path.match(/\//g) || []).length;
         var depthB = (b.path.match(/\//g) || []).length;
@@ -1879,67 +1896,65 @@ body {
         return a.path.localeCompare(b.path);
       });
 
-      var brushes = [];
+      // Only process the primary (root-level) brush
+      var mainEntry = archiveEntries[0];
+      var archiveData = await mainEntry.file.async('uint8array');
+      var info = extractBrushInfoFromArchive(archiveData);
 
-      for (var i = 0; i < archiveEntries.length; i++) {
-        var entry = archiveEntries[i];
-        var archiveData = await entry.file.async('uint8array');
-        var info = extractBrushInfoFromArchive(archiveData);
+      // Determine the base directory for this brush archive
+      var baseDir = mainEntry.path.replace(/Brush\.archive$/, '');
 
-        var baseDir = entry.path.replace(/Brush\.archive$/, '');
+      var brush = {
+        uuid: '',
+        name: info.name || '',
+        author: info.author || '',
+        brushClass: info.brushClass || '',
+        previewDataUrl: null,
+        signatureDataUrl: null,
+        authorPicDataUrl: null,
+      };
 
-        var brush = {
-          uuid: '',
-          name: info.name || '',
-          author: info.author || '',
-          brushClass: info.brushClass || '',
-          previewDataUrl: null,
-          signatureDataUrl: null,
-          authorPicDataUrl: null,
-        };
-
-        var thumbPath = baseDir + 'QuickLook/Thumbnail.png';
-        var thumbFile = zip.file(thumbPath);
-        if (thumbFile) {
-          var thumbData = await thumbFile.async('uint8array');
-          brush.previewDataUrl = 'data:image/png;base64,' + arrayBufferToBase64(thumbData);
-        }
-
-        var sigPath = baseDir + 'Signature/SignaturePicture.png';
-        var sigFile = zip.file(sigPath);
-        if (sigFile) {
-          var sigData = await sigFile.async('uint8array');
-          brush.signatureDataUrl = 'data:image/png;base64,' + arrayBufferToBase64(sigData);
-        }
-
-        var authorPath = baseDir + 'AuthorPicture/AuthorPicture.png';
-        var authorFile = zip.file(authorPath);
-        if (authorFile) {
-          var authorData = await authorFile.async('uint8array');
-          brush.authorPicDataUrl = 'data:image/png;base64,' + arrayBufferToBase64(authorData);
-        }
-
-        if (!brush.name) {
-          if (baseDir === '') {
-            brush.name = fileName.replace(/\.brush$/i, '');
-          } else {
-            brush.name = baseDir.replace(/\/$/, '').split('/').pop() || 'Unnamed Brush';
-          }
-        }
-
-        brushes.push(brush);
+      // Extract QuickLook thumbnail
+      var thumbPath = baseDir + 'QuickLook/Thumbnail.png';
+      var thumbFile = zip.file(thumbPath);
+      if (thumbFile) {
+        var thumbData = await thumbFile.async('uint8array');
+        brush.previewDataUrl = 'data:image/png;base64,' + arrayBufferToBase64(thumbData);
       }
 
-      var displayName = brushes.length === 1
-        ? brushes[0].name
-        : fileName.replace(/\.brush$/i, '');
+      // Extract Signature
+      var sigPath = baseDir + 'Signature/SignaturePicture.png';
+      var sigFile = zip.file(sigPath);
+      if (sigFile) {
+        var sigData = await sigFile.async('uint8array');
+        brush.signatureDataUrl = 'data:image/png;base64,' + arrayBufferToBase64(sigData);
+      }
+
+      // Extract Author picture
+      var authorPath = baseDir + 'AuthorPicture/AuthorPicture.png';
+      var authorFile = zip.file(authorPath);
+      if (authorFile) {
+        var authorData = await authorFile.async('uint8array');
+        brush.authorPicDataUrl = 'data:image/png;base64,' + arrayBufferToBase64(authorData);
+      }
+
+      // Fallback: use filename as name
+      if (!brush.name) {
+        brush.name = fileName.replace(/\.brush$/i, '');
+      }
+
+      var brushes = [brush];
+
+      // For .brush files, show the brush name in the info bar
+      var displayName = brush.name || fileName.replace(/\.brush$/i, '');
 
       allBrushes = brushes;
       renderBrushes(brushes);
-      updateInfoBar(displayName, brushes.length);
+      updateInfoBar(displayName, 1);
       searchInput.disabled = false;
       searchInput.value = '';
 
+      // Compact the dropzone
       dropzone.classList.add('compact');
       var dropzoneTitle = dropzone.querySelector('.dropzone-title');
       if (dropzoneTitle) dropzoneTitle.textContent = 'Drop another .brushset or .brush to replace';
@@ -2073,6 +2088,14 @@ body {
       fileInput.value = '';
     }
   });
+
+  // ── Upload Button ─────────────────────────────
+  if (uploadBtn) {
+    uploadBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      fileInput.click();
+    });
+  }
 
   // ── Global paste support ──────────────────────
   document.addEventListener('paste', function(e) {
