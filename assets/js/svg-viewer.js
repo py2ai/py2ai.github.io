@@ -73,7 +73,7 @@
     content.setAttribute('tabindex', '0');
     content.setAttribute('role', 'img');
 
-    // Inner wrapper (gets the transform)
+    // Inner wrapper (gets the width change for zoom)
     var inner = document.createElement('div');
     inner.className = 'svg-viewer-inner';
 
@@ -96,13 +96,14 @@
     var hasMoved = false;
 
     /**
-     * Updates the zoom level display and applies the transform.
+     * Updates the zoom level display and applies the width change.
      */
     function updateZoom() {
       var percent = Math.round(currentZoom * 100);
       zoomLevel.textContent = percent + '%';
-      inner.style.transform = 'scale(' + currentZoom + ')';
-      inner.style.width = (100 / currentZoom) + '%';
+      // Use actual width change instead of CSS transform for proper scroll overflow
+      inner.style.transform = '';
+      inner.style.width = (currentZoom * 100) + '%';
 
       // Update cursor based on zoom level
       if (currentZoom > 1.0) {
