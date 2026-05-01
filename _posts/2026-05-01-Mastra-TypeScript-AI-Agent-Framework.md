@@ -306,7 +306,7 @@ const suspendResumeStep = createStep({
 
 The Model Context Protocol (MCP) is a standardized way for AI systems to expose tools, resources, and agents. Mastra provides first-class support for both authoring MCP servers and consuming MCP clients.
 
-![Mastra MCP Integration](/assets/img/diagrams/mastra-mcp-integration.svg)
+![Mastra MCP Integration](/assets/img/diagrams/mastra/mastra-mcp-integration.svg)
 
 The MCP integration diagram shows how a Mastra application registers MCP servers that expose tools, agents, workflows, and resources through a standardized protocol. The transport layer supports stdio, SSE, and StreamableHTTP. External MCP clients like Claude Desktop, Cursor IDE, and GitHub Copilot can discover and invoke these capabilities. Elicitation allows MCP servers to request user input during execution, enabling interactive workflows.
 
