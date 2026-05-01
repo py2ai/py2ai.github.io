@@ -213,7 +213,7 @@ const memory = new Memory({
 
 When you need explicit control over execution flow rather than autonomous agent reasoning, Mastra's workflow engine provides a graph-based orchestration system with an intuitive chaining syntax.
 
-![Mastra Workflow Engine](/assets/img/diagrams/mastra-workflow-engine.svg)
+![Mastra Workflow Engine](/assets/img/diagrams/mastra/mastra-workflow-engine.svg)
 
 The workflow engine diagram illustrates the key execution patterns. Input enters a validated schema, flows through sequential steps via `.then()`, branches into parallel execution with `.parallel()`, makes conditional decisions with `.branch()`, suspends for human input via `suspend()`, loops with `.doUntil()`, and can nest sub-workflows. Error handling is built in with `.catch()` and retry mechanisms. Each step has typed input and output schemas enforced by Zod.
 
