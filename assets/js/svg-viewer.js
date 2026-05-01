@@ -219,6 +219,8 @@
         hasMoved = true;
       }
 
+      // Disable smooth scrolling during drag for instant response
+      content.style.scrollBehavior = 'auto';
       content.scrollLeft = scrollStartX - dx;
       content.scrollTop = scrollStartY - dy;
     });
@@ -227,6 +229,8 @@
       if (isDragging) {
         isDragging = false;
         content.classList.remove('dragging');
+        // Restore default scroll behavior after drag ends
+        content.style.scrollBehavior = '';
       }
     });
 
@@ -278,6 +282,8 @@
         e.preventDefault();
         var dx = e.touches[0].clientX - touchStartX;
         var dy = e.touches[0].clientY - touchStartY;
+        // Disable smooth scrolling during drag for instant response
+        content.style.scrollBehavior = 'auto';
         content.scrollLeft = touchScrollStartX - dx;
         content.scrollTop = touchScrollStartY - dy;
       }
@@ -285,6 +291,8 @@
 
     content.addEventListener('touchend', function () {
       isTouchDragging = false;
+      // Restore default scroll behavior after touch drag ends
+      content.style.scrollBehavior = '';
     });
 
     // Double-click/tap to reset
