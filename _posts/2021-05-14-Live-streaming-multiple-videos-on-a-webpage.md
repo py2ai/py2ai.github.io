@@ -32,7 +32,7 @@ Hi friends, hope your are doing great. This tutorial is about streaming multiple
 2) Second video feed, either webcam or mp4 file).
 
 
-[![GIF](/assets/img/posts/multiwebpagevideos.gif)](https://youtu.be/vt6Fu-Rp-h0 "GIF")
+[![GIF](/assets/img/posts/multiwebpagevideos.webp)](https://youtu.be/vt6Fu-Rp-h0 "GIF")
 
 You will need to install pyshine and opencv libraries. Pyshine can be installed as as:
 pip3 install pyshine==0.0.9

@@ -42,11 +42,11 @@ Some friends have asked about the possibility of saving the image as an output i
 
 ## Sample Images 
 
-[![Bird1](/assets/img/posts/pyqt5-opencv-PyOpenCVone.png)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird1")
+[![Bird1](/assets/img/posts/pyqt5-opencv-PyOpenCVone.webp)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird1")
 
-[![Cat](/assets/img/posts/pyqt5-opencv-PyOpenCVtwo.png)](https://www.youtube.com/embed/DLJM7o0B8zk "Cat")
+[![Cat](/assets/img/posts/pyqt5-opencv-PyOpenCVtwo.webp)](https://www.youtube.com/embed/DLJM7o0B8zk "Cat")
 
-[![Bird2](/assets/img/posts/pyqt5-opencv-PyOpenCVthree.png)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
+[![Bird2](/assets/img/posts/pyqt5-opencv-PyOpenCVthree.webp)](https://www.youtube.com/embed/DLJM7o0B8zk "Bird2")
 
 
 ## # process.py
