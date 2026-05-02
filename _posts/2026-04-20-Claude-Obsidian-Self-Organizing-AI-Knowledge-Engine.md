@@ -113,7 +113,7 @@ These hooks ensure that the wiki stays synchronized across sessions. The `Sessio
 
 ## Query, Research, and Cross-Project Referencing
 
-![Query and Research](/assets/img/diagrams/claude-obsidian/claude-query-research.svg)
+![Query and Research](/assets/img/diagrams/claude-obsidian/claude-obsidian-query-research.svg)
 
 The true power of claude-obsidian emerges when you query the wiki. Unlike traditional search that returns a list of matching documents, the query skill synthesizes an answer from the entire knowledge graph, pulling in relevant entities, cross-references, and even flagged contradictions.
 

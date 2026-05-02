@@ -108,7 +108,7 @@ The pipeline supports two output modes:
 
 ## Integration Options
 
-![Integration Diagram](/assets/img/diagrams/privacy-filter-integration.svg)
+![Integration Diagram](/assets/img/diagrams/privacy-filter/privacy-filter-integration.svg)
 
 ### Understanding Integration Options
 

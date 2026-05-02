@@ -126,7 +126,7 @@ Every skill follows a consistent anatomy designed for agent comprehension and ex
 
 ## Agent Integration: How Skills Work with AI Agents
 
-![Agent Integration Flow](/assets/img/diagrams/agent-integration.svg)
+![Agent Integration Flow](/assets/img/diagrams/agent-skills/agent-integration.svg)
 
 Agent Skills integrates with popular AI coding tools through multiple mechanisms:
 

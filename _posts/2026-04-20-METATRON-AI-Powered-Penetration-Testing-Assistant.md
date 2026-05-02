@@ -36,7 +36,7 @@ Finally, `export.py` (422 lines) reads data from the database and generates prof
 
 ## The Agentic Loop
 
-![METATRON Agentic Loop](/assets/img/diagrams/metatron-agentic-loop.svg)
+![METATRON Agentic Loop](/assets/img/diagrams/metatron/metatron-agentic-loop.svg)
 
 The agentic loop is the core innovation that separates METATRON from simple tool-orchestration scripts. Rather than running a fixed sequence of commands and presenting raw output, METATRON gives the LLM the ability to autonomously decide when additional information is needed and which tools to use to obtain it. This creates a feedback-driven intelligence cycle that mirrors how an experienced penetration tester would approach a target.
 
@@ -65,7 +65,7 @@ The context window management strategy is particularly noteworthy. Rather than s
 
 ## Database Schema
 
-![METATRON Database Schema](/assets/img/diagrams/metatron-database-schema.svg)
+![METATRON Database Schema](/assets/img/diagrams/metatron/metatron-database-schema.svg)
 
 METATRON uses MariaDB as its persistence layer, storing all assessment data in five interconnected tables. The schema is designed around a central `history` table that serves as the primary record for each scan, with four satellite tables linked through the `sl_no` foreign key. This design enables efficient queries across all findings for a given assessment while maintaining clean separation between different data categories.
 
@@ -95,7 +95,7 @@ The `db.py` module provides full CRUD operations for all five tables. Records ar
 
 ## Recon Pipeline
 
-![METATRON Recon Pipeline](/assets/img/diagrams/metatron-recon-pipeline.svg)
+![METATRON Recon Pipeline](/assets/img/diagrams/metatron/metatron-recon-pipeline.svg)
 
 The reconnaissance pipeline is the first phase of every METATRON assessment, and it is designed with a security-first philosophy. Before any tool is executed, the target passes through a tool allowlist security gate. This gate ensures that only the six approved recon tools -- nmap, whois, whatweb, curl, dig, and nikto -- can be executed. This is a critical safeguard: because the LLM can request additional tool runs through the `[TOOL:]` tag, the allowlist prevents the model from executing potentially destructive or unauthorized commands. Even if the LLM were to emit `[TOOL: rm -rf /]`, the allowlist would reject it.
 
