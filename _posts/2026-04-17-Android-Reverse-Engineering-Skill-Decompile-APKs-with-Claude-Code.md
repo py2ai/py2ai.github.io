@@ -326,5 +326,5 @@ The skill is open source under the Apache 2.0 license and available on GitHub at
 
 ### Related Posts
 
-- [Claude Code Skills: Building Custom AI Workflows](/Claude-Code-Skills-Building-Custom-AI-Workflows/)
-- [Open Source Security Tools for Mobile Applications](/Open-Source-Security-Tools-for-Mobile-Applications/)
+- [Claude Code Skills: Building Custom AI Workflows](/claude-code-skills-guide/)
+- Open Source Security Tools for Mobile Applications

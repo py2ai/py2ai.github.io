@@ -247,7 +247,7 @@ Contributions are welcome! Check the [project roadmap](https://github.com/users/
 
 ## License
 
-OpenScreen is licensed under the [MIT License](./LICENSE). Use it freely for personal and commercial projects.
+OpenScreen is licensed under the [MIT License](https://github.com/siddharthvaddem/openscreen/blob/main/LICENSE). Use it freely for personal and commercial projects.
 
 ## Conclusion
 

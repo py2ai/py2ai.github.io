@@ -178,7 +178,7 @@ Claudian builds upon the excellent work of several projects. [Obsidian](https://
 
 ## License
 
-Claudian is licensed under the [MIT License](LICENSE), making it free to use, modify, and distribute. This permissive license encourages community contributions and allows for integration into both personal and commercial projects.
+Claudian is licensed under the [MIT License](https://github.com/YishenTu/claudian/blob/main/LICENSE), making it free to use, modify, and distribute. This permissive license encourages community contributions and allows for integration into both personal and commercial projects.
 
 ---
 
