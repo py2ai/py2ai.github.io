@@ -32,7 +32,7 @@ Hello friends, this tutorial is about displaying mp4 video and its audio plot on
 backbone-gui is available here https://pyshine.com/PyQt5-Live-Audio-GUI-with-Start-and-Stop/. Below are two files: main.ui and gui.py. Put both in same directory and 
 run `python3 gui.py`
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
+[![GIF](/assets/img/posts/test.gif)](https://youtu.be/5vbIMWwWU5A "GIF")
 
 ## main.ui
 {% include codeHeader.html %}

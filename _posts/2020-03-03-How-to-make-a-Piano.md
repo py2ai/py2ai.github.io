@@ -30,7 +30,7 @@ title: How to Make a Piano Application in Python with Pygame
 
 Hi there! Today we will make a basic piano application. Below is the complete tutorial video which consists of four parts. 
 
-[![IMAGE ALT TEXT HERE](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/pianotube.png?raw=true)](https://youtu.be/b61PU170_4k "Everything Is AWESOME")
+[![IMAGE ALT TEXT HERE](/assets/img/posts/pianotube.png)](https://youtu.be/b61PU170_4k "Everything Is AWESOME")
 
 Please download sounds from here: https://freesound.org/people/TEDAgame/packs/25405/
 Here is the complete code with description.

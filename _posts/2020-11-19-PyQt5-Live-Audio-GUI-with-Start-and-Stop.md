@@ -35,7 +35,7 @@ Hello friends, this tutorial is an update of the previous tutorial No. 10. Like 
 
 Tested on Mac OS and Windows.
 
-[![GIF](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/test.gif?raw=true)](https://youtu.be/5vbIMWwWU5A "GIF")
+[![GIF](/assets/img/posts/test.gif)](https://youtu.be/5vbIMWwWU5A "GIF")
 
 # main.ui
 {% include codeHeader.html %}

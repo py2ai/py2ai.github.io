@@ -18,7 +18,7 @@ author: "PyShine"
 
 Deep-Live-Cam is a powerful open-source tool that enables real-time face swapping using just a single source image. Whether you want to appear in live streams, video calls, or create entertaining content, Deep-Live-Cam makes it happen with impressive accuracy.
 
-![Deep-Live-Cam Demo](https://github.com/hacksider/Deep-Live-Cam/raw/main/media/demo.gif)
+![Deep-Live-Cam Demo](/assets/img/posts/deep-live-cam-demo.gif)
 
 ## How Face Swap Works
 
@@ -219,7 +219,7 @@ python run.py -s source_image.jpg -t 0 -m inswapper_128.onnx
 
 Perfect for content creators who want to appear as different characters in real-time streams.
 
-![Live Streaming Demo](https://github.com/hacksider/Deep-Live-Cam/raw/main/media/live_show.gif)
+![Live Streaming Demo](/assets/img/posts/deep-live-cam-live-show.gif)
 
 ### Video Calls
 
@@ -229,13 +229,13 @@ Appear as your favorite character during video conferences or online meetings.
 
 Create entertaining videos, memes, and social media content with face swap effects.
 
-![Meme Demo](https://github.com/hacksider/Deep-Live-Cam/raw/main/media/meme.gif)
+![Meme Demo](/assets/img/posts/deep-live-cam-meme.gif)
 
 ### Movie and Show Recreation
 
 Put your face in famous movie scenes or TV show clips.
 
-![Movie Demo](https://github.com/hacksider/Deep-Live-Cam/raw/main/media/movie.gif)
+![Movie Demo](/assets/img/posts/deep-live-cam-movie.gif)
 
 ## Troubleshooting
 

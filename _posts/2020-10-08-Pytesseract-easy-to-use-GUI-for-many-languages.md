@@ -30,7 +30,7 @@ Hello friends, here is the code for the new idea of making pytesseract based GUI
 ARABIC, BENGALI, BULGARIAN, CHINESE(TRADITIONAL), CHINESE(SIMPLIFIED), DANISH, ENGLISH, FINNISH, FRENCH, GERMAN, GREEK, GUJRATI, HINDI, HUNGRARIAN, IGBO, ITALIAN, JAPANESE, KANNADA, KAZAKH, KHMER, KOREAN, LAO, MACEDONIAN, MALAYALAM, MARATHI, NEPALI, RUSSIAN, TURKISH, URDU.
 
 <p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyshineTessGui.gif?raw=true" width="350" title="PyShine OCR GUI">
+  <img src="/assets/img/posts/PyshineTessGui.gif" width="350" title="PyShine OCR GUI">
 </p>
 
 ## What You Will Learn

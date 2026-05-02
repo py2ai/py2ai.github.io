@@ -407,7 +407,7 @@ Example image via these parameters:
 
 `image_to_ascii("cat.png","ascii_hd.png",cols=400,brightness=1.6)`
 
-![ascii_hd_cat]({{"assets/img/posts/ascii_hd_cat.png" | absolute_url}} )
+![ascii_hd_cat]({{"assets/img/posts/ascii_hd_cat.webp" | absolute_url}} )
 
 ```bash
 python main.py

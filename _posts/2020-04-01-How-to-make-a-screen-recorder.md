@@ -35,7 +35,7 @@ Alright friends welcome back, lets make a very flexible screen recorder today. T
 3. [PyShine Recorder setup.z01]
 
 
-[![Everything Is AWESOME](https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/scren.png?raw=true)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
+[![Everything Is AWESOME](/assets/img/posts/scren.png)](https://youtu.be/jLzLNRK72KI "Everything Is AWESOME")
 
 # IMPORTANT
 

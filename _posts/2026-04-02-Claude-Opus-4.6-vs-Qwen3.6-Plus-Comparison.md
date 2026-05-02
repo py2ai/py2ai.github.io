@@ -13,7 +13,7 @@ description: "A detailed comparison between Anthropic's Claude Opus 4.6 and Alib
 
 The AI landscape is evolving at breakneck speed, with new models pushing the boundaries of what's possible every few months. Two of the most anticipated releases in 2026 are Anthropic's **Claude Opus 4.6** and Alibaba's **Qwen3.6 Plus Preview** (free version). But how do these models stack up against each other?
 
-![Qwen 3.6 Banner]({{ site.baseurl }}/assets/img/posts/2026-apr/3.6_plus_banner.png)
+![Qwen 3.6 Banner]({{ site.baseurl }}/assets/img/posts/2026-apr/3.6_plus_banner.webp)
 
 Following the release of the Qwen3.5 series in February, Alibaba has officially launched Qwen3.6-Plus, representing a massive capability upgrade over its predecessor. Most notably, they have drastically enhanced the model's agentic coding capabilities. From frontend web development to complex, repository-level problem solving, Qwen3.6-Plus sets a new state-of-the-art standard. Furthermore, Qwen3.6-Plus perceives the world with greater accuracy and sharper multimodal reasoning.
 

@@ -37,7 +37,7 @@ In a previous blog we made a code for pytesseract based GUI for all languages in
 ARABIC, BENGALI, BULGARIAN, CHINESE(TRADITIONAL), CHINESE(SIMPLIFIED), DANISH, ENGLISH, FINNISH, FRENCH, GERMAN, GREEK, GUJRATI,
 HINDI, HUNGRARIAN, IGBO, ITALIAN, JAPANESE, KANNADA, KAZAKH, KHMER, KOREAN, LAO, MACEDONIAN, MALAYALAM, MARATHI, NEPALI, RUSSIAN,  TURKISH, URDU.
 <p align="center">
-  <img src="https://github.com/py2ai/py2ai.github.io/blob/master/assets/img/posts/PyshineTessGui.gif?raw=true" width="350" title="PyShine OCR GUI">
+  <img src="/assets/img/posts/PyshineTessGui.gif" width="350" title="PyShine OCR GUI">
 </p>
 
 As a recap previously we answered these questions:
