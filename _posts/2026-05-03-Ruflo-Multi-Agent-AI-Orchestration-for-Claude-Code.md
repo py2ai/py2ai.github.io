@@ -43,6 +43,8 @@ Ruflo supports five LLM providers out of the box: Claude, GPT, Gemini, Cohere, a
 **Agent Federation**
 The federation layer enables agents on different machines, teams, or organizations to collaborate securely. Using mTLS and ed25519 challenge-response for identity verification, plus a 14-type PII detection pipeline, federation ensures that sensitive data never leaves your node while still enabling productive cross-boundary collaboration.
 
+> **Key Insight:** Ruflo's HNSW vector memory delivers 150x to 12,500x faster search than brute force, enabling sub-millisecond retrieval across millions of vectors.
+
 ## Key Features
 
 ![Ruflo Features](/assets/img/diagrams/ruflo/ruflo-features.svg)
@@ -108,6 +110,8 @@ SONA captures the patterns of successful task completions and stores them in Rea
 The completed task, with full context and documentation, is delivered back to the user. The feedback loop from Step 7 back to Step 3 ensures that future similar tasks are routed even more efficiently.
 
 ## Installation
+
+> **Takeaway:** With just `ruflo init`, Claude Code gains a complete nervous system for agent coordination -- no manual configuration needed. The 27 hooks automatically route tasks, learn from successful patterns, and coordinate agents in the background.
 
 ### Claude Code Plugin (Recommended)
 
@@ -206,6 +210,8 @@ Ruflo provides 32 native plugins organized by category:
 | Extensibility | wasm, plugin-creator | Sandbox and custom plugin development |
 | Domain-Specific | iot-cognitum, neural-trader, market-data | IoT, trading, and financial data |
 
+> **Amazing:** The intelligent router achieves 89% accuracy in matching tasks to the right agent type, and improves over time through SONA self-learning patterns that capture successful trajectories.
+
 ## Comparison: Claude Code With vs Without Ruflo
 
 | Capability | Claude Code Alone | With Ruflo |
@@ -219,6 +225,8 @@ Ruflo provides 32 native plugins organized by category:
 | LLM Providers | Anthropic only | 5 providers with failover |
 | Security | Standard | CVE-hardened with AIDefence |
 | Cross-Machine | Not supported | Zero-trust federation with mTLS |
+
+> **Important:** Federation uses zero-trust security with mTLS and ed25519 challenge-response, meaning agents on different machines can collaborate without leaking sensitive data. A 14-type PII detection pipeline automatically strips personal information before it leaves your node.
 
 ## Troubleshooting
 
