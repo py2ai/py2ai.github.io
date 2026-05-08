@@ -2,7 +2,7 @@
 layout: post
 title: "Solar Map: Interactive Sunshine Intensity Map and Solar Panel Optimizer"
 description: "Explore the Solar Map web app on PyShine - an interactive tool that visualizes sunshine intensity, tracks sun position in real-time, and optimizes solar panel configurations for maximum energy output using Leaflet maps and SunCalc."
-date: 2026-05-07
+date: 2026-05-08
 header-img: "img/post-bg.jpg"
 permalink: /Solar-Map-Interactive-Solar-System-Explorer/
 featured-img: ai-coding-frameworks/ai-coding-frameworks

@@ -2,7 +2,7 @@
 layout: post
 title: "PageIndex: Vectorless Reasoning-Based RAG That Achieves 98.7% on FinanceBench"
 description: "Learn how PageIndex replaces vector similarity search with LLM reasoning over hierarchical tree indexes for more accurate document retrieval. Covers architecture, self-healing verification, and agentic RAG integration."
-date: 2026-05-07
+date: 2026-05-08
 header-img: "img/post-bg.jpg"
 permalink: /PageIndex-Vectorless-Reasoning-RAG/
 featured-img: ai-coding-frameworks/ai-coding-frameworks

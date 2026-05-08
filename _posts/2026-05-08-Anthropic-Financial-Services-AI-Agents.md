@@ -2,7 +2,7 @@
 layout: post
 title: "Anthropic Financial Services: AI Agents for Investment Banking, Equity Research, and Fund Administration"
 description: "Learn how Anthropic's Financial Services agents bring Claude AI to investment banking, equity research, private equity, and fund administration with 10 named agents, 50+ skills, and 11 MCP data connectors."
-date: 2026-05-07
+date: 2026-05-08
 header-img: "img/post-bg.jpg"
 permalink: /Anthropic-Financial-Services-AI-Agents/
 featured-img: ai-coding-frameworks/ai-coding-frameworks

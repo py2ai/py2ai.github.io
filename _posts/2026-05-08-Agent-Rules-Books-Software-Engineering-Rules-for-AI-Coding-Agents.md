@@ -2,7 +2,7 @@
 layout: post
 title: "Agent Rules Books: Software Engineering Rules Distilled for AI Coding Agents"
 description: "Learn how agent-rules-books distills 14 classic software engineering books into ready-to-use AGENTS.md rules for Claude Code, Codex, and Cursor with a three-tier compression system from full to nano."
-date: 2026-05-07
+date: 2026-05-08
 header-img: "img/post-bg.jpg"
 permalink: /Agent-Rules-Books-Software-Engineering-Rules-AI-Coding-Agents/
 featured-img: ai-coding-frameworks/ai-coding-frameworks

@@ -2,7 +2,7 @@
 layout: post
 title: "Symphony: OpenAI's Coding Agent Orchestrator for Autonomous Work"
 description: "Learn how OpenAI Symphony orchestrates coding agents to manage project work autonomously. Explore its 6-layer architecture, 5-state machine, WORKFLOW.md hot-reload config, and Elixir/OTP reference implementation."
-date: 2026-05-07
+date: 2026-05-08
 header-img: "img/post-bg.jpg"
 permalink: /Symphony-OpenAI-Coding-Agent-Orchestrator/
 featured-img: ai-coding-frameworks/ai-coding-frameworks

@@ -2,7 +2,7 @@
 layout: post
 title: "Gemma Chat: Local AI Coding Agent for Apple Silicon via MLX"
 description: "Discover how Gemma Chat runs a fully local AI coding agent on Apple Silicon using MLX. No API keys, no cloud, no internet required after setup - build apps entirely on your Mac."
-date: 2026-05-07
+date: 2026-05-08
 header-img: "img/post-bg.jpg"
 permalink: /Gemma-Chat-Local-AI-Coding-Agent-Apple-Silicon/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
