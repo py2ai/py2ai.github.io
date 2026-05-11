@@ -1,4 +1,577 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-05-11T13:01:25+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner</title><link href="https://pyshine.com/Pi-Mono-Full-Stack-AI-Agent-Toolkit/" rel="alternate" type="text/html" title="Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner" /><published>2026-05-11T00:00:00+00:00</published><updated>2026-05-11T00:00:00+00:00</updated><id>https://pyshine.com/Pi-Mono-Full-Stack-AI-Agent-Toolkit</id><content type="html" xml:base="https://pyshine.com/Pi-Mono-Full-Stack-AI-Agent-Toolkit/"><![CDATA[<h1 id="pi-mono-the-full-stack-ai-agent-toolkit-from-libgdx-creator-mario-zechner">Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-05-11T14:49:59+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling</title><link href="https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform/" rel="alternate" type="text/html" title="CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling" /><published>2026-05-11T00:00:00+00:00</published><updated>2026-05-11T00:00:00+00:00</updated><id>https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform</id><content type="html" xml:base="https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform/"><![CDATA[<h1 id="cyberverse-open-source-digital-human-agent-platform-with-real-time-video-calling">CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling</h1>
+
+<p>CyberVerse is an open-source digital human agent platform that transforms a single photograph into a living, breathing AI character you can talk to face-to-face in real time. Unlike pre-recorded avatars or turn-based chatbots, CyberVerse delivers live video calling with approximately 1.5-second first-frame latency, natural lip-sync, and subtle idle breathing animations – all driven by state-of-the-art neural avatar models and a pluggable inference architecture. Built with Go, Python, and Vue 3, it gives developers full control over every component: the brain (LLM), the face (avatar model), the voice (TTS), and the ears (ASR).</p>
+
+<h2 id="what-is-cyberverse">What is CyberVerse?</h2>
+
+<p>CyberVerse answers a deceptively simple question: what if you could video-call an AI? Upload one photo, and the platform generates a digital human that speaks, listens, and reacts in real time. The experience feels like a video call – not a chatbot with a static profile picture, not a pre-rendered loop, but a live conversation where the digital human’s mouth moves in sync with its words, its expression shifts naturally, and it even breathes while waiting for you to speak.</p>
+
+<p>The project is licensed under GPL v3.0 and targets developers who want self-hosted, customizable digital humans. It ships with two avatar backends – FlashHead 1.3B (quality-focused) and LiveAct 18B (high-fidelity full-head motion) – and supports multiple LLM, TTS, and ASR providers through a YAML-driven plugin system. A single Doubao Voice API key is enough to get a full conversation running today.</p>
+
+<blockquote>
+  <p><strong>Key Insight:</strong> CyberVerse achieves ~1.5s first-frame latency for real-time video calls using FlashHead 1.3B parameters in Lite mode on a single RTX 4090 at 512x512 resolution and 25+ FPS, or in Pro mode on an RTX 5090 at the same resolution.</p>
+</blockquote>
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<p><img src="/assets/img/diagrams/cyberverse/cyberverse-architecture.svg" alt="CyberVerse Architecture" /></p>
+
+<h3 id="understanding-the-three-service-architecture">Understanding the Three-Service Architecture</h3>
+
+<p>CyberVerse deploys as three independent services that communicate through well-defined protocols. This separation allows each service to scale, restart, and evolve independently – a critical design choice when the Python inference server holds GPU-heavy model weights while the Go server handles lightweight HTTP/WebRTC orchestration.</p>
+
+<p><strong>Go API Server (<code class="language-plaintext highlighter-rouge">server/</code>)</strong></p>
+
+<p>The Go server is the central orchestrator. Built with Go 1.25, it handles HTTP API requests for character CRUD, session management, and health checks. It also manages WebRTC connectivity through two modes: direct P2P with an embedded TURN server (for simple deployments and SSH tunnel access), and LiveKit SFU integration (for production multi-party scenarios). The server communicates with the Python inference process exclusively over gRPC, sending audio chunks for ASR, text for LLM and TTS, and receiving generated video frames back. It also supports session recording – producing MP4 video, raw WAV audio, and transcript files for each conversation turn.</p>
+
+<p><strong>Python Inference Server (<code class="language-plaintext highlighter-rouge">inference/</code>)</strong></p>
+
+<p>The inference server is where the neural heavy lifting happens. It runs as an async gRPC server on port 50051, exposing five service endpoints: AvatarService, LLMService, TTSService, ASRService, and VoiceLLMService. The server uses a plugin registry pattern – at startup, it reads the YAML config, dynamically imports plugin classes via their fully qualified Python paths, registers them, and initializes only the ones needed for the current session. In multi-GPU mode (using <code class="language-plaintext highlighter-rouge">torchrun</code>), only rank 0 binds the gRPC port; other ranks stay alive as distributed workers for model-parallel inference.</p>
+
+<p><strong>Vue 3 Frontend (<code class="language-plaintext highlighter-rouge">frontend/</code>)</strong></p>
+
+<p>The frontend is a single-page application built with Vue 3, Vite, and Tailwind CSS. It provides a VideoPlayer component for the real-time avatar stream, a ChatPanel for text-based interaction alongside voice, a CharacterEdit page for uploading reference photos and configuring personality, and a settings page where API keys and service endpoints can be changed at runtime without editing <code class="language-plaintext highlighter-rouge">.env</code> files. The frontend connects to the Go server via WebSocket for control messages and WebRTC for media streaming. Internationalization support covers both Chinese and English.</p>
+
+<p><strong>Communication Flow</strong></p>
+
+<p>Data flows through the system in two pipelines depending on the mode. In <strong>omni mode</strong>, the user’s microphone audio goes directly to a voice LLM plugin (Doubao Realtime or Qwen Omni) that handles ASR, LLM reasoning, and TTS in a single streaming WebSocket connection. The generated audio is then sent to the avatar plugin for facial animation. In <strong>standard mode</strong>, audio passes through separate ASR, LLM, and TTS plugins in sequence. Both pipelines converge at the avatar plugin, which generates video frames and streams them back through WebRTC to the browser.</p>
+
+<h2 id="plugin-system">Plugin System</h2>
+
+<p><img src="/assets/img/diagrams/cyberverse/cyberverse-plugin-system.svg" alt="CyberVerse Plugin System" /></p>
+
+<h3 id="understanding-the-plugin-architecture">Understanding the Plugin Architecture</h3>
+
+<p>CyberVerse’s plugin system is what makes it truly extensible. Every cognitive and perceptual component of the digital human – the face, the brain, the voice, the ears – is a swappable plugin, not a hardcoded dependency. This means you can switch from Qwen to OpenAI GPT-4o for language, from Qwen TTS to OpenAI TTS for speech, or from FlashHead to LiveAct for the avatar, all by editing a few lines in <code class="language-plaintext highlighter-rouge">cyberverse_config.yaml</code>.</p>
+
+<p><strong>Plugin Categories</strong></p>
+
+<p>The system defines six plugin categories, each corresponding to a gRPC service:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Purpose</th>
+      <th>Available Plugins</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">avatar</code></td>
+      <td>Facial animation and video generation</td>
+      <td>FlashHead 1.3B (Pro/Lite), LiveAct 18B</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">voice_llm</code></td>
+      <td>Unified ASR+LLM+TTS via omni model</td>
+      <td>Doubao Realtime, Qwen Omni Realtime</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">llm</code></td>
+      <td>Text-based language model</td>
+      <td>Qwen (qwen3.6-plus), OpenAI (GPT-4o)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tts</code></td>
+      <td>Text-to-speech synthesis</td>
+      <td>Qwen TTS (Momo voice), OpenAI TTS (nova voice)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">asr</code></td>
+      <td>Automatic speech recognition</td>
+      <td>Qwen ASR, Whisper (base/large)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">omni</code></td>
+      <td>Alias for voice_llm in config</td>
+      <td>Same as voice_llm</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Plugin Discovery and Registration</strong></p>
+
+<p>The inference server discovers plugins at startup by scanning the YAML config. For each category, it reads every named entry, extracts the <code class="language-plaintext highlighter-rouge">plugin_class</code> field (a fully qualified Python class path like <code class="language-plaintext highlighter-rouge">inference.plugins.avatar.flash_head_plugin.FlashHeadAvatarPlugin</code>), dynamically imports the class, and registers it in the <code class="language-plaintext highlighter-rouge">PluginRegistry</code>. Plugins without a <code class="language-plaintext highlighter-rouge">plugin_class</code> field are silently skipped, making it safe to keep partial configurations in the file.</p>
+
+<p><strong>Initialization Strategy</strong></p>
+
+<p>Not all plugins are initialized at startup. LLM, TTS, ASR, and voice_llm plugins are lightweight – they are API clients that cost nothing to keep warm, so every configured entry in these categories gets initialized. Avatar plugins, by contrast, load multi-gigabyte model weights onto the GPU. Only the <code class="language-plaintext highlighter-rouge">default</code> avatar plugin is initialized to avoid wasting VRAM. You select which avatar model to activate by setting <code class="language-plaintext highlighter-rouge">inference.avatar.default</code> to either <code class="language-plaintext highlighter-rouge">flash_head</code> or <code class="language-plaintext highlighter-rouge">live_act</code>.</p>
+
+<p><strong>Configuration-Driven Assembly</strong></p>
+
+<p>The YAML config acts as the wiring board for the entire system. Each plugin entry specifies its class path and any parameters that plugin needs – API keys, model names, voice selections, sample rates, and inference parameters like resolution and FPS. Shared settings (GPU device IDs, world size for multi-GPU, warmup behavior) are propagated from parent sections down to individual plugins. This means changing the digital human’s personality, voice, or face is a config edit and a restart – no code changes required.</p>
+
+<blockquote>
+  <p><strong>Takeaway:</strong> With a single YAML file, you can assemble a digital human that speaks through Qwen TTS, reasons with GPT-4o, listens via Whisper, and animates with FlashHead – or swap any of those components for alternatives in minutes.</p>
+</blockquote>
+
+<h2 id="real-time-video-call-flow">Real-Time Video Call Flow</h2>
+
+<p><img src="/assets/img/diagrams/cyberverse/cyberverse-video-call-flow.svg" alt="CyberVerse Video Call Flow" /></p>
+
+<h3 id="understanding-the-real-time-pipeline">Understanding the Real-Time Pipeline</h3>
+
+<p>The video call flow is what distinguishes CyberVerse from every other AI chatbot. When a user opens a session, the browser establishes a WebRTC connection to the Go server (either direct P2P or through LiveKit SFU). The microphone stream flows from the browser through WebRTC to the Go orchestrator, which forwards it over gRPC to the Python inference server. The inference server processes the audio, generates a response, animates the avatar, and streams video frames back through the same path in reverse.</p>
+
+<p><strong>Omni Mode Pipeline</strong></p>
+
+<p>In omni mode, the voice_llm plugin handles the entire conversation in a single streaming connection. The user’s audio is sent directly to the Doubao Realtime or Qwen Omni API, which performs speech recognition, language model inference, and speech synthesis in one continuous stream. The generated audio chunks are forwarded to the avatar plugin, which drives facial animation from the audio waveform. This pipeline minimizes latency because there is no handoff between separate ASR, LLM, and TTS services – the omni model handles all three.</p>
+
+<p><strong>Standard Mode Pipeline</strong></p>
+
+<p>In standard mode, the pipeline chains three separate services. The ASR plugin transcribes the microphone audio into text. The LLM plugin generates a text response. The TTS plugin converts that response into audio. Finally, the avatar plugin animates the face from the audio. Each step communicates through gRPC, and the Go orchestrator manages the sequencing. This mode offers more flexibility – you can mix and match any ASR, LLM, and TTS provider – at the cost of slightly higher latency due to the sequential chain.</p>
+
+<p><strong>Avatar Rendering</strong></p>
+
+<p>The avatar plugin is the final stage in both pipelines. FlashHead uses a diffusion-based architecture with a WAV2Vec audio feature extractor to drive facial animation from audio waveforms. It generates video frames at configurable resolution (up to 512x512) and frame rate (up to 25 FPS in Lite mode). The model applies color correction, lip-sync alignment, and subtle idle breathing animations to make the digital human appear alive even during pauses. LiveAct uses a different architecture based on the Wan video generation framework, supporting full-head motion with text prompts for expression control.</p>
+
+<p><strong>WebRTC Transport</strong></p>
+
+<p>Video frames travel from the inference server back to the Go server via gRPC, then from the Go server to the browser via WebRTC. In direct P2P mode, the Go server embeds a TURN server on port 8443/TCP for NAT traversal, making it possible to reach remote browsers through SSH tunnels. In LiveKit mode, the Go server acts as a LiveKit client that publishes video tracks to the SFU, which then distributes them to all subscribers. The <code class="language-plaintext highlighter-rouge">pipeline.streaming_mode</code> config key selects between <code class="language-plaintext highlighter-rouge">direct</code> and <code class="language-plaintext highlighter-rouge">livekit</code>.</p>
+
+<blockquote>
+  <p><strong>Amazing:</strong> A single photograph is all it takes – CyberVerse’s avatar models generate real-time facial animation with natural lip-sync and idle breathing from just one reference image, no 3D modeling or motion capture required.</p>
+</blockquote>
+
+<h2 id="installation">Installation</h2>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<p>Before installing CyberVerse, ensure your system meets these requirements:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Requirement</th>
+      <th>Version</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Node.js</td>
+      <td>18+</td>
+      <td>Node 22 recommended (see <code class="language-plaintext highlighter-rouge">.nvmrc</code>)</td>
+    </tr>
+    <tr>
+      <td>Go</td>
+      <td>1.25</td>
+      <td>Required for <code class="language-plaintext highlighter-rouge">protoc-gen-go</code> and <code class="language-plaintext highlighter-rouge">protoc-gen-go-grpc</code></td>
+    </tr>
+    <tr>
+      <td>Python</td>
+      <td>3.10+</td>
+      <td>Conda environment recommended</td>
+    </tr>
+    <tr>
+      <td>PyTorch</td>
+      <td>2.8</td>
+      <td>CUDA 12.8 build</td>
+    </tr>
+    <tr>
+      <td>CUDA</td>
+      <td>12.8+</td>
+      <td>GPU with CUDA support required</td>
+    </tr>
+    <tr>
+      <td>FFmpeg</td>
+      <td>with libvpx</td>
+      <td>Required for video encoding</td>
+    </tr>
+    <tr>
+      <td>Conda</td>
+      <td>Any recent</td>
+      <td>For Python environment management</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Verify your environment:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>node <span class="nt">--version</span>
+go version
+protoc <span class="nt">--version</span>
+ffmpeg <span class="nt">-version</span> | <span class="nb">grep </span>libvpx
+conda <span class="nt">--version</span>
+</code></pre></div></div>
+
+<h3 id="step-1-clone-the-repository">Step 1: Clone the Repository</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/dsd2077/CyberVerse.git
+<span class="nb">cd </span>CyberVerse
+</code></pre></div></div>
+
+<h3 id="step-2-create-python-environment">Step 2: Create Python Environment</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>conda create <span class="nt">-n</span> cyberverse <span class="nv">python</span><span class="o">=</span>3.10
+conda activate cyberverse
+</code></pre></div></div>
+
+<p>Install PyTorch with CUDA 12.8 support:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip3 <span class="nb">install </span><span class="nv">torch</span><span class="o">==</span>2.8.0 <span class="nv">torchvision</span><span class="o">==</span>0.23.0 <span class="nt">--index-url</span> https://download.pytorch.org/whl/cu128
+</code></pre></div></div>
+
+<h3 id="step-3-configure-environment-variables">Step 3: Configure Environment Variables</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cp </span>infra/.env.example .env
+</code></pre></div></div>
+
+<p>Edit <code class="language-plaintext highlighter-rouge">.env</code> and fill in your API keys. At minimum, you need a Doubao Voice API key for omni mode:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">DOUBAO_ACCESS_TOKEN</span><span class="o">=</span>your_doubao_access_token
+<span class="nv">DOUBAO_APP_ID</span><span class="o">=</span>your_doubao_app_id
+</code></pre></div></div>
+
+<p>You can also add Qwen (DashScope) and OpenAI keys for additional plugin support. After the stack is running, these values can be changed from the web UI at <code class="language-plaintext highlighter-rouge">/settings</code>.</p>
+
+<h3 id="step-4-download-model-weights">Step 4: Download Model Weights</h3>
+
+<p>Install the Hugging Face CLI:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install</span> <span class="s2">"huggingface_hub[cli]"</span>
+</code></pre></div></div>
+
+<p>For <strong>FlashHead</strong> (recommended for most GPUs):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>hf download Soul-AILab/SoulX-FlashHead-1_3B <span class="se">\</span>
+  <span class="nt">--local-dir</span> ./checkpoints/SoulX-FlashHead-1_3B
+
+hf download facebook/wav2vec2-base-960h <span class="se">\</span>
+  <span class="nt">--local-dir</span> ./checkpoints/wav2vec2-base-960h
+</code></pre></div></div>
+
+<p>For <strong>LiveAct</strong> (higher fidelity, requires more GPU memory):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>hf download Soul-AILab/LiveAct <span class="se">\</span>
+  <span class="nt">--local-dir</span> ./checkpoints/LiveAct
+
+hf download TencentGameMate/chinese-wav2vec2-base <span class="se">\</span>
+  <span class="nt">--local-dir</span> ./checkpoints/chinese-wav2vec2-base
+</code></pre></div></div>
+
+<h3 id="step-5-create-local-configuration">Step 5: Create Local Configuration</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cp </span>infra/cyberverse_config.example.yaml cyberverse_config.yaml
+</code></pre></div></div>
+
+<p>Edit <code class="language-plaintext highlighter-rouge">cyberverse_config.yaml</code> to match your checkpoint paths and GPU setup. The key settings are:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">inference</span><span class="pi">:</span>
+  <span class="na">avatar</span><span class="pi">:</span>
+    <span class="na">default</span><span class="pi">:</span> <span class="s2">"</span><span class="s">flash_head"</span>
+    <span class="na">runtime</span><span class="pi">:</span>
+      <span class="na">cuda_visible_devices</span><span class="pi">:</span> <span class="m">0</span>
+      <span class="na">world_size</span><span class="pi">:</span> <span class="m">1</span>
+    <span class="na">flash_head</span><span class="pi">:</span>
+      <span class="na">checkpoint_dir</span><span class="pi">:</span> <span class="s2">"</span><span class="s">./checkpoints/SoulX-FlashHead-1_3B"</span>
+      <span class="na">wav2vec_dir</span><span class="pi">:</span> <span class="s2">"</span><span class="s">./checkpoints/wav2vec2-base-960h"</span>
+      <span class="na">model_type</span><span class="pi">:</span> <span class="s2">"</span><span class="s">lite"</span>
+      <span class="na">compile_model</span><span class="pi">:</span> <span class="no">true</span>
+      <span class="na">compile_vae</span><span class="pi">:</span> <span class="no">true</span>
+</code></pre></div></div>
+
+<p>Set <code class="language-plaintext highlighter-rouge">model_type</code> to <code class="language-plaintext highlighter-rouge">"pro"</code> for higher visual quality (requires more GPU), or <code class="language-plaintext highlighter-rouge">"lite"</code> for faster inference on consumer hardware.</p>
+
+<h3 id="step-6-install-project-dependencies">Step 6: Install Project Dependencies</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make setup
+</code></pre></div></div>
+
+<p>This single command installs the Python package in editable mode with dev and inference extras, generates gRPC protobuf stubs, and installs frontend npm dependencies. For selective installs:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># All optional groups at once</span>
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="s2">".[all]"</span>
+
+<span class="c"># Or cherry-pick what you need</span>
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="s2">".[omni,flash_head]"</span>
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="s2">".[live_act]"</span>
+</code></pre></div></div>
+
+<h3 id="step-7-start-services">Step 7: Start Services</h3>
+
+<p>CyberVerse requires three running services. Open three terminals:</p>
+
+<p><strong>Terminal 1 – Python inference server:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>conda activate cyberverse
+make inference
+</code></pre></div></div>
+
+<p>Wait until you see <code class="language-plaintext highlighter-rouge">Active avatar model initialized: flash_head</code> and <code class="language-plaintext highlighter-rouge">CyberVerse Inference Server started on port 50051</code>.</p>
+
+<p><strong>Terminal 2 – Go API server:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make server
+</code></pre></div></div>
+
+<p><strong>Terminal 3 – Frontend:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make frontend
+</code></pre></div></div>
+
+<h3 id="step-8-verify">Step 8: Verify</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> http://localhost:8080/api/v1/health
+</code></pre></div></div>
+
+<p>Open http://localhost:5173 in your browser to start creating digital humans.</p>
+
+<h3 id="docker-deployment">Docker Deployment</h3>
+
+<p>For containerized deployment, use Docker Compose:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd </span>infra
+docker compose up <span class="nt">--build</span>
+</code></pre></div></div>
+
+<p>The Docker Compose stack includes LiveKit server, Redis, the Go API server, the Python inference server (with GPU passthrough), and an nginx frontend proxy. Make sure to set the required environment variables (<code class="language-plaintext highlighter-rouge">DOUBAO_API_KEY</code>, <code class="language-plaintext highlighter-rouge">DOUBAO_APP_ID</code>, <code class="language-plaintext highlighter-rouge">OPENAI_API_KEY</code>) in your <code class="language-plaintext highlighter-rouge">.env</code> file before starting.</p>
+
+<blockquote>
+  <p><strong>Important:</strong> The inference container requires NVIDIA GPU passthrough with CUDA 12.8+. The Docker Compose file configures GPU access via the nvidia container runtime. Model checkpoints must be mounted as a volume at <code class="language-plaintext highlighter-rouge">/app/checkpoints</code>.</p>
+</blockquote>
+
+<h2 id="key-features">Key Features</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>One Photo to Digital Human</td>
+      <td>Upload a single photo to create a fully animated digital human – no 3D modeling or motion capture</td>
+    </tr>
+    <tr>
+      <td>Real-Time Video Calling</td>
+      <td>Live, unlimited-duration video calls with ~1.5s first-frame latency via WebRTC</td>
+    </tr>
+    <tr>
+      <td>Natural Lip-Sync</td>
+      <td>Audio-driven facial animation with precise mouth movement synchronized to speech</td>
+    </tr>
+    <tr>
+      <td>Idle Breathing</td>
+      <td>Subtle breathing animations during pauses make the digital human appear alive</td>
+    </tr>
+    <tr>
+      <td>Pluggable Architecture</td>
+      <td>Swap LLM, TTS, ASR, and avatar backends through YAML configuration</td>
+    </tr>
+    <tr>
+      <td>Dual Avatar Models</td>
+      <td>FlashHead 1.3B (Pro/Lite) for quality-speed tradeoff, LiveAct 18B for high-fidelity motion</td>
+    </tr>
+    <tr>
+      <td>Omni Mode</td>
+      <td>Single-stream ASR+LLM+TTS via Doubao Realtime or Qwen Omni for minimal latency</td>
+    </tr>
+    <tr>
+      <td>Standard Mode</td>
+      <td>Separate ASR, LLM, TTS chain for maximum provider flexibility</td>
+    </tr>
+    <tr>
+      <td>Voice Interruption</td>
+      <td>Interrupt the digital human mid-sentence, just like a real conversation</td>
+    </tr>
+    <tr>
+      <td>Hybrid Input</td>
+      <td>Use both voice and text in the same conversation session</td>
+    </tr>
+    <tr>
+      <td>Face-to-Face</td>
+      <td>User-side camera and screen sharing input for visual context</td>
+    </tr>
+    <tr>
+      <td>Session Recording</td>
+      <td>Per-turn MP4 video, WAV audio, and transcript files</td>
+    </tr>
+    <tr>
+      <td>Character Management</td>
+      <td>CRUD with multiple reference images, personality, welcome message, system prompt</td>
+    </tr>
+    <tr>
+      <td>Voice Cloning</td>
+      <td>Supports Doubao voice cloning for custom voice identities</td>
+    </tr>
+    <tr>
+      <td>Web UI Settings</td>
+      <td>Change API keys and service endpoints at runtime from <code class="language-plaintext highlighter-rouge">/settings</code></td>
+    </tr>
+    <tr>
+      <td>Multi-GPU Support</td>
+      <td>FlashHead model-parallel inference across multiple GPUs via <code class="language-plaintext highlighter-rouge">torchrun</code></td>
+    </tr>
+    <tr>
+      <td>i18n</td>
+      <td>Built-in Chinese and English localization</td>
+    </tr>
+    <tr>
+      <td>Docker Compose</td>
+      <td>Full stack deployment with LiveKit, Redis, nginx, and GPU passthrough</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>CyberVerse uses a single YAML file (<code class="language-plaintext highlighter-rouge">cyberverse_config.yaml</code>) to wire the entire system. The configuration is organized into these top-level sections:</p>
+
+<p><strong>Server settings</strong> control the HTTP/gRPC ports and CORS policy:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">server</span><span class="pi">:</span>
+    <span class="na">host</span><span class="pi">:</span> <span class="s2">"</span><span class="s">0.0.0.0"</span>
+    <span class="na">http_port</span><span class="pi">:</span> <span class="m">8080</span>
+    <span class="na">grpc_port</span><span class="pi">:</span> <span class="m">50051</span>
+    <span class="na">cors_origins</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">*"</span><span class="pi">]</span>
+</code></pre></div></div>
+
+<p><strong>Inference plugins</strong> define every AI component. Each category has a <code class="language-plaintext highlighter-rouge">default</code> selector and named plugin entries with their class paths and parameters:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">inference</span><span class="pi">:</span>
+    <span class="na">llm</span><span class="pi">:</span>
+        <span class="na">default</span><span class="pi">:</span> <span class="s2">"</span><span class="s">qwen"</span>
+        <span class="na">qwen</span><span class="pi">:</span>
+            <span class="na">plugin_class</span><span class="pi">:</span> <span class="s2">"</span><span class="s">inference.plugins.llm.qwen_plugin.QwenLLMPlugin"</span>
+            <span class="na">api_key</span><span class="pi">:</span> <span class="s2">"</span><span class="s">${DASHSCOPE_API_KEY}"</span>
+            <span class="na">model</span><span class="pi">:</span> <span class="s2">"</span><span class="s">qwen3.6-plus"</span>
+            <span class="na">temperature</span><span class="pi">:</span> <span class="m">0.7</span>
+        <span class="na">openai</span><span class="pi">:</span>
+            <span class="na">plugin_class</span><span class="pi">:</span> <span class="s2">"</span><span class="s">inference.plugins.llm.openai_plugin.OpenAILLMPlugin"</span>
+            <span class="na">api_key</span><span class="pi">:</span> <span class="s2">"</span><span class="s">${OPENAI_API_KEY}"</span>
+            <span class="na">model</span><span class="pi">:</span> <span class="s2">"</span><span class="s">gpt-4o"</span>
+            <span class="na">temperature</span><span class="pi">:</span> <span class="m">0.7</span>
+</code></pre></div></div>
+
+<p><strong>Pipeline settings</strong> control the streaming mode and visual input:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">pipeline</span><span class="pi">:</span>
+    <span class="na">default_mode</span><span class="pi">:</span> <span class="s2">"</span><span class="s">omni"</span>
+    <span class="na">streaming_mode</span><span class="pi">:</span> <span class="s2">"</span><span class="s">direct"</span>
+    <span class="na">turn_enabled</span><span class="pi">:</span> <span class="no">true</span>
+    <span class="na">turn_port</span><span class="pi">:</span> <span class="m">8443</span>
+</code></pre></div></div>
+
+<p>Set <code class="language-plaintext highlighter-rouge">streaming_mode</code> to <code class="language-plaintext highlighter-rouge">"direct"</code> for P2P WebRTC with embedded TURN, or <code class="language-plaintext highlighter-rouge">"livekit"</code> for LiveKit SFU. Set <code class="language-plaintext highlighter-rouge">default_mode</code> to <code class="language-plaintext highlighter-rouge">"omni"</code> for the unified voice LLM pipeline, or <code class="language-plaintext highlighter-rouge">"standard"</code> for the separate ASR/LLM/TTS chain.</p>
+
+<p><strong>Session limits</strong> prevent resource exhaustion:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">session</span><span class="pi">:</span>
+    <span class="na">max_concurrent</span><span class="pi">:</span> <span class="m">4</span>
+    <span class="na">idle_timeout_s</span><span class="pi">:</span> <span class="m">300</span>
+    <span class="na">max_duration_s</span><span class="pi">:</span> <span class="m">3600</span>
+</code></pre></div></div>
+
+<p><strong>Recording</strong> captures conversation artifacts:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">recording</span><span class="pi">:</span>
+    <span class="na">enabled</span><span class="pi">:</span> <span class="no">true</span>
+    <span class="na">output_dir</span><span class="pi">:</span> <span class="s2">"</span><span class="s">./recordings"</span>
+    <span class="na">crf</span><span class="pi">:</span> <span class="m">23</span>
+</code></pre></div></div>
+
+<p>Environment variable expansion (<code class="language-plaintext highlighter-rouge">${DASHSCOPE_API_KEY}</code>) is supported throughout the config, with values loaded from the <code class="language-plaintext highlighter-rouge">.env</code> file at startup. This keeps secrets out of the YAML file while allowing the config to reference them naturally.</p>
+
+<h2 id="hardware-requirements">Hardware Requirements</h2>
+
+<p>Real-time digital human conversation demands GPU acceleration. The following benchmarks come from the CyberVerse repository:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Quality</th>
+      <th>GPU</th>
+      <th>Count</th>
+      <th>Resolution</th>
+      <th>FPS</th>
+      <th>Real-Time?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FlashHead 1.3B</td>
+      <td>Pro</td>
+      <td>RTX 5090</td>
+      <td>2</td>
+      <td>512x512</td>
+      <td>25+</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>FlashHead 1.3B</td>
+      <td>Pro</td>
+      <td>RTX 5090</td>
+      <td>1</td>
+      <td>464x464</td>
+      <td>20</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>FlashHead 1.3B</td>
+      <td>Pro</td>
+      <td>RTX PRO 6000</td>
+      <td>1</td>
+      <td>512x512</td>
+      <td>20</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>FlashHead 1.3B</td>
+      <td>Pro</td>
+      <td>RTX 4090</td>
+      <td>1</td>
+      <td>512x512</td>
+      <td>~10.8</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>FlashHead 1.3B</td>
+      <td>Lite</td>
+      <td>RTX 4090</td>
+      <td>1</td>
+      <td>512x512</td>
+      <td>25+</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>LiveAct 18B</td>
+      <td>–</td>
+      <td>RTX PRO 6000</td>
+      <td>2</td>
+      <td>320x480</td>
+      <td>20</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>LiveAct 18B</td>
+      <td>–</td>
+      <td>RTX PRO 6000</td>
+      <td>1</td>
+      <td>256x417</td>
+      <td>20</td>
+      <td>Yes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Pro mode favors visual quality; Lite mode favors speed. An RTX 4090 can run FlashHead Lite at full 512x512 resolution and 25+ FPS, making it the most accessible option for real-time conversation. The RTX 5090 unlocks Pro mode at the same resolution. LiveAct 18B, with its 18 billion parameters, requires professional-grade GPUs like the RTX PRO 6000.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>CyberVerse represents a significant step toward making digital human technology accessible to developers. By combining state-of-the-art avatar models with a clean plugin architecture and real-time WebRTC streaming, it delivers an experience that feels genuinely like video-calling an AI. The YAML-driven configuration means you can experiment with different LLMs, voices, and avatar models without touching code, while the three-service architecture keeps concerns cleanly separated for production deployment.</p>
+
+<p>The project’s roadmap points toward even more ambitious capabilities: long-term memory across sessions, tool use and function calling, and eventually an agent network where multiple digital humans communicate and collaborate. Whether you are building virtual companions, customer service agents, or interactive characters, CyberVerse provides the foundation to bring them to life from a single photograph.</p>
+
+<p><strong>Links:</strong></p>
+
+<ul>
+  <li>GitHub Repository: <a href="https://github.com/dsd2077/CyberVerse">https://github.com/dsd2077/CyberVerse</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Open Source" /><category term="Python" /><category term="CyberVerse" /><category term="digital human" /><category term="AI agent" /><category term="real-time video" /><category term="WebRTC" /><category term="avatar" /><category term="lip-sync" /><category term="facial animation" /><category term="open source" /><category term="Python" /><summary type="html"><![CDATA[Learn how CyberVerse creates AI digital humans from a single photo with real-time video calling, lip-sync, and facial animation. This guide covers architecture, plugin system, and deployment.]]></summary></entry><entry><title type="html">Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner</title><link href="https://pyshine.com/Pi-Mono-Full-Stack-AI-Agent-Toolkit/" rel="alternate" type="text/html" title="Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner" /><published>2026-05-11T00:00:00+00:00</published><updated>2026-05-11T00:00:00+00:00</updated><id>https://pyshine.com/Pi-Mono-Full-Stack-AI-Agent-Toolkit</id><content type="html" xml:base="https://pyshine.com/Pi-Mono-Full-Stack-AI-Agent-Toolkit/"><![CDATA[<h1 id="pi-mono-the-full-stack-ai-agent-toolkit-from-libgdx-creator-mario-zechner">Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner</h1>
 
 <p>The pi-mono AI agent toolkit has rapidly become one of the most starred open-source projects in the AI coding space, accumulating over 39,132 stars on GitHub. Created by Mario Zechner – better known as badlogic, the creator of libGDX, the widely-used Java game development framework – pi-mono is a full-stack monorepo containing five interconnected npm packages that together form a complete agent infrastructure. Published under the @earendil-works scope and licensed under MIT, every package shares lockstep versioning (currently 0.74.0), ensuring compatibility across the stack. What sets pi-mono apart from other coding agents is its philosophy: a minimal core that refuses to bake in features like sub-agents, plan mode, or permission popups, instead pushing all customization to its extension system. The result is a framework where every layer – from the unified LLM API to the terminal UI framework – is independently usable and extensible.</p>
 
@@ -3910,434 +4483,4 @@ mise <span class="nb">exec</span> <span class="nt">--</span> ./bin/symphony ./WO
   <li>Elixir Implementation: <a href="https://github.com/openai/symphony/tree/main/elixir">https://github.com/openai/symphony/tree/main/elixir</a></li>
   <li>Harness Engineering Blog Post: <a href="https://openai.com/index/harness-engineering/">https://openai.com/index/harness-engineering/</a></li>
   <li>Codex App Server Documentation: <a href="https://developers.openai.com/codex/app-server/">https://developers.openai.com/codex/app-server/</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Developer Tools" /><category term="Open Source" /><category term="Symphony" /><category term="OpenAI" /><category term="coding agent" /><category term="orchestration" /><category term="Elixir" /><category term="OTP" /><category term="Linear integration" /><category term="autonomous agents" /><category term="agent orchestration" /><category term="WORKFLOW.md" /><summary type="html"><![CDATA[Learn how OpenAI Symphony orchestrates coding agents to manage project work autonomously. Explore its 6-layer architecture, 5-state machine, WORKFLOW.md hot-reload config, and Elixir/OTP reference implementation.]]></summary></entry><entry><title type="html">Browserbase Skills: Claude Code Web Automation Plugin System</title><link href="https://pyshine.com/Browserbase-Skills-Claude-Code-Web-Automation/" rel="alternate" type="text/html" title="Browserbase Skills: Claude Code Web Automation Plugin System" /><published>2026-05-05T00:00:00+00:00</published><updated>2026-05-05T00:00:00+00:00</updated><id>https://pyshine.com/Browserbase-Skills-Claude-Code-Web-Automation</id><content type="html" xml:base="https://pyshine.com/Browserbase-Skills-Claude-Code-Web-Automation/"><![CDATA[<h1 id="browserbase-skills-claude-code-web-automation-plugin-system">Browserbase Skills: Claude Code Web Automation Plugin System</h1>
-
-<p>Browserbase Skills is a plugin and skill system for Claude Code that delivers comprehensive web automation capabilities through 13 specialized skills. Whether you need to browse websites, fill forms, solve CAPTCHAs, run adversarial UI tests, or build self-improving browser automation, Browserbase Skills Claude Code web automation provides a unified CLI-driven interface that works identically in both local and remote browser environments. With over 2,185 GitHub stars and 320 stars per day during its trending peak, this project has quickly become the go-to solution for giving AI coding agents real browser control.</p>
-
-<p><img src="/assets/img/diagrams/browserbase-skills/browserbase-skills-architecture.svg" alt="Browserbase Skills Architecture" /></p>
-
-<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
-
-<p>The architecture diagram above illustrates how Browserbase Skills integrates with Claude Code and the Browserbase cloud platform. Let us break down each component and how they interact:</p>
-
-<p><strong>Claude Code Agent</strong>
-At the top of the stack sits Claude Code, the AI coding assistant that serves as the orchestrator. When a user asks Claude to browse a website, test a UI, or extract data, Claude dispatches commands through the skill system rather than attempting raw HTTP requests. This means the agent gets full browser rendering, JavaScript execution, and interactive capabilities that simple fetch operations cannot provide.</p>
-
-<p><strong>Skill Registry and Plugin System</strong>
-The skill registry acts as the central dispatcher. When installed via <code class="language-plaintext highlighter-rouge">npx skills add browserbase/skills</code> or the <code class="language-plaintext highlighter-rouge">/plugin</code> command in Claude Code, all 13 skills become available as natural language invocations. Each skill has its own SKILL.md file that defines triggers, allowed tools, and compatibility requirements. The registry ensures that Claude knows which skill to activate based on the user’s intent – whether that is browsing, testing, debugging, or researching.</p>
-
-<p><strong>Daemon-Based Browse CLI</strong>
-The browse CLI is the workhorse of the system. It runs as a persistent daemon process that manages browser sessions, handles page navigation, and provides structured output through accessibility tree snapshots. The daemon auto-starts on first command and supports both local Chrome instances and remote Browserbase cloud sessions. Key commands include <code class="language-plaintext highlighter-rouge">browse open</code>, <code class="language-plaintext highlighter-rouge">browse snapshot</code>, <code class="language-plaintext highlighter-rouge">browse click</code>, <code class="language-plaintext highlighter-rouge">browse fill</code>, and <code class="language-plaintext highlighter-rouge">browse stop</code>.</p>
-
-<p><strong>Browserbase Cloud API</strong>
-For sites with bot detection, CAPTCHAs, or geo-restrictions, the system seamlessly switches to Browserbase’s cloud infrastructure. This provides anti-bot stealth mode with custom Chromium builds, automatic CAPTCHA solving for reCAPTCHA and hCaptcha, residential proxies across 201 countries, and session persistence through cookie contexts. The transition between local and remote is a single command: <code class="language-plaintext highlighter-rouge">browse env remote</code>.</p>
-
-<blockquote>
-  <p><strong>Key Insight:</strong> Browserbase Skills provides residential proxies in 201 countries with automatic CAPTCHA solving, making it possible for AI agents to access protected websites that would normally block automated browsing.</p>
-</blockquote>
-
-<p><img src="/assets/img/diagrams/browserbase-skills/browserbase-skills-ecosystem.svg" alt="Browserbase Skills Ecosystem" /></p>
-
-<h3 id="the-13-skills-core-and-advanced">The 13 Skills: Core and Advanced</h3>
-
-<p>The ecosystem diagram organizes all 13 skills into two tiers. Here is a detailed look at each:</p>
-
-<p><strong>Core Skills (4)</strong></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Skill</th>
-      <th>Purpose</th>
-      <th>Key Capability</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">browser</code></td>
-      <td>Web browser automation</td>
-      <td>Full CLI-driven browsing with accessibility tree snapshots, element interaction, and session management</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">fetch</code></td>
-      <td>Static page retrieval</td>
-      <td>Fetch HTML or JSON without a browser session – inspect status codes, headers, and follow redirects</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">search</code></td>
-      <td>Web search</td>
-      <td>Return structured search results (titles, URLs, metadata) without launching a browser</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">browserbase-cli</code></td>
-      <td>Platform management</td>
-      <td>Use the official <code class="language-plaintext highlighter-rouge">bb</code> CLI for Browserbase Functions, sessions, projects, contexts, extensions, and dashboard access</td>
-    </tr>
-  </tbody>
-</table>
-
-<p><strong>Advanced Skills (9)</strong></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Skill</th>
-      <th>Purpose</th>
-      <th>Key Capability</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">functions</code></td>
-      <td>Serverless deployment</td>
-      <td>Deploy browser automation to Browserbase cloud as serverless functions using <code class="language-plaintext highlighter-rouge">bb functions init</code></td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">site-debugger</code></td>
-      <td>Automation debugging</td>
-      <td>Diagnose failing browser automations by analyzing bot detection, selectors, timing, auth, and CAPTCHAs</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">browser-trace</code></td>
-      <td>Performance tracing</td>
-      <td>Capture full DevTools-protocol traces (CDP firehose, screenshots, DOM dumps) and bisect them into per-page searchable buckets</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">cookie-sync</code></td>
-      <td>Authentication transfer</td>
-      <td>Sync cookies from local Chrome to Browserbase persistent contexts so remote sessions can access authenticated sites</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">autobrowse</code></td>
-      <td>Self-improving automation</td>
-      <td>Iterative loop: inner agent browses, outer agent reads traces and improves the strategy until it reliably passes</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">ui-test</code></td>
-      <td>Adversarial UI testing</td>
-      <td>AI-powered testing that analyzes git diffs to test changes, or explores the full app to find bugs</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">company-research</code></td>
-      <td>Business intelligence</td>
-      <td>Research companies by extracting data from their websites and compiling structured reports</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">event-prospecting</code></td>
-      <td>Event discovery</td>
-      <td>Find and extract event information from conference and meetup platforms</td>
-    </tr>
-  </tbody>
-</table>
-
-<blockquote>
-  <p><strong>Takeaway:</strong> With a single <code class="language-plaintext highlighter-rouge">npx skills add browserbase/skills</code> command, Claude Code gains 13 specialized skills covering everything from simple page fetching to self-improving browser automation – no manual configuration needed.</p>
-</blockquote>
-
-<p><img src="/assets/img/diagrams/browserbase-skills/browserbase-skills-autobrowse.svg" alt="AutoBrowse Self-Improving Loop" /></p>
-
-<h3 id="autobrowse-the-self-improving-browser-skill">AutoBrowse: The Self-Improving Browser Skill</h3>
-
-<p>The AutoBrowse skill is the most innovative component of the Browserbase Skills ecosystem. It implements a self-improving loop where an inner agent browses a website and an outer agent reads the execution traces and improves the navigation strategy until it reliably passes.</p>
-
-<p><strong>How the Loop Works</strong></p>
-
-<ol>
-  <li>
-    <p><strong>Task Definition</strong> – The user provides a task (e.g., “book a flight on Google Flights”) or a URL. AutoBrowse creates a task definition in <code class="language-plaintext highlighter-rouge">./autobrowse/tasks/&lt;task&gt;/task.md</code> that specifies the URL, inputs, steps, and expected JSON output.</p>
-  </li>
-  <li>
-    <p><strong>Inner Agent Execution</strong> – The inner agent runs <code class="language-plaintext highlighter-rouge">evaluate.mjs</code> which launches a browser session, follows the current strategy, and records every action. It writes a full trace to <code class="language-plaintext highlighter-rouge">./autobrowse/traces/&lt;task&gt;/latest/</code> including screenshots, accessibility tree snapshots, and a summary with duration, cost, and turn count.</p>
-  </li>
-  <li>
-    <p><strong>Trace Analysis</strong> – The outer agent reads the trace summary and identifies exactly where things went wrong. It looks for specific failure patterns: elements not found, timing issues, incorrect selectors, or bot detection triggers.</p>
-  </li>
-  <li>
-    <p><strong>Hypothesis Formation</strong> – Based on the trace analysis, the outer agent forms a single, testable hypothesis. For example: “After clicking the dropdown, wait 1 second – options animate in before they are clickable” or “Navigate directly to <code class="language-plaintext highlighter-rouge">/pay-invoice/</code> instead of going through the landing page.”</p>
-  </li>
-  <li>
-    <p><strong>Strategy Update</strong> – The outer agent edits <code class="language-plaintext highlighter-rouge">strategy.md</code> to incorporate the hypothesis while keeping everything that worked in previous iterations. Good strategies include fast paths (direct URLs), step-by-step workflows with timing notes, site-specific selector knowledge, and failure recovery procedures.</p>
-  </li>
-  <li>
-    <p><strong>Iteration and Graduation</strong> – The loop runs for a configurable number of iterations (default: 5). If the task passes on 2 or more of the last 3 iterations, the skill graduates and is installed to <code class="language-plaintext highlighter-rouge">~/.claude/skills/&lt;task-name&gt;/SKILL.md</code> as a permanent, self-contained skill.</p>
-  </li>
-</ol>
-
-<p><strong>Multi-Task Parallel Execution</strong></p>
-
-<p>AutoBrowse also supports running multiple tasks in parallel using sub-agents. Each sub-agent runs the full evaluate-improve loop independently for its assigned task, and the main agent collects results into a structured session report with per-task pass rates, costs, and key learnings.</p>
-
-<blockquote>
-  <p><strong>Important:</strong> AutoBrowse’s self-improving loop is a breakthrough in browser automation – the inner agent browses and the outer agent reads traces and improves strategy, creating skills that get better with each iteration until they reliably pass.</p>
-</blockquote>
-
-<p><img src="/assets/img/diagrams/browserbase-skills/browserbase-skills-dual-env.svg" alt="Dual Environment System" /></p>
-
-<h3 id="dual-environment-local-and-remote-browser-control">Dual Environment: Local and Remote Browser Control</h3>
-
-<p>One of the most powerful features of Browserbase Skills is its seamless dual-environment system. The same browse commands work identically whether you are running a local Chrome instance or a remote Browserbase cloud session.</p>
-
-<p><strong>Local Mode</strong></p>
-
-<p>Local mode is the default for development and trusted sites. It offers three variants:</p>
-
-<ul>
-  <li><code class="language-plaintext highlighter-rouge">browse env local</code> – Starts a clean, isolated local browser. Best for reproducible testing and localhost development.</li>
-  <li><code class="language-plaintext highlighter-rouge">browse env local --auto-connect</code> – Reuses an already-running debuggable Chrome instance with your existing cookies and login state. Falls back to isolated mode if nothing is available.</li>
-  <li><code class="language-plaintext highlighter-rouge">browse env local &lt;port|url&gt;</code> – Attaches to a specific Chrome DevTools Protocol (CDP) target. Useful for connecting to an already-running browser on a specific port.</li>
-</ul>
-
-<p>Local mode is faster, requires no API key, and is ideal for development, localhost testing, and browsing simple sites like documentation wikis and public APIs.</p>
-
-<p><strong>Remote Mode (Browserbase Cloud)</strong></p>
-
-<p>Remote mode activates Browserbase’s cloud infrastructure with a single command: <code class="language-plaintext highlighter-rouge">browse env remote</code>. This provides:</p>
-
-<ul>
-  <li><strong>Anti-bot stealth</strong> – Custom Chromium build with anti-fingerprinting that bypasses bot detection systems</li>
-  <li><strong>Automatic CAPTCHA solving</strong> – Handles reCAPTCHA, hCaptcha, and Turnstile challenges automatically</li>
-  <li><strong>Residential proxies</strong> – Route traffic through residential IPs in 201 countries with geo-targeting</li>
-  <li><strong>Session persistence</strong> – Cookies and authentication state persist across sessions via Browserbase contexts</li>
-  <li><strong>Cookie sync</strong> – The <code class="language-plaintext highlighter-rouge">cookie-sync</code> skill transfers your local Chrome cookies to a Browserbase context, so remote sessions start already authenticated</li>
-</ul>
-
-<p><strong>When to Switch Environments</strong></p>
-
-<p>The system provides clear guidance on when to use each mode:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Scenario</th>
-      <th>Recommended Mode</th>
-      <th>Command</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Localhost development</td>
-      <td>Local (isolated)</td>
-      <td><code class="language-plaintext highlighter-rouge">browse env local</code></td>
-    </tr>
-    <tr>
-      <td>Reuse local login state</td>
-      <td>Local (auto-connect)</td>
-      <td><code class="language-plaintext highlighter-rouge">browse env local --auto-connect</code></td>
-    </tr>
-    <tr>
-      <td>Simple browsing (docs, wikis)</td>
-      <td>Local (isolated)</td>
-      <td><code class="language-plaintext highlighter-rouge">browse env local</code></td>
-    </tr>
-    <tr>
-      <td>Protected sites (CAPTCHAs, bot detection)</td>
-      <td>Remote</td>
-      <td><code class="language-plaintext highlighter-rouge">browse env remote</code></td>
-    </tr>
-    <tr>
-      <td>Geo-restricted content</td>
-      <td>Remote</td>
-      <td><code class="language-plaintext highlighter-rouge">browse env remote</code></td>
-    </tr>
-    <tr>
-      <td>Production scraping</td>
-      <td>Remote</td>
-      <td><code class="language-plaintext highlighter-rouge">browse env remote</code></td>
-    </tr>
-  </tbody>
-</table>
-
-<blockquote>
-  <p><strong>Important:</strong> The dual-environment design means you can develop and test locally with <code class="language-plaintext highlighter-rouge">browse env local</code>, then switch to <code class="language-plaintext highlighter-rouge">browse env remote</code> for production work – all with the same commands, no code changes required.</p>
-</blockquote>
-
-<h2 id="installation">Installation</h2>
-
-<p>Installing Browserbase Skills takes just one command. The system supports multiple installation methods depending on your preferred workflow.</p>
-
-<h3 id="quick-install-all-agents">Quick Install (All Agents)</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx skills add browserbase/skills
-</code></pre></div></div>
-
-<h3 id="claude-code-plugin-install">Claude Code Plugin Install</h3>
-
-<p>On Claude Code, add the marketplace and install the plugin:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/plugin marketplace add browserbase/skills
-</code></pre></div></div>
-
-<p>Then install the browse plugin:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/plugin <span class="nb">install </span>browse@browserbase
-</code></pre></div></div>
-
-<h3 id="manual-install-claude-code">Manual Install (Claude Code)</h3>
-
-<ol>
-  <li>On Claude Code, type <code class="language-plaintext highlighter-rouge">/plugin</code></li>
-  <li>Select option <code class="language-plaintext highlighter-rouge">3. Add marketplace</code></li>
-  <li>Enter the marketplace source: <code class="language-plaintext highlighter-rouge">browserbase/skills</code></li>
-  <li>Press enter to select the <code class="language-plaintext highlighter-rouge">browse</code> plugin</li>
-  <li>Hit enter again to <code class="language-plaintext highlighter-rouge">Install now</code></li>
-  <li><strong>Restart Claude Code</strong> for changes to take effect</li>
-</ol>
-
-<h3 id="prerequisites">Prerequisites</h3>
-
-<ul>
-  <li><strong>Node.js 18+</strong> is required for the browse CLI and AutoBrowse</li>
-  <li><strong>Chrome/Chromium</strong> must be installed for local mode browsing</li>
-  <li><strong>Browserbase API key</strong> is needed for remote mode (get one at https://browserbase.com/settings)</li>
-  <li><strong>ANTHROPIC_API_KEY</strong> is required for AutoBrowse’s inner agent</li>
-</ul>
-
-<h3 id="install-the-browse-cli">Install the Browse CLI</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install</span> <span class="nt">-g</span> @browserbasehq/browse-cli
-</code></pre></div></div>
-
-<h3 id="verify-installation">Verify Installation</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>which browse
-browse status
-</code></pre></div></div>
-
-<h2 id="usage-examples">Usage Examples</h2>
-
-<p>Once installed, you can ask Claude to perform browser tasks using natural language:</p>
-
-<ul>
-  <li>“Go to Hacker News, get the top post comments, and summarize them”</li>
-  <li>“QA test http://localhost:3000 and fix any bugs you encounter”</li>
-  <li>“Order me a pizza, you’re already signed in on Doordash”</li>
-  <li>“Use <code class="language-plaintext highlighter-rouge">bb</code> to list my Browserbase projects and show the output as JSON”</li>
-  <li>“Initialize a new Browserbase Function with <code class="language-plaintext highlighter-rouge">bb functions init</code> and explain the next commands”</li>
-</ul>
-
-<h3 id="basic-browser-workflow">Basic Browser Workflow</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Start with local mode for development</span>
-browse <span class="nb">env local</span>
-
-<span class="c"># Navigate to a page</span>
-browse open https://example.com
-
-<span class="c"># Get the accessibility tree (preferred over screenshots)</span>
-browse snapshot
-
-<span class="c"># Click an element by its ref from the snapshot</span>
-browse click @0-5
-
-<span class="c"># Fill a form field</span>
-browse fill <span class="s2">"#email"</span> <span class="s2">"user@example.com"</span>
-
-<span class="c"># Get the page title</span>
-browse get title
-
-<span class="c"># Stop the browser when done</span>
-browse stop
-</code></pre></div></div>
-
-<h3 id="switching-to-remote-mode">Switching to Remote Mode</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Switch to Browserbase cloud for protected sites</span>
-browse <span class="nb">env </span>remote
-
-<span class="c"># Open a page with an authenticated context</span>
-browse open https://protected-site.com <span class="nt">--context-id</span> ctx_abc123 <span class="nt">--persist</span>
-
-<span class="c"># Take a snapshot</span>
-browse snapshot
-
-<span class="c"># Stop the session</span>
-browse stop
-</code></pre></div></div>
-
-<h2 id="key-features">Key Features</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Feature</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>13 Specialized Skills</td>
-      <td>Complete coverage from basic browsing to self-improving automation</td>
-    </tr>
-    <tr>
-      <td>Dual Environment</td>
-      <td>Seamless switching between local Chrome and Browserbase cloud</td>
-    </tr>
-    <tr>
-      <td>Accessibility-First</td>
-      <td>Uses accessibility tree snapshots instead of screenshots for faster, more reliable interaction</td>
-    </tr>
-    <tr>
-      <td>AutoBrowse Loop</td>
-      <td>Self-improving browser automation that iterates until skills reliably pass</td>
-    </tr>
-    <tr>
-      <td>Anti-Bot Stealth</td>
-      <td>Custom Chromium with anti-fingerprinting for bypassing bot detection</td>
-    </tr>
-    <tr>
-      <td>CAPTCHA Solving</td>
-      <td>Automatic reCAPTCHA, hCaptcha, and Turnstile solving</td>
-    </tr>
-    <tr>
-      <td>Residential Proxies</td>
-      <td>201 countries with geo-targeting for accessing geo-restricted content</td>
-    </tr>
-    <tr>
-      <td>Cookie Sync</td>
-      <td>Transfer local Chrome cookies to Browserbase contexts for authenticated remote sessions</td>
-    </tr>
-    <tr>
-      <td>UI Testing</td>
-      <td>Adversarial AI-powered testing that tries to break your application</td>
-    </tr>
-    <tr>
-      <td>Browser Tracing</td>
-      <td>Full CDP trace capture with per-page bisection for debugging</td>
-    </tr>
-    <tr>
-      <td>Serverless Functions</td>
-      <td>Deploy browser automation to Browserbase cloud as serverless functions</td>
-    </tr>
-    <tr>
-      <td>Daemon Architecture</td>
-      <td>Persistent browse CLI daemon that auto-starts and manages sessions</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="troubleshooting">Troubleshooting</h2>
-
-<p><strong>Chrome not found:</strong> Install Chrome for your platform:</p>
-<ul>
-  <li>macOS or Windows: https://www.google.com/chrome/</li>
-  <li>Linux: <code class="language-plaintext highlighter-rouge">sudo apt install google-chrome-stable</code></li>
-</ul>
-
-<p><strong>Profile refresh:</strong> To refresh cookies from your main Chrome profile:</p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">rm</span> <span class="nt">-rf</span> .chrome-profile
-</code></pre></div></div>
-
-<p><strong>No active page:</strong> Run <code class="language-plaintext highlighter-rouge">browse stop</code>, then check <code class="language-plaintext highlighter-rouge">browse status</code>. If it still says running, kill the zombie daemon:</p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pkill <span class="nt">-f</span> <span class="s2">"browse.*daemon"</span>
-</code></pre></div></div>
-
-<p><strong>Browserbase fails:</strong> Verify your API key is set:</p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">echo</span> <span class="nv">$BROWSERBASE_API_KEY</span>
-</code></pre></div></div>
-
-<h2 id="links">Links</h2>
-
-<ul>
-  <li><strong>GitHub Repository:</strong> <a href="https://github.com/browserbase/skills">https://github.com/browserbase/skills</a></li>
-  <li><strong>Browserbase Website:</strong> <a href="https://www.browserbase.com">https://www.browserbase.com</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Developer Tools" /><category term="Web Automation" /><category term="Browserbase" /><category term="Claude Code" /><category term="web automation" /><category term="browser skills" /><category term="AI agent" /><category term="AutoBrowse" /><category term="browser testing" /><category term="MCP" /><category term="developer tools" /><category term="open source" /><summary type="html"><![CDATA[Learn how Browserbase Skills transforms Claude Code into a web automation powerhouse with 13 specialized skills, AutoBrowse self-improving loops, and dual-environment browser control for local and remote execution.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Developer Tools" /><category term="Open Source" /><category term="Symphony" /><category term="OpenAI" /><category term="coding agent" /><category term="orchestration" /><category term="Elixir" /><category term="OTP" /><category term="Linear integration" /><category term="autonomous agents" /><category term="agent orchestration" /><category term="WORKFLOW.md" /><summary type="html"><![CDATA[Learn how OpenAI Symphony orchestrates coding agents to manage project work autonomously. Explore its 6-layer architecture, 5-state machine, WORKFLOW.md hot-reload config, and Elixir/OTP reference implementation.]]></summary></entry></feed>
