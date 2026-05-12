@@ -1,4 +1,354 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-05-11T14:49:59+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling</title><link href="https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform/" rel="alternate" type="text/html" title="CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling" /><published>2026-05-11T00:00:00+00:00</published><updated>2026-05-11T00:00:00+00:00</updated><id>https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform</id><content type="html" xml:base="https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform/"><![CDATA[<h1 id="cyberverse-open-source-digital-human-agent-platform-with-real-time-video-calling">CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-05-12T00:15:54+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">vLLM: High-Throughput LLM Inference Engine with PagedAttention</title><link href="https://pyshine.com/vLLM-High-Throughput-LLM-Inference-Engine/" rel="alternate" type="text/html" title="vLLM: High-Throughput LLM Inference Engine with PagedAttention" /><published>2026-05-12T00:00:00+00:00</published><updated>2026-05-12T00:00:00+00:00</updated><id>https://pyshine.com/vLLM-High-Throughput-LLM-Inference-Engine</id><content type="html" xml:base="https://pyshine.com/vLLM-High-Throughput-LLM-Inference-Engine/"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>vLLM is a high-throughput and memory-efficient inference and serving engine for large language models that has fundamentally transformed how organizations deploy LLM inference at scale. Originally developed at UC Berkeley’s Sky Computing Lab, vLLM was published at ACM SOSP 2023 with its groundbreaking PagedAttention paper, which introduced a novel approach to KV cache management inspired by operating system virtual memory. Today, vLLM boasts over 2000 contributors and supports more than 200 model architectures, making it one of the most widely adopted open-source LLM serving frameworks in the world. Its tagline – “Easy, fast, and cheap LLM serving for everyone” – captures the project’s mission to democratize access to efficient LLM deployment.</p>
+
+<p>Before vLLM, traditional LLM serving systems suffered from severe GPU memory waste due to KV cache fragmentation. Pre-allocating contiguous memory blocks for each request’s key-value cache meant that 60-80% of GPU memory went unused, dramatically limiting the number of concurrent requests a single GPU could handle. vLLM’s PagedAttention mechanism eliminates this waste by applying virtual memory paging concepts to KV cache management, enabling near-full GPU memory utilization and achieving throughput improvements of 2-4x over existing systems.</p>
+
+<blockquote>
+  <p><strong>Key Insight:</strong> vLLM’s PagedAttention eliminates the 60-80% memory waste traditionally caused by KV cache fragmentation, enabling near-full GPU memory utilization for inference workloads.</p>
+</blockquote>
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<p><img src="/assets/img/diagrams/vllm/vllm-architecture.svg" alt="vLLM Architecture" /></p>
+
+<p>The vLLM architecture follows a layered design that cleanly separates the API serving layer from the core inference engine, enabling both online serving and offline batch inference through a unified codebase. At the top of the stack sits the <strong>API Server Layer</strong>, built on FastAPI and uvicorn, which exposes OpenAI-compatible endpoints for chat completions, text completions, embeddings, and more. This layer handles HTTP request parsing, authentication, and response streaming, making it trivial to migrate existing applications from OpenAI’s API to a self-hosted vLLM deployment.</p>
+
+<p>Beneath the API server lies the <strong>AsyncLLM Engine</strong>, which serves as the asynchronous bridge between the API layer and the core inference engine. Communication between the API server process and the engine core process uses ZMQ IPC with Msgpack serialization, providing low-latency message passing without the overhead of HTTP. The AsyncLLM Engine manages a coroutine-based request queue, allowing it to handle thousands of concurrent connections efficiently while forwarding requests to the EngineCore for processing.</p>
+
+<p>The <strong>EngineCore</strong> is the heart of vLLM, running a tight busy loop: <code class="language-plaintext highlighter-rouge">schedule -&gt; execute -&gt; output</code>. On each iteration, the scheduler determines which requests to advance, the model executor runs the forward pass on the GPU, and the output is processed to generate new tokens. This iteration-level scheduling granularity is what enables continuous batching – new requests can be injected into the running batch at any step, rather than waiting for the entire batch to complete.</p>
+
+<p>The <strong>Scheduler</strong> operates at the token level rather than the request level, managing a token budget per step and deciding which requests from the RUNNING and WAITING queues should be scheduled. When GPU memory is insufficient for all pending requests, the scheduler preempts the lowest-priority requests by swapping their KV cache to CPU memory or recomputing their state later.</p>
+
+<p>The <strong>KV Cache Manager</strong> maintains a BlockPool that tracks all physical GPU memory blocks available for KV cache storage. It supports prefix caching through block hashing (using sha256_cbor or xxhash_cbor algorithms), allowing requests that share common system prompts to reuse cached KV blocks via copy-on-write semantics. This dramatically reduces the computational cost of processing repeated prompt prefixes.</p>
+
+<p>The <strong>Executor</strong> layer abstracts the hardware execution backend. vLLM supports three executor types: UniProcExecutor for single-GPU inference, MultiprocExecutor for multi-GPU tensor parallelism on a single node, and RayDistributedExecutor for distributed inference across multiple nodes. Each executor manages worker processes that run the actual model computation.</p>
+
+<p>The <strong>GPU Model Runner</strong> handles the actual forward pass execution, managing block tables that map virtual KV cache blocks to physical memory locations, and selecting the appropriate attention backend (FlashAttention, FlashInfer, Triton, or ROCm AITER) based on the available hardware and model configuration.</p>
+
+<p>vLLM supports a wide range of hardware platforms including NVIDIA GPUs (CUDA), AMD GPUs (ROCm), Intel accelerators (XPU), Google TPUs, and AWS Trainium/Inferentia, making it one of the most portable LLM serving engines available.</p>
+
+<p>The following code snippet shows the core EngineCore step loop, which drives the entire inference pipeline on each iteration:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">EngineCoreOutputs</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+    <span class="n">scheduler_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">schedule</span><span class="p">()</span>
+    <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model_executor</span><span class="p">.</span><span class="n">execute_model</span><span class="p">(</span><span class="n">scheduler_output</span><span class="p">,</span> <span class="n">non_block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">grammar_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">get_grammar_bitmask</span><span class="p">(</span><span class="n">scheduler_output</span><span class="p">)</span>
+    <span class="n">model_output</span> <span class="o">=</span> <span class="n">future</span><span class="p">.</span><span class="n">result</span><span class="p">()</span>
+    <span class="n">engine_core_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">update_from_output</span><span class="p">(</span>
+        <span class="n">scheduler_output</span><span class="p">,</span> <span class="n">model_output</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">engine_core_outputs</span><span class="p">,</span> <span class="n">scheduler_output</span><span class="p">.</span><span class="n">total_num_scheduled_tokens</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</code></pre></div></div>
+
+<h2 id="pagedattention-the-core-innovation">PagedAttention: The Core Innovation</h2>
+
+<p><img src="/assets/img/diagrams/vllm/vllm-paged-attention.svg" alt="PagedAttention Mechanism" /></p>
+
+<p>PagedAttention is the foundational innovation that sets vLLM apart from all other LLM serving engines. The core insight is remarkably elegant: apply the same virtual memory paging concept that operating systems have used for decades to manage physical RAM, but instead apply it to the KV cache stored in GPU memory. In traditional LLM serving, each request’s KV cache must be stored in contiguous memory, leading to severe fragmentation because the maximum sequence length is unknown at allocation time. Systems typically over-provision memory for each request, reserving space for the worst-case sequence length, which wastes 60-80% of GPU memory.</p>
+
+<p>PagedAttention solves this by dividing the KV cache into fixed-size <strong>virtual blocks</strong>, each typically containing tokens for 16 sequence positions. These virtual blocks are mapped to <strong>physical blocks</strong> in GPU memory through a <strong>Block Table</strong>, analogous to the page table in an operating system. Because physical blocks do not need to be contiguous, the system can allocate them on-demand as a request generates more tokens, eliminating the need for pre-allocation and dramatically reducing memory waste.</p>
+
+<p>The <strong>Block Table</strong> is the central data structure that makes this mapping possible. Each request maintains its own block table, which maps its virtual block indices to physical block IDs in GPU memory. During the attention computation, the GPU kernel reads the block table to locate the physical memory addresses of each token’s key and value vectors, performing attention over non-contiguous memory regions efficiently.</p>
+
+<p><strong>Block sharing</strong> with reference counting enables powerful optimizations. When multiple requests share a common prompt prefix (such as a system prompt), they can share the same physical blocks by simply pointing their block table entries to the same physical block IDs. A reference counter on each physical block tracks how many requests are using it. When a request needs to modify a shared block (during copy-on-write), the system allocates a new physical block, copies the data, and decrements the reference count on the original block. This is identical to how operating systems handle shared memory pages.</p>
+
+<p><strong>Prefix caching</strong> extends block sharing by computing a hash of each block’s content using either the sha256_cbor or xxhash_cbor algorithm. When a new request arrives, the KV Cache Manager computes hashes for each block of the prompt and checks whether matching blocks already exist in the cache. If a cache hit occurs, the request reuses the existing physical blocks without recomputing the key-value pairs, saving significant GPU compute time for repeated prompt prefixes.</p>
+
+<p>The <strong>KVCacheBlock</strong> data structure is the fundamental unit of memory management in vLLM. Each block tracks its physical block ID, a reference count for copy-on-write semantics, a block hash for prefix caching lookups, and doubly-linked list pointers for the free block queue. When a block is freed (its reference count drops to zero), it is added to the tail of the free block queue, implementing a least-recently-used (LRU) eviction policy.</p>
+
+<p>The <strong>BlockPool</strong> manages the pool of all physical blocks, maintaining a free block queue as a doubly-linked list. When a new block is needed, it is dequeued from the head of the free list. When a block is released, it is appended to the tail. This LRU ordering ensures that the most recently freed blocks are the last to be evicted, maximizing cache hit rates for prefix caching.</p>
+
+<p>vLLM also supports <strong>KV cache quantization</strong> to further reduce memory consumption. Supported quantization modes include FP8 (both E4M3 and E5M2 formats with static or dynamic scaling), INT8, and NVFP4. These modes compress the key and value vectors stored in the KV cache, allowing longer sequences or more concurrent requests to fit within the same GPU memory budget, with minimal impact on model accuracy.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">KVCacheBlock</span><span class="p">:</span>
+    <span class="n">block_id</span><span class="p">:</span> <span class="nb">int</span>           <span class="c1"># Physical block ID
+</span>    <span class="n">ref_cnt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>        <span class="c1"># Reference count (copy-on-write)
+</span>    <span class="n">_block_hash</span><span class="p">:</span> <span class="n">BlockHashWithGroupId</span> <span class="o">|</span> <span class="bp">None</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># Hash for prefix caching
+</span>    <span class="n">prev_free_block</span><span class="p">:</span> <span class="s">"KVCacheBlock | None"</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c1"># Doubly linked list
+</span>    <span class="n">next_free_block</span><span class="p">:</span> <span class="s">"KVCacheBlock | None"</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">is_null</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span>   <span class="c1"># Null block placeholder
+</span></code></pre></div></div>
+
+<blockquote>
+  <p><strong>Amazing:</strong> PagedAttention applies the same virtual memory paging concept used in operating systems to KV cache management, allowing non-contiguous memory allocation and block sharing across requests - reducing memory waste from 60-80% to near zero.</p>
+</blockquote>
+
+<h2 id="continuous-batching">Continuous Batching</h2>
+
+<p><img src="/assets/img/diagrams/vllm/vllm-continuous-batching.svg" alt="Continuous Batching Flow" /></p>
+
+<p>Continuous batching is the scheduling paradigm that enables vLLM to achieve its remarkable throughput numbers. Unlike traditional LLM serving systems that operate in discrete phases – a prefill phase where all requests in a batch process their prompts, followed by a decode phase where all requests generate tokens – vLLM eliminates the rigid boundary between these phases entirely. Instead, it performs token-level scheduling at every iteration, allowing the scheduler to mix prefill and decode operations freely within a single step.</p>
+
+<p>On each scheduling iteration, the scheduler first processes <strong>RUNNING</strong> requests – those that are already in the middle of generation. These include requests that are decoding (generating one new token per step) and requests that are in the middle of a chunked prefill (processing a long prompt in multiple steps). Running requests are given priority because they already have KV cache blocks allocated in GPU memory, and preempting them would waste the compute already invested.</p>
+
+<p>Next, the scheduler considers <strong>WAITING</strong> requests – new arrivals that have not yet been scheduled. For each waiting request, the scheduler performs a prefix cache lookup to determine how many of the prompt tokens already have cached KV blocks. If a cache hit is found, the request only needs to process the uncached suffix, saving both compute and memory. The scheduler then checks whether there is sufficient token budget and available KV cache blocks to admit the waiting request into the running batch.</p>
+
+<p><strong>Token budget management</strong> is critical to maintaining stable performance. The scheduler maintains a maximum number of tokens that can be processed in a single step, which is determined by the GPU memory capacity and the model configuration. If adding a new request would exceed the token budget, the scheduler defers it to the next iteration. This prevents out-of-memory errors and ensures that each step completes within a predictable time bound.</p>
+
+<p>When the number of available KV cache blocks is insufficient to accommodate all running and waiting requests, the scheduler performs <strong>preemption</strong>. It identifies the lowest-priority requests (typically the most recently admitted ones) and either swaps their KV cache to CPU memory or simply drops them, forcing recomputation when they are rescheduled. Preemption ensures that the highest-priority requests continue to make progress even under memory pressure.</p>
+
+<p><strong>Chunked prefill</strong> is another important optimization for handling long prompts. Rather than processing an entire long prompt in a single step (which would consume a large portion of the token budget and delay all other requests), the scheduler can split the prefill across multiple steps. Each step processes a chunk of the prompt tokens, interleaving the chunked prefill with ongoing decode operations. This prevents long prompts from causing latency spikes for shorter requests that are already generating tokens.</p>
+
+<p>The request lifecycle in vLLM follows a clear state machine: a new request enters the <strong>WAITING</strong> state, transitions to <strong>RUNNING</strong> when the scheduler admits it, and finally reaches <strong>FINISHED</strong> when the model generates an end-of-sequence token or the maximum token limit is reached. At each iteration, the scheduler evaluates all requests and updates their states accordingly, ensuring that GPU resources are always fully utilized.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SchedulerOutput</span><span class="p">:</span>
+    <span class="c1"># No "decoding phase" nor "prefill phase"
+</span>    <span class="c1"># Just token-level scheduling
+</span>    <span class="c1"># 1. Schedule RUNNING requests (decode + ongoing prefill)
+</span>    <span class="c1"># 2. Schedule WAITING requests (new prefill)
+</span>    <span class="c1"># 3. Preempt if blocks insufficient
+</span></code></pre></div></div>
+
+<blockquote>
+  <p><strong>Takeaway:</strong> vLLM’s continuous batching eliminates the rigid prefill-decode phase boundaries found in traditional serving systems, allowing new requests to enter the batch at any iteration - dramatically improving GPU utilization and reducing latency.</p>
+</blockquote>
+
+<h2 id="distributed-inference">Distributed Inference</h2>
+
+<p>As language models grow larger – with models like Llama 3.1 405B and DeepSeek-V3 requiring hundreds of gigabytes of parameters – distributing inference across multiple GPUs and nodes becomes essential. vLLM provides a comprehensive set of parallelism strategies to handle models of any size.</p>
+
+<p><strong>Tensor Parallelism (TP)</strong> splits individual model weight matrices across multiple GPUs, with each GPU computing a portion of the matrix multiplication and then synchronizing the results via all-reduce operations. This is the most common parallelism strategy for LLM inference, as it reduces the per-GPU memory requirement and can accelerate computation for large layers. vLLM supports TP within a single node (using NCCL for communication) and across nodes (using Ray for process management).</p>
+
+<p><strong>Pipeline Parallelism (PP)</strong> divides the model layers across GPUs, with each GPU responsible for a contiguous group of layers. Requests flow through the pipeline stage by stage, with a batch queue managing the flow between stages. While PP introduces pipeline bubbles (periods where some GPUs are idle), it requires less inter-GPU communication than TP, making it suitable for multi-node deployments where network bandwidth is limited.</p>
+
+<p><strong>Data Parallelism (DP)</strong> replicates the entire model across multiple nodes, with each node processing a different subset of requests. This is the simplest form of parallelism and is ideal when the model fits on a single node but you need to increase overall throughput. vLLM’s DP implementation includes load balancing across replicas.</p>
+
+<p><strong>Expert Parallelism (EP)</strong> is designed specifically for Mixture-of-Experts (MoE) models, where different experts within a layer can be placed on different GPUs. Each token is routed to the appropriate expert based on the router’s output, with all-to-all communication to distribute tokens and gather results. EP is critical for serving large MoE models like Mixtral and DeepSeek-V3 efficiently.</p>
+
+<p><strong>Context Parallelism</strong> comes in two flavors: Prefill Context Parallelism (PCP) splits the prefill computation across ranks for very long prompts, and Decode Context Parallelism (DCP) splits the decode attention across ranks. These strategies are particularly useful for models with very long context windows.</p>
+
+<p><strong>Disaggregated Prefill/Decode</strong> is an advanced deployment pattern where separate vLLM instances handle prefill and decode operations. Prefill instances are optimized for compute throughput (processing long prompts quickly), while decode instances are optimized for low-latency token generation. KV cache blocks are transferred from prefill to decode instances over high-speed interconnects, allowing each instance type to be right-sized for its workload.</p>
+
+<p>The executor backend selection determines how vLLM manages distributed processes:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">@</span><span class="nb">staticmethod</span>
+<span class="k">def</span> <span class="nf">get_class</span><span class="p">(</span><span class="n">vllm_config</span><span class="p">:</span> <span class="n">VllmConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="s">"Executor"</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">distributed_executor_backend</span> <span class="o">==</span> <span class="s">"ray"</span><span class="p">:</span>
+        <span class="n">executor_class</span> <span class="o">=</span> <span class="n">RayDistributedExecutor</span>
+    <span class="k">elif</span> <span class="n">distributed_executor_backend</span> <span class="o">==</span> <span class="s">"mp"</span><span class="p">:</span>
+        <span class="n">executor_class</span> <span class="o">=</span> <span class="n">MultiprocExecutor</span>
+    <span class="k">elif</span> <span class="n">distributed_executor_backend</span> <span class="o">==</span> <span class="s">"uni"</span><span class="p">:</span>
+        <span class="n">executor_class</span> <span class="o">=</span> <span class="n">UniProcExecutor</span>
+</code></pre></div></div>
+
+<h2 id="quantization-support">Quantization Support</h2>
+
+<p>Quantization is essential for deploying large language models on limited GPU memory. vLLM supports over 20 quantization methods, covering both weight quantization (reducing model size) and KV cache quantization (reducing memory usage during inference). The following table summarizes the major quantization methods supported by vLLM:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Type</th>
+      <th>Bits</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FP8 (E4M3/E5M2)</td>
+      <td>Weight + KV</td>
+      <td>8</td>
+      <td>Static or dynamic scaling per tensor/channel</td>
+    </tr>
+    <tr>
+      <td>GPTQ / GPTQ-Marlin</td>
+      <td>Weight</td>
+      <td>4</td>
+      <td>Marlin kernel for fast 4-bit inference</td>
+    </tr>
+    <tr>
+      <td>AWQ / AWQ-Marlin / AWQ-Triton</td>
+      <td>Weight</td>
+      <td>4</td>
+      <td>Activation-aware weight quantization</td>
+    </tr>
+    <tr>
+      <td>GGUF</td>
+      <td>Weight</td>
+      <td>2-8</td>
+      <td>Compatible with llama.cpp format</td>
+    </tr>
+    <tr>
+      <td>bitsandbytes</td>
+      <td>Weight</td>
+      <td>4/8</td>
+      <td>NF4 and INT4/INT8 quantization</td>
+    </tr>
+    <tr>
+      <td>compressed-tensors</td>
+      <td>Weight</td>
+      <td>Variable</td>
+      <td>Neural Magic format support</td>
+    </tr>
+    <tr>
+      <td>ModelOpt</td>
+      <td>Weight</td>
+      <td>4/8</td>
+      <td>NVIDIA Model Optimizer integration</td>
+    </tr>
+    <tr>
+      <td>TorchAO</td>
+      <td>Weight</td>
+      <td>Variable</td>
+      <td>PyTorch native quantization</td>
+    </tr>
+    <tr>
+      <td>MXFP4 / NVFP4</td>
+      <td>Weight + KV</td>
+      <td>4</td>
+      <td>Microscaling formats for Blackwell GPUs</td>
+    </tr>
+    <tr>
+      <td>INT8 experts</td>
+      <td>Weight</td>
+      <td>8</td>
+      <td>Specialized for MoE expert layers</td>
+    </tr>
+    <tr>
+      <td>KV Cache FP8</td>
+      <td>KV Cache</td>
+      <td>8</td>
+      <td>Reduces KV cache memory by 50%</td>
+    </tr>
+    <tr>
+      <td>KV Cache INT8</td>
+      <td>KV Cache</td>
+      <td>8</td>
+      <td>Alternative 8-bit KV cache compression</td>
+    </tr>
+    <tr>
+      <td>KV Cache NVFP4</td>
+      <td>KV Cache</td>
+      <td>4</td>
+      <td>Maximum KV cache compression for Blackwell</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  <p><strong>Important:</strong> vLLM supports 20+ quantization methods including weight quantization and KV cache quantization, enabling deployment of large models on limited GPU memory with minimal accuracy loss.</p>
+</blockquote>
+
+<h2 id="openai-compatible-api-server">OpenAI-Compatible API Server</h2>
+
+<p>One of vLLM’s most practical features is its drop-in compatible OpenAI API server. This means any application built against the OpenAI API can be pointed at a vLLM server with a simple base URL change, requiring zero code modifications. The server supports the following endpoints:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">/v1/chat/completions</code> – Chat completion with conversation history</li>
+  <li><code class="language-plaintext highlighter-rouge">/v1/completions</code> – Text completion for single prompts</li>
+  <li><code class="language-plaintext highlighter-rouge">/v1/models</code> – List available models</li>
+  <li><code class="language-plaintext highlighter-rouge">/v1/embeddings</code> – Text embedding generation</li>
+</ul>
+
+<p>Additionally, vLLM provides extended endpoints for tokenization (<code class="language-plaintext highlighter-rouge">/tokenize</code>, <code class="language-plaintext highlighter-rouge">/detokenize</code>), scoring (<code class="language-plaintext highlighter-rouge">/score</code>), speech-to-text, and a realtime API for streaming interactions. For teams already using Anthropic’s API, vLLM also offers Anthropic Messages API compatibility. A gRPC endpoint is available for high-performance programmatic access.</p>
+
+<p>Starting the server is straightforward:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Start OpenAI-compatible server</span>
+vllm serve meta-llama/Llama-3.1-8B-Instruct
+
+<span class="c"># Or with Python</span>
+python <span class="nt">-m</span> vllm.entrypoints.openai.api_server <span class="nt">--model</span> meta-llama/Llama-3.1-8B-Instruct
+</code></pre></div></div>
+
+<p>Once the server is running, you can use the standard OpenAI Python client to interact with it:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s">"http://localhost:8000/v1"</span><span class="p">,</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="s">"your-api-key"</span>
+<span class="p">)</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">chat</span><span class="p">.</span><span class="n">completions</span><span class="p">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s">"meta-llama/Llama-3.1-8B-Instruct"</span><span class="p">,</span>
+    <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s">"role"</span><span class="p">:</span> <span class="s">"user"</span><span class="p">,</span> <span class="s">"content"</span><span class="p">:</span> <span class="s">"Hello!"</span><span class="p">}]</span>
+<span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">message</span><span class="p">.</span><span class="n">content</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This compatibility layer makes vLLM an ideal choice for organizations that want to self-host LLM inference while maintaining the ability to switch between OpenAI’s cloud API and their own infrastructure without modifying application code.</p>
+
+<h2 id="integration-ecosystem">Integration Ecosystem</h2>
+
+<p><img src="/assets/img/diagrams/vllm/vllm-ecosystem.svg" alt="vLLM Ecosystem" /></p>
+
+<p>vLLM’s success is not just about its core inference engine – it is the rich ecosystem of integrations that makes it the de facto standard for LLM serving. The ecosystem spans framework integrations, hardware platforms, attention backends, speculative decoding strategies, structured output engines, and adapter support, creating a comprehensive platform that fits into virtually any AI infrastructure.</p>
+
+<p><strong>Framework integrations</strong> connect vLLM to the broader AI development ecosystem. LangChain and LlamaIndex, two of the most popular frameworks for building LLM-powered applications, both provide native vLLM integration, allowing developers to use vLLM as the inference backend within their agent and RAG pipelines. Ray integration enables distributed deployment and autoscaling of vLLM instances, making it easy to serve models at production scale. HuggingFace integration provides seamless model loading from the Hub, supporting automatic downloading, caching, and configuration of model weights and tokenizers.</p>
+
+<p><strong>Hardware platform support</strong> is one of vLLM’s strongest differentiators. While many LLM serving engines are tightly coupled to NVIDIA CUDA, vLLM supports NVIDIA GPUs (via CUDA), AMD GPUs (via ROCm), Intel accelerators (via XPU), Google TPUs, AWS Trainium and Inferentia, and even CPU-only inference. This breadth of hardware support means organizations are not locked into a single vendor and can deploy vLLM on whatever infrastructure they have available.</p>
+
+<p><strong>Attention backends</strong> are the low-level kernels that compute the attention operation, and vLLM supports multiple implementations optimized for different hardware and model configurations. FlashAttention-2 and FlashAttention-3 provide the highest performance on NVIDIA GPUs. FlashInfer offers flexible attention kernels with support for custom attention patterns. Triton-based attention provides a portable fallback that works on any CUDA GPU. For AMD GPUs, the ROCm AITER backend delivers optimized attention. MLA (Multi-head Latent Attention) support handles models like DeepSeek that use non-standard attention architectures.</p>
+
+<p><strong>Speculative decoding</strong> is a latency optimization technique that uses a small draft model to predict multiple tokens ahead, which are then verified in parallel by the large model. vLLM supports several speculative decoding strategies: EAGLE uses a lightweight draft model with feature-level drafting, Medusa adds multiple prediction heads to the model, N-gram matching uses statistical patterns from the prompt, and suffix decoding leverages suffix arrays for efficient matching. These techniques can reduce end-to-end latency by 2-3x for compatible workloads.</p>
+
+<p><strong>Structured output</strong> support ensures that generated text conforms to a specified format, such as JSON schemas or regular expressions. vLLM integrates with xgrammar and guidance to enforce output structure during generation, which is essential for building reliable API-driven applications on top of LLM inference.</p>
+
+<p><strong>LoRA support</strong> enables serving multiple fine-tuned adapters from a single base model, dramatically reducing the memory and compute cost of serving many specialized models. vLLM supports multi-LoRA serving with dynamic loading and unloading of adapters, allowing a single vLLM instance to serve hundreds of LoRA adapters efficiently.</p>
+
+<h2 id="installation-and-quick-start">Installation and Quick Start</h2>
+
+<p>Getting started with vLLM is straightforward. The recommended installation method uses pip:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install vLLM</span>
+pip <span class="nb">install </span>vllm
+
+<span class="c"># Or with uv for faster installation</span>
+uv pip <span class="nb">install </span>vllm
+</code></pre></div></div>
+
+<p>For offline batch inference (without starting a server), vLLM provides a simple Python API:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">vllm</span> <span class="kn">import</span> <span class="n">LLM</span><span class="p">,</span> <span class="n">SamplingParams</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">LLM</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s">'meta-llama/Llama-3.1-8B-Instruct'</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="n">SamplingParams</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="n">outputs</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="n">generate</span><span class="p">([</span><span class="s">'Hello, how are you?'</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="p">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>For online serving with the OpenAI-compatible API, start the server with:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vllm serve meta-llama/Llama-3.1-8B-Instruct <span class="nt">--tensor-parallel-size</span> 2
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">--tensor-parallel-size</code> flag enables multi-GPU tensor parallelism. Additional configuration options include <code class="language-plaintext highlighter-rouge">--gpu-memory-utilization</code> to control how much GPU memory vLLM uses (default 0.9), <code class="language-plaintext highlighter-rouge">--max-model-len</code> to set the maximum sequence length, and <code class="language-plaintext highlighter-rouge">--quantization</code> to specify a quantization method.</p>
+
+<h2 id="performance-optimizations">Performance Optimizations</h2>
+
+<p>vLLM incorporates numerous performance optimizations at every level of the stack, from kernel-level tuning to system-level scheduling. Understanding these optimizations is key to getting the best performance from your vLLM deployment.</p>
+
+<p><strong>CUDA/HIP graphs</strong> reduce kernel launch overhead by capturing sequences of GPU operations into a single graph that can be replayed with minimal CPU-GPU synchronization. During the decode phase, where the same sequence of operations is repeated for every token, CUDA graphs can eliminate 5-10 microseconds of overhead per step, which adds up to significant savings at high iteration rates.</p>
+
+<p><strong>Optimized attention kernels</strong> are critical for LLM inference performance. vLLM supports FlashAttention-2, FlashAttention-3, FlashInfer, and TRTLLM-GEN backends, each optimized for different GPU architectures and sequence length ranges. The attention backend is selected automatically based on the hardware and model configuration, but can also be manually specified for fine-tuning.</p>
+
+<p><strong>Optimized GEMM and MoE kernels</strong> accelerate the matrix multiplications that dominate LLM inference time. vLLM uses CUTLASS-based kernels for standard dense GEMM, TRTLLM-GEN kernels for quantized inference, and CuTeDSL kernels for emerging GPU architectures. For MoE models, specialized kernels handle the sparse expert routing and computation efficiently.</p>
+
+<p><strong>torch.compile</strong> integration enables automatic kernel generation and optimization using PyTorch’s just-in-time compilation system. This can fuse multiple operations into a single kernel, reduce memory traffic, and take advantage of hardware-specific optimizations without manual kernel development.</p>
+
+<p><strong>Prefix caching</strong> provides significant speedups for workloads with shared system prompts. When multiple requests share the same prompt prefix, the KV cache blocks for that prefix are computed once and then shared across all subsequent requests via copy-on-write semantics. This can reduce the prefill time for repeated prefixes by 80-100%, depending on the prefix length.</p>
+
+<p><strong>Speculative decoding</strong> reduces end-to-end latency by generating multiple candidate tokens in parallel and verifying them against the target model. When the draft model’s predictions are correct (which happens frequently for well-matched draft models), multiple tokens are produced in a single step, effectively multiplying the generation speed without any loss in output quality.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>vLLM has established itself as the de facto standard for LLM inference serving by solving the fundamental memory management problem that plagued earlier systems. Its PagedAttention mechanism, inspired by operating system virtual memory, reduces KV cache memory waste from 60-80% to near zero, enabling dramatically higher throughput on the same hardware. Combined with continuous batching, which eliminates rigid phase boundaries and maximizes GPU utilization at every iteration, vLLM achieves 2-4x throughput improvements over alternative serving engines.</p>
+
+<p>The project’s breadth of support – 200+ model architectures, 20+ quantization methods, 5+ hardware platforms, and a rich ecosystem of framework integrations – makes it the most versatile LLM serving engine available. Whether you are deploying a single GPU for development or a multi-node cluster for production, vLLM provides the tools and optimizations needed to serve LLMs efficiently and cost-effectively.</p>
+
+<p>For organizations building LLM-powered applications, vLLM’s OpenAI-compatible API server provides a zero-friction migration path from cloud APIs to self-hosted infrastructure, while its distributed inference capabilities ensure that even the largest models can be served with low latency and high throughput.</p>
+
+<p><strong>Resources:</strong></p>
+<ul>
+  <li>GitHub: <a href="https://github.com/vllm-project/vllm">github.com/vllm-project/vllm</a></li>
+  <li>Documentation: <a href="https://docs.vllm.ai">docs.vllm.ai</a></li>
+  <li>PagedAttention Paper: <a href="https://arxiv.org/abs/2309.06180">arxiv.org/abs/2309.06180</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI Infrastructure" /><category term="Open Source" /><category term="Python" /><category term="vLLM" /><category term="LLM inference" /><category term="PagedAttention" /><category term="continuous batching" /><category term="GPU serving" /><category term="KV cache" /><category term="tensor parallelism" /><category term="quantization" /><category term="OpenAI API" /><category term="distributed inference" /><summary type="html"><![CDATA[Discover how vLLM achieves state-of-the-art LLM serving throughput with PagedAttention, continuous batching, and distributed inference. Learn installation, architecture, and optimization techniques.]]></summary></entry><entry><title type="html">CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling</title><link href="https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform/" rel="alternate" type="text/html" title="CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling" /><published>2026-05-11T00:00:00+00:00</published><updated>2026-05-11T00:00:00+00:00</updated><id>https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform</id><content type="html" xml:base="https://pyshine.com/CyberVerse-Open-Source-Digital-Human-Agent-Platform/"><![CDATA[<h1 id="cyberverse-open-source-digital-human-agent-platform-with-real-time-video-calling">CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling</h1>
 
 <p>CyberVerse is an open-source digital human agent platform that transforms a single photograph into a living, breathing AI character you can talk to face-to-face in real time. Unlike pre-recorded avatars or turn-based chatbots, CyberVerse delivers live video calling with approximately 1.5-second first-frame latency, natural lip-sync, and subtle idle breathing animations – all driven by state-of-the-art neural avatar models and a pluggable inference architecture. Built with Go, Python, and Vue 3, it gives developers full control over every component: the brain (LLM), the face (avatar model), the voice (TTS), and the ears (ASR).</p>
 
@@ -4087,400 +4437,4 @@ Annual Energy = Sum of Daily Energy over 365 days
   <li><strong>Leaflet.js:</strong> <a href="https://leafletjs.com/">https://leafletjs.com/</a></li>
   <li><strong>SunCalc:</strong> <a href="https://github.com/mourner/suncalc">https://github.com/mourner/suncalc</a></li>
   <li><strong>OpenStreetMap:</strong> <a href="https://www.openstreetmap.org/">https://www.openstreetmap.org/</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Web Apps" /><category term="Solar Energy" /><category term="JavaScript" /><category term="solar map" /><category term="sunshine intensity" /><category term="solar panel optimizer" /><category term="interactive map" /><category term="Leaflet" /><category term="SunCalc" /><category term="solar energy" /><category term="irradiance calculator" /><category term="sun position tracker" /><category term="OpenStreetMap" /><summary type="html"><![CDATA[Explore the Solar Map web app on PyShine - an interactive tool that visualizes sunshine intensity, tracks sun position in real-time, and optimizes solar panel configurations for maximum energy output using Leaflet maps and SunCalc.]]></summary></entry><entry><title type="html">Symphony: OpenAI’s Coding Agent Orchestrator for Autonomous Work</title><link href="https://pyshine.com/Symphony-OpenAI-Coding-Agent-Orchestrator/" rel="alternate" type="text/html" title="Symphony: OpenAI’s Coding Agent Orchestrator for Autonomous Work" /><published>2026-05-08T00:00:00+00:00</published><updated>2026-05-08T00:00:00+00:00</updated><id>https://pyshine.com/Symphony-OpenAI-Coding-Agent-Orchestrator</id><content type="html" xml:base="https://pyshine.com/Symphony-OpenAI-Coding-Agent-Orchestrator/"><![CDATA[<h1 id="symphony-openais-coding-agent-orchestrator-for-autonomous-work">Symphony: OpenAI’s Coding Agent Orchestrator for Autonomous Work</h1>
-
-<p>OpenAI’s Symphony is a specification-first, language-agnostic orchestration service that turns project work into isolated, autonomous implementation runs for coding agents. Rather than having engineers supervise individual coding agent sessions, Symphony manages the entire lifecycle from issue detection through workspace creation, agent execution, and result verification. Built on the principles of harness engineering, it shifts the operational model from managing agents to managing work that needs to get done, enabling teams to operate at a higher level of abstraction while coding agents handle the implementation details.</p>
-
-<p>The project has garnered over 22,000 stars on GitHub and provides both a detailed specification (SPEC.md) and a reference Elixir/OTP implementation. The specification defines every component, state transition, and contract needed to build a conforming orchestrator in any language, while the Elixir implementation demonstrates these concepts with production-quality code including hot code reloading, process supervision, and a Phoenix LiveView dashboard.</p>
-
-<h2 id="the-harness-engineering-paradigm">The Harness Engineering Paradigm</h2>
-
-<p>Symphony builds on OpenAI’s concept of harness engineering, which advocates for preparing codebases and environments so that coding agents can work effectively without constant human supervision. The key insight is that most operational friction comes not from the agents themselves, but from the surrounding infrastructure: how work is identified, how workspaces are prepared, how prompts are constructed, and how results are verified.</p>
-
-<blockquote>
-  <p><strong>Key Insight:</strong> Symphony shifts the operational model from “managing coding agents” to “managing work that needs to get done.” This means engineers define what needs to happen through WORKFLOW.md configuration, and the orchestrator handles the rest: polling for new issues, creating isolated workspaces, launching agents, and recovering from failures.</p>
-</blockquote>
-
-<p>In a traditional workflow, an engineer manually identifies a task, opens a coding agent session, provides context, reviews the output, and iterates. With Symphony, the engineer defines the workflow policy once in WORKFLOW.md, and the service continuously polls the issue tracker, dispatches agents for eligible work, and manages the entire execution lifecycle including retries, reconciliation, and cleanup.</p>
-
-<h2 id="6-layer-architecture">6-Layer Architecture</h2>
-
-<p><img src="/assets/img/diagrams/symphony/symphony-architecture.svg" alt="Symphony Architecture" /></p>
-
-<h3 id="understanding-the-symphony-architecture">Understanding the Symphony Architecture</h3>
-
-<p>The architecture diagram above illustrates Symphony’s six distinct layers, each with clearly defined responsibilities and contracts. This layered design enables portability across programming languages and runtime environments while maintaining a consistent orchestration model.</p>
-
-<p><strong>Layer 1: Policy Layer (WORKFLOW.md)</strong></p>
-
-<p>The Policy Layer is the repository-owned configuration that defines how Symphony should behave for a specific project. It consists of a WORKFLOW.md file that combines YAML front matter for runtime settings with a Markdown body that serves as the prompt template for coding agents. This layer is version-controlled alongside the code it operates on, ensuring that agent behavior evolves with the codebase. The YAML front matter specifies tracker configuration (Linear project, API keys, active and terminal states), polling intervals, workspace paths, agent concurrency limits, and Codex runtime settings. The Markdown body uses Liquid-compatible template syntax with variables like <code class="language-plaintext highlighter-rouge">and</code> to construct per-issue prompts dynamically.</p>
-
-<p><strong>Layer 2: Configuration Layer</strong></p>
-
-<p>The Configuration Layer parses the WORKFLOW.md front matter into typed runtime settings. It applies built-in defaults for optional fields, resolves environment variable indirection (using <code class="language-plaintext highlighter-rouge">$VAR_NAME</code> syntax), performs path normalization (expanding <code class="language-plaintext highlighter-rouge">~</code> and resolving relative paths), and validates the configuration before dispatch. A critical feature is dynamic reload: when WORKFLOW.md changes on disk, the service detects the change and re-applies the configuration without requiring a restart. Invalid reloads do not crash the service; instead, the last known good configuration remains active while an operator-visible error is logged.</p>
-
-<p><strong>Layer 3: Coordination Layer (Orchestrator)</strong></p>
-
-<p>The Orchestrator is the single authority for all scheduling state. It owns the poll tick, maintains the in-memory runtime state (running sessions, claimed issues, retry queues, completed sets), and decides which issues to dispatch, retry, stop, or release. The orchestrator serializes all state mutations through one process, preventing duplicate dispatch. On each tick, it reconciles running issues against the tracker, validates configuration, fetches candidate issues, sorts by priority, and dispatches eligible work while respecting concurrency limits.</p>
-
-<p><strong>Layer 4: Execution Layer (Workspace + AgentRunner)</strong></p>
-
-<p>The Execution Layer handles the filesystem lifecycle and coding-agent protocol. The Workspace Manager creates deterministic per-issue workspace directories, runs lifecycle hooks (after_create, before_run, after_run, before_remove), and enforces safety invariants: the agent only runs inside the per-issue workspace path, and workspace paths must stay inside the configured root. The Agent Runner launches the Codex app-server subprocess, builds prompts from the workflow template, streams agent updates back to the orchestrator, and manages multi-turn sessions where the agent continues working across multiple turns on the same thread.</p>
-
-<p><strong>Layer 5: Integration Layer (Linear Adapter)</strong></p>
-
-<p>The Integration Layer provides a normalized interface to the issue tracker. Currently supporting Linear, it fetches candidate issues in active states, retrieves current states for reconciliation, and performs startup terminal cleanup. The adapter normalizes tracker payloads into a stable issue model with fields for identifiers, titles, descriptions, priorities, labels, and blocker relationships. This layer is designed to be extensible: other tracker implementations can be added by conforming to the same adapter contract.</p>
-
-<p><strong>Layer 6: Observability Layer (Dashboard + API)</strong></p>
-
-<p>The Observability Layer provides operator visibility into orchestrator and agent behavior. It includes structured logging with required context fields (issue_id, issue_identifier, session_id), an optional Phoenix LiveView dashboard showing running sessions, retry queues, token consumption, and rate limits, and a JSON REST API at <code class="language-plaintext highlighter-rouge">/api/v1/*</code> for programmatic access. The dashboard and API are optional extensions that do not affect orchestrator correctness.</p>
-
-<h2 id="state-machine-5-state-orchestration-model">State Machine: 5-State Orchestration Model</h2>
-
-<p><img src="/assets/img/diagrams/symphony/symphony-state-machine.svg" alt="Symphony State Machine" /></p>
-
-<h3 id="understanding-the-orchestration-state-machine">Understanding the Orchestration State Machine</h3>
-
-<p>The state machine diagram above shows the five orchestration states that Symphony uses to manage the lifecycle of each issue. These states are internal to the service and distinct from the tracker states (like “Todo” or “In Progress” in Linear). Understanding these states is essential for debugging, monitoring, and extending the orchestrator.</p>
-
-<p><strong>State 1: Unclaimed</strong></p>
-
-<p>An issue enters the Unclaimed state when it is not currently running and has no retry scheduled. This is the default state for any eligible issue that has not yet been picked up by the orchestrator. On each poll tick, the orchestrator evaluates unclaimed issues against dispatch eligibility rules: the issue must have required fields (id, identifier, title, state), its state must be in the configured active states and not in terminal states, it must not already be running or claimed, global and per-state concurrency slots must be available, and if the issue is in “Todo” state, it must not have any non-terminal blockers.</p>
-
-<p><strong>State 2: Claimed</strong></p>
-
-<p>When the orchestrator decides to dispatch an issue, it transitions the issue to Claimed. This reservation prevents duplicate dispatch, ensuring that only one agent session works on an issue at a time. In practice, claimed issues are either Running or RetryQueued, since the claim is held until the issue reaches a terminal state or is explicitly released.</p>
-
-<p><strong>State 3: Running</strong></p>
-
-<p>The Running state indicates that a worker task exists and the issue is tracked in the running map. The orchestrator monitors the agent session, tracking token consumption, turn counts, and the last Codex event timestamp. A key feature of the Running state is multi-turn continuation: when a coding-agent turn completes normally, the worker checks whether the issue is still in an active state. If so, it starts another turn on the same live thread, sending continuation guidance rather than resending the original task prompt. This allows the agent to work on complex issues across multiple turns without losing context.</p>
-
-<p><strong>State 4: RetryQueued</strong></p>
-
-<p>When a worker exits abnormally or a stall is detected, the issue transitions to RetryQueued. The orchestrator schedules a retry with exponential backoff: normal continuation retries use a short fixed delay of 1 second, while failure-driven retries use <code class="language-plaintext highlighter-rouge">delay = min(10000 * 2^(attempt-1), max_retry_backoff_ms)</code>. The default maximum backoff is 5 minutes (300,000 ms). This ensures that transient failures are handled gracefully without overwhelming the system.</p>
-
-<p><strong>State 5: Released</strong></p>
-
-<p>An issue is Released when its claim is removed because the tracker state is terminal, no longer active, missing, or the retry path completed without re-dispatch. Released issues are no longer tracked by the orchestrator, and their workspaces may be cleaned up depending on the reason for release.</p>
-
-<blockquote>
-  <p><strong>Takeaway:</strong> The 5-state model ensures that no issue is ever worked on by multiple agents simultaneously, that transient failures are handled with exponential backoff, and that terminal issues are cleaned up promptly. The orchestrator is the single authority for all state transitions, preventing race conditions and duplicate work.</p>
-</blockquote>
-
-<h2 id="end-to-end-workflow">End-to-End Workflow</h2>
-
-<p><img src="/assets/img/diagrams/symphony/symphony-workflow.svg" alt="Symphony Workflow" /></p>
-
-<h3 id="understanding-the-end-to-end-workflow">Understanding the End-to-End Workflow</h3>
-
-<p>The workflow diagram above illustrates the complete journey of an issue through Symphony, from initial detection in the tracker to final workspace cleanup. This end-to-end view shows how all the components work together to deliver autonomous coding agent orchestration.</p>
-
-<p><strong>Step 1: Issue Detection and Polling</strong></p>
-
-<p>The orchestrator begins each tick by polling the Linear API for candidate issues in configured active states (default: “Todo” and “In Progress”). The Linear adapter normalizes the raw GraphQL response into a stable issue model, extracting identifiers, titles, descriptions, priorities, labels, and blocker relationships. Issues are sorted by priority (ascending, with lower numbers being higher priority), then by creation date (oldest first), and finally by identifier as a tie-breaker.</p>
-
-<p><strong>Step 2: Dispatch Eligibility and Concurrency Control</strong></p>
-
-<p>Before dispatching, the orchestrator checks multiple eligibility conditions. The issue must have all required fields, its state must be in the active states list, it must not already be running or claimed, and both global and per-state concurrency slots must be available. A special rule applies to “Todo” state issues: they are not dispatched if any of their blockers are in a non-terminal state. This prevents agents from starting work on issues that depend on unfinished prerequisites.</p>
-
-<p><strong>Step 3: Workspace Creation and Hook Execution</strong></p>
-
-<p>Once an issue is eligible, the Workspace Manager creates a deterministic per-issue workspace directory under the configured root path. The workspace key is derived from the issue identifier by sanitizing characters (only <code class="language-plaintext highlighter-rouge">[A-Za-z0-9._-]</code> are allowed). If the workspace is newly created, the <code class="language-plaintext highlighter-rouge">after_create</code> hook runs, which typically clones the repository and sets up dependencies. Before each agent run, the <code class="language-plaintext highlighter-rouge">before_run</code> hook executes for additional preparation. These hooks are defined in WORKFLOW.md and run in the workspace directory with a configurable timeout (default: 60 seconds).</p>
-
-<p><strong>Step 4: Prompt Construction and Agent Launch</strong></p>
-
-<p>The Agent Runner builds the prompt from the workflow template, substituting issue-specific variables like <code class="language-plaintext highlighter-rouge">,</code>, and ``. The prompt template supports Liquid-compatible semantics with strict variable checking: unknown variables or filters cause rendering to fail rather than silently producing incorrect output. The agent is launched as a Codex app-server subprocess in the workspace directory, with the rendered prompt sent as the first turn.</p>
-
-<p><strong>Step 5: Multi-Turn Execution and Reconciliation</strong></p>
-
-<p>During execution, the orchestrator continuously monitors the agent session. After each turn completes normally, the worker checks whether the issue is still in an active state. If so, it starts another turn on the same thread with continuation guidance, up to the configured <code class="language-plaintext highlighter-rouge">max_turns</code> limit (default: 20). This multi-turn approach allows the agent to work on complex issues that require multiple steps, such as writing code, running tests, fixing failures, and updating the tracker. Meanwhile, the reconciliation process runs on every tick, checking whether running issues have transitioned to terminal states in the tracker and terminating agents for issues that are no longer active.</p>
-
-<p><strong>Step 6: Completion, Retry, or Release</strong></p>
-
-<p>When a worker exits normally, the orchestrator schedules a short continuation retry (1 second) to re-check whether the issue remains active and needs another worker session. When a worker exits abnormally, exponential backoff is applied. If the tracker state becomes terminal, the agent is terminated and the workspace is cleaned up. If the tracker state becomes non-active but not terminal, the agent is terminated without workspace cleanup, preserving the work for potential future resumption.</p>
-
-<blockquote>
-  <p><strong>Amazing:</strong> Symphony’s multi-turn Codex session management keeps the agent working across up to 20 consecutive turns on the same thread, maintaining full context throughout. This means complex tasks like “implement this feature, write tests, fix failures, and update the PR” can be completed autonomously without human intervention.</p>
-</blockquote>
-
-<h2 id="workflowmd-configuration">WORKFLOW.md Configuration</h2>
-
-<p>The WORKFLOW.md file is the central configuration point for Symphony. It combines YAML front matter for runtime settings with a Markdown body for the agent prompt template. Here is a minimal example:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">---</span>
-<span class="na">tracker</span><span class="pi">:</span>
-  <span class="na">kind</span><span class="pi">:</span> <span class="s">linear</span>
-  <span class="na">project_slug</span><span class="pi">:</span> <span class="s2">"</span><span class="s">my-team/my-project"</span>
-  <span class="na">api_key</span><span class="pi">:</span> <span class="s">$LINEAR_API_KEY</span>
-  <span class="na">active_states</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">Todo</span>
-    <span class="pi">-</span> <span class="s">In Progress</span>
-  <span class="na">terminal_states</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">Done</span>
-    <span class="pi">-</span> <span class="s">Closed</span>
-    <span class="pi">-</span> <span class="s">Cancelled</span>
-<span class="na">polling</span><span class="pi">:</span>
-  <span class="na">interval_ms</span><span class="pi">:</span> <span class="m">30000</span>
-<span class="na">workspace</span><span class="pi">:</span>
-  <span class="na">root</span><span class="pi">:</span> <span class="s">~/code/workspaces</span>
-<span class="na">hooks</span><span class="pi">:</span>
-  <span class="na">after_create</span><span class="pi">:</span> <span class="pi">|</span>
-    <span class="s">git clone git@github.com:my-org/my-repo.git .</span>
-    <span class="s">cd my-repo &amp;&amp; npm install</span>
-  <span class="na">before_run</span><span class="pi">:</span> <span class="pi">|</span>
-    <span class="s">git pull origin main</span>
-<span class="na">agent</span><span class="pi">:</span>
-  <span class="na">max_concurrent_agents</span><span class="pi">:</span> <span class="m">10</span>
-  <span class="na">max_turns</span><span class="pi">:</span> <span class="m">20</span>
-  <span class="na">max_retry_backoff_ms</span><span class="pi">:</span> <span class="m">300000</span>
-<span class="na">codex</span><span class="pi">:</span>
-  <span class="na">command</span><span class="pi">:</span> <span class="s">codex app-server</span>
-  <span class="na">turn_timeout_ms</span><span class="pi">:</span> <span class="m">3600000</span>
-  <span class="na">stall_timeout_ms</span><span class="pi">:</span> <span class="m">300000</span>
-<span class="nn">---</span>
-
-<span class="s">You are working on a Linear issue .</span>
-
-<span class="na">Title</span><span class="pi">:</span> 
-<span class="na">Description</span><span class="pi">:</span> 
-
-<span class="s">Please implement the required changes, write tests, and update the PR.</span>
-</code></pre></div></div>
-
-<p>The YAML front matter supports environment variable indirection using <code class="language-plaintext highlighter-rouge">$VAR_NAME</code> syntax, path expansion with <code class="language-plaintext highlighter-rouge">~</code>, and dynamic reload without restart. When WORKFLOW.md changes on disk, the service detects the change and re-applies the configuration for future dispatches, retries, and agent launches. Invalid reloads do not crash the service; the last known good configuration remains active.</p>
-
-<p>The Markdown body uses Liquid-compatible template syntax with strict variable checking. Available variables include <code class="language-plaintext highlighter-rouge">issue</code> (with all normalized fields) and <code class="language-plaintext highlighter-rouge">attempt</code> (null for first run, integer for retries). This allows the prompt to provide different instructions for first attempts versus retries:</p>
-
-<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-You are working on a new issue. Please implement the required changes.
-
-</code></pre></div></div>
-
-<h2 id="installation-and-setup">Installation and Setup</h2>
-
-<h3 id="prerequisites">Prerequisites</h3>
-
-<p>Symphony works best in codebases that have adopted harness engineering practices. Before setting up Symphony, ensure your repository has:</p>
-
-<ul>
-  <li>Clear project structure and dependency management</li>
-  <li>Automated test suites that agents can run</li>
-  <li>Linting and formatting configurations</li>
-  <li>A Linear project with well-defined workflow states</li>
-</ul>
-
-<h3 id="option-1-build-your-own-implementation">Option 1: Build Your Own Implementation</h3>
-
-<p>The SPEC.md is language-agnostic and designed for portability. You can implement Symphony in any programming language:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository to access the specification</span>
-git clone https://github.com/openai/symphony
-<span class="nb">cd </span>symphony
-
-<span class="c"># Read the specification</span>
-<span class="nb">cat </span>SPEC.md
-</code></pre></div></div>
-
-<p>Then point your preferred coding agent at the specification:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Implement Symphony according to the following spec:
-https://github.com/openai/symphony/blob/main/SPEC.md
-</code></pre></div></div>
-
-<h3 id="option-2-use-the-elixir-reference-implementation">Option 2: Use the Elixir Reference Implementation</h3>
-
-<p>The Elixir/OTP reference implementation provides a working orchestrator out of the box:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
-git clone https://github.com/openai/symphony
-<span class="nb">cd </span>symphony/elixir
-
-<span class="c"># Install mise for Elixir/Erlang version management</span>
-<span class="c"># See https://mise.jdx.dev/ for installation instructions</span>
-
-<span class="c"># Trust the mise configuration and install dependencies</span>
-mise trust
-mise <span class="nb">install</span>
-
-<span class="c"># Set up and build the project</span>
-mise <span class="nb">exec</span> <span class="nt">--</span> mix setup
-mise <span class="nb">exec</span> <span class="nt">--</span> mix build
-
-<span class="c"># Configure your Linear API key</span>
-<span class="nb">export </span><span class="nv">LINEAR_API_KEY</span><span class="o">=</span><span class="s2">"your-linear-api-key"</span>
-
-<span class="c"># Start Symphony with your WORKFLOW.md</span>
-mise <span class="nb">exec</span> <span class="nt">--</span> ./bin/symphony ./WORKFLOW.md
-</code></pre></div></div>
-
-<h3 id="optional-enable-the-dashboard">Optional: Enable the Dashboard</h3>
-
-<p>To enable the Phoenix LiveView dashboard and JSON API:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Start with the --port flag</span>
-mise <span class="nb">exec</span> <span class="nt">--</span> ./bin/symphony ./WORKFLOW.md <span class="nt">--port</span> 4040
-</code></pre></div></div>
-
-<p>Or add <code class="language-plaintext highlighter-rouge">server.port</code> to your WORKFLOW.md front matter:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">server</span><span class="pi">:</span>
-  <span class="na">port</span><span class="pi">:</span> <span class="m">4040</span>
-</code></pre></div></div>
-
-<p>The dashboard provides real-time visibility into running sessions, retry queues, token consumption, and rate limits. The JSON API is available at <code class="language-plaintext highlighter-rouge">/api/v1/state</code>, <code class="language-plaintext highlighter-rouge">/api/v1/&lt;issue_identifier&gt;</code>, and <code class="language-plaintext highlighter-rouge">/api/v1/refresh</code>.</p>
-
-<h2 id="key-features">Key Features</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Feature</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Specification-first design</td>
-      <td>Language-agnostic SPEC.md defines every component, state, and contract</td>
-    </tr>
-    <tr>
-      <td>WORKFLOW.md hot-reload</td>
-      <td>Configuration changes detected and applied without restart</td>
-    </tr>
-    <tr>
-      <td>Multi-turn Codex sessions</td>
-      <td>Agents continue working across up to 20 turns on the same thread</td>
-    </tr>
-    <tr>
-      <td>5-state orchestration</td>
-      <td>Unclaimed, Claimed, Running, RetryQueued, Released lifecycle</td>
-    </tr>
-    <tr>
-      <td>Exponential backoff retries</td>
-      <td>Failure-driven retries with configurable max backoff (default: 5 min)</td>
-    </tr>
-    <tr>
-      <td>Per-issue workspace isolation</td>
-      <td>Each issue gets its own workspace directory with safety invariants</td>
-    </tr>
-    <tr>
-      <td>Linear issue tracker integration</td>
-      <td>Polls Linear for candidate work, normalizes into stable issue model</td>
-    </tr>
-    <tr>
-      <td>Concurrency control</td>
-      <td>Global and per-state limits prevent resource exhaustion</td>
-    </tr>
-    <tr>
-      <td>Lifecycle hooks</td>
-      <td>after_create, before_run, after_run, before_remove for workspace customization</td>
-    </tr>
-    <tr>
-      <td>Phoenix LiveView dashboard</td>
-      <td>Real-time observability into sessions, retries, and token usage</td>
-    </tr>
-    <tr>
-      <td>JSON REST API</td>
-      <td>Programmatic access to orchestrator state at /api/v1/*</td>
-    </tr>
-    <tr>
-      <td>SSH worker extension</td>
-      <td>Remote execution over SSH with per-host concurrency caps</td>
-    </tr>
-    <tr>
-      <td>Elixir/OTP implementation</td>
-      <td>Hot code reloading, process supervision, fault tolerance</td>
-    </tr>
-    <tr>
-      <td>Apache License 2.0</td>
-      <td>Fully open source for commercial and non-commercial use</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="ssh-worker-extension">SSH Worker Extension</h2>
-
-<p>The Elixir reference implementation includes an SSH worker extension that allows agent execution on remote hosts. This enables distributed orchestration where the Symphony service runs on one machine while coding agents execute on remote workers over SSH connections. Each SSH host can have its own concurrency cap, and the extension handles connection management, authentication, and workspace synchronization across the SSH transport.</p>
-
-<p>The SSH worker configuration is specified in WORKFLOW.md:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">ssh</span><span class="pi">:</span>
-  <span class="na">hosts</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="na">host</span><span class="pi">:</span> <span class="s">worker1.example.com</span>
-      <span class="na">max_concurrent</span><span class="pi">:</span> <span class="m">5</span>
-    <span class="pi">-</span> <span class="na">host</span><span class="pi">:</span> <span class="s">worker2.example.com</span>
-      <span class="na">max_concurrent</span><span class="pi">:</span> <span class="m">3</span>
-</code></pre></div></div>
-
-<p>This feature is particularly useful for teams that need to run agents on machines with specific hardware configurations, network access, or security boundaries.</p>
-
-<h2 id="safety-and-security">Safety and Security</h2>
-
-<p>Symphony enforces several safety invariants to prevent agents from operating outside their designated scope:</p>
-
-<p><strong>Workspace Containment</strong>: The coding agent can only run inside the per-issue workspace path. Before launching, the system validates that the current working directory matches the workspace path and that the workspace path stays inside the configured root directory.</p>
-
-<p><strong>Workspace Key Sanitization</strong>: Only alphanumeric characters, dots, underscores, and hyphens are allowed in workspace directory names. All other characters are replaced with underscores to prevent path traversal attacks.</p>
-
-<p><strong>Hook Timeout Enforcement</strong>: All workspace hooks (after_create, before_run, after_run, before_remove) have a configurable timeout (default: 60 seconds). Hooks that exceed the timeout are terminated to prevent the orchestrator from hanging.</p>
-
-<p><strong>Secret Handling</strong>: Configuration values support <code class="language-plaintext highlighter-rouge">$VAR_NAME</code> indirection for environment variables. The system validates the presence of secrets without logging their values, and API tokens are never included in log output.</p>
-
-<blockquote>
-  <p><strong>Important:</strong> Symphony is designed for trusted environments and explicitly documents its trust boundary. Implementations are expected to state whether they target trusted environments, restrictive environments, or both. The specification does not mandate a single approval, sandbox, or operator-confirmation policy, allowing teams to choose the security posture that matches their risk profile.</p>
-</blockquote>
-
-<h2 id="failure-model-and-recovery">Failure Model and Recovery</h2>
-
-<p>Symphony defines a comprehensive failure model with clear recovery strategies for each failure class:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Failure Class</th>
-      <th>Recovery Strategy</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Workflow/Config failures</td>
-      <td>Skip dispatch, keep service alive, log errors</td>
-    </tr>
-    <tr>
-      <td>Workspace failures</td>
-      <td>Abort current attempt, schedule retry with backoff</td>
-    </tr>
-    <tr>
-      <td>Agent session failures</td>
-      <td>Exponential backoff retry, preserve workspace for continuation</td>
-    </tr>
-    <tr>
-      <td>Tracker API failures</td>
-      <td>Skip this tick, retry on next poll interval</td>
-    </tr>
-    <tr>
-      <td>Observability failures</td>
-      <td>Do not crash the orchestrator, continue processing</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>On restart, the service recovers by performing terminal workspace cleanup, polling for active issues, and re-dispatching eligible work. No persistent database is required; the orchestrator rebuilds its state from the tracker and filesystem.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>OpenAI’s Symphony represents a significant step forward in coding agent orchestration. By providing a detailed, language-agnostic specification alongside a working Elixir/OTP reference implementation, it enables teams to adopt autonomous coding workflows without being locked into a specific runtime. The specification-first approach means you can implement Symphony in Rust, Go, Python, or any language that supports long-running processes and subprocess management.</p>
-
-<p>The 6-layer architecture cleanly separates concerns from policy (WORKFLOW.md) through configuration, coordination, execution, integration, and observability. The 5-state machine ensures that no issue is worked on by multiple agents simultaneously, that failures are handled with exponential backoff, and that terminal issues are cleaned up promptly. Multi-turn Codex sessions allow agents to work on complex tasks across up to 20 consecutive turns without losing context.</p>
-
-<p>Whether you are a team looking to automate your Linear workflow, a platform engineer building agent orchestration infrastructure, or a researcher exploring autonomous coding systems, Symphony provides a solid foundation built on well-defined contracts and proven operational patterns.</p>
-
-<p><strong>Links:</strong></p>
-
-<ul>
-  <li>GitHub Repository: <a href="https://github.com/openai/symphony">https://github.com/openai/symphony</a></li>
-  <li>Specification: <a href="https://github.com/openai/symphony/blob/main/SPEC.md">https://github.com/openai/symphony/blob/main/SPEC.md</a></li>
-  <li>Elixir Implementation: <a href="https://github.com/openai/symphony/tree/main/elixir">https://github.com/openai/symphony/tree/main/elixir</a></li>
-  <li>Harness Engineering Blog Post: <a href="https://openai.com/index/harness-engineering/">https://openai.com/index/harness-engineering/</a></li>
-  <li>Codex App Server Documentation: <a href="https://developers.openai.com/codex/app-server/">https://developers.openai.com/codex/app-server/</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Developer Tools" /><category term="Open Source" /><category term="Symphony" /><category term="OpenAI" /><category term="coding agent" /><category term="orchestration" /><category term="Elixir" /><category term="OTP" /><category term="Linear integration" /><category term="autonomous agents" /><category term="agent orchestration" /><category term="WORKFLOW.md" /><summary type="html"><![CDATA[Learn how OpenAI Symphony orchestrates coding agents to manage project work autonomously. Explore its 6-layer architecture, 5-state machine, WORKFLOW.md hot-reload config, and Elixir/OTP reference implementation.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="Web Apps" /><category term="Solar Energy" /><category term="JavaScript" /><category term="solar map" /><category term="sunshine intensity" /><category term="solar panel optimizer" /><category term="interactive map" /><category term="Leaflet" /><category term="SunCalc" /><category term="solar energy" /><category term="irradiance calculator" /><category term="sun position tracker" /><category term="OpenStreetMap" /><summary type="html"><![CDATA[Explore the Solar Map web app on PyShine - an interactive tool that visualizes sunshine intensity, tracks sun position in real-time, and optimizes solar panel configurations for maximum energy output using Leaflet maps and SunCalc.]]></summary></entry></feed>
