@@ -5,6 +5,12 @@ date: 2026-05-14
 categories: [ai, open-source, developer-tools, memory]
 tags: [agentmemory, ai-agents, persistent-memory, claude-code, cursor, mcp, coding-assistant, llm]
 image: /assets/img/diagrams/agentmemory/agentmemory-memory-pipeline.svg
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+description: "AgentMemory gives AI coding agents persistent memory across sessions. Learn how it captures, compresses, and injects context for Claude Code, Cursor, and more."
+header-img: "img/post-bg.jpg"
+permalink: /AgentMemory-Persistent-Memory-AI-Coding-Agents/
+keywords: [persistent memory for AI coding agents, AgentMemory MCP integration, Claude Code persistent memory, AI agent memory management, coding assistant context retention, Cursor AI memory plugin, LLM agent session memory, AI coding agent long-term memory, MCP memory server for agents, agent memory compression pipeline]
+author: "PyShine"
 ---
 
 Every coding agent forgets everything when the session ends. You waste the first 5 minutes of every session re-explaining your stack, your preferences, your architecture decisions. **AgentMemory** ([rohitg00/agentmemory](https://github.com/rohitg00/agentmemory)) fixes this — it's persistent memory for AI coding agents that silently captures what your agent does, compresses it into searchable memory, and injects the right context when the next session starts.
