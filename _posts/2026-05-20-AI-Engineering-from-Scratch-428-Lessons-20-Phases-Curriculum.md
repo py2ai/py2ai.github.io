@@ -4,7 +4,7 @@ title: "AI Engineering from Scratch: 428 Lessons, 20 Phases, From Linear Algebra
 description: "AI Engineering from Scratch is a comprehensive open-source curriculum that takes you from math foundations to multi-agent systems in 428 lessons across 20 phases. Every algorithm built from raw math first, every lesson ships a reusable artifact."
 date: 2026-05-20
 permalink: /AI-Engineering-from-Scratch-428-Lessons-20-Phases-Curriculum/
-featured-img: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Education, Open Source]
 tags: [ai-engineering, curriculum, machine-learning, deep-learning, llm, agents, open-source, education]
 keywords: [AI engineering from scratch, AI curriculum, machine learning course, deep learning from scratch, LLM engineering, agent engineering, open source AI education]

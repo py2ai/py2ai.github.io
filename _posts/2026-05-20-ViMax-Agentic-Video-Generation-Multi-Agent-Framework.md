@@ -3,8 +3,9 @@ layout: post
 title: "ViMax: Agentic Video Generation - Multi-Agent Framework for End-to-End Video Creation"
 description: "ViMax by HKUDS is a multi-agent video generation framework that transforms raw ideas, novels, and scripts into complete videos with character consistency, storyboarding, and automated production - all through intelligent agent orchestration."
 date: 2026-05-20
+header-img: "img/post-bg.jpg"
 permalink: /ViMax-Agentic-Video-Generation-Multi-Agent-Framework/
-featured-img: /assets/img/diagrams/vimax/vimax-architecture.svg
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Video Generation, Multi-Agent]
 tags: [vimax, video-generation, multi-agent, ai-video, storyboarding, character-consistency, hkuds]
 keywords: [ViMax, agentic video generation, multi-agent framework, AI video creation, storyboard, character consistency, HKUDS]
