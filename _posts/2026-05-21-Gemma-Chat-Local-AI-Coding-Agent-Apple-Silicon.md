@@ -1,10 +1,10 @@
 ---
 layout: post
 title: "Gemma Chat: Local AI Coding Agent for Apple Silicon Powered by Gemma 4 via MLX"
-description: "Gemma Chat is a fully offline AI coding agent for macOS Apple Silicon that runs Google's Gemma 4 locally via MLX. Build multi-file projects with live preview, chat with tools, and vibe code without the internet."
+description: "Gemma Chat is a fully offline AI coding agent for macOS Apple Silicon that runs Google's Gemma 4 locally via MLX. Build multi-file projects with live preview."
 date: 2026-05-21
 header-img: "img/post-bg.jpg"
-permalink: /Gemma-Chat-Local-AI-Coding-Agent-Apple-Silicon/
+permalink: /Gemma-Chat-Local-AI-Coding-Agent-Apple-Silicon-MLX/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI Agents, Developer Tools, Open Source]
 tags: [Gemma Chat, local AI coding agent, Apple Silicon, MLX, Gemma 4, offline coding, Electron app, React 19, vibe coding, AI assistant]
