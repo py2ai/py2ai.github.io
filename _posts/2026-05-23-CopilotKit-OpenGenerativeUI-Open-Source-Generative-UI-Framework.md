@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "CopilotKit OpenGenerativeUI: Build Interactive AI-Generated UI with Open Source Framework"
-description: "CopilotKit OpenGenerativeUI is an open source framework where AI agents render interactive visualizations, charts, 3D scenes, and widgets directly in your React app."
+description: "CopilotKit OpenGenerativeUI is an open source framework where AI agents render interactive visualizations, charts, and widgets directly in your React app."
 date: 2026-05-23
 header-img: "img/post-bg.jpg"
 permalink: /CopilotKit-OpenGenerativeUI-Open-Source-Generative-UI-Framework/
