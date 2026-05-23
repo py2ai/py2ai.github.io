@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "CopilotKit OpenGenerativeUI: Build Interactive AI-Generated UI with Open Source Framework"
-description: "CopilotKit OpenGenerativeUI is an open source framework for building generative UI where AI agents render interactive visualizations, charts, 3D scenes, and widgets directly in your React app."
+description: "CopilotKit OpenGenerativeUI is an open source framework where AI agents render interactive visualizations, charts, 3D scenes, and widgets directly in your React app."
 date: 2026-05-23
 header-img: "img/post-bg.jpg"
 permalink: /CopilotKit-OpenGenerativeUI-Open-Source-Generative-UI-Framework/
@@ -22,7 +22,7 @@ Generative UI refers to the capability of AI agents to produce interactive visua
 
 CopilotKit OpenGenerativeUI showcases this pattern across multiple domains. The repository includes examples of binary search and BFS vs DFS algorithm visualizations, pie charts and bar charts rendered with Chart.js, 3D scenes built with Three.js, interactive forms and simulations, and SVG diagrams for architecture and flowchart explanations. The framework provides a decision matrix that maps user intent to the appropriate output type: when a user asks about a physical process, the agent produces an illustrative SVG diagram; when they ask about trends over time, it generates a Chart.js line chart; when they request a 3D visualization, it builds a Three.js scene with proper WebGL rendering.
 
-> Generative UI lets AI agents render React components directly in the chat. Instead of responding with text, the agent can produce charts, interactive widgets, visualizations, and custom UI -- all rendered as live HTML/SVG inside a sandboxed iframe.
+> **Key Insight:** Generative UI lets AI agents render React components directly in the chat. Instead of responding with text, the agent can produce charts, interactive widgets, visualizations, and custom UI -- all rendered as live HTML/SVG inside a sandboxed iframe.
 
 ## Architecture Overview
 
@@ -52,7 +52,7 @@ CopilotKit v2 introduces five core hooks that form the foundation of generative 
 
 The diagram above shows the five hooks arranged around the central `useAgent()` hub, which provides bidirectional state sync between the frontend and the agent. `useComponent` (purple) enables the agent to render React components, connecting through the "renders" edge. `useFrontendTool` (teal) allows the agent to call browser-side actions via the "calls" edge. `useHumanInTheLoop` (coral/pink) pauses the agent for user input through the "pauses" edge. `useRenderTool` (amber) customizes tool rendering through the "customizes" edge. `useDefaultRenderTool` (gray) provides fallback rendering through the "fallback" edge. All hooks are imported from `@copilotkit/react-core/v2` and registered together in a custom hook that is called in the page component.
 
-> The WidgetRenderer is the most flexible generative UI component. It renders arbitrary HTML/SVG in a sandboxed iframe with automatic light/dark theming, progressive reveal animations, and responsive sizing. The agent writes HTML, and the frontend renders it with full interactivity.
+> **Core Concept:** The WidgetRenderer is the most flexible generative UI component. It renders arbitrary HTML/SVG in a sandboxed iframe with automatic light/dark theming, progressive reveal animations, and responsive sizing. The agent writes HTML, and the frontend renders it with full interactivity.
 
 ## The WidgetRenderer
 
@@ -80,7 +80,7 @@ The repository includes three skills. The `advanced-visualization` skill covers 
 
 The agent follows a mandatory visualization workflow for any visual response. First, it **acknowledges** the request with one or two sentences of plain text. Then it **plans** by calling the `plan_visualization` tool with the approach, technology choice, and key elements. Next, it **builds** the visualization by calling the appropriate tool (`widgetRenderer`, `pieChart`, or `barChart`). Finally, it **narrates** the result with two or three sentences walking through what was built. This structured workflow ensures consistent quality and prevents the agent from skipping the planning step.
 
-> Progressive disclosure means the agent loads only the skill documents it needs for the current request. Instead of a bloated system prompt with all visualization rules, the deep agent architecture loads `advanced-visualization/SKILL.md` when the user asks about dashboards, and `svg-diagrams/SKILL.md` when they request a flowchart. This keeps the context window focused and reduces token costs.
+> **Architecture:** Progressive disclosure means the agent loads only the skill documents it needs for the current request. Instead of a bloated system prompt with all visualization rules, the deep agent architecture loads `advanced-visualization/SKILL.md` when the user asks about dashboards, and `svg-diagrams/SKILL.md` when they request a flowchart. This keeps the context window focused and reduces token costs.
 
 ## MCP Server Integration
 
@@ -134,7 +134,7 @@ The OpenGenerativeUI documentation provides a clear eight-step integration path 
 
 The core patterns to keep are the CopilotKit provider and API route, the agent state schema with `CopilotKitMiddleware`, the tool pattern with `Command(update={...})`, and the `useAgent()` / `useComponent()` / `useFrontendTool()` / `useHumanInTheLoop()` hooks. The demo-specific elements you should replace are the todo state schema, demo gallery, widget renderer, sample data, skills documents, and animated background styling.
 
-> Bidirectional state sync means both the user and the agent can modify the same state. CopilotKit handles synchronization automatically -- when the user checks a checkbox in the React UI, the agent sees the updated state, and when the agent modifies state through a tool call, the React UI re-renders immediately.
+> **State Management:** Bidirectional state sync means both the user and the agent can modify the same state. CopilotKit handles synchronization automatically -- when the user checks a checkbox in the React UI, the agent sees the updated state, and when the agent modifies state through a tool call, the React UI re-renders immediately.
 
 ## Design System and Quality
 
