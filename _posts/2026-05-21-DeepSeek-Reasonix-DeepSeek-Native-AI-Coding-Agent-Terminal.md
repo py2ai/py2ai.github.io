@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "DeepSeek-Reasonix: DeepSeek-Native AI Coding Agent for Your Terminal with Prefix-Cache Stability"
-description: "DeepSeek-Reasonix is a DeepSeek-native terminal coding agent engineered around prefix-cache stability. Achieve 99.82% cache hit rates, flash-first cost control, and intelligent tool-call repair for affordable long-running AI coding sessions."
+description: "DeepSeek-Reasonix is a DeepSeek-native terminal coding agent engineered around prefix-cache stability with 99.82% cache hit rates and flash-first cost control."
 date: 2026-05-21
 header-img: "img/post-bg.jpg"
 permalink: /DeepSeek-Reasonix-DeepSeek-Native-AI-Coding-Agent-Terminal/

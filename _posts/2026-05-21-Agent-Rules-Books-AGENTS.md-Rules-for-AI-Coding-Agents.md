@@ -1,13 +1,13 @@
 ---
 layout: post
 title: "Agent Rules Books: AGENTS.md Rules for AI Coding Agents from Classic Programming Books"
-description: "Discover Agent Rules Books, a curated collection of AGENTS.md rules distilled from 14 classic programming books for Codex, Cursor, and Claude Code. Improve AI coding agent output quality with structured, context-aware rule sets."
+description: "Discover Agent Rules Books, a curated collection of AGENTS.md rules distilled from 14 classic programming books for Codex, Cursor, and Claude Code agents."
 date: 2026-05-21
 header-img: "img/post-bg.jpg"
 permalink: /Agent-Rules-Books-AGENTS.md-Rules-for-AI-Coding-Agents/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI Agents, Developer Tools, Open Source]
-tags: [AGENTS.md, AI coding agents, Codex rules, Cursor rules, Claude Code rules, Clean Code, Clean Architecture, Domain-Driven Design, refactoring, code quality, agent skills]
+tags: [AGENTS.md, AI coding agents, Codex rules, Cursor rules, Claude Code rules, Clean Code, Clean Architecture, Domain-Driven Design, refactoring, code quality]
 keywords: "AGENTS.md rules for AI coding agents, how to use Agent Rules Books with Codex, Cursor AI coding rules setup, Claude Code project rules tutorial, Clean Code rules for AI agents, Domain-Driven Design agent skills, AI coding agent best practices, open source agent rules library, programming books distilled for AI, refactoring rules for coding agents"
 author: "PyShine"
 ---

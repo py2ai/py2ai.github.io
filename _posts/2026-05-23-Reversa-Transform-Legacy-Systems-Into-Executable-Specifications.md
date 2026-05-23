@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Reversa: Transform Legacy Systems Into Executable Specifications for AI Agents"
-description: "Reversa transforms legacy codebases into executable specifications that AI coding agents can understand and use. Learn how this JavaScript tool bridges the gap between legacy systems and AI-driven development."
+description: "Reversa transforms legacy code into executable specifications for AI agents. Learn how this JavaScript tool bridges legacy systems and AI-driven development."
 date: 2026-05-23
 header-img: "img/post-bg.jpg"
 permalink: /Reversa-Transform-Legacy-Systems-Into-Executable-Specifications/
@@ -32,7 +32,24 @@ Reversa operates through a 5-phase discovery pipeline that progressively transfo
 
 ![Reversa Architecture](/assets/img/diagrams/sandeco-reversa/sandeco-reversa-architecture.svg)
 
-The architecture diagram above illustrates the complete transformation pipeline. On the left, the Legacy Codebase (green) enters Phase 1: Reconnaissance, where the Scout agent maps the project surface -- folder structure, languages, frameworks, and dependencies. The output flows to Phase 2: Excavation (blue), where the Archaeologist performs deep module-by-module analysis of algorithms, control flows, and data structures. Phase 3: Interpretation (teal) splits into two parallel tracks: the Detective extracts implicit business rules, state machines, and permissions, while the Architect synthesizes C4 diagrams, ERD, and integration maps. Phase 4: Generation (purple) is where the Writer assembles structured specifications as operational contracts with full code traceability. Phase 5: Review (orange) has the Reviewer validate consistency and flag gaps. The final output is the Executable Specification (coral) in the `_reversa_sdd/` directory, which any AI Coding Agent can consume. Along the bottom, four independent agents operate across all phases: Visor documents interfaces from screenshots, Data Master analyzes databases, Design System extracts design tokens, and Soul Extractor produces an executive summary spec.
+### Understanding the Reversa Architecture
+
+The architecture diagram above illustrates the complete 5-phase transformation pipeline that Reversa uses to convert legacy codebases into structured specifications.
+
+**Phase 1: Reconnaissance**
+On the left, the Legacy Codebase (green) enters Phase 1: Reconnaissance, where the Scout agent maps the project surface -- folder structure, languages, frameworks, and dependencies. This initial scan produces a high-level inventory that guides all subsequent analysis phases.
+
+**Phase 2: Excavation**
+The output flows to Phase 2: Excavation (blue), where the Archaeologist performs deep module-by-module analysis of algorithms, control flows, and data structures. This is where the internal mechanics of each component are documented in detail.
+
+**Phase 3: Interpretation**
+Phase 3: Interpretation (teal) splits into two parallel tracks. The Detective extracts implicit business rules, state machines, and permissions, while the Architect synthesizes C4 diagrams, ERD, and integration maps. This dual-track approach ensures both business logic and technical architecture are captured.
+
+**Phase 4-5: Generation and Review**
+Phase 4: Generation (purple) is where the Writer assembles structured specifications as operational contracts with full code traceability. Phase 5: Review (orange) has the Reviewer validate consistency and flag gaps before finalizing.
+
+**Cross-Phase Agents**
+Along the bottom, four independent agents operate across all phases: Visor documents interfaces from screenshots, Data Master analyzes databases, Design System extracts design tokens, and Soul Extractor produces an executive summary spec. The final output is the Executable Specification (coral) in the `_reversa_sdd/` directory, which any AI Coding Agent can consume.
 
 > **Key Insight:** Reversa bridges the fundamental gap between legacy systems and AI agents by transforming opaque codebases into structured specifications. Without this transformation layer, AI coding agents operate blind -- they cannot safely modify code they do not understand at the architectural level. Every statement in the generated specs is marked with a confidence indicator: confirmed (extracted directly from code), inferred (deduced from patterns), or gap (requires human validation).
 
@@ -53,7 +70,24 @@ The Discovery Team includes six core agents (Reversa orchestrator, Scout, Archae
 
 ![Reversa Features](/assets/img/diagrams/sandeco-reversa/sandeco-reversa-features.svg)
 
-The features diagram above shows Reversa at the center (blue hub) with six team branches radiating outward. The Discovery branch (green) includes the Scout, Archaeologist, Detective, Architect, and Writer agents that form the core analysis pipeline. The Forward branch (teal) contains the Requirements, Clarify, Quality, Plan, To-Do, Audit, and Coding agents that bridge specs to running code. The Migration branch (purple) provides the Paradigm Advisor, Curator, Strategist, Designer, and Inspector agents for stack rebuilds. The New Project branch (orange) includes the Ideator, Researcher, Drafter, and Spec SDD agents for greenfield development. The Docs branch (coral) contains the Mapper, Analyst, Storyteller, and Publisher agents that produce the HTML mini-site. The Pricing branch (amber) provides the Profile, Size, and Estimate agents for effort estimation. Each branch connects back to the central Reversa orchestrator, which coordinates cross-team workflows and maintains shared state.
+### Understanding Reversa's Agent Teams
+
+The features diagram above shows Reversa at the center (blue hub) with six team branches radiating outward, each targeting a different workflow.
+
+**Discovery Branch (Core)**
+The Discovery branch (green) includes the Scout, Archaeologist, Detective, Architect, and Writer agents that form the core analysis pipeline. This team is always installed and runs the main `/reversa` command.
+
+**Forward Branch**
+The Forward branch (teal) contains the Requirements, Clarify, Quality, Plan, To-Do, Audit, and Coding agents that bridge specs to running code. This team enables iterative development from specifications.
+
+**Migration Branch**
+The Migration branch (purple) provides the Paradigm Advisor, Curator, Strategist, Designer, and Inspector agents for stack rebuilds. This team transforms legacy specifications into a modernization plan.
+
+**New Project and Docs Branches**
+The New Project branch (orange) includes the Ideator, Researcher, Drafter, and Spec SDD agents for greenfield development. The Docs branch (coral) contains the Mapper, Analyst, Storyteller, and Publisher agents that produce the HTML mini-site with 3D architecture visualizations.
+
+**Pricing Branch**
+The Pricing branch (amber) provides the Profile, Size, and Estimate agents for effort estimation. Each branch connects back to the central Reversa orchestrator, which coordinates cross-team workflows and maintains shared state.
 
 > **Amazing:** Reversa supports 13 different AI coding engines out of the box -- Claude Code, Codex, Cursor, Gemini CLI, Windsurf, Antigravity, Kiro, Opencode, Cline, Roo Code, GitHub Copilot, Aider, and Amazon Q Developer. A single `npx reversa install` command detects which engines are present in your environment and configures the appropriate entry files and skill paths for each one automatically.
 
@@ -112,7 +146,24 @@ Each orchestrator pauses between agents and asks for confirmation before advanci
 
 ![Reversa Workflow](/assets/img/diagrams/sandeco-reversa/sandeco-reversa-workflow.svg)
 
-The workflow diagram above shows the step-by-step process from installation to AI-driven development. Step 1 (green) is installing Reversa with `npx reversa install`, which detects engines and configures the project. Step 2 (blue) is activating Reversa with the `/reversa` command in your AI agent. Step 3 (teal) runs the 5-phase discovery pipeline: Reconnaissance, Excavation, Interpretation, Generation, and Review. At the decision diamond (red), the workflow asks whether the specifications are complete. If not, the loop returns to the pipeline for refinement. If complete, Step 4 (purple) presents three directional choices: evolve the system with `/reversa-forward`, rebuild on a modern stack with `/reversa-migrate`, or generate documentation with `/reversa-docs`. Step 5 (orange) shows the AI agent consuming the generated specifications to safely modify and extend the legacy system. Step 6 (coral) represents the ongoing cycle of AI-driven development, where the agent uses the operational contracts to evolve the codebase with fidelity to what already exists.
+### Understanding the Reversa Workflow
+
+The workflow diagram above shows the step-by-step process from installation to AI-driven development with Reversa.
+
+**Step 1: Installation**
+Step 1 (green) is installing Reversa with `npx reversa install`, which detects engines and configures the project. The installer performs seven automated steps including engine detection, agent selection, and SHA-256 manifest generation.
+
+**Step 2: Activation**
+Step 2 (blue) is activating Reversa with the `/reversa` command in your AI agent. This launches the orchestrator which creates a personalized exploration plan for your codebase.
+
+**Step 3: Discovery Pipeline**
+Step 3 (teal) runs the 5-phase discovery pipeline: Reconnaissance, Excavation, Interpretation, Generation, and Review. Progress is saved at each checkpoint so analysis can be resumed if interrupted.
+
+**Decision Point and Direction**
+At the decision diamond (red), the workflow asks whether the specifications are complete. If not, the loop returns to the pipeline for refinement. If complete, Step 4 (purple) presents three directional choices: evolve the system with `/reversa-forward`, rebuild on a modern stack with `/reversa-migrate`, or generate documentation with `/reversa-docs`.
+
+**AI-Driven Development Cycle**
+Step 5 (orange) shows the AI agent consuming the generated specifications to safely modify and extend the legacy system. Step 6 (coral) represents the ongoing cycle of AI-driven development, where the agent uses the operational contracts to evolve the codebase with fidelity to what already exists.
 
 > **Takeaway:** With a single command, `/reversa`, you can launch a coordinated team of specialized AI agents that analyze your entire legacy codebase and generate complete, traceable specifications. These specifications become operational contracts that any supported AI coding agent can immediately consume -- meaning your legacy system becomes accessible to Claude Code, Cursor, Copilot, and nine other engines without manual documentation effort.
 
