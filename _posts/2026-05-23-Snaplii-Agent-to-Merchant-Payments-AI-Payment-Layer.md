@@ -5,7 +5,7 @@ description: "Snaplii unlocks real-world commerce for AI agents with a safe, tok
 date: 2026-05-23
 header-img: "img/post-bg.jpg"
 permalink: /Snaplii-Agent-to-Merchant-Payments-AI-Payment-Layer/
-featured-img: ai-coding-frameworks
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI Agents, Fintech, Open Source]
 tags: [Snaplii, AI agent payments, tokenized payment layer, merchant gift cards, AI commerce, Python, fintech, payment automation, AI-driven transactions, open source]
 keywords: "AI agent payment layer for real-world commerce, Snaplii tokenized payment system, how AI agents can make purchases with gift cards, Snaplii Python payment SDK, AI agent merchant payment integration, tokenized payments for autonomous agents, Snaplii 500 merchant gift cards, AI commerce payment automation, Snaplii installation guide, AI agent real-world transaction layer"
