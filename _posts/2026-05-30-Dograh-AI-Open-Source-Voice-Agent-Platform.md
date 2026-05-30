@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Dograh AI: Open-Source Voice Agent Platform with Drag-and-Drop Workflow Builder"
-description: "Learn how Dograh AI provides an open-source, self-hostable voice AI platform with drag-and-drop workflow builder, Pipecat voice pipeline, multi-provider LLM/STT/TTS integration, and MCP server for AI agent control."
+description: "Discover Dograh AI, the open-source voice agent platform with drag-and-drop workflow builder, Pipecat pipeline, multi-provider LLM/STT/TTS, and MCP server."
 date: 2026-05-30
 header-img: "img/post-bg.jpg"
 permalink: /Dograh-AI-Open-Source-Voice-Agent-Platform/
@@ -145,62 +145,39 @@ The provider ecosystem diagram above shows the breadth of integration options av
 
 **LLM Providers (11)**
 
-Dograh supports 11 LLM providers, giving developers the freedom to choose based on cost, latency, quality, and compliance requirements:
+Dograh supports 11 LLM providers for cost, latency, quality, and compliance flexibility:
 
-- **OpenAI**: GPT-4o and GPT-4o-mini for general-purpose conversations
-- **Groq**: LPU-accelerated inference for ultra-low-latency responses
-- **OpenRouter**: Unified API access to hundreds of models from multiple providers
-- **Google**: Gemini models for multimodal reasoning
-- **Google Vertex**: Enterprise-grade Gemini with compliance features
-- **Azure**: OpenAI models hosted on Azure for enterprise compliance
-- **AWS Bedrock**: Amazon's managed model service for cloud-native deployments
-- **MiniMax**: Chinese LLM provider for multilingual support
-- **Speaches**: Open-source speech-to-speech model hosting
-- **Dograh**: Dograh's own built-in LLM for zero-config startup
-- **xAI**: Grok models including realtime speech-to-speech capabilities
+- **OpenAI**: GPT-4o/4o-mini for general conversations
+- **Groq**: LPU-accelerated ultra-low-latency inference
+- **OpenRouter**: Unified API to hundreds of models
+- **Google / Vertex**: Gemini models with enterprise compliance (Vertex)
+- **Azure / Bedrock**: OpenAI on Azure; Amazon managed models
+- **MiniMax / xAI**: Multilingual (MiniMax); Grok with realtime speech (xAI)
+- **Speaches / Dograh**: Open-source speech-to-speech; built-in zero-config LLM
 
 **STT Providers (10)**
 
-Speech-to-text options cover a wide range of accuracy, latency, and language requirements:
-
-- **Deepgram** (including Flux): Industry-leading streaming STT with sub-200ms latency
-- **OpenAI**: Whisper-based transcription with broad language support
-- **Google**: Cloud Speech-to-Text with automatic punctuation
-- **Cartesia**: Real-time streaming transcription
-- **Dograh**: Built-in STT for immediate deployment
-- **Sarvam**: Indian language specialist with Hindi, Tamil, Telugu support
-- **Speaches**: Open-source STT option
-- **AssemblyAI**: Developer-friendly API with speaker diarization
-- **Gladia**: Multi-language transcription with word-level timestamps
-- **Speechmatics**: Enterprise-grade accuracy with custom vocabulary
+- **Deepgram** (Flux): Sub-200ms streaming STT
+- **OpenAI / Google**: Whisper transcription; Cloud Speech-to-Text
+- **Cartesia / Dograh**: Real-time streaming; built-in STT
+- **Sarvam**: Hindi, Tamil, Telugu specialist
+- **Speaches / AssemblyAI / Gladia / Speechmatics**: Open-source; speaker diarization; word-level timestamps; enterprise custom vocabulary
 
 **TTS Providers (11)**
 
-Text-to-speech options range from natural-sounding neural voices to low-latency streaming:
-
-- **Deepgram**: Aura models for fast, natural speech
-- **OpenAI**: TTS-1 and TTS-1-HD for high-quality output
-- **Google**: Cloud TTS with WaveNet voices
-- **ElevenLabs**: Premium neural voices with voice cloning
-- **Cartesia**: Sonic models for ultra-low-latency streaming
-- **Dograh**: Built-in TTS for zero-config startup
-- **Camb**: Specialized voice options
-- **Speaches**: Open-source TTS option
-- **Rime**: Custom voice creation platform
-- **Sarvam**: Indian language TTS support
-- **MiniMax**: Chinese language TTS
+- **Deepgram / OpenAI / Google**: Aura models; TTS-1/HD; WaveNet voices
+- **ElevenLabs / Cartesia**: Premium voice cloning; ultra-low-latency Sonic
+- **Dograh / Camb / Speaches**: Built-in zero-config; specialized; open-source
+- **Rime / Sarvam / MiniMax**: Custom voices; Indian languages; Chinese TTS
 
 **Telephony Providers (7)**
 
-The telephony provider registry uses a plugin architecture for PSTN connectivity:
+The telephony registry uses a plugin architecture for PSTN connectivity:
 
-- **Twilio**: The most widely used cloud communications API
-- **Vonage**: Global communications platform with SMS and voice
-- **Plivo**: Cloud communications API with competitive pricing
-- **Telnyx**: Telecom infrastructure with SIP trunking
-- **Vobiz**: Business VoIP provider
-- **Cloudonix**: Real-time communications platform
-- **ARI**: Asterisk REST Interface for on-premise PBX integration
+- **Twilio / Vonage / Plivo**: Cloud communications APIs
+- **Telnyx**: SIP trunking infrastructure
+- **Vobiz / Cloudonix**: Business VoIP; real-time communications
+- **ARI**: Asterisk REST Interface for on-premise PBX
 
 > **Important:** The telephony provider registry uses a plugin architecture where adding a new provider requires only its own folder plus a single import line -- no edits needed outside the provider package.
 
