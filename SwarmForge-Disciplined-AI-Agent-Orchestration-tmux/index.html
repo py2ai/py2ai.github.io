@@ -1024,7 +1024,7 @@ body{
             
             <span itemprop="timeRequired">
               
-                13 mins read
+                14 mins read
               
             </span>
           </p>
@@ -1046,27 +1046,73 @@ body{
                  itemprop="articleBody"
                  itemscope itemtype="https://schema.org/Article">
 
-          <h2 id="introduction">Introduction</h2>
+          <h1 id="swarmforge-disciplined-ai-agent-orchestration-with-tmux">SwarmForge: Disciplined AI Agent Orchestration with tmux</h1>
 
-<p>Tmux-based AI agent orchestration has emerged as a practical solution for coordinating multiple AI coding agents without the chaos of unmanaged concurrent workflows. When several AI agents work on the same codebase simultaneously, they overwrite each other’s files, lack structured communication channels, and produce code that ignores engineering standards. SwarmForge, created by Robert C. Martin (Uncle Bob) and Justin Martin, provides a disciplined orchestration platform that uses tmux sessions, git worktrees, and layered constitutions to turn swarms of AI agents into reliable, professional software engineers. Built as a pure shell project with no runtime dependencies beyond tmux and git, SwarmForge enforces Clean Code principles through its constitution system – requiring TDD, mutation testing, CRAP analysis, and Gherkin acceptance testing from every agent in the swarm.</p>
+<p>Tmux-based AI agent orchestration has emerged as a practical solution for coordinating multiple AI coding agents without the chaos of unmanaged concurrent workflows. SwarmForge, created by Robert C. Martin (Uncle Bob) and Justin Martin, provides a disciplined orchestration platform that uses tmux sessions, git worktrees, and layered constitutions to turn swarms of AI agents into reliable, professional software engineers. Built as a pure shell project with no runtime dependencies beyond tmux and git, SwarmForge enforces Clean Code principles through its constitution system – requiring TDD, mutation testing, CRAP analysis, and Gherkin acceptance testing from every agent in the swarm.</p>
 
 <h2 id="how-it-works">How It Works</h2>
 
-<p>SwarmForge operates through a clear orchestration pipeline that begins with a single command and ends with a fully coordinated multi-agent environment. The entry point is the <code class="language-plaintext highlighter-rouge">swarm</code> command, a thin zsh wrapper that delegates to <code class="language-plaintext highlighter-rouge">swarmforge.sh</code>, the 550-line orchestrator script. This script parses the <code class="language-plaintext highlighter-rouge">swarmforge/swarmforge.conf</code> configuration file, which defines the swarm topology with lines of the form <code class="language-plaintext highlighter-rouge">window &lt;role&gt; &lt;agent&gt; &lt;worktree&gt;</code>. For each configured role, the orchestrator creates a git worktree under <code class="language-plaintext highlighter-rouge">.worktrees/</code>, launches a tmux session, opens a macOS Terminal window via AppleScript (osascript), and starts the specified AI backend (claude or codex) in the assigned worktree.</p>
+<p>SwarmForge orchestrates AI agents through a carefully designed pipeline that starts with a simple configuration file and ends with isolated, observable agent sessions. The execution flow begins when you run the <code class="language-plaintext highlighter-rouge">swarm</code> command, which delegates to <code class="language-plaintext highlighter-rouge">swarmforge.sh</code> – a 550-line zsh script that parses <code class="language-plaintext highlighter-rouge">swarmforge.conf</code>, creates git worktrees under <code class="language-plaintext highlighter-rouge">.worktrees/</code>, launches tmux sessions, opens Terminal windows via osascript, and generates <code class="language-plaintext highlighter-rouge">swarmtools/notify-agent.sh</code> for inter-agent communication.</p>
 
-<p>The inter-agent communication system relies on <code class="language-plaintext highlighter-rouge">notify-agent.sh</code>, a helper script generated in the project-local <code class="language-plaintext highlighter-rouge">swarmtools/</code> directory during startup. When one agent needs to send a message to another, it writes the complete handoff message to a temporary file and invokes <code class="language-plaintext highlighter-rouge">notify-agent.sh &lt;target-role&gt; --file &lt;message-file&gt;</code>. The notify script resolves the target role to its tmux session name using the <code class="language-plaintext highlighter-rouge">.swarmforge/sessions.tsv</code> file, then injects the message as keystrokes into that session using <code class="language-plaintext highlighter-rouge">tmux send-keys</code>. If the target agent is busy, incoming messages are saved as files in a local <code class="language-plaintext highlighter-rouge">pending-messages/</code> directory with priority-prefixed filenames like <code class="language-plaintext highlighter-rouge">PP-YYYYMMDD-HHMMSS-source.txt</code>, where <code class="language-plaintext highlighter-rouge">PP</code> is a two-digit priority (00 for architect handoffs, 50 for normal messages).</p>
-
-<p>The watchdog system, implemented in <code class="language-plaintext highlighter-rouge">swarm-window-watchdog.sh</code>, continuously monitors all Terminal windows. If a non-cleanup window is closed accidentally, the watchdog reopens it attached to the same tmux session. If the cleanup window (the first window listed in the config) is closed, the watchdog triggers <code class="language-plaintext highlighter-rouge">swarm-cleanup.sh</code>, which kills all tmux sessions and closes all remaining Terminal windows, providing a clean shutdown mechanism.</p>
+<p>Each component in the architecture serves a specific purpose. The <code class="language-plaintext highlighter-rouge">swarmforge.conf</code> file defines the swarm topology with <code class="language-plaintext highlighter-rouge">window &lt;role&gt; &lt;agent&gt; &lt;worktree&gt;</code> lines, giving you full control over which roles exist, which AI backend each role uses, and whether each role works in the main branch or an isolated worktree. The <code class="language-plaintext highlighter-rouge">swarmforge.sh</code> orchestrator reads this configuration and creates the entire runtime environment – one tmux session per role, one Terminal window per session, and one git worktree per role that needs isolation.</p>
 
 <p><img src="/assets/img/diagrams/swarm-forge/swarm-forge-architecture.svg" alt="SwarmForge Architecture" /></p>
 
-<p>The architecture diagram above illustrates the complete SwarmForge orchestration flow from configuration input to agent execution and lifecycle management. At the top, the green <code class="language-plaintext highlighter-rouge">swarmforge.conf</code> node represents the input that defines the swarm topology – each line specifies a window role, the AI backend to use (claude or codex), and the git worktree assignment. The blue <code class="language-plaintext highlighter-rouge">swarmforge.sh</code> node is the central orchestrator, a 550-line zsh script that parses the configuration, validates role prompts, creates git worktrees, and coordinates the entire startup sequence. The teal tmux node represents the session manager, which creates one isolated terminal session per configured role. The purple Terminal + osascript node shows the macOS window management layer, where AppleScript opens a separate Terminal window for each role and attaches it to the corresponding tmux session. The orange claude and codex nodes represent the AI backends, selected per-role from the configuration file – each agent runs in its own tmux session with its own system prompt. The coral worktree nodes (<code class="language-plaintext highlighter-rouge">.worktrees/coder</code>, <code class="language-plaintext highlighter-rouge">.worktrees/refactorer</code>, <code class="language-plaintext highlighter-rouge">.worktrees/architect</code>) show the git worktree isolation that prevents agents from overwriting each other’s changes. The amber <code class="language-plaintext highlighter-rouge">notify-agent.sh</code> node represents the inter-agent communication layer, which sends keystrokes to tmux sessions for real-time message delivery. The pink <code class="language-plaintext highlighter-rouge">pending-messages/</code> node shows the priority-based message queue that ensures no handoff is lost when an agent is busy. The red watchdog diamond monitors Terminal windows and reopens closed ones, while the gray <code class="language-plaintext highlighter-rouge">swarm-cleanup.sh</code> node terminates all sessions when the cleanup window closes. This architecture effectively functions as a tmux-based operating system for AI agents, where each agent has its own isolated workspace, its own communication channel, and its own lifecycle managed by the watchdog system.</p>
+<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
+
+<p>The architecture diagram above illustrates the complete orchestration flow from configuration to cleanup. Here is a breakdown of each component:</p>
+
+<p><strong>swarmforge.conf</strong> – The input node that defines the swarm topology. Each line specifies a window with the format <code class="language-plaintext highlighter-rouge">window &lt;role&gt; &lt;agent&gt; &lt;worktree&gt;</code>, where <code class="language-plaintext highlighter-rouge">role</code> maps to a prompt file, <code class="language-plaintext highlighter-rouge">agent</code> selects the AI backend (claude, codex, copilot, or grok), and <code class="language-plaintext highlighter-rouge">worktree</code> determines whether the role works in the main branch or an isolated git worktree.</p>
+
+<p><strong>swarmforge.sh</strong> – The orchestrator, a 550-line zsh script that parses the configuration, creates git worktrees under <code class="language-plaintext highlighter-rouge">.worktrees/</code>, launches tmux sessions with project-specific sockets, opens Terminal windows via osascript, and generates the <code class="language-plaintext highlighter-rouge">swarmtools/notify-agent.sh</code> helper for inter-agent messaging.</p>
+
+<p><strong>tmux Sessions</strong> – One session per role, providing isolated terminal environments. Each session uses a project-specific tmux socket stored in <code class="language-plaintext highlighter-rouge">.swarmforge/tmux-socket</code>, ensuring project swarms are isolated from other tmux sessions on the same machine.</p>
+
+<p><strong>Terminal + osascript</strong> – The window manager that opens macOS Terminal windows (or Ghostty tabs, or Windows Terminal windows) for real-time observation. Each role gets its own visible window, making the entire swarm observable at a glance.</p>
+
+<p><strong>AI Backends (claude/codex/copilot/grok)</strong> – Per-role backend selection from the configuration file. Each agent runs in its own tmux session within its assigned worktree, receiving instructions from role-specific prompt files and the layered constitution.</p>
+
+<p><strong>.worktrees/&lt;role&gt;</strong> – Git worktree isolation per role. Each role that specifies a worktree name (other than <code class="language-plaintext highlighter-rouge">master</code> or <code class="language-plaintext highlighter-rouge">none</code>) gets its own isolated working directory, preventing file conflicts between agents working on the same project simultaneously.</p>
+
+<p><strong>notify-agent.sh</strong> – The communication layer that sends keystrokes to tmux sessions for inter-agent message passing. Agents use <code class="language-plaintext highlighter-rouge">./swarmtools/notify-agent.sh &lt;role&gt; --file &lt;message-file&gt;</code> to send structured handoffs to other agents.</p>
+
+<p><strong>pending-messages/</strong> – The message queue for busy agents. When an agent receives a message while busy, it saves the message as a file with the naming format <code class="language-plaintext highlighter-rouge">PP-YYYYMMDD-HHMMSS-source.txt</code>, where <code class="language-plaintext highlighter-rouge">PP</code> is a two-digit priority (00 for architect handoffs, 50 for normal messages).</p>
+
+<p><strong>swarm-window-watchdog.sh</strong> – The monitor that watches Terminal windows, reopens closed ones, and triggers cleanup when the cleanup window closes. It maintains a missing threshold of 3 consecutive misses before reopening a window.</p>
+
+<p><strong>swarm-cleanup.sh</strong> – The terminator that kills all tmux sessions and closes Terminal windows on shutdown. It is attached to the first window in the configuration (the cleanup owner), so closing that window triggers a graceful shutdown of the entire swarm.</p>
 
 <blockquote>
   <p><strong>Key Insight:</strong> SwarmForge solves the fundamental coordination problem in multi-agent AI workflows by giving each agent its own git worktree and a structured communication protocol. Without worktree isolation, agents would overwrite each other’s changes; without file-based handoffs, agents would have no disciplined way to delegate work. The constitution layer ensures every agent follows the same engineering standards – TDD, mutation testing, and CRAP analysis are not optional.</p>
 </blockquote>
 
 <h2 id="key-features">Key Features</h2>
+
+<p>SwarmForge provides a cohesive set of features that work together as a discipline system for AI agent orchestration. Each feature addresses a specific challenge in multi-agent coordination.</p>
+
+<p><img src="/assets/img/diagrams/swarm-forge/swarm-forge-features.svg" alt="SwarmForge Features" /></p>
+
+<h3 id="understanding-the-features">Understanding the Features</h3>
+
+<p><strong>Config-Driven Topology</strong> – The swarm shape comes from <code class="language-plaintext highlighter-rouge">swarmforge/swarmforge.conf</code>, not hardcoded shell variables. You define each window as <code class="language-plaintext highlighter-rouge">window &lt;role&gt; &lt;agent&gt; &lt;worktree&gt;</code>, giving you full control over the number of roles, their AI backends, and their worktree assignments. This means you can add a <code class="language-plaintext highlighter-rouge">research</code> role or a <code class="language-plaintext highlighter-rouge">release</code> role without modifying any shell scripts.</p>
+
+<p><strong>Project-Local Roles</strong> – Each role is defined by <code class="language-plaintext highlighter-rouge">swarmforge/&lt;role&gt;.prompt</code> in the working tree being orchestrated. The specifier, coder, refactorer, and architect roles each have their own prompt file that defines their responsibilities, constraints, and handoff protocols. Because these files live in the project directory, different projects can have entirely different role configurations.</p>
+
+<p><strong>Layered Constitution</strong> – The <code class="language-plaintext highlighter-rouge">constitution.prompt</code> file serves as the entry point and delegates to subordinate files with explicit precedence: <code class="language-plaintext highlighter-rouge">project.prompt</code> has the highest priority, followed by <code class="language-plaintext highlighter-rouge">engineering.prompt</code>, then <code class="language-plaintext highlighter-rouge">workflow.prompt</code>. This separation lets you define project-specific rules (like “this is a Go project”) independently from engineering rules (like “run mutation testing”) and workflow rules (like “use file-based handoffs”).</p>
+
+<p><strong>Backend Selection Per Role</strong> – Each role can launch <code class="language-plaintext highlighter-rouge">claude</code>, <code class="language-plaintext highlighter-rouge">codex</code>, <code class="language-plaintext highlighter-rouge">copilot</code>, or <code class="language-plaintext highlighter-rouge">grok</code> as its AI backend. The configuration file specifies which backend each role uses, so you can have a <code class="language-plaintext highlighter-rouge">specifier</code> running on <code class="language-plaintext highlighter-rouge">codex</code> while the <code class="language-plaintext highlighter-rouge">architect</code> runs on <code class="language-plaintext highlighter-rouge">claude</code>, taking advantage of each backend’s strengths.</p>
+
+<p><strong>Observable Swarm</strong> – One Terminal window opens per role, letting you watch every agent think and work in real time. The tmux-based architecture means you can attach to any session manually with <code class="language-plaintext highlighter-rouge">tmux -S &lt;socket&gt; attach-session -t &lt;session-name&gt;</code> if you need direct interaction.</p>
+
+<p><strong>Self-Hosted and Lightweight</strong> – SwarmForge runs locally in tmux and Terminal with minimal machinery. There are no cloud dependencies, no Docker containers, no npm packages, and no pip installs. The entire platform is a collection of zsh scripts that require only tmux and git.</p>
+
+<p><strong>Git Worktree Isolation</strong> – Each role works in its own git worktree under <code class="language-plaintext highlighter-rouge">.worktrees/&lt;role&gt;</code>, preventing merge conflicts between agents. The first window in the configuration runs on the <code class="language-plaintext highlighter-rouge">master</code> branch, while other roles get isolated branches like <code class="language-plaintext highlighter-rouge">swarmforge-coder</code> or <code class="language-plaintext highlighter-rouge">swarmforge-architect</code>.</p>
+
+<p><strong>Message Queueing</strong> – Priority-prefixed message files ensure no handoff is lost. When an agent is busy, incoming messages are saved as <code class="language-plaintext highlighter-rouge">PP-YYYYMMDD-HHMMSS-source.txt</code> files in a local <code class="language-plaintext highlighter-rouge">pending-messages/</code> directory, with priority 00 for architect handoffs and priority 50 for normal messages. Agents process queued messages in sorted filename order after completing their current task.</p>
+
+<blockquote>
+  <p><strong>Amazing:</strong> The entire SwarmForge platform is a 550-line zsh script with zero runtime dependencies. No npm install, no pip install, no Docker containers – just tmux, git, and your chosen AI backend. The swarm topology is defined in a simple four-column config file, and the constitution system enforces Clean Code principles that Uncle Bob has advocated for decades, now applied to AI agents instead of human developers.</p>
+</blockquote>
 
 <table>
   <thead>
@@ -1078,79 +1124,62 @@ body{
   <tbody>
     <tr>
       <td>Config-Driven Topology</td>
-      <td>The swarm shape comes from <code class="language-plaintext highlighter-rouge">swarmforge/swarmforge.conf</code>, not hardcoded shell variables. Define as many roles as your project needs.</td>
+      <td>Swarm shape defined in <code class="language-plaintext highlighter-rouge">swarmforge.conf</code>, not hardcoded</td>
     </tr>
     <tr>
       <td>Project-Local Roles</td>
-      <td>Each role is defined by <code class="language-plaintext highlighter-rouge">swarmforge/&lt;role&gt;.prompt</code> in the working tree being orchestrated, keeping agent instructions close to the code.</td>
+      <td>Each role defined by <code class="language-plaintext highlighter-rouge">swarmforge/&lt;role&gt;.prompt</code> in the working tree</td>
     </tr>
     <tr>
       <td>Layered Constitution</td>
-      <td><code class="language-plaintext highlighter-rouge">swarmforge/constitution.prompt</code> delegates to subordinate files with explicit precedence: project &gt; engineering &gt; workflow.</td>
+      <td><code class="language-plaintext highlighter-rouge">constitution.prompt</code> delegates to project, engineering, and workflow files</td>
     </tr>
     <tr>
       <td>Backend Selection Per Role</td>
-      <td>A role can launch <code class="language-plaintext highlighter-rouge">claude</code> or <code class="language-plaintext highlighter-rouge">codex</code> as its AI backend, allowing mixed backends within a single swarm.</td>
+      <td>Per-role choice of claude, codex, copilot, or grok</td>
     </tr>
     <tr>
       <td>Observable Swarm</td>
-      <td>One Terminal window per role opens automatically, letting you watch every agent think and work in real time.</td>
+      <td>One Terminal window per role for real-time observation</td>
     </tr>
     <tr>
       <td>Self-Hosted and Lightweight</td>
-      <td>Runs locally in tmux and Terminal with minimal machinery. No cloud dependencies, no Docker containers.</td>
+      <td>Runs locally in tmux and Terminal, no cloud dependencies</td>
     </tr>
     <tr>
       <td>Git Worktree Isolation</td>
-      <td>Each role works in its own worktree under <code class="language-plaintext highlighter-rouge">.worktrees/</code>, preventing file conflicts between concurrent agents.</td>
+      <td>Each role in its own worktree, preventing merge conflicts</td>
     </tr>
     <tr>
-      <td>Message Queueing with Priority</td>
-      <td>Busy agents queue incoming messages in <code class="language-plaintext highlighter-rouge">pending-messages/</code> with priority-prefixed filenames, ensuring no handoff is lost.</td>
+      <td>Message Queueing</td>
+      <td>Priority-prefixed files for busy agents, ensuring no handoff is lost</td>
     </tr>
   </tbody>
 </table>
 
-<p><img src="/assets/img/diagrams/swarm-forge/swarm-forge-features.svg" alt="SwarmForge Features" /></p>
-
-<p>The features diagram above presents SwarmForge’s eight core capabilities in a hub-and-radial layout, with the blue center node representing the platform itself and each colored branch representing a distinct feature. The green Config-Driven Topology branch highlights that the swarm shape is defined entirely by <code class="language-plaintext highlighter-rouge">swarmforge.conf</code>, allowing projects to choose their own role composition instead of being locked to a fixed set. The teal Project-Local Roles branch emphasizes that each role prompt lives in the working tree, making agent instructions version-controlled and project-specific. The purple Layered Constitution branch shows the three-level precedence system – <code class="language-plaintext highlighter-rouge">project.prompt</code> (highest priority), <code class="language-plaintext highlighter-rouge">engineering.prompt</code> (TDD, mutation testing, CRAP analysis), and <code class="language-plaintext highlighter-rouge">workflow.prompt</code> (handoff protocols, message queueing) – that separates concerns without forcing everything into one large prompt. The orange Backend Selection branch illustrates the per-role choice between <code class="language-plaintext highlighter-rouge">claude</code> and <code class="language-plaintext highlighter-rouge">codex</code>, enabling mixed-backend swarms where different roles use different AI providers. The coral Observable Swarm branch represents the real-time visibility provided by one Terminal window per role, where developers can watch agents reason, write code, and communicate. The amber Self-Hosted and Lightweight branch underscores the zero-dependency philosophy – only tmux, git, and an AI backend are required. The pink Git Worktree Isolation branch shows how each role gets its own worktree under <code class="language-plaintext highlighter-rouge">.worktrees/</code>, preventing the file conflicts that plague unmanaged multi-agent workflows. The red Message Queueing branch depicts the priority-based file queueing system in <code class="language-plaintext highlighter-rouge">pending-messages/</code>, where messages are saved with priority prefixes (00 for architect handoffs, 50 for normal) and processed in sorted order after the current job completes. Together, these features form a cohesive discipline system that transforms raw AI coding speed into reliable, maintainable engineering output.</p>
-
-<blockquote>
-  <p><strong>Amazing:</strong> The entire SwarmForge platform is a 550-line zsh script with zero runtime dependencies. No npm install, no pip install, no Docker containers – just tmux, git, and your chosen AI backend. The swarm topology is defined in a simple four-column config file, and the constitution system enforces Clean Code principles that Uncle Bob has advocated for decades, now applied to AI agents instead of human developers.</p>
-</blockquote>
-
 <h2 id="installation">Installation</h2>
 
-<p>SwarmForge requires macOS with Terminal, tmux, git, and at least one AI backend installed.</p>
-
-<p><strong>Prerequisites:</strong></p>
-
-<ul>
-  <li>macOS (Terminal + osascript for window management)</li>
-  <li>tmux (session manager)</li>
-  <li>git (worktree isolation and version control)</li>
-  <li>An AI backend: <code class="language-plaintext highlighter-rouge">claude</code> (Claude Code) or <code class="language-plaintext highlighter-rouge">codex</code> (OpenAI Codex CLI)</li>
-</ul>
-
-<p><strong>Install SwarmForge into your project directory:</strong></p>
+<p>SwarmForge requires macOS (Terminal + osascript), tmux, git, and your chosen AI backend (claude, codex, copilot, or grok). Installation is a single command:</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-L</span> https://github.com/unclebob/swarm-forge/archive/refs/heads/main.tar.gz | <span class="nb">tar</span> <span class="nt">-xz</span> <span class="nt">--strip-components</span><span class="o">=</span>1
 </code></pre></div></div>
 
-<p>This command pulls the SwarmForge repository contents directly into your current working directory without creating a git remote. The key files you need are <code class="language-plaintext highlighter-rouge">swarm</code>, <code class="language-plaintext highlighter-rouge">swarmforge.sh</code>, <code class="language-plaintext highlighter-rouge">swarm-cleanup.sh</code>, <code class="language-plaintext highlighter-rouge">swarm-window-watchdog.sh</code>, and <code class="language-plaintext highlighter-rouge">swarmlog.sh</code>.</p>
+<p>This pulls the SwarmForge files into your current directory without creating a git remote. After extraction, you will have the <code class="language-plaintext highlighter-rouge">swarm</code> entry point, <code class="language-plaintext highlighter-rouge">swarmforge.sh</code>, and all supporting scripts in your project directory.</p>
 
-<p><strong>Add the SwarmForge scripts to your PATH:</strong></p>
+<p>Prerequisites:</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"/path/to/your/project:</span><span class="nv">$PATH</span><span class="s2">"</span>
-</code></pre></div></div>
-
-<p>Or add <code class="language-plaintext highlighter-rouge">swarmforge.sh</code> to your shell PATH before startup, as recommended in the project documentation.</p>
+<ul>
+  <li><strong>macOS</strong> with Terminal.app and osascript (or Ghostty, or Windows Terminal via WSL)</li>
+  <li><strong>tmux</strong> – install with <code class="language-plaintext highlighter-rouge">brew install tmux</code> on macOS</li>
+  <li><strong>git</strong> – pre-installed on macOS or install with <code class="language-plaintext highlighter-rouge">brew install git</code></li>
+  <li><strong>AI backend</strong> – at least one of: <code class="language-plaintext highlighter-rouge">claude</code> (Claude Code), <code class="language-plaintext highlighter-rouge">codex</code> (OpenAI Codex), <code class="language-plaintext highlighter-rouge">copilot</code> (GitHub Copilot), or <code class="language-plaintext highlighter-rouge">grok</code> (xAI Grok)</li>
+</ul>
 
 <h2 id="usage">Usage</h2>
 
-<h3 id="configuration">Configuration</h3>
+<h3 id="configuring-the-swarm">Configuring the Swarm</h3>
 
-<p>Create a <code class="language-plaintext highlighter-rouge">swarmforge/</code> directory in your target working directory with the following structure:</p>
+<p>Create a <code class="language-plaintext highlighter-rouge">swarmforge/</code> directory in your project:</p>
 
 <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>swarmforge/
   swarmforge.conf
@@ -1165,7 +1194,7 @@ body{
   architect.prompt
 </code></pre></div></div>
 
-<p>Define your swarm topology in <code class="language-plaintext highlighter-rouge">swarmforge/swarmforge.conf</code>. Each line specifies a window with a role, an AI backend, and a worktree assignment:</p>
+<p>Define your swarm topology in <code class="language-plaintext highlighter-rouge">swarmforge/swarmforge.conf</code>:</p>
 
 <div class="language-conf highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">window</span> <span class="n">specifier</span> <span class="n">codex</span> <span class="n">master</span>
 <span class="n">window</span> <span class="n">coder</span> <span class="n">codex</span> <span class="n">coder</span>
@@ -1173,55 +1202,85 @@ body{
 <span class="n">window</span> <span class="n">architect</span> <span class="n">codex</span> <span class="n">architect</span>
 </code></pre></div></div>
 
-<p>The first window listed is the cleanup window. When its Terminal window closes, SwarmForge shuts down all sessions. If a role uses <code class="language-plaintext highlighter-rouge">master</code> as its worktree, that agent runs in the main working directory on the <code class="language-plaintext highlighter-rouge">master</code> branch. Otherwise, SwarmForge creates a git worktree under <code class="language-plaintext highlighter-rouge">.worktrees/&lt;worktree&gt;</code>.</p>
+<p>Each line specifies <code class="language-plaintext highlighter-rouge">window &lt;role&gt; &lt;agent&gt; &lt;worktree&gt;</code>. The first window is the cleanup owner. Roles with <code class="language-plaintext highlighter-rouge">master</code> as their worktree run in the main working directory; other roles get isolated worktrees under <code class="language-plaintext highlighter-rouge">.worktrees/&lt;name&gt;</code>.</p>
 
-<h3 id="constitution-system">Constitution System</h3>
+<h3 id="the-constitution-system">The Constitution System</h3>
 
-<p>The <code class="language-plaintext highlighter-rouge">constitution.prompt</code> file is the entry point for the constitution layer. It defines precedence and directs agents to read subordinate files in order:</p>
+<p>The <code class="language-plaintext highlighter-rouge">constitution.prompt</code> file is the entry point for agent behavior. It delegates to subordinate files with explicit precedence:</p>
 
-<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. swarmforge/constitution/project.prompt
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. swarmforge/constitution/project.prompt    (highest priority)
 2. swarmforge/constitution/engineering.prompt
-3. swarmforge/constitution/workflow.prompt
+3. swarmforge/constitution/workflow.prompt     (lowest priority)
 </code></pre></div></div>
 
-<p>If two subordinate files conflict, the earlier file wins. This separation lets you keep project-specific rules (language, tooling, naming conventions) separate from engineering rules (TDD, mutation testing, CRAP analysis) and workflow rules (worktree isolation, handoff format, message queueing).</p>
+<p>If two subordinate files conflict, the earlier file wins. This layered approach separates project-specific rules from engineering standards and workflow protocols.</p>
 
 <h3 id="running-the-swarm">Running the Swarm</h3>
 
-<p>Just type <code class="language-plaintext highlighter-rouge">swarm</code>:</p>
+<p>Just type:</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>swarm
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./swarm
 </code></pre></div></div>
 
-<p>The windows should all pop up. Each Terminal window attaches to its tmux session, and the AI backend for each role starts in its assigned worktree.</p>
+<p>The windows should all pop up. Each Terminal window shows a tmux session running the assigned AI backend in its designated worktree. You can observe every agent in real time.</p>
 
-<h3 id="inter-agent-handoffs">Inter-Agent Handoffs</h3>
+<h3 id="inter-agent-communication">Inter-Agent Communication</h3>
 
-<p>Agents communicate through the file-based handoff system. To send a message to another agent:</p>
+<p>Agents communicate through file-based handoffs:</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./swarmtools/notify-agent.sh &lt;target-role&gt; <span class="nt">--file</span> ./tmp/&lt;target-role&gt;-handoff.txt
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./swarmtools/notify-agent.sh &lt;role&gt; <span class="nt">--file</span> &lt;message-file&gt;
 </code></pre></div></div>
 
-<p>Every handoff message must start with: <code class="language-plaintext highlighter-rouge">Re-read your role and constitution.</code> After the opening line, include exactly these fields: sender role, specifier handoff name, branch name, and commit hash. Do not tell the receiving role how to do its job – the normal request is: <code class="language-plaintext highlighter-rouge">Apply your own role rules to this state.</code></p>
+<p>When an agent is busy, incoming messages are queued in <code class="language-plaintext highlighter-rouge">pending-messages/</code> with priority prefixes:</p>
 
-<p>When an agent is busy and receives a message, it saves the message as a file in its local <code class="language-plaintext highlighter-rouge">pending-messages/</code> directory with this naming format:</p>
-
-<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pending-messages/PP-YYYYMMDD-HHMMSS-source.txt
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pending-messages/00-20260527-143000-architect.txt   (priority 00 - architect)
+pending-messages/50-20260527-143100-coder.txt        (priority 50 - normal)
 </code></pre></div></div>
-
-<p>Priority <code class="language-plaintext highlighter-rouge">00</code> is used for architect handoffs to coder or refactorer. Priority <code class="language-plaintext highlighter-rouge">50</code> is the default for normal messages. After the current job completes, queued messages are processed in sorted filename order.</p>
 
 <p><img src="/assets/img/diagrams/swarm-forge/swarm-forge-workflow.svg" alt="SwarmForge Workflow" /></p>
 
-<p>The workflow diagram above shows the step-by-step process for using SwarmForge, from initial setup through agent execution to final cleanup. Step 1 (green) is creating the <code class="language-plaintext highlighter-rouge">swarmforge/</code> directory in the target project, which holds all configuration and role prompt files. Step 2 (blue) is writing the <code class="language-plaintext highlighter-rouge">swarmforge.conf</code> topology definition and the individual <code class="language-plaintext highlighter-rouge">&lt;role&gt;.prompt</code> files that instruct each agent on its responsibilities. Step 3 (teal) is running the <code class="language-plaintext highlighter-rouge">swarm</code> command, which delegates to <code class="language-plaintext highlighter-rouge">swarmforge.sh</code> to begin the orchestration. Step 4 (purple) shows tmux sessions launching and Terminal windows opening via osascript, one per configured role. Step 5 (orange) depicts each AI agent starting in its isolated git worktree under <code class="language-plaintext highlighter-rouge">.worktrees/</code>, where it can work independently without conflicting with other agents. Step 6 (coral) illustrates the file-based handoff system, where <code class="language-plaintext highlighter-rouge">notify-agent.sh</code> sends messages between agents via tmux keystroke injection, and busy agents queue incoming messages in <code class="language-plaintext highlighter-rouge">pending-messages/</code> with priority-prefixed filenames. Step 7 (amber) represents the user observing all agent activity in real time through the Terminal windows that SwarmForge opened. The pink decision diamond asks “Work complete?” – if not, agents continue the handoff cycle, delegating work back and forth through the structured communication protocol. When work is complete, the gray <code class="language-plaintext highlighter-rouge">swarm-cleanup.sh</code> node terminates all tmux sessions and closes all Terminal windows. This workflow creates a tight feedback loop where the human operator maintains full visibility into every agent action, can intervene at any time, and can shut down the entire swarm cleanly by closing the cleanup window.</p>
+<h3 id="understanding-the-workflow">Understanding the Workflow</h3>
+
+<p>The workflow diagram above shows the step-by-step process from configuration to completion:</p>
+
+<p><strong>Step 1: Create <code class="language-plaintext highlighter-rouge">swarmforge/</code> directory</strong> – This is the project-local configuration setup. All swarm configuration, role prompts, and constitution files live in this directory, keeping everything project-specific and version-controllable.</p>
+
+<p><strong>Step 2: Write <code class="language-plaintext highlighter-rouge">swarmforge.conf</code> + role prompts</strong> – Define the topology in <code class="language-plaintext highlighter-rouge">swarmforge.conf</code> with <code class="language-plaintext highlighter-rouge">window &lt;role&gt; &lt;agent&gt; &lt;worktree&gt;</code> lines, and write agent instructions in <code class="language-plaintext highlighter-rouge">&lt;role&gt;.prompt</code> files. Each role prompt defines responsibilities, constraints, and handoff protocols.</p>
+
+<p><strong>Step 3: Run <code class="language-plaintext highlighter-rouge">swarm</code> command</strong> – Launch the orchestration. The <code class="language-plaintext highlighter-rouge">swarm</code> entry point delegates to <code class="language-plaintext highlighter-rouge">swarmforge.sh</code>, which parses the configuration, creates worktrees, launches tmux sessions, and opens Terminal windows.</p>
+
+<p><strong>Step 4: tmux sessions launch</strong> – One session per role, with Terminal windows opening via osascript. The first window in the configuration becomes the cleanup owner, and a window watchdog monitors all Terminal surfaces.</p>
+
+<p><strong>Step 5: Agents start in worktrees</strong> – Each role begins work in its isolated git worktree under <code class="language-plaintext highlighter-rouge">.worktrees/&lt;role&gt;</code>. The AI backend receives instructions from the constitution and role prompt files, then starts implementing according to its defined responsibilities.</p>
+
+<p><strong>Step 6: File-based handoffs</strong> – Agents use <code class="language-plaintext highlighter-rouge">notify-agent.sh</code> to send messages between agents via tmux keystroke injection. Busy agents queue incoming messages in <code class="language-plaintext highlighter-rouge">pending-messages/</code> with priority prefixes, processing them in order after completing their current task.</p>
+
+<p><strong>Step 7: User observes in Terminal</strong> – Real-time visibility into all agent activity. You can watch every agent think, code, and communicate, intervening in any tmux session when needed.</p>
+
+<p><strong>Decision point: “Work complete?”</strong> – If the task is not complete, agents continue the handoff cycle. The specifier defines specifications, the coder implements, the refactorer cleans up, and the architect verifies. When all agents have completed their work, the cleanup window closes and <code class="language-plaintext highlighter-rouge">swarm-cleanup.sh</code> terminates all sessions.</p>
 
 <blockquote>
   <p><strong>Takeaway:</strong> With a single <code class="language-plaintext highlighter-rouge">swarm</code> command, an entire multi-agent orchestration environment springs to life – Terminal windows open for each role, tmux sessions launch in isolated git worktrees, and agents begin communicating through a file-based handoff system with priority queueing. The observable nature of tmux means you can watch every agent think and work in real time.</p>
 </blockquote>
 
+<h2 id="terminal-backend-support">Terminal Backend Support</h2>
+
+<p>SwarmForge supports multiple terminal backends through an adapter system:</p>
+
+<ul>
+  <li><strong>macOS Terminal.app</strong> – Default when AppleScript is available, opens Terminal windows via osascript</li>
+  <li><strong>Ghostty</strong> – Set <code class="language-plaintext highlighter-rouge">SWARMFORGE_TERMINAL=ghostty</code> for Ghostty tab support</li>
+  <li><strong>Windows Terminal</strong> – Set <code class="language-plaintext highlighter-rouge">SWARMFORGE_TERMINAL=windows-terminal</code> for WSL environments</li>
+  <li><strong>None</strong> – Set <code class="language-plaintext highlighter-rouge">SWARMFORGE_TERMINAL=none</code> to skip terminal automation and attach in the current shell</li>
+</ul>
+
+<p>Adding a new terminal backend requires creating a single file in <code class="language-plaintext highlighter-rouge">terminal-adapters/</code> that implements the <code class="language-plaintext highlighter-rouge">terminal_open_session</code>, <code class="language-plaintext highlighter-rouge">terminal_window_exists</code>, and <code class="language-plaintext highlighter-rouge">terminal_close_window</code> functions.</p>
+
 <h2 id="conclusion">Conclusion</h2>
 
-<p>SwarmForge brings a discipline-first philosophy to multi-agent AI coding workflows. By combining git worktree isolation, file-based handoffs with priority queueing, a layered constitution system, and real-time observability through tmux, it transforms the chaos of concurrent AI agents into a coordinated engineering process. The constitution layer ensures that every agent follows TDD, mutation testing, CRAP analysis, and Gherkin acceptance testing – the same Clean Code practices that Uncle Bob has taught for decades, now enforced at the prompt level for AI agents. The self-dogfooding requirement, where SwarmForge uses itself to build its own features, demonstrates that the platform is reliable enough for production use, not just experimentation.</p>
+<p>SwarmForge brings Clean Code discipline to multi-agent AI workflows through a remarkably simple architecture. By combining tmux sessions for isolation, git worktrees for conflict prevention, file-based handoffs for structured communication, and a layered constitution for behavioral enforcement, it transforms raw AI coding speed into reliable, maintainable engineering output. The platform’s self-dogfooding requirement – that SwarmForge should use itself to build its own features – demonstrates confidence in the discipline-first approach.</p>
+
+<p>The constitution system is what sets SwarmForge apart from simple tmux-based agent wrappers. It is not just about running multiple agents in separate windows; it is about enforcing TDD, mutation testing, CRAP analysis, and Gherkin acceptance testing at the prompt level, ensuring that every agent in the swarm follows the same engineering standards regardless of which AI backend it uses.</p>
 
 <blockquote>
   <p><strong>Important:</strong> SwarmForge’s self-dogfooding requirement – that SwarmForge should use itself to build its own features – is more than a clever meta-exercise. It is a statement of confidence in the discipline-first approach: if the orchestration platform is not reliable enough to build itself, it is not reliable enough for your project. The constitution layer ensures that this reliability is enforced at the prompt level, not just the process level.</p>
@@ -1394,61 +1453,40 @@ body{
             <h2 class="related-posts__title">Related Posts</h2>
             <div class="related-posts__grid">
               
-                <a class="related-post-card" href="/Ruflo-Multi-Agent-AI-Orchestration-for-Claude-Code/">
+                <a class="related-post-card" href="/iii-Unified-Backend-Engine-Three-Primitives/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="Ruflo: Multi-Agent AI Orchestration for Claude Code"
+                           alt="iii: The Unified Backend Engine -- Three Primitives, Zero Integration Cost"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">Ruflo: Multi-Agent AI Orchestration for Claude Code</h3>
+                    <h3 class="related-post-card__title">iii: The Unified Backend Engine -- Three Primitives, Zero...</h3>
                     <p class="related-post-card__excerpt">
                       
-                        Ruflo: Multi-Agent AI Orchestration for Claude Code Ruflo is a multi-agent AI orchestration platform for...
+                        ## Introduction Today, building a typical backend means connecting many separate systems: an API framework...
                       
                     </p>
                     <span class="related-post-card__date">
-                      May 03, 2026
+                      Jun 01, 2026
                     </span>
                   </div>
                 </a>
               
-                <a class="related-post-card" href="/DeepSeek-Reasonix-DeepSeek-Native-AI-Coding-Agent-Terminal/">
+                <a class="related-post-card" href="/RAGFlow-Open-Source-RAG-Engine-Deep-Document-Understanding/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="DeepSeek-Reasonix: DeepSeek-Native AI Coding Agent for Your Terminal with Prefix-Cache Stability"
+                           alt="RAGFlow: Open-Source RAG Engine with Deep Document Understanding"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">DeepSeek-Reasonix: DeepSeek-Native AI Coding Agent for Yo...</h3>
+                    <h3 class="related-post-card__title">RAGFlow: Open-Source RAG Engine with Deep Document Unders...</h3>
                     <p class="related-post-card__excerpt">
                       
-                        DeepSeek-Reasonix: DeepSeek-Native AI Coding Agent for Your Terminal with Prefix-Cache Stability DeepSeek-Reasonix is an open-source,...
-                      
-                    </p>
-                    <span class="related-post-card__date">
-                      May 21, 2026
-                    </span>
-                  </div>
-                </a>
-              
-                <a class="related-post-card" href="/Anthropic-Financial-Services-AI-Agents/">
-                  
-                    <div class="related-post-card__image">
-                      <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="Anthropic Financial Services: AI Agents for Investment Banking, Equity Research, and Fund Administration"
-                           loading="lazy" />
-                    </div>
-                  
-                  <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">Anthropic Financial Services: AI Agents for Investment Ba...</h3>
-                    <p class="related-post-card__excerpt">
-                      
-                        Anthropic Financial Services: AI Agents for Finance Workflows Anthropic’s Financial Services repository delivers a comprehensive...
+                        RAGFlow: Open-Source RAG Engine with Deep Document Understanding RAGFlow is a leading open-source Retrieval-Augmented Generation...
                       
                     </p>
                     <span class="related-post-card__date">
@@ -1457,65 +1495,86 @@ body{
                   </div>
                 </a>
               
-                <a class="related-post-card" href="/Supertonic-On-Device-Multilingual-TTS/">
+                <a class="related-post-card" href="/Web-Design-Skill-AI-Agent-Transforms-Functional-Stunning/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="Supertonic: Lightning-Fast On-Device Multilingual Text-to-Speech via ONNX"
+                           alt="Web Design Skill: AI Agent That Transforms Functional Web Pages Into Stunning Designs"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">Supertonic: Lightning-Fast On-Device Multilingual Text-to...</h3>
+                    <h3 class="related-post-card__title">Web Design Skill: AI Agent That Transforms Functional Web...</h3>
                     <p class="related-post-card__excerpt">
                       
-                        What Is Supertonic? Supertonic is a lightning-fast on-device multilingual text-to-speech system that runs entirely through...
+                        Web Design Skill: AI Agent That Transforms Functional Web Pages Into Stunning Designs Modern LLMs...
                       
                     </p>
                     <span class="related-post-card__date">
-                      May 15, 2026
+                      Apr 26, 2026
                     </span>
                   </div>
                 </a>
               
-                <a class="related-post-card" href="/LangGraph-Stateful-AI-Agent-Orchestration-Framework/">
+                <a class="related-post-card" href="/Agent-Browser-Browser-Automation-CLI-for-AI-Agents/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="LangGraph: Build Stateful AI Agents with Graph-Based Orchestration"
+                           alt="Agent-Browser: Fast Native Rust CLI for Browser Automation Built for AI Agents"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">LangGraph: Build Stateful AI Agents with Graph-Based Orch...</h3>
+                    <h3 class="related-post-card__title">Agent-Browser: Fast Native Rust CLI for Browser Automatio...</h3>
                     <p class="related-post-card__excerpt">
                       
-                        LangGraph: Build Stateful AI Agents with Graph-Based Orchestration Building production-grade AI agents requires more than...
+                        Browser automation for AI agents has long relied on Node.js-based tools like Playwright and Puppeteer,...
                       
                     </p>
                     <span class="related-post-card__date">
-                      May 05, 2026
+                      Jun 01, 2026
                     </span>
                   </div>
                 </a>
               
-                <a class="related-post-card" href="/SGLang-Fast-LLM-Serving-System/">
+                <a class="related-post-card" href="/Local-Deep-Research-AI-Powered-Research-Assistant/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="SGLang: The High-Performance LLM Serving Framework Powering 400K+ GPUs"
+                           alt="Local Deep Research: Open-Source AI Research Assistant Achieving 95% SimpleQA Locally"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">SGLang: The High-Performance LLM Serving Framework Poweri...</h3>
+                    <h3 class="related-post-card__title">Local Deep Research: Open-Source AI Research Assistant Ac...</h3>
                     <p class="related-post-card__excerpt">
                       
-                        SGLang is a fast and powerful LLM serving framework designed to deliver high-throughput, low-latency inference...
+                        Introduction Local deep research has emerged as one of the most significant breakthroughs in open-source...
                       
                     </p>
                     <span class="related-post-card__date">
-                      Apr 28, 2026
+                      May 12, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/Invidious-Privacy-Focused-YouTube-Frontend/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="Invidious: Privacy-Focused Open Source YouTube Frontend"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Invidious: Privacy-Focused Open Source YouTube Frontend</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Invidious: Privacy-Focused Open Source YouTube Frontend Invidious is an open source alternative front-end to YouTube...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      May 03, 2026
                     </span>
                   </div>
                 </a>
