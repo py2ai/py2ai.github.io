@@ -11,7 +11,7 @@ seo:
   og_image: "https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
 meta:
   description: "Hermes WebUI delivers a lightweight dark-themed web interface for Hermes Agent with three-panel layout, vanilla JS SPA, no-build philosophy, and multi-provider AI support across OpenAI, Anthropic, Gemini, DeepSeek, and OpenRouter."
-featured-img: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 ---
 
 ## Introduction
