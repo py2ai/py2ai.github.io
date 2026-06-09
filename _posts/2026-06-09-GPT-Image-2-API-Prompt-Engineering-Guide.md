@@ -5,7 +5,7 @@ slug: gpt-image-2-api-prompt-engineering-guide
 date: 2026-06-09
 header-img: "img/post-bg.jpg"
 permalink: /GPT-Image-2-API-Prompt-Engineering-Guide/
-featured-img: gpt-image-2/gpt-image-2-api-workflow
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [ai, api, prompt-engineering, image-generation]
 tags: [gpt-image-2, openai, evolink, image-api, prompt-engineering, ai-art, text-to-image, image-editing]
 keywords: "GPT-Image-2 API tutorial, GPT-Image-2 prompt engineering, OpenAI image generation API, Evolink GPT-Image-2, GPT-Image-2 prompt examples, AI image generation prompts, text to image API guide, GPT-Image-2 e-commerce prompts, GPT-Image-2 ad creative, image editing API"
