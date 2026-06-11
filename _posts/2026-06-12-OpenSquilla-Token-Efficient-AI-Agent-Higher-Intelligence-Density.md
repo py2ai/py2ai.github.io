@@ -148,7 +148,7 @@ docker build -t opensquilla:local .
 
 ## Usage
 
-![OpenSquilla Workflow](/assets/img/diagrams/opensquilla/opensquilla-workflow.svg)
+<img src="/assets/img/diagrams/opensquilla/opensquilla-workflow.svg" alt="OpenSquilla Workflow" style="max-height: 600px; width: auto; display: block; margin: 0 auto;">
 
 ### Understanding the Workflow
 
