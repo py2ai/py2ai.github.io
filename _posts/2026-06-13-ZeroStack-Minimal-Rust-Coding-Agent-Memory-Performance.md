@@ -6,7 +6,7 @@ date: 2026-06-13
 header-img: "img/post-bg.jpg"
 permalink: /ZeroStack-Minimal-Rust-Coding-Agent-Memory-Performance/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-categories: [AI, Rust, Developer Tools]
+categories: [ai, rust, coding-agent, performance]
 tags: [zerostack, rust, coding-agent, llm, terminal, performance, memory-efficiency, enum-dispatch, feature-gating, mimalloc]
 keywords: "ZeroStack Rust coding agent, minimal memory coding agent, Rust vs JavaScript coding agent, ZeroStack tutorial, ZeroStack installation guide, coding agent performance comparison, ZeroStack enum dispatch, Rust terminal coding agent, low memory AI coding tool, ZeroStack feature gating"
 author: "PyShine"
