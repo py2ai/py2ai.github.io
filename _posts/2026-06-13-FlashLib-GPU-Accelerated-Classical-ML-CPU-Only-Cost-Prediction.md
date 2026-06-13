@@ -4,7 +4,7 @@ title: "FlashLib: GPU-Accelerated Classical ML with CPU-Only Cost Prediction"
 date: 2026-06-13
 categories: [ai, gpu, machine-learning, performance]
 tags: [flashlib, gpu, triton, cutedsl, kmeans, pca, hdbscan, umap, tsne, roofline, cost-estimation, pareto, sklearn]
-image: ai-coding-frameworks/ai-coding-frameworks
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /FlashLib-GPU-Accelerated-Classical-ML-CPU-Only-Cost-Prediction/
 ---
 
