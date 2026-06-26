@@ -5,6 +5,7 @@ description: "Learn how stop-slop detects and eliminates 40+ banned phrases, 9 s
 date: 2026-06-26
 header-img: "img/post-bg.jpg"
 permalink: /Stop-Slop-Remove-AI-Writing-Patterns-Claude-Skill/
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags:
   - Open Source
   - AI
