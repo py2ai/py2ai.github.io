@@ -1003,7 +1003,7 @@ body{
             
             <span itemprop="timeRequired">
               
-                2 mins read
+                8 mins read
               
             </span>
           </p>
@@ -1099,47 +1099,191 @@ body{
   <li>container-network-vmnet XPC agent provides built DNS-resolve per-container using .test hostname namespace</li>
 </ul>
 
-<p><code class="language-plaintext highlighter-rouge">ash
-container system start
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>container system start
 container system status
 container image list
 container network list
-</code></p>
+</code></pre></div></div>
 
 <h2 id="build-run-and-publish-workflow">Build, Run, and Publish Workflow</h2>
 
 <p><img src="/assets/img/diagrams/apple-container/apple-container-workflow.svg" alt="Build Run Publish Workflow" /></p>
 
-<p>```bash</p>
-<h1 id="start-system-service">Start system service</h1>
-<p>container system start</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Start system service</span>
+container system start
 
-<h1 id="build-image-from-dockerfile">Build image from Dockerfile</h1>
-<p>container build –tag myapp:1.0 .</p>
+<span class="c"># Build image from Dockerfile</span>
+container build <span class="nt">--tag</span> myapp:1.0 <span class="nb">.</span>
 
-<h1 id="configure-builder-resources-for-large-builds">Configure builder resources for large builds</h1>
-<p>container builder start –cpus 8 –memory 32g</p>
+<span class="c"># Configure builder resources for large builds</span>
+container builder start <span class="nt">--cpus</span> 8 <span class="nt">--memory</span> 32g
 
-<h1 id="verify-the-container-system">Verify the container system</h1>
-<p>container system status</p>
+<span class="c"># Verify the container system</span>
+container system status
 
-<h1 id="run-image-with-port-forwarding">Run image with port forwarding</h1>
-<p>container run -d –rm -p 127.0.0.1:8080:8000 myapp:1.0</p>
+<span class="c"># Run image with port forwarding</span>
+container run <span class="nt">-d</span> <span class="nt">--rm</span> <span class="nt">-p</span> 127.0.0.1:8080:8000 myapp:1.0
 
-<h1 id="run-interactively-with-volume">Run interactively with volume</h1>
-<p>container run -it –rm -v “${HOME}/Desktop/assets:/data” myapp:1.0 /bin/bash</p>
+<span class="c"># Run interactively with volume</span>
+container run <span class="nt">-it</span> <span class="nt">--rm</span> <span class="nt">-v</span> <span class="s2">"</span><span class="k">${</span><span class="nv">HOME</span><span class="k">}</span><span class="s2">/Desktop/assets:/data"</span> myapp:1.0 /bin/bash
 
-<h1 id="inspect-running-container-detail-use-json-output">Inspect running container detail (use JSON output)</h1>
-<p>container inspect myapp
-container list –format json</p>
+<span class="c"># Inspect running container detail (use JSON output)</span>
+container inspect myapp
+container list <span class="nt">--format</span> json
 
-<h1 id="view-logs-and-vm-boot-output">View logs and VM boot output</h1>
-<p>container logs myapp
-container logs –boot myapp</p>
+<span class="c"># View logs and VM boot output</span>
+container logs myapp
+container logs <span class="nt">--boot</span> myapp
 
-<h1 id="tag-then-push-the-result-to-an-oci-compatibility-registry-destination">Tag then push the result to an OCI-compatibility registry destination</h1>
-<p>container image tag myapp:1.0 ghcr.io/user/myapp:1.0
-container image push ghcr.io/user/myapp:1.0</p>
+<span class="c"># Tag then push the result to an OCI-compatibility registry destination</span>
+container image tag myapp:1.0 ghcr.io/user/myapp:1.0
+container image push ghcr.io/user/myapp:1.0
+</code></pre></div></div>
+
+<h2 id="networking-and-dns">Networking and DNS</h2>
+
+<p><img src="/assets/img/diagrams/apple-container/apple-container-networking.svg" alt="Apple Container Networking Diagram" /></p>
+
+<p>Apple Container introduces a clean networking model built around the <code class="language-plaintext highlighter-rouge">.test</code> hostname namespace. Each container receives a unique DNS name under <code class="language-plaintext highlighter-rouge">.test</code>, allowing containers to resolve each other by name without manual hostfile edits or external DNS servers.</p>
+
+<ul>
+  <li><strong>Per-container DNS resolution</strong> – The <code class="language-plaintext highlighter-rouge">container-network-vmnet</code> XPC agent runs a dedicated DNS resolver for every container. Each VM gets its own resolver instance, so DNS queries from one container never leak into another’s namespace.</li>
+  <li><strong>Network isolation</strong> – Every container VM gets its own virtual network interface via the <code class="language-plaintext highlighter-rouge">vmnet</code> framework. Traffic between containers is isolated by default; explicit configuration is required to expose ports or share networks.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">.test</code> namespace</strong> – Container hostnames follow the pattern <code class="language-plaintext highlighter-rouge">&lt;container-name&gt;.test</code>. This avoids collisions with real domains and makes container addressing predictable and debuggable.</li>
+  <li><strong>Port forwarding</strong> – The CLI exposes container ports to the host with <code class="language-plaintext highlighter-rouge">-p 127.0.0.1:HOST:CONTAINER</code>, binding to localhost by default for security. The vmnet agent handles NAT translation between the host and the container VM’s virtual interface.</li>
+</ul>
+
+<p>This design means developers can run multiple containers side by side, each with independent DNS and network stacks, without the shared-kernel networking complications common in traditional container runtimes.</p>
+
+<h2 id="vm-isolation">VM Isolation</h2>
+
+<p><img src="/assets/img/diagrams/apple-container/apple-container-vm-isolation.svg" alt="Apple Container VM Isolation Diagram" /></p>
+
+<p>The defining architectural choice in Apple Container is giving every container its own lightweight virtual machine rather than sharing a single kernel across containers.</p>
+
+<ul>
+  <li><strong>Per-container VM architecture</strong> – Each <code class="language-plaintext highlighter-rouge">container run</code> invocation spawns a dedicated Linux VM using Apple’s Virtualization framework. The VM runs a minimal <code class="language-plaintext highlighter-rouge">vminit</code> userspace that boots directly into the container’s init process, eliminating the overhead of a full Linux distribution.</li>
+  <li><strong>Sub-350ms boot time</strong> – The minimal vminit userspace and Apple Silicon’s virtualization acceleration combine to boot a container VM in under 350 milliseconds. This is fast enough that container startup feels instantaneous for interactive development workflows.</li>
+  <li><strong>Kernel isolation</strong> – Because each container has its own kernel, a kernel exploit or vulnerability in one container cannot affect any other container on the same host. This is fundamentally different from shared-kernel container runtimes where all containers share a single attack surface.</li>
+  <li><strong>Attack surface reduction</strong> – The minimal vminit userspace contains only what is needed to run the container process. There is no shell, package manager, or system service running by default. The kernel is configured with only the drivers and subsystems required for the container workload, shrinking the attack surface dramatically compared to a general-purpose Linux VM.</li>
+</ul>
+
+<p>This per-VM model trades a small amount of memory overhead per container for a significant gain in isolation and security. On Apple Silicon with its efficient virtualization, the tradeoff is well worth it for most development and CI workloads.</p>
+
+<h2 id="key-features">Key Features</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Per-container VM isolation</td>
+      <td>Each container runs in its own lightweight Linux VM with an isolated kernel</td>
+    </tr>
+    <tr>
+      <td>OCI compatibility</td>
+      <td>Pull, build, run, and push standard OCI images from any compliant registry</td>
+    </tr>
+    <tr>
+      <td>Sub-second boot</td>
+      <td>Container VMs boot in under 350ms using the minimal vminit userspace</td>
+    </tr>
+    <tr>
+      <td>Swift-native</td>
+      <td>Written entirely in Swift using Apple’s Virtualization framework</td>
+    </tr>
+    <tr>
+      <td>Apple Silicon optimization</td>
+      <td>Designed specifically for Apple Silicon with hardware-accelerated virtualization</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">.test</code> DNS namespace</td>
+      <td>Per-container DNS resolution via the container-network-vmnet XPC agent</td>
+    </tr>
+    <tr>
+      <td>XPC services</td>
+      <td>Modular architecture using macOS XPC services for images, networking, and runtime</td>
+    </tr>
+    <tr>
+      <td>Volume mounting</td>
+      <td>Per-container scoped volumes with fine-grained access control</td>
+    </tr>
+    <tr>
+      <td>Port forwarding</td>
+      <td>Localhost-bound port forwarding with vmnet NAT translation</td>
+    </tr>
+    <tr>
+      <td>gRPC API</td>
+      <td>Programmatic access via a gRPC client library for automation and integration</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+  <li><strong>macOS 26 Tahoe</strong> or later (required for the Virtualization framework features used)</li>
+  <li><strong>Apple Silicon</strong> Mac (M1, M2, M3, or later)</li>
+  <li><strong>Xcode 26</strong> with command-line tools installed</li>
+</ul>
+
+<h3 id="installation-via-homebrew">Installation via Homebrew</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install Apple Container from Homebrew</span>
+brew <span class="nb">install </span>container
+
+<span class="c"># Verify installation</span>
+container version
+
+<span class="c"># Start the system service</span>
+container system start
+</code></pre></div></div>
+
+<h3 id="building-from-source">Building from Source</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/apple/container.git
+<span class="nb">cd </span>container
+
+<span class="c"># Build using Swift Package Manager</span>
+swift build <span class="nt">-c</span> release
+
+<span class="c"># The binary is at .build/release/container</span>
+<span class="c"># Optionally copy to a directory in your PATH</span>
+<span class="nb">cp</span> .build/release/container /usr/local/bin/container
+
+<span class="c"># Start the system service</span>
+container system start
+</code></pre></div></div>
+
+<p>Once installed, you can immediately pull OCI images, build from Dockerfiles, and run containers – all with per-VM isolation and sub-second boot times.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Apple Container represents a fundamentally different approach to running Linux containers on macOS. By giving each container its own lightweight VM with an isolated kernel, Apple eliminates the shared-kernel attack surface that has been a persistent concern in container security. The sub-350ms boot times, made possible by the minimal vminit userspace and Apple Silicon’s virtualization acceleration, mean that this isolation comes with no perceptible performance penalty for development workflows.</p>
+
+<p>The OCI compatibility ensures that existing Docker images and registries work without modification, lowering the barrier to adoption. The Swift-native implementation built on Apple’s Virtualization framework means the tool integrates cleanly with macOS rather than relying on third-party daemons or workarounds. For developers on Apple Silicon who need secure, isolated Linux containers – whether for development, testing, or CI – Apple Container is a compelling choice that is only going to improve as the project matures toward 1.0.</p>
+
+<h2 id="links">Links</h2>
+
+<ul>
+  <li><strong>GitHub Repository:</strong> <a href="https://github.com/apple/container">https://github.com/apple/container</a></li>
+  <li><strong>Containerization Swift Package:</strong> <a href="https://github.com/apple/containerization">https://github.com/apple/containerization</a></li>
+</ul>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/Cognee-Open-Source-AI-Memory-Platform-Agents/">Cognee: Open-Source AI Memory Platform for Agents</a></li>
+  <li><a href="/Apple-Container-Lightweight-VMs-Linux-Containers-macOS/">Apple Container: Lightweight VMs for Linux Containers on macOS</a></li>
+  <li><a href="/FreeLLMAPI-OpenAI-Compatible-Proxy-16-Free-LLM-Providers/">FreeLLMAPI: OpenAI-Compatible Proxy with 16 Free LLM Providers</a></li>
+</ul>
 
 
           <!-- Follow.it CTA -->
@@ -1303,19 +1447,19 @@ container image push ghcr.io/user/myapp:1.0</p>
             <h2 class="related-posts__title">Related Posts</h2>
             <div class="related-posts__grid">
               
-                <a class="related-post-card" href="/Supertonic-On-Device-Multilingual-TTS/">
+                <a class="related-post-card" href="/Telegraf-Metrics-Collection-Agent-Go/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="Supertonic: Lightning-Fast On-Device Multilingual Text-to-Speech via ONNX"
+                           alt="Telegraf: The Plugin-Driven Metrics Collection Agent Built in Go"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">Supertonic: Lightning-Fast On-Device Multilingual Text-to...</h3>
+                    <h3 class="related-post-card__title">Telegraf: The Plugin-Driven Metrics Collection Agent Buil...</h3>
                     <p class="related-post-card__excerpt">
                       
-                        What Is Supertonic? Supertonic is a lightning-fast on-device multilingual text-to-speech system that runs entirely through...
+                        Telegraf: The Plugin-Driven Metrics Collection Agent Built in Go Telegraf is an open-source agent for...
                       
                     </p>
                     <span class="related-post-card__date">
@@ -1324,82 +1468,61 @@ container image push ghcr.io/user/myapp:1.0</p>
                   </div>
                 </a>
               
-                <a class="related-post-card" href="/Harbor-Cloud-Native-Registry/">
-                  
-                    <div class="related-post-card__image">
-                      <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="Harbor: Enterprise Cloud Native Registry for Container Security"
-                           loading="lazy" />
-                    </div>
-                  
-                  <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">Harbor: Enterprise Cloud Native Registry for Container Se...</h3>
-                    <p class="related-post-card__excerpt">
-                      
-                        Harbor: Enterprise Cloud Native Registry for Container Security Introduction Harbor is an open source trusted...
-                      
-                    </p>
-                    <span class="related-post-card__date">
-                      Apr 09, 2026
-                    </span>
-                  </div>
-                </a>
-              
-                <a class="related-post-card" href="/How-To-Secure-A-Linux-Server/">
-                  
-                    <div class="related-post-card__image">
-                      <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="How to Secure a Linux Server: Complete Hardening Guide"
-                           loading="lazy" />
-                    </div>
-                  
-                  <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">How to Secure a Linux Server: Complete Hardening Guide</h3>
-                    <p class="related-post-card__excerpt">
-                      
-                        Why Server Security Matters The moment a server becomes visible to the public internet, it...
-                      
-                    </p>
-                    <span class="related-post-card__date">
-                      May 18, 2026
-                    </span>
-                  </div>
-                </a>
-              
-                <a class="related-post-card" href="/CubeSandbox-Secure-Sandbox-for-AI-Agents/">
+                <a class="related-post-card" href="/How-to-install-TVM-in-MacOS/">
                   
                     <div class="related-post-card__image dark-bg"></div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">CubeSandbox: Instant, Concurrent, Secure Sandbox for AI A...</h3>
+                    <h3 class="related-post-card__title">How to install TVM on MAC OS</h3>
                     <p class="related-post-card__excerpt">
                       
-                        Table of Contents Table of Contents What is CubeSandbox? Why AI Agents Need Sandboxes Architecture...
+                        Hello, today’s tutorial is about installing Apache TVM on your Mac OS. Some steps are...
                       
                     </p>
                     <span class="related-post-card__date">
-                      Apr 26, 2026
+                      Feb 27, 2022
                     </span>
                   </div>
                 </a>
               
-                <a class="related-post-card" href="/Gemma-Chat-Local-AI-Coding-Agent-Apple-Silicon-MLX/">
+                <a class="related-post-card" href="/Palmier-Pro-macOS-AI-Video-Editor/">
                   
                     <div class="related-post-card__image">
                       <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
-                           alt="Gemma Chat: Local AI Coding Agent for Apple Silicon Powered by Gemma 4 via MLX"
+                           alt="Palmier Pro: The Open Source macOS Video Editor Built for AI"
                            loading="lazy" />
                     </div>
                   
                   <div class="related-post-card__content">
-                    <h3 class="related-post-card__title">Gemma Chat: Local AI Coding Agent for Apple Silicon Power...</h3>
+                    <h3 class="related-post-card__title">Palmier Pro: The Open Source macOS Video Editor Built for AI</h3>
                     <p class="related-post-card__excerpt">
                       
-                        Gemma Chat: Local AI Coding Agent for Apple Silicon Powered by Gemma 4 via MLX...
+                        Palmier Pro: The Open Source macOS Video Editor Built for AI Video editing has lagged...
                       
                     </p>
                     <span class="related-post-card__date">
-                      May 21, 2026
+                      Jun 22, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/Displaying-Remote-Application/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://www.pyshine.com/assets/img/posts/26072022-python-logo_thumb.jpg" 
+                           alt="Displaying Remote Application Windows Locally Using SSH..."
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Displaying Remote Application Windows Locally Using SSH...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        In this tutorial, we’ll walk you through the steps to display graphical applications running on...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Jun 08, 2024
                     </span>
                   </div>
                 </a>
@@ -1421,6 +1544,27 @@ container image push ghcr.io/user/myapp:1.0</p>
                     </p>
                     <span class="related-post-card__date">
                       Apr 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/MLX-VLM-Vision-Language-Models-Apple-Silicon/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://www.pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="MLX-VLM: Vision Language Models on Apple Silicon"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">MLX-VLM: Vision Language Models on Apple Silicon</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        MLX-VLM: Vision Language Models on Apple Silicon MLX-VLM is a powerful Python package for inference...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Apr 06, 2026
                     </span>
                   </div>
                 </a>
