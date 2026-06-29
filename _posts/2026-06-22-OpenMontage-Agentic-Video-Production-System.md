@@ -18,7 +18,7 @@ author: "PyShine"
 
 # OpenMontage - Agentic Video Production System
 
-With over 8,600 stars on GitHub, OpenMontage has taken the AI community by storm as the world's first open-source agentic video production system. This remarkable project transforms your existing AI coding assistant into a complete video production studio, combining 12 specialized pipelines, 52 production tools, and more than 500 agent skills into a seamless creative workflow. Whether you are a content creator, developer, or AI enthusiast, OpenMontage eliminates the tradicional barriers between ideation and video production by leveraging agentic architecture to orchestrate complex multi-step production tasks automatically.
+With over 8,600 stars on GitHub, OpenMontage has taken the AI community by storm as the world's first open-source agentic video production system. This remarkable project transforms your existing AI coding assistant into a complete video production studio, combining 12 specialized pipelines, 52 production tools, and more than 500 agent skills into a seamless creative workflow. Whether you are a content creator, developer, or AI enthusiast, OpenMontage eliminates the traditional barriers between ideation and video production by leveraging agentic architecture to orchestrate complex multi-step production tasks automatically.
 
 ## What is OpenMontage?
 
