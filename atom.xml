@@ -1,4 +1,195 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-07-01T00:24:32+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">English Level Up Tips: A Complete Guide to English Learning and AI-Powered Skill Building</title><link href="https://pyshine.com/English-Level-Up-Tips-Advanced-English-Learning-Guide/" rel="alternate" type="text/html" title="English Level Up Tips: A Complete Guide to English Learning and AI-Powered Skill Building" /><published>2026-06-30T00:00:00+00:00</published><updated>2026-06-30T00:00:00+00:00</updated><id>https://pyshine.com/English-Level-Up-Tips-Advanced-English-Learning-Guide</id><content type="html" xml:base="https://pyshine.com/English-Level-Up-Tips-Advanced-English-Learning-Guide/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-07-01T00:32:22+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">BiliTickerBuy: Open Source Bilibili Ticket Buying Automation Tool</title><link href="https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool/" rel="alternate" type="text/html" title="BiliTickerBuy: Open Source Bilibili Ticket Buying Automation Tool" /><published>2026-06-30T00:00:00+00:00</published><updated>2026-06-30T00:00:00+00:00</updated><id>https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool</id><content type="html" xml:base="https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool/"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>BiliTickerBuy is an open-source Python automation tool designed to purchase event tickets on Bilibili, one of China’s largest video and entertainment platforms. The project, hosted at <a href="https://github.com/mikumifa/biliTickerBuy">https://github.com/mikumifa/biliTickerBuy</a>, has accumulated over 3,708 GitHub stars, reflecting the significant demand for automated ticket purchasing in the Chinese live-event ecosystem. Bilibili frequently hosts ticketed events for concerts, anime conventions, gaming tournaments, and creator meetups, and these high-demand sales routinely sell out within seconds of opening. Manual purchasing through a browser is often futile because the window of availability is shorter than human reaction time.</p>
+
+<p>The tool is distributed as the <code class="language-plaintext highlighter-rouge">bilitickerbuy</code> Python package (version 2.15.15 at the time of writing) and installs a <code class="language-plaintext highlighter-rouge">btb</code> console entry point. It is licensed under PolyForm Noncommercial 1.0.0, which permits free use, modification, and distribution for noncommercial purposes while prohibiting commercial deployment. This license choice reflects the maintainer’s intent to keep the tool available to individual users while preventing resale or commercial wrapping.</p>
+
+<p>What sets biliTickerBuy apart from simpler ticket-grabbing scripts is its engineering maturity. It offers a dual interface: a command-line tool built on the <code class="language-plaintext highlighter-rouge">tyro</code> argument parser and a Gradio-based web UI with seven tabs covering login, configuration, buying, settings, guidance, updates, and logs. Under the hood it implements a proxy pool with intelligent rotation and exponential backoff, a six-channel notification system, browser-fingerprint-based cToken generation to pass Bilibili’s anti-bot verification, and NTP-synchronized timing so that purchase requests fire at the exact moment a sale opens. The architecture is modular and generator-based, which allows real-time status streaming to both the CLI and the web UI.</p>
+
+<p>This post is an independent technical analysis of the project’s architecture and internals. It is not an official publication and does not endorse automated purchasing as a practice. Users should review Bilibili’s terms of service and use the tool responsibly. The repository is the authoritative source for current behavior: <a href="https://github.com/mikumifa/biliTickerBuy">https://github.com/mikumifa/biliTickerBuy</a>.</p>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<p><img src="/assets/img/diagrams/bilitickerbuy/bilitickerbuy-architecture.svg" alt="Architecture Overview" /></p>
+
+<p>The architecture of biliTickerBuy is organized into six clearly separated layers, each with a distinct responsibility. At the top is the user entry layer, which exposes two ways to interact with the system: the <code class="language-plaintext highlighter-rouge">btb</code> command-line tool and the Gradio web UI. The CLI is built on <code class="language-plaintext highlighter-rouge">tyro</code>, a typed argument parser that derives subcommands and flags directly from Python type annotations, while the web UI is launched by the <code class="language-plaintext highlighter-rouge">btb ui</code> subcommand and presents seven tabs for configuration, execution, and monitoring.</p>
+
+<p>The command layer sits directly beneath user entry and is implemented in the <code class="language-plaintext highlighter-rouge">app_cmd/</code> package. <code class="language-plaintext highlighter-rouge">app_cmd/buy.py</code> handles the CLI buy subcommand, translating command-line flags into a configuration object and invoking the core engine. <code class="language-plaintext highlighter-rouge">app_cmd/ticker.py</code> is responsible for launching the Gradio interface, wiring up the tab components, and bridging UI events to the underlying execution functions. This separation keeps the presentation logic distinct from the business logic, which is important because the same purchase flow must work identically whether triggered from a terminal or a browser.</p>
+
+<p>The core engine lives in <code class="language-plaintext highlighter-rouge">task/buy.py</code> and is built around a <code class="language-plaintext highlighter-rouge">Buy</code> dataclass that exposes a <code class="language-plaintext highlighter-rouge">buy_stream()</code> generator. This generator is the heart of the system: it yields status updates as it progresses through the purchase loop, allowing both the CLI and the Gradio UI to consume the same stream of events and render progress in real time. The generator pattern is a deliberate design choice because it decouples the execution of the purchase loop from its presentation, and it allows the caller to cancel or react to intermediate states without polling.</p>
+
+<p>Beneath the core engine is the interface API layer in the <code class="language-plaintext highlighter-rouge">interface/</code> package. <code class="language-plaintext highlighter-rouge">interface/execution.py</code> provides a programmatic API with functions like <code class="language-plaintext highlighter-rouge">start_buy()</code>, <code class="language-plaintext highlighter-rouge">run_buy_sync()</code>, and <code class="language-plaintext highlighter-rouge">start_managed_buy()</code>, which wrap the generator-based engine for synchronous or managed execution. <code class="language-plaintext highlighter-rouge">interface/project.py</code> is responsible for fetching project and ticket details from Bilibili’s public API at <code class="language-plaintext highlighter-rouge">show.bilibili.com/api/ticket/project/getV2</code>, returning structured information about available ticket tiers, sale times, and venue metadata.</p>
+
+<p>The utility layer is the broadest part of the codebase. <code class="language-plaintext highlighter-rouge">util/request/BiliRequest.py</code> implements the HTTP client using <code class="language-plaintext highlighter-rouge">httpx</code> with HTTP/2, brotli compression, zstd, and SOCKS proxy support, giving it modern performance characteristics and the ability to route traffic through proxy servers. <code class="language-plaintext highlighter-rouge">util/proxy/</code> contains the proxy pool manager, API provider, backoff calculator, and tester. <code class="language-plaintext highlighter-rouge">util/notifer/</code> houses the six notification channels. <code class="language-plaintext highlighter-rouge">cptoken/</code> generates the anti-bot cToken by simulating browser fingerprints. <code class="language-plaintext highlighter-rouge">util/TimeUtil.py</code> synchronizes the local clock against NTP servers so that scheduled purchases fire at the correct instant. <code class="language-plaintext highlighter-rouge">util/Storage/</code> uses TinyDB for persistent key-value storage of configuration and runtime state.</p>
+
+<p>At the bottom of the stack are the external Bilibili API endpoints. The project endpoint at <code class="language-plaintext highlighter-rouge">show.bilibili.com</code> returns ticket metadata, while the order endpoints at <code class="language-plaintext highlighter-rouge">mall.bilibili.com</code> handle the prepare-order and create-order calls that actually reserve and purchase tickets. All HTTP traffic flows through the BiliRequest client, which transparently selects proxies from the pool and applies retry logic, so the upper layers never need to reason about network-level concerns directly.</p>
+
+<h2 id="ticket-buying-workflow">Ticket Buying Workflow</h2>
+
+<p><img src="/assets/img/diagrams/bilitickerbuy/bilitickerbuy-workflow.svg" alt="Ticket Buying Workflow" /></p>
+
+<p>The ticket buying workflow is implemented as a linear pipeline with two decision points and retry loops, all driven by the <code class="language-plaintext highlighter-rouge">buy_stream()</code> generator in <code class="language-plaintext highlighter-rouge">task/buy.py</code>. The flow begins when the user triggers a buy command, either by running <code class="language-plaintext highlighter-rouge">btb buy</code> with a configuration file or by clicking the start button in the Gradio UI. The first action the engine takes is NTP time synchronization, which corrects any drift between the local system clock and a reference NTP server. This step is critical because Bilibili opens ticket sales at a precise server-side timestamp, and a local clock that is even a few hundred milliseconds off can cause the tool to fire requests too early (which are rejected) or too late (by which point inventory is gone).</p>
+
+<p>Once the clock is synchronized, the engine enters a wait state until the configured target sale time. During this wait it sleeps efficiently and wakes just before the sale opens to begin the request phase. The first request fetches project details via <code class="language-plaintext highlighter-rouge">interface/project.py</code>, which calls <code class="language-plaintext highlighter-rouge">show.bilibili.com/api/ticket/project/getV2</code> to retrieve the full ticket metadata, including the available ticket tiers, their prices, and the exact sale window. This information is used to select the correct ticket SKU for the order.</p>
+
+<p>Next, the engine retrieves buyer information and saved addresses from the Bilibili account associated with the user’s cookies. Bilibili requires a valid buyer profile and delivery address to create an order, so these must be fetched and validated before the purchase attempt. After the buyer profile is assembled, the engine generates a cToken by simulating a browser fingerprint through the <code class="language-plaintext highlighter-rouge">cptoken/</code> module. The cToken is Bilibili’s anti-bot verification token, and generating it correctly is what allows the automated client to pass the same checks that a real browser would face. The fingerprint simulation includes headers, cookies, and computed values that mimic a legitimate browser session.</p>
+
+<p>With the cToken in hand, the engine calls the prepare-order endpoint at <code class="language-plaintext highlighter-rouge">mall.bilibili.com/.../api/ticket/order/prepare</code>. This endpoint validates the order parameters, checks inventory availability, and returns a token that is required for the subsequent create-order call. At this point the engine checks whether the response indicates rate limiting, specifically HTTP 429 (too many requests) or HTTP 412 (risk control triggered). If either is detected, the engine applies exponential backoff, rotates to a different proxy from the pool, and retries the prepare call. This retry loop is what allows the tool to survive Bilibili’s aggressive rate limiting during high-traffic sales.</p>
+
+<p>When the prepare call succeeds, the engine immediately calls the create-order endpoint at <code class="language-plaintext highlighter-rouge">mall.bilibili.com/.../api/ticket/order/create</code> using the token from the prepare step. This is the call that actually reserves the ticket. The engine then checks whether the order was created successfully; if not, it enters a retry loop that re-attempts the create call, often with a fresh cToken and proxy. On success, the engine generates a payment QR code from the order response, dispatches notifications across all configured channels, and yields a final status update to the UI. The user then scans the QR code to complete payment within Bilibili’s payment window.</p>
+
+<p>The generator-based design is what makes this workflow practical for both interfaces. Each step yields a status object that the CLI prints and the Gradio UI renders, so the user sees live progress through NTP sync, waiting, fetching, preparing, creating, and notifying. The same generator can be paused, resumed, or cancelled, which is essential for a long-running purchase attempt that may span minutes of waiting followed by sub-second bursts of requests.</p>
+
+<h2 id="proxy-pool-and-rate-limit-handling">Proxy Pool and Rate Limit Handling</h2>
+
+<p><img src="/assets/img/diagrams/bilitickerbuy/bilitickerbuy-proxy-pool.svg" alt="Proxy Pool Management" /></p>
+
+<p>Proxies are essential to biliTickerBuy because Bilibili rate-limits ticket purchase requests by IP address. During a popular sale, a single IP can only issue a small number of order requests before being throttled with HTTP 429 responses or blocked entirely with HTTP 412 risk-control errors. To work around this, the tool maintains a pool of proxy servers in <code class="language-plaintext highlighter-rouge">util/proxy/</code> and rotates through them so that no single IP bears the full request load. The proxy pool is the component that makes sustained purchase attempts viable during high-traffic events.</p>
+
+<p>The pool lifecycle begins when a component requests an available proxy. The pool manager selects a proxy using a rotation strategy, defaulting to round-robin selection that distributes requests evenly across all healthy proxies. The selected proxy is handed to the BiliRequest HTTP client, which routes the outgoing request through it using SOCKS support provided by <code class="language-plaintext highlighter-rouge">httpx[socks]</code>. After the request completes, the outcome determines what happens to the proxy. If the request succeeded, the proxy is marked healthy and returned to the active pool for future selection. If the request failed, the engine inspects the error to decide on a recovery action.</p>
+
+<p>When the failure is a rate-limit response (HTTP 429), the proxy is placed into a cooldown queue and an exponential backoff with jitter is applied before the next attempt. Exponential backoff increases the wait time between retries geometrically, while jitter randomizes the delay slightly to prevent many concurrent clients from retrying in lockstep, a pattern known as the thundering herd problem. The cooldown queue holds proxies for a timed period, after which they are eligible for selection again. This mechanism prevents a single rate-limited proxy from being hammered repeatedly while still allowing it to recover and rejoin the pool.</p>
+
+<p>If the failure indicates the proxy is dead, unreachable, or otherwise unusable, it is removed from the pool entirely and the API replenishment path is triggered. Replenishment fetches new proxies from a configured proxy API endpoint, which can be a commercial proxy provider or a self-hosted proxy source. The new proxies are validated by the proxy tester, added to the pool, and made available for selection. This automatic replenishment ensures the pool does not deplete during a long purchase session, which is important because a sale window may last several minutes and require hundreds of request attempts.</p>
+
+<p>The integration between the proxy pool and the BiliRequest client is transparent to the upper layers. The core engine and interface API never select proxies directly; they simply make HTTP calls through BiliRequest, which internally pulls a proxy from the pool, applies it to the request, and reports the outcome back to the pool manager. This separation keeps the purchase logic clean and allows the proxy strategy to evolve independently, for example by adding least-recently-used selection or weighted scoring based on historical success rates.</p>
+
+<h2 id="notification-system">Notification System</h2>
+
+<p><img src="/assets/img/diagrams/bilitickerbuy/bilitickerbuy-notifications.svg" alt="Notification System" /></p>
+
+<p>The notification system in <code class="language-plaintext highlighter-rouge">util/notifer/</code> is built around a central dispatcher that fans a single event out to all configured channels simultaneously. When the buy engine yields a success or failure event, the dispatcher reads the channel configuration from TinyDB storage and sends the payload to every enabled channel. The six supported channels cover the most common notification ecosystems used by the tool’s audience: Bark, ServerChan, ntfy, PushPlus, MeoW, and a local audio alert.</p>
+
+<p>Bark is an iOS push notification service that delivers messages directly to an iPhone through the Bark app’s API. It is the primary channel for users who want instant alerts on their phone while away from the computer. ServerChan is a WeChat-based notification service popular in the Chinese messaging ecosystem; it sends messages through the ServerChan API to a configured WeChat account, which is valuable because WeChat is the dominant messaging platform in China. ntfy is a cross-platform push notification protocol hosted at ntfy.sh that supports iOS, Android, and desktop clients, making it the most portable option for users outside the WeChat ecosystem.</p>
+
+<p>PushPlus is an alternative WeChat notification channel that provides similar functionality to ServerChan through a different API provider, giving users a fallback if one service is down or rate-limited. MeoW is an additional notification service integrated for users who prefer its delivery characteristics. The audio alert channel is different from the others: it uses the <code class="language-plaintext highlighter-rouge">playsound3</code> library to play a local sound file on the user’s computer, which is useful for users who are sitting at their machine waiting for a purchase result and want an immediate audible signal without relying on any external service.</p>
+
+<p>The dispatcher pattern is important for fault tolerance. Each channel sends its payload independently, and a failure in one channel does not block or affect the others. If the Bark API is down, the ServerChan and ntfy messages still go through. This independence is achieved by wrapping each channel send in its own error handling, so an exception in one channel is logged but does not propagate to the dispatcher loop. Configuration is also independent per channel: each channel reads its own API keys, endpoints, and enable flag from TinyDB, so users can enable only the channels they use and leave the rest disabled.</p>
+
+<p>The notification system integrates with the buy_stream generator through status events. As the generator progresses through the purchase loop, it emits status objects that the dispatcher consumes. A successful order creation triggers a success notification with the payment QR code and order details, while a failure or rate-limit event triggers a status notification so the user knows the tool is still retrying. This tight integration means the user is never left wondering whether the purchase succeeded; the notification arrives within seconds of the outcome, regardless of which interface they used to start the attempt.</p>
+
+<h2 id="installation">Installation</h2>
+
+<p>BiliTickerBuy requires Python 3.11 or newer. The recommended installation method depends on how you intend to use it.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/mikumifa/biliTickerBuy.git
+<span class="nb">cd </span>biliTickerBuy
+
+<span class="c"># Install dependencies</span>
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="nb">.</span>
+
+<span class="c"># Or using install.sh</span>
+bash install.sh
+
+<span class="c"># Docker</span>
+docker-compose up
+</code></pre></div></div>
+
+<p>For an isolated environment, <code class="language-plaintext highlighter-rouge">pipx install bilitickerbuy</code> is preferred because it avoids polluting the global Python environment. After installation, verify the entry point with <code class="language-plaintext highlighter-rouge">btb --help</code>, which should print the available subcommands. The Docker deployment option is useful for running the tool on a server; it mounts a configuration directory as a volume so settings persist across container restarts. For standalone distribution, the repository includes PyInstaller build configuration to produce a single executable that bundles the Python runtime and all dependencies.</p>
+
+<h2 id="usage">Usage</h2>
+
+<p>BiliTickerBuy exposes two interfaces: a CLI and a Gradio web UI.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Launch Gradio web UI</span>
+btb ui
+
+<span class="c"># Run ticket buying from CLI</span>
+btb buy <span class="nt">--config-file</span> config.json
+
+<span class="c"># With options</span>
+btb buy <span class="nt">--time-start</span> <span class="s2">"2026-06-18T20:00:00"</span> <span class="nt">--interval</span> 1000
+</code></pre></div></div>
+
+<p>The CLI is built on <code class="language-plaintext highlighter-rouge">tyro</code>, which means every configuration option is exposed as a typed command-line flag. The <code class="language-plaintext highlighter-rouge">buy</code> subcommand accepts a config file path, a target start time, a request interval, proxy settings, and notification configuration. The <code class="language-plaintext highlighter-rouge">ui</code> subcommand launches the Gradio web server and opens the interface in a browser.</p>
+
+<p>The Gradio web UI organizes functionality into seven tabs. The Login tab handles Bilibili cookie authentication, allowing the user to paste cookies or scan a QR code to log in. The Config tab is where the user sets the ticket project URL, selects the target ticket tier, configures buyer information, and sets the sale start time. The Buy tab provides start and stop buttons for the purchase attempt and displays real-time status updates streamed from the buy generator. The Settings tab manages proxy pool configuration and notification channel setup. The Guide tab offers in-app documentation for common workflows. The Update tab checks for and applies new releases of the package. The Logs tab shows a real-time log viewer powered by <code class="language-plaintext highlighter-rouge">loguru</code>, which is useful for diagnosing failures during a live purchase attempt.</p>
+
+<p>Both interfaces drive the same underlying engine, so the purchase behavior is identical regardless of which one is used. The web UI is generally more approachable for users who prefer a visual workflow, while the CLI is better suited for scripting, automation, or headless server deployment.</p>
+
+<h2 id="features">Features</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Scheduled Ticket Grabbing</td>
+      <td>NTP-synchronized precise timing for ticket purchase at sale opening</td>
+    </tr>
+    <tr>
+      <td>Automated Order Flow</td>
+      <td>Prepare order, create order, generate payment QR code - fully automated</td>
+    </tr>
+    <tr>
+      <td>Proxy Pool Management</td>
+      <td>Rotation, cooldown, exponential backoff, API-based replenishment</td>
+    </tr>
+    <tr>
+      <td>Multi-Channel Notifications</td>
+      <td>Bark, ServerChan, ntfy, PushPlus, MeoW, and audio alerts</td>
+    </tr>
+    <tr>
+      <td>cToken Generation</td>
+      <td>Browser fingerprint simulation to pass anti-bot verification</td>
+    </tr>
+    <tr>
+      <td>Rate Limit Handling</td>
+      <td>HTTP 429 and 412 risk control detection with automatic retry</td>
+    </tr>
+    <tr>
+      <td>Dual Interface</td>
+      <td>CLI via tyro plus Gradio web UI with 7 tabs</td>
+    </tr>
+    <tr>
+      <td>Docker Support</td>
+      <td>Containerized deployment with volume-mounted config</td>
+    </tr>
+    <tr>
+      <td>PyInstaller Building</td>
+      <td>Standalone executable distribution</td>
+    </tr>
+    <tr>
+      <td>TinyDB Storage</td>
+      <td>Persistent key-value configuration and state</td>
+    </tr>
+    <tr>
+      <td>HTTP/2 + Brotli</td>
+      <td>Modern HTTP client with compression and SOCKS proxy support</td>
+    </tr>
+    <tr>
+      <td>NTP Time Sync</td>
+      <td>Clock synchronization against NTP servers for precise scheduling</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p><strong>cToken generation fails:</strong> The cToken is generated by simulating a browser fingerprint, so failures usually indicate that the cookie has expired or the fingerprint configuration does not match what Bilibili expects. Re-log in through the Login tab to refresh cookies, and verify that the browser fingerprint parameters in the configuration are current.</p>
+
+<p><strong>Rate limited (HTTP 429):</strong> Bilibili is throttling requests from your IP. Add more proxies to the pool, increase the backoff delay, and reduce the request interval. The proxy pool cooldown mechanism will automatically rotate proxies, but a larger pool gives more headroom during high-traffic sales.</p>
+
+<p><strong>Risk control (HTTP 412):</strong> Bilibili’s risk control system has detected automation. Rotate cookies and proxies, add delay between attempts, and ensure the cToken is being regenerated for each attempt rather than reused. Persistent 412 errors may require pausing the attempt and resuming later.</p>
+
+<p><strong>NTP sync failure:</strong> Check network connectivity to NTP servers. If NTP is unreachable, the tool falls back to system time, which may be less precise. Running on a server with a well-synchronized clock via <code class="language-plaintext highlighter-rouge">chrony</code> or <code class="language-plaintext highlighter-rouge">systemd-timesyncd</code> reduces reliance on the in-tool NTP client.</p>
+
+<p><strong>Notification not received:</strong> Verify the API keys for each configured channel in the Settings tab. Test individual channel connectivity by triggering a test event. Remember that each channel is independent, so a failure in one does not imply the others are broken.</p>
+
+<p><strong>Order creation fails:</strong> Verify that buyer information is complete and that the selected ticket tier is still available. Ensure cookies are valid and that the cToken was generated successfully in the same session. Check the Logs tab for the specific error returned by the create-order endpoint.</p>
+
+<p><strong>Gradio UI not accessible:</strong> Check that the configured port is available and not blocked by a firewall. Use <code class="language-plaintext highlighter-rouge">btb ui --share</code> to generate a public Gradio link for remote access, which is useful when running the tool on a headless server.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>BiliTickerBuy is a well-engineered automation tool that addresses a real problem in the Bilibili event ticketing ecosystem. Its generator-based architecture, modular utility layer, and dual CLI and web UI interfaces make it accessible to both developers and non-technical users. The proxy pool with intelligent rotation and backoff, the six-channel notification system, and the NTP-synchronized timing demonstrate attention to the practical realities of high-traffic ticket sales, where network-level concerns dominate the user experience.</p>
+
+<p>The PolyForm Noncommercial license keeps the tool available to individual users while preventing commercial exploitation. As with any automation tool that interacts with a third-party platform, users should review Bilibili’s terms of service and use the tool responsibly. The repository is the authoritative source for current behavior and updates: <a href="https://github.com/mikumifa/biliTickerBuy">https://github.com/mikumifa/biliTickerBuy</a>.</p>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Python" /><category term="Automation" /><category term="Bilibili" /><summary type="html"><![CDATA[A Python automation tool for purchasing Bilibili event tickets with proxy rotation, multi-channel notifications, and precise NTP-synchronized timing.]]></summary></entry><entry><title type="html">English Level Up Tips: A Complete Guide to English Learning and AI-Powered Skill Building</title><link href="https://pyshine.com/English-Level-Up-Tips-Advanced-English-Learning-Guide/" rel="alternate" type="text/html" title="English Level Up Tips: A Complete Guide to English Learning and AI-Powered Skill Building" /><published>2026-06-30T00:00:00+00:00</published><updated>2026-06-30T00:00:00+00:00</updated><id>https://pyshine.com/English-Level-Up-Tips-Advanced-English-Learning-Guide</id><content type="html" xml:base="https://pyshine.com/English-Level-Up-Tips-Advanced-English-Learning-Guide/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p><a href="https://github.com/byoungd/English-level-up-tips">English Level Up Tips</a> is a 54,000-star open-source repository that began as a focused English learning tutorial and gradually evolved into something far broader: a “life level-up guide” that weaves together language acquisition, AI-assisted learning methodology, and a deeply personal recovery story. The repository is maintained by a developer who writes under the handle byoungd, and it has grown over several years from a single answer to a friend’s question into a multi-chapter bilingual reference used by readers across the world.</p>
 
@@ -3960,289 +4151,4 @@ affirming its value as a public-benefit open-source project.</p>
   <li><a href="/Claude-Code-Complete-Guide/">Claude-Code-Complete-Guide</a> - A guide to AI-assisted coding, relevant because Penpot’s MCP server integrates with AI coding tools for design-to-code workflows.</li>
   <li><a href="/Harbor-Cloud-Native-Registry/">Harbor-Cloud-Native-Registry</a> - Covers an open-source infrastructure tool with Docker and Kubernetes deployment, similar to Penpot’s self-hosting model.</li>
   <li><a href="/MarkItDown-Microsoft-Document-Conversion/">MarkItDown-Microsoft-Document-Conversion</a> - Discusses format conversion, thematically related to Penpot’s design-to-code conversion using open standards.</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Clojure" /><category term="ClojureScript" /><category term="Design" /><category term="Open Source" /><category term="Collaboration" /><category term="Figma Alternative" /><category term="UI UX" /><summary type="html"><![CDATA[Explore Penpot, the open-source design platform built with Clojure and ClojureScript that bridges the gap between designers and developers with real-time collaboration, design tokens, and MCP integration.]]></summary></entry><entry><title type="html">WorldMonitor: Real-Time Global Intelligence Dashboard with AI-Powered Situational Awareness</title><link href="https://pyshine.com/WorldMonitor-Real-Time-Global-Intelligence-Dashboard/" rel="alternate" type="text/html" title="WorldMonitor: Real-Time Global Intelligence Dashboard with AI-Powered Situational Awareness" /><published>2026-06-29T00:00:00+00:00</published><updated>2026-06-29T00:00:00+00:00</updated><id>https://pyshine.com/WorldMonitor-Real-Time-Global-Intelligence-Dashboard</id><content type="html" xml:base="https://pyshine.com/WorldMonitor-Real-Time-Global-Intelligence-Dashboard/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>Staying informed about global events has never been harder. Journalists, analysts, and researchers juggle dozens of news feeds, satellite imagery services, flight trackers, financial dashboards, and geopolitical monitors, with almost no correlation between the signals each tool surfaces. WorldMonitor, an open-source project by Elie Habib (GitHub user koala73), tackles this fragmentation head-on by unifying news aggregation, geopolitical monitoring, and infrastructure tracking into a single situational awareness interface.</p>
-
-<p>At the time of writing, the repository at <a href="https://github.com/koala73/worldmonitor">https://github.com/koala73/worldmonitor</a> has accumulated 60,714 stars and 9,465 forks, growing at roughly 2,845 stars per week. It is written in TypeScript, distributed under the AGPL-3.0-only license, and powers a live site at <a href="https://worldmonitor.app">https://worldmonitor.app</a>. What makes WorldMonitor particularly notable is its privacy-first design: the entire intelligence pipeline can run locally using Ollama, with no API keys required, while still offering cloud inference through Groq and OpenRouter for users who want higher throughput.</p>
-
-<p>From a single codebase, WorldMonitor produces 6 themed site variants (world, tech, finance, commodity, happy, and energy), ships a native desktop application built with Tauri 2, and renders data on dual map engines powered by globe.gl and deck.gl. This article walks through the key features, the layered architecture, the data ingestion pipeline, the variant system, the desktop app, the data sources, and a quick-start guide for self-hosting.</p>
-
-<h2 id="key-features">Key Features</h2>
-
-<p><img src="/assets/img/diagrams/worldmonitor/worldmonitor-dashboard-features.svg" alt="WorldMonitor Feature Ecosystem" /></p>
-
-<p>The diagram above shows the WorldMonitor feature ecosystem organized into five groups radiating from the central dashboard. Each group represents a distinct capability domain, and together they form a comprehensive situational awareness platform.</p>
-
-<p><strong>Intelligence group (light green)</strong> – the core analytical functions:</p>
-
-<ul>
-  <li><strong>AI News Aggregation</strong> ingests more than 500 curated news feeds across 15 categories</li>
-  <li><strong>Cross-Stream Correlation</strong> detects related events across military, economic, disaster, and escalation signal streams</li>
-  <li><strong>Country Instability Index (CII v8)</strong> produces server-authoritative stress scores for 31 Tier-1 countries</li>
-</ul>
-
-<p><strong>Visualization group (light orange)</strong> – the dual map engine:</p>
-
-<ul>
-  <li>A 3D globe rendered with globe.gl on top of Three.js</li>
-  <li>A WebGL flat map rendered with deck.gl on top of MapLibre GL</li>
-  <li>56 map layer types that can be composed to visualize different data dimensions</li>
-</ul>
-
-<p><strong>Finance group (light purple)</strong> – financial market monitoring:</p>
-
-<ul>
-  <li>Finance Radar tracking 29 stock exchanges worldwide</li>
-  <li>A 7-signal market composite indicator fusing technical and sentiment signals into a single health score</li>
-  <li>Commodities and crypto monitoring for a complete financial picture</li>
-</ul>
-
-<p><strong>AI group (light yellow)</strong> – the inference layer:</p>
-
-<ul>
-  <li>Local AI through Ollama for fully private processing with no data leaving the machine</li>
-  <li>Transformers.js for browser-side machine learning that runs models directly without a server round-trip</li>
-  <li>Cloud inference through Groq and OpenRouter for faster generation or larger models</li>
-</ul>
-
-<p><strong>Platform group (light pink)</strong> – deployment and accessibility:</p>
-
-<ul>
-  <li>6 site variants (world, tech, finance, commodity, happy, energy) from a single codebase</li>
-  <li>A Tauri 2 desktop application for macOS, Windows, and Linux</li>
-  <li>24 languages with native-language feeds and right-to-left (RTL) support</li>
-  <li>PWA support for installable web apps with offline caching</li>
-</ul>
-
-<p>The hub-and-spoke layout is deliberate: every feature connects back to the central WorldMonitor node, emphasizing that these are not isolated tools but integrated capabilities that share the same data backbone. A journalist tracking a breaking geopolitical event can see the news brief, the affected country’s CII score, the financial market reaction, and the flight activity over the region, all on the same dashboard without switching applications. This integration is what distinguishes WorldMonitor from a simple RSS reader or a standalone map viewer.</p>
-
-<h2 id="architecture-overview">Architecture Overview</h2>
-
-<p><img src="/assets/img/diagrams/worldmonitor/worldmonitor-architecture.svg" alt="WorldMonitor System Architecture" /></p>
-
-<p>The architecture diagram above shows the layered design of WorldMonitor, with each layer serving a distinct responsibility.</p>
-
-<p><strong>Frontend Layer (light blue)</strong> – the user-facing rendering engine:</p>
-
-<ul>
-  <li>Built with vanilla TypeScript bundled by Vite, deliberately avoiding heavy UI frameworks in favor of direct DOM manipulation for performance-critical map rendering</li>
-  <li>The 3D globe uses globe.gl, which wraps Three.js for WebGL-based spherical visualization</li>
-  <li>The 2D flat map uses deck.gl on top of MapLibre GL for tile-based rendering</li>
-  <li>Together these engines expose 56 map layer types for visualizing flight paths, financial heatmaps, and more</li>
-</ul>
-
-<p><strong>Edge Functions Layer (light green)</strong> – serverless data aggregation on Vercel:</p>
-
-<ul>
-  <li>More than 60 serverless edge functions deployed close to the user for low latency</li>
-  <li>Data aggregation from external providers, normalization, deduplication, and AI synthesis of raw feeds into concise briefs</li>
-  <li>Protocol Buffers serialization for efficient binary transport and CII v8 scoring for the Country Instability Index</li>
-</ul>
-
-<p><strong>AI/ML Layer (light orange)</strong> – inference for synthesis and analysis:</p>
-
-<ul>
-  <li>Ollama for local processing with no data leaving the machine</li>
-  <li>Groq and OpenRouter for cloud inference with higher throughput</li>
-  <li>Transformers.js for browser-side models that run entirely in the user’s browser</li>
-</ul>
-
-<p><strong>Railway Relay (light yellow)</strong> – persistent background processing:</p>
-
-<ul>
-  <li>Long-running tasks such as continuous feed polling and historical data archiving</li>
-  <li>Freshness monitoring across 35 source groups</li>
-  <li>Survives beyond the ephemeral request lifecycle of a single edge function invocation</li>
-</ul>
-
-<p><strong>Data Sources Layer (light purple)</strong> – the ingestion foundation:</p>
-
-<ul>
-  <li>More than 65 external providers and APIs across 8 domains</li>
-  <li>More than 500 curated news feeds across 15 categories</li>
-  <li>Wingbits ADS-B flight data for real-time aviation tracking, with 35 source groups monitored for staleness and freshness</li>
-</ul>
-
-<p><strong>Caching Layer (light gray)</strong> – a 3-tier cache strategy:</p>
-
-<ul>
-  <li>Edge cache at the Vercel function level for request-level deduplication</li>
-  <li>Redis cache backed by Upstash for sub-millisecond reads</li>
-  <li>CDN for static asset delivery</li>
-  <li>A service worker provides offline caching for the PWA</li>
-</ul>
-
-<p><strong>Desktop Layer (light pink)</strong> – native deployment via Tauri 2:</p>
-
-<ul>
-  <li>Wraps the same frontend in a Rust shell with a Node.js sidecar</li>
-  <li>Produces native binaries for macOS, Windows, and Linux</li>
-  <li>Uses the same Protocol Buffers API as the web frontend</li>
-</ul>
-
-<p>The edges in the diagram show how these layers interact: the frontend calls edge functions via Protocol Buffers, edge functions aggregate from data sources and cache results in Redis, the Railway relay feeds background data into the edge functions, and the desktop app uses the same API as the web frontend. Protocol Buffers define the contract between the edge functions and all frontends. The repository contains 276 protos across 34 services, which gives type safety across the TypeScript frontend and the Rust desktop shell, efficient binary serialization over the network, and a schema evolution path that does not break existing clients when new fields are added. This is a significant architectural choice: rather than ad-hoc JSON, WorldMonitor treats its API as a versioned schema, which is essential for a system that must remain stable while ingesting data from 65+ providers and serving six site variants.</p>
-
-<h2 id="data-flow-and-aggregation-pipeline">Data Flow and Aggregation Pipeline</h2>
-
-<p><img src="/assets/img/diagrams/worldmonitor/worldmonitor-data-pipeline.svg" alt="WorldMonitor Data Aggregation Pipeline" /></p>
-
-<p>The data pipeline diagram above traces how raw information flows from external sources to the user’s dashboard, reading from left to right.</p>
-
-<p><strong>Stage 1 – Input Sources (left side of the diagram):</strong></p>
-
-<ul>
-  <li><strong>External Providers</strong>: more than 65 APIs spanning 8 domains (geopolitics, finance, energy, climate, aviation, cyber security, infrastructure, and news intelligence)</li>
-  <li><strong>Curated News Feeds</strong>: more than 500 feeds across 15 categories, human-curated for source quality and diversity</li>
-  <li><strong>Wingbits Flight Data</strong>: ADS-B flight tracking for real-time aviation awareness</li>
-</ul>
-
-<p><strong>Stage 2 – Edge Functions (aggregation node):</strong></p>
-
-<ul>
-  <li>More than 60 Vercel edge functions perform initial aggregation, normalization, and deduplication</li>
-  <li>All three input streams converge here before branching into parallel processing paths</li>
-</ul>
-
-<p><strong>Stage 3 – Parallel Processing Paths:</strong></p>
-
-<ul>
-  <li><strong>AI Synthesis path</strong>: Ollama, Groq, or OpenRouter models transform raw feed items into concise briefs that preserve the signal while reducing the reading burden</li>
-  <li><strong>CII v8 Scoring path</strong>: the server-authoritative Country Instability Index computes stress scores for 31 Tier-1 countries based on aggregated geopolitical signals</li>
-  <li>Keeping CII scoring server-authoritative is a deliberate security decision that prevents client-side manipulation of index values</li>
-</ul>
-
-<p><strong>Stage 4 – Protobuf Serialization:</strong></p>
-
-<ul>
-  <li>The 276 protos and 34 services encode results into compact binary messages</li>
-  <li>Provides type safety across the TypeScript frontend and the Rust desktop shell</li>
-</ul>
-
-<p><strong>Stage 5 – Freshness Monitor:</strong></p>
-
-<ul>
-  <li>Sits above the edge functions and continuously checks 35 source groups for staleness</li>
-  <li>Flags feeds that have stopped updating so operators can investigate potential outages or censorship events</li>
-</ul>
-
-<p><strong>Stage 6 – Redis 3-Tier Cache:</strong></p>
-
-<ul>
-  <li>Edge-level cache at the Vercel function level</li>
-  <li>Upstash Redis cache for sub-millisecond reads</li>
-  <li>CDN delivery for static assets</li>
-  <li>Minimizes latency and reduces load on upstream providers</li>
-</ul>
-
-<p><strong>Stage 7 – Frontend Rendering and User Dashboard:</strong></p>
-
-<ul>
-  <li>globe.gl renders the 3D globe and deck.gl renders the 2D flat map</li>
-  <li>The rendered visualizations arrive at the User Dashboard, the situational awareness interface the analyst interacts with</li>
-</ul>
-
-<p>The entire pipeline is designed for low latency: edge functions run close to the user, Redis provides sub-millisecond cache reads, and Protocol Buffers keep payload sizes small. The result is a dashboard that can surface a breaking event within seconds of it appearing in a source feed, synthesize it into a brief, correlate it with related signals, and display it on a 3D globe, all without the user leaving the page.</p>
-
-<h2 id="the-6-site-variants">The 6 Site Variants</h2>
-
-<p><img src="/assets/img/diagrams/worldmonitor/worldmonitor-tech-stack.svg" alt="WorldMonitor 6 Site Variants from Single Codebase" /></p>
-
-<p>The diagram above illustrates how WorldMonitor derives six themed dashboards from a single shared codebase. At the top, the Single Codebase node represents the vanilla TypeScript and Vite project with its shared core engine. This codebase flows into the Variant Configuration node (the diamond in the center), which applies per-variant settings for feed categories, map layers, and data sources.</p>
-
-<p><strong>The six site variants, each with a distinct focus:</strong></p>
-
-<ol>
-  <li><strong>worldmonitor.app</strong> – the main global intelligence dashboard that includes all categories and serves as the flagship site</li>
-  <li><strong>tech.worldmonitor.app</strong> – focused on technology monitoring with tech-industry feeds and relevant map layers</li>
-  <li><strong>finance.worldmonitor.app</strong> – oriented toward financial markets with the Finance Radar front and center</li>
-  <li><strong>commodity.worldmonitor.app</strong> – tracking commodity markets including energy and agriculture</li>
-  <li><strong>happy.worldmonitor.app</strong> – filters for positive news and uplifting content, offering situational awareness without the doom-scrolling that typically accompanies news consumption</li>
-  <li><strong>energy.worldmonitor.app</strong> – dedicated to energy markets and infrastructure monitoring</li>
-</ol>
-
-<p>The Variant Configuration node applies three types of per-variant settings:</p>
-
-<ul>
-  <li><strong>Feed categories</strong>: which of the 15 news categories are enabled for each variant</li>
-  <li><strong>Map layers</strong>: which of the 56 map layer types are shown by default</li>
-  <li><strong>Data sources</strong>: which of the 65+ providers are prioritized for each variant’s domain</li>
-</ul>
-
-<p><strong>Shared Infrastructure (bottom of diagram):</strong></p>
-
-<ul>
-  <li>Edge functions for data aggregation and AI synthesis across all variants</li>
-  <li>Redis cache backed by Upstash for sub-millisecond reads</li>
-  <li>Protocol Buffers API with 276 protos across 34 services for type-safe transport</li>
-  <li>Tauri 2 desktop build for macOS, Windows, and Linux</li>
-  <li>PWA support with service worker for offline caching</li>
-  <li>24 languages with native-language feeds and RTL support</li>
-</ul>
-
-<p>All six variants connect down to this shared infrastructure, which is the key to the variant strategy: because the core engine, the data pipeline, and the API contracts are identical across variants, a bug fix or a new feature in the shared codebase propagates to all six sites automatically. There is no forking, no separate maintenance burden, and no drift between variants. The only differences are configuration: which feed categories are enabled, which map layers are shown by default, and which data sources are prioritized.</p>
-
-<p>This approach is a model for multi-tenant open-source projects. Instead of maintaining six separate repositories that inevitably diverge, WorldMonitor maintains one repository and six configuration files. The happy variant deserves special mention as a thoughtful design decision: it acknowledges that continuous exposure to negative news has a documented effect on mental health, and it offers users who want to stay informed a way to do so with a positive-content filter. This is not a gimmick but a genuine accessibility consideration for a tool that people may use for hours each day.</p>
-
-<h2 id="desktop-app-tauri-2">Desktop App (Tauri 2)</h2>
-
-<p>WorldMonitor ships as a native desktop application built with Tauri 2, the Rust-based application framework that produces small, secure, cross-platform binaries. The desktop app wraps the same web frontend in a native window and adds a Node.js sidecar process that runs background data processing outside the webview. This sidecar architecture is important: it allows long-running tasks such as continuous feed polling and local AI inference to persist even when the webview is idle, without blocking the user interface.</p>
-
-<p>The desktop build targets three platforms: macOS (with separate builds for Apple Silicon and Intel), Windows (as a .exe installer), and Linux (as an AppImage). Tauri was chosen over Electron for several reasons. The bundle size is dramatically smaller because Tauri uses the operating system’s native webview rather than bundling a full Chromium runtime. The Rust security model provides memory safety and a smaller attack surface. And native performance is better because the backend logic runs in compiled Rust rather than a JavaScript runtime.</p>
-
-<p>For users who prefer not to install a native application, WorldMonitor also works as a Progressive Web App (PWA). The service worker provides offline caching, so previously loaded data remains available without a network connection. This makes WorldMonitor usable in environments where installing native software is restricted, such as corporate workstations or shared computers. The PWA and the desktop app share the same frontend code, so there is no feature gap between them; the choice is purely about deployment preference.</p>
-
-<h2 id="data-sources">Data Sources</h2>
-
-<p>WorldMonitor aggregates from more than 65 external providers and APIs across 8 domains. The geopolitics and military domain includes conflict monitors, sanctions databases, and military movement trackers. The finance and markets domain provides stock exchange data from 29 exchanges, commodity prices, and cryptocurrency rates. The energy domain covers grid status, fuel prices, and production data. The climate domain includes weather alerts and environmental sensors. The aviation domain uses Wingbits ADS-B flight data for real-time aircraft tracking. The cyber security domain monitors threat feeds and breach notifications. The infrastructure domain tracks outages and service disruptions. The news intelligence domain ingests the 500+ curated feeds.</p>
-
-<p>The feed curation process is human-driven: sources are selected for reliability, diversity of perspective, and coverage of the 15 content categories. This curation is critical for reducing bias, because an automated system that simply ingests everything would amplify high-volume but low-quality sources. The freshness monitor covers 35 source groups and detects when a source has stopped publishing, which can indicate a technical outage at the source or, in some cases, a censorship event. Source diversity is treated as a first-class concern: the system deliberately includes sources from different regions, languages, and political perspectives so that the AI-synthesized briefs reflect a balanced view rather than a single editorial line.</p>
-
-<h2 id="quick-start--self-hosting">Quick Start / Self-Hosting</h2>
-
-<p>WorldMonitor is designed to run with zero configuration. The only prerequisites are Node.js and npm. Clone the repository, install dependencies, and start the development server:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/koala73/worldmonitor.git
-<span class="nb">cd </span>worldmonitor
-npm <span class="nb">install
-</span>npm run dev
-</code></pre></div></div>
-
-<p>After the development server starts, open <code class="language-plaintext highlighter-rouge">http://localhost:3000</code> in your browser. No environment variables are required for the basic experience; the dashboard will function with the default configuration. The project runs entirely on the frontend with the edge functions handling data aggregation, so there is no database to provision and no backend to configure.</p>
-
-<p>For users who want local AI synthesis, install Ollama from <a href="https://ollama.com">https://ollama.com</a> and configure the connection in the WorldMonitor settings. This enables fully private AI processing with no data leaving your machine. For higher-throughput cloud inference, set the <code class="language-plaintext highlighter-rouge">GROQ_API_KEY</code> or <code class="language-plaintext highlighter-rouge">OPENROUTER_API_KEY</code> environment variable to use Groq or OpenRouter respectively. These are optional; the dashboard works without them.</p>
-
-<p>To build for production:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm run build
-</code></pre></div></div>
-
-<p>This produces an optimized bundle in the <code class="language-plaintext highlighter-rouge">dist</code> directory that can be deployed to any static host, with the edge functions deployed to Vercel. For the Tauri desktop build, follow the Tauri 2 setup instructions at <a href="https://tauri.app">https://tauri.app</a> and use the Tauri CLI commands provided in the repository.</p>
-
-<h2 id="use-cases">Use Cases</h2>
-
-<p>WorldMonitor serves several professional audiences. Journalists use it to track breaking news across 500+ feeds simultaneously, correlate events across data streams, and generate concise briefs for editorial workflows. The cross-stream correlation is particularly valuable for investigative reporting, where a military movement, a financial market shift, and a flight pattern change may all relate to a single unfolding story.</p>
-
-<p>Analysts use WorldMonitor for geopolitical monitoring and threat assessment. The CII v8 scoring provides a quantitative baseline for country instability, and the ability to overlay multiple data layers on the 3D globe helps analysts identify patterns that would be invisible in a text-only feed. Researchers benefit from access to 65+ data providers in a unified interface, with historical data available through the caching layer for longitudinal studies.</p>
-
-<p>Finance professionals use the Finance Radar with its 29 stock exchanges, commodities and crypto monitoring, and the 7-signal market composite to correlate financial signals with geopolitical events. The energy sector uses the energy variant for market and infrastructure monitoring. Open-source intelligence (OSINT) practitioners use WorldMonitor as a unified situational awareness dashboard that brings together signals that would otherwise require a dozen separate tools.</p>
-
-<h2 id="community-and-contributing">Community and Contributing</h2>
-
-<p>WorldMonitor is licensed under AGPL-3.0-only, which means derivative works must also be open-source. This protects the project from being absorbed into closed-source commercial products while still allowing broad use and modification. The community gathers on Discord at <a href="https://discord.gg/re63kWKxaz">https://discord.gg/re63kWKxaz</a>, and documentation is available at <a href="https://www.worldmonitor.app/docs/documentation">https://www.worldmonitor.app/docs/documentation</a>.</p>
-
-<p>The project supports 24 languages with native-language feeds and right-to-left (RTL) layout support, making it accessible to a global audience. Contributors can help in several ways: curating new news feeds, adding map layers, translating the interface into additional languages, reporting bugs, and proposing new site variants. The six-variant architecture makes it straightforward to propose a new themed dashboard: define the feed categories, map layers, and data sources, and the shared infrastructure handles the rest. The project’s rapid growth, at 2,845 stars per week, reflects a community that is actively engaged with the tool and invested in its development.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>WorldMonitor represents a thoughtful approach to the problem of global intelligence overload. By unifying news aggregation, geopolitical monitoring, infrastructure tracking, and financial analysis into a single TypeScript dashboard with dual map engines, server-authoritative instability scoring, and local AI through Ollama, it gives journalists, analysts, and researchers a tool that reduces fragmentation without sacrificing depth. The six-variant architecture, the Tauri 2 desktop app, the Protocol Buffers API contract, and the 3-tier caching strategy all reflect engineering decisions that prioritize performance, privacy, and maintainability. For anyone who needs to understand what is happening in the world as it happens, WorldMonitor is worth exploring.</p>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/AI-Hedge-Fund-Open-Source-Investment-Analysis/">AI Hedge Fund: AI-Powered Investment Analysis</a> - financial intelligence with AI-driven analysis</li>
-  <li><a href="/TimesFM-Google-Time-Series-Foundation-Model/">TimesFM: Google’s Time Series Foundation Model</a> - data analysis for time series forecasting</li>
-  <li><a href="/Top-AI-Coding-Assistant-Frameworks-Build-Your-Own/">Top AI Coding Assistant Frameworks</a> - TypeScript frameworks for building tools</li>
-  <li><a href="/Claudian-Claude-Code-Obsidian-Plugin/">Claudian: Claude Code as AI Collaborator</a> - AI integration patterns</li>
-  <li><a href="/Harbor-Open-Source-Container-Registry/">Harbor: Open Source Container Registry</a> - infrastructure tooling for self-hosting</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="TypeScript" /><category term="Dashboard" /><category term="AI" /><category term="Geopolitics" /><category term="Tutorial" /><summary type="html"><![CDATA[Explore WorldMonitor, an open-source TypeScript dashboard for real-time global intelligence with AI news aggregation, dual map engines, country instability scoring, and local AI via Ollama.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="Clojure" /><category term="ClojureScript" /><category term="Design" /><category term="Open Source" /><category term="Collaboration" /><category term="Figma Alternative" /><category term="UI UX" /><summary type="html"><![CDATA[Explore Penpot, the open-source design platform built with Clojure and ClojureScript that bridges the gap between designers and developers with real-time collaboration, design tokens, and MCP integration.]]></summary></entry></feed>
