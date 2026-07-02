@@ -1,4 +1,361 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-07-01T00:32:22+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">BiliTickerBuy: Open Source Bilibili Ticket Buying Automation Tool</title><link href="https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool/" rel="alternate" type="text/html" title="BiliTickerBuy: Open Source Bilibili Ticket Buying Automation Tool" /><published>2026-06-30T00:00:00+00:00</published><updated>2026-06-30T00:00:00+00:00</updated><id>https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool</id><content type="html" xml:base="https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-07-02T12:27:29+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LMCache: A KV Cache Management Layer for Scalable LLM Inference</title><link href="https://pyshine.com/LMCache-KV-Cache-Management-LLM-Inference/" rel="alternate" type="text/html" title="LMCache: A KV Cache Management Layer for Scalable LLM Inference" /><published>2026-07-02T00:00:00+00:00</published><updated>2026-07-02T00:00:00+00:00</updated><id>https://pyshine.com/LMCache-KV-Cache-Management-LLM-Inference</id><content type="html" xml:base="https://pyshine.com/LMCache-KV-Cache-Management-LLM-Inference/"><![CDATA[<h2 id="what-is-lmcache">What Is LMCache</h2>
+
+<p>LMCache is a KV cache management layer for LLM inference. It turns the KV cache – the attention keys and values generated during prefill – from a temporary, engine-bound state into reusable, persistent, AI-native knowledge that can be stored, reused across requests and sessions, monitored with a full observability stack, and transformed for better generation quality. The result is a significant reduction in time-to-first-token (TTFT) and a measurable improvement in throughput, especially for long-context agentic, multi-turn conversation, and knowledge-augmented workloads such as retrieval-augmented generation (RAG).</p>
+
+<p>The project lives at <a href="https://github.com/LMCache/LMCache">github.com/LMCache/LMCache</a> and has attracted over 9,500 GitHub stars. It is licensed under Apache 2.0, has joined the PyTorch Foundation, and can be installed with a single command: <code class="language-plaintext highlighter-rouge">pip install lmcache</code>. The codebase is written primarily in Python with C++ native extensions in <code class="language-plaintext highlighter-rouge">csrc/</code> and Rust source in <code class="language-plaintext highlighter-rouge">rust/</code> for performance-critical paths.</p>
+
+<p>LMCache is vendor-neutral by design. It works as a KV cache layer across mainstream open-source serving engines including vLLM, SGLang, and TensorRT-LLM. It supports a wide range of storage backends – CPU RAM, local disk (SSD), Redis/Valkey, Mooncake, InfiniStore, S3-compatible object storage, NIXL, and GDS – allowing users to freely switch between serving engines and storage vendors while reusing the stored KV caches. This vendor neutrality is a core architectural principle, not an afterthought.</p>
+
+<p>The core problem LMCache addresses is that every prefill recomputes attention keys and values from scratch. For long-context workloads, this prefill computation dominates TTFT and consumes GPU resources that could otherwise serve decode requests. By caching and reusing KV blocks, LMCache eliminates redundant computation, frees GPU memory, and enables cross-request, cross-session, and cross-engine reuse.</p>
+
+<p><img src="/assets/img/diagrams/lmcache/lmcache-architecture.svg" alt="LMCache Architecture" /></p>
+
+<h3 id="understanding-the-lmcache-architecture">Understanding the LMCache Architecture</h3>
+
+<p>The architecture diagram above illustrates the layered design of LMCache.
+It shows how serving engines, the core cache engine, tiered storage, transfer channels, and observability tools fit together.</p>
+
+<p><strong>Top Layer – LLM Serving Engines:</strong></p>
+<ul>
+  <li>vLLM, SGLang, and TensorRT-LLM generate KV cache during prefill.</li>
+  <li>These engines do not manage KV cache persistence themselves.</li>
+  <li>They delegate that responsibility to LMCache through the integration layer.</li>
+</ul>
+
+<p><strong>Integration Layer:</strong></p>
+<ul>
+  <li>Contains engine-specific connectors in <code class="language-plaintext highlighter-rouge">integration/vllm/</code>, <code class="language-plaintext highlighter-rouge">integration/sglang/</code>, and <code class="language-plaintext highlighter-rouge">integration/tensorrt_llm/</code>.</li>
+  <li>Each connector intercepts prefill and redirects to the cache engine for lookup.</li>
+</ul>
+
+<p><strong>LMCache v1 Core – the heart of the system:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cache_engine.py</code> – central orchestration of all cache operations.</li>
+  <li><code class="language-plaintext highlighter-rouge">token_database.py</code> – token-to-cache-block mapping with O(1) lookup.</li>
+  <li><code class="language-plaintext highlighter-rouge">manager.py</code> – high-level coordination of all subsystems.</li>
+  <li><code class="language-plaintext highlighter-rouge">metadata.py</code> – cache block metadata and lifecycle tracking.</li>
+  <li><code class="language-plaintext highlighter-rouge">protocol.py</code> – internal communication between components.</li>
+  <li>When a request arrives, the Cache Engine coordinates with the Token Database to check for cached KV blocks.</li>
+  <li>If cached, the Manager retrieves them from the appropriate storage tier.</li>
+</ul>
+
+<p><strong>Storage Layer – L1 (local) and L2 (remote/distributed):</strong></p>
+<ul>
+  <li>L1 local: CPU RAM (<code class="language-plaintext highlighter-rouge">local_cpu_backend.py</code>), local disk/SSD (<code class="language-plaintext highlighter-rouge">local_disk_backend.py</code>), GPU Direct Storage (<code class="language-plaintext highlighter-rouge">gds_backend.py</code>).</li>
+  <li>L2 remote: Redis/Valkey (<code class="language-plaintext highlighter-rouge">redis_connector.py</code>), S3 (<code class="language-plaintext highlighter-rouge">s3_connector.py</code>), Mooncake (<code class="language-plaintext highlighter-rouge">mooncakestore_connector.py</code>).</li>
+  <li>L2 also includes P2P (<code class="language-plaintext highlighter-rouge">p2p_backend.py</code>), NIXL (<code class="language-plaintext highlighter-rouge">nixl_storage_backend.py</code>), and Aerospike (<code class="language-plaintext highlighter-rouge">aerospike_client.py</code>).</li>
+  <li>The Manager automatically offloads KV blocks from L1 to L2 when local capacity is exhausted.</li>
+  <li>Retrieved blocks are promoted back to L1 when needed for decode.</li>
+</ul>
+
+<p><strong>Transfer Channels – enabling PD disaggregation:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">nixl_channel.py</code> – RDMA/NVLink-based transfer for maximum bandwidth.</li>
+  <li><code class="language-plaintext highlighter-rouge">py_socket_channel.py</code> – TCP-based transfer for broader compatibility.</li>
+  <li>Prefill workers send KV cache to decode workers over high-speed interconnects.</li>
+</ul>
+
+<p><strong>Observability and CLI Layer:</strong></p>
+<ul>
+  <li>Metrics collection for monitoring cache health and performance.</li>
+  <li><code class="language-plaintext highlighter-rouge">lmcache</code> CLI for management operations.</li>
+  <li><code class="language-plaintext highlighter-rouge">lmcache_server</code> for running the standalone daemon.</li>
+  <li><code class="language-plaintext highlighter-rouge">lmcache_controller</code> for distributed control plane operations.</li>
+</ul>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<p><img src="/assets/img/diagrams/lmcache/lmcache-workflow.svg" alt="LMCache Workflow" /></p>
+
+<h3 id="the-kv-cache-lifecycle">The KV Cache Lifecycle</h3>
+
+<p>The workflow diagram above traces the complete lifecycle of a KV cache request through LMCache, from the moment a user request arrives at the serving engine to the point where a response is delivered. The flow begins when a request arrives at the serving engine (vLLM, SGLang, or TensorRT-LLM). The engine integration layer intercepts the prefill phase before any computation begins, redirecting the request to LMCache for cache lookup.</p>
+
+<p>The Token Database performs a lookup to determine whether the KV blocks for the incoming tokens already exist in the cache. This is the critical decision point. If the lookup results in a cache hit, the system retrieves the pre-computed KV blocks from the appropriate storage tier – L1 local storage (CPU RAM, SSD, or GDS) for the fastest access, or L2 remote storage (Redis, S3, P2P, or NIXL) for larger capacity. The retrieved KV blocks pass through the KV Codec for decompression via the SERDE interface, and the decompressed KV is delivered directly to the engine for decode, skipping the expensive prefill computation entirely. This is where LMCache delivers its most significant TTFT reduction.</p>
+
+<p>If the lookup results in a cache miss, the engine computes the prefill normally, generating new KV blocks. These new blocks pass through the KV Codec for compression – the asymmetric K16/V8 quantization in <code class="language-plaintext highlighter-rouge">asym_k16_v8.py</code> reduces memory footprint while maintaining generation quality. The compressed blocks are then stored in the tiered cache, starting with L1 local storage and automatically offloading to L2 if local capacity is exceeded. At this point, the system checks whether PD disaggregation is in use. If yes, the KV blocks are transferred via NIXL/RDMA to a separate decode worker, which handles the token generation phase. If no, the local engine proceeds with decode directly.</p>
+
+<p>A distinctive path in the workflow is the Cacheblend non-prefix reuse route. Traditional prefix caching only reuses KV blocks that match the beginning of a prompt. Cacheblend goes further: it identifies reusable KV blocks at any position in the prompt, not just the prefix. When a partial match is found, Cacheblend selectively recomputes only the tokens where the cached KV diverges from the new prompt, recovering generation quality while still avoiding most of the prefill computation. This is particularly valuable for RAG workloads where documents are inserted at different positions in the prompt, and for multi-turn conversations where earlier context can be reused even when the latest turn changes the prefix.</p>
+
+<p>The engine-independent daemon design is a key architectural decision. LMCache runs as a standalone process, separate from the inference engine. This means the KV cache survives engine crashes – there is no fate-sharing between the cache and the engine. If vLLM crashes and restarts, the cached KV blocks are still available, and the engine can resume serving from cache without recomputing anything. This design also enables KV cache sharing across multiple engine instances, which is essential for distributed inference and for scenarios where different engines serve different request types.</p>
+
+<h2 id="architecture-deep-dive">Architecture Deep Dive</h2>
+
+<p>The LMCache v1 codebase is organized into several key subsystems, each responsible for a specific aspect of KV cache management. Understanding these subsystems is essential for contributors and for operators who need to configure or extend the system.</p>
+
+<h3 id="core-v1-module">Core v1 Module</h3>
+
+<p>The core of LMCache lives in <code class="language-plaintext highlighter-rouge">lmcache/v1/</code> and consists of the following key files:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cache_engine.py</code> – The central orchestration point for all cache operations. It coordinates between the token database, storage manager, and GPU connectors to serve cache lookups and store new KV blocks.</li>
+  <li><code class="language-plaintext highlighter-rouge">token_database.py</code> – Maintains the mapping between token sequences and cached KV blocks. This is the data structure that enables O(1) cache lookup, determining whether a given prompt’s KV is already cached.</li>
+  <li><code class="language-plaintext highlighter-rouge">metadata.py</code> – Tracks cache block metadata including creation time, access frequency, size, and lifecycle state. This information drives eviction decisions and quota management.</li>
+  <li><code class="language-plaintext highlighter-rouge">manager.py</code> – The high-level cache manager that coordinates all subsystems, including the storage manager, GPU connectors, and observability modules.</li>
+  <li><code class="language-plaintext highlighter-rouge">protocol.py</code> – Defines the internal communication protocol used between LMCache components, especially in distributed and multiprocess deployments.</li>
+</ul>
+
+<h3 id="storage-backend-hierarchy">Storage Backend Hierarchy</h3>
+
+<p>The storage system in <code class="language-plaintext highlighter-rouge">lmcache/v1/storage_backend/</code> implements a two-tier hierarchy with a unified interface:</p>
+
+<p><strong>L1 Local Storage</strong> provides the fastest access path:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">local_cpu_backend.py</code> – CPU RAM storage, the primary offload target for KV blocks that need fast retrieval.</li>
+  <li><code class="language-plaintext highlighter-rouge">local_disk_backend.py</code> – Local disk/SSD storage for larger capacity with moderate latency.</li>
+  <li><code class="language-plaintext highlighter-rouge">gds_backend.py</code> – GPU Direct Storage, which bypasses the CPU and enables direct data transfer between SSDs and GPU memory.</li>
+</ul>
+
+<p><strong>L2 Remote and Distributed Storage</strong> provides scalable capacity:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">remote_backend.py</code> – The abstract remote backend interface.</li>
+  <li><code class="language-plaintext highlighter-rouge">p2p_backend.py</code> – Peer-to-peer backend for multi-node CPU memory sharing.</li>
+  <li><code class="language-plaintext highlighter-rouge">nixl_storage_backend.py</code> – NIXL-based storage for RDMA-enabled remote access.</li>
+  <li><code class="language-plaintext highlighter-rouge">maru_backend.py</code> – Maru backend for specialized storage scenarios.</li>
+</ul>
+
+<p>The connector layer in <code class="language-plaintext highlighter-rouge">storage_backend/connector/</code> provides adapters for specific storage systems: <code class="language-plaintext highlighter-rouge">redis_connector.py</code> and <code class="language-plaintext highlighter-rouge">valkey_connector.py</code> for Redis/Valkey, <code class="language-plaintext highlighter-rouge">s3_connector.py</code> for S3-compatible object storage, <code class="language-plaintext highlighter-rouge">mooncakestore_connector.py</code> for Mooncake, <code class="language-plaintext highlighter-rouge">infinistore_connector.py</code> for InfiniStore, <code class="language-plaintext highlighter-rouge">aerospike_client.py</code> for Aerospike, and <code class="language-plaintext highlighter-rouge">fs_connector.py</code> for filesystem-based storage. Each adapter implements the same unified interface, making it straightforward to add new storage backends.</p>
+
+<h3 id="kv-codec-and-compression">KV Codec and Compression</h3>
+
+<p>The KV codec subsystem in <code class="language-plaintext highlighter-rouge">lmcache/v1/kv_codec/</code> handles compression and serialization of KV blocks:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">asym_k16_v8.py</code> – Asymmetric quantization that uses 16-bit precision for keys and 8-bit precision for values. This asymmetric approach preserves the numerical accuracy needed for attention computation while reducing the memory footprint of the larger value tensors.</li>
+  <li><code class="language-plaintext highlighter-rouge">encoded_kv.py</code> – The serialized KV representation format used for storage and transfer.</li>
+</ul>
+
+<p>The SERDE (serialize/deserialize) interface in <code class="language-plaintext highlighter-rouge">storage_backend/naive_serde/</code> provides a pluggable framework for researchers to implement custom compression, token dropping, and serialization strategies. The <code class="language-plaintext highlighter-rouge">cachegen_encoder.py</code> and <code class="language-plaintext highlighter-rouge">cachegen_decoder.py</code> implement the CacheGen compression scheme from the SIGCOMM 2024 paper, while <code class="language-plaintext highlighter-rouge">kivi_serde.py</code> implements KIVI quantization.</p>
+
+<h3 id="transfer-channels">Transfer Channels</h3>
+
+<p>The transfer channel subsystem in <code class="language-plaintext highlighter-rouge">lmcache/v1/transfer_channel/</code> enables PD disaggregation:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">nixl_channel.py</code> – NIXL-based transfer channel using RDMA/NVLink for maximum bandwidth and minimum latency. This is the preferred transfer mechanism for PD disaggregation in production deployments with compatible hardware.</li>
+  <li><code class="language-plaintext highlighter-rouge">py_socket_channel.py</code> – TCP-based transfer channel using PySocket for broader compatibility when RDMA hardware is not available.</li>
+  <li><code class="language-plaintext highlighter-rouge">mock_memory_channel.py</code> – In-memory mock channel for testing and development.</li>
+</ul>
+
+<h3 id="multiprocess-architecture">Multiprocess Architecture</h3>
+
+<p>The multiprocess subsystem in <code class="language-plaintext highlighter-rouge">lmcache/v1/multiprocess/</code> implements the MP architecture that delivered a 10x MoE inference performance boost. Key files include <code class="language-plaintext highlighter-rouge">engine_context.py</code> for engine-level context management, <code class="language-plaintext highlighter-rouge">engine_module.py</code> for engine module coordination, <code class="language-plaintext highlighter-rouge">session.py</code> for session management, and <code class="language-plaintext highlighter-rouge">posix_shm.py</code> for POSIX shared memory operations. The MP architecture achieves process-level parallelism, allowing multiple engine processes to share KV cache through shared memory without the overhead of inter-process communication for every cache operation.</p>
+
+<h3 id="distributed-coordination">Distributed Coordination</h3>
+
+<p>The distributed subsystem in <code class="language-plaintext highlighter-rouge">lmcache/v1/distributed/</code> provides the coordination layer for multi-node deployments. Key components include <code class="language-plaintext highlighter-rouge">storage_controller.py</code> for storage controller operations, <code class="language-plaintext highlighter-rouge">l1_manager.py</code> for L1 storage management, <code class="language-plaintext highlighter-rouge">quota_manager.py</code> for quota enforcement, <code class="language-plaintext highlighter-rouge">eviction.py</code> for cache eviction policies, and <code class="language-plaintext highlighter-rouge">tiers.py</code> for tier management. The cache policy module supports multiple eviction strategies: FIFO (<code class="language-plaintext highlighter-rouge">fifo.py</code>), LRU (<code class="language-plaintext highlighter-rouge">lru.py</code>), LFU (<code class="language-plaintext highlighter-rouge">lfu.py</code>), and MRU (<code class="language-plaintext highlighter-rouge">mru.py</code>).</p>
+
+<h3 id="integration-layer">Integration Layer</h3>
+
+<p>The integration layer in <code class="language-plaintext highlighter-rouge">lmcache/integration/</code> provides engine-specific connectors:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">vllm/</code> – vLLM integration, including the MP connector for multiprocess deployments.</li>
+  <li><code class="language-plaintext highlighter-rouge">sglang/</code> – SGLang integration for drop-in acceleration.</li>
+  <li><code class="language-plaintext highlighter-rouge">tensorrt_llm/</code> – TensorRT-LLM integration for NVIDIA-optimized inference.</li>
+</ul>
+
+<h3 id="cli-tools-and-deployment">CLI Tools and Deployment</h3>
+
+<p>LMCache provides three CLI entry points defined in <code class="language-plaintext highlighter-rouge">pyproject.toml</code>:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">lmcache</code> – The main CLI for cache management operations, mapped to <code class="language-plaintext highlighter-rouge">lmcache.cli.main:main</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">lmcache_server</code> – The standalone daemon server, mapped to <code class="language-plaintext highlighter-rouge">lmcache.v1.server.__main__:main</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">lmcache_controller</code> – The distributed control plane API server, mapped to <code class="language-plaintext highlighter-rouge">lmcache.v1.api_server.__main__:main</code>.</li>
+</ul>
+
+<p>The Kubernetes operator in <code class="language-plaintext highlighter-rouge">operator/</code> enables production deployment on Kubernetes clusters, with custom resource definitions for managing LMCache instances. Docker images are available in the <code class="language-plaintext highlighter-rouge">docker/</code> directory for containerized deployment.</p>
+
+<h2 id="installation">Installation</h2>
+
+<p>LMCache requires Python 3.10 through 3.13, a GPU environment, and a Linux (POSIX) operating system. The build system uses <code class="language-plaintext highlighter-rouge">torch==2.11.0</code>, <code class="language-plaintext highlighter-rouge">ninja</code>, and <code class="language-plaintext highlighter-rouge">setuptools_scm</code> as build dependencies.</p>
+
+<h3 id="install-from-pypi">Install from PyPI</h3>
+
+<p>The simplest way to install LMCache is from PyPI:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>lmcache
+</code></pre></div></div>
+
+<p>This installs the latest release along with all runtime dependencies. The current version on PyPI is 0.5.0, released in June 2026.</p>
+
+<h3 id="install-from-source">Install from Source</h3>
+
+<p>For development or for flexibility with the torch version, install from source with <code class="language-plaintext highlighter-rouge">--no-build-isolation</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/LMCache/LMCache.git
+<span class="nb">cd </span>LMCache
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="nb">.</span> <span class="nt">--no-build-isolation</span>
+</code></pre></div></div>
+
+<p>When using <code class="language-plaintext highlighter-rouge">--no-build-isolation</code>, ensure that <code class="language-plaintext highlighter-rouge">torch</code>, <code class="language-plaintext highlighter-rouge">ninja</code>, and <code class="language-plaintext highlighter-rouge">setuptools_scm</code> are installed in your environment before running the install command, since the build will not create an isolated environment to fetch them.</p>
+
+<h3 id="docker-and-kubernetes">Docker and Kubernetes</h3>
+
+<p>Docker images are available in the <code class="language-plaintext highlighter-rouge">docker/</code> directory of the repository for containerized deployment. The Kubernetes operator in <code class="language-plaintext highlighter-rouge">operator/</code> provides custom resource definitions for deploying and managing LMCache on Kubernetes clusters, with built-in health monitoring and metrics collection.</p>
+
+<h3 id="configuration">Configuration</h3>
+
+<p>LMCache is configured via YAML config files that specify storage backend selection, cache policies, transfer channel settings, and observability options. Configuration examples for different storage backends are available in the <a href="https://docs.lmcache.ai/">documentation</a>.</p>
+
+<h2 id="usage">Usage</h2>
+
+<p><img src="/assets/img/diagrams/lmcache/lmcache-features.svg" alt="LMCache Features" /></p>
+
+<h3 id="understanding-the-feature-map">Understanding the Feature Map</h3>
+
+<p>The features diagram above maps the seven key features of LMCache to the source components that implement each one. This mapping is useful for developers who want to understand the codebase structure and for operators who need to know which components to configure for specific use cases.</p>
+
+<p><strong>Engine-Independent Deployment</strong> is implemented through the <code class="language-plaintext highlighter-rouge">standalone/</code> directory and the <code class="language-plaintext highlighter-rouge">server/</code> module, which together run LMCache as a standalone daemon process. This daemon manages KV cache independently from the inference engine process, ensuring that cached KV survives engine crashes and can be shared across multiple engine instances. The key architectural principle is no fate-sharing: the cache lifecycle is decoupled from the engine lifecycle.</p>
+
+<p><strong>Tiered KV Cache Offloading</strong> is implemented through <code class="language-plaintext highlighter-rouge">storage_manager.py</code> and the L1/L2 storage backends. The <code class="language-plaintext highlighter-rouge">local_cpu_backend.py</code> provides CPU RAM storage, <code class="language-plaintext highlighter-rouge">local_disk_backend.py</code> provides SSD storage, and <code class="language-plaintext highlighter-rouge">gds_backend.py</code> provides GPU Direct Storage. The storage manager automatically moves KV blocks between tiers based on access patterns and capacity constraints, ensuring that frequently accessed blocks stay in the fastest tier while less frequently accessed blocks are offloaded to higher-capacity tiers.</p>
+
+<p><strong>KV Cache Observability</strong> is implemented through the <code class="language-plaintext highlighter-rouge">health_monitor/</code> and <code class="language-plaintext highlighter-rouge">mp_observability/</code> modules, which provide a rich set of metrics including Kubernetes health monitoring, performance diagnostics, request-level and token-level prefix cache hit rates, KV cache lifecycle tracking, and user-specific usage metrics. These metrics are exposed through standard interfaces for integration with monitoring dashboards.</p>
+
+<p><strong>Pluggable Backends</strong> are implemented through the connector layer in <code class="language-plaintext highlighter-rouge">storage_backend/connector/</code>, with adapters for Redis (<code class="language-plaintext highlighter-rouge">redis_connector.py</code>), S3 (<code class="language-plaintext highlighter-rouge">s3_connector.py</code>), Mooncake (<code class="language-plaintext highlighter-rouge">mooncakestore_connector.py</code>), InfiniStore (<code class="language-plaintext highlighter-rouge">infinistore_connector.py</code>), and Valkey (<code class="language-plaintext highlighter-rouge">valkey_connector.py</code>). Each adapter implements the same unified interface, making it straightforward to add new storage backends without modifying the core cache engine.</p>
+
+<p><strong>Non-Prefix KV Reuse</strong> is implemented through Cacheblend, with example workflows in the <code class="language-plaintext highlighter-rouge">blend_kv/</code> and <code class="language-plaintext highlighter-rouge">blend_kv_v1/</code> directories. Cacheblend identifies reusable KV blocks at any position in the prompt, not just the prefix, and selectively recomputes tokens where the cached KV diverges from the new prompt to recover generation quality.</p>
+
+<p><strong>PD Disaggregation</strong> is implemented through the transfer channel subsystem, with <code class="language-plaintext highlighter-rouge">nixl_channel.py</code> for RDMA/NVLink-based transfer and <code class="language-plaintext highlighter-rouge">py_socket_channel.py</code> for TCP-based transfer. The <code class="language-plaintext highlighter-rouge">pd_backend.py</code> and <code class="language-plaintext highlighter-rouge">pd_backend_async.py</code> modules coordinate the prefill-to-decode KV transfer, enabling prefill workers and decode workers to run on separate hardware.</p>
+
+<p><strong>KV Transformation</strong> is implemented through the <code class="language-plaintext highlighter-rouge">kv_codec/</code> module and the SERDE interface in <code class="language-plaintext highlighter-rouge">storage_backend/naive_serde/</code>. The <code class="language-plaintext highlighter-rouge">asym_k16_v8.py</code> codec provides asymmetric K16/V8 quantization, while the SERDE interface allows researchers to implement custom compression, token dropping, and serialization strategies.</p>
+
+<h3 id="example-workflows">Example Workflows</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">examples/</code> directory in the repository contains a comprehensive set of example workflows:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">basic_check/</code> – Basic cache verification to confirm LMCache is working correctly with your engine setup.</li>
+  <li><code class="language-plaintext highlighter-rouge">blend_kv/</code> and <code class="language-plaintext highlighter-rouge">blend_kv_v1/</code> – Cacheblend non-prefix reuse examples demonstrating how to reuse KV blocks at arbitrary prompt positions.</li>
+  <li><code class="language-plaintext highlighter-rouge">disagg_prefill/</code> and <code class="language-plaintext highlighter-rouge">disagg_prefill_mp/</code> – PD disaggregation examples showing how to separate prefill and decode workers with KV transfer.</li>
+  <li><code class="language-plaintext highlighter-rouge">p2p/</code> – Multi-node P2P CPU memory sharing, aggregating memory across nodes into a shared pool.</li>
+  <li><code class="language-plaintext highlighter-rouge">multi_process/</code> – MP architecture examples for process-level parallelism and the 10x MoE inference boost.</li>
+  <li><code class="language-plaintext highlighter-rouge">kubernetes/</code> – Kubernetes deployment examples using the LMCache operator.</li>
+  <li><code class="language-plaintext highlighter-rouge">observability/</code> – Metrics and monitoring setup examples.</li>
+  <li><code class="language-plaintext highlighter-rouge">online_session/</code> – Session-based cache reuse for multi-turn conversations.</li>
+  <li><code class="language-plaintext highlighter-rouge">redis_lookup/</code> – Redis backend configuration and usage examples.</li>
+</ul>
+
+<h3 id="basic-usage-with-vllm">Basic Usage with vLLM</h3>
+
+<p>To use LMCache with vLLM, attach LMCache as a KV cache layer by configuring the integration in your vLLM deployment. The integration layer in <code class="language-plaintext highlighter-rouge">lmcache/integration/vllm/</code> handles the connection, intercepting prefill operations and redirecting them through the cache engine for lookup and storage.</p>
+
+<h3 id="sglang-and-tensorrt-llm-integration">SGLang and TensorRT-LLM Integration</h3>
+
+<p>SGLang integration is provided through <code class="language-plaintext highlighter-rouge">lmcache/integration/sglang/</code> for drop-in acceleration. TensorRT-LLM integration is provided through <code class="language-plaintext highlighter-rouge">lmcache/integration/tensorrt_llm/</code> for NVIDIA-optimized inference. Both integrations follow the same pattern: the integration layer intercepts prefill, the cache engine performs lookup, and on a cache hit, the KV is delivered to the engine without recomputation.</p>
+
+<h2 id="features">Features</h2>
+
+<p>LMCache provides seven key features that together make it a comprehensive KV cache management layer for LLM inference:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+      <th>Key Components</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Engine-Independent Deployment</td>
+      <td>Standalone daemon process that manages KV cache independently from the inference engine, ensuring no fate-sharing</td>
+      <td><code class="language-plaintext highlighter-rouge">standalone/</code>, <code class="language-plaintext highlighter-rouge">server/</code></td>
+    </tr>
+    <tr>
+      <td>Tiered KV Cache Offloading</td>
+      <td>Move KV caches from GPU memory into a tiered storage hierarchy spanning CPU, local disk, and remote backends</td>
+      <td><code class="language-plaintext highlighter-rouge">storage_manager.py</code>, <code class="language-plaintext highlighter-rouge">local_cpu_backend.py</code>, <code class="language-plaintext highlighter-rouge">local_disk_backend.py</code>, <code class="language-plaintext highlighter-rouge">gds_backend.py</code></td>
+    </tr>
+    <tr>
+      <td>KV Cache Observability</td>
+      <td>Rich set of metrics including Kubernetes health monitoring, KV-cache-specific metrics, and management metrics</td>
+      <td><code class="language-plaintext highlighter-rouge">health_monitor/</code>, <code class="language-plaintext highlighter-rouge">mp_observability/</code></td>
+    </tr>
+    <tr>
+      <td>Pluggable Storage Backends</td>
+      <td>Unified interface for integrating remote storage and KV transfer backends</td>
+      <td><code class="language-plaintext highlighter-rouge">redis_connector.py</code>, <code class="language-plaintext highlighter-rouge">s3_connector.py</code>, <code class="language-plaintext highlighter-rouge">mooncakestore_connector.py</code>, <code class="language-plaintext highlighter-rouge">infinistore_connector.py</code>, <code class="language-plaintext highlighter-rouge">valkey_connector.py</code></td>
+    </tr>
+    <tr>
+      <td>Non-Prefix KV Reuse</td>
+      <td>Reuse cached KV blocks at any position in the prompt via Cacheblend with selective recomputation</td>
+      <td>Cacheblend, <code class="language-plaintext highlighter-rouge">blend_kv/</code> examples</td>
+    </tr>
+    <tr>
+      <td>PD Disaggregation and KV Transfer</td>
+      <td>Transfer KV cache from prefill workers to decode workers over NVLink, RDMA, or TCP</td>
+      <td><code class="language-plaintext highlighter-rouge">nixl_channel.py</code>, <code class="language-plaintext highlighter-rouge">py_socket_channel.py</code>, <code class="language-plaintext highlighter-rouge">pd_backend.py</code></td>
+    </tr>
+    <tr>
+      <td>Pluggable KV Transformation</td>
+      <td>SERDE interface for compression, token dropping, and custom serialization</td>
+      <td><code class="language-plaintext highlighter-rouge">asym_k16_v8.py</code>, <code class="language-plaintext highlighter-rouge">encoded_kv.py</code>, <code class="language-plaintext highlighter-rouge">naive_serde/serde.py</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="recent-milestones">Recent Milestones</h3>
+
+<p>LMCache has seen rapid development and adoption, with several significant milestones:</p>
+
+<ul>
+  <li><strong>2026/05</strong>: Agentic workload benchmark on AMD MI300X, demonstrating LMCache performance for multi-turn agentic workloads.</li>
+  <li><strong>2026/04</strong>: MP architecture release, delivering a 10x MoE inference performance boost through process-level parallelism.</li>
+  <li><strong>2026/03</strong>: LMCache presented at GTC 2026, showcasing the system to the broader AI inference community.</li>
+  <li><strong>2026/01</strong>: Multi-node P2P CPU memory sharing moved from experimental feature to production, enabling aggregate memory pools across nodes.</li>
+  <li><strong>2025/10</strong>: LMCache joined the PyTorch Foundation, and Tensormesh was unveiled.</li>
+  <li><strong>2025/09</strong>: NVIDIA Dynamo integrated LMCache, accelerating LLM inference in the Dynamo framework.</li>
+  <li><strong>2025/07</strong>: Redis integration blog published, showing faster LLM inference and cheaper responses with LMCache and Redis.</li>
+</ul>
+
+<h2 id="performance">Performance</h2>
+
+<p><img src="/assets/img/diagrams/lmcache/lmcache-performance.svg" alt="LMCache Performance" /></p>
+
+<h3 id="performance-tiers-and-benchmarks">Performance Tiers and Benchmarks</h3>
+
+<p>The performance diagram above illustrates the tiered storage hierarchy that LMCache uses to balance latency and capacity, along with benchmark highlights from recent releases. The tier pyramid shows five levels of storage, from the fastest and smallest at the top to the slowest and largest at the bottom.</p>
+
+<p><strong>Tier 0: GPU HBM</strong> is the fastest tier, with sub-microsecond latency and bandwidth in the hundreds of GB/s range. However, GPU memory is limited to approximately 40-80 GB per GPU, making it the most expensive and scarce resource. LMCache’s primary goal is to free GPU HBM by offloading KV cache to lower tiers, making that memory available for serving more concurrent requests.</p>
+
+<p><strong>Tier 1: CPU RAM</strong> provides microsecond-level latency with host memory capacity typically in the hundreds of GB. This is the primary offload target for KV blocks that need fast retrieval. The KV Codec compression layer, using K16/V8 asymmetric quantization, effectively extends the capacity of this tier by reducing the memory footprint of each KV block.</p>
+
+<p><strong>Tier 2: Local Disk/SSD</strong> provides millisecond-level latency with large capacity, suitable for KV blocks that are accessed less frequently. The eviction and quota management system (<code class="language-plaintext highlighter-rouge">eviction.py</code>, <code class="language-plaintext highlighter-rouge">quota_manager.py</code>) with policies including FIFO, LRU, LFU, and MRU ensures that the most valuable KV blocks stay in faster tiers while less valuable blocks are offloaded to SSD.</p>
+
+<p><strong>Tier 3: GDS (GPU Direct Storage)</strong> bypasses the CPU entirely, enabling direct data transfer between SSDs and GPU memory. This reduces the latency overhead of CPU-mediated transfers and is particularly valuable for large KV blocks that need to be loaded directly into GPU memory for decode.</p>
+
+<p><strong>Tier 4: Remote Backends</strong> including Redis/Valkey, S3, Mooncake, P2P, and NIXL/RDMA provide the largest capacity tier with network-level latency. The multi-node P2P feature aggregates memory across nodes into a shared pool, effectively creating a distributed cache that can hold far more KV blocks than any single node could manage. The CoreWeave x Cohere case study demonstrated how this tiered approach can break the memory barrier for large-scale LLM inference.</p>
+
+<p>The benchmark callouts in the diagram highlight key performance results. The 10x MoE inference boost from the MP architecture (released April 2026) demonstrates the power of process-level parallelism for Mixture-of-Experts models, where the multiprocess design allows multiple engine processes to share KV cache through POSIX shared memory without inter-process communication overhead for every cache operation. The AMD MI300X agentic workload benchmark (May 2026) validated LMCache performance on AMD hardware for multi-turn agentic workloads. The TTFT reduction from cached prefill eliminates redundant computation, providing the most direct performance benefit. The multi-node P2P aggregate memory pool enables scaling beyond single-node memory limits.</p>
+
+<p>The automatic tiering system moves KV blocks between tiers based on access patterns and capacity constraints. When a cache hit occurs at a lower tier, the system can promote the block to a faster tier for future access. When a tier reaches capacity, the eviction policy determines which blocks to evict or offload to a lower tier. The quota manager ensures fair resource allocation across users and workloads, preventing any single user from monopolizing cache capacity.</p>
+
+<p><strong>Practical Deployment Tips:</strong></p>
+<ul>
+  <li>Start with L1 CPU RAM as the primary offload target for the best latency-to-capacity trade-off.</li>
+  <li>Enable K16/V8 quantization to roughly double the effective capacity of CPU RAM and SSD tiers.</li>
+  <li>Use GDS when your workload involves large KV blocks that must reach GPU memory with minimal CPU overhead.</li>
+  <li>Deploy Redis or Valkey as the L2 backend when you need shared, cross-instance cache across multiple engine processes.</li>
+  <li>Consider multi-node P2P when a single node’s memory is insufficient for your working set of KV blocks.</li>
+  <li>Use NIXL/RDMA transfer channels for PD disaggregation only when you have compatible RDMA or NVLink hardware.</li>
+  <li>Monitor prefix cache hit rates via the observability modules to tune eviction policies and tier thresholds.</li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>LMCache is becoming the de-facto standard for KV cache management in LLM inference. Its vendor-neutral design allows users to switch between serving engines (vLLM, SGLang, TensorRT-LLM) and storage vendors (Redis, S3, Mooncake, NIXL, and more) freely while reusing cached KV, avoiding lock-in to any single provider. The growing ecosystem – with the PyTorch Foundation, NVIDIA Dynamo integration, CoreWeave partnership, Redis integration, and AMD benchmarks – demonstrates broad industry adoption.</p>
+
+<p>The research foundation is solid. LMCache builds on CacheGen (SIGCOMM 2024) for KV cache compression and streaming, CacheBlend (EuroSys 2025) for non-prefix KV reuse with cached knowledge fusion, and the LMCache paper (<a href="https://arxiv.org/abs/2510.09665">arXiv 2510.09665</a>) for the overall system design. The codebase is open source under Apache 2.0, with active community participation through Slack, community meetings, and a contributing guide.</p>
+
+<p>For developers and operators building LLM inference systems, LMCache provides a production-ready, research-backed, vendor-neutral KV cache management layer that reduces TTFT, improves throughput, and enables scalable inference for long-context, agentic, and multi-turn workloads. Installation is a single command – <code class="language-plaintext highlighter-rouge">pip install lmcache</code> – and the <a href="https://docs.lmcache.ai/">documentation</a> provides comprehensive guides for installation, quickstart, configuration, benchmarking, and production deployment.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/Turso-SQLite-Compatible-Edge-Database-Rust/">Turso: The SQLite-Compatible Edge Database Built in Rust</a></li>
+  <li><a href="/SpiderFoot-Open-Source-OSINT-Automation-Tool/">SpiderFoot: Open Source OSINT Automation Tool</a></li>
+  <li><a href="/BiliTickerBuy-Ticket-Buying-Automation-Tool/">BiliTickerBuy: Ticket Buying Automation Tool</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="LLM Inference" /><category term="KV Cache" /><category term="Python" /><category term="vLLM" /><category term="SGLang" /><summary type="html"><![CDATA[Learn how LMCache reduces TTFT and improves throughput for LLM inference with tiered KV cache offloading, non-prefix reuse, PD disaggregation, and pluggable storage backends.]]></summary></entry><entry><title type="html">BiliTickerBuy: Open Source Bilibili Ticket Buying Automation Tool</title><link href="https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool/" rel="alternate" type="text/html" title="BiliTickerBuy: Open Source Bilibili Ticket Buying Automation Tool" /><published>2026-06-30T00:00:00+00:00</published><updated>2026-06-30T00:00:00+00:00</updated><id>https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool</id><content type="html" xml:base="https://pyshine.com/BiliTickerBuy-Ticket-Buying-Automation-Tool/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p>BiliTickerBuy is an open-source Python automation tool designed to purchase event tickets on Bilibili, one of China’s largest video and entertainment platforms. The project, hosted at <a href="https://github.com/mikumifa/biliTickerBuy">https://github.com/mikumifa/biliTickerBuy</a>, has accumulated over 3,708 GitHub stars, reflecting the significant demand for automated ticket purchasing in the Chinese live-event ecosystem. Bilibili frequently hosts ticketed events for concerts, anime conventions, gaming tournaments, and creator meetups, and these high-demand sales routinely sell out within seconds of opening. Manual purchasing through a browser is often futile because the window of availability is shorter than human reaction time.</p>
 
@@ -3927,228 +4284,4 @@ The first time you package an app, Cargo must compile all Rust dependencies from
 <ul>
   <li><a href="/Chatwoot-Open-Source-Omni-Channel-Customer-Support/">Chatwoot: Open-Source Omni-Channel Customer Support Platform</a></li>
   <li><a href="/Apple-Container-Lightweight-VMs-Linux-Containers-macOS/">Apple Container: Lightweight VM-Based Containerization for macOS</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Rust" /><category term="Tauri" /><category term="Desktop App" /><category term="Open Source" /><summary type="html"><![CDATA[Explore Pake, the Rust-powered CLI tool that turns any webpage into a lightweight cross-platform desktop app in one command. Learn installation, usage, features, and architecture.]]></summary></entry><entry><title type="html">Penpot: The Open-Source Design Tool for Design and Code Collaboration</title><link href="https://pyshine.com/Penpot-Open-Source-Design-Tool-Collaboration/" rel="alternate" type="text/html" title="Penpot: The Open-Source Design Tool for Design and Code Collaboration" /><published>2026-06-29T00:00:00+00:00</published><updated>2026-06-29T00:00:00+00:00</updated><id>https://pyshine.com/Penpot-Open-Source-Design-Tool-Collaboration</id><content type="html" xml:base="https://pyshine.com/Penpot-Open-Source-Design-Tool-Collaboration/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>Penpot is an open-source design and prototyping platform that has been gaining significant traction in the developer and design communities. Hosted at <a href="https://github.com/penpot/penpot">penpot/penpot</a> on GitHub, the repository has accumulated approximately 52,224 stars and 3,339 forks, with an impressive growth rate of 1,135 stars in a single day. This momentum reflects a growing demand for design tools that are not locked behind proprietary ecosystems and subscription paywalls.</p>
-
-<p>Developed by Kaleidos, a Spanish technology company, Penpot is licensed under the Mozilla Public License (MPL-2.0) and has been recognized as a Verified Digital Public Good by the Digital Public Goods registry. Unlike many design tools that store artwork in opaque binary formats, Penpot embraces open web standards such as SVG, CSS, HTML, and JSON as its native representation. This means that what designers create in Penpot is already code, and developers can work with it directly without translation layers.</p>
-
-<p>This article provides an independent technical analysis of the Penpot codebase, its architecture, technology stack, and the features that make it a compelling alternative to proprietary design platforms. It is not an endorsed publication of the Penpot project; rather, it is an exploration of the engineering decisions behind a tool that is reshaping how design and code collaborate.</p>
-
-<h2 id="what-is-penpot">What is Penpot?</h2>
-
-<p>Penpot is a web-based design and prototyping platform that runs entirely in the browser. It provides a full-featured visual editor for creating user interfaces, interactive prototypes, and design systems. What sets Penpot apart from other design tools is its foundational philosophy: design should be expressed as code using open standards.</p>
-
-<p>The platform supports vector editing, prototyping, components and variants, CSS Grid and Flex layouts, and native design tokens. It offers real-time collaboration so that multiple designers and developers can work on the same file simultaneously, with changes propagating instantly through WebSocket connections and Redis PubSub messaging.</p>
-
-<p>Penpot can be used as a hosted SaaS application at <a href="https://design.penpot.app">design.penpot.app</a> or self-hosted on your own infrastructure using Docker, Kubernetes, Elestio, or TrueNAS. This deployment flexibility makes it suitable for individuals, small teams, and large enterprises with strict data governance requirements. The official website at <a href="https://penpot.app/">penpot.app</a> provides comprehensive documentation, a learning center, and community resources.</p>
-
-<h2 id="system-architecture">System Architecture</h2>
-
-<p><img src="/assets/img/diagrams/penpot/penpot-architecture.svg" alt="Architecture" />
-The Penpot system architecture follows the structure of a modern single-page
-application with several specialized layers that handle rendering, export, and
-AI integration. At the top of the stack sits the browser layer, which contains
-the frontend SPA built with ClojureScript and React, alongside the WASM renderer
-compiled from Rust. The browser loads the frontend assets from a static web
-server and then communicates with the backend over HTTP for RPC calls and over
-WebSocket for real-time updates.</p>
-
-<p>The backend layer runs on the Java Virtual Machine as a Clojure application. It
-exposes an HTTP server that handles RPC API requests, manages WebSocket
-notifications for file subscriptions, runs async task workers for scheduled
-jobs, and applies SQL schema migrations. All RPC parameters are encoded using
-Cognitect transit, a format that is more expressive than JSON and allows the
-frontend and backend to share data structures seamlessly.</p>
-
-<p>The data layer consists of PostgreSQL as the primary database for all persistent
-data, Redis as a PubSub broker for real-time collaboration, and external file
-storage for media attachments. Two side components extend the platform: the
-exporter, which uses Node.js and Puppeteer to drive a headless Chromium instance
-for rendering shapes to bitmap, SVG, or PDF outputs, and the MCP server, which
-provides a Model Context Protocol bridge for AI tools to read and modify designs
-programmatically.</p>
-
-<p>The WASM renderer communicates with the GPU via OpenGL to deliver hardware-
-accelerated canvas drawing directly in the browser, ensuring smooth performance
-even with complex designs. The interaction flow proceeds as follows: a user
-opens Penpot in the browser, the frontend SPA loads from the static web server,
-RPC calls are made to the backend over HTTP with transit-encoded parameters, and
-when a file is opened a persistent WebSocket is established. The backend
-subscribes to a Redis PubSub topic keyed by file ID, and edits propagate through
-the chain of backend RPC to Redis PubSub to all subscribers via their WebSocket
-connections, resulting in real-time UI updates across all connected clients.</p>
-<h2 id="technology-stack">Technology Stack</h2>
-
-<p><img src="/assets/img/diagrams/penpot/penpot-tech-stack.svg" alt="Tech Stack" />
-The Penpot technology stack is notable for its use of functional programming
-languages and high-performance systems languages working together. The frontend
-is written in ClojureScript, a dialect of Clojure that compiles to JavaScript.
-It uses React through the rumext wrapper library and manages application state
-with potok, an event-loop paradigm similar to Redux. A web worker handles
-background calculations to keep the main thread responsive during intensive
-design operations.</p>
-
-<p>The rendering layer is implemented in Rust and compiled to WebAssembly. It
-relies on skia-safe, the Rust binding for the Skia graphics engine, along with
-glam for linear algebra math, OpenGL for GPU access, and bezier-rs for curve
-calculations. This combination delivers GPU-accelerated canvas rendering that
-runs at native speed inside the browser, a significant advantage over
-JavaScript-based renderers for complex scenes. The build configuration uses a
-release profile with optimization level 3, fat LTO, and a single codegen unit
-for maximum performance.</p>
-
-<p>The backend is a Clojure application running on the JVM. It uses transit for RPC
-data encoding, which preserves Clojure data types across the wire. The exporter
-runs as a Node.js application using Puppeteer to control headless Chromium for
-export automation. PostgreSQL serves as the primary database for all persistent
-data including users, teams, projects, files, shapes, and media metadata. Redis
-acts as the PubSub broker for real-time collaboration, using file ID-based
-topics to broadcast change notifications to all WebSocket subscribers.</p>
-
-<p>Deployment is handled through Docker containers and Kubernetes with an official
-Helm Chart. The monorepo is managed with pnpm workspaces for JavaScript and
-TypeScript packages, and deps.edn for Clojure dependencies. Open standards
-including SVG, CSS, HTML, and JSON form the foundation of the design
-representation, ensuring that Penpot output is always interoperable with web
-technologies and never locked into a proprietary format.</p>
-<h2 id="design-and-code-collaboration">Design and Code Collaboration</h2>
-
-<p><img src="/assets/img/diagrams/penpot/penpot-design-collaboration.svg" alt="Design Collaboration" />
-The design and code collaboration workflow is the core differentiator that
-separates Penpot from traditional design tools. The flow begins with a designer
-creating interfaces in the visual editor. All shapes are stored natively as SVG,
-meaning there is no proprietary format to decode. CSS Grid and Flex layouts in
-Penpot behave identically to real CSS, so what a designer creates matches what a
-developer implements in production code.</p>
-
-<p>Design tokens provide a single source of truth for colors, typography, spacing,
-and other design variables. These tokens can sync between design files and code
-repositories, ensuring that a change to a brand color in Penpot propagates to
-the codebase automatically. This eliminates the common problem of design
-specifications drifting from implementation over time. More details on design
-tokens are available at <a href="https://penpot.app/collaboration/design-tokens">penpot.app/collaboration/design-
-tokens</a>.</p>
-
-<p>Real-time collaboration is powered by WebSocket connections and Redis PubSub.
-When a user opens a file, a persistent WebSocket is established with the
-backend, which subscribes to a Redis PubSub topic keyed by file ID. Any edit
-made by one user is sent to the backend via RPC, published to the Redis topic,
-and broadcast to all subscribers, resulting in instant updates across all
-connected clients. Live presence events and cursor tracking let team members see
-who is working on what in real time.</p>
-
-<p>The MCP server acts as a bidirectional bridge between Penpot and AI tools. Large
-language models and other AI agents can read design data, modify shapes, and
-generate code from designs through the Model Context Protocol. This enables AI-
-driven design automation workflows that were not previously possible with closed
-design tools. Webhooks and the open API allow teams to trigger CI/CD pipelines
-on design changes, automating the design-to-code pipeline end to end. Developers
-can use Inspect Mode to access ready-to-use SVG, CSS, and HTML code directly
-from the design canvas, eliminating manual translation work.</p>
-<h2 id="key-features-and-capabilities">Key Features and Capabilities</h2>
-
-<p><img src="/assets/img/diagrams/penpot/penpot-features.svg" alt="Features" />
-Penpot organizes its capabilities into four major categories, each addressing a
-distinct aspect of the design workflow. The design tools quadrant covers the
-core creative functionality: vector editing for precise shape manipulation,
-prototyping for interactive transitions, reusable components with variants for
-scalable design systems, and CSS Grid and Flex layouts that produce responsive
-interfaces matching real CSS behavior. These tools give designers the full
-expressive power needed for modern UI design.</p>
-
-<p>The collaboration quadrant encompasses everything that enables team work. Real-
-time editing allows multiple users to modify the same file simultaneously. Live
-presence shows who is online and active. Comments facilitate asynchronous
-feedback directly on the canvas. Cursor tracking provides spatial awareness of
-where teammates are working. Shared libraries allow teams to maintain consistent
-design assets across projects. All of this is underpinned by the WebSocket and
-Redis PubSub synchronization engine.</p>
-
-<p>The code integration quadrant bridges the gap to development. Inspect Mode
-generates ready-to-use SVG, CSS, and HTML code from any design element. Design
-tokens sync between design and code repositories. The open API and webhooks
-enable automated pipelines that trigger on design changes. The MCP server
-provides a standardized protocol for AI tools to interact with designs
-programmatically, opening the door to AI-assisted design and code generation
-workflows.</p>
-
-<p>The platform quadrant covers the infrastructure and ecosystem. Self-hosting via
-Docker, Kubernetes, Elestio, or TrueNAS gives teams full control over their
-data. The MPL-2.0 open-source license guarantees that the software remains free
-and auditable. The plugin system allows extending Penpot with custom
-integrations. Open standards including SVG, CSS, and HTML ensure long-term
-interoperability. The WASM-powered rendering engine delivers GPU-accelerated
-performance. Penpot is also recognized as a Verified Digital Public Good,
-affirming its value as a public-benefit open-source project.</p>
-<h2 id="repository-structure">Repository Structure</h2>
-
-<p>The Penpot repository is a monorepo containing all components of the platform. The <code class="language-plaintext highlighter-rouge">backend/</code> directory holds the Clojure backend application with code under <code class="language-plaintext highlighter-rouge">backend/src/app/</code>, including subdirectories for HTTP handling, RPC API, database migrations, setup, CLI, and async tasks. The <code class="language-plaintext highlighter-rouge">frontend/</code> directory contains the ClojureScript frontend with <code class="language-plaintext highlighter-rouge">main/</code>, <code class="language-plaintext highlighter-rouge">worker/</code>, and <code class="language-plaintext highlighter-rouge">util/</code> subdirectories under <code class="language-plaintext highlighter-rouge">frontend/src/app/</code>.</p>
-
-<p>The <code class="language-plaintext highlighter-rouge">common/</code> directory holds shared Clojure and ClojureScript code used by both frontend and backend, enabling code and data structure sharing without conversion. The <code class="language-plaintext highlighter-rouge">exporter/</code> directory contains the ClojureScript Node.js exporter application that uses Puppeteer and headless Chromium. The <code class="language-plaintext highlighter-rouge">render-wasm/</code> directory houses the Rust-based WASM canvas renderer with its skia-safe, glam, and OpenGL dependencies. The <code class="language-plaintext highlighter-rouge">mcp/</code> directory contains the MCP server package published as <code class="language-plaintext highlighter-rouge">@penpot/mcp</code>.</p>
-
-<p>Additional directories include <code class="language-plaintext highlighter-rouge">plugins/</code> for the plugin system, <code class="language-plaintext highlighter-rouge">docker/</code> for deployment configurations, <code class="language-plaintext highlighter-rouge">docs/</code> for documentation rendered at help.penpot.app, <code class="language-plaintext highlighter-rouge">library/</code> for shared library components, <code class="language-plaintext highlighter-rouge">scripts/</code> for build utilities, <code class="language-plaintext highlighter-rouge">tools/</code> for development tools, and <code class="language-plaintext highlighter-rouge">experiments/</code> for experimental features. Key root files include <code class="language-plaintext highlighter-rouge">deps.edn</code> for Clojure dependency configuration, <code class="language-plaintext highlighter-rouge">package.json</code> and <code class="language-plaintext highlighter-rouge">pnpm-workspace.yaml</code> for the Node.js monorepo, and <code class="language-plaintext highlighter-rouge">manage.sh</code> for management operations.</p>
-
-<h2 id="installation-and-deployment">Installation and Deployment</h2>
-
-<p>Penpot offers multiple deployment paths to suit different needs. The simplest option is the hosted SaaS at <a href="https://design.penpot.app">design.penpot.app</a>, which requires no installation and lets users register and start designing immediately. For teams that need control over their data, self-hosting is fully supported through several methods.</p>
-
-<p>The development environment can be set up using Gitpod for a ready-to-code experience at <a href="https://gitpod.io/#https://github.com/penpot/penpot">gitpod.io</a>. The developer environment guide at <a href="https://help.penpot.app/technical-guide/developer/devenv/">help.penpot.app</a> provides detailed instructions for local development. Contributors can follow the contributing guide at <a href="https://help.penpot.app/contributing-guide/">help.penpot.app/contributing-guide/</a> to get started with the codebase.</p>
-
-<h2 id="docker-deployment">Docker Deployment</h2>
-
-<p>Docker Compose is the most common self-hosting method. The official Docker images are published shortly after each SaaS update, ensuring that self-hosted instances stay current. The Docker installation guide at <a href="https://help.penpot.app/technical-guide/getting-started/docker/">help.penpot.app</a> provides the complete configuration. A typical Docker Compose setup includes the backend, frontend, exporter, PostgreSQL, and Redis containers. Configuration is handled through environment variables that specify the public URI, database connection string, and Redis connection string. The official documentation covers all available settings at <a href="https://help.penpot.app/technical-guide/configuration/">help.penpot.app/technical-guide/configuration/</a>. Docker images are tagged by version, allowing teams to pin specific releases for stability while still having the option to track the latest updates.</p>
-
-<h2 id="self-hosting-options">Self-Hosting Options</h2>
-
-<p>Beyond Docker Compose, Penpot supports several other self-hosting options. Kubernetes deployment is available through an official Helm Chart, with additional support for OpenShift and Rancher, documented at <a href="https://help.penpot.app/technical-guide/getting-started/kubernetes/">help.penpot.app</a>. Elestio provides a managed deployment option for teams that want self-hosting without the operational overhead, available at <a href="https://help.penpot.app/technical-guide/getting-started/elestio/">help.penpot.app/technical-guide/getting-started/elestio/</a>.</p>
-
-<p>TrueNAS users can install Penpot from the TrueNAS app catalog at <a href="https://apps.truenas.com/catalog/penpot/">apps.truenas.com</a>. Additional community and unofficial self-hosting options are documented at <a href="https://help.penpot.app/technical-guide/getting-started/unofficial-options/">help.penpot.app</a>. A detailed self-hosting blog post is also available at <a href="https://penpot.app/blog/how-to-self-host-penpot/">penpot.app/blog/how-to-self-host-penpot/</a>.</p>
-
-<h2 id="mcp-server-integration">MCP Server Integration</h2>
-
-<p>The Penpot MCP server, published as the <code class="language-plaintext highlighter-rouge">@penpot/mcp</code> package at version 2.16.0, implements the Model Context Protocol to enable multi-directional workflows between design and code. This allows AI tools and large language models to read Penpot designs, modify shapes, and generate code from design files programmatically.</p>
-
-<p>The MCP server runs as a Node.js application and communicates with the Penpot backend API. It exposes design data in a structured format that AI agents can consume, and it accepts modification commands that can create or update design elements. This bidirectional capability means that AI can both analyze existing designs and contribute to them, opening possibilities for AI-assisted design iteration and automated design-to-code pipelines.</p>
-
-<p>Quick start instructions for the MCP server are available at <a href="https://help.penpot.app/mcp/#quick-start">help.penpot.app/mcp/</a>, and additional information is at <a href="https://penpot.app/penpot-mcp-server">penpot.app/penpot-mcp-server</a>. The MCP integration represents a forward-looking approach to design tooling, positioning Penpot as a platform that can participate in AI-driven development workflows alongside coding assistants and other AI tools.</p>
-
-<h2 id="plugin-system">Plugin System</h2>
-
-<p>Penpot features a plugin system that allows developers to extend the platform with custom integrations and solutions. The plugin system makes the workspace programmable, enabling teams to connect Penpot to their existing toolchains and build specialized workflows. Information about the plugin system is available at <a href="https://penpot.app/penpothub/plugins">penpot.app/penpothub/plugins</a>.</p>
-
-<p>The open API and webhooks complement the plugin system by providing integration points for automation. Access tokens allow authenticated API access for programmatic operations, and webhooks can notify external systems when design changes occur. This enables CI/CD pipelines that trigger on design updates, automated design token synchronization to code repositories, and custom reporting workflows. The integrations and API documentation is at <a href="https://penpot.app/integrations-api">penpot.app/integrations-api</a>.</p>
-
-<h2 id="community-and-ecosystem">Community and Ecosystem</h2>
-
-<p>Penpot has built a vibrant community around its open-source mission. The community forum at <a href="https://community.penpot.app/">community.penpot.app</a> hosts discussions, support requests, and feature discussions. The ambassador program at <a href="https://penpot.app/ambassador-program">penpot.app/ambassador-program</a> recognizes community members who advocate for the platform. A YouTube channel at <a href="https://www.youtube.com/@Penpot">youtube.com/@Penpot</a> publishes tutorials and updates, and a dedicated tutorials playlist is available for structured learning.</p>
-
-<p>Contributors can get involved through the contributing guide, bug reporting process, and translation efforts. The contributing video by Alejandro Alonso provides an overview of how to contribute to the project. Libraries and templates are available at <a href="https://penpot.app/penpothub/libraries-templates">penpot.app/penpothub/libraries-templates</a> to help users get started quickly. The project management happens on Taiga at <a href="https://tree.taiga.io/project/penpot/">tree.taiga.io</a>, providing transparency into the development roadmap.</p>
-
-<h2 id="penpot-vs-proprietary-alternatives">Penpot vs Proprietary Alternatives</h2>
-
-<p>Penpot distinguishes itself from proprietary design tools through several key advantages. The open-source MPL-2.0 license means there is no vendor lock-in and no subscription fees. Self-hosting gives teams complete control over their design data, which is critical for organizations with compliance and governance requirements. The use of open web standards means designs are stored as SVG, CSS, and HTML, not proprietary binary formats that could become inaccessible.</p>
-
-<p>The design-as-code philosophy means that what designers create is already in a format developers can use directly. CSS Grid and Flex layouts behave like real CSS, eliminating the gap between design and implementation. Design tokens provide a single source of truth that syncs between design and code. The MCP server enables AI integration that proprietary tools cannot match through their closed APIs. These factors combine to make Penpot a compelling choice for teams that value openness, interoperability, and long-term sustainability.</p>
-
-<h2 id="getting-started">Getting Started</h2>
-
-<p>Getting started with Penpot is straightforward. For immediate use without installation, visit <a href="https://design.penpot.app">design.penpot.app</a> and register for an account. The learning center at <a href="https://penpot.app/learning-center">penpot.app/learning-center</a> provides tutorials and courses, including a UI Design Course at <a href="https://penpot.app/courses/">penpot.app/courses/</a>. The user guide at <a href="https://help.penpot.app/user-guide/">help.penpot.app/user-guide/</a> covers all features in detail.</p>
-
-<p>For self-hosting, follow the Docker or Kubernetes guides referenced earlier. For development, use Gitpod or set up a local environment following the developer guide. The architecture documentation at <a href="https://help.penpot.app/technical-guide/developer/architecture/">help.penpot.app/technical-guide/developer/architecture/</a> provides deep technical context for contributors. Whether you are a designer looking for an open alternative or a developer interested in the codebase, Penpot offers accessible entry points for every level of engagement.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Penpot represents a significant shift in how design tools can be built and operated. By choosing open web standards as its native format, functional programming languages for its core, and a self-hostable deployment model, Penpot addresses many of the pain points that teams experience with proprietary design platforms. The 52,224 stars and 1,135 daily star growth on GitHub demonstrate that this approach resonates with a large and growing community.</p>
-
-<p>The architecture combining Clojure, ClojureScript, Rust, and WebAssembly is technically sophisticated yet pragmatic, leveraging the strengths of each language where they fit best. The MCP server integration positions Penpot at the intersection of design and AI, a frontier that will only grow more important. For teams evaluating design tools, Penpot offers a compelling combination of openness, performance, and developer-friendly design representation that is worth serious consideration.</p>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/DESIGN-md-AI-Powered-Design-Systems/">DESIGN-md-AI-Powered-Design-Systems</a> - Explores AI-powered design systems, a topic that aligns closely with Penpot’s design tokens and MCP server capabilities.</li>
-  <li><a href="/Awesome-Design-Systems-Curated-Collection/">Awesome-Design-Systems-Curated-Collection</a> - A curated collection of design system resources, directly relevant since Penpot is a tool for building design systems at scale.</li>
-  <li><a href="/Claude-Code-Complete-Guide/">Claude-Code-Complete-Guide</a> - A guide to AI-assisted coding, relevant because Penpot’s MCP server integrates with AI coding tools for design-to-code workflows.</li>
-  <li><a href="/Harbor-Cloud-Native-Registry/">Harbor-Cloud-Native-Registry</a> - Covers an open-source infrastructure tool with Docker and Kubernetes deployment, similar to Penpot’s self-hosting model.</li>
-  <li><a href="/MarkItDown-Microsoft-Document-Conversion/">MarkItDown-Microsoft-Document-Conversion</a> - Discusses format conversion, thematically related to Penpot’s design-to-code conversion using open standards.</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Clojure" /><category term="ClojureScript" /><category term="Design" /><category term="Open Source" /><category term="Collaboration" /><category term="Figma Alternative" /><category term="UI UX" /><summary type="html"><![CDATA[Explore Penpot, the open-source design platform built with Clojure and ClojureScript that bridges the gap between designers and developers with real-time collaboration, design tokens, and MCP integration.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="Rust" /><category term="Tauri" /><category term="Desktop App" /><category term="Open Source" /><summary type="html"><![CDATA[Explore Pake, the Rust-powered CLI tool that turns any webpage into a lightweight cross-platform desktop app in one command. Learn installation, usage, features, and architecture.]]></summary></entry></feed>
