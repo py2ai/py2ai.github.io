@@ -20,7 +20,7 @@ author: "PyShine"
 
 SWC is an extensible Rust-based platform for the next generation of fast developer tools. It serves as a next-generation fast developer tool that compiles JavaScript and TypeScript into optimized JavaScript. Used by major companies including Vercel, ByteDance, Tencent, Shopify, and Trip.com, SWC powers tools like Next.js, Parcel, and Deno.
 
-![SWC Architecture](/assets/img/diagrams/swc/swc-architecture.svg)
+![SWC Architecture Diagram](/assets/img/diagrams/swc/swc-architecture.svg)
 
 ## Understanding SWC Architecture
 
@@ -103,7 +103,7 @@ Organizations can extend this system by:
 - Using WASM bindings for client-side compilation
 - Combining multiple plugins to create specialized compilation workflows
 
-![SWC Features](/assets/img/diagrams/swc/swc-features.svg)
+![SWC Features Diagram](/assets/img/diagrams/swc/swc-features.svg)
 
 ## Key Features and Capabilities
 
@@ -161,7 +161,7 @@ SWC's feature set makes it suitable for a wide range of use cases:
 - Tooling: CLI, Node.js, webpack loader, Jest transformer
 - Extensibility: Plugin system with hook-based architecture
 
-![SWC Performance](/assets/img/diagrams/swc/swc-performance.svg)
+![SWC Performance Diagram](/assets/img/diagrams/swc/swc-performance.svg)
 
 ## Performance Characteristics
 
@@ -217,7 +217,7 @@ SWC's parallel processing capabilities enable:
 
 This scalability makes SWC suitable for large-scale CI/CD pipelines and high-performance build systems.
 
-![SWC Ecosystem](/assets/img/diagrams/swc/swc-ecosystem.svg)
+![SWC Ecosystem Diagram](/assets/img/diagrams/swc/swc-ecosystem.svg)
 
 ## Ecosystem and Integrations
 
