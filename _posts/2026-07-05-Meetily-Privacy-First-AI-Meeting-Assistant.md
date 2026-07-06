@@ -5,7 +5,7 @@ date: 2026-07-05 12:00:00 +0800
 categories: [ai, privacy, meeting-tools]
 tags: [meetily, ai-meeting-assistant, privacy-first, local-ai, transcription, open-source]
 permalink: /Meetily-Privacy-First-AI-Meeting-Assistant/
-image: /assets/img/diagrams/meetily/meetily-architecture.svg
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 ---
 
 ## 1. Introduction
