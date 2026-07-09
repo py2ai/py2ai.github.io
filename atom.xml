@@ -1,4 +1,374 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-07-09T00:12:57+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents</title><link href="https://pyshine.com/AI-Website-Cloner-Clone-Any-Website-With-One-Command/" rel="alternate" type="text/html" title="AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents" /><published>2026-07-08T00:00:00+00:00</published><updated>2026-07-08T00:00:00+00:00</updated><id>https://pyshine.com/AI-Website-Cloner-Clone-Any-Website-With-One-Command</id><content type="html" xml:base="https://pyshine.com/AI-Website-Cloner-Clone-Any-Website-With-One-Command/"><![CDATA[<h1 id="ai-website-cloner-clone-any-website-with-one-command-using-ai-coding-agents">AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-07-09T00:33:58+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Claude Video: Give Claude Code the Ability to Watch and Understand Any Video</title><link href="https://pyshine.com/Claude-Video-Give-Claude-the-Ability-to-Watch-Any-Video/" rel="alternate" type="text/html" title="Claude Video: Give Claude Code the Ability to Watch and Understand Any Video" /><published>2026-07-09T00:00:00+00:00</published><updated>2026-07-09T00:00:00+00:00</updated><id>https://pyshine.com/Claude-Video-Give-Claude-the-Ability-to-Watch-Any-Video</id><content type="html" xml:base="https://pyshine.com/Claude-Video-Give-Claude-the-Ability-to-Watch-Any-Video/"><![CDATA[<h1 id="claude-video-give-claude-code-the-ability-to-watch-and-understand-any-video">Claude Video: Give Claude Code the Ability to Watch and Understand Any Video</h1>
+
+<h2 id="1-introduction">1. Introduction</h2>
+
+<p>Claude Code can read a webpage, run a script, browse a repository, and reason over a codebase. What it cannot do, out of the box, is <em>watch a video</em>. You paste a YouTube link and the best the model can do is guess from the title or pull a transcript that is missing 90% of what is actually on screen. For a tool that is supposed to be a general-purpose coding and reasoning agent, that is a glaring gap — video is now one of the dominant formats for tutorials, product demos, conference talks, bug reports, and internal walkthroughs.</p>
+
+<p><strong>Claude Video</strong> (the <code class="language-plaintext highlighter-rouge">/watch</code> skill from <code class="language-plaintext highlighter-rouge">bradautomates/claude-video</code>) closes that gap. It is a self-contained Python skill that downloads a video, extracts scene-aware frames, pulls a timestamped transcript, and hands all of it to Claude so the model can answer questions grounded in what it actually <em>saw</em> and <em>heard</em>. With over 6,000 GitHub stars and growing at nearly a thousand a day, it has quickly become the de facto way to give any agent host — Claude Code, Codex, Cursor, Copilot, Gemini CLI, and 50+ others — a real video input modality.</p>
+
+<p>This post is a deep dive into what Claude Video does, how it works, and why it matters for the future of multimodal AI agents.</p>
+
+<h2 id="2-the-video-understanding-gap">2. The Video Understanding Gap</h2>
+
+<p>Modern AI agents are remarkably capable across text and code, but video remains a stubbornly missing modality. The reasons are practical, not theoretical:</p>
+
+<ul>
+  <li><strong>Video is heavy.</strong> A 10-minute 720p clip is hundreds of megabytes. You cannot just paste it into a context window.</li>
+  <li><strong>Transcripts are incomplete.</strong> A transcript captures what was <em>said</em>, but not what was <em>shown</em> — the slide that appeared, the terminal that scrolled, the UI that broke, the diagram on the whiteboard. For tutorials, demos, and bug reports, the visual channel often carries the actual signal.</li>
+  <li><strong>Native multimodal input is rare in agent hosts.</strong> Most coding agents accept text and files. Few accept a video URL and “watch” it for you.</li>
+  <li><strong>Token economics punish naivety.</strong> Naively sampling a frame every second of a 30-minute video produces 1,800 images — a context budget disaster. Smart sampling is the whole game.</li>
+</ul>
+
+<p>The result is that when you ask an agent “what happens in this video?”, you get a guess based on metadata, or a transcript summary that ignores the screen entirely. Claude Video exists to fix exactly this. It treats video as two parallel streams — frames and transcript — and assembles them into a context Claude can reason over, the way a human who watched the video would.</p>
+
+<h2 id="3-how-claude-video-works">3. How Claude Video Works</h2>
+
+<p>At its core, Claude Video is a single <code class="language-plaintext highlighter-rouge">/watch</code> command backed by a Python pipeline. The flow is deceptively simple from the user’s perspective:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/watch https://youtu.be/dQw4w9WgXcQ what happens at the 30 second mark?
+</code></pre></div></div>
+
+<p>Behind that one line, the skill:</p>
+
+<ol>
+  <li><strong>Parses the input</strong> into a video source (URL or local path) and an optional question.</li>
+  <li><strong>Runs a setup preflight</strong> — a sub-100ms check that <code class="language-plaintext highlighter-rouge">ffmpeg</code>, <code class="language-plaintext highlighter-rouge">yt-dlp</code>, and a Whisper API key (optional) are available.</li>
+  <li><strong>Checks captions first.</strong> If the source has native captions and the user only wants a transcript, it returns without downloading the video at all.</li>
+  <li><strong>Downloads only what it needs.</strong> If frames are required, or captions are missing and Whisper needs audio, <code class="language-plaintext highlighter-rouge">yt-dlp</code> fetches the minimum necessary.</li>
+  <li><strong>Extracts frames</strong> with <code class="language-plaintext highlighter-rouge">ffmpeg</code> using a scene-aware, keyframe, or uniform sampler, then deduplicates near-identical frames.</li>
+  <li><strong>Gets a transcript</strong> — native captions first, Whisper API as fallback.</li>
+  <li><strong>Assembles context</strong> — frame paths with <code class="language-plaintext highlighter-rouge">t=MM:SS</code> markers plus the timestamped transcript.</li>
+  <li><strong>Claude Reads every frame</strong> as an image, in parallel, alongside the transcript.</li>
+  <li><strong>Claude answers</strong> grounded in what is on screen and in the audio, citing timestamps.</li>
+  <li><strong>Cleans up</strong> the working directory if no follow-ups are expected.</li>
+</ol>
+
+<p>The genius is in the orchestration: the skill does not try to “understand” the video itself. It prepares the evidence — frames and transcript — and lets Claude’s multimodal reasoning do the actual understanding. The Python is plumbing; the intelligence is the model’s.</p>
+
+<h2 id="4-architecture-overview">4. Architecture Overview</h2>
+
+<p>Claude Video is structured as a self-contained skill folder that every installer copies as a unit. The architecture is deliberately modular — each stage of the pipeline is a separate script, so the orchestrator (<code class="language-plaintext highlighter-rouge">watch.py</code>) stays small and each component is independently testable.</p>
+
+<p><img src="/assets/img/diagrams/claude-video/claude-video-architecture.svg" alt="Claude Video Architecture" /></p>
+
+<p>The key components:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">SKILL.md</code></strong> — the skill contract. This is the source of truth across every host (Claude Code, Codex, Cursor, etc.). It tells the agent when to invoke the skill, how to resolve its own script directory, and the exact step-by-step procedure.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">watch.py</code></strong> — the entry point and orchestrator. It parses arguments, calls the download/frames/transcribe stages, and prints a markdown report to stdout that Claude then consumes.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">download.py</code></strong> — a thin <code class="language-plaintext highlighter-rouge">yt-dlp</code> wrapper that handles URLs and local paths, and fetches native captions.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">frames.py</code></strong> — the <code class="language-plaintext highlighter-rouge">ffmpeg</code> frame extraction engine, including the auto-fps budgeting logic, scene-change detection, keyframe mode, uniform-sampling fallback, and the frame-delta dedup pass.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">transcribe.py</code></strong> — VTT caption parsing, deduplication, and Whisper orchestration.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">whisper.py</code></strong> — pure-stdlib Groq and OpenAI Whisper clients.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">config.py</code></strong> — shared config from <code class="language-plaintext highlighter-rouge">~/.config/watch/.env</code>.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">setup.py</code></strong> — preflight check and idempotent installer.</li>
+</ul>
+
+<p>The design philosophy is “prepare evidence, let the model reason.” The scripts never try to summarize or interpret — they surface frames and transcript, and Claude does the rest. This keeps the skill portable, testable, and cheap to maintain.</p>
+
+<h2 id="5-the-watch-workflow">5. The /watch Workflow</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">/watch</code> workflow is the user-facing experience. It is designed to feel like a single command, even though it orchestrates a multi-stage pipeline.</p>
+
+<p><img src="/assets/img/diagrams/claude-video/claude-video-workflow.svg" alt="Claude Video Workflow" /></p>
+
+<p>Step by step:</p>
+
+<ol>
+  <li><strong>Input.</strong> The user pastes a URL (anything <code class="language-plaintext highlighter-rouge">yt-dlp</code> supports — YouTube, Loom, TikTok, X, Instagram, Vimeo, and hundreds more) or a local path (<code class="language-plaintext highlighter-rouge">.mp4</code>, <code class="language-plaintext highlighter-rouge">.mov</code>, <code class="language-plaintext highlighter-rouge">.mkv</code>, <code class="language-plaintext highlighter-rouge">.webm</code>), plus an optional question.</li>
+  <li><strong>Preflight.</strong> <code class="language-plaintext highlighter-rouge">setup.py --check</code> verifies the environment in under 100ms. On the first run in a session, a structured <code class="language-plaintext highlighter-rouge">--json</code> mode lets the agent detect first-time setup and walk the user through installing <code class="language-plaintext highlighter-rouge">ffmpeg</code>/<code class="language-plaintext highlighter-rouge">yt-dlp</code> and optionally adding a Whisper key.</li>
+  <li><strong>Captions decision.</strong> The skill checks for native captions first. If they exist and the user only needs a transcript, the video is never downloaded — a single <code class="language-plaintext highlighter-rouge">yt-dlp</code> call returns the captions in seconds.</li>
+  <li><strong>Download (if needed).</strong> When frames are required or captions are missing, <code class="language-plaintext highlighter-rouge">yt-dlp</code> downloads only what the run needs.</li>
+  <li><strong>Frame extraction.</strong> <code class="language-plaintext highlighter-rouge">ffmpeg</code> extracts JPEGs at the chosen detail level — keyframes (<code class="language-plaintext highlighter-rouge">efficient</code>), scene-change (<code class="language-plaintext highlighter-rouge">balanced</code>/<code class="language-plaintext highlighter-rouge">token-burner</code>), or uniform sampling as a fallback. A dedup pass drops near-identical frames.</li>
+  <li><strong>Transcription.</strong> Native captions are parsed and deduped; if absent, audio is extracted and sent to Whisper (Groq preferred, OpenAI fallback).</li>
+  <li><strong>Context assembly.</strong> Frame paths with <code class="language-plaintext highlighter-rouge">t=MM:SS</code> markers and the timestamped transcript are printed as a markdown report.</li>
+  <li><strong>Claude Reads and answers.</strong> Claude <code class="language-plaintext highlighter-rouge">Read</code>s every frame in a single parallel message, combines them with the transcript, and answers the user’s question — citing timestamps.</li>
+</ol>
+
+<p>The workflow is intentionally asymmetric: the heavy lifting (download, extract, transcribe) happens in Python; the understanding happens in the model. This separation is what makes the skill portable across 50+ agent hosts with no changes.</p>
+
+<h2 id="6-key-features">6. Key Features</h2>
+
+<p>Claude Video packs six core capabilities into a single skill, each tuned for the realities of token budgets and agent context windows.</p>
+
+<p><img src="/assets/img/diagrams/claude-video/claude-video-features.svg" alt="Claude Video Features" /></p>
+
+<p><strong>Video Download.</strong> Powered by <code class="language-plaintext highlighter-rouge">yt-dlp</code>, the skill supports YouTube, Vimeo, TikTok, X, Loom, Twitch, Instagram, and hundreds of other sites, plus local files in MP4, MOV, MKV, and WebM. Critically, it downloads only what the run needs — in <code class="language-plaintext highlighter-rouge">transcript</code> mode with captions available, it skips the video entirely.</p>
+
+<p><strong>Frame Extraction.</strong> <code class="language-plaintext highlighter-rouge">ffmpeg</code> extracts JPEGs at 512px wide (clamped to 1998px tall for Claude Read compatibility) using one of three engines: fast keyframes, scene-change detection, or uniform sampling. A universal 2 fps cap prevents token blowup, and the auto-fps logic budgets frames by duration so short videos are dense and long videos are capped.</p>
+
+<p><strong>Audio Transcription.</strong> Native captions are pulled free via <code class="language-plaintext highlighter-rouge">yt-dlp</code> first. When they are missing, the skill extracts mono 16kHz 64kbps audio (~480 kB/min) and sends it to Whisper — Groq’s <code class="language-plaintext highlighter-rouge">whisper-large-v3</code> (preferred, cheaper and faster) or OpenAI’s <code class="language-plaintext highlighter-rouge">whisper-1</code>. Long audio is automatically chunked to stay under the 25 MB upload cap.</p>
+
+<p><strong>Claude Integration.</strong> Frames and transcript are handed to Claude, which <code class="language-plaintext highlighter-rouge">Read</code>s each JPEG as an image in parallel. The model answers grounded in what is on screen and in the audio — not “based on the title.” This works across Claude Code, Codex, Cursor, Copilot, Gemini CLI, and 50+ other Agent Skills hosts.</p>
+
+<p><strong>Multi-format Support.</strong> Anything <code class="language-plaintext highlighter-rouge">yt-dlp</code> supports, plus local containers. The <code class="language-plaintext highlighter-rouge">--detail</code> dial scales from <code class="language-plaintext highlighter-rouge">transcript</code> (no frames, cheapest) to <code class="language-plaintext highlighter-rouge">token-burner</code> (uncapped scene frames, maximum fidelity), so the same skill handles a 30-second TikTok and a 49-minute lecture.</p>
+
+<p><strong>Timestamp Referencing.</strong> Every frame carries a <code class="language-plaintext highlighter-rouge">t=MM:SS</code> marker aligned to the transcript. <code class="language-plaintext highlighter-rouge">--start</code>/<code class="language-plaintext highlighter-rouge">--end</code> focuses on a section with denser frame budgets, and <code class="language-plaintext highlighter-rouge">--timestamps T1,T2</code> grabs frames at exact moments the presenter flags (“look here”, “as you can see”) — so deictic cues are never missed.</p>
+
+<h2 id="7-processing-pipeline">7. Processing Pipeline</h2>
+
+<p>The processing pipeline is where the engineering lives. It is designed to minimize download size, token cost, and wall-clock time, while maximizing the visual and auditory evidence Claude receives.</p>
+
+<p><img src="/assets/img/diagrams/claude-video/claude-video-pipeline.svg" alt="Claude Video Pipeline" /></p>
+
+<p>The pipeline runs in roughly this order, with parallelism where possible:</p>
+
+<ol>
+  <li><strong>Input</strong> — URL or local path plus an optional question.</li>
+  <li><strong>yt-dlp download</strong> — captions-first check. If captions exist and the detail mode is <code class="language-plaintext highlighter-rouge">transcript</code>, return immediately. Otherwise, download the video (or just audio, if only Whisper is needed).</li>
+  <li><strong>Parallel extraction</strong> — <code class="language-plaintext highlighter-rouge">ffmpeg</code> runs frame extraction and audio extraction concurrently. Frame extraction uses scene-change detection (<code class="language-plaintext highlighter-rouge">-vf select</code>), keyframe selection (<code class="language-plaintext highlighter-rouge">-skip_frame nokey</code>), or uniform sampling, depending on the detail mode. Audio extraction produces a mono 16kHz mp3.</li>
+  <li><strong>Whisper transcription</strong> — if captions were missing, the audio is chunked and sent to Groq or OpenAI. Failed chunks are noted; the transcript is partial only if every chunk fails.</li>
+  <li><strong>Context assembly</strong> — frames (with timestamps) and transcript are combined into a markdown report.</li>
+  <li><strong>Claude analysis</strong> — Claude <code class="language-plaintext highlighter-rouge">Read</code>s all frames in a single parallel message and reasons over frames + transcript together.</li>
+  <li><strong>Output</strong> — a summary or answer with timestamp citations.</li>
+  <li><strong>Cleanup</strong> — the working directory is removed if no follow-ups are expected.</li>
+</ol>
+
+<p>The parallelism matters: frame extraction and audio extraction are independent, so they run concurrently. And Claude’s <code class="language-plaintext highlighter-rouge">Read</code> calls are batched into one message, so the model sees all frames together rather than sequentially. This keeps latency low and context coherent.</p>
+
+<h2 id="8-video-download--yt-dlp-integration">8. Video Download — yt-dlp Integration</h2>
+
+<p>The download stage is a thin wrapper around <code class="language-plaintext highlighter-rouge">yt-dlp</code>, but the wrapper embodies an important principle: <strong>download as little as possible.</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Simplified from download.py
+</span><span class="kn">from</span> <span class="nn">download</span> <span class="kn">import</span> <span class="n">download</span><span class="p">,</span> <span class="n">fetch_captions</span><span class="p">,</span> <span class="n">is_url</span>
+
+<span class="k">if</span> <span class="n">is_url</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="n">captions</span> <span class="o">=</span> <span class="n">fetch_captions</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># try native captions first
+</span>    <span class="k">if</span> <span class="n">detail</span> <span class="o">==</span> <span class="s">"transcript"</span> <span class="ow">and</span> <span class="n">captions</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">captions</span>  <span class="c1"># no video download at all
+</span>    <span class="n">video_path</span> <span class="o">=</span> <span class="n">download</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># download only what's needed
+</span><span class="k">else</span><span class="p">:</span>
+    <span class="n">video_path</span> <span class="o">=</span> <span class="n">source</span>  <span class="c1"># local file, no download
+</span></code></pre></div></div>
+
+<p>The captions-first strategy is what makes <code class="language-plaintext highlighter-rouge">transcript</code> mode so cheap: a single <code class="language-plaintext highlighter-rouge">yt-dlp</code> call returns the VTT captions in seconds, with no video bytes transferred. For a 49-minute YouTube video, this is the difference between a 4.5-second run and a 37-second download plus 20 seconds of frame extraction.</p>
+
+<p><code class="language-plaintext highlighter-rouge">yt-dlp</code> supports an enormous range of sites — YouTube, Vimeo, TikTok, X, Instagram, Twitch, Loom, and hundreds more. For local files, no download happens at all; the path is passed straight to <code class="language-plaintext highlighter-rouge">ffmpeg</code>. The wrapper also handles format selection, so it picks the best available video stream for frame extraction and the best audio stream for Whisper, without over-downloading.</p>
+
+<h2 id="9-frame-extraction--ffmpeg-integration">9. Frame Extraction — ffmpeg Integration</h2>
+
+<p>Frame extraction is the heart of the token economics. Every frame is an image, and image tokens add up fast. The skill’s frame logic is built around three ideas: <strong>budget by duration, select by scene, dedup by delta.</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># From frames.py — the auto-fps budget
+</span><span class="n">MAX_FPS</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c1"># universal cap, never sample faster than 2 fps
+</span>
+<span class="k">def</span> <span class="nf">auto_fps</span><span class="p">(</span><span class="n">duration_seconds</span><span class="p">,</span> <span class="n">max_frames</span><span class="p">):</span>
+    <span class="c1"># target a frame budget by duration, not a fixed rate
+</span>    <span class="k">if</span> <span class="n">duration_seconds</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="k">elif</span> <span class="n">duration_seconds</span> <span class="o">&lt;=</span> <span class="mi">60</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="mi">40</span>
+    <span class="k">elif</span> <span class="n">duration_seconds</span> <span class="o">&lt;=</span> <span class="mi">180</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="k">elif</span> <span class="n">duration_seconds</span> <span class="o">&lt;=</span> <span class="mi">600</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="mi">80</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># capped modes
+</span>    <span class="n">fps</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">target</span> <span class="o">/</span> <span class="n">duration_seconds</span><span class="p">,</span> <span class="n">MAX_FPS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fps</span>
+</code></pre></div></div>
+
+<p>The three extraction engines:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">efficient</code></strong> — <code class="language-plaintext highlighter-rouge">ffmpeg -skip_frame nokey</code> reconstructs only keyframes. Near-instant (~0.5s for a 49-minute video), cap of 50. Best for speed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">balanced</code></strong> (default) — scene-change detection via <code class="language-plaintext highlighter-rouge">ffmpeg</code>’s <code class="language-plaintext highlighter-rouge">select</code> filter, cap of 100. Falls back to uniform sampling when the video is effectively static (fewer than 8 scene cuts).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">token-burner</code></strong> — scene-change, uncapped. Keeps every scene-cut frame. A soft warning prints past 250 frames.</li>
+</ul>
+
+<p>After extraction, a <strong>dedup pass</strong> collapses near-identical frames. It scales each JPEG to a 16×16 grayscale thumbnail and computes the mean absolute difference against the last <em>kept</em> frame. If the difference is at or below 2.0 (on a 0–255 scale), the frame is dropped. This catches held slides, static screen recordings, and paused video — so the frame budget goes to distinct content. The <code class="language-plaintext highlighter-rouge">Frames</code> report line shows what was collapsed, e.g. <code class="language-plaintext highlighter-rouge">6 selected from 14 candidates (… 8 near-duplicates dropped …)</code>.</p>
+
+<h2 id="10-audio-transcription--whisper-integration">10. Audio Transcription — Whisper Integration</h2>
+
+<p>Transcription has a clear priority order: <strong>native captions first, Whisper fallback second.</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># From transcribe.py — caption-first strategy
+</span><span class="n">captions</span> <span class="o">=</span> <span class="n">fetch_captions</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># yt-dlp pulls VTT
+</span><span class="k">if</span> <span class="n">captions</span><span class="p">:</span>
+    <span class="n">transcript</span> <span class="o">=</span> <span class="n">parse_vtt</span><span class="p">(</span><span class="n">captions</span><span class="p">)</span>  <span class="c1"># free, instant, accurate-ish
+</span><span class="k">elif</span> <span class="ow">not</span> <span class="n">no_whisper</span> <span class="ow">and</span> <span class="n">has_api_key</span><span class="p">():</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">extract_audio</span><span class="p">(</span><span class="n">video_path</span><span class="p">)</span>  <span class="c1"># ffmpeg: mono 16kHz 64kbps
+</span>    <span class="n">transcript</span> <span class="o">=</span> <span class="n">transcribe_video</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># Groq or OpenAI
+</span><span class="k">else</span><span class="p">:</span>
+    <span class="n">transcript</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># frames-only
+</span></code></pre></div></div>
+
+<p>Native captions cover the majority of public videos for free. The Whisper fallback only kicks in for local files, TikToks, some Vimeos, and the occasional caption-less YouTube upload. When it does:</p>
+
+<ul>
+  <li><strong>Groq <code class="language-plaintext highlighter-rouge">whisper-large-v3</code></strong> is the preferred backend — cheaper and faster.</li>
+  <li><strong>OpenAI <code class="language-plaintext highlighter-rouge">whisper-1</code></strong> is the fallback.</li>
+  <li>Audio is extracted as mono 16kHz 64kbps mp3 (~480 kB/min), keeping uploads small.</li>
+  <li>Audio over the 25 MB API cap is automatically split into chunks and transcribed in sequence. If some chunks fail, the transcript is partial and the dropped chunks are noted on stderr; only if every chunk fails does the report say “none available.”</li>
+</ul>
+
+<p>The transcript is timestamped and deduped (VTT often repeats lines), so Claude gets a clean, time-aligned text stream alongside the frames. Both keys live in <code class="language-plaintext highlighter-rouge">~/.config/watch/.env</code> (mode <code class="language-plaintext highlighter-rouge">0600</code>), and the skill prefers Groq when both are set. <code class="language-plaintext highlighter-rouge">--no-whisper</code> disables the fallback entirely for a fully free, frames-only experience.</p>
+
+<h2 id="11-installation-and-setup">11. Installation and Setup</h2>
+
+<p>Claude Video is designed to be zero-config to start. <code class="language-plaintext highlighter-rouge">yt-dlp</code> and <code class="language-plaintext highlighter-rouge">ffmpeg</code> install on first run via <code class="language-plaintext highlighter-rouge">brew</code> on macOS (Linux/Windows print the exact commands), and captions cover most public videos for free.</p>
+
+<p><strong>Claude Code (recommended — auto-updates via marketplace):</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/plugin marketplace add bradautomates/claude-video
+/plugin install watch@claude-video
+</code></pre></div></div>
+
+<p><strong>Codex, Cursor, Copilot, Gemini CLI, or any of 50+ Agent Skills hosts:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx skills add bradautomates/claude-video <span class="nt">-g</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">-g</code> flag installs globally for your user (<code class="language-plaintext highlighter-rouge">~/.codex/skills</code>, <code class="language-plaintext highlighter-rouge">~/.cursor/skills</code>, etc.); drop it to scope per-project.</p>
+
+<p><strong>claude.ai (web):</strong></p>
+
+<ol>
+  <li>Download <code class="language-plaintext highlighter-rouge">watch.skill</code> from the <a href="https://github.com/bradautomates/claude-video/releases/latest">latest release</a>.</li>
+  <li>Go to Settings → Capabilities → Skills.</li>
+  <li>Click <code class="language-plaintext highlighter-rouge">+</code> and drop the file in.</li>
+  <li>Enable “Code execution and file creation” — the skill shells out to <code class="language-plaintext highlighter-rouge">ffmpeg</code> and <code class="language-plaintext highlighter-rouge">yt-dlp</code>.</li>
+</ol>
+
+<p><strong>Manual (developer):</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/bradautomates/claude-video.git
+<span class="nb">ln</span> <span class="nt">-s</span> <span class="s2">"</span><span class="si">$(</span><span class="nb">pwd</span><span class="si">)</span><span class="s2">/claude-video/skills/watch"</span> ~/.claude/skills/watch
+</code></pre></div></div>
+
+<p>On the first <code class="language-plaintext highlighter-rouge">/watch</code> call, the skill runs <code class="language-plaintext highlighter-rouge">setup.py --check</code>. If <code class="language-plaintext highlighter-rouge">ffmpeg</code>/<code class="language-plaintext highlighter-rouge">yt-dlp</code> are missing or no Whisper key is set, it walks you through fixing it:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># macOS — auto-installs</span>
+brew <span class="nb">install </span>ffmpeg yt-dlp
+
+<span class="c"># Linux — prints exact commands</span>
+<span class="nb">sudo </span>apt <span class="nb">install </span>ffmpeg yt-dlp
+
+<span class="c"># Windows — prints winget/pip commands</span>
+winget <span class="nb">install </span>ffmpeg yt-dlp
+</code></pre></div></div>
+
+<p>The installer also scaffolds <code class="language-plaintext highlighter-rouge">~/.config/watch/.env</code> (mode <code class="language-plaintext highlighter-rouge">0600</code>) with commented placeholders for <code class="language-plaintext highlighter-rouge">GROQ_API_KEY</code> and <code class="language-plaintext highlighter-rouge">OPENAI_API_KEY</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ~/.config/watch/.env</span>
+<span class="nv">GROQ_API_KEY</span><span class="o">=</span>your-groq-key-here
+<span class="nv">OPENAI_API_KEY</span><span class="o">=</span>your-openai-key-here
+<span class="nv">WATCH_DETAIL</span><span class="o">=</span>balanced
+<span class="nv">SETUP_COMPLETE</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div></div>
+
+<p>After setup, preflight is silent and <code class="language-plaintext highlighter-rouge">/watch</code> just works.</p>
+
+<h2 id="12-usage-examples">12. Usage Examples</h2>
+
+<p>The basic invocation is a video source plus an optional question:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/watch https://youtu.be/dQw4w9WgXcQ what happens at the 30 second mark?
+/watch https://www.tiktok.com/@user/video/123 summarize this
+/watch ~/Movies/screen-recording.mp4 when does the UI break?
+/watch https://vimeo.com/123 what tools does she mention?
+</code></pre></div></div>
+
+<p><strong>Focused on a specific section</strong> — denser frame budget, lower token cost:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/watch https://youtu.be/abc <span class="nt">--start</span> 2:15 <span class="nt">--end</span> 2:45
+/watch video.mp4 <span class="nt">--start</span> 50 <span class="nt">--end</span> 60
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--start</span> 1:12:00            <span class="c"># from 1h12m to end</span>
+</code></pre></div></div>
+
+<p><strong>Choosing a detail mode:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--detail</span> transcript        <span class="c"># no frames, captions only (cheapest)</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--detail</span> efficient          <span class="c"># fast keyframes, cap 50</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--detail</span> balanced           <span class="c"># scene-aware, cap 100 (default)</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--detail</span> token-burner       <span class="c"># scene-aware, uncapped (max fidelity)</span>
+</code></pre></div></div>
+
+<p><strong>Grabbing frames at specific timestamps</strong> — for moments the presenter flags:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--detail</span> transcript <span class="nt">--timestamps</span> 4:32,7:10,9:55
+</code></pre></div></div>
+
+<p><strong>Other useful flags:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--max-frames</span> 40            <span class="c"># tighter token budget</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--resolution</span> 1024           <span class="c"># read on-screen text (slides, terminals)</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--fps</span> 2                     <span class="c"># override auto-fps (capped at 2)</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--whisper</span> openai            <span class="c"># force OpenAI Whisper backend</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--no-whisper</span>                <span class="c"># disable transcription, frames only</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--no-dedup</span>                  <span class="c"># keep near-duplicate frames</span>
+/watch <span class="s2">"</span><span class="nv">$URL</span><span class="s2">"</span> <span class="nt">--out-dir</span> /tmp/mywatch      <span class="c"># keep working files somewhere specific</span>
+</code></pre></div></div>
+
+<p><strong>Real-world patterns people use it for:</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;viral-video&gt; what hook did they open with?</code> — analyze someone else’s content.</li>
+  <li><code class="language-plaintext highlighter-rouge">/watch bug-repro.mov what's going wrong?</code> — diagnose a bug from a screen recording.</li>
+  <li><code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;long-thing&gt; summarize this</code> — faster than watching at 2x.</li>
+  <li><code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;launch-video&gt; what's actually new — skip the hype</code> — cut the hype from an update video.</li>
+  <li><code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;video&gt; summarize this to a note</code> — turn a playlist into notes.</li>
+</ul>
+
+<h2 id="13-claude-code-integration">13. Claude Code Integration</h2>
+
+<p>Claude Video is, at its core, a <strong>Claude Code skill</strong> — a self-contained folder with a <code class="language-plaintext highlighter-rouge">SKILL.md</code> contract and a <code class="language-plaintext highlighter-rouge">scripts/</code> runtime. The <code class="language-plaintext highlighter-rouge">SKILL.md</code> is the source of truth: it tells the agent when to invoke the skill, how to resolve its own script directory, and the exact step-by-step procedure.</p>
+
+<p>The skill resolves its own directory relative to wherever it was installed, so it works identically across every host:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Read ~/.claude/plugins/cache/claude-video/watch/&lt;ver&gt;/skills/watch/SKILL.md → SKILL_DIR=…/skills/watch
+Read ~/.codex/skills/watch/SKILL.md                                          → SKILL_DIR=~/.codex/skills/watch
+Read ~/.agents/skills/watch/SKILL.md                                         → SKILL_DIR=~/.agents/skills/watch
+</code></pre></div></div>
+
+<p>The agent then runs the orchestrator:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python3 <span class="s2">"</span><span class="k">${</span><span class="nv">SKILL_DIR</span><span class="k">}</span><span class="s2">/scripts/watch.py"</span> <span class="s2">"&lt;source&gt;"</span>
+</code></pre></div></div>
+
+<p>The script prints a markdown report to stdout listing frame paths (with <code class="language-plaintext highlighter-rouge">t=MM:SS</code> markers) and the transcript. Claude then <code class="language-plaintext highlighter-rouge">Read</code>s every frame path in a single parallel message — JPEGs render directly as images in its context — and combines them with the transcript to answer.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">SKILL.md</code> defines the full procedure: Step 0 (setup preflight), Step 1 (parse input), Step 2 (run the script), Step 3 (Read every frame), Step 4 (answer the user), Step 5 (clean up). It also defines failure modes — no transcript, long-video warning, download failure, Whisper failure — and how the agent should handle each.</p>
+
+<p>This contract-based design is why the same skill works on Claude Code, Codex, Cursor, Copilot, Gemini CLI, and 50+ other hosts with no code changes. The <code class="language-plaintext highlighter-rouge">SKILL.md</code> is portable; the scripts are portable; the agent harness is the only variable.</p>
+
+<h2 id="14-use-cases">14. Use Cases</h2>
+
+<p>Claude Video’s flexibility makes it useful across a wide range of scenarios:</p>
+
+<p><strong>Video Summarization.</strong> Paste a long YouTube video and ask for a summary. The skill pulls the structure, key moments, what was said and shown — faster than watching at 2x. Run it across a playlist and file a per-video summary, so a channel or course becomes a searchable set of notes.</p>
+
+<p><strong>Content Analysis.</strong> <code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;viral-video&gt; what hook did they open with?</code> Claude looks at the first frames, reads the opening transcript, and breaks down the structure. Same for ad creative, competitor launches, podcast intros — anything where the <em>how</em> matters as much as the <em>what</em>.</p>
+
+<p><strong>Bug Diagnosis from Screen Recordings.</strong> Someone sends you a screen recording of something broken. <code class="language-plaintext highlighter-rouge">/watch bug-repro.mov what's going wrong?</code> Claude watches the recording, finds the frame where the issue appears, describes what is on screen, and often catches the cause without you ever opening the file.</p>
+
+<p><strong>Tutorial and Lecture Analysis.</strong> <code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;lecture&gt; summarize the key concepts</code> — extract the core ideas from an educational video, with timestamps so you can jump to the relevant moment. The <code class="language-plaintext highlighter-rouge">--timestamps</code> flag lets you grab frames at moments the lecturer flags (“look at this equation”, “notice this pattern”).</p>
+
+<p><strong>Meeting Notes.</strong> For recorded meetings, <code class="language-plaintext highlighter-rouge">/watch meeting.mp4 what were the action items?</code> — Claude reads the transcript and any on-screen slides or shared screens to produce structured notes with decisions and action items.</p>
+
+<p><strong>Cutting Through Hype.</strong> <code class="language-plaintext highlighter-rouge">/watch https://youtu.be/&lt;launch-video&gt; what's actually new — skip the hype</code> — strip a “game-changer” feature drop down to the few things that matter, so you get the substance without ten minutes of intro and overselling.</p>
+
+<p><strong>Multi-language Content.</strong> Whisper’s transcription supports dozens of languages, so you can analyze a video in a language you do not speak and get a summary in your own.</p>
+
+<h2 id="15-conclusion">15. Conclusion</h2>
+
+<p>Claude Video represents a quiet but important shift in how AI agents interact with the world. For years, the assumption has been that agents work in text and code — the modalities they were born into. Video was a human format, too heavy and too unstructured for a model to consume directly. Claude Video challenges that assumption by treating video not as a monolith but as two streams — frames and transcript — that a multimodal model can reason over just like it reasons over a codebase.</p>
+
+<p>The engineering is in service of that idea. The captions-first strategy, the duration-aware frame budgets, the scene-aware extraction, the delta dedup, the Whisper fallback — every piece exists to minimize the cost of getting visual and auditory evidence into Claude’s context. The skill does not try to understand the video; it prepares the evidence and lets the model do the understanding. That separation is what makes it portable across 50+ agent hosts, testable with a standard pytest suite, and cheap to maintain.</p>
+
+<p>As multimodal models become more capable and agent hosts more ubiquitous, the ability to feed them real-world media — video, audio, images — will increasingly define what “agentic” means. Claude Video is an early, well-executed example of that future: a single <code class="language-plaintext highlighter-rouge">/watch</code> command that turns any video into something Claude can see, hear, and reason about. For developers, content creators, educators, and anyone who has ever scrubbed through a 30-minute video to find one moment, that is a capability worth having.</p>
+
+<p>The project is MIT-licensed, built on <code class="language-plaintext highlighter-rouge">yt-dlp</code>, <code class="language-plaintext highlighter-rouge">ffmpeg</code>, and Claude’s multimodal <code class="language-plaintext highlighter-rouge">Read</code> tool, with Whisper transcription via Groq or OpenAI. It is built by Brad Bonanno, who makes content about building with AI on YouTube and builds AI operating systems for businesses at Solaris Automation. If <code class="language-plaintext highlighter-rouge">/watch</code> saves you from scrubbing through a video, it has done its job.</p>
+
+<hr />
+
+<p><strong>Links:</strong></p>
+<ul>
+  <li>GitHub: <a href="https://github.com/bradautomates/claude-video">bradautomates/claude-video</a></li>
+  <li>Author: <a href="https://www.youtube.com/@bradbonanno">@bradbonanno</a></li>
+  <li>License: MIT</li>
+</ul>]]></content><author><name>PyShine Team</name></author><category term="AI" /><category term="Developer Tools" /><category term="Video" /><category term="claude-code" /><category term="video-understanding" /><category term="transcription" /><category term="whisper" /><category term="yt-dlp" /><category term="ffmpeg" /><category term="ai-agents" /><category term="python" /><summary type="html"><![CDATA[Claude Video: Give Claude Code the Ability to Watch and Understand Any Video]]></summary></entry><entry><title type="html">AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents</title><link href="https://pyshine.com/AI-Website-Cloner-Clone-Any-Website-With-One-Command/" rel="alternate" type="text/html" title="AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents" /><published>2026-07-08T00:00:00+00:00</published><updated>2026-07-08T00:00:00+00:00</updated><id>https://pyshine.com/AI-Website-Cloner-Clone-Any-Website-With-One-Command</id><content type="html" xml:base="https://pyshine.com/AI-Website-Cloner-Clone-Any-Website-With-One-Command/"><![CDATA[<h1 id="ai-website-cloner-clone-any-website-with-one-command-using-ai-coding-agents">AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents</h1>
 
 <h2 id="1-introduction">1. Introduction</h2>
 
@@ -3348,430 +3718,4 @@ npm run tauri build
   <li><strong>Releases:</strong> <a href="https://github.com/Zackriya-Solutions/meetily/releases">https://github.com/Zackriya-Solutions/meetily/releases</a></li>
 </ul>
 
-<p>Meetily proves that a privacy-first AI meeting assistant is not a compromise. It is an upgrade.</p>]]></content><author><name>PyShine Team</name></author><category term="ai" /><category term="privacy" /><category term="meeting-tools" /><category term="meetily" /><category term="ai-meeting-assistant" /><category term="privacy-first" /><category term="local-ai" /><category term="transcription" /><category term="open-source" /><summary type="html"><![CDATA[1. Introduction]]></summary></entry><entry><title type="html">Codex Plugin for Claude Code: Integrate OpenAI Codex into Your Workflow</title><link href="https://pyshine.com/Codex-Plugin-for-Claude-Code/" rel="alternate" type="text/html" title="Codex Plugin for Claude Code: Integrate OpenAI Codex into Your Workflow" /><published>2026-07-05T00:00:00+00:00</published><updated>2026-07-05T00:00:00+00:00</updated><id>https://pyshine.com/Codex-Plugin-for-Claude-Code</id><content type="html" xml:base="https://pyshine.com/Codex-Plugin-for-Claude-Code/"><![CDATA[<h1 id="codex-plugin-for-claude-code-integrate-openai-codex-into-your-workflow">Codex Plugin for Claude Code: Integrate OpenAI Codex into Your Workflow</h1>
-
-<p>The Codex plugin for Claude Code brings OpenAI’s powerful Codex AI assistant directly into your Claude Code workflow. This plugin enables seamless integration between Claude Code and Codex, allowing you to run code reviews, delegate complex tasks, and manage background jobs without leaving your editor.</p>
-
-<h2 id="what-is-codex">What is Codex?</h2>
-
-<p>Codex is OpenAI’s AI-powered code generation and analysis tool that helps developers write better code, review changes, and solve technical problems. The plugin bridges the gap between Claude Code and Codex, providing a unified interface for leveraging both AI assistants.</p>
-
-<h2 id="what-you-get">What You Get</h2>
-
-<p>The plugin provides several powerful slash commands:</p>
-
-<ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:review</code></strong> - Run a normal read-only Codex review on your current work</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:adversarial-review</code></strong> - Run a steerable challenge review that questions your implementation choices</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:rescue</code></strong> - Delegate tasks to Codex for investigation, fixes, or continuation</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:transfer</code></strong> - Create a persistent Codex thread from your current Claude Code session</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:status</code></strong> - Check progress on running and recent Codex jobs</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:result</code></strong> - View the final stored Codex output for completed jobs</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:cancel</code></strong> - Cancel active background Codex jobs</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/codex:setup</code></strong> - Check Codex installation and authentication status</li>
-</ul>
-
-<p><img src="/assets/img/diagrams/codex-plugin-cc/codex-plugin-architecture.svg" alt="Architecture Diagram" /></p>
-
-<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
-
-<p>The architecture diagram above illustrates how the Codex plugin integrates with Claude Code and Codex. Let’s break down each component:</p>
-
-<p><strong>Claude Code</strong></p>
-<ul>
-  <li>The primary interface where developers interact with AI assistants</li>
-  <li>Provides the context and workspace for code review and task delegation</li>
-  <li>Serves as the orchestrator for plugin commands</li>
-</ul>
-
-<p><strong>Codex Plugin</strong></p>
-<ul>
-  <li>The bridge between Claude Code and Codex</li>
-  <li>Implements slash commands and hooks for seamless integration</li>
-  <li>Manages background jobs and session lifecycle</li>
-</ul>
-
-<p><strong>Codex CLI and App Server</strong></p>
-<ul>
-  <li>The local Codex installation and runtime</li>
-  <li>Handles code analysis, generation, and execution</li>
-  <li>Provides the actual AI-powered code review and task completion</li>
-</ul>
-
-<p><strong>Claude Hooks</strong></p>
-<ul>
-  <li>Integration points that trigger plugin functionality</li>
-  <li>SessionStart and SessionEnd hooks manage session lifecycle</li>
-  <li>Stop hook enables the review gate feature</li>
-</ul>
-
-<p><strong>Slash Commands</strong></p>
-<ul>
-  <li>User-facing commands that invoke plugin functionality</li>
-  <li>Each command maps to specific Codex operations</li>
-  <li>Provides a unified interface for Codex integration</li>
-</ul>
-
-<p><strong>Skills</strong></p>
-<ul>
-  <li>Internal helper modules for Codex operations</li>
-  <li><code class="language-plaintext highlighter-rouge">codex-cli-runtime</code> handles Codex CLI invocations</li>
-  <li><code class="language-plaintext highlighter-rouge">codex-result-handling</code> manages job results</li>
-  <li><code class="language-plaintext highlighter-rouge">gpt-5-4-prompting</code> optimizes prompts for Codex</li>
-</ul>
-
-<h2 id="installation">Installation</h2>
-
-<h3 id="prerequisites">Prerequisites</h3>
-
-<ul>
-  <li><strong>ChatGPT subscription (incl. Free) or OpenAI API key</strong>
-    <ul>
-      <li>Usage will contribute to your Codex usage limits</li>
-      <li>Learn more at <a href="https://developers.openai.com/codex/pricing">OpenAI Codex Pricing</a></li>
-    </ul>
-  </li>
-  <li><strong>Node.js 18.18 or later</strong></li>
-</ul>
-
-<h3 id="setup-steps">Setup Steps</h3>
-
-<ol>
-  <li><strong>Add the marketplace in Claude Code:</strong>
-    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/plugin marketplace add openai/codex-plugin-cc
-</code></pre></div>    </div>
-  </li>
-  <li><strong>Install the plugin:</strong>
-    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/plugin <span class="nb">install </span>codex@openai-codex
-</code></pre></div>    </div>
-  </li>
-  <li><strong>Reload plugins:</strong>
-    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/reload-plugins
-</code></pre></div>    </div>
-  </li>
-  <li><strong>Run setup:</strong>
-    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:setup
-</code></pre></div>    </div>
-    <p>This command checks whether Codex is ready and can offer to install it if missing.</p>
-  </li>
-  <li><strong>Install Codex manually (if needed):</strong>
-    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install</span> <span class="nt">-g</span> @openai/codex
-</code></pre></div>    </div>
-  </li>
-  <li><strong>Log in to Codex:</strong>
-    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">!</span>codex login
-</code></pre></div>    </div>
-  </li>
-</ol>
-
-<p>After installation, you should see:</p>
-<ul>
-  <li>All slash commands listed above</li>
-  <li>The <code class="language-plaintext highlighter-rouge">codex:codex-rescue</code> subagent in <code class="language-plaintext highlighter-rouge">/agents</code></li>
-</ul>
-
-<h2 id="usage">Usage</h2>
-
-<h3 id="codexreview"><code class="language-plaintext highlighter-rouge">/codex:review</code></h3>
-
-<p>Runs a normal Codex review on your current work. It provides the same quality of code review as running <code class="language-plaintext highlighter-rouge">/review</code> inside Codex directly.</p>
-
-<p><strong>Use it when you want:</strong></p>
-<ul>
-  <li>A review of your current uncommitted changes</li>
-  <li>A review of your branch compared to a base branch like <code class="language-plaintext highlighter-rouge">main</code></li>
-</ul>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:review
-/codex:review <span class="nt">--base</span> main
-/codex:review <span class="nt">--background</span>
-</code></pre></div></div>
-
-<p>This command is read-only and will not perform any changes. When run in the background you can use <code class="language-plaintext highlighter-rouge">/codex:status</code> to check on the progress and <code class="language-plaintext highlighter-rouge">/codex:cancel</code> to cancel the ongoing task.</p>
-
-<h3 id="codexadversarial-review"><code class="language-plaintext highlighter-rouge">/codex:adversarial-review</code></h3>
-
-<p>Runs a <strong>steerable</strong> review that questions the chosen implementation and design. This is particularly useful for pressure-testing assumptions, tradeoffs, failure modes, and whether a different approach would have been safer or simpler.</p>
-
-<p><strong>Use it when you want:</strong></p>
-<ul>
-  <li>A review before shipping that challenges the direction, not just the code details</li>
-  <li>Review focused on design choices, tradeoffs, hidden assumptions, and alternative approaches</li>
-  <li>Pressure-testing around specific risk areas like auth, data loss, rollback, race conditions, or reliability</li>
-</ul>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:adversarial-review
-/codex:adversarial-review <span class="nt">--base</span> main challenge whether this was the right caching and retry design
-/codex:adversarial-review <span class="nt">--background</span> look <span class="k">for </span>race conditions and question the chosen approach
-</code></pre></div></div>
-
-<p>This command is read-only and does not fix code.</p>
-
-<p><img src="/assets/img/diagrams/codex-plugin-cc/codex-plugin-workflow.svg" alt="Workflow Diagram" /></p>
-
-<h3 id="understanding-the-workflow">Understanding the Workflow</h3>
-
-<p>The workflow diagram demonstrates how different Codex commands interact with the plugin and Codex CLI. Let’s analyze the key flows:</p>
-
-<p><strong>Review Flow</strong></p>
-<ol>
-  <li>User invokes <code class="language-plaintext highlighter-rouge">/codex:review</code> or <code class="language-plaintext highlighter-rouge">/codex:adversarial-review</code></li>
-  <li>Plugin forwards the request to Codex CLI</li>
-  <li>Codex performs code analysis and generates review</li>
-  <li>Results are stored in background job</li>
-  <li>User can check status with <code class="language-plaintext highlighter-rouge">/codex:status</code> and view results with <code class="language-plaintext highlighter-rouge">/codex:result</code></li>
-</ol>
-
-<p><strong>Rescue Flow</strong></p>
-<ol>
-  <li>User invokes <code class="language-plaintext highlighter-rouge">/codex:rescue</code> with a task description</li>
-  <li>Plugin forwards the task to Codex CLI</li>
-  <li>Codex investigates and attempts fixes</li>
-  <li>Results are returned to the user</li>
-  <li>Follow-up requests can continue the same Codex session</li>
-</ol>
-
-<p><strong>Background Job Management</strong></p>
-<ul>
-  <li>Jobs can be run in background with <code class="language-plaintext highlighter-rouge">--background</code> flag</li>
-  <li>Status can be checked with <code class="language-plaintext highlighter-rouge">/codex:status</code></li>
-  <li>Results can be retrieved with <code class="language-plaintext highlighter-rouge">/codex:result</code></li>
-  <li>Active jobs can be cancelled with <code class="language-plaintext highlighter-rouge">/codex:cancel</code></li>
-</ul>
-
-<h3 id="codexrescue"><code class="language-plaintext highlighter-rouge">/codex:rescue</code></h3>
-
-<p>Hands a task to Codex through the <code class="language-plaintext highlighter-rouge">codex:codex-rescue</code> subagent. This is the primary command for delegating work to Codex.</p>
-
-<p><strong>Use it when you want Codex to:</strong></p>
-<ul>
-  <li>Investigate a bug</li>
-  <li>Try a fix</li>
-  <li>Continue a previous Codex task</li>
-  <li>Take a faster or cheaper pass with a smaller model</li>
-</ul>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:rescue investigate why the tests started failing
-/codex:rescue fix the failing <span class="nb">test </span>with the smallest safe patch
-/codex:rescue <span class="nt">--resume</span> apply the top fix from the last run
-/codex:rescue <span class="nt">--model</span> gpt-5.4-mini <span class="nt">--effort</span> medium investigate the flaky integration <span class="nb">test</span>
-/codex:rescue <span class="nt">--model</span> spark fix the issue quickly
-/codex:rescue <span class="nt">--background</span> investigate the regression
-</code></pre></div></div>
-
-<p>You can also just ask for a task to be delegated to Codex:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Ask Codex to redesign the database connection to be more resilient.
-</code></pre></div></div>
-
-<p><strong>Notes:</strong></p>
-<ul>
-  <li>If you do not pass <code class="language-plaintext highlighter-rouge">--model</code> or <code class="language-plaintext highlighter-rouge">--effort</code>, Codex chooses its own defaults</li>
-  <li>If you say <code class="language-plaintext highlighter-rouge">spark</code>, the plugin maps that to <code class="language-plaintext highlighter-rouge">--model gpt-5.3-codex-spark</code></li>
-  <li>Follow-up rescue requests can continue the latest Codex task in the repo</li>
-</ul>
-
-<h3 id="codextransfer"><code class="language-plaintext highlighter-rouge">/codex:transfer</code></h3>
-
-<p>Creates a persistent Codex thread from the current Claude Code session and prints a <code class="language-plaintext highlighter-rouge">codex resume &lt;session-id&gt;</code> command.</p>
-
-<p>**Use it when you started a debugging or implementation conversation in Claude Code and want to continue that same context directly in Codex.</p>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:transfer
-/codex:transfer <span class="nt">--source</span> ~/.claude/projects/-Users-me-repo/&lt;session-id&gt;.jsonl
-</code></pre></div></div>
-
-<p>The plugin’s existing <code class="language-plaintext highlighter-rouge">SessionStart</code> hook supplies the current transcript path automatically; <code class="language-plaintext highlighter-rouge">--source</code> is available as a manual override. The transfer uses Codex’s external-agent session importer, so it follows the same conversion rules as importing Claude history in the Codex App and creates visible turns that can be continued in the App or TUI.</p>
-
-<h3 id="codexstatus"><code class="language-plaintext highlighter-rouge">/codex:status</code></h3>
-
-<p>Shows running and recent Codex jobs for the current repository.</p>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:status
-/codex:status task-abc123
-</code></pre></div></div>
-
-<p><strong>Use it to:</strong></p>
-<ul>
-  <li>Check progress on background work</li>
-  <li>See the latest completed job</li>
-  <li>Confirm whether a task is still running</li>
-</ul>
-
-<h3 id="codexresult"><code class="language-plaintext highlighter-rouge">/codex:result</code></h3>
-
-<p>Shows the final stored Codex output for a finished job. When available, it also includes the Codex session ID so you can reopen that run directly in Codex with <code class="language-plaintext highlighter-rouge">codex resume &lt;session-id&gt;</code>.</p>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:result
-/codex:result task-abc123
-</code></pre></div></div>
-
-<h3 id="codexcancel"><code class="language-plaintext highlighter-rouge">/codex:cancel</code></h3>
-
-<p>Cancels an active background Codex job.</p>
-
-<p><strong>Examples:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:cancel
-/codex:cancel task-abc123
-</code></pre></div></div>
-
-<h3 id="codexsetup"><code class="language-plaintext highlighter-rouge">/codex:setup</code></h3>
-
-<p>Checks whether Codex is installed and authenticated. If Codex is missing and npm is available, it can offer to install Codex for you.</p>
-
-<p>You can also use <code class="language-plaintext highlighter-rouge">/codex:setup</code> to manage the optional review gate.</p>
-
-<h4 id="enabling-review-gate">Enabling review gate</h4>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:setup <span class="nt">--enable-review-gate</span>
-/codex:setup <span class="nt">--disable-review-gate</span>
-</code></pre></div></div>
-
-<p>When the review gate is enabled, the plugin uses a <code class="language-plaintext highlighter-rouge">Stop</code> hook to run a targeted Codex review based on Claude’s response. If that review finds issues, the stop is blocked so Claude can address them first.</p>
-
-<blockquote>
-  <p><strong>Warning:</strong> The review gate can create a long-running Claude/Codex loop and may drain usage limits quickly. Only enable it when you plan to actively monitor the session.</p>
-</blockquote>
-
-<p><img src="/assets/img/diagrams/codex-plugin-cc/codex-plugin-hooks.svg" alt="Hooks Diagram" /></p>
-
-<h3 id="understanding-claude-hooks-integration">Understanding Claude Hooks Integration</h3>
-
-<p>The hooks diagram illustrates how the plugin integrates with Claude Code’s hook system. This integration enables automatic functionality at key points in the session lifecycle:</p>
-
-<p><strong>SessionStart Hook</strong></p>
-<ul>
-  <li>Runs when a Claude Code session begins</li>
-  <li>Initializes the plugin and prepares for Codex integration</li>
-  <li>Sets up session tracking and context</li>
-</ul>
-
-<p><strong>SessionEnd Hook</strong></p>
-<ul>
-  <li>Runs when a Claude Code session ends</li>
-  <li>Cleans up resources and finalizes any pending Codex operations</li>
-  <li>Ensures proper session termination</li>
-</ul>
-
-<p><strong>Stop Hook (Review Gate)</strong></p>
-<ul>
-  <li>Runs when Claude is about to stop or complete a response</li>
-  <li>Can trigger a Codex review before the stop</li>
-  <li>Blocks the stop if issues are found, allowing Claude to address them first</li>
-</ul>
-
-<p><strong>Hook Scripts</strong></p>
-<ul>
-  <li><code class="language-plaintext highlighter-rouge">session-lifecycle-hook.mjs</code> handles session start and end events</li>
-  <li><code class="language-plaintext highlighter-rouge">stop-review-gate-hook.mjs</code> manages the review gate functionality</li>
-  <li>Both scripts are executed with appropriate timeouts and error handling</li>
-</ul>
-
-<h2 id="typical-flows">Typical Flows</h2>
-
-<h3 id="review-before-shipping">Review Before Shipping</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:review
-</code></pre></div></div>
-
-<h3 id="hand-a-problem-to-codex">Hand A Problem To Codex</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:rescue investigate why the build is failing <span class="k">in </span>CI
-</code></pre></div></div>
-
-<h3 id="start-something-long-running">Start Something Long-Running</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:adversarial-review <span class="nt">--background</span>
-/codex:rescue <span class="nt">--background</span> investigate the flaky <span class="nb">test</span>
-</code></pre></div></div>
-
-<p>Then check in with:</p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/codex:status
-/codex:result
-</code></pre></div></div>
-
-<h2 id="codex-integration">Codex Integration</h2>
-
-<p>The Codex plugin wraps the <a href="https://developers.openai.com/codex/app-server">Codex app server</a>. It uses the global <code class="language-plaintext highlighter-rouge">codex</code> binary installed in your environment and applies the same configuration.</p>
-
-<h3 id="common-configurations">Common Configurations</h3>
-
-<p>If you want to change the default reasoning effort or the default model that gets used by the plugin, you can define that inside your user-level or project-level <code class="language-plaintext highlighter-rouge">config.toml</code>. For example to always use <code class="language-plaintext highlighter-rouge">gpt-5.4-mini</code> on <code class="language-plaintext highlighter-rouge">high</code> for a specific project you can add the following to a <code class="language-plaintext highlighter-rouge">.codex/config.toml</code> file at the root of the directory you started Claude in:</p>
-
-<div class="language-toml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="py">model</span> <span class="p">=</span> <span class="s">"gpt-5.4-mini"</span>
-<span class="py">model_reasoning_effort</span> <span class="p">=</span> <span class="s">"high"</span>
-</code></pre></div></div>
-
-<p>Your configuration will be picked up based on:</p>
-<ul>
-  <li>User-level config in <code class="language-plaintext highlighter-rouge">~/.codex/config.toml</code></li>
-  <li>Project-level overrides in <code class="language-plaintext highlighter-rouge">.codex/config.toml</code></li>
-  <li>Project-level overrides only load when the <a href="https://developers.openai.com/codex/config-advanced#project-config-files-codexconfigtoml">project is trusted</a></li>
-</ul>
-
-<p>Check out the Codex docs for more <a href="https://developers.openai.com/codex/config-reference">configuration options</a>.</p>
-
-<h3 id="moving-the-work-over-to-codex">Moving The Work Over To Codex</h3>
-
-<p>Delegated tasks and any <a href="#what-does-the-review-gate-do">stop gate</a> run can also be directly resumed inside Codex by running <code class="language-plaintext highlighter-rouge">codex resume</code> either with the specific session ID you received from running <code class="language-plaintext highlighter-rouge">/codex:result</code> or <code class="language-plaintext highlighter-rouge">/codex:status</code> or by selecting it from the list.</p>
-
-<p>This way you can review the Codex work or continue the work there.</p>
-
-<h2 id="faq">FAQ</h2>
-
-<h3 id="do-i-need-a-separate-codex-account-for-this-plugin">Do I need a separate Codex account for this plugin?</h3>
-
-<p>If you are already signed into Codex on this machine, that account should work immediately here too. This plugin uses your local Codex CLI authentication.</p>
-
-<p>If you only use Claude Code today and have not used Codex yet, you will also need to sign in to Codex with either a ChatGPT account or an API key. <a href="https://developers.openai.com/codex/pricing/">Codex is available with your ChatGPT subscription</a>, and <a href="https://developers.openai.com/codex/cli/reference/#codex-login"><code class="language-plaintext highlighter-rouge">codex login</code></a> supports both ChatGPT and API key sign-in. Run <code class="language-plaintext highlighter-rouge">/codex:setup</code> to check whether Codex is ready, and use <code class="language-plaintext highlighter-rouge">!codex login</code> if it is not.</p>
-
-<h3 id="does-the-plugin-use-a-separate-codex-runtime">Does the plugin use a separate Codex runtime?</h3>
-
-<p>No. This plugin delegates through your local <a href="https://developers.openai.com/codex/cli/">Codex CLI</a> and <a href="https://developers.openai.com/codex/app-server/">Codex app server</a> on the same machine.</p>
-
-<p>That means:</p>
-<ul>
-  <li>It uses the same Codex install you would use directly</li>
-  <li>It uses the same local authentication state</li>
-  <li>It uses the same repository checkout and machine-local environment</li>
-</ul>
-
-<h3 id="will-it-use-the-same-codex-config-i-already-have">Will it use the same Codex config I already have?</h3>
-
-<p>Yes. If you already use Codex, the plugin picks up the same <a href="#common-configurations">configuration</a>.</p>
-
-<h3 id="can-i-keep-using-my-current-api-key-or-base-url-setup">Can I keep using my current API key or base URL setup?</h3>
-
-<p>Yes. Because the plugin uses your local Codex CLI, your existing sign-in method and config still apply.</p>
-
-<p>If you need to point the built-in OpenAI provider at a different endpoint, set <code class="language-plaintext highlighter-rouge">openai_base_url</code> in your <a href="https://developers.openai.com/codex/config-advanced/#config-and-state-locations">Codex config</a>.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>The Codex plugin for Claude Code provides a powerful integration between two of the most capable AI coding assistants. By combining Claude’s contextual understanding with Codex’s code-specific capabilities, you get the best of both worlds:</p>
-
-<ul>
-  <li><strong>Comprehensive code reviews</strong> with both standard and adversarial modes</li>
-  <li><strong>Task delegation</strong> for investigation, fixes, and continuation</li>
-  <li><strong>Background job management</strong> for long-running operations</li>
-  <li><strong>Session transfer</strong> to continue work in Codex</li>
-  <li><strong>Review gate</strong> for automated quality checks</li>
-</ul>
-
-<p>Whether you’re doing code reviews, debugging complex issues, or delegating tasks to AI, this plugin streamlines your workflow and keeps you in your editor.</p>
-
-<h2 id="related-resources">Related Resources</h2>
-
-<ul>
-  <li><a href="https://developers.openai.com/codex">OpenAI Codex Documentation</a></li>
-  <li><a href="https://docs.anthropic.com/claude-code">Claude Code Documentation</a></li>
-  <li><a href="https://github.com/openai/codex-plugin-cc">GitHub Repository</a></li>
-  <li><a href="https://developers.openai.com/codex/cli/reference">Codex CLI Reference</a></li>
-  <li><a href="https://developers.openai.com/codex/pricing">Codex Pricing</a></li>
-  <li><a href="https://developers.openai.com/codex/config-reference">Codex Configuration</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="AI Tools" /><category term="Claude Code" /><category term="OpenAI Codex" /><category term="Developer Tools" /><summary type="html"><![CDATA[Learn how to use the Codex plugin for Claude Code to run code reviews, delegate tasks, and manage background jobs seamlessly.]]></summary></entry></feed>
+<p>Meetily proves that a privacy-first AI meeting assistant is not a compromise. It is an upgrade.</p>]]></content><author><name>PyShine Team</name></author><category term="ai" /><category term="privacy" /><category term="meeting-tools" /><category term="meetily" /><category term="ai-meeting-assistant" /><category term="privacy-first" /><category term="local-ai" /><category term="transcription" /><category term="open-source" /><summary type="html"><![CDATA[1. Introduction]]></summary></entry></feed>
