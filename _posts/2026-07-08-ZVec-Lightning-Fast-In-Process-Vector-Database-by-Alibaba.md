@@ -2,6 +2,7 @@
 layout: post
 title: "ZVec: Alibaba's Lightning-Fast In-Process Vector Database for AI Applications"
 date: 2026-07-08
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Database, Infrastructure]
 tags: [vector-database, embeddings, similarity-search, c++, alibaba, rag, ai-infrastructure, performance]
 ---

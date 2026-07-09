@@ -2,6 +2,7 @@
 layout: post
 title: "Claude Video: Give Claude Code the Ability to Watch and Understand Any Video"
 date: 2026-07-09
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools, Video]
 tags: [claude-code, video-understanding, transcription, whisper, yt-dlp, ffmpeg, ai-agents, python]
 ---

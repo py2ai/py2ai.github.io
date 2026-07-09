@@ -2,6 +2,7 @@
 layout: post
 title: "OfficeCLI: The First Office Suite Built for AI Agents to Automate Word, Excel, and PowerPoint"
 date: 2026-07-08
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools, Automation]
 tags: [ai-agents, office-automation, word, excel, powerpoint, csharp, cli, automation, developer-tools]
 ---

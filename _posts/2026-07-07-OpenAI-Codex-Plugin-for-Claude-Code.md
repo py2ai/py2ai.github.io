@@ -2,6 +2,7 @@
 layout: post
 title: "OpenAI Codex Plugin for Claude Code: Bridging Two AI Coding Giants"
 date: 2026-07-07
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools]
 tags: [openai, codex, claude-code, ai-coding, plugin, typescript, code-generation, developer-tools]
 ---

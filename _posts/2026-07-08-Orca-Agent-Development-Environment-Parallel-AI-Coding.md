@@ -2,6 +2,7 @@
 layout: post
 title: "Orca: Agent Development Environment for Running a Fleet of Parallel AI Coding Agents"
 date: 2026-07-08
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools]
 tags: [ai-agents, parallel-agents, agent-development, typescript, claude-code, codex, cursor, automation, developer-tools]
 ---

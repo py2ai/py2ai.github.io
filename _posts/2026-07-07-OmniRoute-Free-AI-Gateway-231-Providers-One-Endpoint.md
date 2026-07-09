@@ -2,6 +2,7 @@
 layout: post
 title: "OmniRoute: Free AI Gateway With 231+ Providers and One Unified Endpoint"
 date: 2026-07-07
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools]
 tags: [ai-gateway, llm, api, claude-code, codex, openai, anthropic, typescript, open-source]
 ---
