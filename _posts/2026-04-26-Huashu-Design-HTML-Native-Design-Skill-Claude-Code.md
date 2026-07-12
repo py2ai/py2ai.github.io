@@ -5,6 +5,8 @@ description: "Learn how Huashu Design brings professional-grade visual design to
 date: 2026-04-26
 header-img: "img/post-bg.jpg"
 permalink: /Huashu-Design-HTML-Native-Design-Skill-Claude-Code/
+redirect_from:
+  - /HuaShu-Design-HTML-Native-Design-Skill/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI Design, Developer Tools, Open Source]
 tags: [Huashu Design, Claude Code, AI design skill, HTML prototypes, design philosophies, AI coding agents, design system, slide decks, motion design, infographics]
