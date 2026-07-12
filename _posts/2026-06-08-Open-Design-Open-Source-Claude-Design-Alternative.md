@@ -4,7 +4,9 @@ title: "Open Design: The Open-Source Claude Design Alternative with 261 Plugins 
 description: "Open Design is a local-first, agent-native design studio that runs 21 CLIs, 150+ design systems, and 261 plugins on your laptop with zero cloud lock-in."
 date: 2026-06-08
 header-img: "img/post-bg.jpg"
-permalink: /Open-Design-Open-Source-Claude-Design-Alternative/
+permalink: /Open-Design-261-Plugins-21-Agent-CLIs/
+redirect_from:
+  - /Open-Design-Open-Source-Claude-Design-Alternative-2026-Update/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI Design, Open Source, Developer Tools]
 tags: [Open Design, Claude Design alternative, AI design tool, open source design, coding agent CLI, design systems, HyperFrames, local-first design, agent-native design, BYOK proxy]

@@ -4,7 +4,7 @@ title: "Agent Style: 21 Writing Rules That Make AI Agents Write Like Tech Pros"
 description: "Learn how agent-style applies 21 literature-backed writing rules to AI coding agents, reducing mechanical violations by 45-82% across Claude, GPT, and Gemini models with soft enforcement and deterministic review."
 date: 2026-04-30
 header-img: "img/post-bg.jpg"
-permalink: /Agent-Style-21-Writing-Rules-for-AI-Coding-Agents/
+permalink: /Agent-Style-21-Writing-Rules-Updated/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [Developer Tools, AI Agents, Open Source]
 tags: [agent-style, AI writing rules, coding agents, LLM writing quality, Claude Code, Codex CLI, technical writing, anti-patterns, developer tools, open source]

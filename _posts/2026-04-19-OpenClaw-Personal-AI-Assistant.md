@@ -4,7 +4,7 @@ title: "OpenClaw: Personal AI Assistant You Run on Your Own Devices"
 description: "OpenClaw is a 359K-star open-source personal AI assistant that runs locally on your devices, supporting 20+ messaging channels, voice wake words, live canvas, and multi-agent routing with enterprise-grade security."
 date: 2026-04-19
 header-img: "img/post-bg.jpg"
-permalink: /OpenClaw-Personal-AI-Assistant/
+permalink: /OpenClaw-Personal-AI-Assistant-359K-Stars/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags:
   - Open Source
