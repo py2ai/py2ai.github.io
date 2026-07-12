@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "GBrain - Self-Wiring Knowledge Graph For AI Agents"
+title: "GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents"
 description: "GBrain gives AI agents a brain. Built by YC President Garry Tan, it powers his real deployment: 17,888 pages, 4,383 people, 723 companies, 21 cron jobs. Self-wiring knowledge graph, hybrid search, Minions job queue, 26 skills."
 date: 2026-04-20
 header-img: "assets/img/ai-coding-frameworks/ai-coding-frameworks"
@@ -10,7 +10,7 @@ tags: [AI, Knowledge-Graph, Agent-Framework, Open-Source, Y-Combinator, Postgres
 author: "PyShine"
 ---
 
-Your AI agent is smart but forgetful. Every conversation starts from scratch. Every meeting context is lost. Every person you mention is a stranger. **GBrain** fixes this by giving your agent a persistent, self-wiring knowledge graph that compounds daily.
+Your AI agent is smart but forgetful. Every conversation starts from scratch. Every meeting context is lost. Every person you mention is a stranger. **GBrain** fixes this by giving your agent a persistent, **self-wiring knowledge graph** that compounds daily. GBrain is the memory layer for AI agents — it wires itself up as it learns.
 
 Built by Garry Tan -- President and CEO of Y Combinator -- to run his actual AI agents, GBrain is the production brain powering his OpenClaw and Hermes deployments: **17,888 pages, 4,383 people, 723 companies**, 21 cron jobs running autonomously, built in 12 days. The agent ingests meetings, emails, tweets, voice calls, and original ideas while you sleep. It enriches every person and company it encounters. It fixes its own citations and consolidates memory overnight. You wake up and the brain is smarter than when you went to bed.
 
@@ -121,3 +121,10 @@ Garry Tan was setting up his OpenClaw agent and started a markdown brain repo. O
 **Repository:** [github.com/garrytan/gbrain](https://github.com/garrytan/gbrain)  
 **License:** MIT  
 **Stars:** 9,400+
+## Related guides
+
+GBrain is the memory layer for AI agents — these guides cover the rest of the open-source agent stack:
+
+- **[Hermes Web UI: Open-Source LLM Chat Dashboard for the Hermes Agent](/Hermes-Web-UI-Open-Source-LLM-Chat-Interface/)** — a web dashboard for managing multi-platform AI chat agents that GBrain backs with persistent memory.
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes, slide decks, and dashboards locally with BYOK multi-model support.
+- **[Free Claude Code: Use Claude Code CLI for Free](/Free-Claude-Code-Use-Claude-Code-for-Free/)** — route Claude Code's API calls to NVIDIA NIM, OpenRouter, or local models with no Anthropic API key.

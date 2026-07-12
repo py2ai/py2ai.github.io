@@ -5,16 +5,18 @@ description: "Open CoDesign is the open-source Claude Design alternative that tu
 date: 2026-04-26
 header-img: "img/post-bg.jpg"
 permalink: /Open-Codesign-Open-Source-Claude-Design-Alternative/
+redirect_from:
+  - /Open-Codesign-Open-Source-Multi-Model-Design-Agent/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI Design, Open Source, Developer Tools]
 tags: [Open CoDesign, Claude Design alternative, AI design tool, open source design, BYOK, multi-model, Electron app, local-first, prompt to prototype, design to code]
-keywords: "Open CoDesign open source Claude Design alternative, how to use Open CoDesign for AI design, Open CoDesign vs Claude Design comparison, BYOK multi-model design tool, local-first AI design application, prompt to prototype open source, AI design tool with Ollama support, Open CoDesign installation tutorial, desktop AI design tool Electron, open source design to code tool"
+keywords: "Open CoDesign open source Claude Design alternative, how to use Open CoDesign for AI design, Open CoDesign vs Claude Design comparison, BYOK multi-model design tool, local-first AI design application, prompt to prototype open source, AI design tool with Ollama support, Open CoDesign installation tutorial, desktop AI design tool Electron, open source design to code tool, open codesign, open codesing, opencodesign"
 author: "PyShine"
 ---
 
 # Open CoDesign: Open-Source Claude Design Alternative with Multi-Model Support
 
-Open CoDesign is the open-source Claude Design alternative that turns natural-language prompts into polished design artifacts -- locally, with whichever model you already pay for. Built as an MIT-licensed Electron desktop app, it supports 20+ LLM providers through a bring-your-own-key (BYOK) architecture, ships with twelve built-in design skill modules, and imports your existing Claude Code or Codex configuration in a single click. Whether you are prototyping a landing page, building a dashboard, or generating a slide deck, Open CoDesign gives you the speed of AI-native design tools without subscription lock-in, cloud-only workflows, or being forced onto a single provider.
+**Open CoDesign** (also written "Open Codesign" or misspelled "Open Codesing"; the repo token is `opencodesign`) is the open-source Claude Design alternative that turns natural-language prompts into polished design artifacts -- locally, with whichever model you already pay for. Built as an MIT-licensed Electron desktop app, it supports 20+ LLM providers through a bring-your-own-key (BYOK) architecture, ships with twelve built-in design skill modules, and imports your existing Claude Code or Codex configuration in a single click. Whether you are prototyping a landing page, building a dashboard, or generating a slide deck, Open CoDesign gives you the speed of AI-native design tools without subscription lock-in, cloud-only workflows, or being forced onto a single provider.
 
 ## What Is Open CoDesign?
 
@@ -324,3 +326,12 @@ The project is licensed under MIT -- fork it, ship it, sell it. Third-party noti
 - **GitHub Repository**: [https://github.com/OpenCoworkAI/open-codesign](https://github.com/OpenCoworkAI/open-codesign)
 - **Documentation**: [https://opencoworkai.github.io/open-codesign/](https://opencoworkai.github.io/open-codesign/)
 - **Releases**: [https://github.com/OpenCoworkAI/open-codesign/releases](https://github.com/OpenCoworkAI/open-codesign/releases)
+
+## Related guides
+
+If you found Open CoDesign useful, these open-source AI tooling guides go deeper on adjacent parts of the stack:
+
+- **[GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents](/gbrain-self-wiring-knowledge-graph-ai-agents/)** — give your AI agent a persistent, self-wiring knowledge graph so it stops forgetting between sessions.
+- **[Hermes Web UI: Open-Source LLM Chat Dashboard for the Hermes Agent](/Hermes-Web-UI-Open-Source-LLM-Chat-Interface/)** — a web dashboard for managing multi-platform AI chat agents in one place.
+- **[Free Claude Code: Use Claude Code CLI for Free](/Free-Claude-Code-Use-Claude-Code-for-Free/)** — route Claude Code's API calls to NVIDIA NIM, OpenRouter, DeepSeek, or local models with no Anthropic API key.
+- **[Kronos: Open-Source Foundation Model for Financial Market Forecasting](/Kronos-Foundation-Model-Financial-Markets/)** — an open-source foundation model (Kronos-base, Kronos-small) for K-line / OHLCV market forecasting.

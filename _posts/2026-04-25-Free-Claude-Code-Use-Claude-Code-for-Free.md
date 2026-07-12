@@ -341,3 +341,12 @@ Free Claude Code democratizes access to Claude Code's powerful interface by enab
 - [LM Studio](https://lmstudio.ai)
 - [llama.cpp](https://github.com/ggerganov/llama.cpp)
 - [Claude Code Official Repository](https://github.com/anthropics/claude-code)
+
+## Related guides
+
+Once Free Claude Code is routing your API calls for free, these open-source AI tooling guides take the setup further:
+
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes, slide decks, and dashboards locally with BYOK multi-model support.
+- **[GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents](/gbrain-self-wiring-knowledge-graph-ai-agents/)** — give your AI agent a persistent memory layer so it stops forgetting between sessions.
+- **[Hermes Web UI: Open-Source LLM Chat Dashboard for the Hermes Agent](/Hermes-Web-UI-Open-Source-LLM-Chat-Interface/)** — manage multi-platform AI chat agents from one web dashboard.
+- **[GhostTrack: OSINT Location Tracking Tool](/GhostTrack-OSINT-Location-Tracking-Tool/)** — another open-source intelligence tool in the same AI-agent and OSINT ecosystem.

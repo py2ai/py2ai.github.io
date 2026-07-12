@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Kronos: Foundation Model for Financial Markets Language"
-description: "Explore Kronos, the first open-source foundation model designed to understand and process the language of financial markets with state-of-the-art performance on K-line sequences."
+title: "Kronos: Open-Source Foundation Model for Financial Market Forecasting (Kronos-base & Kronos-small)"
+description: "Kronos is an open-source foundation model for financial market forecasting — a hierarchical tokenizer (Kronos-base, Kronos-small) that turns K-line / OHLCV candlesticks into tokens for autoregressive prediction. Complete setup, tokenization, and forecasting tutorial with Python code."
 date: 2026-04-11
 header-img: "img/post-bg.jpg"
 permalink: /Kronos-Foundation-Model-Financial-Markets/
@@ -16,9 +16,9 @@ tags:
 author: "PyShine"
 ---
 
-# Kronos: Foundation Model for Financial Markets Language
+# Kronos: Open-Source Foundation Model for Financial Market Forecasting
 
-Kronos represents a groundbreaking advancement in financial machine learning as the **first open-source foundation model** specifically designed for financial candlesticks (K-lines). Trained on data from over **45 global exchanges**, Kronos introduces a novel approach to understanding the unique "language" of financial markets through hierarchical tokenization and autoregressive modeling.
+Kronos is an **open-source foundation model for financial market forecasting** — the first model specifically built for financial candlesticks (K-lines / OHLCV). It uses a hierarchical **tokenizer** (ships as `Kronos-base` and `Kronos-small`) to convert K-line sequences into tokens, then forecasts future prices with autoregressive modeling. Trained on data from over **45 global exchanges**, Kronos introduces a novel approach to understanding the unique "language" of financial markets through hierarchical tokenization and autoregressive modeling.
 
 ## Introduction
 
@@ -748,3 +748,10 @@ The open-source release includes:
 - Comprehensive documentation
 
 Whether you're building trading systems, conducting research, or exploring financial ML, Kronos provides a powerful foundation for your work.
+
+## Related guides
+
+Kronos is a financial foundation model — these adjacent open-source ML/AI guides may also be useful:
+
+- **[GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents](/gbrain-self-wiring-knowledge-graph-ai-agents/)** — a self-wiring knowledge graph for AI agents, useful for organizing financial research and entity relationships.
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes, dashboards, and charts locally with BYOK multi-model support.

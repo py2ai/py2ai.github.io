@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Hermes Web UI: Open-Source LLM Chat Interface Dashboard"
-description: "A comprehensive web dashboard for Hermes Agent providing AI chat, multi-platform channel management, usage analytics, scheduled jobs, and model management in a single unified interface."
+title: "Hermes Web UI: Open-Source LLM Chat Dashboard for the Hermes Agent"
+description: "Hermes Web UI is an open-source web dashboard (also called Hermes webui) that gives the Hermes Agent a unified chat interface, multi-platform channel management, usage analytics, scheduled jobs, and model management in one browser-based dashboard. Built with Vue 3, TypeScript, and Koa 2."
 date: 2026-04-20
 header-img: assets/img/diagrams/hermes-web-ui/hermes-web-ui-architecture.svg
 permalink: /Hermes-Web-UI-Open-Source-LLM-Chat-Interface/
@@ -10,9 +10,11 @@ tags: [AI, LLM, Chat-Interface, Dashboard, Open-Source, Vue, TypeScript, Koa]
 author: PyShine
 ---
 
+# Hermes Web UI: Open-Source LLM Chat Dashboard for the Hermes Agent
+
 ## Introduction
 
-Hermes Web UI is an open-source web dashboard designed to provide a unified management interface for the Hermes Agent ecosystem. As AI chat agents proliferate across messaging platforms, the challenge of configuring, monitoring, and interacting with them from a single control point has become increasingly critical. Hermes Web UI addresses this by offering a browser-based dashboard that consolidates chat interactions, channel configuration, usage analytics, scheduled jobs, and model management into one cohesive experience.
+**Hermes Web UI** (often searched as "Hermes webui" or "Hermes web UI") is an open-source web dashboard that gives the Hermes Agent ecosystem a unified management interface. As AI chat agents proliferate across messaging platforms, the challenge of configuring, monitoring, and interacting with them from a single control point has become increasingly critical. Hermes Web UI addresses this by offering a browser-based dashboard that consolidates chat interactions, channel configuration, usage analytics, scheduled jobs, and model management into one cohesive experience.
 
 The project has garnered over 1,100 stars on GitHub, reflecting strong community adoption and interest. Built with a Vue 3 and TypeScript frontend paired with a Koa 2 Backend-For-Frontend (BFF) server, Hermes Web UI leverages modern web technologies to deliver a responsive, type-safe, and maintainable dashboard. The frontend uses Vite 8 for fast development builds, Naive UI for component rendering, and Pinia 3 for state management -- creating a stack that is both performant and developer-friendly.
 
@@ -139,3 +141,10 @@ Internationalization support covers English and Chinese through the `vue-i18n` l
 Hermes Web UI fills a critical gap in the AI agent ecosystem by providing a unified, browser-based management interface for multi-platform chat agents. Its BFF architecture cleanly separates concerns between the browser, the middleware server, and the Hermes Agent backend, while the CLI-as-Backend pattern ensures that every CLI capability is accessible through the web interface without duplicating logic. The eight feature areas -- AI Chat, Usage Analytics, Scheduled Jobs, Model Management, Multi-Profile, Skills and Memory, Web Terminal, and Settings -- cover the full lifecycle of AI agent operation from configuration to monitoring to interactive debugging.
 
 For teams deploying AI agents across multiple messaging platforms, Hermes Web UI eliminates the operational complexity of managing separate configuration tools, monitoring dashboards, and terminal access for each platform. The project's growing community and active development make it a practical choice for anyone running Hermes Agent in production. The full source code, documentation, and installation guides are available at the [Hermes Web UI GitHub repository](https://github.com/HermesWebUI/hermes-web-ui).
+## Related guides
+
+Hermes Web UI is part of a wider open-source AI-agent stack — these guides cover the adjacent pieces:
+
+- **[GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents](/gbrain-self-wiring-knowledge-graph-ai-agents/)** — the persistent memory layer that backs Hermes agents, wiring itself as it learns.
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes, slide decks, and dashboards locally with BYOK multi-model support.
+- **[Free Claude Code: Use Claude Code CLI for Free](/Free-Claude-Code-Use-Claude-Code-for-Free/)** — route Claude Code's API calls to NVIDIA NIM, OpenRouter, or local models with no Anthropic API key.
