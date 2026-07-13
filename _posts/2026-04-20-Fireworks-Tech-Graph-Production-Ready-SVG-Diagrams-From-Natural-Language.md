@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Fireworks Tech Graph: Production-Ready SVG Diagrams From Natural Language"
-description: "An open-source skill that generates publication-quality SVG+PNG technical diagrams from English or Chinese descriptions, featuring 7 visual styles, 14 UML diagram types, and built-in AI domain patterns."
+title: "Fireworks Tech Graph: Generate Production-Ready SVG Technical Diagrams From Plain English"
+description: "Fireworks Tech Graph turns plain English or Chinese descriptions into publication-ready SVG + PNG technical diagrams in seconds. An open-source AI skill with 7 visual styles, 14 UML diagram types, and 3,700+ GitHub stars. Stop drawing diagrams by hand — describe your system and get architecture, sequence, and flow diagrams automatically."
 date: 2026-04-20
 header-img: "assets/img/ai-coding-frameworks/ai-coding-frameworks"
 permalink: /fireworks-tech-graph-production-ready-svg-diagrams-from-natural-language/
@@ -10,7 +10,9 @@ tags: [AI, SVG, Diagrams, Technical-Diagrams, UML, Open-Source, Developer-Tools,
 author: "PyShine"
 ---
 
-Stop drawing diagrams by hand. Describe your system in English or Chinese and get publication-ready SVG + PNG technical diagrams in seconds. That is the promise of **Fireworks Tech Graph**, an open-source skill from [yizhiyanhua-ai/fireworks-tech-graph](https://github.com/yizhiyanhua-ai/fireworks-tech-graph) that has garnered over 3,700 stars on GitHub. It is a comprehensive diagram generation system designed for AI coding agents, providing structured workflows, semantic shape vocabularies, and seven distinct visual styles.
+# Fireworks Tech Graph: Production-Ready SVG Diagrams From Plain English
+
+Stop drawing diagrams by hand. Describe your system in English or Chinese and get publication-ready **SVG + PNG technical diagrams in seconds**. That is the promise of **Fireworks Tech Graph**, an open-source skill from [yizhiyanhua-ai/fireworks-tech-graph](https://github.com/yizhiyanhua-ai/fireworks-tech-graph) that has garnered over 3,700 stars on GitHub. It is a comprehensive diagram generation system designed for AI coding agents, providing structured workflows, semantic shape vocabularies, and seven distinct visual styles.
 
 ## What Is Fireworks Tech Graph?
 
@@ -101,3 +103,10 @@ Once installed, simply describe your system in natural language -- English or Ch
 Fireworks Tech Graph represents a significant step forward in AI-assisted diagram generation. By combining a rigorous 10-step workflow, seven visual styles, full UML coverage, built-in AI domain patterns, a semantic shape vocabulary, and comprehensive validation, it transforms the ad-hoc process of LLM diagram generation into a reliable, production-quality pipeline. For developers, technical writers, and AI engineers who need consistent, publication-ready diagrams, this skill eliminates the gap between describing a system and visualizing it.
 
 The project is open source and actively maintained at [github.com/yizhiyanhua-ai/fireworks-tech-graph](https://github.com/yizhiyanhua-ai/fireworks-tech-graph).
+## Related guides
+
+Fireworks Tech Graph generates diagrams for AI agents — these adjacent open-source AI tooling guides may also be useful:
+
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes, slide decks, and dashboards locally.
+- **[Designlang: Extract Design Systems From Any Website](/Designlang-Extract-Design-Systems-From-Any-Website/)** — extract design systems and tokens from existing websites for reuse.
+- **[jcode: Next-Generation Coding Agent Harness](/jcode-Next-Generation-Coding-Agent-Harness/)** — a Rust coding agent harness with semantic memory and multi-agent swarms.

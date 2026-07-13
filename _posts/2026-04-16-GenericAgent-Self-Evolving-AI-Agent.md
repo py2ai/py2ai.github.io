@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "GenericAgent: Self-Evolving AI Agent with Skill Tree Growth"
-description: "Explore GenericAgent, a self-evolving AI agent that grows its skill tree from a 3.3K-line seed, achieving full system control with 6x less code than traditional approaches."
+title: "GenericAgent: Self-Evolving AI Agent That Grows Its Own Skill Tree"
+description: "GenericAgent is a self-evolving AI agent that grows its skill tree from a 3.3K-line seed, achieving full system control with 6x less code than traditional agents. Learn how GenericAgent bootstraps new skills autonomously and reaches full system control."
 date: 2026-04-16
 header-img: "img/post-bg.jpg"
 permalink: /GenericAgent-Self-Evolving-AI-Agent/
@@ -236,3 +236,10 @@ The project is open source under the MIT License, making it accessible for both 
 ---
 
 *GenericAgent demonstrates that powerful AI agents don't require massive codebases. Through intelligent design and self-evolution, a 3K-line seed can grow into a sophisticated system capable of complex real-world tasks.*
+## Related guides
+
+GenericAgent is a self-evolving AI agent — these guides cover adjacent open-source AI agent frameworks:
+
+- **[GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents](/gbrain-self-wiring-knowledge-graph-ai-agents/)** — the persistent memory layer that lets agents accumulate skills and context.
+- **[jcode: Next-Generation Coding Agent Harness](/jcode-Next-Generation-Coding-Agent-Harness/)** — a Rust coding agent harness with multi-agent swarms.
+- **[OpenHuman: Open-Source Personal AI Super Intelligence in Rust](/OpenHuman-Personal-AI-Super-Intelligence/)** — a Rust-powered personal AI with 118+ integrations and Memory Trees.

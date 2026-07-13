@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Obscura: Headless Browser for AI Agents"
-description: "A deep dive into Obscura, a Rust-based headless browser purpose-built for AI agents with built-in stealth, tracker blocking, SSRF protection, and native DOM-to-Markdown conversion via CDP."
+title: "Obscura: Rust Headless Browser & Browser Harness for AI Agents"
+description: "Obscura is a Rust-based headless browser and browser harness purpose-built for AI agents — built-in stealth, tracker blocking, SSRF protection, and native DOM-to-Markdown conversion via CDP. A secure, anti-detect browser harness for web automation, scraping, and agentic browsing."
 date: 2026-04-20
 header-img: "img/post-bg-tech.jpg"
 permalink: /Obscura-Headless-Browser-for-AI-Agents/
@@ -207,3 +207,11 @@ await browser.disconnect();
 ## Conclusion
 
 Obscura represents a significant step forward in headless browser technology for AI agents. By building stealth, tracker blocking, SSRF protection, and native DOM-to-Markdown conversion directly into the browser runtime, it eliminates the patchwork of plugins and workarounds that AI agent developers currently rely on. The Rust foundation delivers a memory footprint of ~30 MB and a binary size of ~70 MB, making it practical to run dozens of concurrent instances on modest hardware. The CDP compatibility ensures that existing Puppeteer and Playwright workflows can migrate to Obscura with minimal changes, while the custom LP domain provides AI-specific capabilities that no other browser offers. As AI agents become more prevalent in web automation, research, and data extraction, purpose-built tools like Obscura will be essential for running them efficiently, safely, and undetected.
+## Related guides
+
+Obscura is the browser harness layer for AI agents — these guides cover the rest of the open-source agent stack:
+
+- **[herdr: Rust Terminal Workspace & Agent Multiplexer](/herdr-Agent-Multiplexer-for-AI-Agents/)** — orchestrate multiple AI agents in one terminal workspace; pairs well with Obscura for agentic browsing.
+- **[jcode: Next-Generation Coding Agent Harness](/jcode-Next-Generation-Coding-Agent-Harness/)** — a Rust coding agent harness with semantic memory and multi-agent swarms.
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes, slide decks, and dashboards locally.
+- **[GBrain: Self-Wiring Knowledge Graph Memory Layer for AI Agents](/gbrain-self-wiring-knowledge-graph-ai-agents/)** — persistent memory layer for AI agents.

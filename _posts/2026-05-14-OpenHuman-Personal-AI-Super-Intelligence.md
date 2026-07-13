@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "OpenHuman: Personal AI Super Intelligence with Rust"
-description: "Learn how to use OpenHuman, an open-source Rust-powered personal AI super intelligence with 118+ integrations, Memory Trees, and TokenJuice compression for private, powerful automation."
+title: "OpenHuman: Open-Source Personal AI Super Intelligence in Rust"
+description: "OpenHuman is an open-source personal AI super intelligence built in Rust — 118+ integrations, Memory Trees for persistent context, and TokenJuice compression for private, powerful automation that runs locally. A self-hosted alternative to cloud AI assistants."
 date: 2026-05-14
 header-img: "img/post-bg.jpg"
 permalink: /OpenHuman-Personal-AI-Super-Intelligence/

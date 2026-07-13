@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "herdr: The Agent Multiplexer -- Terminal Workspace Manager for AI Coding Agents"
-description: "herdr is a Rust-based terminal workspace manager for AI coding agents that provides tmux-like multiplexing with agent awareness -- workspaces, tabs, panes, real-time agent state detection, session persistence, and a Unix socket API for agent orchestration across 14+ supported AI agents."
+title: "herdr: Rust Terminal Workspace & Agent Multiplexer for AI Coding Agents"
+description: "herdr is a Rust terminal workspace manager and agent multiplexer for AI coding agents — tmux-like multiplexing with agent awareness, workspaces, tabs, panes, real-time agent state detection, session persistence, and a Unix socket API for orchestrating 14+ AI agents. A faster, agent-aware alternative to tmux."
 date: 2026-06-01
 header-img: "img/post-bg.jpg"
 permalink: /herdr-Agent-Multiplexer-for-AI-Agents/
@@ -276,3 +276,11 @@ herdr solves all four problems. It's the first terminal multiplexer designed fro
 - **Install**: `curl -fsSL https://herdr.dev/install.sh | sh`
 - **License**: AGPL-3.0-or-later (dual-licensed with commercial option)
 - **Stars**: 3,450+
+## Related guides
+
+herdr is the terminal orchestration layer for AI agents — these guides cover the rest of the open-source agent stack:
+
+- **[Obscura: Rust Headless Browser & Browser Harness for AI Agents](/Obscura-Headless-Browser-for-AI-Agents/)** — a secure, anti-detect headless browser for agentic web automation.
+- **[jcode: Next-Generation Coding Agent Harness](/jcode-Next-Generation-Coding-Agent-Harness/)** — a Rust coding agent harness with semantic memory and multi-agent swarms.
+- **[Open CoDesign: Open-Source Claude Design Alternative](/Open-Codesign-Open-Source-Claude-Design-Alternative/)** — turn prompts into polished HTML prototypes and dashboards locally with BYOK multi-model support.
+- **[Free Claude Code: Use Claude Code CLI for Free](/Free-Claude-Code-Use-Claude-Code-for-Free/)** — route Claude Code's API calls to free or local model providers.

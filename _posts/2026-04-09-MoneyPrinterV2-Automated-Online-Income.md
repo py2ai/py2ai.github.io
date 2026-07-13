@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "MoneyPrinterV2: Automate Your Online Income with AI"
-description: "Learn how MoneyPrinterV2 uses AI to automate content creation, social media management, and business outreach for passive income generation."
+title: "MoneyPrinterV2: Automate Online Income With AI Content Generation"
+description: "MoneyPrinterV2 is an open-source AI tool that automates online income — AI content creation, social media management, and business outreach for passive income. Learn how MoneyPrinterV2 automates faceless YouTube, TikTok, and affiliate content generation end-to-end."
 date: 2026-04-09
 header-img: "img/post-bg.jpg"
 permalink: /MoneyPrinterV2-Automated-Online-Income/
