@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Tetris
+title: "Tetris - Play Free Online Tetris Game"
 permalink: /games/tetris/
 canonical: https://pyshine.com/games/tetris/
+description: "Play Tetris online for free. Rotate and move falling blocks to complete lines and score points. The classic block-stacking puzzle game in your browser. No download required."
+keywords: "tetris, play tetris online, free tetris game, block game, puzzle game, browser game"
 ---
 
 <div class="tetris-container">

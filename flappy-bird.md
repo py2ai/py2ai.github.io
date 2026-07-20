@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Flappy Bird
+title: "Flappy Bird - Play Free Online Flappy Bird Game"
 permalink: /games/flappy-bird/
 canonical: https://pyshine.com/games/flappy-bird/
+description: "Play Flappy Bird online for free. Click or tap to flap and fly through pipes. Test your reflexes and beat your high score in this addictive browser game. No download needed."
+keywords: "flappy bird, play flappy bird online, free flappy bird game, browser game, arcade game, tap to fly"
 ---
 
 <div class="flappy-bird-container">

@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Memory Match
+title: "Memory Match - Play Free Online Memory Card Game"
 permalink: /games/memory-match/
 canonical: https://pyshine.com/games/memory-match/
+description: "Play Memory Match online for free. Flip cards to find matching pairs and test your memory. A fun brain-training card game in your browser. No download required."
+keywords: "memory match game, memory card game, play memory online, free memory game, brain game, browser game"
 ---
 
 <div class="memory-container">

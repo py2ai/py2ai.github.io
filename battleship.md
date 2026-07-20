@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Battleship
+title: "Battleship - Play Free Online Battleship Game"
 permalink: /games/battleship/
 canonical: https://pyshine.com/games/battleship/
+description: "Play Battleship online for free. Strategically place your ships and sink the enemy fleet. The classic naval strategy game in your browser. No download required."
+keywords: "battleship game, play battleship online, free battleship game, strategy game, naval game, browser game"
 ---
 
 <div class="battleship-game-container">

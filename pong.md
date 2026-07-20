@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Pong
+title: "Pong - Play Free Online Pong Game with 10 Levels"
 permalink: /games/pong/
 canonical: https://pyshine.com/games/pong/
+description: "Play Pong online for free. Use arrow keys to move your paddle and score points against the AI opponent. 10 levels of increasing difficulty. Classic arcade game in your browser."
+keywords: "pong game, play pong online, free pong game, arcade game, paddle game, browser game"
 ---
 
 <div class="pong-container">

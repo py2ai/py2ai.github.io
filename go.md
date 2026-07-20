@@ -1,8 +1,10 @@
 ---
 layout: page
-title: GO Game
+title: "GO Game - Play Free Online GO Board Game"
 permalink: /games/go/
 canonical: https://pyshine.com/games/go/
+description: "Play GO online for free. The ancient strategy board game where you surround territory to win. Place stones, capture your opponent, and control the board. No download needed."
+keywords: "go game, play go online, free go game, board game, strategy game, weiqi, baduk, browser game"
 ---
 
 <div class="go-game-container">

@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Copter Game
+title: "Copter Game - Play Free Online Helicopter Game"
 permalink: /games/copter/
 canonical: https://pyshine.com/games/copter/
+description: "Play Copter online for free. Fly your helicopter through obstacles and survive as long as possible. Simple controls, addictive gameplay. Classic browser arcade game. No download."
+keywords: "copter game, helicopter game, play copter online, free helicopter game, arcade game, browser game"
 ---
 
 <div class="copter-game-container">

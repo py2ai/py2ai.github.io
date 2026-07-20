@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Snake Game
+title: "Snake Game - Play Free Online Snake Game"
 permalink: /games/snake/
 canonical: https://pyshine.com/games/snake/
+description: "Play the classic Snake game online for free. Use arrow keys or WASD to guide the snake, eat food to grow, and avoid hitting yourself. No download required - play in your browser."
+keywords: "snake game, play snake online, free snake game, classic snake, browser game, arcade game"
 ---
 
 <div class="snake-game-container">

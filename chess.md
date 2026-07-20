@@ -1,8 +1,10 @@
 ---
 layout: page
-title: Chess Game
+title: "Chess Game - Play Free Online Chess"
 permalink: /games/chess/
 canonical: https://pyshine.com/games/chess/
+description: "Play Chess online for free. Challenge the AI in this classic strategy board game. Move your pieces, checkmate the king, and win. No download - play chess in your browser."
+keywords: "chess game, play chess online, free chess game, strategy game, board game, checkmate, browser game"
 ---
 
 <div class="chess-game-container">
