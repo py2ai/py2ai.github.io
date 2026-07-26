@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Which Ollama Cloud Model is Best? Duck Driving a Jeep SVG Comparison"
-description: "Compare 9 Ollama cloud models side by side to find the best LLM for SVG generation. See how each model draws a duck driving a jeep. Pick the winner yourself."
+title: "Which Ollama Cloud Model is Best? Duck Driving a Jeep SVG Comparison (13 Models)"
+description: "Compare 13 Ollama cloud models side by side to find the best LLM for SVG generation. See how each model draws a duck driving a jeep. Pick the winner yourself."
 date: 2026-07-26
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Duck-Jeep/
@@ -17,12 +17,12 @@ tags:
   - SVG generation
 author: "PyShine"
 seo:
-  keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, deepseek vs glm vs qwen, LLM SVG benchmark, AI image generation comparison, duck jeep SVG, which Ollama model is best, Ollama cloud models 2026"
+  keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, deepseek vs glm vs qwen, LLM SVG benchmark, AI image generation comparison, duck jeep SVG, which Ollama model is best, Ollama cloud models 2026, gpt-oss vs deepseek, minimax m3, gemma4"
 ---
 
-# Which Ollama Cloud Model is Best? Duck Driving a Jeep SVG Comparison
+# Which Ollama Cloud Model is Best? Duck Driving a Jeep SVG Comparison (13 Models)
 
-If you are wondering **which Ollama cloud model is best for SVG generation**, this post is for you. We sent the exact same prompt to 9 different state-of-the-art LLMs and let them draw a duck driving a jeep. The results are wildly different, and they reveal which models are actually good at structured drawing tasks.
+If you are wondering **which Ollama cloud model is best for SVG generation**, this post is for you. We sent the exact same prompt to 13 different state-of-the-art LLMs and let them draw a duck driving a jeep. The results are wildly different, and they reveal which models are actually good at structured drawing tasks.
 
 This is the third in our SVG benchmark series. The prompt was: `Make an svg image about a duck driving a jeep`.
 You can compare with our previous benchmarks:
@@ -47,43 +47,287 @@ The script discovers all cloud-hosted models via the Ollama API (`/api/tags`), p
 
 Cloud models are identified by the `remote_host` field in the API response -- these models are hosted on Ollama Cloud rather than running locally. This means even very large models (671B parameters) can be queried instantly without local GPU resources.
 
-## Summary Table: Compare All Models at a Glance
+## Summary Table: Compare All 13 Models at a Glance
 
 Use this table to quickly compare models on the metrics that matter. The **verdict** column is a one-line summary to help you shortlist -- but read the per-model sections below for the full picture before you decide.
 
-| # | Model | SVG Size | Shapes | Colors | Speed | Complexity | Verdict |
-|---|-------|----------|--------|--------|-------|------------|---------|
-| 1 | `deepseek-v4-pro_cloud` | 6664 | 62 | 21 | - | Medium | Best all-rounder |
-| 2 | `gemma4_31b-cloud` | 1680 | 19 | 13 | - | Low | Fastest |
-| 3 | `glm-5.1_cloud` | 17901 | 160 | 50 | - | Very high | Most detailed |
-| 4 | `glm-5.2_cloud` | 6996 | 66 | 26 | - | Medium | Balanced |
-| 5 | `kimi-k2.6_cloud` | 9966 | 51 | 32 | - | Medium | Most technical |
-| 6 | `minimax-m2.7_cloud` | 2722 | 26 | 15 | - | Low | Minimalist |
-| 7 | `nemotron-3-super_cloud` | 1807 | 15 | 10 | - | Low | Compact |
-| 8 | `nemotron-3-ultra_cloud` | 16076 | 92 | 40 | - | Very high | Richest scene |
-| 9 | `qwen3.5_397b-cloud` | 3106 | 29 | 16 | - | Low | Efficient |
-| 10 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | - | Retired (410) |
-| 11 | `deepseek-v3.1:671b-cloud` | - | - | - | - | - | Retired (410) |
-| 12 | `glm-5:cloud` | - | - | - | - | - | Retired (410) |
-| 13 | `qwen3-vl:235b-cloud` | - | - | - | - | - | Retired (410) |
+| # | Model | SVG Size | Shapes | Colors | Complexity | Verdict |
+|---|-------|----------|--------|--------|------------|---------|
+| 1 | `deepseek-v4-flash_cloud` | 8244 | 83 | 32 | Medium | Fast + detailed |
+| 2 | `deepseek-v4-pro_cloud` | 6639 | 62 | 21 | Medium | Best all-rounder |
+| 3 | `gemma4_31b-cloud` | 1656 | 19 | 13 | Low | Fastest (31B) |
+| 4 | `gemma4_cloud` | 1694 | 16 | 13 | Low | Fast |
+| 5 | `glm-5.1_cloud` | 17880 | 160 | 50 | Very high | Most detailed |
+| 6 | `glm-5.2_cloud` | 6971 | 66 | 26 | Medium | Balanced |
+| 7 | `gpt-oss_120b-cloud` | 2147 | 18 | 10 | Low | Open-weight fast |
+| 8 | `kimi-k2.6_cloud` | 9941 | 51 | 32 | Medium | Most technical |
+| 9 | `minimax-m2.7_cloud` | 2697 | 26 | 15 | Low | Minimalist |
+| 10 | `minimax-m3_cloud` | 6464 | 74 | 26 | Medium | Solid detail |
+| 11 | `nemotron-3-super_cloud` | 1782 | 15 | 10 | Low | Compact |
+| 12 | `nemotron-3-ultra_cloud` | 16049 | 92 | 40 | Very high | Richest scene |
+| 13 | `qwen3.5_397b-cloud` | 3081 | 29 | 16 | Low | Efficient |
+| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**9 out of 13** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
 If you just want a shortcut, here is which model to pick based on what you care about:
 
 - **You want the most detailed, visually rich SVG**: pick `glm-5.1:cloud` or `nemotron-3-ultra:cloud`
-- **You want the fastest response**: pick `gemma4:31b-cloud` (under 10 seconds)
+- **You want the fastest response**: pick `gemma4:31b-cloud` or `gpt-oss:120b-cloud` (under 12 seconds)
 - **You want the cleanest, most reusable SVG code**: pick `deepseek-v4-pro:cloud` or `kimi-k2.6:cloud`
-- **You want a small, efficient SVG for web embedding**: pick `nemotron-3-super:cloud` or `qwen3.5:397b-cloud`
-- **You want a balance of detail and speed**: pick `glm-5.2:cloud`
+- **You want a small, efficient SVG for web embedding**: pick `gemma4:cloud` or `nemotron-3-super:cloud`
+- **You want a balance of detail and speed**: pick `deepseek-v4-flash:cloud` or `glm-5.2:cloud`
+- **You want the newest model families**: pick `gpt-oss:120b-cloud` (OpenAI open weights), `minimax-m3:cloud`, or `gemma4:cloud`
 
 Now read on for the full per-model breakdown and judge for yourself.
 
-## 1. deepseek-v4-pro_cloud
+## 1. deepseek-v4-flash_cloud
 
-**SVG size:** 6664 characters  
+**SVG size:** 8244 characters  
+**Complexity:** Medium  
+**Shape elements:** 83  
+**Distinct colors:** 32  
+**Raw response:** 8671 characters
+
+![deepseek-v4-flash_cloud duck jeep SVG](/assets/img/diagrams/ollama-svg-jeep/deepseek-v4-flash_cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **83 shape elements** and uses **32 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth and shading
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- Duck is present (the model understood the main subject)
+- Jeep / vehicle elements are present (the model understood the second subject)
+
+This is a moderately detailed SVG (5,000-10,000 characters), balancing visual richness with code clarity. The model included enough detail to make the scene recognizable while keeping the markup manageable. Good for general use.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <!-- Sky Gradient -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4CB8C4" />
+      <stop offset="100%" stop-color="#3CD3AD" />
+    </linearGradient>
+
+    <!-- Jeep Body Gradient -->
+    <linearGradient id="jeepGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5A8B4A" />
+      <stop offset="100%" stop-color="#3A6B3A" />
+    </linearGradient>
+
+    <!-- Duck Body Gradient -->
+    <radialGradient id="duckGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FFE44D" />
+      <stop offset="100%" stop-color="#FFB300" />
+    </radialGradient>
+
+    <!-- Sun Gradient -->
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF5A0" />
+      <stop offset="100%" stop-color="#FFD700" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#skyGrad)" />
+  
+  <!-- Sun -->
+  <circle cx="700" cy="100" r="50" fill="url(#sunGrad)" />
+  <circle cx="700" cy="100" r="60" fill="#FFD700" opacity="0.3" />
+  
+  <!-- Clouds -->
+  <g fill="#FFF" opacity="0.9">
+    <circle cx="150" cy="120" r="40" />
+    <circle cx="200" cy="100" r="50" />
+    <circle cx="250" cy="130" r="35" />
+    <rect x="150" y="100" width="100" height="65" rx="20" />
+    
+    <circle cx="550" cy="150" r="30" />
+    <circle cx="590" cy="140" r="40" />
+    <circle cx="630" cy="160" r="25" />
+    <rect x="550" y="140" width="80" height="45" rx="20" />
+  </g>
+
+  <!-- Ground / Road -->
+  <rect x="0" y="520" width="800" height="80" fill="#444" />
+  <rect x="0" y="520" width="800" height="10" fill="#333" />
+  
+  <!-- Road Lines -->
+  <g fill="#FFD700" opacity="0.8">
+    <rect x="50" y="555" width="60" height="10" rx="5" />
+    <rect x="200" y="555" width="60" height="10" rx="5" />
+    <rect x="350" y="555" width="60" height="10" rx="5" />
+    <rect x="500" y="555" width="60" height="10" rx="5" />
+    <rect x="650" y="555" width="60" height="10" rx="5" />
+  </g>
+
+  <!-- Shadow under Jeep -->
+  <ellipse cx="400" cy="550" rx="280" ry="25" fill="#000" opacity="0.4" />
+
+  <!-- Exhaust Smoke -->
+  <g fill="#FFF" opacity="0.5">
+    <circle cx="120" cy="450" r="10" />
+    <circle cx="100" cy="430" r="15" />
+    <circle cx="80" cy="400" r="20" />
+    <circle cx="60" cy="360" r="25" />
+  </g>
+
+  <!-- Exhaust Pipe -->
+  <rect x="140" y="460" width="30" height="10" rx="3" fill="#888" />
+  <rect x="130" y="455" width="10" height="20" rx="3" fill="#666" />
+
+  <!-- ================= JEEP & DUCK ================= -->
+
+  <!-- Back Wheels -->
+  <g>
+    <!-- Tire -->
+    <circle cx="200" cy="480" r="70" fill="#1A1A1A" />
+    <circle cx="200" cy="480" r="70" fill="none" stroke="#333" stroke-width="10" stroke-dasharray="8 8" />
+    <!-- Rim -->
+    <circle cx="200" cy="480" r="30" fill="#CCC" />
+    <circle cx="200" cy="480" r="20" fill="#888" />
+    <circle cx="200" cy="480" r="10" fill="#1A1A1A" />
+    <!-- Spokes -->
+    <path d="M 200 450 L 200 510 M 170 480 L 230 480 M 178 458 L 222 502 M 178 502 L 222 458" stroke="#888" stroke-width="4" />
+  </g>
+
+  <!-- Front Wheels -->
+  <g>
+    <!-- Tire -->
+    <circle cx="570" cy="480" r="70" fill="#1A1A1A" />
+    <circle cx="570" cy="480" r="70" fill="none" stroke="#333" stroke-width="10" stroke-dasharray="8 8" />
+    <!-- Rim -->
+    <circle cx="570" cy="480" r="30" fill="#CCC" />
+    <circle cx="570" cy="480" r="20" fill="#888" />
+    <circle cx="570" cy="480" r="10" fill="#1A1A1A" />
+    <!-- Spokes -->
+    <path d="M 570 450 L 570 510 M 540 480 L 600 480 M 548 458 L 592 502 M 548 502 L 592 458" stroke="#888" stroke-width="4" />
+  </g>
+
+  <!-- Jeep Main Body -->
+  <path d="M 150 380 L 250 380 L 250 340 L 450 340 L 500 380 L 650 380 Q 680 380 680 410 L 680 480 L 150 480 Z" fill="url(#jeepGrad)" stroke="#2C5028" stroke-width="4" stroke-linejoin="round" />
+
+  <!-- Jeep Fenders -->
+  <path d="M 120 480 A 80 80 0 0 1 280 480 L 280 420 L 120 420 Z" fill="#2C3E2C" />
+  <path d="M 480 480 A 80 80 0 0 1 660 480 L 660 420 L 480 420 Z" fill="#2C3E2C" />
+
+  <!-- Jeep Details (Doors, Handles) -->
+  <line x1="250" y1="380" x2="400" y2="380" stroke="#2C5028" stroke-width="4" />
+  <rect x="380" y="400" width="20" height="6" rx="3" fill="#CCC" />
+  <rect x="180" y="400" width="20" height="6" rx="3" fill="#CCC" />
+  
+  <!-- Gear Stick -->
+  <rect x="420" y="380" width="8" height="30" rx="4" fill="#222" />
+  <circle cx="424" cy="380" r="6" fill="#FF3333" />
+
+  <!-- Dashboard -->
+  <rect x="450" y="340" width="50" height="40" fill="#222" />
+  <rect x="460" y="350" width="15" height="10" rx="2" fill="#4B5320" />
+  <rect x="480" y="350" width="15" height="10" rx="2" fill="#4B5320" />
+
+  <!-- Steering Column -->
+  <rect x="480" y="340" width="10" height="40" fill="#111" />
+
+  <!-- ================= DUCK ================= -->
+  
+  <!-- Duck Body -->
+  <ellipse cx="300" cy="320" rx="55" ry="65" fill="url(#duckGrad)" />
+  
+  <!-- Duck Neck -->
+  <rect x="300" y="260" width="40" height="60" fill="url(#duckGrad)" />
+  
+  <!-- Duck Head -->
+  <circle cx="330" cy="220" r="45" fill="url(#duckGrad)" />
+  
+  <!-- Duck Tuft -->
+  <path d="M 310 180 Q 300 160 310 150 Q 320 160 320 180 Z" fill="#FFD700" />
+  
+  <!-- Duck Beak -->
+  <path d="M 370 215 Q 420 210 440 225 Q 440 240 370 245 Z" fill="#FF8C00" stroke="#CC6600" stroke-width="2" />
+  <circle cx="420" cy="220" r="2" fill="#CC6600" />
+  
+  <!-- Duck Smile -->
+  <path d="M 380 235 Q 400 245 420 235" fill="none" stroke="#CC6600" stroke-width="2" />
+  
+  <!-- Duck Eye -->
+  <circle cx="350" cy="210" r="10" fill="#000" />
+  <circle cx="353" cy="207" r="4" fill="#FFF" />
+  
+  <!-- Duck Scarf -->
+  <path d="M 300 250 Q 330 270 370 260 Q 390 250 400 260 L 390 270 Q 350 280 300 260 Z" fill="#E63946" />
+  <path d="M 390 265 Q 450 280 470 320 L 460 330 Q 440 290 380 275 Z" fill="#E63946" />
+  
+  <!-- Duck Wing (Behind Steering Wheel) -->
+  <path d="M 270 300 Q 350 320 480 340 Q 400 380 270 340 Z" fill="#E6B800" />
+  
+  <!-- Wing Feathers Details -->
+  <path d="M 320 330 Q 340 340 360 330" fill="none" stroke="#D4A800" stroke-width="3" />
+  <path d="M 350 350 Q 370 360 390 350" fill="none" stroke="#D4A800" stroke-width="3" />
+
+  <!-- ================= STEERING WHEEL ================= -->
+  <!-- Steering Wheel (Overlaps the wing) -->
+  <ellipse cx="485" cy="330" rx="35" ry="12" fill="none" stroke="#222" stroke-width="12" />
+  <ellipse cx="485" cy="330" rx="35" ry="12" fill="none" stroke="#444" stroke-width="6" />
+  <rect x="480" y="318" width="10" height="24" fill="#222" />
+
+  <!-- ================= JEEP FRONT & ROLL CAGE ================= -->
+  
+  <!-- Jeep Grille -->
+  <rect x="660" y="390" width="20" height="90" rx="5" fill="#2C5028" />
+  <line x1="668" y1="400" x2="668" y2="470" stroke="#1A3318" stroke-width="4" />
+  <line x1="672" y1="400" x2="672" y2="470" stroke="#1A3318" stroke-width="4" />
+  
+  <!-- Jeep Headlight -->
+  <circle cx="660" cy="420" r="15" fill="#FFF" />
+  <circle cx="660" cy="420" r="10" fill="#FFE55C" />
+  <circle cx="660" cy="420" r="5" fill="#FFF" />
+  
+  <!-- Jeep Bumper -->
+  <rect x="670" y="460" width="30" height="15" rx="5" fill="#CCC" />
+  <rect x="675" y="465" width="20" height="5" rx="2" fill="#888" />
+  
+  <!-- Tail Light -->
+  <circle cx="160" cy="420" r="10" fill="#FF3333" />
+  <circle cx="160" cy="420" r="5" fill="#FFA500" />
+
+  <!-- Side Mirror -->
+  <rect x="450" y="360" width="10" height="20" rx="2" fill="#333" />
+  <rect x="455" y="355" width="15" height="10" rx="2" fill="#AAD0F5" stroke="#CCC" stroke-width="1" />
+
+  <!-- Roll Cage -->
+  <path d="M 250 340 L 250 260 L 450 260 L 500 340" fill="none" stroke="#E0E0E0" stroke-width="15" stroke-linejoin="round" />
+  <line x1="250" y1="280" x2="450" y2="280" stroke="#E0E0E0" stroke-width="15" />
+  
+  <!-- Roll Cage Padding Details -->
+  <path d="M 250 340 L 250 260 L 450 260 L 500 340" fill="none" stroke="#FFF" stroke-width="2" stroke-linejoin="round" opacity="0.5" />
+  
+  <!-- Rear View Mirror -->
+  <rect x="440" y="270" width="20" height="10" rx="2" fill="#AAD0F5" stroke="#CCC" stroke-width="2" />
+  <rect x="445" y="265" width="10" height="5" fill="#333" />
+
+</svg>
+```
+
+</details>
+
+## 2. deepseek-v4-pro_cloud
+
+**SVG size:** 6639 characters  
 **Complexity:** Medium  
 **Shape elements:** 62  
 **Distinct colors:** 21  
@@ -133,7 +377,7 @@ This is a moderately detailed SVG (5,000-10,000 characters), balancing visual ri
   </defs>
 
   <!-- Background Sky -->
-  <rect width="800" height="400" fill="url(#skyGrad)" />
+  <rect fill="url(#skyGrad)" />
   
   <!-- Clouds -->
   <path d="M 100 100 Q 120 80 140 100 Q 160 90 170 110 Q 180 130 150 130 L 100 130 Q 80 130 90 110 Q 80 90 100 100" fill="#FFF" opacity="0.8" />
@@ -261,9 +505,9 @@ This is a moderately detailed SVG (5,000-10,000 characters), balancing visual ri
 
 </details>
 
-## 2. gemma4_31b-cloud
+## 3. gemma4_31b-cloud
 
-**SVG size:** 1680 characters  
+**SVG size:** 1656 characters  
 **Complexity:** Low  
 **Shape elements:** 19  
 **Distinct colors:** 13  
@@ -292,7 +536,7 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
   <!-- Background/Ground -->
   <rect fill="#e0f7fa" />
-  <rect x="0" y="220" width="400" height="80" fill="#8bc34a" />
+  <rect x="0" y="220" fill="#8bc34a" />
 
   <!-- Jeep Body -->
   <rect x="100" y="150" width="200" height="60" rx="10" fill="#f44336" />
@@ -335,9 +579,81 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 
 </details>
 
-## 3. glm-5.1_cloud
+## 4. gemma4_cloud
 
-**SVG size:** 17901 characters  
+**SVG size:** 1694 characters  
+**Complexity:** Low  
+**Shape elements:** 16  
+**Distinct colors:** 13  
+**Raw response:** 2644 characters
+
+![gemma4_cloud duck jeep SVG](/assets/img/diagrams/ollama-svg-jeep/gemma4_cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **16 shape elements** and uses **13 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- Duck is present (the model understood the main subject)
+- Jeep / vehicle elements are present (the model understood the second subject)
+
+This is a compact SVG (under 5,000 characters) that uses minimal markup to convey the scene. The model prioritized efficiency and simplicity over elaborate detail. Best for embedding in web pages where small file size matters.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background: Simple Road -->
+  <rect x="0" y="220" fill="#777" />
+  <line x1="0" y1="260" x2="400" y2="260" stroke="white" stroke-width="4" stroke-dasharray="20,20" />
+
+  <!-- Jeep Body -->
+  <path d="M80 210 L320 210 L320 160 L250 160 L230 120 L130 120 L110 160 L80 160 Z" fill="#4C704C" stroke="#2d452d" stroke-width="3" />
+  <!-- Windshield -->
+  <rect x="135" y="125" width="90" height="30" fill="#AADDFF" stroke="#2d452d" stroke-width="2" />
+  
+  <!-- Wheels -->
+  <circle cx="120" cy="210" r="25" fill="#333" stroke="#000" stroke-width="2" />
+  <circle cx="120" cy="210" r="10" fill="#888" />
+  <circle cx="280" cy="210" r="25" fill="#333" stroke="#000" stroke-width="2" />
+  <circle cx="280" cy="210" r="10" fill="#888" />
+
+  <!-- Headlights -->
+  <circle cx="320" cy="175" r="8" fill="#FFFFAA" stroke="#ccc" />
+
+  <!-- The Duck -->
+  <g id="duck">
+    <!-- Body -->
+    <ellipse cx="170" cy="160" rx="25" ry="20" fill="#FFD700" stroke="#B8860B" stroke-width="2" />
+    <!-- Head -->
+    <circle cx="185" cy="140" r="15" fill="#FFD700" stroke="#B8860B" stroke-width="2" />
+    <!-- Beak -->
+    <path d="M195 140 L205 140 L200 148 Z" fill="#FF8C00" stroke="#B8860B" stroke-width="1" />
+    <!-- Eye -->
+    <circle cx="190" cy="135" r="2" fill="black" />
+    <!-- Wing (holding steering wheel) -->
+    <path d="M165 160 Q175 150 185 160" fill="none" stroke="#B8860B" stroke-width="3" />
+  </g>
+
+  <!-- Steering Wheel -->
+  <ellipse cx="185" cy="155" rx="12" ry="5" fill="#333" transform="rotate(-20, 185, 155)" />
+
+  <!-- Tiny Hat (Optional Detail) -->
+  <path d="M180 125 L190 125 L185 120 Z" fill="#B22222" />
+</svg>
+```
+
+</details>
+
+## 5. glm-5.1_cloud
+
+**SVG size:** 17880 characters  
 **Complexity:** Very high  
 **Shape elements:** 160  
 **Distinct colors:** 50  
@@ -423,7 +739,7 @@ With over 15,000 characters of SVG markup, this is one of the most detailed outp
 
     <!-- Tire tread pattern -->
     <pattern id="treadPattern" x="0" y="0" patternUnits="userSpaceOnUse">
-      <rect width="6" height="6" fill="#222"/>
+      <rect fill="#222"/>
       <line x1="0" y1="3" x2="6" y2="3" stroke="#333" stroke-width="1.5"/>
       <line x1="3" y1="0" x2="3" y2="6" stroke="#333" stroke-width="1"/>
     </pattern>
@@ -762,9 +1078,9 @@ With over 15,000 characters of SVG markup, this is one of the most detailed outp
 
 </details>
 
-## 4. glm-5.2_cloud
+## 6. glm-5.2_cloud
 
-**SVG size:** 6996 characters  
+**SVG size:** 6971 characters  
 **Complexity:** Medium  
 **Shape elements:** 66  
 **Distinct colors:** 26  
@@ -814,7 +1130,7 @@ This is a moderately detailed SVG (5,000-10,000 characters), balancing visual ri
   </defs>
 
   <!-- Sky Background -->
-  <rect x="0" y="0" width="800" height="500" fill="url(#skyGrad)" />
+  <rect x="0" y="0" fill="url(#skyGrad)" />
 
   <!-- Sun -->
   <circle cx="680" cy="100" r="45" fill="#FFD700" opacity="0.8" />
@@ -954,9 +1270,99 @@ This is a moderately detailed SVG (5,000-10,000 characters), balancing visual ri
 
 </details>
 
-## 5. kimi-k2.6_cloud
+## 7. gpt-oss_120b-cloud
 
-**SVG size:** 9966 characters  
+**SVG size:** 2147 characters  
+**Complexity:** Low  
+**Shape elements:** 18  
+**Distinct colors:** 10  
+**Raw response:** 2917 characters
+
+![gpt-oss_120b-cloud duck jeep SVG](/assets/img/diagrams/ollama-svg-jeep/gpt-oss_120b-cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **18 shape elements** and uses **10 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- Duck is present (the model understood the main subject)
+- Jeep / vehicle elements are present (the model understood the second subject)
+
+This is a compact SVG (under 5,000 characters) that uses minimal markup to convey the scene. The model prioritized efficiency and simplicity over elaborate detail. Best for embedding in web pages where small file size matters.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+   
+   
+    viewBox="0 0 200 120"
+    role="img"
+    aria-labelledby="title desc">
+
+  <title id="title">Duck driving a Jeep</title>
+  <desc id="desc">A cute yellow duck sitting in the driver's seat of a green jeep.</desc>
+
+  <!-- ---- Jeep body ---- -->
+  <g id="jeep">
+    <!-- Main chassis -->
+    <rect x="20" y="70" width="150" height="30" fill="#4a7d1b" rx="5"/>
+    <!-- Roof and windshield -->
+    <polygon points="45,70 65,55 115,55 135,70"
+             fill="#4a7d1b" stroke="#3b5f13" stroke-width="1"/>
+    <!-- Front bumper -->
+    <rect x="160" y="75" width="15" height="20" fill="#4a7d1b" rx="3"/>
+    <!-- Rear bumper -->
+    <rect x="10" y="75" width="15" height="20" fill="#4a7d1b" rx="3"/>
+    <!-- Wheels -->
+    <circle cx="45"  cy="100" r="10" fill="#333"/>
+    <circle cx="145" cy="100" r="10" fill="#333"/>
+    <!-- Wheel rims -->
+    <circle cx="45"  cy="100" r="4" fill="#aaa"/>
+    <circle cx="145" cy="100" r="4" fill="#aaa"/>
+  </g>
+
+  <!-- ---- Duck driver ---- -->
+  <g id="duck" transform="translate(55,61) scale(0.6)">
+    <!-- Body -->
+    <ellipse cx="0" cy="0" rx="15" ry="12"
+             fill="#ffd93b" stroke="#e6c84a" stroke-width="1"/>
+    <!-- Head -->
+    <circle cx="-12" cy="-10" r="8"
+            fill="#ffd93b" stroke="#e6c84a" stroke-width="1"/>
+    <!-- Eye -->
+    <circle cx="-14" cy="-12" r="1.5" fill="#000"/>
+    <!-- Beak -->
+    <polygon points="-19,-8 -14,-5 -14,-11"
+             fill="#ffb347"/>
+    <!-- Wing (just a simple shape) -->
+    <path d="M -2 2 q 6 -4 8 2 q -4 2 -8 -2"
+          fill="#e6c84a" opacity="0.8"/>
+    <!-- Hands (steering wheel) -->
+    <circle cx="0" cy="2" r="6" fill="none" stroke="#8a8a8a" stroke-width="1.2"/>
+    <line x1="-2" y1="2" x2="2" y2="2" stroke="#8a8a8a" stroke-width="1.2"/>
+    <!-- Feet (peeking out the footwell) -->
+    <path d="M 7 8 q 2 3 4 0" stroke="#ffb347" stroke-width="1.5" fill="none"/>
+    <path d="M 11 8 q 2 3 4 0" stroke="#ffb347" stroke-width="1.5" fill="none"/>
+  </g>
+
+  <!-- Optional ground line -->
+  <line x1="0" y1="110" x2="200" y2="110" stroke="#555" stroke-width="0.5"/>
+</svg>
+```
+
+</details>
+
+## 8. kimi-k2.6_cloud
+
+**SVG size:** 9941 characters  
 **Complexity:** Medium  
 **Shape elements:** 51  
 **Distinct colors:** 32  
@@ -1028,7 +1434,7 @@ This is a moderately detailed SVG (5,000-10,000 characters), balancing visual ri
         </defs>
 
         <!-- Background: Sky and Sun -->
-        <rect x="0" y="0" width="800" height="600" fill="url(#skyGradient)" />
+        <rect x="0" y="0" fill="url(#skyGradient)" />
         <circle cx="700" cy="100" r="60" fill="#FFD700" opacity="0.8" />
         
         <!-- Background: Moving Clouds -->
@@ -1178,9 +1584,9 @@ This is a moderately detailed SVG (5,000-10,000 characters), balancing visual ri
 
 </details>
 
-## 6. minimax-m2.7_cloud
+## 9. minimax-m2.7_cloud
 
-**SVG size:** 2722 characters  
+**SVG size:** 2697 characters  
 **Complexity:** Low  
 **Shape elements:** 26  
 **Distinct colors:** 15  
@@ -1210,7 +1616,7 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
   <!-- Background: Sky and Grass -->
   <rect fill="#87CEEB" />
-  <rect x="0" y="300" width="600" height="100" fill="#7CFC00" />
+  <rect x="0" y="300" fill="#7CFC00" />
   
   <!-- Clouds -->
   <path d="M100,80 Q120,50 150,80 T200,80 T250,80" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
@@ -1279,9 +1685,196 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 
 </details>
 
-## 7. nemotron-3-super_cloud
+## 10. minimax-m3_cloud
 
-**SVG size:** 1807 characters  
+**SVG size:** 6464 characters  
+**Complexity:** Medium  
+**Shape elements:** 74  
+**Distinct colors:** 26  
+**Raw response:** 7444 characters
+
+![minimax-m3_cloud duck jeep SVG](/assets/img/diagrams/ollama-svg-jeep/minimax-m3_cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **74 shape elements** and uses **26 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth and shading
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- Duck is present (the model understood the main subject)
+- Jeep / vehicle elements are present (the model understood the second subject)
+
+This is a moderately detailed SVG (5,000-10,000 characters), balancing visual richness with code clarity. The model included enough detail to make the scene recognizable while keeping the markup manageable. Good for general use.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500">
+  <!-- Background sky -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#87CEEB"/>
+      <stop offset="100%" stop-color="#FFE4B5"/>
+    </linearGradient>
+    <linearGradient id="jeepBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A6B3A"/>
+      <stop offset="100%" stop-color="#2D4A22"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="500" fill="url(#sky)"/>
+  
+  <!-- Sun -->
+  <circle cx="500" cy="80" r="40" fill="#FFD700" opacity="0.8"/>
+  
+  <!-- Clouds -->
+  <ellipse cx="100" cy="70" rx="40" ry="15" fill="white" opacity="0.8"/>
+  <ellipse cx="130" cy="60" rx="30" ry="12" fill="white" opacity="0.8"/>
+  <ellipse cx="380" cy="100" rx="35" ry="13" fill="white" opacity="0.8"/>
+  
+  <!-- Ground/Road -->
+  <rect x="0" y="380" width="600" height="120" fill="#8B7355"/>
+  <rect x="0" y="380" width="600" height="10" fill="#A0A0A0"/>
+  <line x1="50" y1="400" x2="100" y2="400" stroke="white" stroke-width="4"/>
+  <line x1="150" y1="400" x2="200" y2="400" stroke="white" stroke-width="4"/>
+  <line x1="250" y1="400" x2="300" y2="400" stroke="white" stroke-width="4"/>
+  <line x1="350" y1="400" x2="400" y2="400" stroke="white" stroke-width="4"/>
+  <line x1="450" y1="400" x2="500" y2="400" stroke="white" stroke-width="4"/>
+  
+  <!-- Jeep -->
+  <!-- Main body -->
+  <rect x="120" y="280" width="360" height="110" fill="url(#jeepBody)" rx="10"/>
+  
+  <!-- Jeep hood (front lower part) -->
+  <path d="M 120 280 L 80 310 L 80 380 L 120 380 Z" fill="#3A5530" stroke="#2D4A22" stroke-width="2"/>
+  
+  <!-- Windshield frame -->
+  <path d="M 180 280 L 180 220 L 320 220 L 320 280" fill="none" stroke="#2D4A22" stroke-width="6"/>
+  
+  <!-- Windshield glass -->
+  <path d="M 188 280 L 188 226 L 312 226 L 312 280 Z" fill="#B8DCE8" opacity="0.7"/>
+  
+  <!-- Roof bar -->
+  <rect x="170" y="215" width="160" height="8" fill="#2D4A22" rx="3"/>
+  
+  <!-- Back of jeep (roll bar area) -->
+  <path d="M 320 220 L 340 220 L 340 280" fill="none" stroke="#2D4A22" stroke-width="5"/>
+  <path d="M 460 220 L 480 220 L 480 280" fill="none" stroke="#2D4A22" stroke-width="5"/>
+  <rect x="335" y="220" width="130" height="8" fill="#2D4A22" rx="3"/>
+  
+  <!-- Headlight -->
+  <circle cx="95" cy="340" r="12" fill="#FFFF99" stroke="#333" stroke-width="2"/>
+  <circle cx="95" cy="340" r="6" fill="#FFFFCC"/>
+  
+  <!-- Grille -->
+  <rect x="82" y="350" width="35" height="25" fill="#1A1A1A" rx="2"/>
+  <line x1="85" y1="355" x2="115" y2="355" stroke="#444" stroke-width="1"/>
+  <line x1="85" y1="362" x2="115" y2="362" stroke="#444" stroke-width="1"/>
+  <line x1="85" y1="369" x2="115" y2="369" stroke="#444" stroke-width="1"/>
+  
+  <!-- Wheels -->
+  <circle cx="180" cy="395" r="35" fill="#1A1A1A"/>
+  <circle cx="180" cy="395" r="28" fill="#333"/>
+  <circle cx="180" cy="395" r="15" fill="#666"/>
+  <circle cx="180" cy="395" r="5" fill="#999"/>
+  
+  <circle cx="420" cy="395" r="35" fill="#1A1A1A"/>
+  <circle cx="420" cy="395" r="28" fill="#333"/>
+  <circle cx="420" cy="395" r="15" fill="#666"/>
+  <circle cx="420" cy="395" r="5" fill="#999"/>
+  
+  <!-- Wheel treads -->
+  <g stroke="#000" stroke-width="2">
+    <line x1="180" y1="360" x2="180" y2="370"/>
+    <line x1="180" y1="420" x2="180" y2="430"/>
+    <line x1="145" y1="395" x2="155" y2="395"/>
+    <line x1="205" y1="395" x2="215" y2="395"/>
+  </g>
+  <g stroke="#000" stroke-width="2">
+    <line x1="420" y1="360" x2="420" y2="370"/>
+    <line x1="420" y1="420" x2="420" y2="430"/>
+    <line x1="385" y1="395" x2="395" y2="395"/>
+    <line x1="445" y1="395" x2="455" y2="395"/>
+  </g>
+  
+  <!-- DUCK DRIVER -->
+  <!-- Duck body -->
+  <ellipse cx="230" cy="270" rx="45" ry="40" fill="#FFD700"/>
+  
+  <!-- Duck wing/arm -->
+  <ellipse cx="195" cy="285" rx="15" ry="25" fill="#FFB800" transform="rotate(-20 195 285)"/>
+  
+  <!-- Duck head -->
+  <circle cx="230" cy="220" r="30" fill="#FFD700"/>
+  
+  <!-- Duck hat (military style to match jeep) -->
+  <ellipse cx="230" cy="195" rx="35" ry="8" fill="#2D4A22"/>
+  <rect x="205" y="180" width="50" height="18" fill="#3A5530" rx="2"/>
+  <circle cx="230" cy="188" r="6" fill="#8B0000"/>
+  <path d="M 226 186 L 234 186 M 230 182 L 230 194" stroke="white" stroke-width="1.5"/>
+  
+  <!-- Duck bill -->
+  <ellipse cx="195" cy="225" rx="25" ry="10" fill="#FF8C00"/>
+  <line x1="175" y1="225" x2="215" y2="225" stroke="#E67A00" stroke-width="1.5"/>
+  
+  <!-- Duck eye -->
+  <circle cx="215" cy="215" r="6" fill="white"/>
+  <circle cx="216" cy="216" r="4" fill="#1A1A1A"/>
+  <circle cx="217" cy="215" r="1.5" fill="white"/>
+  
+  <!-- Duck cheek blush -->
+  <circle cx="205" cy="235" r="5" fill="#FFB6C1" opacity="0.6"/>
+  
+  <!-- Duck arm reaching for steering wheel -->
+  <ellipse cx="260" cy="295" rx="10" ry="20" fill="#FFD700" transform="rotate(20 260 295)"/>
+  
+  <!-- Steering wheel -->
+  <ellipse cx="270" cy="305" rx="18" ry="18" fill="none" stroke="#2C2C2C" stroke-width="4"/>
+  <ellipse cx="270" cy="305" rx="6" ry="6" fill="#2C2C2C"/>
+  <line x1="270" y1="287" x2="270" y2="295" stroke="#2C2C2C" stroke-width="3"/>
+  <line x1="252" y1="305" x2="260" y2="305" stroke="#2C2C2C" stroke-width="3"/>
+  <line x1="280" y1="305" x2="288" y2="305" stroke="#2C2C2C" stroke-width="3"/>
+  
+  <!-- Duck feet visible -->
+  <ellipse cx="220" cy="380" rx="12" ry="5" fill="#FF8C00"/>
+  <ellipse cx="245" cy="380" rx="12" ry="5" fill="#FF8C00"/>
+  
+  <!-- Side mirror -->
+  <rect x="170" y="240" width="8" height="15" fill="#2D4A22"/>
+  <ellipse cx="166" cy="247" rx="6" ry="9" fill="#B8DCE8" stroke="#2D4A22" stroke-width="1.5"/>
+  
+  <!-- Door handle -->
+  <rect x="290" y="320" width="15" height="4" fill="#2D4A22" rx="1"/>
+  
+  <!-- Star on jeep (military style) -->
+  <circle cx="400" cy="320" r="22" fill="none" stroke="#8B7355" stroke-width="2"/>
+  <path d="M 400 305 L 404 316 L 415 316 L 406 323 L 410 334 L 400 327 L 390 334 L 394 323 L 385 316 L 396 316 Z" fill="#DAA520"/>
+  
+  <!-- Speed lines behind jeep -->
+  <g stroke="#888" stroke-width="2" opacity="0.5">
+    <line x1="50" y1="320" x2="80" y2="320"/>
+    <line x1="40" y1="350" x2="75" y2="350"/>
+    <line x1="55" y1="370" x2="85" y2="370"/>
+  </g>
+  
+  <!-- Small rocks on ground -->
+  <ellipse cx="80" cy="450" rx="8" ry="4" fill="#6B5B4A"/>
+  <ellipse cx="540" cy="460" rx="10" ry="5" fill="#6B5B4A"/>
+  <ellipse cx="300" cy="470" rx="7" ry="3" fill="#6B5B4A"/>
+</svg>
+```
+
+</details>
+
+## 11. nemotron-3-super_cloud
+
+**SVG size:** 1782 characters  
 **Complexity:** Low  
 **Shape elements:** 15  
 **Distinct colors:** 10  
@@ -1314,7 +1907,7 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
      version="1.1">
 
   <!-- Background -->
-  <rect width="300" height="200" fill="#cce6ff"/>
+  <rect fill="#cce6ff"/>
 
   <!-- Ground -->
   <rect x="0" y="170" width="300" height="30" fill="#8b5a2b"/>
@@ -1366,9 +1959,9 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 
 </details>
 
-## 8. nemotron-3-ultra_cloud
+## 12. nemotron-3-ultra_cloud
 
-**SVG size:** 16076 characters  
+**SVG size:** 16049 characters  
 **Complexity:** Very high  
 **Shape elements:** 92  
 **Distinct colors:** 40  
@@ -1448,7 +2041,7 @@ With over 15,000 characters of SVG markup, this is one of the most detailed outp
       <stop offset="100%" style="stop-color:#5D4037" />
     </linearGradient>
     <!-- Shadow Filter -->
-    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+    <filter id="dropShadow" x="-20%" y="-20%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
       <feOffset dx="3" dy="4" result="offsetBlur"/>
       <feComponentTransfer>
@@ -1703,9 +2296,9 @@ With over 15,000 characters of SVG markup, this is one of the most detailed outp
 
 </details>
 
-## 9. qwen3.5_397b-cloud
+## 13. qwen3.5_397b-cloud
 
-**SVG size:** 3106 characters  
+**SVG size:** 3081 characters  
 **Complexity:** Low  
 **Shape elements:** 29  
 **Distinct colors:** 16  
@@ -1734,7 +2327,7 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 ```xml
 <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
   <!-- Background / Sky -->
-  <rect width="500" height="400" fill="#87CEEB" />
+  <rect fill="#87CEEB" />
   
   <!-- Ground -->
   <rect y="300" width="500" height="100" fill="#8FBC8F" />
@@ -1822,13 +2415,13 @@ The following models were listed in the Ollama registry but returned HTTP 410 Go
 
 ## How to Pick the Best Model: A Decision Guide
 
-Now that you have seen all 9 SVGs, here is a structured way to decide which Ollama cloud model is best for your SVG generation needs:
+Now that you have seen all 13 SVGs, here is a structured way to decide which Ollama cloud model is best for your SVG generation needs:
 
 ### Step 1: Define your priority
 
 - **Visual quality first**: Scroll back through the SVGs above and pick the one that looks best to your eye. There is no substitute for visual judgment. The shape and color counts are useful, but a model with 60 shapes can look worse than one with 20 if the composition is off.
 - **Code quality first**: Open the raw SVG source for each model (use the disclosure toggles) and look for `<defs>`, `<use>`, gradients, and clean indentation. Models that produce structured code are easier to edit and reuse programmatically.
-- **Speed first**: If you are building a real-time app, prioritize the models that responded in under 15 seconds (gemma4:31b-cloud, nemotron-3-super:cloud).
+- **Speed first**: If you are building a real-time app, prioritize the models that responded in under 15 seconds (gemma4:31b-cloud, gemma4:cloud, gpt-oss:120b-cloud, nemotron-3-super:cloud).
 - **File size first**: For web embedding, smaller is better. Look at the SVG size column in the summary table.
 
 ### Step 2: Cross-check across prompts
@@ -1855,17 +2448,28 @@ resp = client.chat.completions.create(
 print(resp.choices[0].message.content)
 ```
 
+## New Models Added in This Update
+
+This update added 4 new cloud models that were not in the original comparison:
+
+- **deepseek-v4-flash:cloud** -- a faster variant of deepseek-v4-pro, balancing speed and detail
+- **gemma4:cloud** -- the standard Gemma 4 variant (alongside the 31B version)
+- **gpt-oss:120b-cloud** -- OpenAI's open-weight 120B model, available on Ollama Cloud
+- **minimax-m3:cloud** -- the latest MiniMax M3 model (alongside M2.7)
+
+These new models let you compare within the same family (e.g. deepseek-v4-pro vs deepseek-v4-flash, minimax-m2.7 vs minimax-m3, gemma4 vs gemma4:31b) to see how different sizes and variants perform on the same prompt.
+
 ## Conclusion: You Decide the Winner
 
-This comparison shows that 9 out of 13 active Ollama cloud models can generate valid SVG artwork from a natural language prompt involving a vehicle (jeep) with multiple parts. The results vary dramatically in complexity, style, and technique -- and there is no single "best" model.
+This comparison shows that 13 out of 17 active Ollama cloud models can generate valid SVG artwork from a natural language prompt involving a vehicle (jeep) with multiple parts. The results vary dramatically in complexity, style, and technique -- and there is no single "best" model.
 
 Our takeaways after running three SVG benchmarks (bicycle, parachute, jeep):
 
 - **deepseek-v4-pro:cloud** consistently produces well-structured, technically advanced SVGs with `<defs>`, `<use>`, and transforms. A strong default choice for code quality.
 - **glm-5.1:cloud** and **nemotron-3-ultra:cloud** consistently produce the longest, most detailed SVGs. Best when you want maximum visual richness.
-- **gemma4:31b-cloud** is consistently the fastest (under 25 seconds) and produces simple, compact SVGs. Best for speed-sensitive applications.
+- **gemma4:31b-cloud** and **gpt-oss:120b-cloud** are consistently among the fastest (under 12 seconds) and produce simple, compact SVGs. Best for speed-sensitive applications.
 - **kimi-k2.6:cloud** often uses animations, which is unique among the models -- but the animations sometimes make content invisible unless you fix them (as we did in the parachute post).
-- **glm-5.2:cloud** offers a reliable balance of detail, speed, and code quality.
+- **glm-5.2:cloud** and **deepseek-v4-flash:cloud** offer a reliable balance of detail, speed, and code quality.
 
 But the real verdict is yours. Scroll back through the SVGs, compare them visually, check the raw code, and pick the model that best fits your needs. Every model in this comparison is available right now on Ollama Cloud -- so you can reproduce these results in minutes.
 
