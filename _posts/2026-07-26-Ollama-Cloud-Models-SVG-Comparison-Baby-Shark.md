@@ -59,16 +59,16 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 |---|-------|----------|--------|--------|------------|---------|
 | 1 | `deepseek-v4-flash:cloud` | 4917 | 42 | 15 | High | Detailed |
 | 2 | `deepseek-v4-pro:cloud` | 3287 | 27 | 8 | Medium | Balanced |
-| 3 | `gemma4:31b-cloud` | 1627 | 15 | 9 | Medium | Balanced |
-| 4 | `gemma4:cloud` | 1615 | 13 | 8 | Compact | Compact |
+| 3 | `gemma4:31b-cloud` | 1628 | 15 | 9 | Medium | Balanced |
+| 4 | `gemma4:cloud` | 1616 | 13 | 8 | Compact | Compact |
 | 5 | `glm-5.1:cloud` | 11903 | 69 | 23 | Very high | Richest scene |
 | 6 | `glm-5.2:cloud` | 6479 | 43 | 14 | High | Detailed |
-| 7 | `gpt-oss:120b-cloud` | 1212 | 8 | 6 | Compact | Compact |
-| 8 | `kimi-k2.6:cloud` | 776 | 3 | 0 | Compact | Compact |
+| 7 | `gpt-oss:120b-cloud` | 1213 | 8 | 6 | Compact | Compact |
+| 8 | `kimi-k2.6:cloud` | 3425 | 13 | 8 | Medium | Balanced |
 | 9 | `minimax-m2.7:cloud` | 2341 | 18 | 10 | Medium | Balanced |
-| 10 | `minimax-m3:cloud` | 2859 | 24 | 6 | Medium | Balanced |
-| 11 | `nemotron-3-super:cloud` | 938 | 7 | 5 | Compact | Compact |
-| 12 | `nemotron-3-ultra:cloud` | 5199 | 25 | 8 | Medium | Detailed |
+| 10 | `minimax-m3:cloud` | 2860 | 24 | 6 | Medium | Balanced |
+| 11 | `nemotron-3-super:cloud` | 939 | 7 | 5 | Compact | Compact |
+| 12 | `nemotron-3-ultra:cloud` | 5200 | 25 | 8 | Medium | Detailed |
 | 13 | `qwen3.5:397b-cloud` | 2023 | 19 | 7 | Medium | Balanced |
 | 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
 | 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
@@ -112,7 +112,7 @@ Now read on for the full per-model breakdown and judge for yourself.
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Gills are present -- the model captured anatomical detail
@@ -126,7 +126,7 @@ With 4,917 characters of SVG markup, this is a balanced output -- enough detail 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="auto">
   <defs>
     <!-- Drop shadow for the shark -->
     <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
@@ -273,7 +273,7 @@ With 3,287 characters of SVG markup, this is a balanced output -- enough detail 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="auto">
   <defs>
     <!-- Body Gradient -->
     <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -345,7 +345,7 @@ With 3,287 characters of SVG markup, this is a balanced output -- enough detail 
 
 ## 3. `gemma4:31b-cloud`
 
-**SVG size:** 1627 characters  
+**SVG size:** 1628 characters  
 **Complexity:** Medium  
 **Shape elements:** 15  
 **Distinct colors:** 9  
@@ -363,18 +363,18 @@ With 3,287 characters of SVG markup, this is a balanced output -- enough detail 
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Bubbles are present -- the model created an underwater atmosphere
 - Baby/cute styling is present -- the model captured the "baby" cue
 
-With 1,627 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
+With 1,628 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+<svg width="400" height="auto" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
   <!-- Background Circle for a pop of color -->
   <circle cx="200" cy="150" r="120" fill="#e0f7fa" />
   <!-- Tail Fin -->
@@ -407,7 +407,7 @@ With 1,627 characters of SVG markup, this is a compact output -- minimal but pot
 
 ## 4. `gemma4:cloud`
 
-**SVG size:** 1615 characters  
+**SVG size:** 1616 characters  
 **Complexity:** Compact  
 **Shape elements:** 13  
 **Distinct colors:** 8  
@@ -425,19 +425,19 @@ With 1,627 characters of SVG markup, this is a compact output -- minimal but pot
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Gills are present -- the model captured anatomical detail
 - Bubbles are present -- the model created an underwater atmosphere
 - Baby/cute styling is present -- the model captured the "baby" cue
 
-With 1,615 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
+With 1,616 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+<svg width="400" height="auto" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
   <!-- Background Circle for a little pop of color -->
   <circle cx="200" cy="150" r="120" fill="#e0f7fa" />
   <!-- Tail Fin -->
@@ -490,7 +490,7 @@ With 1,615 characters of SVG markup, this is a compact output -- minimal but pot
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Gills are present -- the model captured anatomical detail
@@ -728,7 +728,7 @@ With 11,903 characters of SVG markup, this is a detailed output that balances ri
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Gills are present -- the model captured anatomical detail
@@ -743,7 +743,7 @@ With 6,479 characters of SVG markup, this is a detailed output that balances ric
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="auto">
   <defs>
     <!-- Ocean Background Gradient -->
     <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
@@ -892,7 +892,7 @@ With 6,479 characters of SVG markup, this is a detailed output that balances ric
 
 ## 7. `gpt-oss:120b-cloud`
 
-**SVG size:** 1212 characters  
+**SVG size:** 1213 characters  
 **Complexity:** Compact  
 **Shape elements:** 8  
 **Distinct colors:** 6  
@@ -910,11 +910,11 @@ With 6,479 characters of SVG markup, this is a detailed output that balances ric
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 
-With 1,212 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
+With 1,213 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
 
 <details><summary>View raw SVG source</summary>
 
@@ -923,7 +923,7 @@ With 1,212 characters of SVG markup, this is a compact output -- minimal but pot
     viewBox="0 0 200 120"
     xmlns="http://www.w3.org/2000/svg"
     width="200"
-    height="120"
+    height="auto"
     style="background:#e0f7ff"
 >
   <!-- Body -->
@@ -989,10 +989,10 @@ With 1,212 characters of SVG markup, this is a compact output -- minimal but pot
 
 ## 8. `kimi-k2.6:cloud`
 
-**SVG size:** 776 characters  
-**Complexity:** Compact  
-**Shape elements:** 3  
-**Distinct colors:** 0  
+**SVG size:** 3425 characters  
+**Complexity:** Medium  
+**Shape elements:** 13  
+**Distinct colors:** 8  
 **Raw response:** 17103 characters  
 **Generation time:** 51.4s
 
@@ -1004,25 +1004,92 @@ With 1,212 characters of SVG markup, this is a compact output -- minimal but pot
 
 - Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
 - Includes gradient fills for richer visual depth (great for ocean water and lighting)
+- Applies SVG filters (e.g., drop shadows, blurs) for atmospheric effects
+- Uses transforms (translate, rotate, scale) for positioning the shark and scene elements
+- Contains XML comments, showing the model's internal documentation of its work
 
-**Concept adherence:** Limited -- the model may have drawn a generic shape rather than a recognizable baby shark.
+**Concept adherence:**
 
-With 776 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
+- Fin/dorsal fin is present -- the model captured the shark's defining feature
+- Mouth is present -- the model rendered the shark's mouth
+- Tail is present -- the model captured the shark's propulsion
+- Eyes are present -- the model gave the shark character
+- Gills are present -- the model captured anatomical detail
+- Baby/cute styling is present -- the model captured the "baby" cue
+
+With 3,425 characters of SVG markup, this is a balanced output -- enough detail to be recognizable without being bloated.
 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" class="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none" preserveAspectRatio="none" width="100%" height="auto">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" width="100%" height="auto">
             <defs>
-                <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:white;stop-opacity:0.5" />
-                    <stop offset="100%" style="stop-color:white;stop-opacity:0" />
+                <!-- Body Gradient -->
+                <linearGradient id="sharkBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00BFFF;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#0080FF;stop-opacity:1" />
                 </linearGradient>
+                <!-- Belly Gradient -->
+                <linearGradient id="sharkBelly" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#E0F7FA;stop-opacity:1" />
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
             </defs>
-            <path id="ray1" d="M0,0 L500,1000 L-200,1000 Z" fill="url(#sunGradient)" />
-            <path id="ray2" d="M200,0 L800,1000 L300,1000 Z" fill="url(#sunGradient)" />
-            <path id="ray3" d="M600,0 L1200,1000 L600,1000 Z" fill="url(#sunGradient)" />
+
+            <g id="shark-group">
+                <!-- Tail (Back Fin) -->
+                <g id="tail-fin" transform="translate(380, 150)">
+                    <path d="M0,0 Q30,-40 60,-70 Q50,0 60,70 Q30,40 0,0" fill="url(#sharkBody)" stroke="#0066CC" stroke-width="2" stroke-linejoin="round" />
+                </g>
+
+                <!-- Dorsal Fin (Top) -->
+                <path d="M220,120 Q240,60 280,50 L290,120 Z" fill="url(#sharkBody)" stroke="#0066CC" stroke-width="2" stroke-linejoin="round" />
+
+                <!-- Pectoral Fin (Side/Bottom) -->
+                <path d="M220,160 Q200,200 180,220 L250,180 Z" fill="#0080FF" stroke="#0066CC" stroke-width="2" stroke-linejoin="round" />
+
+                <!-- Main Body -->
+                <!-- Using a complex path for a shark silhouette -->
+                <path id="body-shape"
+                      d="M100,150 Q100,100 180,90 L350,120 Q420,130 380,150 Q420,170 350,180 L180,210 Q100,200 100,150 Z"
+                      fill="url(#sharkBody)"
+                      stroke="#0066CC"
+                      stroke-width="3"
+                      stroke-linejoin="round" />
+
+                <!-- Belly Patch -->
+                <path d="M110,150 Q250,150 360,160 L340,180 Q220,180 110,150 Z" fill="url(#sharkBelly)" opacity="0.8" />
+
+                <!-- Gills -->
+                <g stroke="#005599" stroke-width="3" stroke-linecap="round">
+                    <path d="M250,110 Q250,130 250,150" />
+                    <path d="M265,112 Q265,132 265,152" />
+                    <path d="M280,114 Q280,134 280,154" />
+                </g>
+
+                <!-- Face Details -->
+                <!-- Eye -->
+                <g id="eye-group" transform="translate(140, 130)">
+                    <circle cx="0" cy="0" r="10" fill="white" stroke="#0066CC" stroke-width="2"/>
+                    <circle id="pupil" cx="2" cy="0" r="4" fill="black" />
+                    <circle cx="4" cy="-3" r="2" fill="white" opacity="0.8" />
+                </g>
+
+                <!-- Mouth -->
+                <path id="mouth" d="M120,170 Q140,185 160,175" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round" />
+
+                <!-- Cheek Blush -->
+                <ellipse cx="150" cy="160" rx="10" ry="5" fill="#FFB6C1" opacity="0.4" />
+            </g>
         </svg>
+
 ```
 
 </details>
@@ -1049,7 +1116,7 @@ With 776 characters of SVG markup, this is a compact output -- minimal but poten
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Gills are present -- the model captured anatomical detail
@@ -1114,7 +1181,7 @@ With 2,341 characters of SVG markup, this is a balanced output -- enough detail 
 
 ## 10. `minimax-m3:cloud`
 
-**SVG size:** 2859 characters  
+**SVG size:** 2860 characters  
 **Complexity:** Medium  
 **Shape elements:** 24  
 **Distinct colors:** 6  
@@ -1134,7 +1201,7 @@ With 2,341 characters of SVG markup, this is a balanced output -- enough detail 
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
 - Gills are present -- the model captured anatomical detail
@@ -1142,12 +1209,12 @@ With 2,341 characters of SVG markup, this is a balanced output -- enough detail 
 - Water/ocean scene is present -- the model understood the habitat
 - Baby/cute styling is present -- the model captured the "baby" cue
 
-With 2,859 characters of SVG markup, this is a balanced output -- enough detail to be recognizable without being bloated.
+With 2,860 characters of SVG markup, this is a balanced output -- enough detail to be recognizable without being bloated.
 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="auto">
   <!-- Background (ocean) -->
   <defs>
     <linearGradient id="ocean" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -1207,7 +1274,7 @@ With 2,859 characters of SVG markup, this is a balanced output -- enough detail 
 
 ## 11. `nemotron-3-super:cloud`
 
-**SVG size:** 938 characters  
+**SVG size:** 939 characters  
 **Complexity:** Compact  
 **Shape elements:** 7  
 **Distinct colors:** 5  
@@ -1229,12 +1296,12 @@ With 2,859 characters of SVG markup, this is a balanced output -- enough detail 
 - Eyes are present -- the model gave the shark character
 - Baby/cute styling is present -- the model captured the "baby" cue
 
-With 938 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
+With 939 characters of SVG markup, this is a compact output -- minimal but potentially efficient for web embedding.
 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg width="200" height="150" viewBox="0 0 200 150"
+<svg width="200" height="auto" viewBox="0 0 200 150"
      xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc">
   <title id="title">Baby Shark</title>
   <desc id="desc">A cute, simplified baby shark silhouette.</desc>
@@ -1266,7 +1333,7 @@ With 938 characters of SVG markup, this is a compact output -- minimal but poten
 
 ## 12. `nemotron-3-ultra:cloud`
 
-**SVG size:** 5199 characters  
+**SVG size:** 5200 characters  
 **Complexity:** Medium  
 **Shape elements:** 25  
 **Distinct colors:** 8  
@@ -1294,12 +1361,12 @@ With 938 characters of SVG markup, this is a compact output -- minimal but poten
 - Bubbles are present -- the model created an underwater atmosphere
 - Baby/cute styling is present -- the model captured the "baby" cue
 
-With 5,199 characters of SVG markup, this is a detailed output that balances richness with readability.
+With 5,200 characters of SVG markup, this is a detailed output that balances richness with readability.
 
 <details><summary>View raw SVG source</summary>
 
 ```xml
-<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+<svg width="400" height="auto" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <!-- Definitions for Gradients &amp; Filters -->
   <defs>
     <!-- Main Body Gradient (Blue/Grey) -->
@@ -1440,9 +1507,10 @@ With 5,199 characters of SVG markup, this is a detailed output that balances ric
 **Concept adherence:**
 
 - Fin/dorsal fin is present -- the model captured the shark's defining feature
-- Teeth/mouth is present -- the model rendered the shark's mouth
+- Mouth is present -- the model rendered the shark's mouth
 - Tail is present -- the model captured the shark's propulsion
 - Eyes are present -- the model gave the shark character
+- Baby/cute styling is present -- the model captured the "baby" cue
 
 With 2,023 characters of SVG markup, this is a balanced output -- enough detail to be recognizable without being bloated.
 
