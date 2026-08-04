@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Which Ollama Cloud Model is Best? Elephant on a Skateboard SVG Comparison (13 Models)"
+title: "Which Ollama Cloud Model is Best? Elephant on a Skateboard SVG Comparison (14 Models)"
 description: "Compare 14 Ollama cloud models on a whimsical prompt: an elephant on a skateboard. Find the best LLM for funny animal SVG scenes. You decide the winner."
 date: 2026-07-27
 header-img: "img/post-bg.jpg"
@@ -25,7 +25,7 @@ seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, elephant skateboard SVG, AI elephant drawing, LLM SVG benchmark, AI image generation comparison, deepseek vs glm vs qwen, which Ollama model is best, Ollama cloud models 2026, AI creative art, funny animal SVG, elephant SVG, AI art comparison, complex SVG scene, animal on skateboard, whimsical AI art"
 ---
 
-# Which Ollama Cloud Model is Best? Elephant on a Skateboard SVG Comparison (13 Models)
+# Which Ollama Cloud Model is Best? Elephant on a Skateboard SVG Comparison (14 Models)
 
 After testing LLMs on ducks, vehicles, dev scenes, marine life, chess, and the FIFA World Cup, we wanted to know: **can today's top models draw a whimsical, physically impossible scene?** This time we asked 14 Ollama cloud models to draw **an elephant on a skateboard** -- a prompt that tests organic anatomy (a massive elephant), mechanical precision (a skateboard with wheels), scale mismatch (a huge animal on a tiny board), and creative humor.
 

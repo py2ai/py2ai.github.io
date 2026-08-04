@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (13 Models)"
+title: "Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (14 Models)"
 description: "Compare 14 Ollama cloud models on a nature / scenery prompt: drawing cherry blossom trees with flowers. Find the best LLM for SVG art. You decide the winner."
 date: 2026-07-26
 header-img: "img/post-bg.jpg"
@@ -22,7 +22,7 @@ seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, deepseek vs glm vs qwen, LLM SVG benchmark, AI image generation comparison, cherry blossom SVG, sakura SVG, which Ollama model is best, Ollama cloud models 2026, AI nature art, LLM drawing benchmark"
 ---
 
-# Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (13 Models)
+# Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (14 Models)
 
 After testing LLMs on ducks and vehicles, we wanted to know: **can today's top models draw nature?** This time we asked 14 Ollama cloud models to draw **cherry blossom trees with flowers** -- a softer, more organic prompt that tests color palettes, repeated organic shapes (petals), and scene composition.
 
