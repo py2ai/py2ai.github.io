@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? Baby Shark Fish SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a marine-life prompt: a baby shark fish. Find the best LLM for SVG animal art. You decide the winner."
+description: "Compare 14 Ollama cloud models on a marine-life prompt: a baby shark fish. Find the best LLM for SVG animal art. You decide the winner."
 date: 2026-07-26
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Baby-Shark/
@@ -24,7 +24,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? Baby Shark Fish SVG Comparison (13 Models)
 
-After testing LLMs on ducks, vehicles, dev scenes, and nature, we wanted to know: **can today's top models draw marine life?** This time we asked 13 Ollama cloud models to draw **a baby shark fish** -- a prompt that tests organic curves, underwater atmosphere, character anatomy, and cute styling.
+After testing LLMs on ducks, vehicles, dev scenes, and nature, we wanted to know: **can today's top models draw marine life?** This time we asked 14 Ollama cloud models to draw **a baby shark fish** -- a prompt that tests organic curves, underwater atmosphere, character anatomy, and cute styling.
 
 The prompt was: `Make an svg image of a baby shark fish`
 
@@ -70,12 +70,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super:cloud` | 939 | 7 | 5 | Compact | Compact |
 | 12 | `nemotron-3-ultra:cloud` | 5200 | 25 | 8 | Medium | Detailed |
 | 13 | `qwen3.5:397b-cloud` | 2023 | 19 | 7 | Medium | Balanced |
-| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash:0731-cloud` | 6060 | 53 | 6 | High | Detailed |
+| 15 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -1554,9 +1555,170 @@ With 2,023 characters of SVG markup, this is a balanced output -- enough detail 
 
 </details>
 
+## 14. `deepseek-v4-flash:0731-cloud`
+
+**SVG size:** 6060 characters  
+**Complexity:** High  
+**Shape elements:** 53  
+**Distinct colors:** 6  
+**Raw response:** 6060 characters  
+**Generation time:** ~100s
+
+![deepseek-v4-flash:0731-cloud baby shark SVG](/assets/img/diagrams/ollama-svg-shark/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth
+- Applies SVG filters (e.g., drop shadows, blurs) for atmospheric effects
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- The model rendered its interpretation of the "baby shark" prompt -- review the SVG above for how well it captured the subject, composition, and key visual cues
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="auto">
+  <defs>
+    <!-- Shark Body Gradient -->
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#81D4FA" />
+      <stop offset="100%" stop-color="#29B6F6" />
+    </linearGradient>
+    <!-- Drop Shadow for the Shark -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#000000" flood-opacity="0.1" />
+    </filter>
+  </defs>
+  <!-- Background Ocean Circle -->
+  <circle cx="200" cy="200" r="180" fill="#E0F7FA" />
+  <!-- Background Waves -->
+  <g stroke="#B2EBF2" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M 40 120 Q 60 100, 80 120 T 120 120" />
+    <path d="M 280 280 Q 300 260, 320 280 T 360 280" />
+    <path d="M 330 140 Q 350 120, 370 140 T 410 140" />
+    <path d="M 20 60 Q 40 40, 60 60 T 100 60" />
+    <path d="M 120 320 Q 140 300, 160 320 T 200 320" />
+  </g>
+  <!-- Seaweed / Coral -->
+  <g fill="none" stroke-width="6" stroke-linecap="round">
+    <path d="M 40 380 Q 50 360, 40 340 Q 30 320, 40 300" stroke="#80CBC4" />
+    <path d="M 60 380 Q 70 350, 60 320 Q 50 290, 60 260" stroke="#4DB6AC" />
+    <path d="M 350 380 Q 340 350, 350 320 Q 360 290, 350 260" stroke="#80CBC4" />
+    <path d="M 370 380 Q 380 360, 370 340" stroke="#4DB6AC" />
+  </g>
+  <!-- Bubbles -->
+  <g fill="#FFFFFF" fill-opacity="0.7" stroke="#B2EBF2" stroke-width="2">
+    <circle cx="60" cy="100" r="15" />
+    <circle cx="45" cy="130" r="8" />
+    <circle cx="80" cy="80" r="5" />
+    <circle cx="330" cy="80" r="12" />
+    <circle cx="310" cy="50" r="6" />
+    <circle cx="360" cy="100" r="7" />
+    <circle cx="180" cy="60" r="5" />
+    <circle cx="260" cy="40" r="9" />
+  </g>
+  <!-- Bubble Highlights -->
+  <g fill="#FFFFFF">
+    <circle cx="55" cy="95" r="3" />
+    <circle cx="42" cy="127" r="2" />
+    <circle cx="78" cy="78" r="1.5" />
+    <circle cx="326" cy="76" r="2.5" />
+    <circle cx="308" cy="47" r="1.5" />
+    <circle cx="357" cy="97" r="2" />
+    <circle cx="178" cy="58" r="1.5" />
+    <circle cx="257" cy="37" r="2" />
+  </g>
+  <!-- Sparkles -->
+  <g fill="#FFFFFF">
+    <path d="M 120 70 Q 120 80, 130 80 Q 120 80, 120 90 Q 120 80, 110 80 Q 120 80, 120 70" />
+    <path d="M 280 240 Q 280 250, 290 250 Q 280 250, 280 260 Q 280 250, 270 250 Q 280 250, 280 240" />
+    <path d="M 320 180 Q 320 185, 325 185 Q 320 185, 320 190 Q 320 185, 315 185 Q 320 185, 320 180" />
+    <path d="M 80 240 Q 80 245, 85 245 Q 80 245, 80 250 Q 80 245, 75 245 Q 80 245, 80 240" />
+  </g>
+  <!-- Baby Shark Group -->
+  <g filter="url(#shadow)">
+    <!-- Tail Fin Inner Lines -->
+    <g stroke="#0288D1" stroke-width="4" fill="none" stroke-linecap="round">
+      <path d="M 358 195 Q 370 180, 380 125" />
+      <path d="M 358 205 Q 370 220, 380 275" />
+    </g>
+    <!-- Dorsal Fin (Top) -->
+    <path d="M 180 125 C 190 60, 230 50, 250 75 C 260 95, 255 120, 245 130 C 220 110, 200 120, 180 125 Z" 
+          fill="url(#bodyGrad)" stroke="#0288D1" stroke-width="6" stroke-linejoin="round" />
+    <!-- Pectoral Fin (Side) -->
+    <path d="M 140 240 C 130 280, 160 310, 190 300 C 180 270, 160 250, 140 240 Z" 
+          fill="url(#bodyGrad)" stroke="#0288D1" stroke-width="6" stroke-linejoin="round" />
+    <!-- Main Body -->
+    <path d="M 90 190 
+             C 90 140, 150 110, 230 120 
+             C 300 130, 340 160, 360 170 
+             L 390 110 
+             Q 370 180, 360 200 
+             Q 370 220, 390 290 
+             L 350 230 
+             C 300 270, 180 290, 110 270 
+             C 85 260, 80 230, 90 190 Z" 
+          fill="url(#bodyGrad)" stroke="#0288D1" stroke-width="6" stroke-linejoin="round" />
+    <!-- Belly (Lighter color) -->
+    <path d="M 90 190 
+             C 95 250, 140 275, 200 280 
+             C 270 280, 320 260, 350 230 
+             C 310 265, 220 285, 140 265 
+             C 105 255, 90 230, 90 190 Z" 
+          fill="#FFFFFF" stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" />
+    <!-- Belly Outline (to re-add the body outline over the belly) -->
+    <path d="M 90 190 
+             C 95 250, 140 275, 200 280 
+             C 270 280, 320 260, 350 230 
+             C 310 265, 220 285, 140 265 
+             C 105 255, 90 230, 90 190 Z" 
+          fill="none" stroke="#0288D1" stroke-width="6" stroke-linejoin="round" />
+    <!-- Nostril -->
+    <path d="M 85 195 Q 90 192, 95 195" fill="none" stroke="#0288D1" stroke-width="4" stroke-linecap="round" />
+    <!-- Gills -->
+    <g fill="none" stroke="#0288D1" stroke-width="4" stroke-linecap="round">
+      <path d="M 200 185 Q 205 195, 200 205" />
+      <path d="M 210 182 Q 215 195, 210 208" />
+    </g>
+    <!-- Mouth &amp; Tongue -->
+    <path d="M 105 215 Q 130 245, 165 220 Q 130 220, 105 215" 
+          fill="#D32F2F" stroke="#0288D1" stroke-width="4" stroke-linejoin="round" />
+    <path d="M 115 225 Q 130 240, 145 225 Z" 
+          fill="#FF8A80" stroke="#0288D1" stroke-width="2" stroke-linejoin="round" />
+    <!-- Small Lip -->
+    <path d="M 100 215 Q 110 208, 120 215" 
+          fill="url(#bodyGrad)" stroke="#0288D1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Left Eye (Far) -->
+    <circle cx="140" cy="165" r="9" fill="#FFFFFF" stroke="#0288D1" stroke-width="4" />
+    <circle cx="143" cy="165" r="4.5" fill="#333333" />
+    <circle cx="145" cy="163" r="1.5" fill="#FFFFFF" />
+    <!-- Right Eye (Near) -->
+    <circle cx="180" cy="165" r="12" fill="#FFFFFF" stroke="#0288D1" stroke-width="4" />
+    <circle cx="185" cy="165" r="6" fill="#333333" />
+    <circle cx="187" cy="163" r="2" fill="#FFFFFF" />
+    <!-- Blush / Cheeks -->
+    <circle cx="145" cy="195" r="7" fill="#FFCDD2" opacity="0.8" />
+    <circle cx="185" cy="195" r="9" fill="#FFCDD2" opacity="0.8" />
+    <!-- Cute Back Details -->
+    <g stroke="#0288D1" stroke-width="4" stroke-linecap="round">
+      <path d="M 280 155 L 290 155" />
+      <path d="M 295 165 L 305 165" />
+    </g>
+  </g>
+</svg>
+```
+
+</details>
+
+
 ## Conclusion
 
-That's all 13 baby shark SVGs from the active Ollama cloud models. The marine-life prompt tested a different skill set than our previous prompts: organic curves, underwater atmosphere, anatomical features, and cute character styling.
+That's all 14 baby shark SVGs from the active Ollama cloud models. The marine-life prompt tested a different skill set than our previous prompts: organic curves, underwater atmosphere, anatomical features, and cute character styling.
 
 **No single model is best at everything.** A model that produces a stunning cherry blossom may produce a basic shark, and vice versa. The best model for you depends on your specific use case:
 

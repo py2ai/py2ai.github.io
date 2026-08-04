@@ -40,12 +40,13 @@ Cloud models are identified by the `remote_host` field in the API response -- th
 | 7 | `nemotron-3-super_cloud` | 1606 | Generated |
 | 8 | `nemotron-3-ultra_cloud` | 15952 | Generated |
 | 9 | `qwen3.5_397b-cloud` | 3277 | Generated |
-| 10 | `bjoernb/claude-opus-4-5:latest` | - | Retired (410) |
-| 11 | `deepseek-v3.1:671b-cloud` | - | Retired (410) |
-| 12 | `glm-5:cloud` | - | Retired (410) |
-| 13 | `qwen3-vl:235b-cloud` | - | Retired (410) |
+| 10 | `deepseek-v4-flash_0731-cloud` | 6400 | Generated |
+| 11 | `bjoernb/claude-opus-4-5:latest` | - | Retired (410) |
+| 12 | `deepseek-v3.1:671b-cloud` | - | Retired (410) |
+| 13 | `glm-5:cloud` | - | Retired (410) |
+| 14 | `qwen3-vl:235b-cloud` | - | Retired (410) |
 
-**9 out of 13** models successfully produced a valid SVG. The 4 retired models returned HTTP 410 Gone (they were removed from Ollama Cloud on 2026-07-15).
+**10 out of 14** models successfully produced a valid SVG. The 4 retired models returned HTTP 410 Gone (they were removed from Ollama Cloud on 2026-07-15).
 
 ## 1. deepseek-v4-pro_cloud
 
@@ -1773,6 +1774,164 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 
 </details>
 
+## 10. deepseek-v4-flash_0731-cloud
+
+**SVG size:** 6400 characters  
+**Raw response:** 6400 characters
+
+![deepseek-v4-flash_0731-cloud duck parachute SVG](/assets/img/diagrams/ollama-svg-parachute/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **56 shape elements** and uses **7 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+This is a moderately sized SVG (5,000-10,000 characters) that balances detail with manageable file size. A good middle ground for web embedding and visual richness.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="auto">
+  <defs>
+    <!-- Sky Gradient -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4A90E2" />
+      <stop offset="100%" stop-color="#A9E0FF" />
+    </linearGradient>
+    <!-- Parachute Canopy Gradient -->
+    <linearGradient id="canopyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF4500" />
+      <stop offset="50%" stop-color="#FF8C00" />
+      <stop offset="100%" stop-color="#FF4500" />
+    </linearGradient>
+    <!-- Duck Body Gradient -->
+    <radialGradient id="duckGrad" cx="400" cy="550" r="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFF8DC" />
+      <stop offset="40%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#FFA500" />
+    </radialGradient>
+    <!-- Duck Wing Gradient -->
+    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066" />
+      <stop offset="100%" stop-color="#FFCC00" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#skyGrad)" />
+  <!-- Sun -->
+  <circle cx="100" cy="100" r="90" fill="#FFD700" opacity="0.2" />
+  <circle cx="100" cy="100" r="70" fill="#FFD700" opacity="0.4" />
+  <circle cx="100" cy="100" r="50" fill="#FFD700" opacity="0.9" />
+  <!-- Clouds -->
+  <g fill="#FFF" opacity="0.8">
+    <!-- Cloud 1 (Top Right) -->
+    <circle cx="650" cy="100" r="50" />
+    <circle cx="700" cy="120" r="60" />
+    <circle cx="740" cy="150" r="45" />
+    <circle cx="680" cy="160" r="40" />
+    <!-- Cloud 2 (Mid Left) -->
+    <circle cx="120" cy="350" r="40" />
+    <circle cx="160" cy="330" r="50" />
+    <circle cx="200" cy="360" r="35" />
+    <!-- Cloud 3 (Bottom Right) -->
+    <circle cx="680" cy="600" r="45" opacity="0.6" />
+    <circle cx="730" cy="620" r="55" opacity="0.6" />
+    <circle cx="760" cy="650" r="40" opacity="0.6" />
+  </g>
+  <!-- Wind / Speed Lines -->
+  <g fill="none" stroke="#FFF" stroke-width="4" stroke-linecap="round" opacity="0.6">
+    <path d="M 120 200 Q 150 200, 170 220" />
+    <path d="M 630 180 Q 660 180, 680 200" />
+    <path d="M 640 250 Q 670 250, 690 270" />
+    <path d="M 220 400 L 280 400" stroke-dasharray="10 10" />
+    <path d="M 520 450 L 600 450" stroke-dasharray="15 15" />
+    <path d="M 180 600 L 240 600" stroke-dasharray="8 8" />
+    <path d="M 550 650 L 620 650" stroke-dasharray="12 12" />
+  </g>
+  <!-- Ropes -->
+  <g stroke="#555" stroke-width="3" stroke-linecap="round">
+    <line x1="253.3" y1="280" x2="370" y2="550" />
+    <line x1="326.6" y1="280" x2="370" y2="550" />
+    <line x1="400" y1="280" x2="370" y2="550" />
+    <line x1="473.3" y1="280" x2="370" y2="550" />
+    <line x1="546.6" y1="280" x2="370" y2="550" />
+  </g>
+  <!-- Parachute Canopy -->
+  <g>
+    <!-- Main Canopy Shape -->
+    <path d="M 180 280 
+             C 180 80, 620 80, 620 280 
+             Q 586.6 240, 546.6 280 
+             Q 513.3 240, 473.3 280 
+             Q 440 240, 400 280 
+             Q 366.6 240, 326.6 280 
+             Q 293.3 240, 253.3 280 
+             Q 226.6 240, 180 280 Z" 
+          fill="url(#canopyGrad)" />
+    <!-- Canopy Seams (White Stripes) -->
+    <path d="M 400 80 Q 300 180, 253.3 280" fill="none" stroke="#FFF" stroke-width="5" opacity="0.9" />
+    <path d="M 400 80 Q 360 180, 326.6 280" fill="none" stroke="#FFF" stroke-width="5" opacity="0.9" />
+    <path d="M 400 80 Q 440 180, 473.3 280" fill="none" stroke="#FFF" stroke-width="5" opacity="0.9" />
+    <path d="M 400 80 Q 500 180, 546.6 280" fill="none" stroke="#FFF" stroke-width="5" opacity="0.9" />
+  </g>
+  <!-- Duck -->
+  <g>
+    <!-- Tail -->
+    <path d="M 290 570 L 240 530 L 280 610 Z" fill="url(#duckGrad)" />
+    <!-- Body -->
+    <ellipse cx="370" cy="580" rx="90" ry="70" fill="url(#duckGrad)" />
+    <!-- Neck -->
+    <path d="M 410 510 L 480 500 L 470 580 L 400 580 Z" fill="url(#duckGrad)" />
+    <!-- Head -->
+    <circle cx="450" cy="490" r="50" fill="url(#duckGrad)" />
+    <!-- Head Tuft -->
+    <path d="M 440 445 Q 430 425, 445 420 Q 445 435, 450 440 Z" fill="url(#duckGrad)" />
+    <path d="M 450 440 Q 455 410, 465 415 Q 460 430, 455 440 Z" fill="url(#duckGrad)" />
+    <!-- Beak -->
+    <path d="M 490 480 Q 550 480, 550 500 Q 550 515, 490 510 Z" fill="#FF8C00" />
+    <circle cx="515" cy="485" r="2.5" fill="#CC7000" />
+    <path d="M 495 505 Q 515 515, 530 505" fill="none" stroke="#CC7000" stroke-width="2" stroke-linecap="round" />
+    <!-- Eye -->
+    <circle cx="465" cy="475" r="7" fill="#000" />
+    <circle cx="467" cy="473" r="2.5" fill="#FFF" />
+    <!-- Wing -->
+    <path d="M 330 570 C 330 540, 410 550, 410 590 C 410 620, 350 620, 330 570 Z" fill="url(#wingGrad)" />
+    <!-- Wing Feather Details -->
+    <path d="M 350 570 Q 370 580, 390 580" fill="none" stroke="#E6A800" stroke-width="3" stroke-linecap="round" />
+    <path d="M 345 580 Q 365 590, 385 590" fill="none" stroke="#E6A800" stroke-width="3" stroke-linecap="round" />
+    <path d="M 350 590 Q 370 600, 380 600" fill="none" stroke="#E6A800" stroke-width="3" stroke-linecap="round" />
+    <!-- Highlights -->
+    <ellipse cx="435" cy="470" rx="15" ry="10" fill="#FFF" opacity="0.4" transform="rotate(-30 435 470)" />
+    <ellipse cx="330" cy="550" rx="20" ry="15" fill="#FFF" opacity="0.4" transform="rotate(-45 330 550)" />
+    <!-- Feet -->
+    <!-- Left Foot -->
+    <path d="M 330 640 Q 320 670, 300 680 L 330 690 L 350 680 Q 340 660, 340 640 Z" fill="#FF8C00" />
+    <!-- Right Foot -->
+    <path d="M 390 640 Q 380 670, 360 680 L 390 690 L 410 680 Q 400 660, 400 640 Z" fill="#FF8C00" />
+  </g>
+  <!-- Harness -->
+  <g>
+    <!-- Harness Straps -->
+    <path d="M 310 550 Q 370 580, 430 550" fill="none" stroke="#8B4513" stroke-width="8" stroke-linecap="round" />
+    <path d="M 310 610 Q 370 640, 430 610" fill="none" stroke="#8B4513" stroke-width="8" stroke-linecap="round" />
+    <line x1="330" y1="550" x2="330" y2="610" stroke="#8B4513" stroke-width="8" stroke-linecap="round" />
+    <line x1="410" y1="550" x2="410" y2="610" stroke="#8B4513" stroke-width="8" stroke-linecap="round" />
+    <!-- Harness Ring (Connection point for ropes) -->
+    <circle cx="370" cy="550" r="14" fill="#A9A9A9" stroke="#555" stroke-width="4" />
+    <circle cx="370" cy="550" r="6" fill="#555" />
+  </g>
+</svg>
+```
+
+</details>
+
+
 ## Retired Models
 
 The following models were listed in the Ollama registry but returned HTTP 410 Gone when queried. They were retired from Ollama Cloud and are no longer available for inference:
@@ -1800,7 +1959,7 @@ Observations across models:
 
 ## Conclusion
 
-This comparison shows that 9 out of 13 active Ollama cloud models can generate valid SVG artwork from a complex natural language prompt involving multiple objects, spatial relationships, and a specific mechanism. The results vary dramatically in complexity, style, and technique:
+This comparison shows that 10 out of 14 active Ollama cloud models can generate valid SVG artwork from a complex natural language prompt involving multiple objects, spatial relationships, and a specific mechanism. The results vary dramatically in complexity, style, and technique:
 
 - **Simplest output**: nemotron-3-super:cloud produced a compact SVG with basic shapes
 - **Most detailed output**: nemotron-3-ultra:cloud generated a 15,000+ character SVG with rich scene elements

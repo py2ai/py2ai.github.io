@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? Elephant on a Skateboard SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a whimsical prompt: an elephant on a skateboard. Find the best LLM for funny animal SVG scenes. You decide the winner."
+description: "Compare 14 Ollama cloud models on a whimsical prompt: an elephant on a skateboard. Find the best LLM for funny animal SVG scenes. You decide the winner."
 date: 2026-07-27
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Elephant-Skateboard/
@@ -27,7 +27,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? Elephant on a Skateboard SVG Comparison (13 Models)
 
-After testing LLMs on ducks, vehicles, dev scenes, marine life, chess, and the FIFA World Cup, we wanted to know: **can today's top models draw a whimsical, physically impossible scene?** This time we asked 13 Ollama cloud models to draw **an elephant on a skateboard** -- a prompt that tests organic anatomy (a massive elephant), mechanical precision (a skateboard with wheels), scale mismatch (a huge animal on a tiny board), and creative humor.
+After testing LLMs on ducks, vehicles, dev scenes, marine life, chess, and the FIFA World Cup, we wanted to know: **can today's top models draw a whimsical, physically impossible scene?** This time we asked 14 Ollama cloud models to draw **an elephant on a skateboard** -- a prompt that tests organic anatomy (a massive elephant), mechanical precision (a skateboard with wheels), scale mismatch (a huge animal on a tiny board), and creative humor.
 
 The prompt was: `Make an svg of elephant on a skateboard`
 
@@ -74,12 +74,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super:cloud` | 1995 | 22 | 7 | Medium | Balanced |
 | 12 | `nemotron-3-ultra:cloud` | 7239 | 39 | 14 | High | Detailed |
 | 13 | `qwen3.5:397b-cloud` | 2604 | 22 | 15 | Medium | Balanced |
-| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash:0731-cloud` | 4669 | 48 | 14 | Medium | Balanced |
+| 15 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -1838,9 +1839,123 @@ With 2,604 characters of SVG markup, this is a balanced output -- enough detail 
 
 </details>
 
+## 14. `deepseek-v4-flash:0731-cloud`
+
+**SVG size:** 4669 characters  
+**Complexity:** Medium  
+**Shape elements:** 48  
+**Distinct colors:** 14  
+**Raw response:** 4669 characters  
+**Generation time:** ~100s
+
+![deepseek-v4-flash:0731-cloud elephant skateboard SVG](/assets/img/diagrams/ollama-svg-elephant/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- The model rendered its interpretation of the "elephant skateboard" prompt -- review the SVG above for how well it captured the subject, composition, and key visual cues
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
+  <defs>
+    <!-- Gradient for the wheels to give a slight 3D effect -->
+    <radialGradient id="wheelGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#636e72" />
+      <stop offset="100%" stop-color="#2d3436" />
+    </radialGradient>
+    <radialGradient id="hubGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#dfe6e9" />
+      <stop offset="100%" stop-color="#b2bec3" />
+    </radialGradient>
+  </defs>
+  <!-- Background Layer -->
+  <rect width="800" height="600" fill="#fdfbf7" />
+  <circle cx="400" cy="300" r="240" fill="#ffebd6" />
+  <!-- Sun Decoration -->
+  <circle cx="140" cy="140" r="45" fill="#f9f871" />
+  <circle cx="140" cy="140" r="60" fill="none" stroke="#f9f871" stroke-width="4" stroke-dasharray="10 10" />
+  <!-- Ground Shadow -->
+  <ellipse cx="400" cy="530" rx="200" ry="15" fill="#e8d8c3" />
+  <!-- Motion Lines (Speed effect) -->
+  <line x1="180" y1="470" x2="240" y2="470" stroke="#ff9f1c" stroke-width="6" stroke-linecap="round" />
+  <line x1="150" y1="500" x2="230" y2="500" stroke="#ff9f1c" stroke-width="6" stroke-linecap="round" />
+  <line x1="170" y1="530" x2="220" y2="530" stroke="#ff9f1c" stroke-width="6" stroke-linecap="round" />
+  <!-- Elephant Tail -->
+  <path d="M 280 330 Q 230 360 240 410" stroke="#8ba3c7" stroke-width="12" fill="none" stroke-linecap="round" />
+  <path d="M 240 410 L 230 420 M 240 410 L 245 425 M 240 410 L 235 430" stroke="#8ba3c7" stroke-width="4" fill="none" stroke-linecap="round" />
+  <!-- Far Legs -->
+  <rect x="300" y="380" width="25" height="80" rx="12" fill="#7a96b8" />
+  <rect x="440" y="380" width="25" height="80" rx="12" fill="#7a96b8" />
+  <!-- Far Legs Toenails -->
+  <circle cx="310" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="320" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="450" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="460" cy="455" r="4" fill="#f7c8d0" />
+  <!-- Elephant Body -->
+  <ellipse cx="370" cy="350" rx="100" ry="80" fill="#8ba3c7" />
+  <!-- Saddle / Blanket -->
+  <path d="M 310 320 C 310 280, 430 280, 430 320 C 430 360, 310 360, 310 320 Z" fill="#2ec4b6" />
+  <path d="M 310 320 C 310 280, 430 280, 430 320" fill="none" stroke="#f9f871" stroke-width="6" stroke-dasharray="10 5" />
+  <!-- Elephant Head -->
+  <ellipse cx="500" cy="310" rx="65" ry="75" fill="#8ba3c7" />
+  <!-- Elephant Ear -->
+  <path d="M 480 260 C 440 250, 420 350, 460 390 C 480 410, 510 380, 500 340 Z" fill="#8ba3c7" />
+  <path d="M 480 280 C 455 275, 440 340, 465 370 C 475 380, 490 365, 485 340 Z" fill="#f7c8d0" />
+  <!-- Elephant Trunk -->
+  <path d="M 540 280 Q 600 300 590 420 Q 585 460 560 460 Q 550 460 550 450 Q 570 440 570 400 Q 570 330 520 340 Z" fill="#8ba3c7" />
+  <!-- Tusk -->
+  <path d="M 530 380 Q 560 390 560 410 Q 550 400 525 390 Z" fill="#ffffff" />
+  <!-- Eye -->
+  <circle cx="530" cy="290" r="6" fill="#2d3436" />
+  <circle cx="532" cy="288" r="2" fill="#ffffff" />
+  <!-- Cap / Hat -->
+  <path d="M 460 260 C 460 220, 520 220, 530 260 Z" fill="#ff6b6b" />
+  <path d="M 525 260 Q 560 255 570 265 L 525 265 Z" fill="#ee5253" />
+  <!-- Near Legs -->
+  <rect x="335" y="380" width="25" height="80" rx="12" fill="#8ba3c7" />
+  <rect x="475" y="380" width="25" height="80" rx="12" fill="#8ba3c7" />
+  <!-- Near Legs Toenails -->
+  <circle cx="345" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="355" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="365" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="485" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="495" cy="455" r="4" fill="#f7c8d0" />
+  <circle cx="505" cy="455" r="4" fill="#f7c8d0" />
+  <!-- Skateboard Deck -->
+  <rect x="250" y="460" width="300" height="20" rx="10" fill="#ff9f1c" />
+  <!-- Skateboard Trucks -->
+  <path d="M 310 480 L 330 480 L 325 495 L 315 495 Z" fill="#636e72" />
+  <path d="M 470 480 L 490 480 L 485 495 L 475 495 Z" fill="#636e72" />
+  <!-- Skateboard Wheels -->
+  <circle cx="320" cy="505" r="25" fill="url(#wheelGrad)" />
+  <circle cx="320" cy="505" r="10" fill="url(#hubGrad)" />
+  <circle cx="480" cy="505" r="25" fill="url(#wheelGrad)" />
+  <circle cx="480" cy="505" r="10" fill="url(#hubGrad)" />
+  <!-- Grip Tape -->
+  <rect x="250" y="460" width="300" height="5" rx="2" fill="#2d3436" />
+  <!-- Decorative Sparkles -->
+  <path d="M 600 200 L 605 210 L 615 212 L 605 214 L 600 224 L 595 214 L 585 212 L 595 210 Z" fill="#f9f871" />
+  <path d="M 220 220 L 223 226 L 230 228 L 223 230 L 220 236 L 217 230 L 210 228 L 217 226 Z" fill="#ff9f1c" />
+  <circle cx="620" cy="380" r="5" fill="#ff6b6b" />
+  <circle cx="200" cy="350" r="6" fill="#2ec4b6" />
+</svg>
+```
+
+</details>
+
+
 ## Conclusion
 
-That's all 13 elephant-on-a-skateboard SVGs from the active Ollama cloud models. This whimsical-animal prompt tested a different skill set than our previous prompts: organic anatomy (elephant trunk, ears, legs), mechanical precision (skateboard deck, wheels, trucks), scale mismatch handling, and creative humor.
+That's all 14 elephant-on-a-skateboard SVGs from the active Ollama cloud models. This whimsical-animal prompt tested a different skill set than our previous prompts: organic anatomy (elephant trunk, ears, legs), mechanical precision (skateboard deck, wheels, trucks), scale mismatch handling, and creative humor.
 
 **No single model is best at everything.** A model that produces a stunning World Cup poster may produce a basic elephant, and vice versa. The best model for you depends on your specific use case:
 

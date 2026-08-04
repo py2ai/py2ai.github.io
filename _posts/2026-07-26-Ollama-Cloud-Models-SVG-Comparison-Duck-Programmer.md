@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? Duck Programmer Debugging at 3AM SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a developer-culture prompt: a duck programmer debugging code at 3am with coffee. Find the best LLM for SVG art. You decide the winner."
+description: "Compare 14 Ollama cloud models on a developer-culture prompt: a duck programmer debugging code at 3am with coffee. Find the best LLM for SVG art. You decide the winner."
 date: 2026-07-26
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Duck-Programmer/
@@ -24,7 +24,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? Duck Programmer Debugging at 3AM SVG Comparison (13 Models)
 
-After testing LLMs on ducks, vehicles, and nature scenes, we wanted to know: **can today's top models draw developer culture?** This time we asked 13 Ollama cloud models to draw **a duck programmer debugging code at 3am with coffee** -- a relatable dev meme that tests scene composition, screens with code, lighting, and character expression.
+After testing LLMs on ducks, vehicles, and nature scenes, we wanted to know: **can today's top models draw developer culture?** This time we asked 14 Ollama cloud models to draw **a duck programmer debugging code at 3am with coffee** -- a relatable dev meme that tests scene composition, screens with code, lighting, and character expression.
 
 The prompt was: `Make an svg image about a duck programmer debugging code at 3am with coffee`
 
@@ -51,7 +51,7 @@ The script discovers all cloud-hosted models via the Ollama API (`/api/tags`), p
 
 Cloud models are identified by the `remote_host` field in the API response -- these models are hosted on Ollama Cloud rather than running locally. This means even very large models (671B parameters) can be queried instantly without local GPU resources.
 
-## Summary Table: Compare All 13 Models at a Glance
+## Summary Table: Compare All 14 Models at a Glance
 
 Use this table to quickly compare models on the metrics that matter. The **verdict** column is a one-line summary to help you shortlist -- but read the per-model sections below for the full picture before you decide.
 
@@ -70,12 +70,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super_cloud` | 3664 | 32 | 11 | High | Detailed |
 | 12 | `nemotron-3-ultra_cloud` | 19457 | 93 | 39 | Very high | Richest scene |
 | 13 | `qwen3.5_397b-cloud` | 5746 | 54 | 17 | High | Detailed |
-| 14 | `bjoernb_claude-opus-4-5_latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1_671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5_cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl_235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash_0731-cloud` | 12388 | 116 | 32 | Very high | Richest scene |
+| 15 | `bjoernb_claude-opus-4-5_latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1_671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5_cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl_235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -2848,9 +2849,249 @@ With 5,746 characters of SVG markup, this is a detailed output that balances ric
 
 </details>
 
+## 14. deepseek-v4-flash_0731-cloud
+
+**SVG size:** 12388 characters  
+**Complexity:** Very high  
+**Shape elements:** 116  
+**Distinct colors:** 32  
+**Raw response:** 12388 characters
+
+![deepseek-v4-flash_0731-cloud duck programmer SVG](/assets/img/diagrams/ollama-svg-programmer/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **116 shape elements** and uses **32 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Includes animation elements -- the model attempted motion
+- Contains XML comments, showing the model's internal documentation of its work
+
+This is a large, detailed SVG (over 10,000 characters) packed with shapes, gradients, and structure. Best when you want maximum visual richness over file size.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="auto">
+    <defs>
+        <!-- Background Gradient (Late Night Coding Vibe) -->
+        <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0f0c29" />
+            <stop offset="50%" stop-color="#302b63" />
+            <stop offset="100%" stop-color="#24243e" />
+        </linearGradient>
+        <!-- Monitor Glow -->
+        <radialGradient id="monitor-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4af" stop-opacity="0.8" />
+            <stop offset="100%" stop-color="#4af" stop-opacity="0" />
+        </radialGradient>
+        <!-- Duck Glow (from monitor) -->
+        <linearGradient id="duck-glow" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stop-color="#4af" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="#4af" stop-opacity="0" />
+        </linearGradient>
+    </defs>
+    <!-- Background -->
+    <rect width="800" height="600" fill="url(#bg-grad)" />
+    <!-- Window &amp; Night Sky -->
+    <g id="window">
+        <rect x="50" y="50" width="200" height="250" rx="10" fill="#1a1a2e" stroke="#4a4a6a" stroke-width="8" />
+        <!-- Moon -->
+        <circle cx="120" cy="100" r="30" fill="#fdfd96" />
+        <circle cx="120" cy="100" r="50" fill="#fdfd96" opacity="0.2" />
+        <circle cx="120" cy="100" r="70" fill="#fdfd96" opacity="0.1" />
+        <!-- Moon Craters -->
+        <circle cx="110" cy="90" r="5" fill="#e5e57a" />
+        <circle cx="130" cy="110" r="4" fill="#e5e57a" />
+        <circle cx="115" cy="115" r="3" fill="#e5e57a" />
+        <!-- Stars -->
+        <circle cx="80" cy="70" r="1.5" fill="#fff" />
+        <circle cx="180" cy="60" r="2" fill="#fff" />
+        <circle cx="200" cy="140" r="1.5" fill="#fff" />
+        <circle cx="90" cy="200" r="2" fill="#fff" />
+        <circle cx="220" cy="180" r="1" fill="#fff" />
+        <circle cx="150" cy="150" r="1" fill="#fff" />
+        <circle cx="170" cy="220" r="1.5" fill="#fff" />
+        <!-- Window Crossbars -->
+        <line x1="150" y1="50" x2="150" y2="300" stroke="#4a4a6a" stroke-width="8" />
+        <line x1="50" y1="175" x2="250" y2="175" stroke="#4a4a6a" stroke-width="8" />
+    </g>
+    <!-- Wall Clock (3:00 AM) -->
+    <g id="clock">
+        <circle cx="680" cy="100" r="45" fill="#222" stroke="#555" stroke-width="6" />
+        <!-- Tick Marks -->
+        <line x1="680" y1="60" x2="680" y2="70" stroke="#fff" stroke-width="3" />
+        <line x1="680" y1="130" x2="680" y2="140" stroke="#fff" stroke-width="3" />
+        <line x1="640" y1="100" x2="650" y2="100" stroke="#fff" stroke-width="3" />
+        <line x1="710" y1="100" x2="720" y2="100" stroke="#fff" stroke-width="3" />
+        <!-- Hands -->
+        <line x1="680" y1="100" x2="680" y2="65" stroke="#fff" stroke-width="4" stroke-linecap="round" />
+        <line x1="680" y1="100" x2="705" y2="100" stroke="#ff4d4d" stroke-width="5" stroke-linecap="round" />
+        <circle cx="680" cy="100" r="5" fill="#fff" />
+        <text x="680" y="155" fill="#fff" font-family="monospace" font-size="12" text-anchor="middle" opacity="0.8">3:00 AM</text>
+    </g>
+    <!-- Desk and Chair -->
+    <g id="furniture">
+        <!-- Chair Back -->
+        <rect x="60" y="250" width="30" height="150" rx="10" fill="#1a1a2e" />
+        <rect x="50" y="240" width="50" height="20" rx="5" fill="#16213e" />
+        <!-- Chair Seat -->
+        <rect x="80" y="420" width="160" height="20" rx="8" fill="#16213e" />
+        <!-- Chair Legs -->
+        <rect x="150" y="440" width="20" height="40" fill="#1a1a2e" />
+        <rect x="130" y="480" width="60" height="10" rx="3" fill="#111" />
+        <!-- Desk Top -->
+        <rect x="50" y="450" width="700" height="20" rx="5" fill="#2d1b0f" />
+        <rect x="60" y="470" width="680" height="10" fill="#1a0f07" />
+        <!-- Desk Legs -->
+        <rect x="150" y="480" width="15" height="120" fill="#2d1b0f" />
+        <rect x="635" y="480" width="15" height="120" fill="#2d1b0f" />
+        <!-- Power Strip &amp; Cables Under Desk -->
+        <rect x="300" y="490" width="60" height="15" rx="3" fill="#d4d4d4" />
+        <circle cx="310" cy="497" r="2" fill="#111" />
+        <circle cx="320" cy="497" r="2" fill="#111" />
+        <circle cx="330" cy="497" r="2" fill="#111" />
+        <circle cx="340" cy="497" r="2" fill="#111" />
+        <path d="M 300 497 C 280 497, 260 520, 220 520" fill="none" stroke="#111" stroke-width="4" />
+        <path d="M 360 497 C 400 497, 450 520, 500 520" fill="none" stroke="#111" stroke-width="4" />
+    </g>
+    <!-- Pizza Box -->
+    <g id="pizza-box">
+        <rect x="640" y="415" width="80" height="30" rx="3" fill="#d4a373" />
+        <path d="M 640 415 L 720 415 L 680 395 L 640 415" fill="#b5835a" />
+        <line x1="680" y1="395" x2="680" y2="415" stroke="#b5835a" stroke-width="2" />
+        <!-- Pizza Slice -->
+        <path d="M 660 410 L 675 410 L 667 400 Z" fill="#f4a261" />
+        <circle cx="667" cy="405" r="1.5" fill="#e76f51" />
+        <circle cx="670" cy="407" r="1.5" fill="#e76f51" />
+    </g>
+    <!-- Monitor and Code -->
+    <g id="monitor">
+        <!-- Stand -->
+        <rect x="440" y="380" width="60" height="60" fill="#333" />
+        <rect x="420" y="440" width="100" height="15" rx="5" fill="#222" />
+        <!-- Frame -->
+        <rect x="380" y="220" width="200" height="160" rx="10" fill="#111" stroke="#333" stroke-width="8" />
+        <!-- Screen -->
+        <rect x="390" y="230" width="180" height="140" rx="5" fill="#0a1f2e" />
+        <!-- Code Lines -->
+        <rect x="400" y="245" width="80" height="8" rx="4" fill="#c792ea" />
+        <rect x="490" y="245" width="30" height="8" rx="4" fill="#fff" opacity="0.5" />
+        <rect x="530" y="245" width="10" height="8" rx="4" fill="#ffcb8b" />
+        <rect x="400" y="260" width="50" height="8" rx="4" fill="#82aaff" />
+        <rect x="460" y="260" width="60" height="8" rx="4" fill="#fff" opacity="0.6" />
+        <rect x="530" y="260" width="20" height="8" rx="4" fill="#f78c6c" />
+        <rect x="410" y="275" width="30" height="8" rx="4" fill="#c792ea" />
+        <rect x="450" y="275" width="40" height="8" rx="4" fill="#ffcb8b" />
+        <rect x="500" y="275" width="10" height="8" rx="4" fill="#ffcb8b" />
+        <rect x="420" y="290" width="40" height="8" rx="4" fill="#82aaff" />
+        <rect x="470" y="290" width="30" height="8" rx="4" fill="#f78c6c" />
+        <rect x="410" y="305" width="30" height="8" rx="4" fill="#c792ea" />
+        <rect x="450" y="305" width="40" height="8" rx="4" fill="#ffcb8b" />
+        <rect x="420" y="320" width="40" height="8" rx="4" fill="#82aaff" />
+        <rect x="470" y="320" width="30" height="8" rx="4" fill="#f78c6c" />
+        <rect x="510" y="320" width="40" height="8" rx="4" fill="#c792ea" />
+        <rect x="400" y="335" width="10" height="8" rx="4" fill="#ffcb8b" />
+        <!-- Blinking Cursor -->
+        <rect x="420" y="335" width="8" height="10" fill="#fff">
+            <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" />
+        </rect>
+        <!-- Sticky Notes on Monitor -->
+        <rect x="590" y="230" width="25" height="25" fill="#ffeb3b" transform="rotate(15, 590, 230)" />
+        <rect x="610" y="220" width="25" height="25" fill="#ff5722" transform="rotate(-10, 610, 220)" />
+        <line x1="590" y1="235" x2="610" y2="235" stroke="#333" stroke-width="1.5" transform="rotate(15, 590, 230)" />
+        <line x1="590" y1="245" x2="610" y2="245" stroke="#333" stroke-width="1.5" transform="rotate(15, 590, 230)" />
+        <!-- Monitor Glow Effect -->
+        <circle cx="480" cy="300" r="200" fill="url(#monitor-glow)" opacity="0.3" pointer-events="none" />
+    </g>
+    <!-- Duck Programmer -->
+    <g id="duck-programmer">
+        <!-- Hoodie Back/Hood -->
+        <circle cx="160" cy="310" r="55" fill="#152c47" />
+        <!-- Duck Body (Hoodie) -->
+        <rect x="80" y="330" width="160" height="130" rx="40" fill="#1e3a5f" />
+        <!-- Hoodie Pocket -->
+        <path d="M 110 430 L 210 430 L 200 450 L 120 450 Z" fill="#152c47" />
+        <!-- Hoodie Drawstrings -->
+        <line x1="130" y1="340" x2="120" y2="370" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+        <line x1="190" y1="340" x2="200" y2="370" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+        <circle cx="120" cy="370" r="4" fill="#fff" />
+        <circle cx="200" cy="370" r="4" fill="#fff" />
+        <!-- Duck Head -->
+        <circle cx="160" cy="280" r="45" fill="#e6f2ff" />
+        <!-- Duck Beak -->
+        <path d="M 200 270 C 240 260, 260 270, 250 285 C 240 290, 210 290, 200 285 Z" fill="#f4a261" />
+        <path d="M 200 285 C 210 295, 240 295, 250 285 C 240 305, 210 305, 200 290 Z" fill="#e76f51" />
+        <!-- Duck Eyes (Tired) -->
+        <!-- Right Eye -->
+        <circle cx="190" cy="270" r="6" fill="#fff" />
+        <circle cx="193" cy="270" r="3" fill="#000" />
+        <!-- Left Eye -->
+        <circle cx="145" cy="270" r="6" fill="#fff" />
+        <circle cx="148" cy="270" r="3" fill="#000" />
+        <!-- Eyelids (Half-closed) -->
+        <rect x="139" y="262" width="12" height="5" rx="2" fill="#e6f2ff" />
+        <rect x="184" y="262" width="12" height="5" rx="2" fill="#e6f2ff" />
+        <!-- Dark Circles under Eyes -->
+        <path d="M 138 280 Q 145 283 152 280" fill="none" stroke="#7a8a9a" stroke-width="2" />
+        <path d="M 183 280 Q 190 283 197 280" fill="none" stroke="#7a8a9a" stroke-width="2" />
+        <!-- Floating Zzz (Sleepiness) -->
+        <text x="120" y="240" fill="#fff" font-family="monospace" font-size="12" opacity="0.8">Z</text>
+        <text x="105" y="220" fill="#fff" font-family="monospace" font-size="14" opacity="0.6">Z</text>
+        <text x="90" y="195" fill="#fff" font-family="monospace" font-size="16" opacity="0.4">Z</text>
+        <!-- Headset -->
+        <path d="M 120 250 A 40 40 0 0 1 200 250" fill="none" stroke="#222" stroke-width="6" />
+        <rect x="110" y="245" width="15" height="25" rx="5" fill="#333" />
+        <rect x="195" y="245" width="15" height="25" rx="5" fill="#333" />
+        <!-- Microphone -->
+        <path d="M 210 255 L 225 255 L 225 270 L 210 270 Z" fill="#333" />
+        <circle cx="217" cy="270" r="4" fill="#555" />
+        <!-- Duck Wing (Typing) -->
+        <path d="M 120 390 Q 200 400 230 420 Q 190 435 130 430 Z" fill="#d9e6f2" />
+        <!-- Monitor Glow on Duck -->
+        <rect x="120" y="220" width="200" height="250" fill="url(#duck-glow)" opacity="0.4" pointer-events="none" />
+    </g>
+    <!-- Desk Accessories -->
+    <g id="desk-accessories">
+        <!-- Keyboard -->
+        <rect x="200" y="420" width="140" height="30" rx="5" fill="#111" />
+        <rect x="205" y="425" width="15" height="10" fill="#333" />
+        <rect x="225" y="425" width="15" height="10" fill="#333" />
+        <rect x="245" y="425" width="15" height="10" fill="#333" />
+        <rect x="265" y="425" width="15" height="10" fill="#333" />
+        <rect x="285" y="425" width="15" height="10" fill="#333" />
+        <rect x="305" y="425" width="15" height="10" fill="#333" />
+        <rect x="325" y="425" width="15" height="10" fill="#333" />
+        <!-- Coffee Cup -->
+        <rect x="360" y="400" width="25" height="30" rx="3" fill="#c43" />
+        <path d="M 385 405 C 395 405, 395 425, 385 425" fill="none" stroke="#c43" stroke-width="4" />
+        <ellipse cx="372" cy="400" rx="12" ry="4" fill="#3a1c0d" />
+        <!-- Coffee Steam Animation -->
+        <path d="M 365 390 Q 370 380 365 370" fill="none" stroke="#fff" stroke-width="2" opacity="0.6">
+            <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2s" repeatCount="indefinite" />
+        </path>
+        <path d="M 375 395 Q 380 385 375 375" fill="none" stroke="#fff" stroke-width="2" opacity="0.4">
+            <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.5s" repeatCount="indefinite" />
+        </path>
+        <!-- Tiny Rubber Duck (Debugging Buddy) -->
+        <circle cx="375" cy="440" r="8" fill="#ffd700" />
+        <circle cx="375" cy="432" r="5" fill="#ffd700" />
+        <path d="M 379 432 L 385 433 L 384 435 Z" fill="#ff8c00" />
+        <circle cx="377" cy="431" r="1" fill="#000" />
+    </g>
+</svg>
+```
+
+</details>
+
+
 ## How to Pick the Best Model: A Decision Guide
 
-Now that you have seen all 13 programmer SVGs, here is a structured way to decide which Ollama cloud model is best for your SVG generation needs:
+Now that you have seen all 14 programmer SVGs, here is a structured way to decide which Ollama cloud model is best for your SVG generation needs:
 
 ### Step 1: Define your priority
 
@@ -2898,7 +3139,7 @@ If you are picking a model for a specific project, look at the benchmark closest
 
 ## Conclusion: You Decide the Winner
 
-This comparison shows that 13 out of 17 active Ollama cloud models can generate valid SVG artwork from a developer-culture prompt about a duck programmer debugging code at 3am. The results vary dramatically in complexity, style, and technique -- and there is no single "best" model.
+This comparison shows that 14 out of 18 active Ollama cloud models can generate valid SVG artwork from a developer-culture prompt about a duck programmer debugging code at 3am. The results vary dramatically in complexity, style, and technique -- and there is no single "best" model.
 
 Our takeaways after running five SVG benchmarks (bicycle, parachute, jeep, blossom, programmer):
 

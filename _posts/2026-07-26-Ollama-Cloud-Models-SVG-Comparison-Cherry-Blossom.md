@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a nature / scenery prompt: drawing cherry blossom trees with flowers. Find the best LLM for SVG art. You decide the winner."
+description: "Compare 14 Ollama cloud models on a nature / scenery prompt: drawing cherry blossom trees with flowers. Find the best LLM for SVG art. You decide the winner."
 date: 2026-07-26
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Cherry-Blossom/
@@ -24,7 +24,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (13 Models)
 
-After testing LLMs on ducks and vehicles, we wanted to know: **can today's top models draw nature?** This time we asked 13 Ollama cloud models to draw **cherry blossom trees with flowers** -- a softer, more organic prompt that tests color palettes, repeated organic shapes (petals), and scene composition.
+After testing LLMs on ducks and vehicles, we wanted to know: **can today's top models draw nature?** This time we asked 14 Ollama cloud models to draw **cherry blossom trees with flowers** -- a softer, more organic prompt that tests color palettes, repeated organic shapes (petals), and scene composition.
 
 The prompt was: `Make an svg image about cherry blossom trees with flowers`.
 
@@ -52,7 +52,7 @@ The script discovers all cloud-hosted models via the Ollama API (`/api/tags`), p
 
 Cloud models are identified by the `remote_host` field in the API response -- these models are hosted on Ollama Cloud rather than running locally. This means even very large models (671B parameters) can be queried instantly without local GPU resources.
 
-## Summary Table: Compare All 13 Models at a Glance
+## Summary Table: Compare All 14 Models at a Glance
 
 Use this table to quickly compare models on the metrics that matter. The **verdict** column is a one-line summary to help you shortlist -- but read the per-model sections below for the full picture before you decide.
 
@@ -71,12 +71,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super_cloud` | 2648 | 42 | 3 | Low | Compact |
 | 12 | `nemotron-3-ultra_cloud` | 16411 | 32 | 20 | Very high | Richest scene |
 | 13 | `qwen3.5_397b-cloud` | 4458 | 25 | 8 | Low | Balanced |
-| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash_0731-cloud` | 15165 | 152 | 9 | Very high | Richest scene |
+| 15 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -2869,6 +2870,321 @@ This is a compact SVG (under 5,000 characters) that uses minimal markup to conve
 
 </details>
 
+## 14. deepseek-v4-flash_0731-cloud
+
+**SVG size:** 15165 characters  
+**Complexity:** Very high  
+**Shape elements:** 152  
+**Distinct colors:** 9  
+**Raw response:** 15165 characters
+
+![deepseek-v4-flash_0731-cloud cherry blossom SVG](/assets/img/diagrams/ollama-svg-blossom/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+This SVG contains approximately **152 shape elements** and uses **9 distinct colors**.
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Uses `<use>` references to reuse defined elements -- ideal for repeating motifs
+- Includes gradient fills for richer visual depth
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+This is a large, detailed SVG (over 10,000 characters) packed with shapes, gradients, and structure. Best when you want maximum visual richness over file size.
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="auto">
+    <defs>
+        <!-- Sky Gradient -->
+        <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1A1B41"/>
+            <stop offset="30%" stop-color="#4B2A5E"/>
+            <stop offset="60%" stop-color="#A5557B"/>
+            <stop offset="100%" stop-color="#F2A68D"/>
+        </linearGradient>
+        <!-- Glowing Sun/Moon Gradient -->
+        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="30%" stop-color="rgba(255, 240, 220, 0.9)"/>
+            <stop offset="60%" stop-color="rgba(255, 200, 200, 0.4)"/>
+            <stop offset="100%" stop-color="rgba(255, 200, 200, 0)"/>
+        </radialGradient>
+        <!-- Falling Petal Symbol -->
+        <g id="petal">
+            <path d="M 0,0 C 5,-10 15,-10 20,-2 C 18,0 18,2 20,6 C 15,10 5,10 0,0 Z" fill="#FCC1CD"/>
+        </g>
+        <!-- Deep Pink Petal for Ground Clusters -->
+        <g id="petal-deep">
+            <path d="M 0,0 C 5,-10 15,-10 20,-2 C 18,0 18,2 20,6 C 15,10 5,10 0,0 Z" fill="#F4A0B8"/>
+        </g>
+    </defs>
+    <!-- Background Sky -->
+    <rect width="800" height="600" fill="url(#skyGradient)"/>
+    <!-- Glowing Sun -->
+    <circle cx="400" cy="320" r="180" fill="url(#moonGlow)"/>
+    <circle cx="400" cy="320" r="60" fill="#FFFFFF" opacity="0.9"/>
+    <!-- Subtle Distant Clouds -->
+    <path d="M 100,200 Q 150,180 200,200 Q 250,190 300,210 Q 250,220 200,220 Q 150,230 100,200 Z" fill="#FFFFFF" opacity="0.1"/>
+    <path d="M 500,150 Q 550,130 600,150 Q 650,140 700,160 Q 650,170 600,170 Q 550,180 500,150 Z" fill="#FFFFFF" opacity="0.15"/>
+    <path d="M 600,250 Q 630,240 660,250 Q 690,240 720,260 Q 690,270 660,270 Q 630,280 600,250 Z" fill="#FFFFFF" opacity="0.1"/>
+    <!-- Distant Birds -->
+    <g fill="#1A1015" opacity="0.6">
+        <path d="M 500,150 Q 508,140 516,150 Q 524,140 532,150 Z"/>
+        <path d="M 540,135 Q 546,127 552,135 Q 558,127 564,135 Z"/>
+        <path d="M 480,165 Q 486,157 492,165 Q 498,157 504,165 Z"/>
+        <path d="M 650,120 Q 656,114 662,120 Q 668,114 674,120 Z"/>
+    </g>
+    <!-- Rolling Hills (Background to Foreground) -->
+    <path d="M 0,400 Q 200,350 500,450 T 800,400 L 800,600 L 0,600 Z" fill="#3E5C50"/>
+    <path d="M -50,480 Q 250,400 600,500 T 850,480 L 850,600 L -50,600 Z" fill="#2A4238"/>
+    <path d="M -50,600 Q 150,500 400,550 T 850,550 L 850,600 L -50,600 Z" fill="#16261F"/>
+    <!-- Tree Ground Shadows -->
+    <ellipse cx="180" cy="550" rx="130" ry="25" fill="#0F201A" opacity="0.7"/>
+    <ellipse cx="580" cy="550" rx="90" ry="20" fill="#0F201A" opacity="0.7"/>
+    <!-- ================= LEFT CHERRY BLOSSOM TREE ================= -->
+    <!-- Trunk and Branches -->
+    <g fill="none" stroke="#2B1B20" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Main Trunk -->
+        <path d="M 150,550 C 130,450 160,350 180,250" stroke-width="30"/>
+        <!-- Major Branches -->
+        <path d="M 160,400 C 100,350 60,300 40,200" stroke-width="18"/>
+        <path d="M 170,350 C 220,300 260,250 300,200" stroke-width="16"/>
+        <path d="M 175,300 C 150,220 120,150 100,100" stroke-width="12"/>
+        <path d="M 180,280 C 220,200 240,150 250,100" stroke-width="12"/>
+        <!-- Minor Branches -->
+        <path d="M 120,240 C 100,200 80,180 60,160" stroke-width="8"/>
+        <path d="M 200,280 C 220,240 240,220 270,210" stroke-width="8"/>
+        <path d="M 140,180 C 130,140 110,120 100,80" stroke-width="6"/>
+        <path d="M 220,180 C 230,140 250,120 270,100" stroke-width="6"/>
+        <path d="M 80,220 C 60,200 50,180 30,150" stroke-width="5"/>
+        <path d="M 240,230 C 260,210 280,200 310,190" stroke-width="5"/>
+        <path d="M 190,250 C 200,220 220,200 240,180" stroke-width="4"/>
+    </g>
+    <!-- Trunk Textures &amp; Bark Details -->
+    <g fill="none" stroke-linecap="round">
+        <path d="M 155,530 C 140,450 165,350 183,260" stroke="#4A303A" stroke-width="8"/>
+        <path d="M 165,480 C 150,420 170,360 185,290" stroke="#4A303A" stroke-width="6"/>
+        <path d="M 175,540 C 160,480 175,420 188,330" stroke="#1A1015" stroke-width="10"/>
+        <path d="M 145,520 C 130,460 150,380 170,280" stroke="#1A1015" stroke-width="4"/>
+        <path d="M 110,300 C 90,260 70,220 50,180" stroke="#4A303A" stroke-width="3"/>
+        <path d="M 250,200 C 260,180 280,160 300,150" stroke="#4A303A" stroke-width="3"/>
+    </g>
+    <!-- Left Tree Canopy (Base Layer - Deep Pink) -->
+    <g fill="#E87A9E" opacity="0.85">
+        <circle cx="100" cy="220" r="70"/>
+        <circle cx="180" cy="240" r="80"/>
+        <circle cx="240" cy="200" r="60"/>
+        <circle cx="140" cy="160" r="75"/>
+        <circle cx="220" cy="150" r="65"/>
+        <circle cx="80" cy="180" r="50"/>
+        <circle cx="180" cy="100" r="70"/>
+        <circle cx="260" cy="130" r="45"/>
+        <circle cx="40" cy="150" r="40"/>
+        <circle cx="280" cy="100" r="35"/>
+        <circle cx="300" cy="160" r="30"/>
+        <circle cx="80" cy="100" r="45"/>
+        <circle cx="260" cy="240" r="40"/>
+        <circle cx="120" cy="270" r="50"/>
+        <circle cx="200" cy="280" r="45"/>
+    </g>
+    <!-- Left Tree Canopy (Mid Layer - Mid Pink) -->
+    <g fill="#F4A0B8" opacity="0.9">
+        <circle cx="120" cy="200" r="50"/>
+        <circle cx="200" cy="220" r="60"/>
+        <circle cx="160" cy="180" r="55"/>
+        <circle cx="240" cy="180" r="45"/>
+        <circle cx="100" cy="160" r="40"/>
+        <circle cx="200" cy="140" r="50"/>
+        <circle cx="140" cy="120" r="45"/>
+        <circle cx="260" cy="160" r="30"/>
+        <circle cx="60" cy="170" r="30"/>
+        <circle cx="220" cy="120" r="35"/>
+        <circle cx="160" cy="240" r="40"/>
+        <circle cx="280" cy="140" r="25"/>
+        <circle cx="120" cy="140" r="35"/>
+        <circle cx="180" cy="220" r="45"/>
+    </g>
+    <!-- Left Tree Canopy (Top Layer - Light Pink &amp; White Highlights) -->
+    <g fill="#FCC1CD" opacity="0.95">
+        <circle cx="140" cy="190" r="40"/>
+        <circle cx="180" cy="200" r="45"/>
+        <circle cx="200" cy="170" r="35"/>
+        <circle cx="160" cy="150" r="30"/>
+        <circle cx="220" cy="140" r="25"/>
+        <circle cx="120" cy="170" r="30"/>
+        <circle cx="180" cy="120" r="35"/>
+        <circle cx="240" cy="160" r="20"/>
+        <circle cx="140" cy="140" r="25"/>
+        <circle cx="160" cy="210" r="30"/>
+        <circle cx="100" cy="190" r="25"/>
+        <circle cx="200" cy="190" r="30"/>
+        <circle cx="80" cy="150" r="20"/>
+        <circle cx="260" cy="130" r="15"/>
+    </g>
+    <!-- Left Tree Canopy (Pure White Core Highlights) -->
+    <g fill="#FFFFFF" opacity="0.9">
+        <circle cx="180" cy="180" r="20"/>
+        <circle cx="160" cy="160" r="15"/>
+        <circle cx="200" cy="190" r="18"/>
+        <circle cx="140" cy="200" r="12"/>
+        <circle cx="220" cy="160" r="10"/>
+        <circle cx="120" cy="150" r="12"/>
+    </g>
+    <!-- ================= RIGHT CHERRY BLOSSOM TREE ================= -->
+    <!-- Trunk and Branches -->
+    <g fill="none" stroke="#2B1B20" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Main Trunk -->
+        <path d="M 600,550 C 590,480 580,420 580,380" stroke-width="20"/>
+        <!-- Major Branches -->
+        <path d="M 585,450 C 550,410 510,390 480,360" stroke-width="12"/>
+        <path d="M 580,420 C 620,380 650,350 680,320" stroke-width="12"/>
+        <path d="M 580,390 C 570,340 560,300 550,260" stroke-width="10"/>
+        <!-- Minor Branches -->
+        <path d="M 530,380 C 510,360 490,340 470,320" stroke-width="6"/>
+        <path d="M 620,360 C 640,340 650,320 660,290" stroke-width="6"/>
+        <path d="M 560,300 C 540,280 520,260 510,240" stroke-width="5"/>
+        <path d="M 590,320 C 610,300 620,280 630,260" stroke-width="5"/>
+        <path d="M 500,350 C 480,340 460,330 440,320" stroke-width="4"/>
+        <path d="M 650,330 C 670,310 690,290 710,280" stroke-width="4"/>
+        <path d="M 570,350 C 550,330 540,310 520,290" stroke-width="3"/>
+    </g>
+    <!-- Trunk Textures &amp; Bark Details -->
+    <g fill="none" stroke-linecap="round">
+        <path d="M 605,530 C 595,480 585,430 585,390" stroke="#4A303A" stroke-width="6"/>
+        <path d="M 595,500 C 585,450 575,410 575,370" stroke="#1A1015" stroke-width="4"/>
+        <path d="M 590,470 C 580,420 570,380 565,340" stroke="#4A303A" stroke-width="3"/>
+        <path d="M 540,400 C 520,380 500,360 480,350" stroke="#4A303A" stroke-width="3"/>
+        <path d="M 630,380 C 650,360 660,340 670,320" stroke="#4A303A" stroke-width="3"/>
+    </g>
+    <!-- Right Tree Canopy (Base Layer - Deep Pink) -->
+    <g fill="#E87A9E" opacity="0.85">
+        <circle cx="520" cy="360" r="50"/>
+        <circle cx="580" cy="380" r="60"/>
+        <circle cx="640" cy="340" r="45"/>
+        <circle cx="540" cy="300" r="55"/>
+        <circle cx="620" cy="280" r="50"/>
+        <circle cx="580" cy="260" r="60"/>
+        <circle cx="460" cy="280" r="30"/>
+        <circle cx="500" cy="240" r="35"/>
+        <circle cx="680" cy="260" r="30"/>
+        <circle cx="700" cy="300" r="25"/>
+        <circle cx="650" cy="220" r="20"/>
+        <circle cx="480" cy="320" r="40"/>
+    </g>
+    <!-- Right Tree Canopy (Mid Layer - Mid Pink) -->
+    <g fill="#F4A0B8" opacity="0.9">
+        <circle cx="550" cy="340" r="40"/>
+        <circle cx="600" cy="360" r="45"/>
+        <circle cx="500" cy="320" r="35"/>
+        <circle cx="650" cy="310" r="35"/>
+        <circle cx="560" cy="280" r="40"/>
+        <circle cx="620" cy="300" r="40"/>
+        <circle cx="590" cy="250" r="45"/>
+        <circle cx="520" cy="280" r="30"/>
+        <circle cx="660" cy="280" r="25"/>
+        <circle cx="540" cy="240" r="30"/>
+        <circle cx="480" cy="290" r="25"/>
+        <circle cx="680" cy="300" r="20"/>
+    </g>
+    <!-- Right Tree Canopy (Top Layer - Light Pink &amp; White Highlights) -->
+    <g fill="#FCC1CD" opacity="0.95">
+        <circle cx="560" cy="320" r="30"/>
+        <circle cx="590" cy="340" r="35"/>
+        <circle cx="540" cy="280" r="25"/>
+        <circle cx="610" cy="280" r="30"/>
+        <circle cx="580" cy="300" r="35"/>
+        <circle cx="620" cy="320" r="25"/>
+        <circle cx="570" cy="260" r="20"/>
+        <circle cx="600" cy="250" r="25"/>
+        <circle cx="530" cy="310" r="20"/>
+        <circle cx="640" cy="290" r="20"/>
+        <circle cx="510" cy="270" r="15"/>
+        <circle cx="660" cy="310" r="15"/>
+    </g>
+    <!-- Right Tree Canopy (Pure White Core Highlights) -->
+    <g fill="#FFFFFF" opacity="0.9">
+        <circle cx="580" cy="300" r="15"/>
+        <circle cx="560" cy="310" r="12"/>
+        <circle cx="600" cy="280" r="15"/>
+        <circle cx="590" cy="320" r="10"/>
+        <circle cx="550" cy="290" r="10"/>
+        <circle cx="620" cy="300" r="8"/>
+    </g>
+    <!-- ================= FALLING &amp; GROUND PETALS ================= -->
+    <g id="falling-petals">
+        <!-- Floating in the air -->
+        <use href="#petal" transform="translate(320, 400) rotate(45)"/>
+        <use href="#petal" transform="translate(350, 450) rotate(-30)"/>
+        <use href="#petal" transform="translate(280, 350) rotate(15)"/>
+        <use href="#petal" transform="translate(420, 380) rotate(-60)"/>
+        <use href="#petal" transform="translate(450, 300) rotate(80)"/>
+        <use href="#petal" transform="translate(380, 250) rotate(-15)"/>
+        <use href="#petal" transform="translate(500, 450) rotate(45)"/>
+        <use href="#petal" transform="translate(480, 520) rotate(-80)"/>
+        <use href="#petal" transform="translate(550, 400) rotate(20)"/>
+        <use href="#petal" transform="translate(680, 450) rotate(-45)"/>
+        <use href="#petal" transform="translate(720, 380) rotate(70)"/>
+        <use href="#petal" transform="translate(750, 300) rotate(-10)"/>
+        <use href="#petal" transform="translate(650, 350) rotate(35)"/>
+        <use href="#petal" transform="translate(600, 280) rotate(-55)"/>
+        <use href="#petal" transform="translate(700, 220) rotate(85)"/>
+        <use href="#petal" transform="translate(520, 200) rotate(-25)"/>
+        <use href="#petal" transform="translate(400, 150) rotate(60)"/>
+        <use href="#petal" transform="translate(300, 180) rotate(-40)"/>
+        <use href="#petal" transform="translate(200, 250) rotate(15)"/>
+        <use href="#petal" transform="translate(150, 300) rotate(-70)"/>
+        <use href="#petal" transform="translate(100, 350) rotate(30)"/>
+        <use href="#petal" transform="translate(80, 400) rotate(-20)"/>
+        <use href="#petal" transform="translate(180, 500) rotate(45)"/>
+        <use href="#petal" transform="translate(350, 580) rotate(75)"/>
+        <use href="#petal" transform="translate(550, 560) rotate(-50)"/>
+        <use href="#petal" transform="translate(650, 580) rotate(25)"/>
+        <use href="#petal" transform="translate(750, 550) rotate(-65)"/>
+        <use href="#petal" transform="translate(700, 500) rotate(10)"/>
+        <use href="#petal" transform="translate(600, 520) rotate(-35)"/>
+        <use href="#petal" transform="translate(680, 550) rotate(40)"/>
+        <!-- Scattered on the Ground (Left Tree) -->
+        <use href="#petal-deep" transform="translate(100, 560) rotate(15)"/>
+        <use href="#petal-deep" transform="translate(130, 580) rotate(-45)"/>
+        <use href="#petal-deep" transform="translate(150, 565) rotate(70)"/>
+        <use href="#petal-deep" transform="translate(220, 570) rotate(-30)"/>
+        <use href="#petal-deep" transform="translate(250, 555) rotate(50)"/>
+        <use href="#petal-deep" transform="translate(180, 585) rotate(-10)"/>
+        <use href="#petal-deep" transform="translate(280, 560) rotate(85)"/>
+        <use href="#petal-deep" transform="translate(80, 575) rotate(-60)"/>
+        <!-- Scattered on the Ground (Right Tree) -->
+        <use href="#petal-deep" transform="translate(520, 560) rotate(-15)"/>
+        <use href="#petal-deep" transform="translate(560, 575) rotate(45)"/>
+        <use href="#petal-deep" transform="translate(610, 565) rotate(-70)"/>
+        <use href="#petal-deep" transform="translate(580, 585) rotate(20)"/>
+        <use href="#petal-deep" transform="translate(640, 555) rotate(-40)"/>
+        <use href="#petal-deep" transform="translate(660, 570) rotate(10)"/>
+        <use href="#petal-deep" transform="translate(500, 570) rotate(75)"/>
+        <use href="#petal-deep" transform="translate(600, 550) rotate(-25)"/>
+    </g>
+    <!-- Magical Atmosphere Sparkles -->
+    <g fill="#FFFFFF" opacity="0.7">
+        <circle cx="100" cy="100" r="2"/>
+        <circle cx="300" cy="180" r="1.5"/>
+        <circle cx="200" cy="80" r="2.5"/>
+        <circle cx="480" cy="250" r="2"/>
+        <circle cx="700" cy="300" r="1.5"/>
+        <circle cx="400" cy="200" r="1"/>
+        <circle cx="250" cy="280" r="1.5"/>
+        <circle cx="550" cy="220" r="2"/>
+        <circle cx="150" cy="130" r="1"/>
+        <circle cx="650" cy="200" r="1.5"/>
+    </g>
+</svg>
+```
+
+</details>
+
+
 ## Retired Models
 
 The following models were listed in the Ollama registry but returned HTTP 410 Gone when queried. They were retired from Ollama Cloud and are no longer available for inference:
@@ -2880,7 +3196,7 @@ The following models were listed in the Ollama registry but returned HTTP 410 Go
 
 ## How to Pick the Best Model: A Decision Guide
 
-Now that you have seen all 13 cherry blossom SVGs, here is a structured way to decide which Ollama cloud model is best for your SVG generation needs:
+Now that you have seen all 14 cherry blossom SVGs, here is a structured way to decide which Ollama cloud model is best for your SVG generation needs:
 
 ### Step 1: Define your priority
 
@@ -2925,7 +3241,7 @@ If you are picking a model for a specific project, look at the benchmark closest
 
 ## Conclusion: You Decide the Winner
 
-This comparison shows that 13 out of 17 active Ollama cloud models can generate valid SVG artwork from a nature prompt about cherry blossom trees. The results vary dramatically in complexity, style, and technique -- and there is no single "best" model.
+This comparison shows that 14 out of 18 active Ollama cloud models can generate valid SVG artwork from a nature prompt about cherry blossom trees. The results vary dramatically in complexity, style, and technique -- and there is no single "best" model.
 
 Our takeaways after running four SVG benchmarks (bicycle, parachute, jeep, blossom):
 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? Octopus Playing Chess SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a creative prompt: an octopus playing chess. Find the best LLM for complex SVG scenes. You decide the winner."
+description: "Compare 14 Ollama cloud models on a creative prompt: an octopus playing chess. Find the best LLM for complex SVG scenes. You decide the winner."
 date: 2026-07-26
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Octopus-Chess/
@@ -25,7 +25,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? Octopus Playing Chess SVG Comparison (13 Models)
 
-After testing LLMs on ducks, vehicles, dev scenes, marine life, and nature, we wanted to know: **can today's top models draw a complex, imaginative scene?** This time we asked 13 Ollama cloud models to draw **an octopus playing chess** -- a prompt that tests organic anatomy, geometric precision, scene composition, and creative concept combination.
+After testing LLMs on ducks, vehicles, dev scenes, marine life, and nature, we wanted to know: **can today's top models draw a complex, imaginative scene?** This time we asked 14 Ollama cloud models to draw **an octopus playing chess** -- a prompt that tests organic anatomy, geometric precision, scene composition, and creative concept combination.
 
 The prompt was: `Make svg image of an octopus playing chess`
 
@@ -71,12 +71,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super:cloud` | 2155 | 14 | 6 | Compact | Compact |
 | 12 | `nemotron-3-ultra:cloud` | 21145 | 148 | 19 | Very high | Richest scene |
 | 13 | `qwen3.5:397b-cloud` | 7464 | 89 | 13 | Very high | Richest scene |
-| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash:0731-cloud` | 14744 | 115 | 16 | Very high | Richest scene |
+| 15 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -3068,9 +3069,313 @@ With 7,464 characters of SVG markup, this is a detailed output that balances ric
 
 </details>
 
+## 14. `deepseek-v4-flash:0731-cloud`
+
+**SVG size:** 14744 characters  
+**Complexity:** Very high  
+**Shape elements:** 115  
+**Distinct colors:** 16  
+**Raw response:** 14744 characters  
+**Generation time:** ~100s
+
+![deepseek-v4-flash:0731-cloud octopus chess SVG](/assets/img/diagrams/ollama-svg-octopus/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Uses `<use>` references to reuse defined elements -- ideal for repeating motifs
+- Includes gradient fills for richer visual depth
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- The model rendered its interpretation of the "octopus chess" prompt -- review the SVG above for how well it captured the subject, composition, and key visual cues
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
+    <defs>
+        <!-- Background Gradient -->
+        <radialGradient id="oceanGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#1a4d6e"/>
+            <stop offset="100%" stop-color="#0a1a2b"/>
+        </radialGradient>
+        <!-- Octopus Body Gradient -->
+        <radialGradient id="octGrad" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#ff8c69"/>
+            <stop offset="50%" stop-color="#e63946"/>
+            <stop offset="100%" stop-color="#6a0572"/>
+        </radialGradient>
+        <!-- Chessboard Pattern -->
+        <pattern id="chessPattern" width="100" height="100" patternUnits="userSpaceOnUse">
+            <rect width="100" height="100" fill="#f0d9b5"/>
+            <rect width="50" height="50" fill="#b58863"/>
+            <rect x="50" y="50" width="50" height="50" fill="#b58863"/>
+        </pattern>
+        <!-- Spotlight Effect -->
+        <radialGradient id="spotlight" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Sucker Template -->
+        <g id="sucker">
+            <circle cx="0" cy="0" r="6" fill="#ffb3c6"/>
+            <circle cx="0" cy="0" r="3" fill="#6a0572"/>
+        </g>
+        <!-- White Chess Pieces -->
+        <g id="white-pawn">
+            <ellipse cx="0" cy="0" rx="10" ry="5" fill="#f0f0f0"/>
+            <path d="M -8 0 C -8 -15, -5 -20, 0 -25 C 5 -20, 8 -15, 8 0 Z" fill="#f0f0f0"/>
+            <circle cx="0" cy="-30" r="7" fill="#f0f0f0"/>
+            <path d="M -8 0 C -8 -15, -5 -20, 0 -25" fill="none" stroke="#ccc" stroke-width="1"/>
+        </g>
+        <g id="white-rook">
+            <ellipse cx="0" cy="0" rx="12" ry="6" fill="#f0f0f0"/>
+            <rect x="-10" y="-20" width="20" height="20" fill="#f0f0f0"/>
+            <rect x="-12" y="-25" width="24" height="5" fill="#f0f0f0"/>
+            <path d="M -8 -25 L -8 -32 L -4 -25 L 0 -32 L 4 -25 L 8 -32 L 8 -25 Z" fill="#f0f0f0"/>
+        </g>
+        <g id="white-knight">
+            <ellipse cx="0" cy="0" rx="15" ry="8" fill="#f0f0f0"/>
+            <path d="M -12 0 C -15 -15, -5 -25, 5 -30 C 10 -35, 15 -25, 10 -20 C 15 -20, 12 -10, 10 -5 C 15 -10, 15 -15, 12 -20 C 18 -15, 15 0, 12 0 Z" fill="#f0f0f0"/>
+            <path d="M -5 -25 C -10 -15, -10 -5, -12 0 L -8 0 C -8 -10, -5 -20, -5 -25 Z" fill="#d0d0d0"/>
+            <circle cx="5" cy="-22" r="2" fill="#333"/>
+        </g>
+        <g id="white-bishop">
+            <ellipse cx="0" cy="0" rx="12" ry="6" fill="#f0f0f0"/>
+            <path d="M -8 0 C -8 -15, -4 -20, 0 -25 C 4 -20, 8 -15, 8 0 Z" fill="#f0f0f0"/>
+            <circle cx="0" cy="-28" r="5" fill="#f0f0f0"/>
+            <path d="M -2 -33 L 2 -33 L 0 -38 Z" fill="#f0f0f0"/>
+        </g>
+        <g id="white-queen">
+            <ellipse cx="0" cy="0" rx="14" ry="7" fill="#f0f0f0"/>
+            <path d="M -10 0 L -10 -25 L 10 -25 L 10 0 Z" fill="#f0f0f0"/>
+            <path d="M -10 -25 C -15 -35, 15 -35, 10 -25 Z" fill="#f0f0f0"/>
+            <circle cx="-8" cy="-30" r="4" fill="#f0f0f0"/>
+            <circle cx="0" cy="-33" r="5" fill="#f0f0f0"/>
+            <circle cx="8" cy="-30" r="4" fill="#f0f0f0"/>
+        </g>
+        <g id="white-king">
+            <ellipse cx="0" cy="0" rx="14" ry="7" fill="#f0f0f0"/>
+            <path d="M -10 0 L -10 -25 L 10 -25 L 10 0 Z" fill="#f0f0f0"/>
+            <path d="M -10 -25 C -15 -35, 15 -35, 10 -25 Z" fill="#f0f0f0"/>
+            <rect x="-2" y="-38" width="4" height="10" fill="#f0f0f0"/>
+            <rect x="-6" y="-35" width="12" height="4" fill="#f0f0f0"/>
+            <path d="M -10 0 L -10 -25" stroke="#ccc" stroke-width="1"/>
+            <path d="M 10 0 L 10 -25" stroke="#ccc" stroke-width="1"/>
+        </g>
+        <!-- Black Chess Pieces -->
+        <g id="black-pawn">
+            <ellipse cx="0" cy="0" rx="10" ry="5" fill="#1a1a1a"/>
+            <path d="M -8 0 C -8 -15, -5 -20, 0 -25 C 5 -20, 8 -15, 8 0 Z" fill="#1a1a1a"/>
+            <circle cx="0" cy="-30" r="7" fill="#1a1a1a"/>
+        </g>
+        <g id="black-rook">
+            <ellipse cx="0" cy="0" rx="12" ry="6" fill="#1a1a1a"/>
+            <rect x="-10" y="-20" width="20" height="20" fill="#1a1a1a"/>
+            <rect x="-12" y="-25" width="24" height="5" fill="#1a1a1a"/>
+            <path d="M -8 -25 L -8 -32 L -4 -25 L 0 -32 L 4 -25 L 8 -32 L 8 -25 Z" fill="#1a1a1a"/>
+        </g>
+        <g id="black-knight">
+            <ellipse cx="0" cy="0" rx="15" ry="8" fill="#1a1a1a"/>
+            <path d="M -12 0 C -15 -15, -5 -25, 5 -30 C 10 -35, 15 -25, 10 -20 C 15 -20, 12 -10, 10 -5 C 15 -10, 15 -15, 12 -20 C 18 -15, 15 0, 12 0 Z" fill="#1a1a1a"/>
+            <path d="M -5 -25 C -10 -15, -10 -5, -12 0 L -8 0 C -8 -10, -5 -20, -5 -25 Z" fill="#333"/>
+            <circle cx="5" cy="-22" r="2" fill="#fff"/>
+        </g>
+        <g id="black-bishop">
+            <ellipse cx="0" cy="0" rx="12" ry="6" fill="#1a1a1a"/>
+            <path d="M -8 0 C -8 -15, -4 -20, 0 -25 C 4 -20, 8 -15, 8 0 Z" fill="#1a1a1a"/>
+            <circle cx="0" cy="-28" r="5" fill="#1a1a1a"/>
+            <path d="M -2 -33 L 2 -33 L 0 -38 Z" fill="#1a1a1a"/>
+        </g>
+        <g id="black-queen">
+            <ellipse cx="0" cy="0" rx="14" ry="7" fill="#1a1a1a"/>
+            <path d="M -10 0 L -10 -25 L 10 -25 L 10 0 Z" fill="#1a1a1a"/>
+            <path d="M -10 -25 C -15 -35, 15 -35, 10 -25 Z" fill="#1a1a1a"/>
+            <circle cx="-8" cy="-30" r="4" fill="#1a1a1a"/>
+            <circle cx="0" cy="-33" r="5" fill="#1a1a1a"/>
+            <circle cx="8" cy="-30" r="4" fill="#1a1a1a"/>
+        </g>
+        <g id="black-king">
+            <ellipse cx="0" cy="0" rx="14" ry="7" fill="#1a1a1a"/>
+            <path d="M -10 0 L -10 -25 L 10 -25 L 10 0 Z" fill="#1a1a1a"/>
+            <path d="M -10 -25 C -15 -35, 15 -35, 10 -25 Z" fill="#1a1a1a"/>
+            <rect x="-2" y="-38" width="4" height="10" fill="#1a1a1a"/>
+            <rect x="-6" y="-35" width="12" height="4" fill="#1a1a1a"/>
+        </g>
+    </defs>
+    <!-- Deep Ocean Background -->
+    <rect width="800" height="800" fill="url(#oceanGrad)"/>
+    <!-- Light Rays -->
+    <g opacity="0.06">
+        <polygon points="100,0 200,0 300,800 0,800" fill="#fff"/>
+        <polygon points="300,0 450,0 600,800 200,800" fill="#fff"/>
+        <polygon points="550,0 650,0 800,800 500,800" fill="#fff"/>
+    </g>
+    <!-- Bubbles -->
+    <g fill="none" stroke="#fff" stroke-width="1.5">
+        <circle cx="200" cy="150" r="15" opacity="0.4"/>
+        <circle cx="210" cy="140" r="5" opacity="0.6"/>
+        <circle cx="180" cy="180" r="8" opacity="0.5"/>
+        <circle cx="550" cy="80" r="20" opacity="0.3"/>
+        <circle cx="560" cy="60" r="10" opacity="0.5"/>
+        <circle cx="700" cy="100" r="12" opacity="0.4"/>
+        <circle cx="350" cy="300" r="6" opacity="0.6"/>
+        <circle cx="500" cy="250" r="18" opacity="0.4"/>
+        <circle cx="680" cy="50" r="7" opacity="0.5"/>
+    </g>
+    <!-- Seaweed &amp; Corals (Background Frame) -->
+    <g opacity="0.8">
+        <!-- Bottom Left Seaweed -->
+        <path d="M 50 800 Q 80 700 50 600 Q 20 500 60 400" fill="none" stroke="#2d6a4f" stroke-width="15" stroke-linecap="round"/>
+        <path d="M 50 800 Q 100 750 80 650 Q 60 550 100 450" fill="none" stroke="#40916c" stroke-width="10" stroke-linecap="round"/>
+        <path d="M 20 800 Q 40 750 20 700 Q 0 650 30 600" fill="none" stroke="#1b4332" stroke-width="12" stroke-linecap="round"/>
+        <!-- Bottom Right Coral -->
+        <path d="M 750 800 Q 720 700 760 600" fill="none" stroke="#f4845f" stroke-width="12" stroke-linecap="round"/>
+        <path d="M 760 600 Q 780 550 750 500" fill="none" stroke="#f4845f" stroke-width="8" stroke-linecap="round"/>
+        <path d="M 760 600 Q 720 560 730 520" fill="none" stroke="#f4845f" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="750" cy="500" r="15" fill="#f8961e"/>
+        <circle cx="730" cy="520" r="12" fill="#f8961e"/>
+        <circle cx="780" cy="550" r="10" fill="#f8961e"/>
+    </g>
+    <!-- Board Shadow -->
+    <ellipse cx="400" cy="720" rx="220" ry="40" fill="#000" opacity="0.4"/>
+    <!-- OCTOPUS ARMS (Behind Layers) -->
+    <g>
+        <!-- Arm 5 (Left floating) -->
+        <path d="M 630 400 C 500 350, 400 400, 350 350 C 355 340, 365 340, 370 350 C 420 400, 510 370, 640 420 Z" fill="url(#octGrad)"/>
+        <!-- Arm 6 (Right floating) -->
+        <path d="M 630 400 C 700 350, 750 400, 780 350 C 785 355, 785 365, 775 370 C 740 410, 700 380, 640 420 Z" fill="url(#octGrad)"/>
+        <!-- Arm 7 (Supporting/Underneath) -->
+        <path d="M 630 400 C 680 450, 700 550, 680 650 C 685 660, 695 660, 700 650 C 720 550, 700 460, 640 420 Z" fill="url(#octGrad)"/>
+        <!-- Arm 8 (Behind mantle) -->
+        <path d="M 630 400 C 650 300, 750 250, 720 150 C 725 145, 735 145, 740 150 C 770 250, 670 320, 640 420 Z" fill="url(#octGrad)"/>
+    </g>
+    <!-- CHESSBOARD -->
+    <g transform="translate(400, 600) scale(1, 0.5) rotate(45)">
+        <!-- 3D Edge -->
+        <rect x="-220" y="-220" width="440" height="440" fill="#2d1305" rx="10"/>
+        <rect x="-210" y="-210" width="420" height="420" fill="#5a3a1a" rx="5"/>
+        <!-- Board Surface -->
+        <rect x="-200" y="-200" width="400" height="400" fill="url(#chessPattern)" stroke="#8b5a2b" stroke-width="6"/>
+        <!-- Highlighted Squares (Last Move) -->
+        <rect x="-50" y="0" width="50" height="50" fill="#fff" opacity="0.3" rx="5"/>
+        <rect x="50" y="-50" width="50" height="50" fill="#fff" opacity="0.3" rx="5"/>
+    </g>
+    <!-- CHESS PIECES -->
+    <g>
+        <!-- White Rook at (col=1, row=1) -> x=250, y=450 -->
+        <g transform="translate(250, 450) scale(1.3)">
+            <use href="#white-rook"/>
+        </g>
+        <!-- Black Queen at (col=5, row=1) -> x=450, y=480 -->
+        <g transform="translate(450, 480) scale(1.3)">
+            <use href="#black-queen"/>
+        </g>
+        <!-- Black Pawn at (col=4, row=2) -> x=400, y=480 -->
+        <g transform="translate(400, 480) scale(1.2)">
+            <use href="#black-pawn"/>
+        </g>
+        <!-- White Queen at (col=3, row=1) -> x=310, y=540 -->
+        <g transform="translate(310, 540) scale(1.3)">
+            <use href="#white-queen"/>
+        </g>
+        <!-- Black Bishop at (col=5, row=3) -> x=480, y=580 -->
+        <g transform="translate(480, 580) scale(1.3)">
+            <use href="#black-bishop"/>
+        </g>
+        <!-- White King at (col=4, row=4) -> x=400, y=600 -->
+        <g transform="translate(400, 600) scale(1.4)">
+            <use href="#white-king"/>
+        </g>
+        <!-- Black Knight at (col=5, row=3) -> x=460, y=660 -->
+        <g transform="translate(460, 660) scale(1.3)">
+            <use href="#black-knight"/>
+        </g>
+        <!-- White Pawn at (col=3, row=4) -> x=310, y=630 -->
+        <g transform="translate(310, 630) scale(1.2)">
+            <use href="#white-pawn"/>
+        </g>
+    </g>
+    <!-- OCTOPUS ARMS (Front Layers) -->
+    <g>
+        <!-- Arm 1 (Reaching White Pawn) -->
+        <path d="M 630 400 C 550 450, 350 500, 310 630 C 315 640, 325 640, 330 630 C 380 520, 570 470, 640 420 Z" fill="url(#octGrad)"/>
+        <!-- Arm 2 (Reaching Black Knight) -->
+        <path d="M 630 400 C 600 500, 500 600, 460 660 C 465 670, 475 670, 480 660 C 530 600, 620 520, 640 420 Z" fill="url(#octGrad)"/>
+        <!-- Arm 3 (Thinking/Curled) -->
+        <path d="M 630 400 C 580 400, 550 350, 580 320 C 585 315, 595 315, 600 320 C 580 360, 600 410, 640 420 Z" fill="url(#octGrad)"/>
+        <!-- Arm 4 (Resting on Board) -->
+        <path d="M 630 400 C 650 500, 600 650, 550 700 C 555 710, 565 710, 570 700 C 620 650, 670 520, 640 420 Z" fill="url(#octGrad)"/>
+    </g>
+    <!-- SUCKERS -->
+    <g>
+        <!-- Arm 1 Suckers -->
+        <use href="#sucker" transform="translate(380, 520) rotate(-30)"/>
+        <use href="#sucker" transform="translate(350, 560) rotate(-40)"/>
+        <use href="#sucker" transform="translate(325, 600) rotate(-50)"/>
+        <!-- Arm 2 Suckers -->
+        <use href="#sucker" transform="translate(520, 560) rotate(-20)"/>
+        <use href="#sucker" transform="translate(490, 610) rotate(-30)"/>
+        <use href="#sucker" transform="translate(470, 640) rotate(-40)"/>
+        <!-- Arm 3 Suckers -->
+        <use href="#sucker" transform="translate(590, 370) rotate(30)"/>
+        <use href="#sucker" transform="translate(585, 340) rotate(45)"/>
+        <!-- Arm 4 Suckers -->
+        <use href="#sucker" transform="translate(620, 550) rotate(-10)"/>
+        <use href="#sucker" transform="translate(590, 630) rotate(-20)"/>
+        <use href="#sucker" transform="translate(565, 680) rotate(-30)"/>
+    </g>
+    <!-- OCTOPUS MANTLE &amp; HEAD -->
+    <g>
+        <!-- Main Mantle -->
+        <path d="M 700 150 C 780 200, 780 350, 650 420 C 600 450, 580 350, 700 150 Z" fill="url(#octGrad)" stroke="#4a0444" stroke-width="4"/>
+        <!-- Funnel (Siphon) -->
+        <path d="M 670 350 Q 690 380 680 400 Q 670 380 660 370 Z" fill="#b03a48"/>
+        <!-- Beak -->
+        <path d="M 610 380 L 620 390 L 600 400 Z" fill="#ff9900"/>
+        <!-- Mantle Texture / Warts -->
+        <g fill="#4a0444" opacity="0.3">
+            <circle cx="680" cy="200" r="10"/>
+            <circle cx="720" cy="240" r="15"/>
+            <circle cx="660" cy="280" r="8"/>
+            <circle cx="740" cy="300" r="12"/>
+            <circle cx="680" cy="350" r="18"/>
+            <circle cx="640" cy="320" r="6"/>
+            <circle cx="700" cy="380" r="10"/>
+        </g>
+        <!-- Left Eye -->
+        <g transform="rotate(-15, 600, 240)">
+            <ellipse cx="600" cy="240" rx="22" ry="32" fill="#fff"/>
+            <ellipse cx="605" cy="245" rx="12" ry="22" fill="#1a1a1a"/>
+            <circle cx="602" cy="238" r="5" fill="#fff"/>
+        </g>
+        <!-- Left Eyebrow -->
+        <path d="M 580 220 Q 600 210 620 230" fill="none" stroke="#4a0444" stroke-width="6" stroke-linecap="round"/>
+        <!-- Right Eye -->
+        <g transform="rotate(10, 650, 230)">
+            <ellipse cx="650" cy="230" rx="22" ry="32" fill="#fff"/>
+            <ellipse cx="655" cy="235" rx="12" ry="22" fill="#1a1a1a"/>
+            <circle cx="652" cy="228" r="5" fill="#fff"/>
+        </g>
+        <!-- Right Eyebrow -->
+        <path d="M 640 200 Q 660 210 670 230" fill="none" stroke="#4a0444" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <!-- SPOTLIGHT OVERLAY -->
+    <ellipse cx="400" cy="600" rx="350" ry="250" fill="url(#spotlight)" pointer-events="none"/>
+</svg>
+```
+
+</details>
+
+
 ## Conclusion
 
-That's all 13 octopus chess SVGs from the active Ollama cloud models. This creative-combination prompt tested a different skill set than our previous prompts: organic anatomy (tentacles), geometric precision (chess board), scene composition, and concept combination.
+That's all 14 octopus chess SVGs from the active Ollama cloud models. This creative-combination prompt tested a different skill set than our previous prompts: organic anatomy (tentacles), geometric precision (chess board), scene composition, and concept combination.
 
 **No single model is best at everything.** A model that produces a stunning cherry blossom may produce a basic octopus, and vice versa. The best model for you depends on your specific use case:
 

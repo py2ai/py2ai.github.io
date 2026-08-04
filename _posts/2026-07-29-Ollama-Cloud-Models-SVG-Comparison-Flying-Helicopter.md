@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? Flying Helicopter SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a flying helicopter SVG prompt. Find the best LLM for aviation and mechanical SVG scenes. You decide the winner."
+description: "Compare 14 Ollama cloud models on a flying helicopter SVG prompt. Find the best LLM for aviation and mechanical SVG scenes. You decide the winner."
 date: 2026-07-30
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Flying-Helicopter/
@@ -27,7 +27,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? Flying Helicopter SVG Comparison (13 Models)
 
-After testing LLMs on ducks, vehicles, dev scenes, marine life, chess, the FIFA World Cup, and an elephant on a skateboard, we wanted to know: **can today's top models draw a machine with moving parts?** This time we asked 13 Ollama cloud models to draw **a flying helicopter** -- a prompt that tests mechanical precision (rotor blades, fuselage, tail boom, landing skids), aerodynamic understanding (how a helicopter flies), scene context (sky, clouds, motion), and animation potential (spinning rotors, hovering).
+After testing LLMs on ducks, vehicles, dev scenes, marine life, chess, the FIFA World Cup, and an elephant on a skateboard, we wanted to know: **can today's top models draw a machine with moving parts?** This time we asked 14 Ollama cloud models to draw **a flying helicopter** -- a prompt that tests mechanical precision (rotor blades, fuselage, tail boom, landing skids), aerodynamic understanding (how a helicopter flies), scene context (sky, clouds, motion), and animation potential (spinning rotors, hovering).
 
 The prompt was: `Make an svg image of a flying helicopter`
 
@@ -74,12 +74,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super:cloud` | 796 | 7 | 4 | Compact | Compact |
 | 12 | `nemotron-3-ultra:cloud` | 7241 | 39 | 15 | High | Detailed |
 | 13 | `qwen3.5:397b-cloud` | 3707 | 22 | 7 | Medium | Balanced |
-| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash:0731-cloud` | 7972 | 66 | 9 | High | Detailed |
+| 15 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -1925,9 +1926,194 @@ With 3,707 characters of SVG markup, this is a balanced output -- enough detail 
 
 </details>
 
+## 14. `deepseek-v4-flash:0731-cloud`
+
+**SVG size:** 7972 characters  
+**Complexity:** High  
+**Shape elements:** 66  
+**Distinct colors:** 9  
+**Raw response:** 7972 characters  
+**Generation time:** ~100s
+
+![deepseek-v4-flash:0731-cloud flying helicopter SVG](/assets/img/diagrams/ollama-svg-helicopter/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Includes gradient fills for richer visual depth
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- The model rendered its interpretation of the "flying helicopter" prompt -- review the SVG above for how well it captured the subject, composition, and key visual cues
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="auto">
+  <defs>
+    <!-- Sky Gradient -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#87CEEB"/>
+      <stop offset="100%" stop-color="#E0F6FF"/>
+    </linearGradient>
+    <!-- Rotor Motion Blur Gradient -->
+    <radialGradient id="rotorBlur" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F1FAEE" stop-opacity="0.5"/>
+      <stop offset="80%" stop-color="#F1FAEE" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#F1FAEE" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#skyGrad)"/>
+  <!-- Sun -->
+  <circle cx="100" cy="100" r="70" fill="#F4A261" opacity="0.3"/>
+  <circle cx="100" cy="100" r="50" fill="#F4A261" opacity="0.9"/>
+  <!-- Background Clouds / Speed Lines -->
+  <g fill="#FFFFFF" opacity="0.6">
+    <path d="M 100 200 Q 150 190 200 200 Q 250 190 300 200 Q 250 210 200 210 Q 150 210 100 200 Z"/>
+    <path d="M 500 400 Q 550 390 600 400 Q 650 390 700 400 Q 650 410 600 410 Q 550 410 500 400 Z"/>
+    <path d="M 600 150 Q 630 140 660 150 Q 690 140 720 150 Q 690 160 660 160 Q 630 160 600 150 Z"/>
+  </g>
+  <g stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.5">
+    <line x1="200" y1="150" x2="280" y2="150"/>
+    <line x1="600" y1="500" x2="680" y2="500"/>
+    <line x1="150" y1="350" x2="200" y2="350"/>
+    <line x1="650" y1="250" x2="720" y2="250"/>
+  </g>
+  <!-- Helicopter Ground Shadow -->
+  <ellipse cx="400" cy="550" rx="120" ry="20" fill="#1D3557" opacity="0.15"/>
+  <!-- Main Helicopter Group -->
+  <g transform="translate(400, 300)">
+    <!-- Tail Rotor (Background elements) -->
+    <g>
+      <!-- Tail Rotor Blades -->
+      <ellipse cx="-220" cy="-20" rx="5" ry="25" fill="#1D3557" opacity="0.7"/>
+      <ellipse cx="-220" cy="-20" rx="5" ry="25" fill="#1D3557" opacity="0.7" transform="rotate(90, -220, -20)"/>
+      <!-- Tail Rotor Motion Blur -->
+      <ellipse cx="-220" cy="-20" rx="15" ry="30" fill="none" stroke="#F1FAEE" stroke-width="4" opacity="0.6"/>
+      <ellipse cx="-220" cy="-20" rx="8" ry="35" fill="none" stroke="#F1FAEE" stroke-width="2" opacity="0.4"/>
+    </g>
+    <!-- Background Landing Gear Skid -->
+    <g>
+      <path d="M -30 25 L -40 45" stroke="#1D3557" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 10 25 L 0 45" stroke="#1D3557" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 50 25 L 40 45" stroke="#1D3557" stroke-width="4" stroke-linecap="round"/>
+      <path d="M -60 45 L 40 45" stroke="#1D3557" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+      <circle cx="-60" cy="45" r="3" fill="#1D3557" opacity="0.6"/>
+      <circle cx="40" cy="45" r="3" fill="#1D3557" opacity="0.6"/>
+    </g>
+    <!-- Tail Boom -->
+    <g>
+      <path d="M -80 -10 L -220 -30 L -220 -10 L -80 10 Z" fill="#E63946"/>
+      <path d="M -80 -5 L -220 -20 L -220 -15 L -80 0 Z" fill="#F4F4F9"/>
+      <path d="M -80 0 L -220 -15 L -220 -10 L -80 10 Z" fill="#B32D3A"/>
+      <!-- Tail Rotor Hub -->
+      <circle cx="-220" cy="-20" r="6" fill="#1D3557"/>
+    </g>
+    <!-- Forward Motion Speed Lines -->
+    <g fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.7">
+      <path d="M 120 0 Q 150 0 180 -10"/>
+      <path d="M 130 15 Q 160 15 190 5"/>
+      <path d="M 110 -20 Q 140 -25 160 -30"/>
+    </g>
+    <!-- Main Fuselage / Body -->
+    <g>
+      <!-- Base Body -->
+      <path d="M -80 30 L -80 -10 Q -80 -60 -20 -60 Q 40 -60 70 -30 Q 120 -10 110 15 Q 100 30 70 30 L -80 30 Z" fill="#E63946"/>
+      <!-- Bottom White Stripe -->
+      <path d="M -78 20 L 68 20 Q 90 20 100 25 L -78 25 Z" fill="#F4F4F9"/>
+      <!-- Bottom Shadow (Dark Red) -->
+      <path d="M -80 25 L 70 25 Q 85 25 95 28 L -80 28 Z" fill="#B32D3A"/>
+      <!-- Top White Stripe -->
+      <path d="M -78 -10 Q -78 -50 -20 -50 Q 35 -50 60 -30 L 45 -20 Q 25 -35 -20 -35 Q -55 -35 -60 -10 Z" fill="#F4F4F9"/>
+      <!-- Engine Intake -->
+      <ellipse cx="-60" cy="-20" rx="10" ry="15" fill="#1D3557"/>
+      <ellipse cx="-58" cy="-22" rx="6" ry="10" fill="#333333"/>
+      <!-- Exhaust Pipe -->
+      <path d="M -80 -5 L -95 0 L -95 5 L -80 5 Z" fill="#457B9D"/>
+    </g>
+    <!-- Cockpit and Windows -->
+    <g>
+      <!-- Windshield -->
+      <path d="M 55 -28 Q 90 -15 105 5 L 85 10 Q 65 -10 45 -15 Z" fill="#A8DADC" stroke="#1D3557" stroke-width="2"/>
+      <!-- Pilot Silhouette -->
+      <circle cx="60" cy="-20" r="8" fill="#1D3557" opacity="0.4"/>
+      <path d="M 50 -12 L 70 -12 L 70 -5 L 50 -5 Z" fill="#1D3557" opacity="0.4"/>
+      <!-- Control Panel -->
+      <path d="M 45 -15 L 70 -15 L 80 5 L 45 5 Z" fill="#1D3557" opacity="0.3"/>
+      <!-- Side Window 1 -->
+      <rect x="10" y="-45" width="30" height="20" rx="5" fill="#A8DADC" stroke="#1D3557" stroke-width="2"/>
+      <!-- Side Window 2 -->
+      <rect x="-30" y="-45" width="30" height="20" rx="5" fill="#A8DADC" stroke="#1D3557" stroke-width="2"/>
+      <!-- Rear Window -->
+      <path d="M -60 -40 L -40 -40 L -40 -15 L -60 -15 Z" fill="#A8DADC" stroke="#1D3557" stroke-width="2"/>
+      <!-- Door Lines -->
+      <path d="M -20 -55 L -20 25" stroke="#1D3557" stroke-width="2" opacity="0.5"/>
+      <path d="M 20 -55 L 20 25" stroke="#1D3557" stroke-width="2" opacity="0.5"/>
+    </g>
+    <!-- Wing Stub &amp; Armaments (Optional Add-on) -->
+    <g>
+      <!-- Wing Stub -->
+      <path d="M 10 15 L 50 25 L 50 35 L 10 25 Z" fill="#E63946" stroke="#1D3557" stroke-width="2"/>
+      <!-- Rocket Pod -->
+      <rect x="45" y="20" width="30" height="20" rx="3" fill="#457B9D" stroke="#1D3557" stroke-width="2"/>
+      <!-- Rocket Tubes -->
+      <circle cx="75" cy="25" r="3" fill="#F4F4F9"/>
+      <circle cx="75" cy="30" r="3" fill="#F4F4F9"/>
+      <circle cx="75" cy="35" r="3" fill="#F4F4F9"/>
+      <!-- Foreground Wing Stub Shadow -->
+      <path d="M 10 25 L 50 35 L 50 30 L 10 20 Z" fill="#B32D3A"/>
+    </g>
+    <!-- Foreground Landing Gear Skids -->
+    <g>
+      <!-- Struts -->
+      <path d="M -40 25 L -50 50" stroke="#1D3557" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 0 25 L -10 50" stroke="#1D3557" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 40 25 L 30 50" stroke="#1D3557" stroke-width="5" stroke-linecap="round"/>
+      <!-- Skid Tube -->
+      <path d="M -70 50 L 50 50" stroke="#1D3557" stroke-width="8" stroke-linecap="round"/>
+      <!-- Skid End Caps -->
+      <circle cx="-70" cy="50" r="4" fill="#1D3557"/>
+      <circle cx="50" cy="50" r="4" fill="#1D3557"/>
+      <!-- Skid Highlights -->
+      <path d="M -65 48 L 45 48" stroke="#F4F4F9" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    </g>
+    <!-- Main Rotor Assembly -->
+    <g>
+      <!-- Mast -->
+      <rect x="-12" y="-90" width="12" height="30" fill="#457B9D"/>
+      <!-- Swash Plate / Hub -->
+      <ellipse cx="-6" cy="-60" rx="15" ry="6" fill="#1D3557"/>
+      <!-- Rotor Blades -->
+      <g opacity="0.85">
+        <!-- Blade 1 (Front) -->
+        <path d="M -6 -63 L 180 -70 L 180 -64 L -6 -57 Z" fill="#1D3557"/>
+        <!-- Blade 2 (Right) -->
+        <path d="M -6 -63 L 180 -70 L 180 -64 L -6 -57 Z" fill="#1D3557" transform="rotate(90, -6, -63)"/>
+        <!-- Blade 3 (Back) -->
+        <path d="M -6 -63 L 180 -70 L 180 -64 L -6 -57 Z" fill="#1D3557" opacity="0.6" transform="rotate(180, -6, -63)"/>
+        <!-- Blade 4 (Left) -->
+        <path d="M -6 -63 L 180 -70 L 180 -64 L -6 -57 Z" fill="#1D3557" opacity="0.6" transform="rotate(270, -6, -63)"/>
+      </g>
+      <!-- Rotor Motion Blur Discs -->
+      <ellipse cx="-6" cy="-63" rx="190" ry="25" fill="url(#rotorBlur)"/>
+      <ellipse cx="-6" cy="-63" rx="190" ry="8" fill="none" stroke="#F1FAEE" stroke-width="6" opacity="0.4"/>
+      <ellipse cx="-6" cy="-63" rx="100" ry="15" fill="none" stroke="#F1FAEE" stroke-width="4" opacity="0.3"/>
+    </g>
+  </g>
+</svg>
+```
+
+</details>
+
+
 ## Conclusion
 
-That's all 13 flying helicopter SVGs from the active Ollama cloud models. This mechanical-aviation prompt tested a different skill set than our previous prompts: mechanical anatomy (fuselage, cockpit, rotors, tail boom, landing skids), rotational motion (spinning rotors), flight dynamics (sky, clouds, ground), and animation potential.
+That's all 14 flying helicopter SVGs from the active Ollama cloud models. This mechanical-aviation prompt tested a different skill set than our previous prompts: mechanical anatomy (fuselage, cockpit, rotors, tail boom, landing skids), rotational motion (spinning rotors), flight dynamics (sky, clouds, ground), and animation potential.
 
 **No single model is best at everything.** A model that produces a stunning elephant may produce a basic helicopter, and vice versa. The best model for you depends on your specific use case:
 

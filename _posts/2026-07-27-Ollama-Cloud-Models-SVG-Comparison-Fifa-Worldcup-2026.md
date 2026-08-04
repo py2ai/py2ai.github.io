@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Which Ollama Cloud Model is Best? FIFA World Cup 2026 SVG Comparison (13 Models)"
-description: "Compare 13 Ollama cloud models on a trending prompt: FIFA Football World Cup 2026. Find the best LLM for complex branded SVG scenes. You decide the winner."
+description: "Compare 14 Ollama cloud models on a trending prompt: FIFA Football World Cup 2026. Find the best LLM for complex branded SVG scenes. You decide the winner."
 date: 2026-07-27
 header-img: "img/post-bg.jpg"
 permalink: /Ollama-Cloud-Models-SVG-Comparison-Fifa-Worldcup-2026/
@@ -28,7 +28,7 @@ seo:
 
 # Which Ollama Cloud Model is Best? FIFA World Cup 2026 SVG Comparison (13 Models)
 
-The FIFA World Cup 2026 is the biggest sporting event of the year -- hosted across three nations (USA, Canada, and Mexico) for the first time in history. So we asked 13 Ollama cloud models to draw **"FIFA Football World Cup 2026"** as an SVG. This prompt tests whether models can combine text rendering (FIFA, World Cup, 2026), brand recognition (the iconic trophy), sports imagery (soccer ball), and national identity (flags) into a single cohesive poster.
+The FIFA World Cup 2026 is the biggest sporting event of the year -- hosted across three nations (USA, Canada, and Mexico) for the first time in history. So we asked 14 Ollama cloud models to draw **"FIFA Football World Cup 2026"** as an SVG. This prompt tests whether models can combine text rendering (FIFA, World Cup, 2026), brand recognition (the iconic trophy), sports imagery (soccer ball), and national identity (flags) into a single cohesive poster.
 
 The prompt was: `Make svg image of Fifa football worldcup 2026`
 
@@ -75,12 +75,13 @@ Use this table to quickly compare models on the metrics that matter. The **verdi
 | 11 | `nemotron-3-super:cloud` | 1775 | 9 | 2 | Compact | Compact |
 | 12 | `nemotron-3-ultra:cloud` | 7733 | 24 | 12 | High | Detailed |
 | 13 | `qwen3.5:397b-cloud` | 3391 | 7 | 6 | Medium | Balanced |
-| 14 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
-| 15 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
-| 16 | `glm-5:cloud` | - | - | - | - | Retired (410) |
-| 17 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
+| 14 | `deepseek-v4-flash:0731-cloud` | 8260 | 47 | 12 | High | Detailed |
+| 15 | `bjoernb/claude-opus-4-5:latest` | - | - | - | - | Retired (410) |
+| 16 | `deepseek-v3.1:671b-cloud` | - | - | - | - | Retired (410) |
+| 17 | `glm-5:cloud` | - | - | - | - | Retired (410) |
+| 18 | `qwen3-vl:235b-cloud` | - | - | - | - | Retired (410) |
 
-**13 out of 17** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
+**14 out of 18** active models produced a valid SVG. The 4 retired models returned HTTP 410 Gone (removed from Ollama Cloud on 2026-07-15).
 
 ## Quick Recommendation by Use Case
 
@@ -2096,9 +2097,177 @@ With 3,391 characters of SVG markup, this is a balanced output -- enough detail 
 
 </details>
 
+## 14. `deepseek-v4-flash:0731-cloud`
+
+**SVG size:** 8260 characters  
+**Complexity:** High  
+**Shape elements:** 47  
+**Distinct colors:** 12  
+**Raw response:** 8260 characters  
+**Generation time:** ~100s
+
+![deepseek-v4-flash:0731-cloud FIFA World Cup 2026 SVG](/assets/img/diagrams/ollama-svg-fifa/deepseek-v4-flash_0731-cloud.svg)
+
+### Analysis
+
+**Notable SVG techniques used:**
+
+- Uses `<defs>` blocks for reusable components (a sign of well-structured, editable SVG)
+- Uses `<use>` references to reuse defined elements -- ideal for repeating motifs
+- Includes gradient fills for richer visual depth
+- Uses transforms (translate, rotate, scale) for precise positioning
+- Contains XML comments, showing the model's internal documentation of its work
+
+**Concept adherence:**
+
+- The model rendered its interpretation of the "FIFA World Cup 2026" prompt -- review the SVG above for how well it captured the subject, composition, and key visual cues
+
+<details><summary>View raw SVG source</summary>
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 550" width="100%" height="auto">
+    <defs>
+        <!-- Background Gradient -->
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0a1128"/>
+            <stop offset="50%" stop-color="#1c2c54"/>
+            <stop offset="100%" stop-color="#0a1128"/>
+        </linearGradient>
+        <!-- Gold Gradients for Trophy and Text -->
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f2d50f"/>
+            <stop offset="30%" stop-color="#d4af37"/>
+            <stop offset="50%" stop-color="#fff2a8"/>
+            <stop offset="70%" stop-color="#d4af37"/>
+            <stop offset="100%" stop-color="#aa771c"/>
+        </linearGradient>
+        <linearGradient id="goldLight" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#aa771c"/>
+            <stop offset="50%" stop-color="#fdf0a6"/>
+            <stop offset="100%" stop-color="#d4af37"/>
+        </linearGradient>
+        <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#f2d50f"/>
+            <stop offset="50%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#f2d50f"/>
+        </linearGradient>
+        <!-- Glowing Effect -->
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#d4af37" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#d4af37" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Soccer Pattern -->
+        <pattern id="pent" width="60" height="60" patternUnits="userSpaceOnUse">
+            <polygon points="30,5 55,22.5 45,52.5 15,52.5 5,22.5" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.05"/>
+        </pattern>
+        <!-- Star Symbol -->
+        <polygon id="star" points="0,-15 4,-5 15,-5 6,2 9,12 0,6 -9,12 -6,2 -15,-5 -4,-5" fill="url(#goldGrad)"/>
+    </defs>
+    <!-- Background Layer -->
+    <rect width="800" height="550" fill="url(#bgGrad)"/>
+    <rect width="800" height="550" fill="url(#pent)"/>
+    <!-- Spotlight Glow behind Trophy -->
+    <circle cx="400" cy="240" r="220" fill="url(#glow)"/>
+    <!-- Orbital Rings representing Unity and Host Cities -->
+    <circle cx="400" cy="270" r="240" fill="none" stroke="#d4af37" stroke-width="2" stroke-dasharray="10 20" opacity="0.6"/>
+    <circle cx="400" cy="270" r="260" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="4 8" opacity="0.3"/>
+    <!-- 16 Dots for 16 Host Cities -->
+    <g fill="#d4af37" opacity="0.8">
+        <circle cx="400" cy="30" r="5"/>
+        <circle cx="496" cy="46" r="5"/>
+        <circle cx="576" cy="94" r="5"/>
+        <circle cx="628" cy="170" r="5"/>
+        <circle cx="640" cy="260" r="5"/>
+        <circle cx="610" cy="345" r="5"/>
+        <circle cx="545" cy="410" r="5"/>
+        <circle cx="460" cy="440" r="5"/>
+        <circle cx="340" cy="440" r="5"/>
+        <circle cx="255" cy="410" r="5"/>
+        <circle cx="190" cy="345" r="5"/>
+        <circle cx="160" cy="260" r="5"/>
+        <circle cx="172" cy="170" r="5"/>
+        <circle cx="224" cy="94" r="5"/>
+        <circle cx="304" cy="46" r="5"/>
+    </g>
+    <!-- Large Background "26" Watermark -->
+    <text x="400" y="390" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="url(#textGrad)" text-anchor="middle" opacity="0.08" letter-spacing="20">26</text>
+    <!-- Host Nations Ribbons (USA, Canada, Mexico) -->
+    <g>
+        <!-- Canada Ribbon -->
+        <path d="M -50 470 Q 200 420, 450 470 T 850 470 L 850 550 L -50 550 Z" fill="#d80621" opacity="0.4"/>
+        <path d="M -50 485 Q 200 435, 450 485 T 850 485 L 850 550 L -50 550 Z" fill="#ffffff" opacity="0.3"/>
+        <!-- USA Ribbon -->
+        <path d="M -50 440 Q 250 380, 500 440 T 850 440 L 850 550 L -50 550 Z" fill="#002868" opacity="0.5"/>
+        <path d="M -50 455 Q 250 395, 500 455 T 850 455 L 850 550 L -50 550 Z" fill="#ffffff" opacity="0.4"/>
+        <path d="M -50 470 Q 250 410, 500 470 T 850 470 L 850 550 L -50 550 Z" fill="#bf0a30" opacity="0.5"/>
+        <!-- Mexico Ribbon -->
+        <path d="M -50 410 Q 300 350, 550 410 T 850 410 L 850 550 L -50 550 Z" fill="#006847" opacity="0.5"/>
+        <path d="M -50 425 Q 300 365, 550 425 T 850 425 L 850 550 L -50 550 Z" fill="#ffffff" opacity="0.3"/>
+        <path d="M -50 440 Q 300 380, 550 440 T 850 440 L 850 550 L -50 550 Z" fill="#ce1126" opacity="0.5"/>
+    </g>
+    <!-- Host Nation Stars -->
+    <g transform="translate(100, 90) scale(1.2)">
+        <use href="#star"/>
+    </g>
+    <g transform="translate(400, 45) scale(1.2)">
+        <use href="#star"/>
+    </g>
+    <g transform="translate(700, 90) scale(1.2)">
+        <use href="#star"/>
+    </g>
+    <!-- FIFA World Cup Trophy -->
+    <g transform="translate(0, 20)">
+        <!-- Trophy Glow -->
+        <circle cx="400" cy="180" r="100" fill="url(#glow)"/>
+        <!-- Malachite Base -->
+        <polygon points="340,280 460,280 450,295 350,295" fill="#2E4A62"/>
+        <polygon points="350,295 450,295 440,310 360,310" fill="#1c2c54"/>
+        <polygon points="360,310 440,310 430,320 370,320" fill="#0a1128"/>
+        <!-- Gold Trim on Base -->
+        <polygon points="335,275 465,275 460,280 340,280" fill="url(#goldGrad)"/>
+        <!-- Left Athlete Figure -->
+        <path d="M 390 280 C 310 270, 310 140, 375 130 C 380 150, 375 200, 395 280 Z" fill="url(#goldGrad)"/>
+        <!-- Left Athlete Highlight -->
+        <path d="M 385 280 C 320 270, 320 150, 375 140 C 375 160, 370 210, 390 280 Z" fill="url(#goldLight)" opacity="0.5"/>
+        <!-- Right Athlete Figure -->
+        <path d="M 410 280 C 490 270, 490 140, 425 130 C 420 150, 425 200, 405 280 Z" fill="url(#goldGrad)"/>
+        <!-- Right Athlete Highlight -->
+        <path d="M 415 280 C 480 270, 480 150, 425 140 C 425 160, 430 210, 410 280 Z" fill="url(#goldLight)" opacity="0.5"/>
+        <!-- Core/Body between Athletes -->
+        <path d="M 390 280 L 410 280 L 405 180 L 395 180 Z" fill="url(#goldLight)"/>
+        <!-- The Globe -->
+        <circle cx="400" cy="160" r="45" fill="url(#goldGrad)"/>
+        <circle cx="385" cy="145" r="15" fill="#ffffff" opacity="0.4"/> <!-- Globe Highlight -->
+        <!-- Globe Lines (Lat/Long) -->
+        <ellipse cx="400" cy="160" rx="20" ry="45" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+        <ellipse cx="400" cy="160" rx="45" ry="20" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+        <line x1="355" y1="160" x2="445" y2="160" stroke="#B8860B" stroke-width="1.5"/>
+        <path d="M 360 160 Q 380 140, 400 160 T 440 160" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+        <path d="M 360 160 Q 380 180, 400 160 T 440 160" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+    </g>
+    <!-- Typography Layer -->
+    <g>
+        <!-- FIFA Title -->
+        <text x="400" y="80" font-family="'Impact', 'Arial Black', sans-serif" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="10">FIFA</text>
+        <!-- WORLD CUP Subtitle -->
+        <text x="400" y="125" font-family="'Impact', 'Arial Black', sans-serif" font-size="48" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="6">WORLD CUP</text>
+        <!-- 2026 Main Title -->
+        <text x="400" y="230" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#000000" text-anchor="middle" letter-spacing="15" opacity="0.5" transform="translate(2, 2)">2026</text>
+        <text x="400" y="230" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="url(#textGrad)" text-anchor="middle" letter-spacing="15">2026</text>
+        <!-- Host Nations Subtitle -->
+        <text x="400" y="505" font-family="'Arial', sans-serif" font-size="18" font-weight="bold" fill="#a0b4d7" text-anchor="middle" letter-spacing="5">UNITED STATES • CANADA • MEXICO</text>
+        <!-- Tagline -->
+        <text x="400" y="535" font-family="'Arial', sans-serif" font-size="13" font-weight="bold" fill="#d4af37" text-anchor="middle" letter-spacing="8">THE WORLD'S GAME</text>
+    </g>
+</svg>
+```
+
+</details>
+
+
 ## Conclusion
 
-That's all 13 FIFA World Cup 2026 SVGs from the active Ollama cloud models. This trending-event prompt tested a different skill set than our previous prompts: text rendering (FIFA, World Cup, 2026), brand recognition (the trophy), sports imagery (soccer ball), national identity (flags of USA, Canada, Mexico), and poster composition.
+That's all 14 FIFA World Cup 2026 SVGs from the active Ollama cloud models. This trending-event prompt tested a different skill set than our previous prompts: text rendering (FIFA, World Cup, 2026), brand recognition (the trophy), sports imagery (soccer ball), national identity (flags of USA, Canada, Mexico), and poster composition.
 
 **No single model is best at everything.** A model that produces a stunning octopus may produce a basic World Cup poster, and vice versa. The best model for you depends on your specific use case:
 
