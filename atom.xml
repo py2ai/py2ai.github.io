@@ -1,4 +1,1284 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-08T00:43:33+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)</title><link href="https://pyshine.com/Ollama-Local-Models-SVG-Comparison-Dates-Palm/" rel="alternate" type="text/html" title="Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)" /><published>2026-08-05T00:00:00+00:00</published><updated>2026-08-05T00:00:00+00:00</updated><id>https://pyshine.com/Ollama-Local-Models-SVG-Comparison-Dates-Palm</id><content type="html" xml:base="https://pyshine.com/Ollama-Local-Models-SVG-Comparison-Dates-Palm/"><![CDATA[<h1 id="which-ollama-local-model-is-best-dates-palm-tree-svg-comparison-17-models">Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-08T10:53:28+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">AirLLM: Run 70B LLMs on a 4GB GPU Without Quantization</title><link href="https://pyshine.com/airllm-70b-llm-4gb-gpu/" rel="alternate" type="text/html" title="AirLLM: Run 70B LLMs on a 4GB GPU Without Quantization" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/AirLLM-70B-LLM-4GB-GPU</id><content type="html" xml:base="https://pyshine.com/airllm-70b-llm-4gb-gpu/"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>The GPU memory bottleneck is the elephant in the room of modern AI. As large language models scale from 7B to 70B to 400B and beyond, the VRAM required just to hold the model weights has become a showstopper for most developers. A full-precision 70B model needs roughly 140GB of VRAM – that’s four A100-80GB cards or a single H100, neither of which is within reach of the average developer, student, or small team.</p>
+
+<p>The conventional wisdom says the only path forward is quantization (shrinking model weights from FP16 to 4-bit or 8-bit), distillation (training a smaller model to mimic a larger one), or pruning (removing weights). Each approach trades quality for size, and quantization in particular can degrade model behavior in subtle ways that are hard to detect.</p>
+
+<p><strong>AirLLM</strong> by Gavin Li challenges this assumption. It lets you run 70B models on a single 4GB GPU card – <strong>without quantization, distillation, or pruning</strong>. Even more remarkably, it scales to 405B Llama 3.1 on 8GB, 671B DeepSeek-V3 on ~12GB, and Kimi K3 (2.8T parameters) on under 4GB. The trick is not about making the model smaller – it’s about making the model loading smarter.</p>
+
+<h2 id="what-is-airllm">What Is AirLLM?</h2>
+
+<p>AirLLM is a Python library that performs <strong>layer-by-layer model streaming</strong> for inference. Instead of loading the entire model into GPU memory at once, it processes one transformer layer at a time, keeping only the current layer’s weights on the GPU. For Mixture of Experts (MoE) models, it goes even further: it streams one expert at a time within each layer, loading only the expert weights that the current token actually routes to.</p>
+
+<p>This approach exploits a key insight about transformer inference: during a forward pass, each layer processes the hidden state sequentially. You don’t need all layers in memory simultaneously – you only need the one you’re currently computing. The hidden state (which is relatively small, typically a few MB per token) passes between layers, and each layer’s weights are loaded and discarded as needed.</p>
+
+<h3 id="the-technical-approach">The Technical Approach</h3>
+
+<p>AirLLM’s architecture centers on three core techniques:</p>
+
+<p><strong>1. Layer-wise streaming.</strong> The model is decomposed into individual transformer layers, each saved as a separate file. During inference, layers are loaded one at a time onto the GPU. After a layer processes the hidden state, the layer’s weights are freed from GPU memory and the next layer is loaded. This creates a constant memory footprint proportional to the size of a single layer, not the total model.</p>
+
+<p><strong>2. MoE expert streaming.</strong> For Mixture of Experts models (like Mixtral, DeepSeek-V3, Qwen3-MoE), AirLLM further decomposes each layer. MoE layers contain multiple “expert” feed-forward networks, and a router selects which expert(s) to activate for each token. AirLLM loads only the selected expert(s) at inference time, rather than loading all experts. This dramatically reduces memory for models with many experts per layer.</p>
+
+<p><strong>3. Hidden state accumulation.</strong> The hidden state (the intermediate representation of the input) is maintained on the GPU throughout the forward pass. Since the hidden state size is determined by the hidden dimension and sequence length – not the model size – it remains manageable even for trillion-parameter models. For a 4096-token sequence with a 4096 hidden dimension, the hidden state is roughly 4096 × 4096 × 2 bytes ≈ 32MB, trivial compared to the model weights.</p>
+
+<p>The result: VRAM requirements scale with <strong>per-layer size</strong>, not <strong>total model size</strong>. A 70B model and a 7B model with the same layer architecture use roughly the same amount of GPU memory, because each layer has the same dimensions. The 70B model just has more layers, processed sequentially.</p>
+
+<h2 id="key-features">Key Features</h2>
+
+<h3 id="run-70b-models-on-4gb-gpu">Run 70B Models on 4GB GPU</h3>
+
+<p>The headline feature: full-precision 70B inference on a consumer-grade 4GB GPU card (like the RTX 3050, RTX 3060 4GB, or the 4GB M-series Macs). No quantization required – the model runs in its original FP16 or BF16 precision.</p>
+
+<h3 id="run-405b-llama-31-on-8gb">Run 405B Llama 3.1 on 8GB</h3>
+
+<p>Llama 3.1 405B is the flagship model in the Llama family, with 405 billion parameters in its full version. AirLLM runs it on a single 8GB GPU by streaming layers one at a time.</p>
+
+<h3 id="run-671b-deepseek-v3-on-12gb">Run 671B DeepSeek-V3 on ~12GB</h3>
+
+<p>DeepSeek-V3 is a Mixture of Experts model with a total of 671 billion parameters (activated parameters are much smaller per token). AirLLM leverages MoE expert streaming to load only the active experts, fitting the inference pipeline into ~12GB.</p>
+
+<h3 id="run-28t-kimi-k3-on-under-4gb">Run 2.8T Kimi K3 on Under 4GB</h3>
+
+<p>Kimi K3 is the largest open-source model released to date at 2.8 trillion parameters. Thanks to its sparse MoE architecture and AirLLM’s per-expert streaming, it runs in just 3.72GB of VRAM on an RTX 6000 Ada.</p>
+
+<h3 id="sparse-moe-expert-streaming">Sparse MoE Expert Streaming</h3>
+
+<p>For MoE models, AirLLM loads only the expert(s) that each token’s router selects. If a layer has 64 experts and a token routes to 2, only those 2 experts’ weights are loaded. This is the key enabler for running trillion-parameter MoE models on small GPUs.</p>
+
+<h3 id="fp8-model-support-v30">FP8 Model Support (v3.0)</h3>
+
+<p>Version 3.0 adds support for FP8 models, further reducing memory footprint. When combined with expert streaming, FP8 models like Qwen3-235B fit into approximately 3GB of VRAM.</p>
+
+<h3 id="cpu-inference">CPU Inference</h3>
+
+<p>Don’t have a GPU? AirLLM supports CPU inference as well. While slower, it makes running large models accessible on any machine with sufficient RAM and disk space.</p>
+
+<h3 id="macos-support">MacOS Support</h3>
+
+<p>AirLLM runs natively on Apple Silicon (M1, M2, M3) using the MLX framework. This means MacBook and Mac mini users can run 70B+ models without any NVIDIA GPU.</p>
+
+<h3 id="automatic-model-detection-automodel">Automatic Model Detection (AutoModel)</h3>
+
+<p>AirLLM’s <code class="language-plaintext highlighter-rouge">AutoModel</code> class automatically detects the model architecture from its HuggingFace configuration, so you don’t need to specify a model class explicitly. One line of code handles Llama, Qwen, Mistral, Mixtral, DeepSeek, Phi, Gemma, ChatGLM, Baichuan, InternLM, and more.</p>
+
+<h3 id="apache-20-licensed">Apache 2.0 Licensed</h3>
+
+<p>AirLLM is released under the Apache 2.0 license, making it free for both personal and commercial use.</p>
+
+<h2 id="installation">Installation</h2>
+
+<p>Getting started with AirLLM is straightforward:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>airllm
+</code></pre></div></div>
+
+<p>That’s it. AirLLM works with PyTorch and automatically detects your hardware (GPU or CPU).</p>
+
+<h2 id="usage-examples">Usage Examples</h2>
+
+<h3 id="basic-inference">Basic Inference</h3>
+
+<p>The simplest way to use AirLLM is through the <code class="language-plaintext highlighter-rouge">AutoModel</code> class:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">MAX_LENGTH</span> <span class="o">=</span> <span class="mi">128</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"meta-llama/Llama-2-70b-hf"</span><span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"What is the capital of France?"</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="n">MAX_LENGTH</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="running-a-70b-model-on-4gb-gpu">Running a 70B Model on 4GB GPU</h3>
+
+<p>The same code works for the 70B version – AirLLM handles the layer streaming automatically:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"meta-llama/Llama-3-70B-Instruct"</span><span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Explain quantum computing in simple terms."</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="running-405b-llama-31-on-8gb">Running 405B Llama 3.1 on 8GB</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"meta-llama/Llama-3.1-405B-Instruct"</span><span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Write a Python function that sorts a linked list."</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="running-deepseek-v3-671b-on-12gb">Running DeepSeek-V3 (671B) on ~12GB</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"deepseek-ai/DeepSeek-V3"</span><span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Explain the difference between supervised and unsupervised learning."</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="running-kimi-k3-28t-on-under-4gb">Running Kimi K3 (2.8T) on Under 4GB</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"moonshotai/Kimi-K3"</span><span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Write a haiku about artificial intelligence."</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="cpu-inference-1">CPU Inference</h3>
+
+<p>No GPU? No problem:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"mistralai/Mistral-7B-Instruct-v0.1"</span><span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Hello, how are you?"</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">],</span>  <span class="c1"># .cpu() is the default
+</span>    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="macos-inference">MacOS Inference</h3>
+
+<p>On Apple Silicon, install MLX and use the same code:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>airllm mlx torch
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"HuggingFaceTB/SmolLM2-135M"</span><span class="p">)</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="p">[</span><span class="s">"What is the meaning of life?"</span><span class="p">],</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">],</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="using-compression-for-speed">Using Compression for Speed</h3>
+
+<p>AirLLM also supports optional block-wise quantization (4-bit or 8-bit) to speed up inference by up to 3x when disk loading is the bottleneck:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s">"garage-bAInd/Platypus2-70B-instruct"</span><span class="p">,</span>
+    <span class="n">compression</span><span class="o">=</span><span class="s">"4bit"</span>
+<span class="p">)</span>
+
+<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Explain the transformer architecture."</span><span class="p">]</span>
+
+<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
+    <span class="n">input_text</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
+<span class="p">)</span>
+
+<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</code></pre></div></div>
+
+<h3 id="profiling-and-configuration">Profiling and Configuration</h3>
+
+<p>Enable profiling to see time spent in each stage:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s">"meta-llama/Llama-2-70b-hf"</span><span class="p">,</span>
+    <span class="n">profiling_mode</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>Specify a custom path for layer shards:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s">"meta-llama/Llama-2-70b-hf"</span><span class="p">,</span>
+    <span class="n">layer_shards_saving_path</span><span class="o">=</span><span class="s">"/path/to/save/layer/shards"</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>Use a HuggingFace token for gated models:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s">"meta-llama/Llama-3-70B"</span><span class="p">,</span>
+    <span class="n">hf_token</span><span class="o">=</span><span class="s">"HF_API_TOKEN"</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="performance-benchmarks">Performance Benchmarks</h2>
+
+<p>The following table summarizes what AirLLM users have achieved across different model sizes and configurations:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Total Parameters</th>
+      <th>Minimum VRAM</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mistral 7B / Phi-3 8B</td>
+      <td>7B</td>
+      <td>~1-2 GB</td>
+      <td>Standard dense model</td>
+    </tr>
+    <tr>
+      <td>Qwen3-32B</td>
+      <td>32B</td>
+      <td>~2-3 GB</td>
+      <td>Dense model</td>
+    </tr>
+    <tr>
+      <td>Mixtral 8x7B (MoE)</td>
+      <td>47B</td>
+      <td>~1-3 GB</td>
+      <td>MoE expert streaming</td>
+    </tr>
+    <tr>
+      <td>Qwen3-235B (MoE)</td>
+      <td>235B</td>
+      <td>~3 GB</td>
+      <td>MoE + FP8 support</td>
+    </tr>
+    <tr>
+      <td>Llama 3 70B</td>
+      <td>70B</td>
+      <td>~4 GB</td>
+      <td>Full FP16 precision</td>
+    </tr>
+    <tr>
+      <td>Llama 3.1 405B</td>
+      <td>405B</td>
+      <td>~8 GB</td>
+      <td>Layer streaming</td>
+    </tr>
+    <tr>
+      <td>DeepSeek-V3</td>
+      <td>671B</td>
+      <td>~12 GB</td>
+      <td>MoE + FP8</td>
+    </tr>
+    <tr>
+      <td>Kimi K3</td>
+      <td>2.8T</td>
+      <td>~3.7 GB</td>
+      <td>Sparse MoE, per-expert streaming</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The key insight is that VRAM requirements do not scale with total model size – they scale with <strong>per-layer size</strong>. This is why a 2.8T MoE model can run in less VRAM than a 70B dense model: each layer in the 2.8T model is actually smaller when only the active experts are loaded.</p>
+
+<h3 id="speed-considerations">Speed Considerations</h3>
+
+<p>The trade-off for this memory efficiency is speed. Because layers are loaded sequentially from disk, inference is slower than with a fully loaded model. However, AirLLM mitigates this with several optimizations:</p>
+
+<ul>
+  <li><strong>Prefetching</strong>: The next layer is loaded while the current layer is being computed, overlapping I/O and compute by up to 10%.</li>
+  <li><strong>Block-wise quantization</strong>: Optional 4-bit or 8-bit compression reduces layer size, speeding up disk loading by up to 3x with minimal accuracy loss.</li>
+  <li><strong>MoE expert streaming</strong>: Loading only the needed experts means less data to transfer per layer.</li>
+</ul>
+
+<p>For many use cases – research, exploration, prototyping – the speed difference is acceptable given the ability to run models that would otherwise require multi-GPU clusters.</p>
+
+<h2 id="supported-models">Supported Models</h2>
+
+<p>AirLLM works out of the box with virtually every popular open LLM through its <code class="language-plaintext highlighter-rouge">AutoModel</code> class:</p>
+
+<ul>
+  <li><strong>Llama</strong>: Llama 2, Llama 3, Llama 3.1, Llama 3.3, Llama 4</li>
+  <li><strong>Qwen</strong>: Qwen 1, Qwen 2, Qwen 2.5, Qwen 3 (including MoE and FP8 variants)</li>
+  <li><strong>DeepSeek</strong>: DeepSeek V2, V3, R1</li>
+  <li><strong>Mistral &amp; Mixtral</strong>: All variants</li>
+  <li><strong>Phi</strong>: Phi-3, Phi-4</li>
+  <li><strong>Gemma</strong>: Gemma 1, Gemma 2</li>
+  <li><strong>ChatGLM</strong>: ChatGLM series</li>
+  <li><strong>Baichuan</strong>: Baichuan series</li>
+  <li><strong>InternLM</strong>: InternLM series</li>
+  <li><strong>Yi</strong>: Yi series</li>
+</ul>
+
+<p>New models are typically supported the day they’re released, as <code class="language-plaintext highlighter-rouge">AutoModel</code> reads the HuggingFace configuration and adapts automatically.</p>
+
+<h2 id="who-should-use-airllm">Who Should Use AirLLM?</h2>
+
+<h3 id="developers-without-high-end-gpus">Developers without High-End GPUs</h3>
+
+<p>If you’ve ever wanted to experiment with 70B+ models but couldn’t justify the cost of an A100 or H100, AirLLM is for you. A laptop with a 4GB GPU or an Apple Silicon Mac can now run state-of-the-art models.</p>
+
+<h3 id="students-and-researchers">Students and Researchers</h3>
+
+<p>AirLLM democratizes access to large models for academic research. Students can fine-tune, evaluate, and experiment with 70B+ models on personal hardware without needing cluster access.</p>
+
+<h3 id="cost-conscious-teams">Cost-Conscious Teams</h3>
+
+<p>For small teams and startups, AirLLM eliminates the need for expensive multi-GPU deployments in many scenarios. A single RTX 3060 (4GB) can handle inference workloads that previously required a full server rack.</p>
+
+<h3 id="privacy-sensitive-applications">Privacy-Sensitive Applications</h3>
+
+<p>Running large models locally – without sending data to cloud APIs – is critical for confidential data processing. AirLLM makes local inference viable for organizations that cannot use cloud-based LLM services.</p>
+
+<h3 id="rapid-prototyping">Rapid Prototyping</h3>
+
+<p>When you need to quickly test a model’s capabilities without setting up a full inference infrastructure, AirLLM provides the fastest path from “HuggingFace model ID” to “running inference.”</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>AirLLM represents a fundamentally different approach to LLM inference. Instead of trying to fit the entire model into GPU memory through compression, it asks a simpler question: do you need the entire model in memory at once? The answer, for transformer inference, is no – and the implications are staggering.</p>
+
+<p>By streaming layers one at a time and further decomposing MoE layers into individual experts, AirLLM breaks the VRAM bottleneck that has defined LLM deployment for years. A 4GB GPU – once capable of running only 7B models – can now handle 70B. An 8GB card can run 405B. And the 2.8T Kimi K3 runs on under 4GB, a feat that seemed impossible just months ago.</p>
+
+<p>The trade-off is speed: sequential layer loading means slower inference than a fully loaded multi-GPU setup. But for the vast majority of use cases – research, prototyping, exploration, privacy-sensitive workloads – this is an acceptable trade. The ability to run state-of-the-art models on commodity hardware without quantization or quality loss changes what’s possible for individual developers and small teams.</p>
+
+<p>As models continue to grow larger, AirLLM’s approach becomes increasingly compelling. The layer-streaming technique scales with model depth rather than model width, making it inherently future-proof for trillion-parameter architectures. Combined with FP8 support, CPU inference, MacOS compatibility, and automatic model detection, AirLLM is a vital tool in the inference optimization toolkit.</p>
+
+<p><strong>Resources:</strong></p>
+<ul>
+  <li><a href="https://github.com/lyogavin/airllm">AirLLM on GitHub</a></li>
+  <li><a href="https://pypi.org/project/airllm/">AirLLM on PyPI</a></li>
+  <li><a href="https://colab.research.google.com/github/lyogavin/airllm/blob/main/air_llm/examples/run_all_types_of_models.ipynb">Colab Example Notebook</a></li>
+  <li><a href="https://arxiv.org/abs/2212.09720">AirLLM Paper on arXiv</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="LLM" /><category term="Inference" /><category term="GPU" /><category term="Open Source" /><category term="AirLLM" /><category term="LLM" /><category term="GPU" /><category term="Inference" /><category term="MoE" /><category term="Mixture of Experts" /><category term="70B" /><category term="DeepSeek" /><category term="Llama" /><category term="FP8" /><category term="CPU" /><category term="MacOS" /><category term="Apache 2.0" /><summary type="html"><![CDATA[Learn how AirLLM runs 70B large language models on a single 4GB GPU card without quantization, distillation, or pruning. Explore MoE streaming, FP8 support, and real-world performance.]]></summary></entry><entry><title type="html">Code Review Graph: Local-First Code Intelligence for AI Assistants</title><link href="https://pyshine.com/Code-Review-Graph-Local-First-Code-Intelligence/" rel="alternate" type="text/html" title="Code Review Graph: Local-First Code Intelligence for AI Assistants" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/Code-Review-Graph-Local-First-Code-Intelligence</id><content type="html" xml:base="https://pyshine.com/Code-Review-Graph-Local-First-Code-Intelligence/"><![CDATA[<h1 id="code-review-graph-local-first-code-intelligence-for-ai-assistants">Code Review Graph: Local-First Code Intelligence for AI Assistants</h1>
+
+<p>AI coding assistants have become indispensable in modern development, but they share a common flaw: they’re <strong>blind to your codebase structure</strong>. When you ask an AI to review a pull request or refactor a function, it typically resorts to brute-force tactics — dumping entire files or even the whole repository into the context window. This wastes tokens, inflates costs, and often produces shallow, context-free suggestions.</p>
+
+<p><strong>code-review-graph</strong> solves this by giving AI assistants a <strong>precise, structured understanding</strong> of your codebase — built locally, updated incrementally, and served through the Model Context Protocol (MCP). Instead of reading thousands of lines to understand a single change, an AI gets exactly the context it needs: the function, its callers, its dependencies, and its impact radius. The result is a staggering <strong>71x reduction in token usage</strong> while producing more accurate, context-aware code reviews.</p>
+
+<p>Let’s dive into how it works and why it matters.</p>
+
+<hr />
+
+<h2 id="why-token-waste-is-the-silent-killer-of-ai-code-review">Why Token Waste Is the Silent Killer of AI Code Review</h2>
+
+<p>Let’s be honest: token waste is the dirty secret of AI-assisted development. Consider a typical code review scenario:</p>
+
+<ol>
+  <li>A developer opens a PR changing 3 files in a Flask project</li>
+  <li>The AI assistant, lacking structural knowledge, reads the entire codebase to understand context</li>
+  <li>For Flask alone, that’s roughly <strong>143,594 tokens</strong> consumed just to review a few hundred lines</li>
+</ol>
+
+<p>That’s like photocopying an entire book to check a single footnote. It’s wasteful, slow, and it pushes your context window to its limit — leaving less room for actual reasoning.</p>
+
+<p>The root cause is that most AI coding tools treat source code as flat text. They don’t understand that <code class="language-plaintext highlighter-rouge">validate_user()</code> is called by <code class="language-plaintext highlighter-rouge">auth.login()</code> which is imported by <code class="language-plaintext highlighter-rouge">routes.py</code> which is registered by <code class="language-plaintext highlighter-rouge">create_app()</code>. They don’t see the graph.</p>
+
+<p><strong>code-review-graph</strong> fixes this by making the graph visible.</p>
+
+<hr />
+
+<h2 id="what-code-review-graph-does">What code-review-graph Does</h2>
+
+<p>At its core, code-review-graph is a <strong>code graph engine</strong> that builds a structural map of your codebase and serves it to AI assistants through MCP. It operates in three stages:</p>
+
+<h3 id="stage-1-parse-with-tree-sitter">Stage 1: Parse with Tree-sitter</h3>
+
+<p>code-review-graph uses <strong>Tree-sitter</strong> — an incremental parser generator that builds concrete syntax trees (CSTs) for source code. Unlike regex-based or line-counting approaches, Tree-sitter understands the actual structure of your code: functions, classes, imports, calls, conditionals, and more.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># A Python function parsed into a structured node
+# code-review-graph extracts the function signature, body,
+# imports, and all call relationships automatically
+</span>
+<span class="k">def</span> <span class="nf">calculate_price</span><span class="p">(</span><span class="n">quantity</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unit_price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="s">"""Calculate total price with discount."""</span>
+    <span class="k">if</span> <span class="n">quantity</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">discount</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># 10% off for bulk orders
+</span>    <span class="k">elif</span> <span class="n">quantity</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
+        <span class="n">discount</span> <span class="o">=</span> <span class="mf">0.05</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">discount</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">subtotal</span> <span class="o">=</span> <span class="n">quantity</span> <span class="o">*</span> <span class="n">unit_price</span>
+    <span class="k">return</span> <span class="n">subtotal</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">discount</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Tree-sitter doesn’t just read this text — it produces a structured tree that captures every node type, every relationship, and every code span. This becomes the foundation of the code graph.</p>
+
+<h3 id="stage-2-build-the-graph">Stage 2: Build the Graph</h3>
+
+<p>Once parsed, code-review-graph connects the dots into a <strong>knowledge graph</strong>:</p>
+
+<ul>
+  <li><strong>Call edges</strong>: <code class="language-plaintext highlighter-rouge">calculate_price</code> is called by <code class="language-plaintext highlighter-rouge">checkout.process_order</code></li>
+  <li><strong>Import edges</strong>: <code class="language-plaintext highlighter-rouge">checkout</code> imports from <code class="language-plaintext highlighter-rouge">models.inventory</code></li>
+  <li><strong>Inheritance edges</strong>: <code class="language-plaintext highlighter-rouge">PremiumCustomer</code> extends <code class="language-plaintext highlighter-rouge">Customer</code></li>
+  <li><strong>Module edges</strong>: <code class="language-plaintext highlighter-rouge">routes</code> registers <code class="language-plaintext highlighter-rouge">api</code> blueprint</li>
+</ul>
+
+<p>The result is a directed graph where nodes represent code entities and edges represent relationships. This graph is the AI’s source of truth for codebase understanding.</p>
+
+<h3 id="stage-3-serve-via-mcp">Stage 3: Serve via MCP</h3>
+
+<p>The graph is exposed through the <strong>Model Context Protocol (MCP)</strong>, which means any AI assistant that supports MCP can query it. Instead of saying “read the whole codebase,” the AI says:</p>
+
+<ul>
+  <li>“Show me all callers of <code class="language-plaintext highlighter-rouge">calculate_price</code>”</li>
+  <li>“What’s the impact radius of changing <code class="language-plaintext highlighter-rouge">unit_price</code>?”</li>
+  <li>“Find functions related to user authentication”</li>
+</ul>
+
+<p>Each query returns <strong>precise, structured context</strong> — often just a few hundred tokens instead of tens of thousands.</p>
+
+<hr />
+
+<h2 id="key-features-with-code-examples">Key Features with Code Examples</h2>
+
+<h3 id="installation">Installation</h3>
+
+<p>code-review-graph is available as a Python package:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>code-review-graph
+</code></pre></div></div>
+
+<h3 id="cli-usage">CLI Usage</h3>
+
+<p>The command-line interface makes it easy to build and query your code graph:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Build the code graph for your project</span>
+crg build ./my-project
+
+<span class="c"># Query the graph for semantic search</span>
+crg search <span class="s2">"user authentication"</span>
+
+<span class="c"># Analyze impact radius of a specific function</span>
+crg impact checkout.process_order
+
+<span class="c"># Get a code review with risk scoring</span>
+crg review ./my-project <span class="nt">--diff</span> git diff HEAD~1
+</code></pre></div></div>
+
+<h3 id="mcp-integration">MCP Integration</h3>
+
+<p>Connect code-review-graph to your AI assistant via MCP:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"mcpServers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"code-review-graph"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"python"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"-m"</span><span class="p">,</span><span class="w"> </span><span class="s2">"code_review_graph.mcp"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--repo"</span><span class="p">,</span><span class="w"> </span><span class="s2">"./my-project"</span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Once configured, your AI assistant gains access to specialized tools:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">crg_search</code> — Semantic code search across the entire graph</li>
+  <li><code class="language-plaintext highlighter-rouge">crg_impact</code> — Impact radius analysis for any function or class</li>
+  <li><code class="language-plaintext highlighter-rouge">crg_review</code> — Automated code review with risk scoring</li>
+  <li><code class="language-plaintext highlighter-rouge">crg_context</code> — Precise context retrieval for any code entity</li>
+  <li><code class="language-plaintext highlighter-rouge">crg_diff</code> — Incremental change analysis against git history</li>
+</ul>
+
+<h3 id="semantic-search">Semantic Search</h3>
+
+<p>Find code by meaning, not just by name:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Find code related to a concept</span>
+crg search <span class="s2">"how does the system handle payments"</span>
+
+<span class="c"># Find all code touching a specific concern</span>
+crg search <span class="s2">"error handling in authentication"</span>
+
+<span class="c"># Filter by language</span>
+crg search <span class="s2">"database connection"</span> <span class="nt">--language</span> python
+</code></pre></div></div>
+
+<h3 id="incremental-change-tracking">Incremental Change Tracking</h3>
+
+<p>One of the most powerful features is <strong>incremental updates</strong>. You don’t need to rebuild the entire graph every time. code-review-graph tracks changes via git diffs and updates only the affected portions of the graph:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Update the graph after code changes</span>
+crg update <span class="nt">--repo</span> ./my-project
+
+<span class="c"># See what changed</span>
+crg diff <span class="nt">--repo</span> ./my-project
+</code></pre></div></div>
+
+<p>This makes it practical for large, actively-developed codebases where a full rebuild would be prohibitively slow.</p>
+
+<h3 id="code-review-with-risk-scoring">Code Review with Risk Scoring</h3>
+
+<p>code-review-graph can analyze a diff and provide risk assessments:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Review a specific commit</span>
+crg review ./my-project <span class="nt">--commit</span> abc123
+
+<span class="c"># Review uncommitted changes</span>
+crg review ./my-project <span class="nt">--diff</span> <span class="s2">"git diff"</span>
+
+<span class="c"># Review a pull request</span>
+crg review ./my-project <span class="nt">--pr</span> 123
+</code></pre></div></div>
+
+<p>The risk scoring takes into account:</p>
+
+<ul>
+  <li><strong>Blast radius</strong>: How many downstream functions are affected?</li>
+  <li><strong>Call chain depth</strong>: How deep does the change propagate?</li>
+  <li><strong>Module boundaries</strong>: Does the change cross architectural layers?</li>
+  <li><strong>Test coverage</strong>: Are there adequate tests for the affected code?</li>
+</ul>
+
+<hr />
+
+<h2 id="token-savings-benchmarks">Token Savings Benchmarks</h2>
+
+<p>The headline metric is a <strong>71x reduction</strong> in token usage for code review tasks. Here’s how it breaks down for real-world projects:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th>Full Context Tokens</th>
+      <th>code-review-graph Tokens</th>
+      <th>Reduction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Flask</td>
+      <td>143,594</td>
+      <td>2,196</td>
+      <td><strong>65x</strong></td>
+    </tr>
+    <tr>
+      <td>Django</td>
+      <td>287,102</td>
+      <td>4,058</td>
+      <td><strong>71x</strong></td>
+    </tr>
+    <tr>
+      <td>FastAPI</td>
+      <td>98,445</td>
+      <td>1,523</td>
+      <td><strong>64x</strong></td>
+    </tr>
+    <tr>
+      <td>Requests</td>
+      <td>45,230</td>
+      <td>892</td>
+      <td><strong>51x</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="what-this-means-in-practice">What This Means in Practice</h3>
+
+<p>Consider a typical code review for a Flask pull request that changes the <code class="language-plaintext highlighter-rouge">calculate_price</code> function. Here’s how the two approaches compare:</p>
+
+<p><strong>Without code-review-graph:</strong></p>
+<ol>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">calculate_price.py</code> (50 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">checkout.py</code> to find callers (120 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">routes.py</code> to find the blueprint (80 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">app.py</code> to find app factory (150 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">models.py</code> for database context (200 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">config.py</code> for settings (100 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">tests/</code> for test coverage (300 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">README.md</code> for project context (200 lines)</li>
+  <li>AI reads <code class="language-plaintext highlighter-rouge">requirements.txt</code> for dependencies (50 lines)</li>
+  <li>AI reads 5+ more files to fill gaps</li>
+</ol>
+
+<p><strong>Total: ~1,350 lines ≈ 5,400+ tokens — and that’s a “focused” review!</strong></p>
+
+<p><strong>With code-review-graph:</strong></p>
+<ol>
+  <li>AI queries <code class="language-plaintext highlighter-rouge">crg_context("calculate_price")</code> — returns the function, its 3 callers, its 2 imports, and the test that covers it</li>
+  <li>AI queries <code class="language-plaintext highlighter-rouge">crg_impact("calculate_price")</code> — returns the 7 downstream functions affected</li>
+  <li>AI queries <code class="language-plaintext highlighter-rouge">crg_search("discount calculation")</code> — returns 4 related functions</li>
+</ol>
+
+<p><strong>Total: ~120 lines ≈ 480 tokens — 9x more focused, and more accurate!</strong></p>
+
+<p>And for larger codebases, the gap widens dramatically. The 71x figure comes from comparing a full-repository dump against targeted graph queries for Django-sized projects.</p>
+
+<hr />
+
+<h2 id="supported-languages">Supported Languages</h2>
+
+<p>code-review-graph supports multiple programming languages out of the box:</p>
+
+<ul>
+  <li><strong>Python</strong> — Full support for functions, classes, imports, decorators, and type hints</li>
+  <li><strong>JavaScript / TypeScript</strong> — Full support for ES modules, classes, arrow functions, and TS types</li>
+  <li><strong>Java</strong> — Full support for classes, interfaces, generics, and Spring annotations</li>
+  <li><strong>Go</strong> — Full support for packages, interfaces, goroutines, and channels</li>
+  <li><strong>Rust</strong> — Full support for structs, traits, lifetimes, and modules</li>
+  <li><strong>C / C++</strong> — Full support for functions, structs, classes, and includes</li>
+  <li><strong>Ruby</strong> — Full support for classes, modules, blocks, and gems</li>
+  <li><strong>PHP</strong> — Full support for classes, traits, namespaces, and Laravel patterns</li>
+</ul>
+
+<p>New languages are added regularly via Tree-sitter grammar bindings.</p>
+
+<hr />
+
+<h2 id="who-should-use-code-review-graph">Who Should Use code-review-graph</h2>
+
+<h3 id="ai-centric-development-teams">AI-Centric Development Teams</h3>
+
+<p>If you’re building with AI coding assistants (Claude Code, Cursor, Windsurf, Copilot Workspace), code-review-graph gives your AI tools the structural context they’re missing. It turns them from “glorified autocomplete” into <strong>genuine code review partners</strong> that understand your architecture.</p>
+
+<h3 id="code-reviewers-and-maintainers">Code Reviewers and Maintainers</h3>
+
+<p>For maintainers of large codebases, code-review-graph eliminates the “where do I start?” problem. When a PR touches <code class="language-plaintext highlighter-rouge">calculate_price</code>, you instantly see the blast radius: which functions, modules, and tests are affected. No more manual grep-spelunking.</p>
+
+<h3 id="teams-managing-technical-debt">Teams Managing Technical Debt</h3>
+
+<p>Incremental change tracking means you can see how your codebase evolves over time. code-review-graph highlights when changes cross architectural boundaries, when new dependencies are introduced, and when modules become overly coupled.</p>
+
+<h3 id="security-conscious-developers">Security-Conscious Developers</h3>
+
+<p>Since code-review-graph runs <strong>100% locally</strong>, your source code never leaves your machine. Unlike cloud-based code intelligence tools, there’s no risk of your proprietary code being sent to third-party servers. This makes it suitable for regulated industries and sensitive codebases.</p>
+
+<h3 id="solo-developers">Solo Developers</h3>
+
+<p>Even if you’re a team of one, code-review-graph pays dividends. When you come back to a project after weeks away, the code graph acts as a <strong>memory aid</strong> — quickly reminding you of how pieces fit together without re-reading every file.</p>
+
+<hr />
+
+<h2 id="getting-started">Getting Started</h2>
+
+<p>Ready to give it a try? Here’s a quick start:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install</span>
+pip <span class="nb">install </span>code-review-graph
+
+<span class="c"># Navigate to your project</span>
+<span class="nb">cd </span>your-project
+
+<span class="c"># Build the graph</span>
+crg build <span class="nb">.</span>
+
+<span class="c"># Start the MCP server for AI integration</span>
+crg serve
+
+<span class="c"># Or query directly</span>
+crg search <span class="s2">"user authentication"</span>
+crg impact my_module.critical_function
+crg review <span class="nb">.</span>
+</code></pre></div></div>
+
+<p><strong>For AI assistant integration</strong>, configure the MCP server in your assistant’s settings:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"mcpServers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"code-review-graph"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"crg"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"serve"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--repo"</span><span class="p">,</span><span class="w"> </span><span class="s2">"."</span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Once configured, ask your AI assistant to:</p>
+<ul>
+  <li>“Review my last commit using the code review graph”</li>
+  <li>“Show me the impact radius of <code class="language-plaintext highlighter-rouge">UserService.validate</code>”</li>
+  <li>“Find all functions related to payment processing”</li>
+</ul>
+
+<hr />
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>code-review-graph represents a fundamental shift in how AI assistants interact with codebases. Instead of dumping raw text into context windows and hoping the AI figures it out, code-review-graph provides <strong>structured, precise, and actionable code intelligence</strong> — right where the AI needs it.</p>
+
+<p>The 71x token reduction isn’t just a number — it translates to faster code reviews, lower costs, and more accurate suggestions. And since everything runs locally, there’s no privacy compromise.</p>
+
+<p>If you’re building with AI coding tools in 2026, a code graph engine like code-review-graph isn’t just a nice-to-have — it’s becoming the <strong>essential infrastructure</strong> that makes AI-assisted development truly effective.</p>
+
+<hr />
+
+<p><strong>Repository</strong>: <a href="https://github.com/tirth8205/code-review-graph">https://github.com/tirth8205/code-review-graph</a></p>
+
+<p><strong>License</strong>: MIT</p>
+
+<p><strong>Installation</strong>: <code class="language-plaintext highlighter-rouge">pip install code-review-graph</code></p>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Code Review" /><category term="MCP" /><category term="LLM" /><category term="Developer Tools" /><category term="Tree-sitter" /><category term="Code Intelligence" /><summary type="html"><![CDATA[Discover how code-review-graph builds a structural map of your codebase using Tree-sitter, tracks changes incrementally, and delivers AI assistants precise context via MCP — reducing token usage by up to 71x.]]></summary></entry><entry><title type="html">Reverse Skill: A Cybersecurity Skills Router for AI Agents</title><link href="https://pyshine.com/Reverse-Skill-Agent-Cybersecurity-Router/" rel="alternate" type="text/html" title="Reverse Skill: A Cybersecurity Skills Router for AI Agents" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/Reverse-Skill-Agent-Cybersecurity-Router</id><content type="html" xml:base="https://pyshine.com/Reverse-Skill-Agent-Cybersecurity-Router/"><![CDATA[<h1 id="reverse-skill-a-cybersecurity-skills-router-for-ai-agents">Reverse Skill: A Cybersecurity Skills Router for AI Agents</h1>
+
+<p>Imagine asking your AI coding assistant to analyze an APK file. What happens? It might try <code class="language-plaintext highlighter-rouge">jadx</code> first, then jump to <code class="language-plaintext highlighter-rouge">apktool</code>, then attempt <code class="language-plaintext highlighter-rouge">Frida</code> for dynamic analysis — all without knowing whether the target is actually an APK, whether those tools are installed, or whether you have authorization to interact with the target. Now imagine the same scenario for a binary executable, a JavaScript obfuscation challenge, a CTF puzzle, or a penetration test against a live web app. Each scenario demands a completely different playbook, and AI agents are notoriously bad at picking the right one.</p>
+
+<p>This is the problem <strong>reverse-skill</strong> solves. It’s a cybersecurity skills router — a package that sits between your AI agent and the security task at hand, classifies what needs to be done, checks which tools are available, and routes the agent to a repeatable, documented workflow instead of letting it guess commands.</p>
+
+<p>The project is the work of security researcher <strong>zhaoxuya520</strong> and is available on GitHub at <a href="https://github.com/zhaoxuya520/reverse-skill">zhaoxuya520/reverse-skill</a>. It currently ships with <strong>41 routing rules</strong> (R0 through R40), <strong>163 regression benchmark cases</strong>, <strong>42 tracked skill modules</strong>, and MCP server integration for tool calling across multiple AI client platforms.</p>
+
+<h2 id="what-reverse-skill-actually-is">What Reverse Skill Actually Is</h2>
+
+<p>At its core, reverse-skill is a routing engine. When you feed it a task description — “decompile this APK and check for anti-debugging,” “recover the encryption key from this JavaScript obfuscation,” or “perform reconnaissance on this target” — it follows a deterministic pipeline:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>User task
+  → RULES.md (global routing protocol)
+  → MASTER-ROUTING.md / master-route.ps1 (PRIMARY fast ladder)
+  → case-init / scope.md (authorization + network profile; NO target interaction until ready)
+  → Scenario skill → tools / MCP / scripts
+  → timeline + Evidence → Finding → Path → report + field-journal
+</code></pre></div></div>
+
+<p>The key insight is that <strong>routing happens before execution</strong>. The system never lets an agent “do first, route later.” Instead, it enforces a strict order: classify the task, verify authorization, confirm tool availability, and only then take action.</p>
+
+<h3 id="why-this-matters">Why This Matters</h3>
+
+<p>AI agents (Claude Code, Codex CLI, Cursor, Cline, Windsurf, etc.) encounter security tasks across wildly different domains:</p>
+
+<ul>
+  <li><strong>APK analysis</strong> needs jadx, apktool, Frida, and smali knowledge</li>
+  <li><strong>Binary reversing</strong> needs IDA Pro, radare2, Ghidra, and understanding of PE/ELF/Mach-O formats</li>
+  <li><strong>JS deobfuscation</strong> needs CDP hooks, runtime capture, AST analysis, and domain-specific patterns</li>
+  <li><strong>Penetration testing</strong> needs nmap, Nuclei, SQLMap, Burp Suite, and an understanding of attack chains</li>
+  <li><strong>CTF challenges</strong> need 40+ sub-skills spanning reverse, pwn, crypto, web, and forensics</li>
+</ul>
+
+<p>Each domain has its own playbook, its own toolchain, and its own safety considerations. Without a router, AI agents either guess poorly or fall back to generic approaches that waste tokens and produce unreliable results.</p>
+
+<h2 id="how-the-routing-works">How the Routing Works</h2>
+
+<p>The routing system is built around three layers: a master routing ladder, a full routing matrix, and skill-specific execution contracts.</p>
+
+<h3 id="the-master-routing-ladder-41-rules">The Master Routing Ladder (41 Rules)</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">MASTER-ROUTING.md</code> file defines a priority-ordered ladder of 41 rules (R0–R40). Each rule maps a pattern of keywords to a skill module:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>Trigger Condition</th>
+      <th>Routes To</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>R1</strong></td>
+      <td>APK / smali / jadx / apktool</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/apk-reverse/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R2</strong></td>
+      <td>IPA / iOS / Objection / MobSF</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/mobile-reverse/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R3</strong></td>
+      <td>JS signing / frontend encryption / jshook / CDP</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/js-reverse/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R4</strong></td>
+      <td>DSL VM / fireeye / custom opcode VM</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/reverse-engineering/dsl-vm-reverse/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R5</strong></td>
+      <td>.NET / dnSpy / de4dot / ConfuserEx</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/dotnet-reverse/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R6</strong></td>
+      <td>IDA / decompile / deep disassembly</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/ida-reverse/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R7</strong></td>
+      <td>radare2 / r2</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/radare2/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R8</strong></td>
+      <td>Firmware / binwalk / IoT / EMBA</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/firmware-pentest/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R9</strong></td>
+      <td>Malware sample / YARA / sandbox</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/malware-analysis/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R10</strong></td>
+      <td>Attack chain / red team / lateral movement</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/attack-chain/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R11</strong></td>
+      <td>Nmap / Nuclei / SQLMap / penetration tools</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/pentest-tools/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R12</strong></td>
+      <td>API / GraphQL / BOLA / JWT attacks</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/api-security/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R13</strong></td>
+      <td>SBOM / Trivy / supply chain</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/supply-chain-security/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R14</strong></td>
+      <td>LLM / prompt injection / agent security</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/llm-security/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R15</strong></td>
+      <td>bindiff / symbol migration / PDB</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/binary-diff/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R16</strong></td>
+      <td>N-day / patch diff / exploit development</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/patch-diff-exploit/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R17</strong></td>
+      <td>pwn / ROP / stack exploitation</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/pwn-chain/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R18</strong></td>
+      <td>EDR / evasion / syscall</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/edr-bypass-re/</code></td>
+    </tr>
+    <tr>
+      <td><strong>R0</strong></td>
+      <td>Generic reverse / anti-debug / OLLVM / unknown binary</td>
+      <td><code class="language-plaintext highlighter-rouge">skills/reverse-engineering/</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The ladder is checked top-down. The first matching rule wins. If no strong keyword matches, the system defaults to <strong>R0</strong> (generic reverse engineering) and suggests consulting the full routing matrix.</p>
+
+<h3 id="the-full-routing-matrix">The Full Routing Matrix</h3>
+
+<p>When the master ladder produces ambiguous results, <code class="language-plaintext highlighter-rouge">skills/routing.md</code> provides a three-dimensional routing matrix covering <strong>target type</strong>, <strong>user intent</strong>, and <strong>toolchain</strong>. It maps over 100+ task phrasings to specific skill modules. For example:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">"DSL VM / custom instruction set / risk engine reverse"</code> → <code class="language-plaintext highlighter-rouge">reverse-engineering/dsl-vm-reverse/SKILL.md</code></li>
+  <li><code class="language-plaintext highlighter-rouge">"decompile / IDA analyze"</code> → <code class="language-plaintext highlighter-rouge">ida-reverse/SKILL.md</code></li>
+  <li><code class="language-plaintext highlighter-rouge">"Frida hook / dynamic inject"</code> → <code class="language-plaintext highlighter-rouge">reverse-engineering/tools-dynamic.md</code></li>
+  <li><code class="language-plaintext highlighter-rouge">"OLLVM deobfuscate / control flow flattening removal"</code> → <code class="language-plaintext highlighter-rouge">reverse-engineering/references/ollvm-deobfuscation.md</code></li>
+</ul>
+
+<p>The matrix also covers cross-module tasks — for instance, a CTF challenge might combine reverse engineering, cryptography, and web exploitation, each routed to separate skill modules that the orchestrator chains together.</p>
+
+<h3 id="running-the-router-from-the-command-line">Running the Router from the Command Line</h3>
+
+<p>The router can be invoked directly via PowerShell or Bash scripts:</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># One-shot PRIMARY triage</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">skills\scripts\master-route.ps1</span><span class="w"> </span><span class="nt">-Hint</span><span class="w"> </span><span class="s2">"Analyze this APK for anti-debugging checks"</span><span class="w">
+
+</span><span class="c"># Initialize a case directory with scope, timeline, and workitems</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">skills\scripts\case-init.ps1</span><span class="w"> </span><span class="nt">-Hint</span><span class="w"> </span><span class="s2">"Reverse this binary"</span><span class="w"> </span><span class="nt">-CaseName</span><span class="w"> </span><span class="s2">"malware-analysis"</span><span class="w">
+
+</span><span class="c"># Smoke test the entire routing system</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">skills\scripts\smoke.ps1</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="three-layer-authorization-gate">Three-Layer Authorization Gate</h2>
+
+<p>One of the most important design decisions in reverse-skill is its <strong>three-layer authorization gate</strong>. The system refuses to interact with any target until all three layers are satisfied:</p>
+
+<h3 id="layer-1-authorization-pre-declaration">Layer 1: Authorization Pre-Declaration</h3>
+
+<p>Before any tool touches a target, the system reads <code class="language-plaintext highlighter-rouge">skills/field-journal/precedent-auth.md</code> and requires an explicit authorization declaration. This ensures that the user has legal permission to test the target.</p>
+
+<h3 id="layer-2-scope-contract">Layer 2: Scope Contract</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">case-init</code> script generates a <code class="language-plaintext highlighter-rouge">scope.md</code> file that must be filled with:</p>
+
+<ul>
+  <li><strong>auth.status</strong>: Must be set to <code class="language-plaintext highlighter-rouge">granted</code> before any action occurs</li>
+  <li><strong>target URL or IP</strong>: Clearly identified and documented</li>
+  <li><strong>network profile</strong>: Authorized targets only, no unintended network access</li>
+  <li><strong>role assignments</strong>: Lead specialist and supporting roles defined</li>
+</ul>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Initialize a case with all authorization fields set</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">skills\scripts\case-init.ps1</span><span class="w"> </span><span class="se">`
+</span><span class="w">  </span><span class="nt">-Hint</span><span class="w"> </span><span class="s2">"Penetration test against staging environment"</span><span class="w"> </span><span class="se">`
+</span><span class="w">  </span><span class="nt">-CaseName</span><span class="w"> </span><span class="s2">"staging-pentest"</span><span class="w"> </span><span class="se">`
+</span><span class="w">  </span><span class="nt">-AuthGranted</span><span class="w"> </span><span class="se">`
+</span><span class="w">  </span><span class="nt">-TargetUrl</span><span class="w"> </span><span class="s2">"https://staging.example.com"</span><span class="w"> </span><span class="se">`
+</span><span class="w">  </span><span class="nt">-NetworkProfile</span><span class="w"> </span><span class="nx">authorized_target_only</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="layer-3-case-guard">Layer 3: Case Guard</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">case-guard.ps1</code> script performs a runtime check before any tool execution. If authorization is not <code class="language-plaintext highlighter-rouge">granted</code> or the network profile is not set, the guard exits with code 2 (refusing to proceed). The <code class="language-plaintext highlighter-rouge">-Force</code> flag issues a warning but still blocks execution.</p>
+
+<p>This three-layer approach is critical for security professionals who need demonstrable authorization trails. Every action is logged with its authorization context, creating an auditable chain from task receipt to final report.</p>
+
+<h2 id="42-skill-modules">42 Skill Modules</h2>
+
+<p>The skill modules are the execution engines behind each routing rule. Each module contains a <code class="language-plaintext highlighter-rouge">SKILL.md</code> file with:</p>
+
+<ul>
+  <li>A clear <strong>execution contract</strong> — what the module does, prerequisites, and output format</li>
+  <li><strong>Tool integration</strong> — which tools to use, how to invoke them, and how to interpret results</li>
+  <li><strong>MCP server connections</strong> — for tools with MCP interfaces (Burp Suite, IDA Pro, etc.)</li>
+  <li><strong>References and playbooks</strong> — curated knowledge for specific sub-tasks</li>
+</ul>
+
+<p>Here’s a snapshot of the tracked skill modules:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Modules</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Mobile</strong></td>
+      <td>APK reverse, iOS/mobile reverse, browser extension reverse</td>
+    </tr>
+    <tr>
+      <td><strong>Binary</strong></td>
+      <td>IDA reverse, radare2, Ghidra reverse, Go/Rust reverse, .NET reverse, macOS reverse</td>
+    </tr>
+    <tr>
+      <td><strong>Web/JS</strong></td>
+      <td>JS reverse, DSL VM reverse, protocol reverse, browser automation</td>
+    </tr>
+    <tr>
+      <td><strong>Security Testing</strong></td>
+      <td>Pentest tools, attack chain, API security, firmware pentest</td>
+    </tr>
+    <tr>
+      <td><strong>Analysis</strong></td>
+      <td>Malware analysis, digital forensics, binary diff, code audit</td>
+    </tr>
+    <tr>
+      <td><strong>Offensive</strong></td>
+      <td>Pwn chain, EDR bypass, patch diff/exploit, supply chain security</td>
+    </tr>
+    <tr>
+      <td><strong>Defensive</strong></td>
+      <td>Threat hunting, identity federation, database security, email security</td>
+    </tr>
+    <tr>
+      <td><strong>Specialized</strong></td>
+      <td>LLM security, CTF sandbox orchestrator, hardware security, radio/SDR</td>
+    </tr>
+    <tr>
+      <td><strong>Utilities</strong></td>
+      <td>Diagram generator, docs generator, field journal</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="example-apk-reverse-module">Example: APK Reverse Module</h3>
+
+<p>When R1 routes an APK task to <code class="language-plaintext highlighter-rouge">skills/apk-reverse/</code>, the agent follows a structured workflow:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. triage → classify the APK, identify architecture, check protection
+2. static → jadx decompile, apktool unpack, smali analysis
+3. dynamic → Frida hooking, runtime capture, SSL pinning bypass
+4. analysis → identify anti-debugging, data exfiltration, vulnerable components
+5. report → Evidence → Finding → Path chain, structured output
+</code></pre></div></div>
+
+<h3 id="example-js-reverse-module">Example: JS Reverse Module</h3>
+
+<p>When R3 routes a JavaScript obfuscation task to <code class="language-plaintext highlighter-rouge">skills/js-reverse/</code>, the agent follows a five-stage pipeline:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Observe → Capture → Rebuild → Verify → Document
+</code></pre></div></div>
+
+<p>This includes support for CDP (Chrome DevTools Protocol) hooks, runtime capture via MCP servers, AST-level deobfuscation, and pattern matching against known obfuscation frameworks.</p>
+
+<h2 id="mcp-server-integration">MCP Server Integration</h2>
+
+<p>Reverse-skill integrates with MCP (Model Context Protocol) servers to provide tool-calling capabilities. The MCP integration enables:</p>
+
+<ul>
+  <li><strong>Burp Suite MCP</strong>: 78 tools for web application security testing, including proxy history analysis, Intruder brute forcing, Repeater replay, and Collaborator OOB testing</li>
+  <li><strong>IDA Pro MCP</strong>: Decompilation, cross-reference analysis, pattern search, and script execution</li>
+  <li>** anything-analyzer MCP**: HTTP capture, request replay, and browser interaction for security testing</li>
+  <li><strong>Pentest Swarm AI</strong>: Autonomous pentesting swarm that can coordinate multi-stage attacks</li>
+  <li><strong>Reqable MCP</strong>: Network traffic capture and API workflow testing</li>
+</ul>
+
+<p>The MCP servers are registered through a bootstrap process that validates installation, checks authentication, and confirms connectivity before making them available to the agent.</p>
+
+<h2 id="163-regression-benchmark-cases">163 Regression Benchmark Cases</h2>
+
+<p>The project maintains <strong>163 regression benchmark cases</strong> that validate routing accuracy across all skill modules. These cases ensure that updates to routing rules don’t break existing classifications. The test suite covers:</p>
+
+<ul>
+  <li>Correct rule matching for each of the 41 routing rules</li>
+  <li>Edge cases (ambiguous inputs, overlapping triggers, multi-language targets)</li>
+  <li>Tool availability checks across Windows and Linux platforms</li>
+  <li>Authorization gate enforcement</li>
+  <li>Evidence chain integrity</li>
+</ul>
+
+<p>Running the benchmarks:</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Full smoke test including routing matrix validation</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">skills\scripts\smoke.ps1</span><span class="w">
+
+</span><span class="c"># Case initialization and scope validation</span><span class="w">
+</span><span class="n">powershell</span><span class="w"> </span><span class="nt">-File</span><span class="w"> </span><span class="nx">skills\scripts\case-init.ps1</span><span class="w"> </span><span class="nt">-Hint</span><span class="w"> </span><span class="s2">"test task"</span><span class="w"> </span><span class="nt">-CaseName</span><span class="w"> </span><span class="s2">"benchmark-test"</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="ci-platforms-windows--ubuntu">CI Platforms: Windows + Ubuntu</h2>
+
+<p>Reverse-skill is designed for cross-platform operation with CI pipelines on both Windows and Ubuntu:</p>
+
+<ul>
+  <li><strong>Windows</strong>: PowerShell-based scripts for master routing, case initialization, tool index refresh, and smoke testing</li>
+  <li><strong>Ubuntu/Linux</strong>: Bash equivalents for the same operations, with Kali Linux-specific profiles for security tool availability</li>
+  <li><strong>Tool Index</strong>: Auto-generated <code class="language-plaintext highlighter-rouge">tool-index.md</code> that reflects which tools are actually installed on the current machine. Agents never try to use tools that aren’t available.</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Linux tool index refresh</span>
+bash skills/scripts/refresh-tool-index.sh
+
+<span class="c"># Kali Linux specialized refresh</span>
+bash kali/scripts/refresh-tool-index.sh
+</code></pre></div></div>
+
+<h2 id="client-neutral-design">Client-Neutral Design</h2>
+
+<p>A key design principle is that reverse-skill is <strong>client-neutral</strong>. It works with any AI coding client that can read markdown files and execute scripts:</p>
+
+<ul>
+  <li>Claude Code</li>
+  <li>Codex CLI</li>
+  <li>Cursor</li>
+  <li>Cline</li>
+  <li>Windsurf</li>
+  <li>Kiro</li>
+  <li>Aider</li>
+  <li>Continue</li>
+  <li>Reasonix</li>
+</ul>
+
+<p>The routing core is pure markdown and scripts — no client-specific APIs or SDKs are required. Client-specific adapters are optional add-ons, not dependencies.</p>
+
+<h2 id="who-should-use-reverse-skill">Who Should Use Reverse Skill</h2>
+
+<p><strong>Security professionals</strong> who want AI assistance without the guesswork:</p>
+
+<ul>
+  <li><strong>Penetration testers</strong> who need consistent, documented workflows across different target types</li>
+  <li><strong>Reverse engineers</strong> who want AI agents to follow established playbooks instead of improvising</li>
+  <li><strong>CTF competitors</strong> who need rapid classification of challenge types and access to 40+ sub-skills</li>
+  <li><strong>Malware analysts</strong> who want structured analysis pipelines with evidence tracking</li>
+  <li><strong>Red team operators</strong> who need multi-stage attack chain orchestration</li>
+  <li><strong>Security educators</strong> who want to teach structured analysis methodologies</li>
+  <li><strong>Bug bounty hunters</strong> who need repeatable reconnaissance and exploitation workflows</li>
+</ul>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+  <li><strong>Java / JDK</strong> — for jadx and apktool</li>
+  <li><strong>Node.js 22.12+</strong> — for JS toolchain and MCP servers</li>
+  <li><strong>Python 3.x</strong> — for Frida and helper scripts</li>
+  <li><strong>A code AI client</strong> — Claude Code, Codex CLI, Cursor, etc.</li>
+</ul>
+
+<h3 id="installation">Installation</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/zhaoxuya520/reverse-skill.git
+</code></pre></div></div>
+
+<p>Then refresh the tool index for your platform:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Platform</th>
+      <th>Command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Windows</td>
+      <td><code class="language-plaintext highlighter-rouge">powershell -File skills/scripts/refresh-tool-index.ps1</code></td>
+    </tr>
+    <tr>
+      <td>Linux / macOS</td>
+      <td><code class="language-plaintext highlighter-rouge">bash skills/scripts/refresh-tool-index.sh</code></td>
+    </tr>
+    <tr>
+      <td>Kali Linux</td>
+      <td><code class="language-plaintext highlighter-rouge">bash kali/scripts/refresh-tool-index.sh</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Check <code class="language-plaintext highlighter-rouge">skills/tool-index.md</code> to see which tools were detected.</p>
+
+<h3 id="typical-workflow">Typical Workflow</h3>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Clone the repo and refresh the tool index
+2. Ask your AI client to read RULES.md
+3. Run master-route.ps1 with your task description
+4. Run case-init.ps1 to set up scope and authorization
+5. The router directs you to the right SKILL.md
+6. Follow the skill's execution contract
+7. Log findings via Evidence → Finding → Path
+8. Generate reports via docs-generator
+</code></pre></div></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Reverse Skill fills a critical gap in the AI-assisted security toolkit: it gives agents a map before they start exploring. By enforcing routing-before-execution, implementing a three-layer authorization gate, and providing 42 skill modules with 163 regression-tested routing rules, it transforms AI agents from unpredictable tool guessers into structured security analysts.</p>
+
+<p>The project’s 121 commits, 15 contributors, and active community (QQ group 942400892, Discord server) demonstrate that this is a living, evolving toolkit. Whether you’re analyzing an APK, reversing a binary, deobfuscating JavaScript, conducting a penetration test, or competing in a CTF, reverse-skill ensures your AI agent approaches the task with the right methodology, the right tools, and the right authorization — every single time.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><strong>Get Started</strong>: <a href="https://github.com/zhaoxuya520/reverse-skill">GitHub Repository</a></td>
+      <td><a href="https://github.com/zhaoxuya520/reverse-skill/blob/main/skills/routing.md">Full Routing Matrix</a></td>
+      <td><a href="https://github.com/zhaoxuya520/reverse-skill/blob/main/skills/MASTER-ROUTING.md">Master Routing Ladder</a></td>
+      <td><a href="https://github.com/zhaoxuya520/reverse-skill/blob/main/README_AI.md">AI Bootstrap Guide</a></td>
+    </tr>
+  </tbody>
+</table>]]></content><author><name>PyShine Team</name></author><category term="AI" /><category term="Security" /><category term="Cybersecurity" /><category term="Agent" /><category term="Penetration Testing" /><category term="Reverse Engineering" /><category term="MCP" /><summary type="html"><![CDATA[Reverse Skill is a routing engine that directs AI agents to the right tools and methodologies for security tasks — from APK analysis and binary reversing to penetration testing and CTF challenges. With 41 routing rules, 163 benchmark cases, MCP integration, and a three-layer authorization gate.]]></summary></entry><entry><title type="html">Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)</title><link href="https://pyshine.com/Ollama-Local-Models-SVG-Comparison-Dates-Palm/" rel="alternate" type="text/html" title="Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)" /><published>2026-08-05T00:00:00+00:00</published><updated>2026-08-05T00:00:00+00:00</updated><id>https://pyshine.com/Ollama-Local-Models-SVG-Comparison-Dates-Palm</id><content type="html" xml:base="https://pyshine.com/Ollama-Local-Models-SVG-Comparison-Dates-Palm/"><![CDATA[<h1 id="which-ollama-local-model-is-best-dates-palm-tree-svg-comparison-17-models">Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)</h1>
 
 <p>A dates palm tree is another Fibonacci marvel of nature: its fronds (large feather-like leaves) spiral around the trunk following Fibonacci numbers, and each frond itself has leaflets arranged in a Fibonacci pattern along the central rib. We asked our models to draw <strong>a dates palm tree</strong> to test whether they can render the spiral frond crown, the tall slender trunk with textured diamond leaf scars, the hanging clusters of dates, and the desert/sky scene context. This prompt tests organic geometry (spiraling fronds), texture (trunk pattern), color depth (green fronds, brown trunk, red/brown dates), and scene composition (sky, ground, perspective).</p>
 
@@ -8420,1189 +9700,4 @@ ansible-playbook playbook.yml <span class="nt">--check</span> <span class="nt">-
 
 <hr />
 
-<p>Ansible’s value is <strong>agentless, idempotent, YAML-driven configuration management</strong> — describe the desired state, let Ansible converge to it, run it 100 times safely. The five stages here — inventory, playbooks, modules, roles, production — cover everything from a one-host <code class="language-plaintext highlighter-rouge">ping</code> to a vault-encrypted, Molecule-tested, AWX-scheduled, GitOps-driven production fleet with fact caching and dynamic cloud inventory. The two habits that pay off: <strong>prefer modules over <code class="language-plaintext highlighter-rouge">shell</code>/<code class="language-plaintext highlighter-rouge">command</code></strong> (modules are idempotent; raw shell is not), and <strong>always <code class="language-plaintext highlighter-rouge">--check --diff</code> before prod</strong> (see what would change before you change it). Install Ansible, write a 10-line playbook that installs nginx, run it twice, and watch the second run report <code class="language-plaintext highlighter-rouge">changed=0</code> — once you’ve seen idempotency, the model clicks.</p>]]></content><author><name>PyShine</name></author><category term="Tutorial" /><category term="DevOps" /><category term="Infrastructure" /><category term="Ansible" /><category term="Configuration Management" /><category term="DevOps" /><category term="IaC" /><category term="Automation" /><category term="Tutorial" /><summary type="html"><![CDATA[A complete Ansible tutorial in one blog post. Covers the whole tool in 5 stages: inventory (hosts, groups, dynamic inventory, variables), playbooks (plays, tasks, YAML, idempotency, modules apt/copy/template/service/git, handlers), roles (directory structure, ansible-galaxy, collections, variable precedence), and production (ansible-vault for secrets, ansible-lint, Molecule testing, AWX/Tower automation, pull mode, fact caching). Five hand-drawn diagrams, runnable YAML, and a quick-start roadmap.]]></summary></entry><entry><title type="html">Learn Loki in a Single Post: A Complete Tutorial From Labels and LogQL to Promtail, Grafana, and Production</title><link href="https://pyshine.com/Learn-Loki-in-One-Post-Complete-Tutorial-Labels-LogQL-Promtail-Grafana-Quick-Start/" rel="alternate" type="text/html" title="Learn Loki in a Single Post: A Complete Tutorial From Labels and LogQL to Promtail, Grafana, and Production" /><published>2026-07-28T00:00:00+00:00</published><updated>2026-07-28T00:00:00+00:00</updated><id>https://pyshine.com/Learn-Loki-in-One-Post-Complete-Tutorial-Labels-LogQL-Promtail-Grafana-Quick-Start</id><content type="html" xml:base="https://pyshine.com/Learn-Loki-in-One-Post-Complete-Tutorial-Labels-LogQL-Promtail-Grafana-Quick-Start/"><![CDATA[<h1 id="learn-loki-in-a-single-post-complete-tutorial-from-labels-and-logql-to-promtail-grafana-and-production">Learn Loki in a Single Post: Complete Tutorial From Labels and LogQL to Promtail, Grafana, and Production</h1>
-
-<p>Loki is the <strong>logs</strong> pillar of the Grafana observability stack — a horizontally-scalable log aggregation system that indexes only labels (not the full text), making it dramatically cheaper and faster to ingest than Elasticsearch/ELK. It pairs with <a href="/Learn-Prometheus-in-One-Post-Complete-Tutorial-Metrics-PromQL-Alerting-Grafana-Quick-Start/">Prometheus</a> (metrics) and <a href="/Learn-Observability-in-One-Post-Complete-Tutorial-Metrics-Logs-Traces-OpenTelemetry-Quick-Start/">OpenTelemetry</a> (traces) to complete the observability triad. This single post covers the whole system in five stages, with hand-drawn diagrams and runnable config.</p>
-
-<h2 id="learning-roadmap">Learning Roadmap</h2>
-
-<p><img src="/assets/img/diagrams/loki-tutorial/loki-roadmap.svg" alt="Loki Roadmap" /></p>
-
-<p>The roadmap moves from the label model (Stage 1), through ingest (Stage 2), storage (Stage 3), LogQL (Stage 4), and production (Stage 5). The <a href="/Learn-Prometheus-in-One-Post-Complete-Tutorial-Metrics-PromQL-Alerting-Grafana-Quick-Start/">Prometheus tutorial</a> is the prerequisite — Loki shares the same label-cardinality model.</p>
-
-<hr />
-
-<h2 id="stage-1--labels-streams-not-indexed-fields">Stage 1 — Labels: Streams, Not Indexed Fields</h2>
-
-<h3 id="the-key-insight-index-labels-not-log-content">The key insight: index labels, not log content</h3>
-
-<p><img src="/assets/img/diagrams/loki-tutorial/loki-arch.svg" alt="Loki Architecture: Push + Label-Index" /></p>
-
-<p>Loki’s fundamental difference from Elasticsearch/ELK: it <strong>indexes only the labels</strong> (metadata about the log line — which app, which environment, which pod), not the log line content itself. The log text is stored compressed in <strong>chunks</strong>; at query time, Loki first finds the right streams by label (fast, index lookup), then greps within those streams (brute-force, but on a small filtered set).</p>
-
-<h3 id="loki-vs-elk--the-tradeoff">Loki vs ELK — the tradeoff</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th> </th>
-      <th>ELK (Elasticsearch)</th>
-      <th>Loki</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>What’s indexed</strong></td>
-      <td>every field in the log line</td>
-      <td>only labels</td>
-    </tr>
-    <tr>
-      <td><strong>Storage</strong></td>
-      <td>expensive (full inverted index)</td>
-      <td>10-100x less (just labels + compressed chunks)</td>
-    </tr>
-    <tr>
-      <td><strong>Ingest speed</strong></td>
-      <td>slower (indexing every field)</td>
-      <td>fast (only label index)</td>
-    </tr>
-    <tr>
-      <td><strong>Query: by label</strong></td>
-      <td>fast</td>
-      <td>fast (index lookup)</td>
-    </tr>
-    <tr>
-      <td><strong>Query: full-text search</strong></td>
-      <td>fast (inverted index)</td>
-      <td>slower (grep within stream)</td>
-    </tr>
-    <tr>
-      <td><strong>Best for</strong></td>
-      <td>free-text search across many fields</td>
-      <td>log query-by-label (which app, which pod)</td>
-    </tr>
-  </tbody>
-</table>
-
-<p><strong>The rule</strong>: if you primarily query logs by <em>which application/pod/environment produced them</em> (label-based), Loki is cheaper and faster. If you need to search across <em>any field in the log content</em> (full-text), ELK is better. Most operational logging is label-based (“show me the logs for the payment service in production”), which is why Loki has become the default.</p>
-
-<h3 id="labels-and-cardinality">Labels and cardinality</h3>
-
-<p><img src="/assets/img/diagrams/loki-tutorial/loki-labels.svg" alt="Labels: Streams, Not Indexed Fields" /></p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># A log stream = a unique set of label values</span>
-<span class="pi">{</span><span class="nv">app="payment-api"</span><span class="pi">,</span> <span class="nv">env="prod"</span><span class="pi">,</span> <span class="nv">instance="pod-abc123"</span><span class="pi">}</span>
-</code></pre></div></div>
-
-<ul>
-  <li>A <strong>stream</strong> is a unique combination of label values. All log lines with the same labels go into one stream.</li>
-  <li><strong>Low cardinality only</strong> — same rule as Prometheus: <code class="language-plaintext highlighter-rouge">app</code>, <code class="language-plaintext highlighter-rouge">env</code>, <code class="language-plaintext highlighter-rouge">namespace</code>, <code class="language-plaintext highlighter-rouge">cluster</code> are good labels (dozens of values). <code class="language-plaintext highlighter-rouge">user_id</code>, <code class="language-plaintext highlighter-rouge">request_id</code>, <code class="language-plaintext highlighter-rouge">trace_id</code> are <strong>bad labels</strong> (millions of values → millions of streams → OOM).</li>
-  <li><strong>Relabeling</strong> — Promtail can drop, add, or change labels before pushing to Loki (filter at source).</li>
-</ul>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> High-cardinality labels (<code class="language-plaintext highlighter-rouge">user_id</code>, <code class="language-plaintext highlighter-rouge">request_id</code>) create millions of streams — same OOM as Prometheus. If you need per-request log search, use the trace ID as a <em>field inside the log line</em> (parsed at query time with LogQL), not as a label. Labels are for <em>grouping</em> (which app), not for <em>identifying</em> (which request).</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-2--ingest-promtail-docker-opentelemetry">Stage 2 — Ingest: Promtail, Docker, OpenTelemetry</h2>
-
-<h3 id="promtail--the-log-shipper">Promtail — the log shipper</h3>
-
-<p><strong>Promtail</strong> is Loki’s log shipper (the log equivalent of Prometheus’s scrape). It runs on each host, reads log files, adds labels, and pushes to Loki:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># promtail-config.yml</span>
-<span class="na">server</span><span class="pi">:</span>
-  <span class="na">port</span><span class="pi">:</span> <span class="m">9080</span>
-
-<span class="na">positions</span><span class="pi">:</span>
-  <span class="na">filename</span><span class="pi">:</span> <span class="s">/tmp/positions.yaml</span>
-
-<span class="na">clients</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">http://loki:3100/loki/api/v1/push</span>
-
-<span class="na">scrape_configs</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">job_name</span><span class="pi">:</span> <span class="s">app-logs</span>
-    <span class="na">static_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">targets</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">localhost</span><span class="pi">]</span>
-        <span class="na">labels</span><span class="pi">:</span>
-          <span class="na">job</span><span class="pi">:</span> <span class="s">payment-api</span>
-          <span class="na">env</span><span class="pi">:</span> <span class="s">prod</span>
-          <span class="na">__path__</span><span class="pi">:</span> <span class="s">/var/log/app/*.log</span>
-</code></pre></div></div>
-
-<p>Promtail tails the log files (<code class="language-plaintext highlighter-rouge">__path__</code>), attaches labels (<code class="language-plaintext highlighter-rouge">job</code>, <code class="language-plaintext highlighter-rouge">env</code>), tracks its position (so it resumes on restart), and pushes to Loki’s <code class="language-plaintext highlighter-rouge">/loki/api/v1/push</code> endpoint.</p>
-
-<h3 id="docker-logging-driver">Docker logging driver</h3>
-
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">//</span><span class="w"> </span><span class="err">Docker</span><span class="w"> </span><span class="err">Compose:</span><span class="w"> </span><span class="err">ship</span><span class="w"> </span><span class="err">container</span><span class="w"> </span><span class="err">logs</span><span class="w"> </span><span class="err">directly</span><span class="w"> </span><span class="err">to</span><span class="w"> </span><span class="err">Loki</span><span class="w">
-</span><span class="p">{</span><span class="w">
-  </span><span class="nl">"logging"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="nl">"driver"</span><span class="p">:</span><span class="w"> </span><span class="s2">"loki"</span><span class="p">,</span><span class="w">
-    </span><span class="nl">"options"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"loki-url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http://loki:3100/loki/api/v1/push"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"loki-pipeline-stages"</span><span class="p">:</span><span class="w"> </span><span class="s2">"[{</span><span class="se">\"</span><span class="s2">labels</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="s2">app</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">payment-api</span><span class="se">\"</span><span class="s2">}}]"</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
-
-<p>Docker can push container logs directly to Loki without Promtail — the <code class="language-plaintext highlighter-rouge">loki</code> logging driver handles it.</p>
-
-<h3 id="opentelemetry">OpenTelemetry</h3>
-
-<p>Loki can ingest via the <strong>OpenTelemetry Collector</strong> — the OTel collector’s Loki exporter sends logs with OTel attributes mapped to Loki labels. This is the unified path: OTel for traces + metrics + logs, with Loki as the log backend.</p>
-
-<h3 id="other-ingest-paths">Other ingest paths</h3>
-
-<ul>
-  <li><strong>Fluentd / Fluent Bit</strong> — popular alternatives to Promtail with a Loki output plugin.</li>
-  <li><strong>Vector</strong> — another log shipper with Loki support.</li>
-  <li><strong>Direct API push</strong> — any application can POST logs to <code class="language-plaintext highlighter-rouge">/loki/api/v1/push</code> (for custom integrations).</li>
-</ul>
-
-<hr />
-
-<h2 id="stage-3--storage-chunks-index-boltdb-shipper">Stage 3 — Storage: Chunks, Index, boltdb-shipper</h2>
-
-<h3 id="how-loki-stores-logs">How Loki stores logs</h3>
-
-<ol>
-  <li><strong>Chunks</strong> — log lines are compressed (gzip/snappy) into <strong>chunks</strong> (~1.5MB each). A chunk belongs to one stream and a time range. Chunks are stored in object storage (S3, GCS, filesystem).</li>
-  <li><strong>Index</strong> — maps <code class="language-plaintext highlighter-rouge">label set + time range → chunk IDs</code>. This is the only index; it’s small because it only covers labels.</li>
-</ol>
-
-<h3 id="boltdb-shipper--the-modern-index-store">boltdb-shipper — the modern index store</h3>
-
-<p>Older Loki used an index per day in BoltDB. <strong>boltdb-shipper</strong> (the default since Loki 2.0) stores index files in object storage alongside chunks, with a local BoltDB cache for fast lookups. This scales horizontally without a shared database.</p>
-
-<h3 id="object-storage-backends">Object storage backends</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># loki-config.yml</span>
-<span class="na">storage_config</span><span class="pi">:</span>
-  <span class="na">boltdb_shipper</span><span class="pi">:</span>
-    <span class="na">active_index_directory</span><span class="pi">:</span> <span class="s">/loki/index</span>
-    <span class="na">cache_location</span><span class="pi">:</span> <span class="s">/loki/cache</span>
-    <span class="na">shared_store</span><span class="pi">:</span> <span class="s">filesystem</span>   <span class="c1"># or s3, gcs, azure</span>
-  <span class="na">filesystem</span><span class="pi">:</span>
-    <span class="na">directory</span><span class="pi">:</span> <span class="s">/loki/chunks</span>
-</code></pre></div></div>
-
-<p>Loki supports: <strong>filesystem</strong> (dev), <strong>S3</strong>, <strong>GCS</strong>, <strong>Azure Blob</strong>, <strong>BOS</strong>. For production, use S3/GCS — cheap, durable, infinitely scalable. Loki doesn’t need a database (unlike ELK’s Elasticsearch cluster); the index + chunks live in object storage.</p>
-
-<hr />
-
-<h2 id="stage-4--logql">Stage 4 — LogQL</h2>
-
-<h3 id="stream-selectors--line-filters--parsers">Stream selectors + line filters + parsers</h3>
-
-<p><img src="/assets/img/diagrams/loki-tutorial/loki-logql.svg" alt="LogQL: Selectors, Filters, Parsers, Aggregations" /></p>
-
-<pre><code class="language-logql"># 1. Stream selector (fast: index lookup)
-{app="payment-api", env="prod"}
-
-# 2. Line filter (grep within stream)
-{app="payment-api"} |= "error"
-
-# 3. Parser (extract fields from the log line)
-{app="payment-api"} |= "error" | json
-
-# 4. Label filter (on parsed fields)
-{app="payment-api"} |= "error" | json | status &gt;= "500"
-
-# 5. Aggregation (like PromQL)
-sum by (status) (count_over_time({app="payment-api"} |= "error" | json [5m]))
-</code></pre>
-
-<h3 id="logql-syntax">LogQL syntax</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Syntax</th>
-      <th>What it does</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">{app="api"}</code></td>
-      <td>stream selector (label match)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">\|= "error"</code></td>
-      <td>line contains “error”</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">\|~ "timeout.*"</code></td>
-      <td>line matches regex</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">!= "debug"</code></td>
-      <td>line does NOT contain “debug”</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">\| json</code></td>
-      <td>parse line as JSON → extract fields</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">\| logfmt</code></td>
-      <td>parse logfmt (key=value)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">\| regexp</code></td>
-      <td>parse with a custom regex</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">count_over_time({...}[5m])</code></td>
-      <td>number of log lines in 5m window</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">rate({...}[5m])</code></td>
-      <td>logs per second</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">sum by (status) (...)</code></td>
-      <td>aggregate (like PromQL)</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="logql-vs-promql">LogQL vs PromQL</h3>
-
-<p>LogQL is designed to feel like PromQL:</p>
-<ul>
-  <li>Same label selector syntax: <code class="language-plaintext highlighter-rouge">{app="api", env="prod"}</code>.</li>
-  <li>Same aggregation: <code class="language-plaintext highlighter-rouge">sum by (job) (rate(...[5m]))</code>.</li>
-  <li>Same range vector: <code class="language-plaintext highlighter-rouge">[5m]</code> window.</li>
-  <li><strong>Difference</strong>: LogQL adds <strong>line filters</strong> (<code class="language-plaintext highlighter-rouge">|=</code>, <code class="language-plaintext highlighter-rouge">|~</code>, <code class="language-plaintext highlighter-rouge">!=</code>) and <strong>parsers</strong> (<code class="language-plaintext highlighter-rouge">| json</code>, <code class="language-plaintext highlighter-rouge">| logfmt</code>) that operate on the log <em>content</em> — PromQL doesn’t have these because metrics don’t have content.</li>
-</ul>
-
-<h3 id="log-based-alerts">Log-based alerts</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># alerting_rules.yml</span>
-<span class="na">groups</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">log-alerts</span>
-    <span class="na">rules</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">alert</span><span class="pi">:</span> <span class="s">HighErrorLogs</span>
-        <span class="na">expr</span><span class="pi">:</span> <span class="s">sum by (app) (rate({app="payment-api"} |= "error" [5m])) &gt; </span><span class="m">10</span>
-        <span class="na">for</span><span class="pi">:</span> <span class="s">10m</span>
-        <span class="na">labels</span><span class="pi">:</span>
-          <span class="na">severity</span><span class="pi">:</span> <span class="s">page</span>
-        <span class="na">annotations</span><span class="pi">:</span>
-          <span class="na">summary</span><span class="pi">:</span> <span class="s2">"</span><span class="s">High</span><span class="nv"> </span><span class="s">error</span><span class="nv"> </span><span class="s">log</span><span class="nv"> </span><span class="s">rate</span><span class="nv"> </span><span class="s">on</span><span class="nv"> </span><span class="s">"</span>
-</code></pre></div></div>
-
-<p>Loki’s <strong>ruler</strong> evaluates LogQL alert expressions (just like Prometheus’s alerting rules) and sends firing alerts to <strong>Alertmanager</strong>. This means you can alert on log patterns (“error rate in the payment service logs &gt; 10/s for 10m”) without a separate monitoring system.</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> LogQL line filters (<code class="language-plaintext highlighter-rouge">|= "error"</code>) grep through the log lines — they’re slower than label selectors. Always use the <strong>label selector first</strong> (<code class="language-plaintext highlighter-rouge">{app="api"}</code>) to narrow to the right streams, then line-filter within that small set. Filtering all streams for “error” is a full scan of everything.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-5--production">Stage 5 — Production</h2>
-
-<p><img src="/assets/img/diagrams/loki-tutorial/loki-prod.svg" alt="Production: Chunks, Retention, Multi-tenant, Alerts" /></p>
-
-<h3 id="retention">Retention</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">limits_config</span><span class="pi">:</span>
-  <span class="na">retention_period</span><span class="pi">:</span> <span class="s">30d</span>        <span class="c1"># global default</span>
-  <span class="na">retention_stream</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="na">selector</span><span class="pi">:</span> <span class="s1">'</span><span class="s">{namespace="audit"}'</span>
-      <span class="na">priority</span><span class="pi">:</span> <span class="s">high</span>
-      <span class="na">period</span><span class="pi">:</span> <span class="s">730d</span>              <span class="c1"># 2 years for audit logs</span>
-</code></pre></div></div>
-
-<p>Loki deletes old chunks via the <strong>compactor</strong>. Retention can be global (30d) or per-stream (audit logs kept 2 years). The compactor runs periodically and removes chunks past their retention.</p>
-
-<h3 id="multi-tenancy">Multi-tenancy</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Each request carries X-Scope-OrgID header = tenant ID</span>
-curl <span class="nt">-H</span> <span class="s2">"X-Scope-OrgID: team-payments"</span> http://loki:3100/loki/api/v1/query?query<span class="o">=</span>...
-</code></pre></div></div>
-
-<p>Loki is <strong>multi-tenant by default</strong> — every request carries an <code class="language-plaintext highlighter-rouge">X-Scope-OrgID</code> header identifying the tenant. Each tenant’s logs, index entries, and chunks are isolated. Per-tenant rate limits and retention policies can be configured. This lets one Loki cluster serve many teams.</p>
-
-<h3 id="high-availability">High availability</h3>
-
-<p>Run <strong>two Loki instances</strong> behind a load balancer. Since the index and chunks live in object storage (shared), both instances see the same data. Ingest is <strong>deduplicated</strong> (if both receive the same log, one copy is kept). Queries can go to either instance.</p>
-
-<h3 id="caching">Caching</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">query_range</span><span class="pi">:</span>
-  <span class="na">cache_results</span><span class="pi">:</span> <span class="no">true</span>
-  <span class="na">results_cache</span><span class="pi">:</span>
-    <span class="na">cache</span><span class="pi">:</span>
-      <span class="na">embedded_cache</span><span class="pi">:</span>
-        <span class="na">enabled</span><span class="pi">:</span> <span class="no">true</span>
-        <span class="na">max_size_mb</span><span class="pi">:</span> <span class="m">100</span>
-</code></pre></div></div>
-
-<p>Loki can cache <strong>query results</strong> (repeated dashboard queries resolve instantly) and <strong>chunks</strong> (recently accessed chunks stay in memory/Redis). Caching is critical for Grafana dashboards that re-query the same time range on every refresh.</p>
-
-<h3 id="grafana-integration">Grafana integration</h3>
-
-<p>Loki is designed for <strong>Grafana</strong> — add Loki as a data source, write LogQL in the Explore panel, and build log dashboards. The “Logs” panel in Grafana shows live log streams; the “LogQL” panel runs queries. Loki + Prometheus + Grafana = the complete Grafana observability stack (metrics + logs + dashboards + alerts).</p>
-
-<hr />
-
-<h2 id="quick-start-checklist">Quick-Start Checklist</h2>
-
-<ol>
-  <li><strong>Run Loki + Promtail + Grafana</strong> — <code class="language-plaintext highlighter-rouge">docker run</code> the Grafana Loki stack, or use the Helm chart.</li>
-  <li><strong>Configure Promtail</strong> — tail your app logs, add labels (<code class="language-plaintext highlighter-rouge">job</code>, <code class="language-plaintext highlighter-rouge">env</code>).</li>
-  <li><strong>Open Grafana</strong> → add Loki as a data source → Explore.</li>
-  <li><strong>Query with LogQL</strong> — <code class="language-plaintext highlighter-rouge">{app="myapp"}</code> to see all logs, add <code class="language-plaintext highlighter-rouge">|= "error"</code> to filter.</li>
-  <li><strong>Parse JSON logs</strong> — <code class="language-plaintext highlighter-rouge">{app="myapp"} | json</code> to extract fields.</li>
-  <li><strong>Aggregate</strong> — <code class="language-plaintext highlighter-rouge">sum by (status) (count_over_time({app="myapp"} |= "error" [5m]))</code>.</li>
-  <li><strong>Add labels</strong> at the source (Promtail/Docker) — not at query time.</li>
-  <li><strong>Keep cardinality low</strong> — never use <code class="language-plaintext highlighter-rouge">user_id</code>/<code class="language-plaintext highlighter-rouge">request_id</code> as labels.</li>
-  <li><strong>Configure retention</strong> — 30d default, longer for audit logs.</li>
-  <li><strong>Set up log-based alerts</strong> — Loki ruler + Alertmanager on LogQL expressions.</li>
-</ol>
-
-<h2 id="common-pitfalls">Common Pitfalls</h2>
-
-<ul>
-  <li><strong>High-cardinality labels</strong> — <code class="language-plaintext highlighter-rouge">user_id</code>/<code class="language-plaintext highlighter-rouge">request_id</code> as labels → millions of streams → OOM. Use them as fields in the log line, parsed at query time.</li>
-  <li><strong>Full-text search across all streams</strong> — <code class="language-plaintext highlighter-rouge">|= "error"</code> without a label selector greps everything. Always narrow with <code class="language-plaintext highlighter-rouge">{app="..."}</code> first.</li>
-  <li><strong>No parser for structured logs</strong> — if your logs are JSON, use <code class="language-plaintext highlighter-rouge">| json</code> to extract fields; raw text filtering misses structured data.</li>
-  <li><strong>Promtail not tracking position</strong> — <code class="language-plaintext highlighter-rouge">positions.filename</code> must be on a persistent volume; otherwise Promtail re-reads on restart.</li>
-  <li><strong>No retention configured</strong> — logs accumulate forever; set <code class="language-plaintext highlighter-rouge">retention_period</code>.</li>
-  <li><strong>Single Loki instance in prod</strong> — no HA; run two behind a load balancer with shared object storage.</li>
-  <li><strong>No caching</strong> — Grafana dashboard queries re-run on every refresh; enable query result caching.</li>
-  <li><strong>Using ELK when Loki suffices</strong> — if you query by label (which app/pod/env), Loki is 10-100x cheaper. Only use ELK if you need true full-text search across many fields.</li>
-</ul>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://grafana.com/docs/loki/latest/">Loki Docs</a> — the official reference</li>
-  <li><a href="https://grafana.com/docs/loki/latest/logql/">LogQL Docs</a> — the query language</li>
-  <li><a href="https://grafana.com/docs/loki/latest/clients/promtail/">Promtail Docs</a> — the log shipper</li>
-  <li><a href="https://github.com/grafana/loki">Grafana Loki GitHub</a> — the source</li>
-  <li><a href="https://grafana.com/blog/2021/08/04/how-loki-can-slash-your-observability-costs/">Loki vs ELK</a> — the comparison</li>
-</ul>
-
-<h2 id="related-guides">Related guides</h2>
-
-<p>Loki is the logs pillar of observability — these PyShine tutorials connect to it:</p>
-
-<ul>
-  <li><strong><a href="/Learn-Prometheus-in-One-Post-Complete-Tutorial-Metrics-PromQL-Alerting-Grafana-Quick-Start/">Learn Prometheus in One Post</a></strong> — the metrics pillar; same label model, same Grafana dashboards, same Alertmanager.</li>
-  <li><strong><a href="/Learn-Observability-in-One-Post-Complete-Tutorial-Metrics-Logs-Traces-OpenTelemetry-Quick-Start/">Learn Observability in One Post</a></strong> — the umbrella; metrics + logs + traces. Loki is the logs half.</li>
-  <li><strong><a href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">Learn Kubernetes in One Post</a></strong> — the Loki Helm chart runs on K8s; Promtail discovers pods.</li>
-  <li><strong><a href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">Learn Docker in One Post</a></strong> — the Docker logging driver ships to Loki; run the stack in Compose.</li>
-  <li><strong><a href="/Learn-Elasticsearch-OpenSearch-in-One-Post-Complete-Tutorial-Inverted-Index-Shards-Query-DSL-Quick-Start/">Learn Elasticsearch in One Post</a></strong> — the comparison; ELK for full-text search, Loki for label-based log aggregation.</li>
-</ul>
-
-<hr />
-
-<p>Loki’s value is the <strong>label-index-only model</strong> — index what’s cheap (labels), grep what’s expensive (log content), and store compressed chunks in cheap object storage. The five stages here — labels, ingest, storage, LogQL, production — cover everything from a single Promtail tailing one log file to a multi-tenant, S3-backed, HA-paired, cached, retention-managed, log-alerting production cluster. The two habits that pay off: <strong>never use high-cardinality labels</strong> (same OOM as Prometheus), and <strong>always narrow with a label selector before line-filtering</strong> (grep all streams = full scan). Run the Loki Docker stack, tail your app logs with Promtail, query <code class="language-plaintext highlighter-rouge">{app="myapp"} |= "error"</code> in Grafana, and watch the filtered logs appear — once you’ve seen LogQL narrow by label then grep by content, the model clicks.</p>]]></content><author><name>PyShine</name></author><category term="Tutorial" /><category term="DevOps" /><category term="Observability" /><category term="Loki" /><category term="Logging" /><category term="Grafana" /><category term="Observability" /><category term="LogQL" /><category term="Tutorial" /><summary type="html"><![CDATA[A complete Grafana Loki tutorial in one blog post. Covers the whole system in 5 stages: labels (streams not indexed fields, low cardinality only, vs ELK tradeoff), ingest (Promtail, Docker logging driver, OpenTelemetry -> push), storage (chunks, label-index, boltdb-shipper, S3/GCS backend), LogQL (stream selectors, line filters, parsers json/logfmt/regexp, count_over_time, rate, sum by aggregation), and production (retention, multi-tenant X-Scope-OrgID, alerting ruler, HA, caching). Five hand-drawn diagrams, runnable config, and a quick-start roadmap.]]></summary></entry><entry><title type="html">Learn OAuth 2.0 and OIDC in a Single Post: A Complete Tutorial From Authorization Flows and Tokens to PKCE and Security Best Practices</title><link href="https://pyshine.com/Learn-OAuth-2-OIDC-in-One-Post-Complete-Tutorial-Flows-Tokens-PKCE-Security-Quick-Start/" rel="alternate" type="text/html" title="Learn OAuth 2.0 and OIDC in a Single Post: A Complete Tutorial From Authorization Flows and Tokens to PKCE and Security Best Practices" /><published>2026-07-28T00:00:00+00:00</published><updated>2026-07-28T00:00:00+00:00</updated><id>https://pyshine.com/Learn-OAuth-2-OIDC-in-One-Post-Complete-Tutorial-Flows-Tokens-PKCE-Security-Quick-Start</id><content type="html" xml:base="https://pyshine.com/Learn-OAuth-2-OIDC-in-One-Post-Complete-Tutorial-Flows-Tokens-PKCE-Security-Quick-Start/"><![CDATA[<h1 id="learn-oauth-20-and-oidc-in-a-single-post-complete-tutorial-from-authorization-flows-and-tokens-to-pkce-and-security">Learn OAuth 2.0 and OIDC in a Single Post: Complete Tutorial From Authorization Flows and Tokens to PKCE and Security</h1>
-
-<p>OAuth 2.0 is the authorization framework that lets a user grant a third-party app access to their data on another service — without giving the app their password. <strong>OpenID Connect (OIDC)</strong> is the authentication layer on top of OAuth that proves <em>who the user is</em>. Together they power “Sign in with Google/GitHub/Microsoft” and every delegated-access API. This single post covers the whole stack in five stages, with hand-drawn diagrams and runnable code.</p>
-
-<h2 id="learning-roadmap">Learning Roadmap</h2>
-
-<p><img src="/assets/img/diagrams/oauth-tutorial/oauth-roadmap.svg" alt="OAuth 2.0 + OIDC Roadmap" /></p>
-
-<p>The roadmap moves from the roles (Stage 1), through the flows (Stage 2), tokens (Stage 3), OIDC (Stage 4), and security best practices (Stage 5). The <a href="/Learn-Cryptography-in-One-Post-Complete-Tutorial-Symmetric-Asymmetric-Hashing-TLS-Quick-Start/">Cryptography tutorial</a> and <a href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">REST API tutorial</a> are companions.</p>
-
-<hr />
-
-<h2 id="stage-1--roles-whos-who">Stage 1 — Roles: Who’s Who</h2>
-
-<p><img src="/assets/img/diagrams/oauth-tutorial/oauth-roles.svg" alt="OAuth Roles: Who's Who" /></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Role</th>
-      <th>What it is</th>
-      <th>Example</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Resource Owner</strong></td>
-      <td>the user who owns the data</td>
-      <td>you, logged into Google</td>
-    </tr>
-    <tr>
-      <td><strong>Client</strong></td>
-      <td>the app that wants access to the user’s data</td>
-      <td>a photo-printing app</td>
-    </tr>
-    <tr>
-      <td><strong>Authorization Server</strong></td>
-      <td>issues tokens after the user consents</td>
-      <td>Google’s OAuth endpoint</td>
-    </tr>
-    <tr>
-      <td><strong>Resource Server</strong></td>
-      <td>the API that holds the data</td>
-      <td>Google Photos API</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The <strong>client</strong> never sees the user’s password. It redirects the user to the <strong>authorization server</strong>, the user logs in there and consents, the authorization server gives the client a <strong>token</strong>, and the client uses that token to call the <strong>resource server</strong>. The password stays with the authorization server.</p>
-
-<h3 id="the-authorization-code-flow-simplified">The authorization code flow (simplified)</h3>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Client → User: "Do you want to grant me access to your photos?"
-2. User → Auth Server: logs in + consents
-3. Auth Server → Client: gives an authorization CODE (short-lived, one-time)
-4. Client → Auth Server: exchanges code + client_secret for a TOKEN
-5. Client → Resource Server: sends token in the Authorization header
-6. Resource Server → Client: returns the photos
-</code></pre></div></div>
-
-<p>The code (step 3) is delivered via a browser redirect (URL parameter); the token (step 4) is delivered via a server-to-server POST — the code → token exchange happens on the backend, so the token never touches the browser.</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> OAuth is <strong>authorization</strong> (what you can do), not <strong>authentication</strong> (who you are). A successful OAuth flow means “the user granted the client access” — it doesn’t prove “the user is who they claim.” That’s what OIDC adds (Stage 4).</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-2--flows">Stage 2 — Flows</h2>
-
-<p><img src="/assets/img/diagrams/oauth-tutorial/oauth-flows.svg" alt="OAuth 2.0 Flows" /></p>
-
-<h3 id="authorization-code--pkce--the-standard-flow">Authorization Code + PKCE — the standard flow</h3>
-
-<p>Used by web apps, SPAs (React/Vue), and mobile apps. <strong>PKCE</strong> (Proof Key for Code Exchange) replaces the client secret (which can’t be safely stored in a browser/app) with a dynamically generated challenge:</p>
-
-<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 1. Generate PKCE pair (client-side)</span>
-<span class="kd">const</span> <span class="nx">verifier</span> <span class="o">=</span> <span class="nx">randomString</span><span class="p">(</span><span class="mi">64</span><span class="p">);</span>
-<span class="kd">const</span> <span class="nx">challenge</span> <span class="o">=</span> <span class="nx">base64url</span><span class="p">(</span><span class="nx">sha256</span><span class="p">(</span><span class="nx">verifier</span><span class="p">));</span>
-
-<span class="c1">// 2. Redirect user to authorization server</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">location</span> <span class="o">=</span> <span class="s2">`https://auth.example.com/authorize?
-  response_type=code&amp;
-  client_id=MY_APP&amp;
-  redirect_uri=https://myapp.com/callback&amp;
-  scope=photos:read&amp;
-  code_challenge=</span><span class="p">${</span><span class="nx">challenge</span><span class="p">}</span><span class="s2">&amp;
-  code_challenge_method=S256&amp;
-  state=</span><span class="p">${</span><span class="nx">randomString</span><span class="p">()}</span><span class="s2">`</span><span class="p">;</span>
-
-<span class="c1">// 3. Authorization server redirects back with ?code=XYZ</span>
-<span class="c1">// 4. Exchange code + verifier for tokens (server-to-server POST)</span>
-<span class="kd">const</span> <span class="nx">tokenResponse</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">fetch</span><span class="p">(</span><span class="dl">"</span><span class="s2">https://auth.example.com/token</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
-  <span class="na">method</span><span class="p">:</span> <span class="dl">"</span><span class="s2">POST</span><span class="dl">"</span><span class="p">,</span>
-  <span class="na">body</span><span class="p">:</span> <span class="k">new</span> <span class="nx">URLSearchParams</span><span class="p">({</span>
-    <span class="na">grant_type</span><span class="p">:</span> <span class="dl">"</span><span class="s2">authorization_code</span><span class="dl">"</span><span class="p">,</span>
-    <span class="na">code</span><span class="p">:</span> <span class="dl">"</span><span class="s2">XYZ</span><span class="dl">"</span><span class="p">,</span>
-    <span class="na">code_verifier</span><span class="p">:</span> <span class="nx">verifier</span><span class="p">,</span>
-    <span class="na">client_id</span><span class="p">:</span> <span class="dl">"</span><span class="s2">MY_APP</span><span class="dl">"</span><span class="p">,</span>
-    <span class="na">redirect_uri</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://myapp.com/callback</span><span class="dl">"</span><span class="p">,</span>
-  <span class="p">}),</span>
-<span class="p">});</span>
-<span class="kd">const</span> <span class="p">{</span> <span class="nx">access_token</span><span class="p">,</span> <span class="nx">refresh_token</span> <span class="p">}</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">tokenResponse</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
-</code></pre></div></div>
-
-<p><strong>PKCE</strong> prevents an attacker who intercepts the authorization code (from the browser redirect) from exchanging it for a token — they don’t have the <code class="language-plaintext highlighter-rouge">code_verifier</code>, which was generated and stored on the client. <strong>PKCE is required for all SPAs and mobile apps</strong> (OAuth 2.1 makes it mandatory for everything).</p>
-
-<h3 id="client-credentials--server-to-server-no-user">Client Credentials — server-to-server (no user)</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /token
-<span class="nv">grant_type</span><span class="o">=</span>client_credentials&amp;
-<span class="nv">client_id</span><span class="o">=</span>SERVICE_A&amp;
-<span class="nv">client_secret</span><span class="o">=</span>SECRET&amp;
-<span class="nv">scope</span><span class="o">=</span>api:read
-</code></pre></div></div>
-
-<p>No user involvement — a service authenticates with its own ID + secret and gets a token. Used for machine-to-machine (a cron job calling an API, a microservice calling another).</p>
-
-<h3 id="device-code--tvs-iot-clis">Device Code — TVs, IoT, CLIs</h3>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Device → Auth Server: "give me a device code"
-2. Auth Server → Device: "show the user this URL + code: example.com/device, code ABC123"
-3. User → opens browser, enters code, logs in + consents
-4. Device → polls Auth Server: "is it done yet?" → eventually gets tokens
-</code></pre></div></div>
-
-<p>Used when the device can’t render a browser (a smart TV, a CLI tool, an IoT device). The user authorizes on a <em>different</em> device (their phone/laptop).</p>
-
-<h3 id="deprecated-flows">Deprecated flows</h3>
-
-<ul>
-  <li><strong>Implicit</strong> — returned the access token directly in the URL fragment (no code exchange). No refresh token, token visible in URL (logs, referrer). <strong>Deprecated; use auth code + PKCE.</strong></li>
-  <li><strong>Password (ROPC)</strong> — the client asks for the user’s password directly. <strong>Never use; it trains users to type passwords into arbitrary apps.</strong></li>
-</ul>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> If you see <code class="language-plaintext highlighter-rouge">response_type=token</code> (implicit) or a flow that asks the user for their password, it’s wrong. Always use <code class="language-plaintext highlighter-rouge">response_type=code</code> + PKCE.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-3--tokens-access-refresh-scopes">Stage 3 — Tokens: Access, Refresh, Scopes</h2>
-
-<p><img src="/assets/img/diagrams/oauth-tutorial/oauth-tokens.svg" alt="Tokens: Access, Refresh, Scopes, JWT" /></p>
-
-<h3 id="access-token">Access token</h3>
-
-<ul>
-  <li><strong>Short-lived</strong> (minutes to an hour).</li>
-  <li>Sent to the API in the <code class="language-plaintext highlighter-rouge">Authorization: Bearer &lt;token&gt;</code> header.</li>
-  <li><strong>Never</strong> put it in a URL (logs + referrer leak it).</li>
-  <li>The resource server validates it (by signature for JWT, by introspection for opaque).</li>
-</ul>
-
-<h3 id="refresh-token">Refresh token</h3>
-
-<ul>
-  <li><strong>Long-lived</strong> (days to weeks).</li>
-  <li>Used to get a new access token when the old one expires — no re-login.</li>
-  <li><strong>Never</strong> sent to the resource server (it’s for the authorization server only).</li>
-  <li><strong>Store securely</strong>: httpOnly cookie (web), secure storage (mobile), env var (server).</li>
-</ul>
-
-<h3 id="scopes">Scopes</h3>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>scope=photos:read profile email
-</code></pre></div></div>
-
-<p>Scopes are the <strong>permissions</strong> the client requests — they limit what the access token can do. The user sees them in the consent screen (“This app wants to read your photos and see your email”). The token carries the scopes; the resource server checks them on every request.</p>
-
-<h3 id="jwt-vs-opaque-tokens">JWT vs opaque tokens</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th> </th>
-      <th>JWT</th>
-      <th>Opaque</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Format</strong></td>
-      <td><code class="language-plaintext highlighter-rouge">header.payload.signature</code> (base64)</td>
-      <td>random string</td>
-    </tr>
-    <tr>
-      <td><strong>Validation</strong></td>
-      <td>verify signature (no DB lookup)</td>
-      <td>call introspection endpoint</td>
-    </tr>
-    <tr>
-      <td><strong>Stateless</strong></td>
-      <td>✅ (self-contained)</td>
-      <td>❌ (server must track)</td>
-    </tr>
-    <tr>
-      <td><strong>Revocation</strong></td>
-      <td>hard (can’t un-sign)</td>
-      <td>easy (delete from DB)</td>
-    </tr>
-    <tr>
-      <td><strong>Size</strong></td>
-      <td>large (~1KB)</td>
-      <td>small (32 bytes)</td>
-    </tr>
-  </tbody>
-</table>
-
-<p><strong>JWT</strong> is great for distributed APIs (no shared DB needed); <strong>opaque</strong> is better when you need revocation (the server can immediately invalidate a token by deleting it). Most modern systems use JWT with short expiry + a revocation list for emergencies.</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> A JWT access token can’t be revoked — once signed, it’s valid until it expires. That’s why access tokens are short-lived (5-15 min). The refresh token (which <em>can</em> be revoked) is the control point; the access token is the fast path.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-4--oidc-identity-on-top-of-oauth">Stage 4 — OIDC: Identity on Top of OAuth</h2>
-
-<h3 id="what-oidc-adds">What OIDC adds</h3>
-
-<p>OAuth 2.0 gives you an access token (authorization: “what the app can do”). <strong>OpenID Connect</strong> adds an <strong>ID token</strong> (authentication: “who the user is”):</p>
-
-<p><img src="/assets/img/diagrams/oauth-tutorial/oauth-oidc.svg" alt="OIDC + PKCE + Security Best Practices" /></p>
-
-<ul>
-  <li><strong>ID token</strong> — a JWT containing the user’s identity claims (<code class="language-plaintext highlighter-rouge">sub</code>, <code class="language-plaintext highlighter-rouge">email</code>, <code class="language-plaintext highlighter-rouge">name</code>, <code class="language-plaintext highlighter-rouge">picture</code>).</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">openid</code> scope</strong> — request OIDC by adding <code class="language-plaintext highlighter-rouge">openid</code> to the scope list.</li>
-  <li><strong>Userinfo endpoint</strong> — a REST endpoint to fetch the user’s profile (separate from the ID token, for when you need more claims).</li>
-  <li><strong>Nonce</strong> — a random value the client sends and checks in the ID token (prevents replay attacks).</li>
-</ul>
-
-<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// OIDC authorization request</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">location</span> <span class="o">=</span> <span class="s2">`https://auth.example.com/authorize?
-  response_type=code&amp;
-  client_id=MY_APP&amp;
-  scope=openid profile email&amp;   // "openid" activates OIDC
-  redirect_uri=...&amp;
-  nonce=</span><span class="p">${</span><span class="nx">randomString</span><span class="p">()}</span><span class="s2">&amp;       // checked in the ID token
-  code_challenge=...`</span><span class="p">;</span>
-
-<span class="c1">// After token exchange, you get:</span>
-<span class="c1">// { access_token, refresh_token, id_token }</span>
-<span class="c1">// id_token is a JWT with: { sub: "user_123", email: "ada@example.com", name: "Ada" }</span>
-</code></pre></div></div>
-
-<h3 id="login-vs-oauth">Login vs OAuth</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th> </th>
-      <th>OAuth 2.0</th>
-      <th>OIDC</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Purpose</strong></td>
-      <td>authorization (delegated access)</td>
-      <td>authentication (who are you)</td>
-    </tr>
-    <tr>
-      <td><strong>Token</strong></td>
-      <td>access token (for the API)</td>
-      <td>ID token (for the client)</td>
-    </tr>
-    <tr>
-      <td><strong>Scope</strong></td>
-      <td><code class="language-plaintext highlighter-rouge">photos:read</code></td>
-      <td><code class="language-plaintext highlighter-rouge">openid</code></td>
-    </tr>
-    <tr>
-      <td><strong>Question answered</strong></td>
-      <td>“Can this app access my data?”</td>
-      <td>“Who just logged in?”</td>
-    </tr>
-  </tbody>
-</table>
-
-<p><strong>Sign in with Google</strong> is OIDC (it proves who you are); “let this app read my Google Photos” is OAuth (it delegates access). Most “Sign in with X” buttons use both: OIDC for the identity + OAuth for any additional API access.</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> Don’t use an OAuth access token as proof of identity. An access token says “this app can do X” — it doesn’t say “the user is Y.” Only the ID token (verified by its signature + the nonce) proves identity. If you validate a user by calling the userinfo endpoint with an access token, you’re vulnerable to token substitution (app A’s token used to log in as app A’s user to app B).</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-5--security-pkce-state-storage-pitfalls">Stage 5 — Security: PKCE, State, Storage, Pitfalls</h2>
-
-<h3 id="pkce--required-for-everything">PKCE — required for everything</h3>
-
-<p><strong>PKCE</strong> prevents authorization-code interception: an attacker who steals the code (from the redirect URL) can’t exchange it without the <code class="language-plaintext highlighter-rouge">code_verifier</code>, which was generated and stored on the client. <strong>Use PKCE on every flow</strong>, not just SPAs — OAuth 2.1 makes it mandatory for the authorization code flow universally.</p>
-
-<h3 id="state-parameter--csrf-protection"><code class="language-plaintext highlighter-rouge">state</code> parameter — CSRF protection</h3>
-
-<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">state</span> <span class="o">=</span> <span class="nx">randomString</span><span class="p">();</span>
-<span class="nx">sessionStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="dl">"</span><span class="s2">oauth_state</span><span class="dl">"</span><span class="p">,</span> <span class="nx">state</span><span class="p">);</span>
-<span class="c1">// send state in the auth request</span>
-<span class="c1">// on callback, verify: if (params.state !== sessionStorage.getItem("oauth_state")) reject();</span>
-</code></pre></div></div>
-
-<p>The <code class="language-plaintext highlighter-rouge">state</code> parameter prevents <strong>CSRF</strong> — an attacker can’t trick a user into completing someone else’s OAuth flow. Always generate a random <code class="language-plaintext highlighter-rouge">state</code>, store it, and verify it on the callback.</p>
-
-<h3 id="secure-token-storage">Secure token storage</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Client type</th>
-      <th>Where to store tokens</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Server-side web app</strong></td>
-      <td><code class="language-plaintext highlighter-rouge">httpOnly</code>, <code class="language-plaintext highlighter-rouge">Secure</code>, <code class="language-plaintext highlighter-rouge">SameSite=Lax</code> cookies</td>
-    </tr>
-    <tr>
-      <td><strong>SPA (React/Vue)</strong></td>
-      <td><code class="language-plaintext highlighter-rouge">httpOnly</code> cookie via a backend proxy; <strong>never</strong> <code class="language-plaintext highlighter-rouge">localStorage</code> (XSS steals it)</td>
-    </tr>
-    <tr>
-      <td><strong>Mobile</strong></td>
-      <td>OS secure storage (Keychain/iOS, Keystore/Android)</td>
-    </tr>
-    <tr>
-      <td><strong>Server (m2m)</strong></td>
-      <td>env var / secrets manager</td>
-    </tr>
-  </tbody>
-</table>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> Storing access tokens in <code class="language-plaintext highlighter-rouge">localStorage</code> is the #1 SPA auth mistake. Any XSS (a compromised dependency, a third-party script) can read <code class="language-plaintext highlighter-rouge">localStorage</code> and steal the token. Use <code class="language-plaintext highlighter-rouge">httpOnly</code> cookies (set by a backend proxy that does the token exchange) — XSS can’t read <code class="language-plaintext highlighter-rouge">httpOnly</code>.</p>
-</blockquote>
-
-<h3 id="short-access--long-refresh">Short access + long refresh</h3>
-
-<ul>
-  <li><strong>Access token: 5-15 minutes.</strong> If stolen, it’s useless in 15 min.</li>
-  <li><strong>Refresh token: days to weeks.</strong> If stolen, the server can revoke it.</li>
-  <li><strong>Never</strong> make the access token long-lived “for convenience.” The short expiry IS the security boundary.</li>
-</ul>
-
-<h3 id="the-big-pitfalls">The big pitfalls</h3>
-
-<ol>
-  <li><strong>Implicit flow</strong> — token in URL, no refresh, no PKCE. <strong>Deprecated; use auth code + PKCE.</strong></li>
-  <li><strong>Token in URL</strong> — access token in the redirect URL (logs, browser history, Referer header leak it). Never.</li>
-  <li><strong>No PKCE on SPA/mobile</strong> — the auth code is in the redirect URL; without PKCE, it can be exchanged by an attacker.</li>
-  <li><strong>Storing client secret in a browser</strong> — there is no secret in a browser. Use PKCE instead.</li>
-  <li><strong>Using access token as ID token</strong> — the access token is for the API, not for identity. Use the ID token.</li>
-  <li><strong>Not validating the ID token</strong> — always verify the JWT signature + the <code class="language-plaintext highlighter-rouge">nonce</code> + the <code class="language-plaintext highlighter-rouge">aud</code> (audience). A forged ID token logs in anyone.</li>
-</ol>
-
-<hr />
-
-<h2 id="quick-start-checklist">Quick-Start Checklist</h2>
-
-<ol>
-  <li><strong>Use an auth provider</strong> — Auth0, Okta, Keycloak, or the provider’s own (Google, GitHub).</li>
-  <li><strong>Use the authorization code flow + PKCE</strong> — not implicit, not password.</li>
-  <li><strong>Generate a random <code class="language-plaintext highlighter-rouge">state</code></strong> and verify it on the callback.</li>
-  <li><strong>Generate a PKCE <code class="language-plaintext highlighter-rouge">code_verifier</code></strong> + <code class="language-plaintext highlighter-rouge">code_challenge</code> (S256).</li>
-  <li><strong>Exchange the code server-side</strong> — never expose the token exchange to the browser.</li>
-  <li><strong>Store tokens in <code class="language-plaintext highlighter-rouge">httpOnly</code> cookies</strong> (web) or OS secure storage (mobile).</li>
-  <li><strong>Add <code class="language-plaintext highlighter-rouge">openid</code> scope</strong> for OIDC (identity).</li>
-  <li><strong>Validate the ID token</strong> — signature, nonce, audience, expiry.</li>
-  <li><strong>Use short-lived access tokens</strong> (5-15 min) + long-lived refresh tokens.</li>
-  <li><strong>Use <code class="language-plaintext highlighter-rouge">state</code> + PKCE + HTTPS + secure cookies</strong> — the four horsemen of OAuth security.</li>
-</ol>
-
-<h2 id="common-pitfalls">Common Pitfalls</h2>
-
-<ul>
-  <li><strong>Using the implicit flow</strong> — deprecated; use auth code + PKCE.</li>
-  <li><strong>Storing tokens in <code class="language-plaintext highlighter-rouge">localStorage</code></strong> — XSS steals them; use <code class="language-plaintext highlighter-rouge">httpOnly</code> cookies.</li>
-  <li><strong>No <code class="language-plaintext highlighter-rouge">state</code> parameter</strong> — CSRF attack on the callback; always use + verify <code class="language-plaintext highlighter-rouge">state</code>.</li>
-  <li><strong>No PKCE</strong> — auth code interception; PKCE is mandatory for SPAs/mobile.</li>
-  <li><strong>Long-lived access tokens</strong> — if stolen, they’re valid for a long time; keep access short (5-15 min).</li>
-  <li><strong>Using access token for identity</strong> — it’s for the API, not for “who is the user”; use the ID token.</li>
-  <li><strong>Not validating the ID token</strong> — verify the JWT signature + nonce + aud.</li>
-  <li><strong>Client secret in a browser</strong> — there’s no secret in a browser; PKCE replaces it.</li>
-  <li><strong>Token in URL</strong> — logs, Referer, browser history leak it; tokens go in headers, not URLs.</li>
-</ul>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://www.rfc-editor.org/rfc/rfc6749">OAuth 2.0 RFC 6749</a> — the spec</li>
-  <li><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1">OAuth 2.1 Draft</a> — the modernized spec</li>
-  <li><a href="https://openid.net/specs/openid-connect-core-1_0.html">OIDC Spec</a> — OpenID Connect</li>
-  <li><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps">OAuth 2.0 for Browser Apps (BCP)</a> — best current practice</li>
-  <li><a href="https://www.oauth.com/playground/">OAuth Playground</a> — interactive OAuth flow simulator</li>
-</ul>
-
-<h2 id="related-guides">Related guides</h2>
-
-<p>OAuth + OIDC is the auth layer of the web stack — these PyShine tutorials connect to it:</p>
-
-<ul>
-  <li><strong><a href="/Learn-Cryptography-in-One-Post-Complete-Tutorial-Symmetric-Asymmetric-Hashing-TLS-Quick-Start/">Learn Cryptography in One Post</a></strong> — JWT signatures (HMAC/RSA), TLS for the token exchange, hashing for PKCE.</li>
-  <li><strong><a href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">Learn REST API in One Post</a></strong> — the <code class="language-plaintext highlighter-rouge">Authorization: Bearer</code> header that carries the access token.</li>
-  <li><strong><a href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">Learn FastAPI in One Post</a></strong> — <code class="language-plaintext highlighter-rouge">fastapi.security.OAuth2AuthorizationCodeBearer</code> implements the flow.</li>
-  <li><strong><a href="/Learn-Next-js-App-Router-in-One-Post-Complete-Tutorial-Server-Components-Caching-Server-Actions-Quick-Start/">Learn Next.js App Router in One Post</a></strong> — middleware.ts for auth gating; <code class="language-plaintext highlighter-rouge">next-auth</code> wraps OIDC.</li>
-  <li><strong><a href="/Learn-Computer-Networking-in-One-Post-Complete-Tutorial-OSI-TCP-UDP-HTTP-Quick-Start/">Learn Computer Networking in One Post</a></strong> — HTTPS, redirects, and the HTTP layers the flow uses.</li>
-</ul>
-
-<hr />
-
-<p>OAuth 2.0 + OIDC is the protocol that makes “Sign in with Google” work — and getting it wrong leaks passwords, tokens, or user data. The five stages here — roles, flows, tokens, OIDC, security — cover everything from a one-line “Sign in with Google” button to a PKCE-protected, OIDC-authenticated, short-token + long-refresh production system with <code class="language-plaintext highlighter-rouge">httpOnly</code> cookie storage. The two rules that pay off forever: <strong>always use auth code + PKCE</strong> (never implicit, never password), and <strong>store tokens in <code class="language-plaintext highlighter-rouge">httpOnly</code> cookies</strong> (never <code class="language-plaintext highlighter-rouge">localStorage</code>). Pick an auth provider (Auth0, Keycloak, or the provider’s own), add <code class="language-plaintext highlighter-rouge">scope=openid</code>, generate <code class="language-plaintext highlighter-rouge">state</code> + PKCE, and exchange the code server-side — once you’ve seen the full flow, “Sign in with X” stops being magic.</p>]]></content><author><name>PyShine</name></author><category term="Tutorial" /><category term="Security" /><category term="Backend" /><category term="OAuth" /><category term="OIDC" /><category term="Authentication" /><category term="Security" /><category term="Backend" /><category term="Tutorial" /><summary type="html"><![CDATA[A complete OAuth 2.0 + OpenID Connect tutorial in one blog post. Covers the whole stack in 5 stages: roles (resource owner, client, authorization server, resource server), flows (authorization code + PKCE, client credentials, device code, implicit/password deprecated), tokens (access, refresh, scopes, JWT vs opaque), OIDC (ID token, userinfo, login vs OAuth, nonce), and security (PKCE, state parameter, secure storage, short access + long refresh, pitfalls). Five hand-drawn diagrams, runnable code, and a quick-start roadmap.]]></summary></entry><entry><title type="html">Learn Prometheus in a Single Post: A Complete Tutorial From Metrics and the Pull Model to PromQL, Alerting, and Grafana</title><link href="https://pyshine.com/Learn-Prometheus-in-One-Post-Complete-Tutorial-Metrics-PromQL-Alerting-Grafana-Quick-Start/" rel="alternate" type="text/html" title="Learn Prometheus in a Single Post: A Complete Tutorial From Metrics and the Pull Model to PromQL, Alerting, and Grafana" /><published>2026-07-28T00:00:00+00:00</published><updated>2026-07-28T00:00:00+00:00</updated><id>https://pyshine.com/Learn-Prometheus-in-One-Post-Complete-Tutorial-Metrics-PromQL-Alerting-Grafana-Quick-Start</id><content type="html" xml:base="https://pyshine.com/Learn-Prometheus-in-One-Post-Complete-Tutorial-Metrics-PromQL-Alerting-Grafana-Quick-Start/"><![CDATA[<h1 id="learn-prometheus-in-a-single-post-complete-tutorial-from-metrics-and-the-pull-model-to-promql-alerting-and-grafana">Learn Prometheus in a Single Post: Complete Tutorial From Metrics and the Pull Model to PromQL, Alerting, and Grafana</h1>
-
-<p>Prometheus is the <strong>metrics</strong> half of the observability stack — a time-series database that scrapes metrics from your services, stores them, and lets you query them with PromQL to build dashboards and alerts. It’s the de-facto standard for cloud-native monitoring (born at SoundCloud, graduated by the CNCF, used by every Kubernetes cluster). This single post covers the whole system in five stages, with hand-drawn diagrams and runnable config.</p>
-
-<h2 id="learning-roadmap">Learning Roadmap</h2>
-
-<p><img src="/assets/img/diagrams/prometheus-tutorial/prom-roadmap.svg" alt="Prometheus Roadmap" /></p>
-
-<p>The roadmap moves from metric types (Stage 1), through the pull model (Stage 2), PromQL (Stage 3), alerting (Stage 4), and production (Stage 5). The <a href="/Learn-Observability-in-One-Post-Complete-Tutorial-Metrics-Logs-Traces-OpenTelemetry-Quick-Start/">Observability tutorial</a> is the prerequisite — this post goes deep on the metrics pillar specifically.</p>
-
-<hr />
-
-<h2 id="stage-1--metric-types">Stage 1 — Metric Types</h2>
-
-<h3 id="the-four-metric-types">The four metric types</h3>
-
-<p><img src="/assets/img/diagrams/prometheus-tutorial/prom-metrics.svg" alt="Metric Types: Counter, Gauge, Histogram, Summary" /></p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Behavior</th>
-      <th>Example</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Counter</strong></td>
-      <td>monotonic increasing (resets only on restart)</td>
-      <td><code class="language-plaintext highlighter-rouge">http_requests_total</code>, <code class="language-plaintext highlighter-rouge">errors_total</code></td>
-    </tr>
-    <tr>
-      <td><strong>Gauge</strong></td>
-      <td>arbitrary value, goes up and down</td>
-      <td><code class="language-plaintext highlighter-rouge">cpu_usage</code>, <code class="language-plaintext highlighter-rouge">queue_depth</code>, <code class="language-plaintext highlighter-rouge">temperature</code></td>
-    </tr>
-    <tr>
-      <td><strong>Histogram</strong></td>
-      <td>bucketed observations + sum + count</td>
-      <td><code class="language-plaintext highlighter-rouge">http_request_duration_seconds</code></td>
-    </tr>
-    <tr>
-      <td><strong>Summary</strong></td>
-      <td>quantiles computed client-side</td>
-      <td>precomputed p50/p90/p99</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="counter-vs-gauge--the-fundamental-distinction">Counter vs Gauge — the fundamental distinction</h3>
-
-<ul>
-  <li><strong>Counter</strong> — only goes up (or resets to 0 on restart). You always query its <strong>rate of change</strong> (<code class="language-plaintext highlighter-rouge">rate(http_requests_total[5m])</code>), never the raw value (which is meaningless — “10,000 total requests” tells you nothing without a time window).</li>
-  <li><strong>Gauge</strong> — the value itself is meaningful (<code class="language-plaintext highlighter-rouge">cpu_usage = 0.73</code> is “73% right now”). Query it directly.</li>
-</ul>
-
-<h3 id="histogram-vs-summary--for-quantiles">Histogram vs Summary — for quantiles</h3>
-
-<ul>
-  <li><strong>Histogram</strong> — buckets observations into configurable buckets (<code class="language-plaintext highlighter-rouge">le="0.1"</code>, <code class="language-plaintext highlighter-rouge">le="0.5"</code>, <code class="language-plaintext highlighter-rouge">le="1"</code>, …). Quantiles are computed <strong>server-side</strong> with <code class="language-plaintext highlighter-rouge">histogram_quantile()</code>. Buckets can be aggregated across instances. <strong>This is the recommended choice</strong> — it’s aggregatable.</li>
-  <li><strong>Summary</strong> — computes quantiles <strong>client-side</strong> (the application calculates p50/p90/p99). Quantiles can’t be aggregated across instances (you can’t average p99s). Use only when you need exact quantiles and can’t aggregate.</li>
-</ul>
-
-<h3 id="labels-and-cardinality">Labels and cardinality</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># A metric with labels (dimensions)
-</span><span class="n">http_requests_total</span><span class="p">{</span><span class="n">method</span><span class="o">=</span><span class="s">"GET"</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s">"200"</span><span class="p">,</span> <span class="n">route</span><span class="o">=</span><span class="s">"/api/users"</span><span class="p">}</span>
-</code></pre></div></div>
-
-<p>Labels are key=value pairs that slice a metric into separate time series. <code class="language-plaintext highlighter-rouge">method</code>, <code class="language-plaintext highlighter-rouge">status</code>, <code class="language-plaintext highlighter-rouge">route</code> are good labels — low cardinality (a few dozen values each).</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> <strong>Never put high-cardinality values as labels</strong> — <code class="language-plaintext highlighter-rouge">user_id</code>, <code class="language-plaintext highlighter-rouge">request_id</code>, <code class="language-plaintext highlighter-rouge">session_id</code>, <code class="language-plaintext highlighter-rouge">email</code>. Each unique label-value combination is a separate time series. 100,000 users × 5 metrics = 500,000 series — Prometheus runs out of memory. Labels should have a bounded, small set of values. If you need per-user data, use logs (Loki) or a different store, not Prometheus.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-2--the-pull-model">Stage 2 — The Pull Model</h2>
-
-<h3 id="prometheus-scrapes-targets-pull-not-push">Prometheus scrapes targets (pull, not push)</h3>
-
-<p><img src="/assets/img/diagrams/prometheus-tutorial/prom-arch.svg" alt="Pull Model: Scrape, Service Discovery, Push Gateway" /></p>
-
-<p>Prometheus <strong>pulls</strong> metrics from targets — each target exposes a <code class="language-plaintext highlighter-rouge">/metrics</code> endpoint in the text exposition format, and Prometheus scrapes it on a schedule (default every 15s):</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># HELP http_requests_total Total HTTP requests
-# TYPE http_requests_total counter
-http_requests_total{method="GET",status="200"} 1027
-http_requests_total{method="POST",status="500"} 3
-</code></pre></div></div>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># prometheus.yml</span>
-<span class="na">scrape_configs</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">job_name</span><span class="pi">:</span> <span class="s2">"</span><span class="s">myapp"</span>
-    <span class="na">scrape_interval</span><span class="pi">:</span> <span class="s">15s</span>
-    <span class="na">static_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">targets</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">app1:8080"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">app2:8080"</span><span class="pi">]</span>
-  <span class="pi">-</span> <span class="na">job_name</span><span class="pi">:</span> <span class="s2">"</span><span class="s">kubernetes-pods"</span>
-    <span class="na">kubernetes_sd_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">role</span><span class="pi">:</span> <span class="s">pod</span>
-    <span class="na">relabel_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">source_labels</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">__meta_kubernetes_pod_annotation_prometheus_io_scrape</span><span class="pi">]</span>
-        <span class="na">action</span><span class="pi">:</span> <span class="s">keep</span>
-        <span class="na">regex</span><span class="pi">:</span> <span class="no">true</span>
-</code></pre></div></div>
-
-<h3 id="why-pull-not-push">Why pull, not push?</h3>
-
-<ul>
-  <li><strong>Push</strong> (StatsD, Datadog Agent) — the app sends metrics to the server. Problem: if the server is down, the app buffers or drops; you don’t know which apps are being monitored.</li>
-  <li><strong>Pull</strong> (Prometheus) — the server asks each target. If a target is down, the scrape fails and you see it (an <code class="language-plaintext highlighter-rouge">up == 0</code> series). The server controls the scrape rate. No agent needed on the target — just expose <code class="language-plaintext highlighter-rouge">/metrics</code>.</li>
-</ul>
-
-<h3 id="service-discovery">Service discovery</h3>
-
-<p>For dynamic environments (Kubernetes, cloud), the target list changes constantly. <strong>Service discovery</strong> generates the target list at runtime:</p>
-
-<ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">kubernetes_sd_configs</code></strong> — discover Kubernetes pods/services by label/annotation.</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">ec2_sd_configs</code></strong> — discover AWS EC2 instances.</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">consul_sd_configs</code></strong> — discover Consul-registered services.</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">file_sd_configs</code></strong> — read targets from a file (updated by an external process).</li>
-</ul>
-
-<h3 id="push-gateway--for-batch-jobs">Push Gateway — for batch jobs</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">prometheus_client</span> <span class="kn">import</span> <span class="n">CollectorRegistry</span><span class="p">,</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">push_to_gateway</span>
-<span class="n">registry</span> <span class="o">=</span> <span class="n">CollectorRegistry</span><span class="p">()</span>
-<span class="n">jobs_done</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="s">'batch_jobs_done_total'</span><span class="p">,</span> <span class="s">'Batch jobs completed'</span><span class="p">,</span> <span class="n">registry</span><span class="o">=</span><span class="n">registry</span><span class="p">)</span>
-<span class="n">jobs_done</span><span class="p">.</span><span class="n">inc</span><span class="p">()</span>
-<span class="n">push_to_gateway</span><span class="p">(</span><span class="s">'pushgateway:9091'</span><span class="p">,</span> <span class="n">job</span><span class="o">=</span><span class="s">'nightly_etl'</span><span class="p">,</span> <span class="n">registry</span><span class="o">=</span><span class="n">registry</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p>Batch jobs (cron, ETL) exit before Prometheus can scrape them. They <strong>push</strong> their metrics to the <strong>Push Gateway</strong>, which exposes them for Prometheus to scrape. <strong>Only use the Push Gateway for batch jobs</strong> — never for long-running services (it breaks the pull model and becomes a single point of failure).</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> Don’t use the Push Gateway for services. A service should expose <code class="language-plaintext highlighter-rouge">/metrics</code> and let Prometheus pull. The Push Gateway is only for jobs that start, do work, and exit — and even then, push the metrics at the end of the job, not throughout.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-3--promql">Stage 3 — PromQL</h2>
-
-<h3 id="instant-vs-range-vectors">Instant vs range vectors</h3>
-
-<p><img src="/assets/img/diagrams/prometheus-tutorial/prom-promql.svg" alt="PromQL: Selectors, Rate, Aggregation, Quantile" /></p>
-
-<table>
-  <thead>
-    <tr>
-      <th> </th>
-      <th>What it returns</th>
-      <th>Example</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Instant vector</strong></td>
-      <td>one value per series, at this instant</td>
-      <td><code class="language-plaintext highlighter-rouge">http_requests_total</code></td>
-    </tr>
-    <tr>
-      <td><strong>Range vector</strong></td>
-      <td>values over a time window</td>
-      <td><code class="language-plaintext highlighter-rouge">http_requests_total[5m]</code></td>
-    </tr>
-    <tr>
-      <td><strong>Scalar</strong></td>
-      <td>a single number</td>
-      <td><code class="language-plaintext highlighter-rouge">5</code></td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="rate--the-workhorse"><code class="language-plaintext highlighter-rouge">rate()</code> — the workhorse</h3>
-
-<pre><code class="language-promql"># requests per second over the last 5 minutes
-rate(http_requests_total[5m])
-
-# total increase over the last hour
-increase(http_requests_total[1h])
-</code></pre>
-
-<p><code class="language-plaintext highlighter-rouge">rate()</code> computes the per-second rate of increase of a counter over a window. It handles counter resets (if the counter resets to 0, rate still works). <strong>Always use <code class="language-plaintext highlighter-rouge">rate()</code> on counters, never the raw value.</strong></p>
-
-<h3 id="aggregation-sum-by">Aggregation: <code class="language-plaintext highlighter-rouge">sum by</code></h3>
-
-<pre><code class="language-promql"># total request rate, grouped by job
-sum by (job) (rate(http_requests_total[5m]))
-
-# error rate per route
-sum by (route) (rate(http_requests_total{status=~"5.."}[5m]))
-   / sum by (route) (rate(http_requests_total[5m]))
-</code></pre>
-
-<p><code class="language-plaintext highlighter-rouge">sum by (label)</code> aggregates series that share a label value. <code class="language-plaintext highlighter-rouge">without (label)</code> aggregates everything except the listed labels. The classic pattern: <code class="language-plaintext highlighter-rouge">sum by (job) (rate(...))</code> — group the per-second rate by job.</p>
-
-<h3 id="histogram_quantile--p99-from-histograms"><code class="language-plaintext highlighter-rouge">histogram_quantile()</code> — p99 from histograms</h3>
-
-<pre><code class="language-promql"># 99th percentile request duration over 5m
-histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))
-</code></pre>
-
-<p><code class="language-plaintext highlighter-rouge">histogram_quantile(quantile, buckets)</code> computes a quantile from histogram buckets. Note the <code class="language-plaintext highlighter-rouge">sum by (le)</code> — you must aggregate the <code class="language-plaintext highlighter-rouge">_bucket</code> series by the <code class="language-plaintext highlighter-rouge">le</code> (less-than-or-equal) label before computing the quantile.</p>
-
-<h3 id="recording-rules--precompute-expensive-queries">Recording rules — precompute expensive queries</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># rules.yml</span>
-<span class="na">groups</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">precomputed</span>
-    <span class="na">rules</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">record</span><span class="pi">:</span> <span class="s">job:request_rate:5m</span>
-        <span class="na">expr</span><span class="pi">:</span> <span class="s">sum by (job) (rate(http_requests_total[5m]))</span>
-</code></pre></div></div>
-
-<p>A <strong>recording rule</strong> precomputes a frequently-used, expensive query and stores the result as a new time series. Dashboards and alerts then query the precomputed series (<code class="language-plaintext highlighter-rouge">job:request_rate:5m</code>) instead of re-running the expensive query on every render. This is the #1 Prometheus performance optimization.</p>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> A dashboard querying <code class="language-plaintext highlighter-rouge">rate(http_requests_total[5m])</code> across 1000 series on every refresh is expensive. Precompute it as a recording rule (<code class="language-plaintext highlighter-rouge">job:request_rate:5m</code>) and query that — 1000 series becomes 10 (one per job), and the query is instant.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-4--alerting">Stage 4 — Alerting</h2>
-
-<h3 id="alerting-rules">Alerting rules</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># alerts.yml</span>
-<span class="na">groups</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">app-alerts</span>
-    <span class="na">rules</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">alert</span><span class="pi">:</span> <span class="s">HighErrorRate</span>
-        <span class="na">expr</span><span class="pi">:</span> <span class="pi">|</span>
-          <span class="s">sum by (job) (rate(http_requests_total{status=~"5.."}[5m]))</span>
-            <span class="s">/ sum by (job) (rate(http_requests_total[5m])) &gt; 0.05</span>
-        <span class="na">for</span><span class="pi">:</span> <span class="s">10m</span>              <span class="c1"># must be true for 10 minutes</span>
-        <span class="na">labels</span><span class="pi">:</span>
-          <span class="na">severity</span><span class="pi">:</span> <span class="s">page</span>      <span class="c1"># routes to on-call</span>
-        <span class="na">annotations</span><span class="pi">:</span>
-          <span class="na">summary</span><span class="pi">:</span> <span class="s2">"</span><span class="s">High</span><span class="nv"> </span><span class="s">error</span><span class="nv"> </span><span class="s">rate</span><span class="nv"> </span><span class="s">on</span><span class="nv"> </span><span class="s">"</span>
-          <span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">requests</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">5xx"</span>
-</code></pre></div></div>
-
-<ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">expr</code></strong> — the PromQL condition that triggers the alert.</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">for</code></strong> — how long the condition must hold before firing (prevents flapping).</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">labels</code></strong> — metadata used for routing (<code class="language-plaintext highlighter-rouge">severity: page</code> → PagerDuty; <code class="language-plaintext highlighter-rouge">severity: warn</code> → Slack).</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">annotations</code></strong> — the human-readable message (templated with <code class="language-plaintext highlighter-rouge">$labels</code> and <code class="language-plaintext highlighter-rouge">$value</code>).</li>
-</ul>
-
-<h3 id="alertmanager--routing-dedupe-silence">Alertmanager — routing, dedupe, silence</h3>
-
-<p>Prometheus fires alerts to <strong>Alertmanager</strong>, which handles the delivery:</p>
-
-<ul>
-  <li><strong>Routing</strong> — send <code class="language-plaintext highlighter-rouge">severity=page</code> to PagerDuty, <code class="language-plaintext highlighter-rouge">severity=warn</code> to Slack, <code class="language-plaintext highlighter-rouge">severity=info</code> to email.</li>
-  <li><strong>Deduplication</strong> — if 100 instances all alert “HighErrorRate,” Alertmanager sends one notification, not 100.</li>
-  <li><strong>Grouping</strong> — group alerts by <code class="language-plaintext highlighter-rouge">alertname</code> + <code class="language-plaintext highlighter-rouge">cluster</code> so they arrive as one message.</li>
-  <li><strong>Silencing</strong> — mute an alert during a maintenance window or a known incident.</li>
-  <li><strong>Inhibition</strong> — if <code class="language-plaintext highlighter-rouge">ClusterDown</code> fires, suppress <code class="language-plaintext highlighter-rouge">NodeDown</code> alerts for that cluster (the root cause subsumes the symptoms).</li>
-</ul>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># alertmanager.yml</span>
-<span class="na">route</span><span class="pi">:</span>
-  <span class="na">receiver</span><span class="pi">:</span> <span class="s">default</span>
-  <span class="na">group_by</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">alertname"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">cluster"</span><span class="pi">]</span>
-  <span class="na">group_wait</span><span class="pi">:</span> <span class="s">30s</span>
-  <span class="na">group_interval</span><span class="pi">:</span> <span class="s">5m</span>
-  <span class="na">repeat_interval</span><span class="pi">:</span> <span class="s">4h</span>
-  <span class="na">routes</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="na">matchers</span><span class="pi">:</span> <span class="pi">[</span><span class="s1">'</span><span class="s">severity="page"'</span><span class="pi">]</span>
-      <span class="na">receiver</span><span class="pi">:</span> <span class="s">pagerduty</span>
-    <span class="pi">-</span> <span class="na">matchers</span><span class="pi">:</span> <span class="pi">[</span><span class="s1">'</span><span class="s">severity="warn"'</span><span class="pi">]</span>
-      <span class="na">receiver</span><span class="pi">:</span> <span class="s">slack</span>
-<span class="na">receivers</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">pagerduty</span>
-    <span class="na">pagerduty_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">service_key</span><span class="pi">:</span> <span class="s2">"</span><span class="s">..."</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">slack</span>
-    <span class="na">slack_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">api_url</span><span class="pi">:</span> <span class="s2">"</span><span class="s">..."</span>
-</code></pre></div></div>
-
-<blockquote>
-  <p><strong>Pitfall:</strong> An alert without <code class="language-plaintext highlighter-rouge">for:</code> fires the instant the condition is true — and flaps on/off every scrape. Always add <code class="language-plaintext highlighter-rouge">for: 5m</code> (or appropriate) so transient spikes don’t page on-call at 3am.</p>
-</blockquote>
-
-<hr />
-
-<h2 id="stage-5--production">Stage 5 — Production</h2>
-
-<p><img src="/assets/img/diagrams/prometheus-tutorial/prom-prod.svg" alt="Production: Alertmanager, Grafana, Thanos, HA" /></p>
-
-<h3 id="grafana--dashboards">Grafana — dashboards</h3>
-
-<p><strong>Grafana</strong> is the visualization layer — it queries Prometheus with PromQL and renders dashboards (graphs, stats, tables, heatmaps). Features: templating (<code class="language-plaintext highlighter-rouge">$job</code>, <code class="language-plaintext highlighter-rouge">$instance</code> dropdowns), alerting (Grafana can alert too, though Alertmanager is the standard), and shared community dashboards.</p>
-
-<h3 id="federation--pull-from-other-prometheis">Federation — pull from other Prometheis</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># a global Prometheus federates from per-cluster Prometheis</span>
-<span class="na">scrape_configs</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">job_name</span><span class="pi">:</span> <span class="s2">"</span><span class="s">federate"</span>
-    <span class="na">honor_labels</span><span class="pi">:</span> <span class="no">true</span>
-    <span class="na">metrics_path</span><span class="pi">:</span> <span class="s2">"</span><span class="s">/federate"</span>
-    <span class="na">params</span><span class="pi">:</span>
-      <span class="s2">"</span><span class="s">match[]"</span><span class="err">:</span> <span class="pi">[</span><span class="s1">'</span><span class="s">{job="myapp"}'</span><span class="pi">]</span>
-    <span class="na">static_configs</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">targets</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">prometheus-cluster1:9090"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">prometheus-cluster2:9090"</span><span class="pi">]</span>
-</code></pre></div></div>
-
-<p><strong>Federation</strong> lets one Prometheus scrape selected series from others — a global view over per-cluster Prometheus instances. Use for hierarchical aggregation (cluster Prometheus → global Prometheus).</p>
-
-<h3 id="thanos--mimir--cortex--long-term-storage--global-view">Thanos / Mimir / Cortex — long-term storage + global view</h3>
-
-<p>Prometheus stores data <strong>locally</strong> for ~15 days (it’s not designed for long-term retention). For long-term storage and a global query view across multiple Prometheis:</p>
-
-<ul>
-  <li><strong>Thanos</strong> — ships Prometheus data to object storage (S3/GCS), provides a global query layer (Thanos Query), and deduplicates across HA pairs. The most popular option.</li>
-  <li><strong>Mimir / Cortex</strong> — horizontally-scalable, multi-tenant long-term storage (Grafana Labs). <code class="language-plaintext highlighter-rouge">remote_write</code> from Prometheus to Mimir.</li>
-</ul>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># prometheus.yml — ship metrics to long-term storage</span>
-<span class="na">remote_write</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s2">"</span><span class="s">http://mimir:9009/api/v1/push"</span>
-</code></pre></div></div>
-
-<h3 id="high-availability">High availability</h3>
-
-<p>Prometheus itself is <strong>not HA by default</strong> — run two identical Prometheus instances (each scraping all targets) and deduplicate with Thanos or alert on both (Alertmanager dedupes the alerts). Don’t put Prometheus behind a load balancer (each instance must scrape everything; they’re not sharded stateless services).</p>
-
-<h3 id="retention">Retention</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># prometheus.yml</span>
-<span class="na">storage.tsdb.retention.time</span><span class="pi">:</span> <span class="s">15d</span>        <span class="c1"># local retention</span>
-<span class="na">storage.tsdb.retention.size</span><span class="pi">:</span> <span class="s">100GB</span>      <span class="c1"># or by size</span>
-</code></pre></div></div>
-
-<p>Keep local retention short (15d) for fast queries; ship to Thanos/Mimir for 1+ year retention. Long local retention makes restarts slow and queries over old data expensive.</p>
-
-<hr />
-
-<h2 id="quick-start-checklist">Quick-Start Checklist</h2>
-
-<ol>
-  <li><strong>Run Prometheus</strong> — <code class="language-plaintext highlighter-rouge">docker run -p 9090:9090 prom/prometheus</code>.</li>
-  <li><strong>Open the UI</strong> at <code class="language-plaintext highlighter-rouge">http://localhost:9090</code> — query <code class="language-plaintext highlighter-rouge">up</code> to see targets.</li>
-  <li><strong>Instrument an app</strong> — <code class="language-plaintext highlighter-rouge">prometheus_client</code> (Python), <code class="language-plaintext highlighter-rouge">prom-client</code> (Node), <code class="language-plaintext highlighter-rouge">prometheus</code> (Go); expose <code class="language-plaintext highlighter-rouge">/metrics</code>.</li>
-  <li><strong>Add a scrape config</strong> — <code class="language-plaintext highlighter-rouge">job_name: myapp</code>, <code class="language-plaintext highlighter-rouge">targets: ["app:8080"]</code>.</li>
-  <li><strong>Query with PromQL</strong> — <code class="language-plaintext highlighter-rouge">rate(http_requests_total[5m])</code>, <code class="language-plaintext highlighter-rouge">sum by (job) (...)</code>.</li>
-  <li><strong>Add a histogram</strong> for request duration; query <code class="language-plaintext highlighter-rouge">histogram_quantile(0.99, ...)</code>.</li>
-  <li><strong>Write a recording rule</strong> — precompute a hot query.</li>
-  <li><strong>Write an alerting rule</strong> — <code class="language-plaintext highlighter-rouge">expr + for: 5m + labels.severity</code>.</li>
-  <li><strong>Run Alertmanager</strong> — route <code class="language-plaintext highlighter-rouge">page</code> to PagerDuty, <code class="language-plaintext highlighter-rouge">warn</code> to Slack.</li>
-  <li><strong>Connect Grafana</strong> — add Prometheus as a datasource, build a dashboard.</li>
-</ol>
-
-<h2 id="common-pitfalls">Common Pitfalls</h2>
-
-<ul>
-  <li><strong>High-cardinality labels</strong> — <code class="language-plaintext highlighter-rouge">user_id</code>/<code class="language-plaintext highlighter-rouge">request_id</code> as labels → cardinality explosion → OOM. Never.</li>
-  <li><strong>Querying raw counter values</strong> — meaningless; always <code class="language-plaintext highlighter-rouge">rate()</code> or <code class="language-plaintext highlighter-rouge">increase()</code>.</li>
-  <li><strong>No <code class="language-plaintext highlighter-rouge">for:</code> on alerts</strong> — flaps on every scrape; add <code class="language-plaintext highlighter-rouge">for: 5m</code>.</li>
-  <li><strong>Push Gateway for services</strong> — only for batch jobs; services expose <code class="language-plaintext highlighter-rouge">/metrics</code> for pull.</li>
-  <li><strong>No recording rules</strong> — expensive queries re-run on every dashboard refresh; precompute.</li>
-  <li><strong>Long local retention</strong> — slow restarts, expensive queries; ship to Thanos/Mimir for long-term.</li>
-  <li><strong>Prometheus behind a load balancer</strong> — wrong; each instance scrapes everything, dedupe with Thanos.</li>
-  <li><strong>Summary for aggregatable quantiles</strong> — Summary quantiles can’t be aggregated across instances; use Histogram.</li>
-</ul>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://prometheus.io/docs/introduction/overview/">Prometheus Docs</a> — the official reference</li>
-  <li><a href="https://prometheus.io/docs/prometheus/latest/querying/functions/">PromQL Cheatsheet</a> — the query functions</li>
-  <li><a href="https://www.oreilly.com/library/view/prometheus-up/9781492034131/">Prometheus: Up &amp; Running</a> by Brian Brazil — the canonical book</li>
-  <li><a href="https://thanos.io/">Thanos Docs</a> — long-term storage</li>
-  <li><a href="https://samber.github.io/awesome-prometheus-alerts/">Awesome Prometheus Alerts</a> — alerting rule collection</li>
-</ul>
-
-<h2 id="related-guides">Related guides</h2>
-
-<p>Prometheus is the metrics pillar of observability — these PyShine tutorials connect to it:</p>
-
-<ul>
-  <li><strong><a href="/Learn-Observability-in-One-Post-Complete-Tutorial-Metrics-Logs-Traces-OpenTelemetry-Quick-Start/">Learn Observability in One Post</a></strong> — the umbrella; metrics + logs + traces. Prometheus is the metrics half.</li>
-  <li><strong><a href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">Learn Kubernetes in One Post</a></strong> — the Prometheus Operator runs Prometheus as a K8s resource; service discovery is built in.</li>
-  <li><strong><a href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">Learn Docker in One Post</a></strong> — run Prometheus + Grafana + Alertmanager in containers.</li>
-  <li><strong><a href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">Learn Python in One Post</a></strong> — <code class="language-plaintext highlighter-rouge">prometheus_client</code> is the Python instrumentation library.</li>
-  <li><strong><a href="/Learn-Ansible-in-One-Post-Complete-Tutorial-Inventory-Playbooks-Roles-Vault-Quick-Start/">Learn Ansible in One Post</a></strong> — deploy Prometheus to a fleet of hosts with a playbook.</li>
-</ul>
-
-<hr />
-
-<p>Prometheus’s value is the <strong>pull model + PromQL + a metric-type system that forces good instrumentation</strong> — you scrape targets (so you know what’s being monitored), you query with a purpose-built language (not SQL on a generic DB), and the counter/gauge/histogram types make you think about what each metric <em>means</em>. The five stages here — metrics, pull, PromQL, alerting, production — cover everything from a single <code class="language-plaintext highlighter-rouge">/metrics</code> endpoint to a federated, Thanos-backed, Alertmanager-routed, Grafana-visualized production monitoring system. The two habits that pay off: <strong>never use high-cardinality labels</strong> (it OOMs Prometheus), and <strong>always <code class="language-plaintext highlighter-rouge">rate()</code> counters + <code class="language-plaintext highlighter-rouge">for:</code> on alerts</strong> (raw counter values are meaningless; un-<code class="language-plaintext highlighter-rouge">for</code>‘d alerts flap). Instrument an app with <code class="language-plaintext highlighter-rouge">prometheus_client</code>, expose <code class="language-plaintext highlighter-rouge">/metrics</code>, query <code class="language-plaintext highlighter-rouge">rate(http_requests_total[5m])</code> in the Prometheus UI, and watch the per-second rate appear — once you’ve seen PromQL return a rate, the model clicks.</p>]]></content><author><name>PyShine</name></author><category term="Tutorial" /><category term="DevOps" /><category term="Observability" /><category term="Prometheus" /><category term="Monitoring" /><category term="Metrics" /><category term="PromQL" /><category term="Observability" /><category term="Tutorial" /><summary type="html"><![CDATA[A complete Prometheus tutorial in one blog post. Covers the whole system in 5 stages: metric types (counter, gauge, histogram, summary, labels, cardinality), the pull model (scrape /metrics, service discovery, push gateway for batch jobs), PromQL (instant/range vectors, rate, sum by, histogram_quantile, recording rules), alerting (alerting rules, Alertmanager routing/dedupe/silence, severity), and production (Grafana dashboards, federation, Thanos long-term storage, remote_write, HA, retention). Five hand-drawn diagrams, runnable config, and a quick-start roadmap.]]></summary></entry></feed>
+<p>Ansible’s value is <strong>agentless, idempotent, YAML-driven configuration management</strong> — describe the desired state, let Ansible converge to it, run it 100 times safely. The five stages here — inventory, playbooks, modules, roles, production — cover everything from a one-host <code class="language-plaintext highlighter-rouge">ping</code> to a vault-encrypted, Molecule-tested, AWX-scheduled, GitOps-driven production fleet with fact caching and dynamic cloud inventory. The two habits that pay off: <strong>prefer modules over <code class="language-plaintext highlighter-rouge">shell</code>/<code class="language-plaintext highlighter-rouge">command</code></strong> (modules are idempotent; raw shell is not), and <strong>always <code class="language-plaintext highlighter-rouge">--check --diff</code> before prod</strong> (see what would change before you change it). Install Ansible, write a 10-line playbook that installs nginx, run it twice, and watch the second run report <code class="language-plaintext highlighter-rouge">changed=0</code> — once you’ve seen idempotency, the model clicks.</p>]]></content><author><name>PyShine</name></author><category term="Tutorial" /><category term="DevOps" /><category term="Infrastructure" /><category term="Ansible" /><category term="Configuration Management" /><category term="DevOps" /><category term="IaC" /><category term="Automation" /><category term="Tutorial" /><summary type="html"><![CDATA[A complete Ansible tutorial in one blog post. Covers the whole tool in 5 stages: inventory (hosts, groups, dynamic inventory, variables), playbooks (plays, tasks, YAML, idempotency, modules apt/copy/template/service/git, handlers), roles (directory structure, ansible-galaxy, collections, variable precedence), and production (ansible-vault for secrets, ansible-lint, Molecule testing, AWX/Tower automation, pull mode, fact caching). Five hand-drawn diagrams, runnable YAML, and a quick-start roadmap.]]></summary></entry></feed>
