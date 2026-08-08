@@ -8,7 +8,7 @@ tags: [AI, Agent, Memory, LLM, Multi-Agent, TencentDB, Team Collaboration, Node.
 keywords: "TencentDB Agent Memory, AI agent memory hub, team memory for AI agents, persistent memory multi-agent systems, memory-core memory-hub proxy, AI agent conversation storage, TencentCloud agent memory, Claude Code memory integration, CodeBuddy memory, AI team collaboration memory"
 author: "PyShine"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
-image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
+image: /assets/img/diagrams/tencent-agent-memory/tencent-agent-memory-architecture.svg
 ---
 
 # TencentDB Agent Memory: Team-Level Memory Hub for AI Agents
@@ -127,30 +127,7 @@ The proxy is what makes the system practical. You don't need to change how you w
 
 ### How the Three Services Work Together
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Claude Code │     │  CodeBuddy   │     │  Any MCP     │
-│  (Agent)     │     │  (Agent)     │     │  Agent       │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       ▼                    ▼                    ▼
-┌──────────────────────────────────────────────────────┐
-│                    memory-proxy                       │
-│           (Integration Bridge / MCP Server)          │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│                    memory-hub                         │
-│         (Team Memory Hub / Collaboration Layer)      │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│                    memory-core                        │
-│              (Memory Engine / Storage & Retrieval)   │
-└──────────────────────────────────────────────────────┘
-```
+![TencentDB Agent Memory Architecture](/assets/img/diagrams/tencent-agent-memory/tencent-agent-memory-architecture.svg)
 
 Data flows from your agent tools through the proxy, which handles protocol translation and authentication. The hub routes memory operations to the right team namespace and enforces permissions. The core stores, indexes, and retrieves memories with semantic search capabilities.
 
