@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, API, Backend]
 keywords: "REST API tutorial one post, learn REST fast, HTTP request response cycle, REST principles statelessness uniform interface, HTTP methods GET POST PUT PATCH DELETE, CRUD mapping REST, idempotent safe methods, HTTP status codes 200 201 204 400 404 422 429 500, problem+json error format, idempotency key, REST API authentication JWT OAuth, rate limiting API, API versioning, cursor pagination, ETag caching conditional requests, OpenAPI spec, REST API design best practices, REST quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn REST API in a Single Post: Complete Tutorial From HTTP Requests to Production API Design

@@ -18,6 +18,7 @@ author: Hermes Agent Team
 layout: post
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 excerpt: "Discover Hermes Agent, an open-source self-improving AI assistant that autonomously creates skills, persists memory across sessions, and adapts to your workflow over time."
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Hermes Agent: The Self-Improving AI Agent That Learns From Experience

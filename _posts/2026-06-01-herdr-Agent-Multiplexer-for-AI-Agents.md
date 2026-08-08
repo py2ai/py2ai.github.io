@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, Rust]
 tags: [herdr, agent multiplexer, Rust, AI agents, terminal multiplexer, agent awareness, tmux alternative, agent orchestration, session persistence, coding agents]
 keywords: "herdr agent multiplexer tutorial, Rust AI agent terminal manager, tmux for AI agents, herdr installation guide, terminal workspace manager AI, agent state detection terminal, herdr vs tmux, AI coding agent orchestration, Unix socket API agents, multi-agent terminal workflow"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## The Problem: Terminals Weren't Built for AI Agents

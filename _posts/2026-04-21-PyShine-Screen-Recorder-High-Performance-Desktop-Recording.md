@@ -13,6 +13,7 @@ tags:
   - Screen Recording
   - Desktop Application
 author: "PyShine"
+image: /assets/img/diagrams/claude-desktop-debian/claude-desktop-debian-build-architecture.svg
 ---
 
 ## Introduction

@@ -10,6 +10,7 @@ categories: [AI Infrastructure, Developer Tools, Open Source]
 tags: [Vidur, LLM inference, simulation, capacity planning, GPU optimization, Microsoft Research, discrete-event simulation, scheduling algorithms, ML prediction, open source]
 keywords: "Vidur LLM simulator, how to simulate LLM inference, LLM capacity planning tool, Vidur vs vLLM benchmark, GPU inference simulation, LLM deployment optimization, Vidur Microsoft Research, LLM inference performance, discrete event simulation LLM, how to use Vidur simulator"
 author: "PyShine"
+image: /assets/img/diagrams/system-design-tutorial/sd-components.svg
 ---
 
 # Vidur: Microsoft's LLM Inference System Simulator

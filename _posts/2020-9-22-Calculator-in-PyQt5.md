@@ -16,6 +16,7 @@ tags:
 - Calculator
 - GUI
 title: How to make a calculator GUI in python with PyQt5
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

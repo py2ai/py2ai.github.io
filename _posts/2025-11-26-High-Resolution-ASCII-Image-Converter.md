@@ -18,6 +18,7 @@ tags:
 - beginner
 - tutorial
 title: High-Resolution ASCII Image Converter in Python – Beginner's Guide
+image: /assets/img/diagrams/awesome-gpt-image-2-prompts/image-generation-pipeline.svg
 ---
 ## Introduction
 

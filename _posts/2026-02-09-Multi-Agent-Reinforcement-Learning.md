@@ -5,6 +5,7 @@ date: 2026-02-09
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Multi-Agent Reinforcement Learning - training multiple agents in shared environments. Complete guide with MADDPG and PyTorch implementation."
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Part 9: Multi-Agent Reinforcement Learning - Training Multiple Agents Together

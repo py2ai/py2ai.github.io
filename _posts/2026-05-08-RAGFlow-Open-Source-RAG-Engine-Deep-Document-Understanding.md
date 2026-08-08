@@ -10,6 +10,7 @@ categories: [AI, Open Source, Python]
 tags: [RAGFlow, RAG, retrieval-augmented generation, document understanding, LLM, open source, deep document understanding, vector search, AI agents, knowledge base]
 keywords: "how to use RAGFlow, RAGFlow tutorial, RAGFlow vs LangChain RAG, open source RAG engine, RAGFlow installation guide, deep document understanding RAG, RAGFlow Docker setup, RAGFlow agentic workflow, RAGFlow chunking strategies, RAGFlow for beginners"
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 # RAGFlow: Open-Source RAG Engine with Deep Document Understanding

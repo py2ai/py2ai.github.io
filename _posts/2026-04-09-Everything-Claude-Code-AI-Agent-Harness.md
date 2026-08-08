@@ -13,6 +13,7 @@ tags:
   - Developer Tools
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Everything Claude Code: The Ultimate AI Agent Harness Performance Optimization System

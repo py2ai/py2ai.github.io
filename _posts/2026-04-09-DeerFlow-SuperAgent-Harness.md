@@ -13,6 +13,7 @@ tags:
   - ByteDance
   - Python
 author: "PyShine"
+image: /assets/img/diagrams/browser-harness/browser-harness-architecture.svg
 ---
 
 # DeerFlow: ByteDance's Open-Source SuperAgent Harness

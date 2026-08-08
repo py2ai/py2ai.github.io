@@ -10,6 +10,7 @@ categories: [Cloud, Data Engineering, AI]
 tags: [Google Cloud, Knowledge Catalog, data catalog, metadata management, AI agents, knowledge graph, Dataplex, cloud data, data governance, GCP]
 keywords: "Google Cloud Knowledge Catalog tutorial, AI-powered data catalog, Open Knowledge Format OKF, Metadata as Code kcmd, Knowledge Catalog enrichment agent, Knowledge Catalog discovery agent, Dataplex metadata management, Google Cloud data governance, AI agent context management, Knowledge Catalog MCP server"
 author: "PyShine"
+image: /assets/img/diagrams/knowledge-catalog/knowledge-catalog-architecture.svg
 ---
 
 Google Cloud Knowledge Catalog is an AI-powered data catalog and metadata management platform that transforms your entire data estate into agent-ready context through dynamic knowledge graphs, automated governance, and the open-source Open Knowledge Format. With 2,700+ GitHub stars and tools like Metadata as Code, enrichment agents, and discovery agents, Knowledge Catalog provides the semantic layer that AI agents need to reason accurately about enterprise data -- from BigQuery tables and Spanner databases to unstructured documents and third-party catalogs.

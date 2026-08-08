@@ -10,6 +10,7 @@ categories: [AI, TypeScript, Developer Tools]
 tags: [GStack, Claude Code, AI tools, TypeScript, open source, developer productivity, how to use, setup guide, tutorial, AI coding]
 keywords: "how to use GStack, GStack tutorial, GStack Claude Code tools, GStack vs alternatives, GStack installation guide, open source Claude Code tools, GStack TypeScript setup, best AI coding tools, GStack for beginners, opinionated Claude Code tools"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # GStack: 23 Opinionated Claude Code Tools for AI-Powered Development

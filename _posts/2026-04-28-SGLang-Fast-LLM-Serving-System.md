@@ -10,6 +10,7 @@ categories: [AI Infrastructure, Open Source, Python]
 tags: [SGLang, LLM inference, RadixAttention, KV cache, serving framework, GPU optimization, speculative decoding, PD disaggregation, vLLM alternative, open source]
 keywords: "SGLang LLM serving framework tutorial, how to use SGLang for LLM inference, SGLang vs vLLM comparison, RadixAttention KV cache reuse, SGLang installation guide, fast LLM serving Python, SGLang speculative decoding setup, PD disaggregation LLM inference, SGLang OpenAI compatible API, best open source LLM serving framework"
 author: "PyShine"
+image: /assets/img/diagrams/fastapi-tutorial/fastapi-async-db.svg
 ---
 
 SGLang is a fast and powerful LLM serving framework designed to deliver high-throughput, low-latency inference for large language models at production scale. Developed by the SGLang team at UC Berkeley and the open-source community, SGLang has rapidly become one of the most widely deployed inference engines in the world, powering over 400,000 GPUs and processing trillions of tokens daily. Adopted by organizations including xAI, AMD, NVIDIA, LinkedIn, Cursor, Oracle, Google Cloud, Microsoft Azure, and AWS, SGLang represents a fundamental shift in how LLM serving infrastructure is built -- combining innovative caching algorithms, disaggregated compute architectures, and advanced decoding strategies into a single, cohesive system.

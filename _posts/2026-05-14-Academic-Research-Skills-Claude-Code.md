@@ -10,6 +10,7 @@ categories: [AI, Python, Research]
 tags: [Academic Research Skills, Claude Code, AI research, Python, open source, research tools, how to use, setup guide, tutorial, academic writing]
 keywords: "how to use Academic Research Skills, Academic Research Skills tutorial, Academic Research Skills Claude Code, Academic Research Skills vs alternatives, Academic Research Skills installation guide, open source AI research tools, Claude Code research skills setup, best academic research AI tools, Academic Research Skills for beginners, AI-powered academic research"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## From Research Question to Published Paper -- Inside the 35-Agent Suite That Guards Academic Integrity

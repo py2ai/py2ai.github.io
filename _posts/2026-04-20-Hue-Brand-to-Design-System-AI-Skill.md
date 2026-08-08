@@ -8,6 +8,7 @@ permalink: /Hue-Brand-to-Design-System-AI-Skill/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Design Systems, Claude Code, OpenAI Codex, Brand Analysis, Design Tokens]
 author: PyShine
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

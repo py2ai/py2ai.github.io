@@ -8,6 +8,7 @@ permalink: /Claw-Code-Parity-Rust-AI-Agent-Harness/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [Rust, AI-Agent, Claude-Code, Autonomous-Development, Open-Source]
 author: PyShine
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

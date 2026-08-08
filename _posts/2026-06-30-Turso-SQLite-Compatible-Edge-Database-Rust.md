@@ -13,6 +13,7 @@ tags:
   - Edge Computing
   - AI Agents
 author: "PyShine"
+image: /assets/img/diagrams/knowledge-catalog/knowledge-catalog-architecture.svg
 ---
 
 ## What Is Turso

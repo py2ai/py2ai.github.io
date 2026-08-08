@@ -23,6 +23,7 @@ tags:
 - Automation
 - Batch Processing
 title: Python File Handling - Batch Rename Files and Change Extensions
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

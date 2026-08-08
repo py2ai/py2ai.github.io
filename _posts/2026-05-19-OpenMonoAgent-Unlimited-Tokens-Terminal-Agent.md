@@ -10,6 +10,7 @@ seo:
   keywords: "openmonoagent, unlimited tokens, terminal agent, ai coding, open source, context window"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /OpenMonoAgent-Unlimited-Tokens-Terminal-Agent/
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 What if your AI coding agent never ran out of context — and never sent a single byte of your code to the cloud? **OpenMonoAgent.ai** is an open-source, local-first terminal agent built on .NET 10 that bundles its own llama.cpp inference server, giving you a full agentic loop with 20 built-in tools, Docker sandboxing, and deep code intelligence. After the one-time setup, every token is free. Your code never leaves your machine.

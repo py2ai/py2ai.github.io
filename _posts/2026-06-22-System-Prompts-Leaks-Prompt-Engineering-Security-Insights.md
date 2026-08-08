@@ -13,6 +13,7 @@ tags:
   - Prompt Engineering
   - Security
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 System prompts are the hidden instructions that define how AI assistants behave behind the scenes. The [system_prompts_leaks](https://github.com/xdevlabs/system_prompts_leaks) repository has become one of the most widely shared open-source projects on GitHub, accumulating over 44,378 stars. It houses a curated collection of system prompts harvested from more than 11 AI providers, including OpenAI, Google, Anthropic, xAI, and Meta, covering 100+ distinct prompts.

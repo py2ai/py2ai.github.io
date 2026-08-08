@@ -10,6 +10,7 @@ categories: [Developer Tools, Windows, Open Source]
 tags: [PowerToys, Windows, FancyZones, PowerToys Run, Command Palette, Text Extractor, Microsoft, open source, productivity, keyboard manager]
 keywords: "how to use Microsoft PowerToys, PowerToys FancyZones tutorial, PowerToys Run quick launcher, Command Palette Windows, Text Extractor OCR Windows, PowerToys installation guide, best Windows productivity tools, PowerToys vs alternatives, open source Windows utilities, PowerToys keyboard manager setup"
 author: "PyShine"
+image: /assets/img/diagrams/powertoys/powertoys-architecture.svg
 ---
 
 # Microsoft PowerToys: The Ultimate Windows Power User Suite

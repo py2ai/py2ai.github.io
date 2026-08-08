@@ -5,6 +5,7 @@ date: 2026-04-02
 categories: [AI, Multi-Agent Systems, Productivity, Development]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Explore agency-agents, an open-source repository of 157 specialized AI agents across 17 professional divisions, ready to transform how you work, create, and solve problems."
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # The Agency-Agents Repository: Your Complete AI Team in a Box

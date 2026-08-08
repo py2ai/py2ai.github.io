@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Skills Manage, AI coding agents, Claude Code, Cursor, Windsurf, Copilot, agent skills, desktop app, Tauri, skill management, symlink, marketplace, AI tools]
 keywords: "how to manage AI coding agent skills, Skills Manage desktop app tutorial, Claude Code skills management, Cursor skills installation, multi-platform AI agent skills, symlink skill installation, AI coding agent marketplace, Skills Manage vs manual skill management, Tauri desktop app for AI skills, open source skill manager for coding agents"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Skills Manage: The Desktop App That Unifies AI Coding Agent Skills Across 27+ Platforms

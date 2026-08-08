@@ -23,6 +23,7 @@ tags:
 - GUI
 - Text Extraction
 title: Multi-Language OCR GUI with Pytesseract and PyQt5
+image: /assets/img/diagrams/easy-vibe/easy-vibe-architecture.svg
 ---
 
 Hello friends, here is the code for the new idea of making pytesseract based GUI for all languages in PyQt5. This tutorial is about creating a multi-language OCR GUI in PyQt5 in Python. We start from very basic GUI in the Qt designer. We have tested various languages for image to text extraction process of pytesseract. These languages are tested for OCR: 

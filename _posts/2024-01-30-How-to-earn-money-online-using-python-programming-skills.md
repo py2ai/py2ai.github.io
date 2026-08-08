@@ -27,6 +27,7 @@ tags:
 - Software Development
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # How to Earn Money Online Using Python Programming Skills

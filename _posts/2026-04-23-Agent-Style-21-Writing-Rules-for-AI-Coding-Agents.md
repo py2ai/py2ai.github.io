@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Best Practices]
 tags: [Open Source, AI Agents, Code Style, Best Practices, Claude Code, Writing Quality, AI Writing, LLM Output, Developer Tools, Technical Writing]
 keywords: "AI coding agent writing rules, how to improve AI code quality, agent style guide for LLMs, Claude Code writing rules, AI agent output quality, technical writing for AI agents, reduce AI sycophancy in code, AI code style linter, LLM writing best practices, agent style npm package"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

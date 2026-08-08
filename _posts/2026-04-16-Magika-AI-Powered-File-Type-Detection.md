@@ -12,6 +12,7 @@ tags:
   - Security
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/magika/magika-architecture.svg
 ---
 
 ## Introduction

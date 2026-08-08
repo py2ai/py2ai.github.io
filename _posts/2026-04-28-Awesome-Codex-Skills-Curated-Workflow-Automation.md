@@ -10,6 +10,7 @@ categories: [AI, Developer Tools, Open Source]
 tags: [Codex, OpenAI, skills, automation, CLI, workflow, developer tools, AI coding, Codex CLI, open source]
 keywords: "how to use Codex skills, awesome Codex skills tutorial, Codex CLI automation, OpenAI Codex workflow skills, best Codex skills for developers, Codex skills installation guide, AI coding automation tools, Codex vs Claude skills comparison, practical Codex skills examples, open source Codex automation"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 OpenAI's Codex CLI has rapidly become a go-to tool for developers who want AI-powered workflow automation directly from the terminal. The **awesome-codex-skills** repository by ComposioHQ delivers a curated collection of Codex skills that transform Codex from a code generator into a full-fledged automation engine -- capable of sending emails, triaging issues, deploying pipelines, and connecting to over 1000 applications. With 3.3K stars and growing, this collection represents the most practical and battle-tested Codex skills available for developers who want to ship faster and automate repetitive tasks without leaving the command line.

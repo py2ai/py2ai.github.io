@@ -13,6 +13,7 @@ tags:
   - Privacy
   - Self-Hosted
 author: "PyShine"
+image: /assets/img/diagrams/thunderbolt/thunderbolt-architecture.svg
 ---
 
 # Thunderbolt: AI You Control

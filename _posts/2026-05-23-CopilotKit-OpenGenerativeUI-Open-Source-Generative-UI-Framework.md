@@ -10,6 +10,7 @@ categories: [AI Frameworks, Open Source, Web Development]
 tags: [CopilotKit, generative UI, LangGraph, AI agents, React, Next.js, open source, interactive visualizations, AI-generated UI, CopilotKit v2]
 keywords: "CopilotKit OpenGenerativeUI framework, generative UI AI agents, AI-generated interactive visualizations, CopilotKit v2 useComponent hook, LangGraph deep agents generative UI, sandboxed iframe AI rendering, AI agent React components, open source generative UI framework, human-in-the-loop AI interface, MCP server generative UI design system"
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 ## Introduction

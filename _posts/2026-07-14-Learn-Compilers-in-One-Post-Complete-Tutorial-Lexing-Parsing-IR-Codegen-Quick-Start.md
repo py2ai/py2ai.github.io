@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Computer Science, Compilers]
 keywords: "compilers tutorial one post, learn compilers fast, lexing tokens regex finite automata DFA, parsing grammar BNF parse tree AST recursive descent, semantic analysis scope types symbol table, intermediate representation IR SSA form, compiler optimization passes constant folding dead code inlining, code generation instruction selection register allocation, LLVM GCC framework, AOT vs JIT interpreter bytecode, Crafting Interpreters, compilers quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Compilers in a Single Post: Complete Tutorial From Lexing and Parsing to IR Optimization and Code Generation

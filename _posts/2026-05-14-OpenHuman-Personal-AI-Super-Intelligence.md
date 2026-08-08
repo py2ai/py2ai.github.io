@@ -10,6 +10,7 @@ categories: [AI, Rust, Developer Tools]
 tags: [OpenHuman, AI, super intelligence, Rust, personal AI, open source, AI framework, how to use, setup guide, tutorial]
 keywords: "how to use OpenHuman, OpenHuman tutorial, OpenHuman personal AI, OpenHuman vs alternatives, OpenHuman installation guide, open source AI super intelligence, OpenHuman Rust setup, best personal AI framework, OpenHuman for beginners, AI super intelligence framework"
 author: "PyShine"
+image: /assets/img/diagrams/openhuman/openhuman-architecture.svg
 ---
 
 # OpenHuman: Personal AI Super Intelligence with Rust

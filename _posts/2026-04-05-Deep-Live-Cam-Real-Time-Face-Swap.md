@@ -13,6 +13,7 @@ tags:
   - Computer Vision
   - Python
 author: "PyShine"
+image: /assets/img/diagrams/deep-ep/deep-ep-architecture.svg
 ---
 # Deep-Live-Cam: Real-Time Face Swap with Single Image
 

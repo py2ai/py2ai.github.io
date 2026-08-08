@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, MCP]
 tags: [Context Mode, MCP server, context window optimization, AI coding agents, Claude Code, sandbox tools, session continuity, SQLite FTS5, BM25 search, developer productivity]
 keywords: "how to reduce AI agent context window usage, Context Mode MCP server tutorial, Claude Code context optimization tool, sandbox tools for AI coding agents, AI agent session continuity solution, Context Mode vs raw tool output, SQLite FTS5 BM25 search for AI agents, context window compression AI coding, multi-platform AI agent optimization, how to extend AI coding session time"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Context Mode: Reduce AI Coding Agent Context Window Usage by 98% with Sandbox Tools and Session Continuity

@@ -12,6 +12,7 @@ tags:
   - Claude Code
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/caveman/caveman-architecture.svg
 ---
 
 # Caveman: Cut 75% of LLM Output Tokens While Keeping Full Accuracy

@@ -5,6 +5,7 @@ date: 2026-02-01
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn fundamentals of Reinforcement Learning from scratch. Understand agents, environments, rewards, and RL loop with practical examples and mathematical foundations."
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 # Part 1: Introduction to Reinforcement Learning - Core Concepts and Fundamentals
 

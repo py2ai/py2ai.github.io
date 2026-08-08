@@ -13,6 +13,7 @@ tags:
   - Research
   - LLM
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # last30days-skill: AI-Powered Multi-Source Research Engine

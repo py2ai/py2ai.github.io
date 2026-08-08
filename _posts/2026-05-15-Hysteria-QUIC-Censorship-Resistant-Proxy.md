@@ -10,6 +10,7 @@ categories: [Open Source, Go, Networking]
 tags: [Hysteria, QUIC, proxy, censorship resistance, Go, VPN alternative, networking, secure tunnel, open source, speed]
 keywords: "how to use Hysteria proxy, Hysteria tutorial, Hysteria vs V2Ray, QUIC proxy setup, censorship resistant proxy, Hysteria installation guide, fast proxy QUIC protocol, Hysteria server configuration, open source proxy tool, secure tunnel alternative"
 author: "PyShine"
+image: /assets/img/diagrams/hysteria/hysteria-architecture.svg
 ---
 
 In a world where internet censorship continues to evolve, finding a reliable and lightning-fast censorship-resistant proxy solution is more critical than ever. Hysteria, an open-source project by Aperture Internet Laboratory, answers this call by building a powerful proxy on top of the QUIC protocol -- delivering speeds that leave traditional proxy protocols behind while masquerading as standard HTTP/3 traffic to evade detection. With over 20,000 GitHub stars and growing at nearly 700 stars per week, Hysteria has rapidly become one of the most popular proxy solutions in the open-source ecosystem.

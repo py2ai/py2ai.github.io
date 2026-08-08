@@ -10,6 +10,7 @@ categories: [AI, Coding Agents, Open Source]
 tags: [opencode, coding-agent, ai-agent, open-source, typescript, claude-code, cursor, github, developer-tools, llm]
 keywords: "open source coding agent, opencode vs claude code, opencode vs cursor, self-hosted coding agent, AI code assistant open source, opencode architecture, opencode features, opencode installation, opencode github stars, opencode agent workflow"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # OpenCode: The Open Source Coding Agent with 148K+ Stars

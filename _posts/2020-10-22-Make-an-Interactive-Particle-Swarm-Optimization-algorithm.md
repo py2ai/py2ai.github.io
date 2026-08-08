@@ -23,6 +23,7 @@ tags:
 - Matplotlib
 - Algorithm
 title: Interactive Particle Swarm Optimization Algorithm in Python
+image: /assets/img/diagrams/swarm-forge/swarm-forge-agent-roles.svg
 ---
 <br>
 <div align="center">

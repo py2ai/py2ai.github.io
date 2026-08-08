@@ -8,6 +8,7 @@ permalink: /Tradclaw-AI-Household-Manager-Agentic-Parenting/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, agents, parenting, household-management, automation]
 author: PyShine
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 ## Introduction

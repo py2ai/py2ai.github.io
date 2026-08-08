@@ -10,6 +10,7 @@ categories: [3D Reconstruction, Rust, Computer Vision]
 tags: [Brush, 3D reconstruction, Gaussian Splatting, Rust, computer vision, NeRF, neural rendering, open source, 3D graphics, photogrammetry]
 keywords: "how to use Brush 3D reconstruction, Brush Gaussian Splatting tutorial, 3D reconstruction from images, Gaussian Splatting Rust implementation, Brush vs NeRF comparison, open source 3D reconstruction tool, Brush installation guide, real-time 3D reconstruction, neural radiance fields alternative, photogrammetry with Gaussian Splatting"
 author: "PyShine"
+image: /assets/img/diagrams/brush/brush-architecture.svg
 ---
 
 ## What is Brush?

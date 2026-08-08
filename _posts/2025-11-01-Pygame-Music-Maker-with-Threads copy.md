@@ -19,6 +19,7 @@ tags:
 - beginner
 - python
 title: Music Maker with Save Load Clear & Slider
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # PyShine Music Maker – The Ultimate Step Sequencer Tutorial
 

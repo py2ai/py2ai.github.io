@@ -13,6 +13,7 @@ tags:
   - Python
   - Rust
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # OpenViking: Context Database for AI Agents

@@ -10,6 +10,7 @@ categories: [Linux, Security, DevOps]
 tags: [Linux security, server hardening, SSH hardening, firewall configuration, intrusion detection, Linux administration, DevOps, open source, security guide, server setup]
 keywords: "how to secure a Linux server, Linux server hardening guide, SSH security configuration, Linux firewall setup, intrusion detection Linux, server security best practices, Linux security tutorial, UFW firewall configuration, fail2ban setup guide, Linux server hardening checklist"
 author: "PyShine"
+image: /assets/img/diagrams/linux-cli-tutorial/linux-features.svg
 ---
 
 ## Why Server Security Matters

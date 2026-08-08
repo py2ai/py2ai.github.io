@@ -10,6 +10,7 @@ keywords:
 - Mac and windows pc data transfer
 - windows pc data transfer
 - instant copy paste text 
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # PyShine Clipboard

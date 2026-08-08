@@ -10,6 +10,7 @@ categories: [AI, LLM, Inference, GPU, Open Source]
 tags: [AirLLM, LLM, GPU, Inference, MoE, Mixture of Experts, 70B, DeepSeek, Llama, FP8, CPU, MacOS, Apache 2.0]
 keywords: "AirLLM tutorial, run 70B on 4GB GPU, LLM inference optimization, Mixture of Experts streaming, AirLLM installation guide, how to run large models on small GPU, DeepSeek-V3 single card, Llama 3.1 405B 8GB, Kimi K3 2.8T"
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 ## Introduction

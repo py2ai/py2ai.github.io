@@ -10,6 +10,7 @@ categories: [Open Source, Python, Computer Vision]
 tags: [Roboflow Supervision, computer vision, object detection, Python, object tracking, video annotation, YOLO, bounding box, open source, AI tools]
 keywords: "how to use Roboflow Supervision, Supervision Python tutorial, computer vision annotation tools, object detection Python library, Roboflow Supervision vs OpenCV, video object tracking Python, bounding box annotation tool, Supervision installation guide, YOLO detection pipeline Python, open source computer vision tools"
 author: "PyShine"
+image: /assets/img/diagrams/computer-architecture-tutorial/ca-cache.svg
 ---
 
 Building production-grade computer vision applications requires more than just a trained model. You need tools to convert model outputs into a common format, track objects across frames, count entries and exits in defined zones, and annotate results with professional visualizations. **Roboflow Supervision** is an open-source Python library that provides all of these reusable computer vision tools in a single, model-agnostic package. Whether you are working with YOLO, Transformers, MMDetection, or Roboflow's own Inference server, Supervision gives you a unified API to process detections, apply tracking, filter results, and render annotated outputs without writing boilerplate code for each model provider.

@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, CI/CD]
 keywords: "GitHub Actions tutorial one post, learn GitHub Actions fast, workflow YAML triggers, GitHub Actions jobs steps runs-on, GitHub Actions marketplace actions checkout cache, GitHub-hosted vs self-hosted runners, matrix strategy, GitHub Actions secrets environments, OIDC cloud auth, reusable workflows composite actions, GitHub Actions artifacts, GitHub Actions quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn GitHub Actions in a Single Post: Complete Tutorial From Workflows and Jobs to Runners, Secrets, and Reusable Pipelines

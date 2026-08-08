@@ -25,6 +25,7 @@ tags:
 - beginner
 - tutorial
 title: Garden Data Live Chart Tutorial with Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

@@ -23,6 +23,7 @@ tags:
 - Python
 - Computer Vision
 title: PyQt5 GUI Design and Video Processing with OpenCV
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

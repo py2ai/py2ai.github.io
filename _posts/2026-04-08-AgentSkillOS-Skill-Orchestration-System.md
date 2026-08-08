@@ -12,6 +12,7 @@ tags:
   - Python
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # AgentSkillOS: An Operating System for Agent Skills

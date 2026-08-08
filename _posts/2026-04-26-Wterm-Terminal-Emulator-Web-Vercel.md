@@ -10,6 +10,7 @@ categories: [Developer Tools, Web Development, Open Source]
 tags: [wterm, terminal emulator, web terminal, WASM, Zig, React, Vue, DOM rendering, WebSocket, xterm]
 keywords: "wterm web terminal emulator, how to use wterm, Zig WASM terminal emulator, wterm vs xterm.js, web terminal emulator tutorial, DOM-based terminal rendering, wterm React component, wterm Vue component, browser terminal emulator, WebSocket terminal transport"
 author: "PyShine"
+image: /assets/img/diagrams/fincept-terminal/fincept-terminal-architecture.svg
 ---
 
 # wterm: A High-Performance Web Terminal Emulator Built with Zig and WASM

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Python]
 tags: [CLI-Anything, HKUDS, agent-native, CLI generation, Claude Code, Blender, GIMP, LibreOffice, AI agents, automated CLI, REPL, JSON output, SKILL.md]
 keywords: "CLI-Anything, how to use CLI-Anything with Claude Code, CLI-Anything automated CLI generation, make software agent-native, CLI-Anything 7-phase pipeline, CLI-Anything Blender GIMP, CLI-Anything HARNESS.md, AI agent CLI tools, CLI-Anything CLI-Hub, agent-native software"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # CLI-Anything: Making ALL Software Agent-Native with Automated CLI Generation

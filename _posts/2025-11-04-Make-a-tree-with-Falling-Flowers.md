@@ -16,6 +16,7 @@ tags:
 - graphics
 - nature
 title: Make a Tree with falling Flowers
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 ## Overview

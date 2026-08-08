@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Harmonist, AI agent orchestration, mechanical enforcement, multi-agent framework, Cursor, Claude Code, Copilot, supply chain, protocol enforcement, open source]
 keywords: "how to use Harmonist AI agent framework, Harmonist vs LangChain comparison, mechanical protocol enforcement AI agents, 186 agent catalogue orchestration, AI agent supply chain verification, Harmonist installation guide, Cursor AI agent orchestration, Claude Code multi-agent, AI coding assistant review gates, structured validated memory AI"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Harmonist: Portable AI Agent Orchestration with Mechanical Protocol Enforcement

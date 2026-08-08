@@ -12,6 +12,7 @@ keywords:
 - AI assistants
 - specialized agents
 - Claude agents
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Claude Code Subagents - Specialized AI Assistants

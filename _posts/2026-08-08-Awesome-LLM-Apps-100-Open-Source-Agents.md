@@ -6,6 +6,8 @@ categories: [ai, llm, agents, rag, open-source]
 tags: [AI, LLM, Agents, RAG, Open Source, AI Apps, Claude, GPT, Gemini, DeepSeek, Llama, Qwen, Agent Skills, Voice AI]
 description: "Discover Awesome LLM Apps — a curated collection of 100+ hand-built, end-to-end tested open-source AI agents, agent skills, and RAG apps. Apache-2.0 licensed, multi-model compatible."
 author: "PyShine"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 The LLM app landscape has exploded. Every week brings a new agent framework, a fresh RAG technique, or a voice AI demo that goes viral on Hacker News. But here's the problem: most of these projects are toy demos — half-baked proofs of concept that crash on the second run, lack proper error handling, or are locked behind a paywall and a specific model provider.

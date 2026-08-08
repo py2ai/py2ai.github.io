@@ -8,6 +8,7 @@ permalink: "/OpenMythos-Reconstructing-Claude-Mythos-Architecture/"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, LLM, Transformer, Architecture, Open-Source, Python, Deep-Learning, Claude, Recurrent-Depth]
 author: PyShine
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Introduction

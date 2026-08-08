@@ -10,6 +10,7 @@ categories: [AI, TypeScript, Developer Tools]
 tags: [AiToEarn, AI earning, automated income, TypeScript, open source, AI platform, how to use, setup guide, tutorial, passive income]
 keywords: "how to use AiToEarn, AiToEarn tutorial, AiToEarn AI earning platform, AiToEarn vs alternatives, AiToEarn installation guide, open source AI earning, AiToEarn TypeScript setup, best AI earning platform, AiToEarn for beginners, AI-powered income automation"
 author: "PyShine"
+image: /assets/img/diagrams/aitoearn/aitoearn-architecture.svg
 ---
 
 ## What Is AiToEarn?

@@ -10,6 +10,7 @@ categories: [AI Agents, TypeScript, Developer Tools]
 tags: [oh-my-pi, AI coding agent, terminal, hash-anchored edits, LSP, Python, browser automation, subagents, Claude Code, developer tools]
 keywords: "oh-my-pi AI coding agent tutorial, terminal AI coding assistant, hash-anchored edits AI, how to use oh-my-pi, oh-my-pi vs Claude Code, AI agent terminal tool, LSP integration AI coding, Python AI agent terminal, browser automation AI agent, oh-my-pi installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## What Is Oh-My-Pi?

@@ -14,6 +14,7 @@ tags:
   - Metatables
   - Game Dev
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Lua in a Single Post: A Complete Lua Tutorial from Tables and Metatables to Coroutines and LÖVE

@@ -23,6 +23,7 @@ tags:
 - Drone
 - Socket Programming
 title: Build a Cache Server to Broadcast Drone Video in Python
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

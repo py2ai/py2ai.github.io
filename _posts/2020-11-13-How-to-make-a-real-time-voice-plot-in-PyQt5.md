@@ -23,6 +23,7 @@ tags:
 - Real-time Data
 - Microphone
 title: PyQt5 GUI to Plot Live Audio from Microphone in Real-Time
+image: /assets/img/diagrams/fluidvoice/fluidvoice-architecture.svg
 ---
 
 

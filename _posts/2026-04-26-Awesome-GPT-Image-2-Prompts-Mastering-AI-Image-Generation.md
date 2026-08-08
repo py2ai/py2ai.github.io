@@ -7,6 +7,8 @@ tags: [gpt-image-2, openai, prompt-engineering, ai-art, image-generation, prompt
 author: pyshine
 seo_description: "Explore the Awesome GPT-Image-2 Prompts collection - a curated repository of 100+ prompt patterns for OpenAI's GPT-Image-2 model covering portraits, posters, character design, UI mockups, and more."
 seo_keywords: "GPT-Image-2, OpenAI, prompt engineering, AI image generation, portrait prompts, poster design, character design, UI mockup, creative AI"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/awesome-agent-skills/awesome-agent-skills-categories.svg
 ---
 
 ## Table of Contents

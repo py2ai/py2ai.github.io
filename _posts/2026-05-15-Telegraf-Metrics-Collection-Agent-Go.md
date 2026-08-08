@@ -10,6 +10,7 @@ categories: [Open Source, Go, DevOps]
 tags: [Telegraf, metrics collection, monitoring, Go, InfluxDB, DevOps, observability, log aggregation, plugin architecture, open source]
 keywords: "how to use Telegraf, Telegraf tutorial, Telegraf vs Prometheus, metrics collection agent Go, Telegraf installation guide, InfluxDB monitoring setup, Telegraf input plugins configuration, observability pipeline tutorial, Telegraf output plugins, open source monitoring agent"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Telegraf: The Plugin-Driven Metrics Collection Agent Built in Go

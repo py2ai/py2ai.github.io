@@ -24,6 +24,7 @@ tags:
 - NLP
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/chatwoot/chatwoot-ai-features.svg
 ---
 
 

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Code Quality]
 tags: [Open Source, AI Agents, Best Practices, Code Quality, Claude Code, Anti-Sycophancy, Verification Loops, Developer Tools, Software Engineering, AGENTS.md]
 keywords: "how to make AI coding agents better, agents.md configuration file, AI agent anti-sycophancy rules, Claude Code best practices, AI coding agent verification loops, senior engineer AI agent behavior, improve AI code quality, AI agent discipline rules, AGENTS.md open standard, coding agent instruction file"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

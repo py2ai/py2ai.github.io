@@ -10,6 +10,7 @@ categories: [Open Source, Education, Developer Tools]
 tags: [free programming books, EbookFoundation, open source education, programming tutorials, free courses, cheat sheets, developer resources, learn programming, coding education, open source books]
 keywords: "free programming books guide, how to learn programming for free, best free coding resources 2026, EbookFoundation free programming books, free programming courses online, programming cheat sheets collection, learn to code free resources, open source programming education, free developer books by language, programming tutorials for beginners"
 author: "PyShine"
+image: /assets/img/diagrams/agent-rules-books/agent-rules-books-architecture.svg
 ---
 
 # Free Programming Books: The Ultimate Resource Guide with 387K Stars

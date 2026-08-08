@@ -24,6 +24,7 @@ tags:
 - Image Processing
 - Multi-language OCR
 title: How to make PySide6 based GUI
+image: /assets/img/diagrams/awesome-gpt-image-2-prompts/image-generation-pipeline.svg
 ---
 
 

@@ -12,6 +12,7 @@ tags:
   - AI Coding
   - Developer Tools
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # T3 Code: A Minimal Web GUI for Coding Agents

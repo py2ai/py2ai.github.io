@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Backend, JavaScript]
 keywords: "Node.js Express tutorial one post, learn Node fast, Node event loop libuv thread pool single thread, V8 JavaScript engine, CommonJS vs ES modules ESM, npm package.json, callbacks promises async await, Node streams, Express routing middleware pipeline, req res next error handling, Node clusters PM2, Node testing vitest, Node deploy security, Node quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Node.js and Express in a Single Post: Complete Tutorial From the Event Loop to Middleware and Production

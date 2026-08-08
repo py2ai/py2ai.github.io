@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Developer Tools]
 tags: [OpenSquilla, token-efficient, AI agent, MCP, memory system, skills, LLM, Python, intelligence density, openclaw]
 keywords: "token-efficient AI agent, OpenSquilla tutorial, how to reduce LLM token usage, AI agent intelligence density, MCP server integration, AI agent memory system, Python AI agent framework, OpenSquilla vs alternatives, token optimization AI, modular skills system AI agent"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # OpenSquilla: Token-Efficient AI Agent with Higher Intelligence Density

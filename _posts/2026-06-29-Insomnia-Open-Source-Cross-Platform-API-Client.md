@@ -13,6 +13,7 @@ tags:
   - REST
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 ## Introduction

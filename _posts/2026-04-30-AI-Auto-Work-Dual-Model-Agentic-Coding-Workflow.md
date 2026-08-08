@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Software Engineering]
 tags: [AI Auto-Work, agentic coding, Claude Code, Codex, dual-model review, adversarial review, autonomous development, quality gates, atomic commits, context repair]
 keywords: "AI Auto-Work agentic coding workflow, how to use Claude Code and Codex together, dual-model adversarial code review, autonomous software development pipeline, AI coding quality gates, Claude Code Codex collaboration, agentic workflow automation, AI Auto-Work vs GitHub Copilot, automated code review with AI, context repair in AI coding agents"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 # AI Auto-Work: Dual-Model Agentic Coding Workflow with Claude and Codex Adversarial Review

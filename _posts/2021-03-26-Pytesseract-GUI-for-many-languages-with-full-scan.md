@@ -18,6 +18,7 @@ tags:
 - OCR
 - GUI
 title: How to make an image to text GUI in Python
+image: /assets/img/diagrams/osv-scanner/osv-scanner-architecture.svg
 ---
 
 

@@ -13,6 +13,7 @@ tags:
   - Python
   - DevOps
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 # OpenSRE: AI-Powered Site Reliability Engineering Framework

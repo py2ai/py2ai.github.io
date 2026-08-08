@@ -10,6 +10,7 @@ categories: [Open Source, Android, Developer Tools]
 tags: [scrcpy, Android mirroring, screen mirroring, Android control, ADB, open source, mobile development, desktop control, Genymobile, device management]
 keywords: "how to use scrcpy, scrcpy tutorial, scrcpy vs Vysor, Android screen mirroring tool, scrcpy installation guide, control Android from desktop, wireless Android mirroring, scrcpy configuration options, open source Android control, low latency screen mirroring"
 author: "PyShine"
+image: /assets/img/diagrams/android-reverse-engineering-skill/are-api-extraction-flow.svg
 ---
 
 ## What is scrcpy?

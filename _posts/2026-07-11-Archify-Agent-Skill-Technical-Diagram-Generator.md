@@ -14,6 +14,7 @@ tags:
   - Diagrams
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Archify: An Agent Skill That Turns Plain English into Shareable Technical Diagrams

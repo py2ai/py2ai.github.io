@@ -13,6 +13,7 @@ tags:
   - CLI
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # wacli: WhatsApp CLI for Sync, Search, and Send

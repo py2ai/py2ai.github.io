@@ -10,6 +10,7 @@ categories: [AI Tools, Claude Code, Open Source]
 tags: [Guizang, Social Card, Claude Code, Skill, Xiaohongshu, WeChat, HTML, Open Source]
 keywords: "guizang social card skill, Claude Code skill, Xiaohongshu image generation, WeChat cover pair, Rednote carousel, Swiss style social cards, editorial magazine social cards, AI agent skill, social media card automation, HTML to PNG social cards"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 Guizang Social Card Skill is a Claude Code / Codex skill that generates magazine-quality social card image sets for Xiaohongshu (Rednote) and WeChat Official Account from articles, scripts, screenshots, or photos. With 28 layout skeletons, 10 curated theme presets, dual Editorial x Swiss visual systems, and a Playwright-based validation pipeline, it turns any AI agent into a disciplined social media designer - no Figma, no Canva, no manual layout work.

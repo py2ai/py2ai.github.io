@@ -12,6 +12,7 @@ keywords:
 - AI memory
 - persistent context
 - Claude memory
+image: /assets/img/diagrams/agentmemory/agentmemory-agent-ecosystem.svg
 ---
 
 ## Claude Code Memory Guide - Persistent Context with CLAUDE.md

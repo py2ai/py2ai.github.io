@@ -33,6 +33,7 @@ title: "Listening and Talking Clock"
 lang: en
 zh_url: /zh/Listening-and-Talking-clock/
 ko_url: /ko/Listening-and-Talking-clock/
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # Wall Clock with Voice Time and Greeting
 

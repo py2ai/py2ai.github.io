@@ -8,6 +8,7 @@ permalink: /2026/04/20/darwin-skill-autonomous-skill-optimization/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Agent-Skills, Optimization, AutoResearch, Skill-Evolution, LLM]
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

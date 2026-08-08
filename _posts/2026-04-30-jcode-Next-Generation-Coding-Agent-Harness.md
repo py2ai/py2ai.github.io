@@ -10,6 +10,7 @@ categories: [Developer Tools, AI Agents, Open Source]
 tags: [jcode, coding agent, Rust, multi-agent, semantic memory, swarm collaboration, LLM harness, developer tools, AI coding, open source]
 keywords: "how to use jcode coding agent, jcode vs Claude Code comparison, Rust coding agent harness, multi-agent swarm collaboration, semantic memory AI agent, jcode installation guide, coding agent performance benchmark, jcode self-dev mode, LLM provider integration, lightweight coding agent terminal"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # jcode: The Next-Generation Coding Agent Harness Built for Performance and Multi-Agent Workflows

@@ -13,6 +13,7 @@ tags:
   - Semantic Search
   - AI Coding
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Claude Context: Semantic Code Search MCP Server

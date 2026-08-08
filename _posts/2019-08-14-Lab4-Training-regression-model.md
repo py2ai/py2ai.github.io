@@ -15,6 +15,7 @@ keywords:
 layout: post
 mathjax: true
 title: Lab4 Training regression model and Epochs
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 # Regression model
 

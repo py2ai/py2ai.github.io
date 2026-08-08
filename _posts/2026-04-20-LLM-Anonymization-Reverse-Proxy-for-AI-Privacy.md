@@ -8,6 +8,7 @@ permalink: /LLM-Anonymization-Reverse-Proxy-for-AI-Privacy/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Privacy, Pentesting, Claude, Anonymization, Security, Proxy, LLM]
 author: PyShine
+image: /assets/img/diagrams/android-reverse-engineering-skill/are-api-extraction-flow.svg
 ---
 
 ## Introduction

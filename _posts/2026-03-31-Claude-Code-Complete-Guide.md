@@ -14,6 +14,7 @@ keywords:
 - slash commands
 - Claude skills
 - MCP servers
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Claude Code - Complete Guide to AI-Powered Coding Assistant

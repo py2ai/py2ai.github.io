@@ -23,6 +23,7 @@ tags:
 - Python
 - Parallel Processing
 title: Working with Multiple Threads in PyQt5 - Complete QThread Guide
+image: /assets/img/diagrams/networking-tutorial/net-flow.svg
 ---
 
 ## Introduction

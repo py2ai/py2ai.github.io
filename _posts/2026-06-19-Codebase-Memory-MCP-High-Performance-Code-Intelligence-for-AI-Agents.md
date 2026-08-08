@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [codebase-memory-mcp, MCP server, AI agents, knowledge graph, tree-sitter, code intelligence, semantic search, Claude Code, developer productivity, open source]
 keywords: "codebase-memory-mcp tutorial, how to set up MCP server for code intelligence, AI agent code understanding tool, codebase knowledge graph for LLM, tree-sitter code indexing MCP, Claude Code MCP server setup, codebase-memory-mcp vs grep search, AI coding agent token reduction, Cypher graph queries for code, MCP server zero dependencies"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Codebase-Memory-MCP is a high-performance code intelligence engine for AI coding agents that indexes 158 programming languages into a persistent knowledge graph and answers structural queries in under 1 millisecond. Built in pure C with zero runtime dependencies, it delivers a 99.2% token reduction compared to file-by-file exploration -- five structural queries consume approximately 3,400 tokens versus 412,000 tokens through traditional grep-based search.

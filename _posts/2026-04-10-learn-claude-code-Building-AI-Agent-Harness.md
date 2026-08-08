@@ -12,6 +12,7 @@ tags:
   - Open Source
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # learn-claude-code: Building Production AI Agent Harness from Scratch

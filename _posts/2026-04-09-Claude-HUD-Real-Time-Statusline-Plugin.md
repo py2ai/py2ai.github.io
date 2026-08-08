@@ -12,6 +12,7 @@ tags:
   - Developer Tools
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Claude HUD: Real-Time Statusline Plugin for Claude Code

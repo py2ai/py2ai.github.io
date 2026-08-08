@@ -10,6 +10,7 @@ categories: [AI Agents, TypeScript, Developer Tools]
 tags: [Mastra, AI agents, TypeScript, Gatsby, agent framework, MCP, workflows, evals, LLM integration, open source]
 keywords: "Mastra AI agent framework tutorial, how to build AI agents with Mastra, Mastra vs LangChain comparison, TypeScript AI agent framework, Mastra MCP integration guide, Gatsby team AI framework, Mastra workflow engine tutorial, AI agent evals TypeScript, Mastra installation guide, production AI agents TypeScript"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## What is Mastra?

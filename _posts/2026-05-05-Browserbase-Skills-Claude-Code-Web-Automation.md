@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Web Automation]
 tags: [Browserbase, Claude Code, web automation, browser skills, AI agent, AutoBrowse, browser testing, MCP, developer tools, open source]
 keywords: "Browserbase Skills tutorial, how to use Browserbase with Claude Code, Claude Code web automation, Browserbase AutoBrowse self-improving, AI browser testing skills, Browserbase vs Playwright, Claude Code browser plugin, web automation AI agent, Browserbase dual environment setup, AI web scraping skills"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Browserbase Skills: Claude Code Web Automation Plugin System

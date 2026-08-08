@@ -13,6 +13,7 @@ tags:
   - Python
   - Voice Cloning
 author: "PyShine"
+image: /assets/img/diagrams/free-claude-code/free-claude-code-architecture.svg
 ---
 
 # VoxCPM: Tokenizer-Free TTS for Multilingual Speech Generation

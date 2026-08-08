@@ -10,6 +10,7 @@ categories: [AI Security, Python, Developer Tools]
 tags: [Microsoft Agent Governance Toolkit, AI agent security, OWASP Agentic Top 10, zero-trust AI, agent sandboxing, policy enforcement, autonomous agents, AI governance, Python security framework, reliability engineering]
 keywords: "Microsoft Agent Governance Toolkit tutorial, how to secure AI agents with governance toolkit, OWASP Agentic Top 10 coverage, zero-trust identity for AI agents, AI agent policy enforcement Python, execution sandboxing autonomous agents, AI governance framework comparison, Microsoft agent security best practices, AI agent reliability engineering, autonomous agent security risks"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

@@ -12,6 +12,7 @@ tags:
   - GPU Computing
   - Open Source
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Newton Physics Engine: GPU-Accelerated Simulation for Robotics

@@ -14,6 +14,7 @@ tags:
   - Open Source
   - AI Agents
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # AI Berkshire: A Value-Investing Multi-Agent Research Framework for Claude Code

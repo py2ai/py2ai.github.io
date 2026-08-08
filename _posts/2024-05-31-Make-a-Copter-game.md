@@ -18,6 +18,7 @@ tags:
 - copter game
 - tutorial
 title: Let's build a copter game
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 # Introduction

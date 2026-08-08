@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, TypeScript]
 tags: [composio, AI agents, toolkit integration, function calling, OpenAI, LangChain, CrewAI, AutoGen, TypeScript SDK, tool orchestration]
 keywords: "composio toolkit integration tutorial, AI agent tool calling, OpenAI function calling SDK, LangChain tool integration, CrewAI tools integration, AutoGen tool orchestration, authenticated API calls for AI, multi-framework AI SDK, composio Python TypeScript SDK, AI agent tool orchestration platform"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 A toolkit integration platform for AI agents has been one of the most sought-after building blocks in the AI engineering ecosystem, as developers struggle to connect their agents to the ever-growing landscape of external tools and services. Composio, with 27,890 stars on GitHub, addresses this challenge head-on: an open-source platform providing 1000+ pre-built tool integrations with native support for OpenAI, LangChain, CrewAI, AutoGen, and more, featuring authenticated tool calls, automatic function calling conversion, real-time execution, and a unified SDK for both TypeScript and Python -- all designed to let AI agents interact with any external service in minutes instead of days.

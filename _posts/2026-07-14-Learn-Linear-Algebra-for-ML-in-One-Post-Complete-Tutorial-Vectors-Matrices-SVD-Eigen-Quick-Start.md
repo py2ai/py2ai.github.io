@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Mathematics, Machine Learning]
 keywords: "linear algebra machine learning tutorial one post, learn linear algebra fast, vectors magnitude dot product angle projection, matrix multiplication dimensions identity transpose inverse determinant, linear transformation rotation scaling eigenvalues eigenvectors, SVD singular value decomposition PCA principal component analysis rank, neural network weights matrices embeddings gradient descent, NumPy linear algebra, linear algebra quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Linear Algebra for Machine Learning in a Single Post: Complete Tutorial From Vectors and Matrices to SVD and Neural Network Weights

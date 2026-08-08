@@ -24,6 +24,7 @@ tags:
 - Qt
 - Tutorial
 mathjax: true
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

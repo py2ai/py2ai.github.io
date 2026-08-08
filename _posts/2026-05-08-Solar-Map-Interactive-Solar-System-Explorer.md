@@ -10,6 +10,7 @@ categories: [Web Apps, Solar Energy, JavaScript]
 tags: [solar map, sunshine intensity, solar panel optimizer, interactive map, Leaflet, SunCalc, solar energy, irradiance calculator, sun position tracker, OpenStreetMap]
 keywords: "solar map interactive tool, sunshine intensity map online, solar panel optimizer calculator, how to use solar map, solar irradiance calculator web app, sun position tracker real-time, best solar panel tilt angle calculator, solar energy estimation tool, OpenStreetMap solar visualization, solar panel configuration optimizer"
 author: "PyShine"
+image: /assets/img/diagrams/solar-map/solar-map-architecture.svg
 ---
 
 # Solar Map: Interactive Sunshine Intensity Map and Solar Panel Optimizer

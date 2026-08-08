@@ -18,6 +18,7 @@ tags:
 - Python
 - Video Processing
 title: Faster and accurate object tracking in Python
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 <br>

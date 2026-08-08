@@ -10,6 +10,7 @@ categories: [AI Design, Web Development, Developer Tools]
 tags: [Taste Skill, AI design, anti-slop, frontend framework, agent skills, SKILL.md, Claude Code, Cursor, Codex, design systems]
 keywords: "Taste Skill AI frontend framework, how to use Taste Skill with Claude Code, anti-slop design rules for AI agents, AI agent design skills SKILL.md, Taste Skill Three-Dial system, Taste Skill vs other AI design tools, how to install Taste Skill, AI frontend design best practices, Taste Skill tutorial, portable agent skills for coding"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Every AI coding agent can build a frontend. The problem is that they all build the *same* frontend: centered hero with a purple gradient, three equal feature cards, Inter font on slate-900, and an em-dash in every headline. Taste Skill, the anti-slop frontend framework for AI agents, exists to break that cycle. With 24,000 GitHub stars and growing at over 2,700 per day, this collection of 13 portable SKILL.md instruction files gives your coding agent the design taste it was never trained on. No runtime code, no npm dependencies to bundle, no build step. Just pure instruction files that teach your agent how to design like a senior frontend engineer instead of a template generator.

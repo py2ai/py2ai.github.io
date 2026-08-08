@@ -8,6 +8,7 @@ permalink: /fireworks-tech-graph-production-ready-svg-diagrams-from-natural-lang
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [AI, SVG, Diagrams, Technical-Diagrams, UML, Open-Source, Developer-Tools, LLM]
 author: "PyShine"
+image: /assets/img/diagrams/codegraph/codegraph-architecture.svg
 ---
 
 # Fireworks Tech Graph: Production-Ready SVG Diagrams From Plain English

@@ -12,6 +12,7 @@ tags:
   - Open Source
   - Automation
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Ralph: Autonomous AI Agent Loop for Complete PRD Execution

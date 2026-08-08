@@ -26,6 +26,7 @@ tags:
 - Code Optimization
 - Debugging
 title: 40 Essential Tips to Write Better Python Code
+image: /assets/img/diagrams/english-level-up-tips/learning-path-roadmap.svg
 ---
 
 

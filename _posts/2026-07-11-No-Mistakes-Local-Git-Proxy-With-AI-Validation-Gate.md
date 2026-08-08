@@ -14,6 +14,7 @@ tags:
   - Claude Code
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/local-deep-research/local-deep-research-architecture.svg
 ---
 
 # no-mistakes: A Local Git Proxy That Runs an AI Validation Gate Before Your Push Lands

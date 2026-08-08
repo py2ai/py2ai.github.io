@@ -14,6 +14,7 @@ keywords:
 - API integration
 - GitHub MCP
 - database MCP
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Claude Code MCP Guide - Complete Model Context Protocol Reference

@@ -8,6 +8,7 @@ permalink: /Hermes-Agent-Orange-Book-Practical-AI-Agent-Guide/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Agent, Hermes, Nous-Research, Self-Improving, LLM, Open-Source]
 author: PyShine
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 The AI agent landscape is evolving at breakneck speed. Among the most compelling entries is the Hermes Agent from Nous Research -- an open-source framework that does not merely execute tasks, but actively learns, remembers, and improves itself over time. The **Hermes Agent Orange Book**, authored by HuaShu, is the definitive practical guide to understanding and mastering this framework. With the Hermes repository surpassing 27,000 GitHub stars within just two months of launch, the Orange Book has become essential reading for anyone building production-grade AI agents.

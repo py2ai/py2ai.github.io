@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Ruflo, Claude Code, multi-agent orchestration, AI agents, swarm intelligence, agent federation, MCP, vector memory, self-learning, developer tools]
 keywords: "how to use Ruflo with Claude Code, Ruflo multi-agent orchestration tutorial, Ruflo vs single agent Claude, AI agent swarm coordination, Ruflo installation guide, Claude Code plugin marketplace, agent federation zero-trust, self-learning AI agents, multi-provider LLM orchestration, Ruflo CLI setup"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Ruflo: Multi-Agent AI Orchestration for Claude Code

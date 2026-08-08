@@ -17,6 +17,7 @@ tags:
 - Beginner Projects
 - Coding Tutorial
 title: Let's build a simple "Rock, Paper, Scissors" game
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 Let's create a simple "Rock, Paper, Scissors" game where the user can play against the computer. This is a classic game that demonstrates user input, random choices by the computer, and conditional statements to determine the winner.

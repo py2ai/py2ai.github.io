@@ -10,6 +10,7 @@ categories: [Developer Tools, AI Agents, Open Source]
 tags: [AGENTS.md, coding agents, anti-sycophancy, Claude Code, Codex CLI, Cursor, AI coding rules, developer tools, LLM instructions, open source]
 keywords: "how to use AGENTS.md for coding agents, AGENTS.md vs CLAUDE.md comparison, anti-sycophancy rules for AI, coding agent operating instructions, AGENTS.md installation guide, best practices for AI coding agents, AGENTS.md cross-tool standard, senior engineer behavior AI, coding agent configuration file, AGENTS.md self-improvement loop"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # AGENTS.md: Anti-Sycophancy Operating Instructions That Make Every Coding Agent Behave Like a Senior Engineer

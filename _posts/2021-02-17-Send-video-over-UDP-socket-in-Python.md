@@ -18,6 +18,7 @@ tags:
 - Video Streaming
 - OpenCV
 title: How to send video using UDP socket in Python
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 

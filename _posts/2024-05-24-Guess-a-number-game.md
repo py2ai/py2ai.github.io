@@ -18,6 +18,7 @@ tags:
 - Random Number Generation
 - Coding Tutorial
 title: How to make a simple guess a number game
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 Let's create a simple game where the user and the computer can play "Guess the Number". The computer will randomly select a number within a given range, and the user will have to guess it. The computer will provide feedback whether the guess is too high, too low, or correct.

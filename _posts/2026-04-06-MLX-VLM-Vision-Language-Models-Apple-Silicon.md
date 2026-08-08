@@ -14,6 +14,7 @@ tags:
   - MLX
   - Local AI
 author: "PyShine"
+image: /assets/img/diagrams/apple-container/apple-container-architecture.svg
 ---
 
 # MLX-VLM: Vision Language Models on Apple Silicon

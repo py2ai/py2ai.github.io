@@ -20,6 +20,7 @@ tags:
 - tutorial
 - beginner
 title: FastAPI Lab 3 – Build a Simple To-Do List API
+image: /assets/img/diagrams/fastapi-tutorial/fastapi-async-db.svg
 ---
 ## Introduction
 

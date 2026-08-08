@@ -17,6 +17,7 @@ keywords:
 layout: post
 mathjax: true
 title: Basic Coding in TensorFlow
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

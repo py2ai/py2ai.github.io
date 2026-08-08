@@ -14,6 +14,7 @@ tags:
   - Automation
   - MCP
 author: "PyShine"
+image: /assets/img/diagrams/agent-browser/agent-browser-architecture.svg
 ---
 
 ## Introduction

@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Web Development, Frontend]
 keywords: "Tailwind CSS tutorial one post, learn Tailwind fast, Tailwind utility classes, Tailwind spacing color typography, Tailwind config theme tokens, Tailwind responsive sm md lg prefixes mobile first, Tailwind @apply extracting components, Tailwind variants hover focus dark mode, Tailwind JIT engine, Tailwind plugins forms typography, Tailwind React Next.js, shadcn/ui Headless UI daisyUI, Tailwind quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Tailwind CSS in a Single Post: Complete Tutorial From Utility Classes to Responsive Components

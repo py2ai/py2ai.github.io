@@ -25,6 +25,7 @@ tags:
 - Application Development
 - Programming
 title: Creating a ComboBox-Based GUI with PySide6 (Part 3)
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

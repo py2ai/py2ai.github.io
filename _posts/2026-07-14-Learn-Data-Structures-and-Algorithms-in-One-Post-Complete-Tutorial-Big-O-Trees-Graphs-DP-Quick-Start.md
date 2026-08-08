@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Computer Science, Algorithms]
 keywords: "data structures and algorithms tutorial one post, learn DSA fast, Big-O notation explained, time space complexity analysis, arrays linked lists stacks queues hash maps, binary search tree heap trie, BFS DFS graph traversal, quicksort mergesort binary search two pointers, dynamic programming memoization tabulation, greedy divide and conquer backtracking, LeetCode interview prep NeetCode, DSA quick start roadmap, data structures cheat sheet complexities"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Data Structures and Algorithms in a Single Post: Complete Tutorial From Big-O to Dynamic Programming

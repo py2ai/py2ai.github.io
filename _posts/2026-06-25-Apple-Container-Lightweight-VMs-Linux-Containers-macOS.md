@@ -16,6 +16,7 @@ tags:
   - Apple Silicon
   - DevOps
 author: "PyShine"
+image: /assets/img/diagrams/apple-container/apple-container-architecture.svg
 ---
 ## Introduction
 

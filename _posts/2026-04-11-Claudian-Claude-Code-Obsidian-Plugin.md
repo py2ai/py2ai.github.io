@@ -13,6 +13,7 @@ tags:
   - Productivity
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Introduction

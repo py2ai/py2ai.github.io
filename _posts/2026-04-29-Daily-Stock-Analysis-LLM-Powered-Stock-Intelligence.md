@@ -10,6 +10,7 @@ categories: [AI Agents, Finance, Open Source]
 tags: [Daily Stock Analysis, LLM stock analysis, AI trading dashboard, stock market automation, GitHub Actions finance, multi-model LLM routing, YAML trading strategies, stock notification push, A-share analysis, open source]
 keywords: "how to use daily stock analysis, LLM stock analysis setup guide, AI stock market dashboard tutorial, daily stock analysis vs alternatives, open source stock analysis tool, GitHub Actions stock analysis, multi-model LLM trading, YAML trading strategies, stock push notification WeChat Feishu, daily stock analysis installation"
 author: "PyShine"
+image: /assets/img/diagrams/daily-stock-analysis/dsa-architecture.svg
 ---
 
 # Daily Stock Analysis: LLM-Powered Stock Intelligence for A-Share, HK, and US Markets

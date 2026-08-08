@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Developer Tools]
 tags: [Haystack, AI orchestration, RAG pipeline, LLM framework, Python, AI agents, deepset, production AI, retrieval augmented generation, open source]
 keywords: "Haystack AI orchestration framework tutorial, how to build RAG pipelines with Haystack, Haystack vs LangChain comparison, production LLM application framework, Haystack agent system Python, deepset Haystack installation guide, AI retrieval augmented generation pipeline, Haystack component system tutorial, open source AI framework for developers, Haystack document search and RAG"
 author: "PyShine"
+image: /assets/img/diagrams/haystack/haystack-agent-system.svg
 ---
 
 ## Introduction

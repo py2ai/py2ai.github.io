@@ -14,6 +14,7 @@ tags:
   - Microsoft
   - Deep Learning
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # VibeVoice: Open-Source Frontier Voice AI from Microsoft

@@ -18,6 +18,7 @@ tags:
 - Python
 - WiFi Communication
 title: How to send and receive live audio using socket...
+image: /assets/img/diagrams/free-programming-books/free-programming-books-ecosystem.svg
 ---
 
 

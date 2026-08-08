@@ -12,6 +12,7 @@ keywords:
 - AI coding
 - custom commands
 - Claude skills
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Claude Code Slash Commands - Complete Reference Guide

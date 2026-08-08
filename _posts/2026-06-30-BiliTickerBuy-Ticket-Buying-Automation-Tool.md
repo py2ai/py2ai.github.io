@@ -12,6 +12,7 @@ tags:
   - Automation
   - Bilibili
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 ## Introduction

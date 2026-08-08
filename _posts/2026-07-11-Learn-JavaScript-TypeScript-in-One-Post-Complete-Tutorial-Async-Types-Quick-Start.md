@@ -14,6 +14,7 @@ tags:
   - Async
   - Learn to Code
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn JavaScript and TypeScript in a Single Post: A Complete Tutorial from Event Loop to Type System

@@ -24,6 +24,7 @@ tags:
 - Virtual Try-on
 - Face Detection
 title: Virtual Lipstick Try-On App with PyQt5, Dlib and OpenCV
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

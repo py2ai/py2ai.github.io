@@ -18,6 +18,7 @@ tags:
 - IP Cameras
 - Python
 title: OpenCV and Real time streaming protocol (RTSP)
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

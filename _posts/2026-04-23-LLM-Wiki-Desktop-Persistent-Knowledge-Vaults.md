@@ -10,6 +10,7 @@ categories: [Knowledge Management, AI Tools, Desktop Apps]
 tags: [Open Source, LLM, Knowledge Management, Desktop App, Tauri, React, Semantic Search, AI Tools, Markdown, Research]
 keywords: "LLM Wiki desktop app, persistent knowledge vault for AI, Karpathy LLM Wiki pattern, how to build knowledge base with LLM, AI knowledge management tool, Tauri desktop knowledge app, LLM document summarization, compound knowledge base AI, semantic search knowledge vault, AI research assistant desktop"
 author: "PyShine"
+image: /assets/img/diagrams/claude-desktop-debian/claude-desktop-debian-build-architecture.svg
 ---
 
 ## Introduction

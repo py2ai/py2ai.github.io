@@ -13,6 +13,7 @@ tags:
   - OpenAI
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 The OpenAI Agents Python SDK is a lightweight yet powerful framework designed for building multi-agent AI workflows in Python. Released by OpenAI, this SDK provides a clean, provider-agnostic abstraction layer that supports not only the OpenAI Responses API and Chat Completions API, but also over 100 other LLM providers through LiteLLM and any-llm integrations. Whether you are building a simple chatbot or orchestrating complex multi-agent systems with handoffs, guardrails, and sandboxed execution, the OpenAI Agents SDK gives you the building blocks to do it efficiently and safely.

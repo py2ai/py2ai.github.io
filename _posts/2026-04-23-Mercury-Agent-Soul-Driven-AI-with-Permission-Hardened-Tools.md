@@ -10,6 +10,7 @@ categories: [AI Agents, Security, Developer Tools]
 tags: [Open Source, AI Agent, TypeScript, Security, Telegram Bot, CLI Tools, Permission System, Token Budget, Developer Tools, Autonomous AI]
 keywords: "Mercury AI agent permission system, soul-driven AI agent, how to build safe AI agents, AI agent token budget, permission-hardened AI tools, Telegram AI agent bot, CLI AI agent TypeScript, safe autonomous AI agent, AI agent security permissions, local AI agent with soul"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Mercury Agent: Soul-Driven AI with Permission-Hardened Tools

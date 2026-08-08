@@ -11,6 +11,7 @@ tags:
 - vpython tutorial
 - gps satellites basic tutorial
 title: How to make a GPS Satellite Simulation in Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 For more details:
 

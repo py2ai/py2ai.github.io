@@ -13,6 +13,7 @@ tags:
   - Knowledge Management
   - Docker
 author: "PyShine"
+image: /assets/img/diagrams/knowledge-catalog/knowledge-catalog-architecture.svg
 ---
 
 # Project N.O.M.A.D.: Offline-First Knowledge Server with AI

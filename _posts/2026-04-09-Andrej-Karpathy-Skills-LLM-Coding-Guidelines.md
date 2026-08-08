@@ -12,6 +12,7 @@ tags:
   - Coding Best Practices
   - Andrej Karpathy
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Andrej Karpathy Skills: LLM Coding Guidelines That Prevent Common Mistakes

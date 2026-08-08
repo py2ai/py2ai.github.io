@@ -13,6 +13,7 @@ tags:
   - Security
   - Google
 author: "PyShine"
+image: /assets/img/diagrams/magika/magika-architecture.svg
 ---
 
 # Google Magika: AI-Powered File Type Detection

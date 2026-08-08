@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Google Cloud]
 tags: [Google Agents CLI, Gemini ADK, AI agents, agent development, Google Cloud, CLI tools, agent evaluation, ADK, agent deployment, coding agents]
 keywords: "how to build AI agents with Google Agents CLI, Google Agents CLI tutorial, Gemini ADK agent development, agents-cli setup guide, AI agent evaluation methodology, Google Cloud agent deployment, agents-cli vs ADK comparison, agent development kit Python, how to use agents-cli for agent creation, Google agent platform beginner guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Google Agents CLI: Building and Evaluating AI Agents with Gemini ADK

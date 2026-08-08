@@ -23,6 +23,7 @@ tags:
 - Coding
 - Career
 title: Python Programming Interview Questions and Answers
+image: /assets/img/diagrams/free-programming-books/free-programming-books-ecosystem.svg
 ---
 
 

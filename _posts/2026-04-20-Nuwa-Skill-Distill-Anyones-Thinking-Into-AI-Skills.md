@@ -8,6 +8,7 @@ permalink: /nuwa-skill-distill-thinking-into-ai-skills/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Claude-Code, Skills, Cognitive-Frameworks, Mental-Models, Open-Source]
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 The best thinkers who ever lived spent decades explaining how they think. Munger left the Almanack plus 40 years of shareholder letters. Feynman left complete lecture series and three autobiographies. Naval left 300 tweets and a 20-hour podcast on wealth. Taleb left five books and ten thousand public arguments. High-purity cognitive ore, sitting there.

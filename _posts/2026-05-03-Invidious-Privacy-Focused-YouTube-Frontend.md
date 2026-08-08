@@ -10,6 +10,7 @@ categories: [Open Source, Privacy, Web Tools]
 tags: [Invidious, YouTube alternative, privacy, open source, self-hosted, ad-free, no tracking, video streaming, frontend, Crystal]
 keywords: "how to use Invidious, Invidious vs YouTube, privacy YouTube alternative, self-host Invidious, Invidious installation guide, ad-free YouTube frontend, open source video streaming, Invidious Docker setup, Invidious API tutorial, private video watching"
 author: "PyShine"
+image: /assets/img/diagrams/invidious/invidious-architecture.svg
 ---
 
 # Invidious: Privacy-Focused Open Source YouTube Frontend

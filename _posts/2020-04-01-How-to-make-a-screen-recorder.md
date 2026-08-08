@@ -22,6 +22,7 @@ tags:
 - video capture
 - gui
 mathjax: true
+image: /assets/img/diagrams/pyshine-screen-recorder/pyshine-screen-recorder-architecture.svg
 ---
 
 # How to Make a Screen Recorder in Python with PyQt5

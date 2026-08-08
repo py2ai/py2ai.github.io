@@ -7,6 +7,7 @@ tags: [generative-ai, image-generation, video-generation, open-source, uncensore
 keywords: "Open Generative AI, uncensored AI image generation, open source video generation, Flux models, Midjourney alternative, Sora alternative, self-hosted AI studio, AI lip sync, local inference stable diffusion"
 description: "Open Generative AI is a free, uncensored, open-source AI image, video, cinema, and lip sync studio with 200+ models. No content filters, no subscription fees, fully self-hosted."
 image: /assets/img/diagrams/open-generative-ai/open-generative-ai-architecture.svg
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 ---
 
 > **Open Generative AI** is the free, open-source, unrestricted alternative to Higgsfield AI, Freepik, Krea AI, and Openart AI. Generate AI images and videos using 200+ state-of-the-art models — no content filters, no closed ecosystem, no subscription fees.

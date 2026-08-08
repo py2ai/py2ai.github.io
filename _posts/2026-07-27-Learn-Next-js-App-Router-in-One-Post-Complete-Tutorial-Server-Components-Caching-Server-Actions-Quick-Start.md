@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Web Development, Frontend]
 keywords: "Next.js App Router tutorial one post, learn Next.js 14+ fast, file-based routing app directory layout page, server components vs client components RSC, use client directive composition rule, fetch caching revalidate ISR, revalidatePath revalidateTag on-demand, Server Actions use server mutations forms, Data Cache Full Route Cache, Vercel edge runtime middleware, next/image next/font metadata SEO, streaming Suspense, Next.js quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/9router/9router-architecture.svg
 ---
 
 # Learn Next.js App Router in a Single Post: Complete Tutorial From Server Components to Caching and Server Actions

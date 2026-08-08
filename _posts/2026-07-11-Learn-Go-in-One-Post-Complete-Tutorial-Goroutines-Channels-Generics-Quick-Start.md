@@ -14,6 +14,7 @@ tags:
   - Concurrency
   - Goroutines
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Go in a Single Post: A Complete Go Tutorial from Goroutines and Channels to Generics and the Toolchain

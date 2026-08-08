@@ -10,6 +10,7 @@ categories: [AI Agents, Rust, Developer Tools]
 tags: [DeepSeek-TUI, coding agent, terminal UI, Rust, AI coding, DeepSeek V4, RLM, MCP, sub-agents, LSP]
 keywords: "DeepSeek-TUI terminal coding agent, how to use DeepSeek-TUI, DeepSeek-TUI vs Claude Code, terminal AI coding assistant Rust, DeepSeek V4 1M token context, recursive language model coding, MCP protocol terminal agent, DeepSeek-TUI installation guide, AI coding agent terminal TUI, DeepSeek-TUI YOLO mode"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # DeepSeek-TUI: Terminal-Native Coding Agent with 1M-Token Context and Recursive Language Model

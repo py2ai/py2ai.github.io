@@ -12,6 +12,7 @@ tags:
   - Open Source
   - Programming
 author: "PyShine"
+image: /assets/img/diagrams/computer-architecture-tutorial/ca-cache.svg
 ---
 
 ## Introduction

@@ -23,6 +23,8 @@ tags:
 author: "PyShine"
 seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama local model comparison, dates palm tree SVG, AI palm tree drawing, LLM SVG benchmark, AI Fibonacci SVG, Fibonacci spiral SVG, golden ratio SVG, phyllotaxis SVG, palm frond spiral, AI nature art, complex SVG scene, tropical illustration, desert oasis SVG"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/local-deep-research/local-deep-research-architecture.svg
 ---
 
 # Which Ollama Local Model is Best? Dates Palm Tree SVG Comparison (17 Models)

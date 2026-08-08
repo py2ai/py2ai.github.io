@@ -18,6 +18,7 @@ tags:
 - ElementTree
 - tutorial
 title: How to parse XML file and save the data as CSV
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

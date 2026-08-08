@@ -14,6 +14,8 @@ keywords:
 layout: post
 mathjax: true
 title: With Speech, control the MS Power Point Presentation
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/speech-to-speech/speech-to-speech-architecture.svg
 ---
 
 

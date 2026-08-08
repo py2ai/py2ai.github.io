@@ -10,6 +10,7 @@ categories: [Developer Tools, Kotlin, Open Source]
 tags: [Quarkdown, Markdown, Kotlin, document generation, presentations, open source, technical writing, knowledge base, developer tools, publishing]
 keywords: "how to use Quarkdown, Quarkdown tutorial, Quarkdown vs Markdown comparison, Markdown superpowers tool, Quarkdown installation guide, best Markdown to presentation tool, Quarkdown for technical writing, open source document generator, Quarkdown paper presentation workflow, Kotlin Markdown framework"
 author: "PyShine"
+image: /assets/img/diagrams/quarkdown/quarkdown-architecture.svg
 ---
 
 # Quarkdown: Markdown With Superpowers for Papers, Presentations, and More

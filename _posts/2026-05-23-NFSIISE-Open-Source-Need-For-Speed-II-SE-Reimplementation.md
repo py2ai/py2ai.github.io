@@ -10,6 +10,7 @@ categories: [Retro Gaming, Open Source, Cross-Platform]
 tags: [NFSIISE, Need for Speed II SE, open source game wrapper, OpenGL rendering, SDL2 cross-platform, retro gaming, TCP multiplayer, 3dfx Glide wrapper, Android gaming, game compatibility layer]
 keywords: "open source Need for Speed II SE reimplementation, NFSIISE cross-platform wrapper, 3dfx Glide to OpenGL translation, retro game wrapper SDL2, Need for Speed II SE Linux, NFSIISE Android build, OpenGL game compatibility layer, TCP multiplayer retro racing, cross-platform game wrapper C, NFS2SE configuration guide"
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 ## Introduction

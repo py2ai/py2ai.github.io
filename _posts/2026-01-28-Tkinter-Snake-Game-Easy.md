@@ -5,6 +5,7 @@ description: "A beginner-friendly tutorial explaining how to build a classic Sna
 featured-img: snakegame-2025-01-29/snakegame-2025-01-29
 author: PyShine
 tags: [python, tkinter, game-development, beginners]
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 # Building a Snake Game in Python with Tkinter

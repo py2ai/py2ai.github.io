@@ -12,6 +12,7 @@ tags:
   - UI Components
   - Frontend
 author: "PyShine"
+image: /assets/img/diagrams/awesome-agent-skills/awesome-agent-skills-categories.svg
 ---
 
 # Awesome Design Systems: A Curated Collection

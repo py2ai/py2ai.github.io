@@ -6,6 +6,7 @@ categories: [ai, gpu, machine-learning, performance]
 tags: [flashlib, gpu, triton, cutedsl, kmeans, pca, hdbscan, umap, tsne, roofline, cost-estimation, pareto, sklearn]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /FlashLib-GPU-Accelerated-Classical-ML-CPU-Only-Cost-Prediction/
+image: /assets/img/diagrams/flashlib/flashlib-architecture.svg
 ---
 
 Classical machine learning has a GPU problem. Scikit-learn is the lingua franca of classical ML -- every data scientist knows its API, every textbook teaches its classes, every production pipeline uses its estimators. But sklearn runs on CPU, and for large datasets, that means waiting minutes or hours for operations that could complete in seconds on a GPU.

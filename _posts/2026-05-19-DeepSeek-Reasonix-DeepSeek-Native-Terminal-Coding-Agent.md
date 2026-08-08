@@ -10,6 +10,7 @@ seo:
   keywords: "deepseek, coding agent, terminal, reasoning, ai coding, open source, deepseek-reasonix"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /DeepSeek-Reasonix-DeepSeek-Native-Terminal-Coding-Agent/
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 What if your coding agent was so cheap you could just leave it running all day? DeepSeek-Reasonix is a terminal-based AI coding agent built from the ground up for DeepSeek's API — and its secret weapon isn't a smarter model, it's a smarter loop. By engineering every layer around DeepSeek's prefix-cache mechanic, Reasonix achieves a **99.82% cache hit rate** in real-world usage, turning what would cost $61 into roughly $12 for the same workload.

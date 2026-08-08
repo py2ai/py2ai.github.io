@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, Rust]
 tags: [iii, backend framework, Rust, worker function trigger, unified backend, event-driven architecture, real-time observability, task queue, cron scheduler, state management]
 keywords: "iii backend framework tutorial, Rust unified backend engine, worker function trigger primitives, replace API framework task queue cron, iii engine installation guide, event-driven backend architecture, real-time observability Rust, multi-language backend SDK Rust TypeScript Python, iii vs traditional backend, zero integration cost backend framework"
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## Introduction

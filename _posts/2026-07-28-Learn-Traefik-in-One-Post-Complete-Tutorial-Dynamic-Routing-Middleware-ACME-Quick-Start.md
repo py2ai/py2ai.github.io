@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Infrastructure]
 keywords: "Traefik tutorial one post, learn Traefik fast, Traefik entrypoints web websecure, Traefik routers Host Path rule priority, Traefik services load balancing, Traefik middleware rate-limit auth compress retry circuit-breaker, Traefik dynamic config Docker K8s file provider auto-discovery no reload, Traefik vs Nginx comparison, Traefik ACME Let's Encrypt auto TLS, Traefik dashboard metrics Prometheus, Traefik HA, Traefik quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Traefik in a Single Post: Complete Tutorial From Dynamic Routing and Middleware to ACME TLS

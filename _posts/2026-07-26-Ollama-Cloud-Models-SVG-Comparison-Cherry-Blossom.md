@@ -20,6 +20,7 @@ tags:
 author: "PyShine"
 seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, deepseek vs glm vs qwen, LLM SVG benchmark, AI image generation comparison, cherry blossom SVG, sakura SVG, which Ollama model is best, Ollama cloud models 2026, AI nature art, LLM drawing benchmark"
+image: /assets/img/diagrams/ollama/ollama-api-ecosystem.svg
 ---
 
 # Which Ollama Cloud Model is Best? Cherry Blossom Trees SVG Comparison (14 Models)

@@ -7,6 +7,8 @@ categories: [AI Agents, Memory, Developer Tools, Multi-Agent]
 tags: [AI, Agent, Memory, LLM, Multi-Agent, TencentDB, Team Collaboration, Node.js, MIT, open-source]
 keywords: "TencentDB Agent Memory, AI agent memory hub, team memory for AI agents, persistent memory multi-agent systems, memory-core memory-hub proxy, AI agent conversation storage, TencentCloud agent memory, Claude Code memory integration, CodeBuddy memory, AI team collaboration memory"
 author: "PyShine"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # TencentDB Agent Memory: Team-Level Memory Hub for AI Agents

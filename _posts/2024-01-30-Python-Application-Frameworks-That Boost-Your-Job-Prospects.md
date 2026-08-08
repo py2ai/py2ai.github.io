@@ -25,6 +25,7 @@ tags:
 - Career Development
 - Python Frameworks
 title: Python Application Frameworks That Boost Your Job Prospects
+image: /assets/img/diagrams/build-your-own-x/build-your-own-x-complexity.svg
 ---
 
 

@@ -10,6 +10,7 @@ categories: [AI Agents, DevOps, Open Source]
 tags: [superlog, AI self-healing, observability, OpenTelemetry, AI agents, self-hosted monitoring, LLM operations, TypeScript, React dashboard, AIOps]
 keywords: "superlog AI self-healing observability, OpenTelemetry AI agent monitoring, self-hosted AIOps platform, AI automated incident remediation, LLM observability tool, superlog open source setup, AI agent memory system, OpenTelemetry self-healing software, TypeScript observability dashboard, AIOps open source alternative"
 author: "PyShine"
+image: /assets/img/diagrams/observability-tutorial/obs-alert.svg
 ---
 
 ## Introduction

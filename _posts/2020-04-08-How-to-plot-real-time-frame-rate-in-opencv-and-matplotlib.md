@@ -23,6 +23,7 @@ tags:
 - FPS
 - Face Detection
 title: Plot Real-Time Frame Rate of Webcam in Python with OpenCV
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 Hello there! Welcome to the PyShine Artificial Intelligence Learning series. Today we will learn, how to detect a Human face using Open CV library in Python, from a real-time web camera. We will also learn, how to plot the real-time frame rate of the camera.
 

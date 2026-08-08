@@ -10,6 +10,7 @@ categories: [Open Source, JavaScript, Education]
 tags: [Easy-Vibe, vibe coding, beginner coding, interactive learning, JavaScript, coding course, AI coding, tutorial platform, open source education, learn to code]
 keywords: "how to use Easy-Vibe, Easy-Vibe tutorial, vibe coding for beginners, Easy-Vibe vs coding bootcamps, interactive coding course, learn vibe coding free, Easy-Vibe setup guide, AI-assisted coding course, beginner coding platform, open source coding education"
 author: "PyShine"
+image: /assets/img/diagrams/easy-vibe/easy-vibe-architecture.svg
 ---
 
 # Easy-Vibe: Interactive Vibe Coding Course for Beginners

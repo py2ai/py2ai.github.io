@@ -17,6 +17,7 @@ keywords:
 layout: post
 mathjax: true
 title: Lab2 How to make a basic multilayer Keras model
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 
 

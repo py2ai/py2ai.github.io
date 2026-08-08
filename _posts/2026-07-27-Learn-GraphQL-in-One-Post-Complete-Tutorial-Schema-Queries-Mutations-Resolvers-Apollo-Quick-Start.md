@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Backend, API]
 keywords: "GraphQL tutorial one post, learn GraphQL fast, GraphQL schema types Query Mutation fields scalars non-null, selection sets variables fragments aliases, GraphQL mutations input types, GraphQL resolvers per-field data sources, N+1 problem DataLoader batching, Apollo Server federation gateway supergraph, persisted queries, GraphQL caching, complexity limit auth, GraphQL quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn GraphQL in a Single Post: Complete Tutorial From Schema and Queries to Resolvers and Apollo Federation

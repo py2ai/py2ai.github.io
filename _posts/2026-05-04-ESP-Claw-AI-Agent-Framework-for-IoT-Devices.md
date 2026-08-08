@@ -10,6 +10,7 @@ categories: [IoT, AI Agents, Embedded Systems]
 tags: [ESP-Claw, ESP32, IoT, AI agents, edge computing, embedded AI, Espressif, MCP protocol, Lua scripting, microcontroller]
 keywords: "ESP-Claw AI agent framework IoT, how to use ESP-Claw with ESP32, ESP-Claw vs OpenClaw comparison, AI agent framework for microcontrollers, ESP32 edge AI tutorial, ESP-Claw installation guide, MCP protocol IoT devices, chat coding IoT programming, edge agent framework ESP32, ESP-Claw Lua scripting tutorial"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # ESP-Claw: Espressif's AI Agent Framework for IoT Devices

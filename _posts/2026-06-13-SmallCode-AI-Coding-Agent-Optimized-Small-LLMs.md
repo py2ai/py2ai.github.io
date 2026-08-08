@@ -10,6 +10,7 @@ categories: [AI Agents, JavaScript, Developer Tools]
 tags: [smallcode, AI coding agent, small LLMs, 4B model, coding benchmark, prompt compression, context management, local LLM, JavaScript, developer tools]
 keywords: "how to use smallcode AI coding agent, small LLM coding agent 87% benchmark, 4B parameter model coding assistant, prompt compression for small LLMs, AI coding agent optimized for local models, smallcode vs aider vs claude code, running coding agent on small LLM, context window optimization coding agent, task decomposition small language models, local AI coding assistant setup guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

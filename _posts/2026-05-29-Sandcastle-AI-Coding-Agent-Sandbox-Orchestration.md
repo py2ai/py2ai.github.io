@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, TypeScript]
 tags: [sandcastle, ai-coding-agent, sandbox-orchestration, claude-code, docker-sandbox, git-worktree, agent-pipeline, typescript, codex, cursor-agent]
 keywords: "sandcastle ai agent orchestration, ai coding agent sandbox, docker sandbox for ai agents, claude code sandbox orchestration, git worktree ai agent, agent pipeline typescript, isolated sandbox coding agent, matt pocock sandcastle, ai agent branch strategy, structured output ai agent"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

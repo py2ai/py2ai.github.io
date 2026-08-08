@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Developer Tools]
 tags: [CUA, computer-use agents, AI sandbox, agent benchmark, macOS virtualization, Lume, CuaBot, agent SDK, desktop automation, open source]
 keywords: "how to use CUA computer-use agents, CUA sandbox setup guide, computer-use agent framework tutorial, CUA vs other agent frameworks, open source agent sandbox, CUA benchmark evaluation, background macOS automation, CUA driver MCP server, AI agent desktop control, CUA installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # CUA: Open-Source Infrastructure for Computer-Use Agents

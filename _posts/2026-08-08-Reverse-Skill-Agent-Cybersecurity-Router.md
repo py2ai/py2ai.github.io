@@ -4,6 +4,8 @@ title: "Reverse Skill: A Cybersecurity Skills Router for AI Agents"
 description: "Reverse Skill is a routing engine that directs AI agents to the right tools and methodologies for security tasks — from APK analysis and binary reversing to penetration testing and CTF challenges. With 41 routing rules, 163 benchmark cases, MCP integration, and a three-layer authorization gate."
 date: 2026-08-08
 tags: [AI, Security, Cybersecurity, Agent, Penetration Testing, Reverse Engineering, MCP]
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Reverse Skill: A Cybersecurity Skills Router for AI Agents

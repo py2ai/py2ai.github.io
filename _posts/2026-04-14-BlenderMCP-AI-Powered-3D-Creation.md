@@ -14,6 +14,7 @@ tags:
   - Blender
   - MCP
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # BlenderMCP: AI-Powered 3D Content Creation

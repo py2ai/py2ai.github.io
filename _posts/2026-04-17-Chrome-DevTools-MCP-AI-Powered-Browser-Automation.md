@@ -14,6 +14,7 @@ tags:
   - Chrome
   - DevTools
 author: "PyShine"
+image: /assets/img/diagrams/agent-browser/agent-browser-architecture.svg
 ---
 
 # Chrome DevTools MCP: AI-Powered Browser Automation

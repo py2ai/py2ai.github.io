@@ -23,6 +23,7 @@ tags:
 - Web Deployment
 - Python
 title: Deploy Flask Video Processing App on PythonAnywhere
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

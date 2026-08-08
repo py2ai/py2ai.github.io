@@ -8,6 +8,7 @@ permalink: /2026/04/claude-obsidian-self-organizing-ai-knowledge-engine/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [claude-code, obsidian, knowledge-management, ai, llm-wiki, second-brain]
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## The Knowledge Fragmentation Problem

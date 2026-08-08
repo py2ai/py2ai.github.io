@@ -15,6 +15,7 @@ tags:
 - interactive-drawing
 - python-tutorial
 title: Mini Paint (Smooth Circular Brush) in Python
+image: /assets/img/diagrams/brush/brush-architecture.svg
 ---
 # Mini Paint Tutorial (Smooth Circular Brush)
 

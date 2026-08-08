@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Infrastructure]
 keywords: "Terraform tutorial one post, learn Terraform fast, HCL hashicorp config language, Terraform resource block, Terraform state file backend locking, Terraform remote state S3, Terraform modules variables outputs, Terraform init plan apply destroy workflow, Terraform providers aws google azure, Terraform import drift, Terraform workspaces, Terraform Cloud Enterprise, infrastructure as code quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Terraform in a Single Post: Complete Tutorial From HCL and State to Modules, Providers, and Infrastructure as Code

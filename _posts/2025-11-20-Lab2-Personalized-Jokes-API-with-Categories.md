@@ -20,6 +20,7 @@ tags:
 - tutorial
 - beginner
 title: FastAPI Lab2 – Personalized Jokes API with Categories
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 ## Introduction
 

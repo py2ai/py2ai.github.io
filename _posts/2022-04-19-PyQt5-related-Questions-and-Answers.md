@@ -17,6 +17,7 @@ tags:
 - Python
 - Qt Designer
 title: FAQs about PyQt5
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

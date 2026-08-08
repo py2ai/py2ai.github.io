@@ -19,6 +19,7 @@ tags:
 - beginner
 - tutorial
 title: Python Avatars – Generate Random SVG Avatars for Beginners
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 ## Introduction

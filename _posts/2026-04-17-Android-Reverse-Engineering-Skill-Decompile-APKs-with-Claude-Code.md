@@ -13,6 +13,7 @@ tags:
   - Security
   - API Extraction
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Android Reverse Engineering Skill: Decompile APKs and Extract APIs with Claude Code

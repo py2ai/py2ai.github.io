@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, DevOps, Containers]
 keywords: "Docker tutorial one post, learn Docker fast, Docker run pull ps exec, Dockerfile FROM RUN COPY CMD explained, Docker layers caching build, Docker volumes vs bind mounts, Docker networks bridge host overlay, docker-compose.yml multi-service, Docker multi-stage build, Docker healthcheck, Docker image size .dockerignore, Docker registry push pull, BuildKit buildx scout, Docker to Kubernetes orchestration, Docker quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Docker in a Single Post: Complete Tutorial From Containers and Dockerfiles to Compose

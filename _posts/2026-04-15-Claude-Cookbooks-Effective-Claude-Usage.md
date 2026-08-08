@@ -12,6 +12,7 @@ tags:
   - Anthropic
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 # Claude Cookbooks: Effective Claude Usage Patterns
 

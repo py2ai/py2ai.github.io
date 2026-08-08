@@ -13,6 +13,7 @@ tags:
   - Knowledge Management
   - Python
 author: "PyShine"
+image: /assets/img/diagrams/gbrain/gbrain-architecture.svg
 ---
 
 # Khoj: Your AI Second Brain for Personal Knowledge Management

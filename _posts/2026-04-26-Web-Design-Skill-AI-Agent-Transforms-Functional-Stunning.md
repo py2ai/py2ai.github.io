@@ -10,6 +10,7 @@ categories: [AI Design, Web Development, Open Source]
 tags: [web design skill, AI agent skill, oklch color system, design system tokens, Claude Code skill, AI anti-slop, front-end design, HTML CSS generation, AI coding agent, design quality]
 keywords: "AI web design skill for coding agents, how to generate stunning HTML with AI, oklch color system for web design, AI anti-slop design rules, design system tokens for AI agents, AI HTML generation best practices, web design skill Claude Code, AI design quality checklist, responsive design with AI tools, AI front-end development workflow"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Web Design Skill: AI Agent That Transforms Functional Web Pages Into Stunning Designs

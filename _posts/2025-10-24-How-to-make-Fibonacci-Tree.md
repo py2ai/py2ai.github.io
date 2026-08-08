@@ -12,6 +12,7 @@ tags:
 - draw tree
 - random tree
 title: Recursive function to grow TREE in Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # Fibonacci Tree Growth (Multithreaded)
 

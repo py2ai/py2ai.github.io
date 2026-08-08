@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, AI, Deep Learning]
 keywords: "deep learning tutorial one post, learn deep learning fast, neural network neuron activation layers, forward backward pass, loss function gradient descent backpropagation, optimizer Adam SGD learning rate, CNN convolution pooling image classification, transformer self-attention LLM, diffusion models, PyTorch TensorFlow JAX, training loop GPU CUDA, model deployment ONNX, deep learning quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Deep Learning in a Single Post: Complete Tutorial From Neural Networks to Transformers and PyTorch Training

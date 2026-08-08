@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Developer Tools]
 tags: [PageIndex, RAG, vectorless RAG, reasoning-based retrieval, document indexing, LLM retrieval, hierarchical tree search, FinanceBench, OpenAI Agents SDK, Python]
 keywords: "PageIndex vectorless RAG tutorial, how to use PageIndex for document retrieval, vectorless RAG vs vector RAG comparison, PageIndex hierarchical tree index, reasoning-based RAG Python setup, best RAG alternative to vector search, PageIndex installation guide, PageIndex agentic RAG integration, FinanceBench benchmark RAG, PageIndex self-hosted document search"
 author: "PyShine"
+image: /assets/img/diagrams/pageindex/pageindex-architecture.svg
 ---
 
 # PageIndex: Vectorless Reasoning-Based RAG That Achieves 98.7% on FinanceBench

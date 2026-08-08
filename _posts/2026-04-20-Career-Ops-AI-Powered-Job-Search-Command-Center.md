@@ -12,6 +12,7 @@ tags:
   - Career
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Career-Ops: The AI-Powered Job Search Command Center That Landed a Head of AI Role

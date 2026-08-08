@@ -23,6 +23,7 @@ tags:
 - PyShine
 - Tutorial
 title: How to easily stream picamera video over wifi with...
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 

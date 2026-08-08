@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Machine Learning, AI]
 keywords: "machine learning tutorial one post, learn ML fast, supervised vs unsupervised vs reinforcement learning, regression classification loss functions, train validation test split, overfitting underfitting bias variance, clustering k-means, dimensionality reduction PCA, embeddings, neural networks backpropagation gradient descent, CNN transformers, ML workflow data features train evaluate deploy, scikit-learn PyTorch, ML quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Machine Learning in a Single Post: Complete Tutorial From Supervised Learning to Neural Networks and the ML Workflow

@@ -18,6 +18,7 @@ tags:
 - Python
 - Programming
 title: How to easily install OpenCv in Raspberry Pi boards
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

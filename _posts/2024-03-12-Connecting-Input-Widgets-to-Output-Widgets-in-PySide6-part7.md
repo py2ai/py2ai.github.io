@@ -23,6 +23,7 @@ tags:
 - Programming
 - Qt
 title: Interacting with Output Widgets Using Input Widgets in...
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

@@ -10,6 +10,7 @@ seo:
   keywords: "pentesting, security plugin, hackingtool, ai agent, ethical hacking, vulnerability assessment"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /HackingTool-Plugin-Penetration-Testing-Plugin-for-AI-Agents/
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Security auditing and penetration testing have traditionally required deep expertise across dozens of specialized tools, each with its own syntax, installation quirks, and runtime requirements. **HackingTool-Plugin** changes the equation by wrapping 183 pentesting and OSINT tools into a single Claude Code plugin-skill, letting AI agents execute security assessments through natural language prompts.

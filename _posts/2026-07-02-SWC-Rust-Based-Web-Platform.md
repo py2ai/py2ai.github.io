@@ -14,6 +14,7 @@ tags:
   - Build Tools
   - Performance
 author: "PyShine"
+image: /assets/img/diagrams/rust-axum-tutorial/axum-arch.svg
 ---
 
 # SWC: Rust-Based Platform for the Web

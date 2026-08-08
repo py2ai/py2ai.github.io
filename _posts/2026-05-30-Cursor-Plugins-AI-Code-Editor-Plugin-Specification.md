@@ -10,6 +10,7 @@ categories: [AI, Open Source, Developer Tools]
 tags: [cursor, cursor-plugins, ai-coding-agent, plugin-architecture, agent-orchestration, pstack, thermos, ralph-loop, agent-workflows, mcp, developer-tools, ai-code-editor]
 keywords: "Cursor plugin ecosystem, AI coding agent plugins, how to use Cursor plugins guide, agent orchestration patterns, Cursor plugin tutorial for developers, Cursor SDK integration, parallel agent workflows, AI code review automation, agent compatibility scoring, Cursor plugin specification"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 The Cursor plugin ecosystem is not a random collection of tools. When Cursor published its official [plugins repository](https://github.com/cursor/plugins), it shipped 13 plugins that together define how AI coding agents are extended, orchestrated, and governed. Every single plugin falls into the Developer Tools category. There are no themes, no color schemes, no vanity projects. This is infrastructure for agent-augmented development, and it reveals a coherent vision for where AI coding is heading.

@@ -10,6 +10,7 @@ categories: [AI Agents, Workflow Automation, Developer Tools]
 tags: [n8n-mcp, MCP, n8n, workflow automation, AI agent, Claude, Model Context Protocol, TypeScript, diff engine, validation]
 keywords: "n8n-MCP AI workflow automation, how to use n8n with Claude, n8n MCP server setup, n8n-MCP vs n8n official MCP, AI-powered n8n workflow builder, n8n diff-based workflow updates, MCP protocol n8n integration, n8n-MCP installation guide, Claude Desktop n8n workflow, n8n node validation AI"
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # n8n-MCP: AI-Powered n8n Workflow Automation with 1,650 Nodes and Diff-Based Updates

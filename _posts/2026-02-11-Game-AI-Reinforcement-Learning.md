@@ -5,6 +5,7 @@ date: 2026-02-11
 categories: [Machine Learning, AI, Python, Game AI]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Game AI with Reinforcement Learning - build intelligent game agents. Complete guide with game environments, self-play, and PyTorch implementation."
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 # Part 11: Game AI with Reinforcement Learning - Build Intelligent Game Agents

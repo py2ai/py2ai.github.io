@@ -16,6 +16,7 @@ tags:
 - Socket Programming
 - Image Processing
 title: A simple autofocus application in Python
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

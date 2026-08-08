@@ -23,6 +23,7 @@ tags:
 - Data Visualization
 - Plotting
 title: Making a Python GUI for Sine and Cosine Plots with Pyqtgraph
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

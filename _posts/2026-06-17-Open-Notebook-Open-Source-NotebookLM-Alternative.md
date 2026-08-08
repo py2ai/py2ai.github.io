@@ -10,6 +10,7 @@ categories: [AI Tools, Open Source, Developer Tools]
 tags: [Open Notebook, NotebookLM alternative, open source AI, RAG search, multi-model AI, podcast generation, self-hosted AI, privacy-first AI, LangChain, SurrealDB]
 keywords: "Open Notebook open source NotebookLM alternative, how to set up Open Notebook locally, Open Notebook vs Google NotebookLM comparison, self-hosted AI research assistant, multi-model AI provider support, Open Notebook podcast generation tutorial, RAG search open source tool, Open Notebook Docker deployment guide, privacy-first AI notebook, Open Notebook REST API integration"
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # Open Notebook: The Open Source NotebookLM Alternative with Multi-Model AI and Podcast Generation

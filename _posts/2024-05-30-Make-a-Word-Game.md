@@ -17,6 +17,7 @@ tags:
 - game development
 - tutorial
 title: Let's build a simple "word game inspired by Scrabble"
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 In this tutorial, we'll create a simple word game inspired by Scrabble that you can play via the command line. The game will allow two players to take turns forming words from a set of randomly chosen letters. The goal is to score the highest points by creating valid words.

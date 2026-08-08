@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Code Quality]
 tags: [Ponytail, AI coding agent, lazy senior dev, code reduction, YAGNI, Claude Code, Codex, Copilot CLI, over-engineering, technical debt]
 keywords: "Ponytail AI agent skill, lazy senior dev AI, reduce AI code output, YAGNI AI agent, Claude Code plugin, Codex plugin, over-engineering prevention, technical debt ledger, AI coding efficiency"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 You know the developer. Long ponytail, oval glasses, been at the company longer than version control. You show them fifty lines of code; they squint, delete forty-nine, and replace them with one. They do not write clever code. They write *less* code. And somehow their features ship faster, break less, and never need a migration guide.

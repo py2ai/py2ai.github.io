@@ -13,6 +13,7 @@ tags:
   - Claude Code
   - Developer Tools
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Agentic Stack: One Brain, Many Harnesses

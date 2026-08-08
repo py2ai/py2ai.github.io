@@ -10,6 +10,7 @@ categories: [AI Agents, Rust, Developer Tools]
 tags: [ThClaws, Rust, AI agents, agent harness, MCP, multi-agent, LLM providers, open source, developer tools, terminal]
 keywords: "ThClaws AI agent harness tutorial, how to use ThClaws Rust agent, ThClaws vs Claude Code comparison, open source AI agent platform Rust, ThClaws agent teams setup, ThClaws MCP integration guide, best AI agent harness 2026, ThClaws installation guide, Rust AI coding agent, ThClaws enterprise features"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # ThClaws: Open-Source Rust AI Agent Harness with 17 LLM Providers and Agent Teams

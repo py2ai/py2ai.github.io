@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Spec Kit, GitHub, spec-driven development, AI coding, Specify CLI, SDD workflow, AI agents, developer tools, open source, software development]
 keywords: "how to use GitHub Spec Kit, spec-driven development tutorial, Spec Kit vs vibe coding, Specify CLI installation guide, AI coding agent integration, spec-driven development workflow, GitHub Spec Kit extensions, Spec Kit community presets, SDD methodology guide, AI-assisted software development"
 author: "PyShine"
+image: /assets/img/diagrams/github-actions-tutorial/gha-anatomy.svg
 ---
 
 # GitHub Spec Kit: Spec-Driven Development Toolkit with 97K Stars

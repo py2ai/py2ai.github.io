@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Symphony, OpenAI, coding agent, orchestration, Elixir, OTP, Linear integration, autonomous agents, agent orchestration, WORKFLOW.md]
 keywords: "OpenAI Symphony coding agent orchestrator, how to use Symphony for autonomous coding, Symphony vs manual agent management, Symphony Elixir OTP implementation, coding agent orchestration tutorial, WORKFLOW.md hot reload configuration, Linear issue tracker agent integration, autonomous coding agent framework, Symphony state machine orchestration, multi-turn Codex session management"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Symphony: OpenAI's Coding Agent Orchestrator for Autonomous Work

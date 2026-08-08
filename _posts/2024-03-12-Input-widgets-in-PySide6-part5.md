@@ -24,6 +24,7 @@ tags:
 - Programming
 - Qt
 title: Exploring Input Widgets in PySide6 (Part 5)
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 In this tutorial, we'll dive into the usage of various input widgets in PySide6 to allow users to interact with our GUI applications. Input widgets provide users with different ways to input data, such as sliders, spin boxes, and more. We'll build a simple example application to demonstrate how to incorporate different input widgets in PySide6.

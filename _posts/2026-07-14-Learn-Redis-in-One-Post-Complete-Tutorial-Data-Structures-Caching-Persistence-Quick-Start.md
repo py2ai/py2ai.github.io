@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Databases, Backend]
 keywords: "Redis tutorial one post, learn Redis fast, Redis data structures strings lists sets hashes sorted sets streams, Redis persistence RDB AOF hybrid, Redis TTL eviction LRU, Redis pub/sub streams consumer groups, Redis cache-aside pattern, Redis rate limiting, Redis leaderboard sorted set, Redis session store, Redis distributed lock Redlock, Redis replication sentinel cluster sharding, Redis single threaded event loop, Redis quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Redis in a Single Post: Complete Tutorial From Data Structures to Caching, Persistence, and Clustering

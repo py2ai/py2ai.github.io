@@ -7,6 +7,7 @@ permalink: /2026/04/20/autogpt-platform-continuous-ai-agents/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [AI, AutoGPT, Agents, Automation, LLM, Open-Source, Platform]
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # AutoGPT: The Open-Source Platform for Building and Deploying Continuous AI Agents

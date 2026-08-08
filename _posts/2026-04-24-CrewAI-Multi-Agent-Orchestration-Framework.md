@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Developer Tools]
 tags: [Open Source, Python, AI Agents, Multi-Agent Systems, LLM, Orchestration, CrewAI, Developer Tools, Automation, Framework]
 keywords: "CrewAI multi-agent framework tutorial, how to build multi-agent AI systems, CrewAI Python framework guide, AI agent orchestration Python, CrewAI vs LangChain comparison, multi-agent AI collaboration framework, CrewAI Flows event-driven, autonomous AI agent teams Python, CrewAI getting started guide, production AI agent framework"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # CrewAI: Multi-Agent Orchestration Framework for Autonomous AI Collaboration

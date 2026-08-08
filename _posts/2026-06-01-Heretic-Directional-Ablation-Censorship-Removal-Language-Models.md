@@ -5,6 +5,7 @@ date: 2026-06-01 12:00:00 +0800
 categories: ai machine-learning llm safety
 tags: [directional-ablation, censorship-removal, llm, optuna, abliteration, huggingface, pytorch]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/heretic/heretic-architecture.svg
 ---
 
 ## What is Heretic?

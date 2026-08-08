@@ -24,6 +24,7 @@ tags:
 - Tokens
 - AI Agents
 title: "Context Length in AI Agents - Understanding AI Working Memory"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## What Does Context Length Really Mean for AI Agents? Understanding AI Working Memory

@@ -20,6 +20,7 @@ tags:
 - beginner
 - tutorial
 title: Matrix Rain Animation in Python – Complete Beginner's Guide
+image: /assets/img/diagrams/chinatextbook/chinatextbook-education-levels.svg
 ---
 
 ## Introduction

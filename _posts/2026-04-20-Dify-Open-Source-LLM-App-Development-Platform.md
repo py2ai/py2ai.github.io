@@ -14,6 +14,7 @@ tags:
   - Agents
   - Workflow
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # Dify: The Open-Source LLM App Development Platform

@@ -28,6 +28,7 @@ tags:
 - Learning Python
 permalink: /2026-02-17-Python-Cheatsheet/
 mathjax: true
+image: /assets/img/diagrams/claude-code-cheatsheet/claude-code-commands.svg
 ---
 
 # Python Cheatsheet Every Learner Must Know

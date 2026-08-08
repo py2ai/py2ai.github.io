@@ -13,6 +13,7 @@ tags:
   - Multi-Agent
   - Hooks
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 ## Introduction

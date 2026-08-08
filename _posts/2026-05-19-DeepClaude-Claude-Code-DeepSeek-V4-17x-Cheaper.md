@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [DeepClaude, Claude Code, DeepSeek, cost optimization, AI proxy, developer tools, open source, LLM routing, token savings, alternative backend]
 keywords: "DeepClaude Claude Code DeepSeek proxy, how to use Claude Code with DeepSeek, Claude Code alternative backend, DeepSeek V4 Pro Claude Code, Claude Code cost reduction, AI coding agent cheaper alternative, OpenRouter Claude Code, Anthropic compatible proxy, Claude Code 17x cheaper, DeepClaude setup guide"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## What is DeepClaude?

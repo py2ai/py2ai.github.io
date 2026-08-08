@@ -5,6 +5,7 @@ date: 2026-02-06
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Actor-Critic Methods - combining policy gradients with value functions. Complete guide with A2C algorithm and PyTorch implementation."
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Part 6: Actor-Critic Methods - Combining Policy and Value Learning

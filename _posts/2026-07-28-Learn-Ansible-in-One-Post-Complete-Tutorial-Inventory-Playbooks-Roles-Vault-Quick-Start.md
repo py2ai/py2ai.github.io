@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Infrastructure]
 keywords: "Ansible tutorial one post, learn Ansible fast, Ansible inventory hosts groups dynamic variables, Ansible playbook plays tasks YAML idempotency, Ansible modules apt copy template service git, handlers notify, Ansible roles directory structure ansible-galaxy collections, variable precedence defaults inventory group host play extra vars, ansible-vault encrypt secrets, ansible-lint Molecule testing, AWX Ansible Tower automation, ansible-pull mode, fact caching, Ansible vs Terraform, Ansible quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Ansible in a Single Post: Complete Tutorial From Inventory and Playbooks to Roles, Vault, and Production

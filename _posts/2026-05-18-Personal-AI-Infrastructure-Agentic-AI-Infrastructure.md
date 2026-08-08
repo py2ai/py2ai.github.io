@@ -10,6 +10,7 @@ categories: [AI Agents, TypeScript, Developer Tools]
 tags: [Personal AI Infrastructure, agentic AI, AI infrastructure, autonomous workflows, Daniel Miessler, TypeScript, AI agents, developer tools, AI framework, open source]
 keywords: "how to use Personal AI Infrastructure, Personal AI Infrastructure tutorial, agentic AI infrastructure setup, Daniel Miessler AI framework, Personal AI Infrastructure vs alternatives, autonomous AI workflows guide, AI agent infrastructure TypeScript, open source agentic AI, Personal AI Infrastructure installation, AI infrastructure for developers"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 ## What Is Personal AI Infrastructure (PAI)?

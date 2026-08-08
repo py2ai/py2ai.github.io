@@ -10,6 +10,7 @@ categories: [AI Agents, Software Engineering, Developer Tools]
 tags: [Open Source, AI Agents, Shell Scripting, Software Engineering, tmux, Git Worktrees, Clean Code, Developer Tools, Multi-Agent, Orchestration]
 keywords: "Swarm Forge Uncle Bob AI agents, how to coordinate multiple AI agents, tmux AI agent orchestration, AI agent swarm coordination, Clean Code AI agent rules, git worktree AI development, multi-agent AI development tool, AI agent constitution system, shell-based AI agent manager, disciplined AI coding agents"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Swarm Forge: Uncle Bob's AI Agent Coordinator

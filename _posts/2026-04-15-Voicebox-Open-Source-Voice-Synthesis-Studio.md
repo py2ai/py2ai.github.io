@@ -12,6 +12,7 @@ tags:
   - TTS
   - Audio Processing
 author: "PyShine"
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 # Voicebox: Open-Source Voice Synthesis Studio

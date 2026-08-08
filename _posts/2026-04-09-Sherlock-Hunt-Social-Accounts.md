@@ -12,6 +12,7 @@ tags:
   - Security
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/guizang-social-card-skill/guizang-social-card-skill-architecture.svg
 ---
 
 # Sherlock: Hunt Down Social Media Accounts Across 400+ Platforms

@@ -10,6 +10,7 @@ categories: [AI Tools, Python, Developer Tools]
 tags: [headroom, LLM, token compression, AI optimization, Python, MCP server, proxy, developer tools, token reduction, context window]
 keywords: "how to reduce LLM token usage, headroom token compression, LLM context window optimization, token compression library Python, how to use headroom, headroom vs alternatives, LLM proxy token reduction, MCP server token compression, AI token optimization guide, reduce API costs LLM"
 author: "PyShine"
+image: /assets/img/diagrams/headroom/headroom-architecture.svg
 ---
 
 Every token sent to an LLM costs money -- and most of it is wasted on redundant context. Tool outputs spew thousands of lines of logs. RAG chunks overlap with duplicate information. Source files contain boilerplate that adds nothing to the answer. The result: bloated API calls, overflowing context windows, and degraded response quality.

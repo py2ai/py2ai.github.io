@@ -12,6 +12,7 @@ tags:
   - Desktop App
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/claude-desktop-debian/claude-desktop-debian-build-architecture.svg
 ---
 
 ## Introduction

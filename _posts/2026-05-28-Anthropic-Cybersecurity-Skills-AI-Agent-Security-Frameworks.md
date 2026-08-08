@@ -10,6 +10,7 @@ categories: [Cybersecurity, AI Agents, Python]
 tags: [Anthropic, cybersecurity, AI agents, MITRE ATT&CK, NIST CSF, security frameworks, Claude Code, skills, penetration testing, security automation]
 keywords: "Anthropic cybersecurity skills tutorial, AI agent security skills, MITRE ATT&CK AI skills, NIST CSF 2.0 AI agents, cybersecurity AI automation, Claude Code security skills, how to use Anthropic cybersecurity skills, AI agent penetration testing, security framework mapping AI, Anthropic skills installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Anthropic Cybersecurity Skills: 754 AI Agent Skills Mapped to Security Frameworks

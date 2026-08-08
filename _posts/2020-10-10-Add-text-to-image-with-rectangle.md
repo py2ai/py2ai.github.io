@@ -22,6 +22,7 @@ tags:
 - Computer Vision
 - Annotation
 title: Add Text with Transparent Rectangle Background in OpenCV
+image: /assets/img/diagrams/awesome-gpt-image-2-prompts/image-generation-pipeline.svg
 ---
 
 

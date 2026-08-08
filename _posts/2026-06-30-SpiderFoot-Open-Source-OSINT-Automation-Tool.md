@@ -10,6 +10,7 @@ categories: [OSINT, Security, Python]
 tags: [SpiderFoot, OSINT, open source intelligence, Python, security tools, reconnaissance, penetration testing, threat intelligence, cybersecurity, automation]
 keywords: "how to use SpiderFoot OSINT tool, SpiderFoot automation tutorial, OSINT automation Python, SpiderFoot 200 modules, open source intelligence gathering, SpiderFoot installation guide, OSINT reconnaissance tool, SpiderFoot correlation engine, penetration testing reconnaissance, attack surface monitoring"
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # SpiderFoot: The Open Source OSINT Automation Tool

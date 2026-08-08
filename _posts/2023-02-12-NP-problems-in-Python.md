@@ -24,6 +24,7 @@ tags:
 - Computer Science
 - Optimization
 title: NP Problems - Traveling Salesman, Knapsack, and SAT in Python
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

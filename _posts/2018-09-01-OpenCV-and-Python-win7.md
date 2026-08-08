@@ -21,6 +21,7 @@ tags:
 - Installation
 - Computer Vision
 title: How to install OpenCV and Python in Windows
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

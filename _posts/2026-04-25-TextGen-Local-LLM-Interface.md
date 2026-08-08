@@ -10,6 +10,7 @@ categories: [AI, LLM, Local AI, Open Source]
 tags: [textgen, oobabooga, local-llm, llm-interface, python, open-source, self-hosted, offline-ai, vision, tool-calling]
 keywords: "textgen local llm, oobabooga text generation webui, self hosted llm interface, local ai chatbot, offline llm ui, textgen installation, textgen features, textgen vs ollama, textgen model support, textgen training"
 author: "PyShine"
+image: /assets/img/diagrams/local-deep-research/local-deep-research-architecture.svg
 ---
 
 # TextGen: The Original Local LLM Interface with 46K+ Stars

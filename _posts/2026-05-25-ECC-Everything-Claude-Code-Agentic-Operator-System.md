@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [ECC, Claude Code, agentic AI, AI coding, Cursor, Codex, OpenCode, skills, agents, MCP, hooks, developer productivity, automation, cross-harness]
 keywords: "ECC Everything Claude Code tutorial, how to set up ECC agentic operator system, Claude Code vs Cursor vs Codex comparison, ECC skills and agents guide, cross-harness AI coding assistant, ECC security scanning AgentShield, open source agentic coding framework, ECC installation and configuration, AI coding assistant operator system, ECC token optimization guide"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 > **182K+ stars** | **28K+ forks** | **170+ contributors** | **12+ language ecosystems** | **Anthropic Hackathon Winner**

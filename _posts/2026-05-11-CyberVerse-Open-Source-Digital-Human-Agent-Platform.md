@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Python]
 tags: [CyberVerse, digital human, AI agent, real-time video, WebRTC, avatar, lip-sync, facial animation, open source, Python]
 keywords: "CyberVerse digital human platform, how to create AI digital human, open source real-time video calling agent, CyberVerse vs alternatives, digital human with lip sync tutorial, WebRTC AI avatar platform, one photo to digital human, CyberVerse installation guide, AI agent video calling setup, open source digital human framework"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # CyberVerse: Open-Source Digital Human Agent Platform with Real-Time Video Calling

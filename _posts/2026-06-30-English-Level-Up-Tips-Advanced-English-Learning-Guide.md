@@ -13,6 +13,7 @@ tags:
   - AI Learning
   - Self-Improvement
 author: "PyShine"
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 
 ## Introduction

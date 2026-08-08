@@ -18,6 +18,7 @@ tags:
 - Audio Transmission
 - Pyshine
 title: How to send audio from a client computer to a server over...
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 

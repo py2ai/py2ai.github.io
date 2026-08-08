@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, Web Development, Frontend]
 keywords: "HTML CSS tutorial one post, learn HTML CSS fast, semantic HTML elements, CSS selectors cascade specificity, CSS box model margin border padding content, flexbox vs grid layout, CSS positioning static relative absolute fixed sticky, responsive design media queries mobile first, CSS custom properties variables, CSS animations transitions, browser DevTools, HTML CSS quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn HTML and CSS in a Single Post: Complete Tutorial From Semantic Markup to Flexbox, Grid, and Responsive Design

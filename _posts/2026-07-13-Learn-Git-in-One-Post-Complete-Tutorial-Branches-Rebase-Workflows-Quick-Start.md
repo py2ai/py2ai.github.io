@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Version Control, DevOps]
 keywords: "Git tutorial one post, learn Git fast, git add commit log status, working tree staging index repo, git branch switch merge, fast-forward vs 3-way merge, git rebase interactive rebase explained, git cherry-pick revert, git stash pop, git fetch vs pull vs push, origin upstream tracking branch, git bisect debugging, git reflog rescue, feature branch workflow pull request, GitFlow trunk-based development, git submodules LFS hooks, git tag semver release, GitHub CLI gh, git quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Git in a Single Post: Complete Tutorial From Commits and Branches to Rebase and Pull Requests

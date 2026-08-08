@@ -8,6 +8,7 @@ permalink: /CC-Design-High-Fidelity-HTML-Design-Skill-for-AI/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Claude-Code, Design-Systems, HTML, Prototyping, Skill]
 author: PyShine
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

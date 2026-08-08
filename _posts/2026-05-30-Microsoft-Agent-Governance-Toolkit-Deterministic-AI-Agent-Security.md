@@ -10,6 +10,7 @@ categories: [AI Agents, Security, Developer Tools]
 tags: [AI agent governance, agent security, OWASP agentic, MCP security, policy as code, zero trust identity, Microsoft AGT, AI agent safety, deterministic interception, privilege rings]
 keywords: "Microsoft agent governance toolkit tutorial, how to secure AI agents with AGT, OWASP agentic top 10 controls, AI agent policy as code, MCP security gateway for agents, deterministic AI agent safety, zero trust identity for AI agents, agent governance vs prompt safety, AI agent privilege rings, Microsoft AGT installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 AI agents are moving from prototypes to production systems that call tools, browse the web, query databases, and delegate tasks to other agents. Once deployed, these agents make decisions autonomously, and the consequences of a misbehaving agent can be severe. The Microsoft **agent governance toolkit** (AGT) addresses this gap by providing deterministic application-layer interception that makes agent misbehavior structurally impossible rather than just unlikely. Unlike prompt-level safety measures that politely ask models to follow rules, AGT intercepts every tool call, message send, and delegation in deterministic code before the model's intent reaches the wire. This post walks through AGT's architecture, policy engine, privilege rings, MCP security gateway, and OWASP coverage, with installation instructions and framework integration details.

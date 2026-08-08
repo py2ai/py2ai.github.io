@@ -13,6 +13,7 @@ tags:
   - Conversational AI
   - Deep Learning
 author: "PyShine"
+image: /assets/img/diagrams/speech-to-speech/speech-to-speech-architecture.svg
 ---
 
 # NVIDIA PersonaPlex: Real-Time Speech Conversational AI with Persona Control

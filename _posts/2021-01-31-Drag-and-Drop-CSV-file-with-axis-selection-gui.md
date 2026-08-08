@@ -19,6 +19,7 @@ tags:
 - GUI
 - Data Visualization
 title: How to make a Matplotlib and PyQt5 based GUI to plot a...
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

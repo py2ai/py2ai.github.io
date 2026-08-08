@@ -14,6 +14,7 @@ tags:
   - Cats Effect
   - ZIO
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Scala in a Single Post: A Complete Scala Tutorial from Case Classes and Traits to Type Classes and Effect Systems

@@ -8,6 +8,7 @@ permalink: "/open-webui-self-hosted-ai-platform/"
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [AI, Self-Hosted, LLM, RAG, Ollama, OpenAI, SvelteKit, FastAPI, Docker, Kubernetes]
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 ## Introduction

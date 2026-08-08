@@ -12,6 +12,7 @@ tags:
   - Multi-Agent
   - TypeScript
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # oh-my-claudecode: Multi-Agent Orchestration for Claude Code

@@ -15,6 +15,7 @@ tags:
 - NumPy
 - performance
 title: Matrix Multiplication Performance Comparison Python vs...
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # Matrix Multiplication Performance Comparison: Python vs C++ vs NumPy
 

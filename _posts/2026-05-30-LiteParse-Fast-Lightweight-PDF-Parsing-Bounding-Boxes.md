@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, Python]
 tags: [LiteParse, LlamaIndex, PDF parsing, OCR, bounding boxes, Rust, Python, document extraction, Tesseract, open source]
 keywords: "LiteParse PDF parser tutorial, how to parse PDF with bounding boxes Python, LiteParse vs LlamaParse comparison, Rust PDF extraction library, PDF OCR with Tesseract Python, document parsing with bounding boxes, LiteParse installation guide, open source PDF parser Rust, multi-format document parsing, PDF text extraction spatial layout"
 author: "PyShine"
+image: /assets/img/diagrams/fastapi-tutorial/fastapi-async-db.svg
 ---
 
 PDF parsing with bounding boxes has long been a challenge for developers who need to preserve spatial layout information -- column structures, table alignments, and positional metadata that most parsers discard. LiteParse, from the LlamaIndex team behind the popular LlamaParse cloud service, is a standalone open-source tool built in Rust that solves this problem by delivering character-level text extraction with precise bounding boxes, pluggable OCR, and multi-language bindings, all running locally with zero cloud dependencies.

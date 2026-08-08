@@ -10,6 +10,7 @@ categories: [AI, Machine Learning, Reinforcement Learning]
 tags: [huggingface, openenv, reinforcement-learning, rl, post-training, environments, gymnasium, python]
 keywords: "HuggingFace OpenEnv tutorial, how to use OpenEnv for RL training, OpenEnv vs Gymnasium comparison, agentic RL environment framework, OpenEnv GRPO training guide, how to create RL environments with OpenEnv, OpenEnv Docker deployment, RL post-training environments, OpenEnv Hugging Face Spaces, OpenEnv TRL integration"
 author: "PyShine"
+image: /assets/img/diagrams/huggingface-transformers/huggingface-transformers-architecture.svg
 ---
 
 # HuggingFace OpenEnv: RL Post-Training Environment Interface

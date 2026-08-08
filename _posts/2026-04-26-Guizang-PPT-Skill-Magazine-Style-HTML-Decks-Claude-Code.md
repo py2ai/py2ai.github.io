@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [guizang-ppt-skill, Claude Code, HTML presentations, magazine-style PPT, WebGL, Motion One, editorial design, AI coding skill, horizontal swipe deck, single-file HTML]
 keywords: "how to use guizang-ppt-skill, Claude Code skill for presentations, magazine-style HTML deck tutorial, editorial presentation design with AI, single-file HTML PPT generator, WebGL fluid background presentations, horizontal swipe deck Claude Code, best AI presentation tools 2026, open source presentation skill, Claude Code skills for developers"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Guizang PPT Skill: Magazine-Style HTML Presentation Decks for Claude Code

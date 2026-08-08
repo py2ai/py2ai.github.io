@@ -13,6 +13,7 @@ tags:
   - AI
   - Data Pipeline
 author: "PyShine"
+image: /assets/img/diagrams/openmetadata/openmetadata-architecture.svg
 ---
 
 # OpenDataLoader PDF: Parser for AI-Ready Data

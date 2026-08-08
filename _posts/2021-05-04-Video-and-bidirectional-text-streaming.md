@@ -23,6 +23,7 @@ tags:
 - Networking
 - Tutorial
 title: How to stream video and bidirectional text in socket...
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

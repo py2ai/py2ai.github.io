@@ -14,6 +14,7 @@ tags:
   - Monads
   - Learn to Code
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Haskell in a Single Post: A Complete Haskell Tutorial from Purity and Laziness to Typeclasses and Monads

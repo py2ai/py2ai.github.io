@@ -23,6 +23,7 @@ tags:
 - Visualization
 - Real-time
 title: Real-Time Voice Plot in Python with Matplotlib
+image: /assets/img/diagrams/fluidvoice/fluidvoice-architecture.svg
 ---
 
 

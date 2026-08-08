@@ -12,6 +12,7 @@ tags:
   - Open Source
   - Content Creation
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # MoneyPrinterV2: Automate Your Online Income with AI

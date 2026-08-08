@@ -24,6 +24,7 @@ tags:
 - Signal Processing
 - Tutorial
 title: Test your audible frequency range in Python
+image: /assets/img/diagrams/build-your-own-x/build-your-own-x-complexity.svg
 ---
 
 

@@ -16,6 +16,7 @@ tags:
 - beginner
 - python
 title: Music Maker with Save/Load in Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # Interactive Music Maker in Python with Pygame
 

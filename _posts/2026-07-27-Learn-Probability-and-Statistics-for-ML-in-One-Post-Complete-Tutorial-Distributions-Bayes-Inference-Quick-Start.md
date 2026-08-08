@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Mathematics, Machine Learning]
 keywords: "probability statistics machine learning tutorial one post, learn probability statistics fast, sample space events independence conditional, random variables expectation, Bernoulli binomial Poisson normal distribution mean variance, sampling distribution central limit theorem, confidence interval standard error, hypothesis test p-value type I II error, Bayes theorem prior posterior, MLE maximum likelihood, MAP maximum a posteriori, Bayesian inference Naive Bayes, uncertainty quantification, probability quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Probability and Statistics for Machine Learning in a Single Post: Complete Tutorial From Distributions and Bayes to MLE and Bayesian Inference

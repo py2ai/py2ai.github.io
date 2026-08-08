@@ -13,6 +13,7 @@ tags:
   - AI
   - Self-Hosted
 author: "PyShine"
+image: /assets/img/diagrams/secure-linux-server/secure-linux-server-architecture.svg
 ---
 
 # n8n: Secure Workflow Automation for Technical Teams

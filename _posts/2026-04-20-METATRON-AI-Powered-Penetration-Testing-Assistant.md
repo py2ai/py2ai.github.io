@@ -8,6 +8,7 @@ permalink: /2026/04/20/metatron-ai-penetration-testing/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, penetration-testing, security, LLM, ollama, local-AI, cybersecurity]
 author: "PyShine"
+image: /assets/img/diagrams/metatron/metatron-agentic-loop.svg
 ---
 
 # METATRON: AI-Powered Penetration Testing Assistant That Runs 100% Locally

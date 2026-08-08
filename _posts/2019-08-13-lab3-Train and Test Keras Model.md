@@ -17,6 +17,7 @@ keywords:
 layout: post
 mathjax: true
 title: Lab3 Train and Test Keras Model
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 
 

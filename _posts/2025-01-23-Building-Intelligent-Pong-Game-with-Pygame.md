@@ -26,6 +26,7 @@ tags:
 - Computer Science
 - Coding Challenges
 title: Building an Intelligent Pong Game with Pygame and AI
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 In this tutorial, we'll build a complete Pong game using Pygame with intelligent rule-based AI opponents. The game features two modes: Player vs Machine and Machine vs Machine, with sophisticated ball prediction algorithms and multiple difficulty levels.

@@ -10,6 +10,7 @@ seo:
   keywords: "aether, android, ai agent, automation, mobile, device control, ai"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /Aether-AI-Agent-for-Android-Device-Automation/
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Imagine controlling your Android phone entirely through natural language -- opening apps, tapping buttons, reading files, running shell commands, and searching the web, all from a single chat interface. That is exactly what **Aether** delivers. Built as a native Android app with a stunning UI, Aether brings the power of AI agents directly to your pocket without requiring a desktop, a VM, or a cloud relay.

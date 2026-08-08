@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Developer Tools]
 tags: [LangGraph, AI agents, stateful agents, graph orchestration, Python framework, LLM applications, checkpointing, human-in-the-loop, LangChain, agent workflows]
 keywords: "LangGraph stateful AI agent framework, how to build AI agents with LangGraph, LangGraph vs CrewAI comparison, LangGraph tutorial Python, stateful agent orchestration guide, LangGraph checkpointing persistence, human in the loop AI agents, LangGraph installation setup, graph-based agent workflows, LangGraph production deployment"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # LangGraph: Build Stateful AI Agents with Graph-Based Orchestration

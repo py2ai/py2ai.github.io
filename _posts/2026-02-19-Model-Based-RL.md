@@ -5,6 +5,7 @@ date: 2026-02-19
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Model-Based Reinforcement Learning. Understand how to learn environment models for planning, explore popular algorithms, and implement toy examples with code."
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 # Model-Based RL - Learning Environment Models for Planning
 

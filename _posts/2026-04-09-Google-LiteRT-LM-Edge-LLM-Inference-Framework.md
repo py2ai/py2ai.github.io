@@ -13,6 +13,7 @@ tags:
   - Mobile AI
   - On-Device AI
 author: "PyShine"
+image: /assets/img/diagrams/knowledge-catalog/knowledge-catalog-architecture.svg
 ---
 
 # Google LiteRT-LM: Production-Ready Edge LLM Inference Framework

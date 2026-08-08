@@ -8,6 +8,7 @@ permalink: /WX-Favorites-Report-WeChat-Data-Visualization/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [WeChat, Data-Visualization, SQLCipher, frida, ECharts, Python, Claude-Code-Skill, Encryption]
 author: PyShine
+image: /assets/img/diagrams/openmetadata/openmetadata-architecture.svg
 ---
 
 ## Introduction

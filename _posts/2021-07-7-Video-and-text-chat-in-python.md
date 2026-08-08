@@ -20,6 +20,7 @@ tags:
 - socket programming
 - tutorial
 title: Video and Text chat in Python
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

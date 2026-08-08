@@ -10,6 +10,7 @@ categories: [Open Source, Rust, Network Tools]
 tags: [Sniffnet, network monitoring, Rust, open source, traffic analysis, network security, packet capture, developer tools, internet monitoring, network diagnostics]
 keywords: "how to use Sniffnet, Sniffnet network monitor tutorial, Sniffnet vs Wireshark comparison, open source network monitoring tool, Rust network analyzer, Sniffnet installation guide, network traffic monitoring, best network monitoring tools 2026, Sniffnet setup configuration, packet capture Rust application"
 author: "PyShine"
+image: /assets/img/diagrams/networking-tutorial/net-flow.svg
 ---
 
 Network traffic monitoring is essential for understanding what happens on your network -- from identifying suspicious connections to tracking bandwidth usage across applications. Whether you are a system administrator watching for intrusions, a developer debugging API calls, or a privacy-conscious user checking which programs phone home, having a clear visual tool makes all the difference. **Sniffnet** is an open source, cross-platform network monitoring application written in Rust that brings a polished graphical interface to real-time packet analysis. With over 36,600 stars on GitHub, it has quickly become one of the most popular Rust desktop applications, combining raw performance with an intuitive design that makes network traffic monitoring accessible to everyone.

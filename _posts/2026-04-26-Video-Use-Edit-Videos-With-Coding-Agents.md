@@ -7,6 +7,7 @@ featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [ai, video-editing, open-source, coding-agents]
 tags: [video-editing, claude-code, llm, ffmpeg, elevenlabs, manim, open-source]
 author: PyShine
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Table of Contents

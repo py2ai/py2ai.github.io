@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Backend, Microservices]
 keywords: "gRPC Protobuf tutorial one post, learn gRPC fast, protocol buffers proto3 messages fields, protoc codegen stubs multiple languages, unary server client bidi streaming RPC, HTTP/2 multiplexed binary, gRPC vs REST vs GraphQL, gRPC interceptors deadlines metadata context, grpc health checking reflection, grpc-gateway grpc-web Envoy, OpenTelemetry trace context propagation, gRPC quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn gRPC and Protobuf in a Single Post: Complete Tutorial From Protobuf Schemas to Streaming RPC and Production

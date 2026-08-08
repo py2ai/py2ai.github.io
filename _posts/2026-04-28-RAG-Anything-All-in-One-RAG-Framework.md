@@ -10,6 +10,7 @@ categories: [AI, Python, Developer Tools]
 tags: [RAG-Anything, RAG, retrieval augmented generation, multi-modal, AI framework, vector search, document processing, LLM, knowledge retrieval, open source]
 keywords: "how to use RAG-Anything, RAG-Anything tutorial, RAG framework Python, multi-modal RAG pipeline, retrieval augmented generation framework, RAG-Anything vs LangChain, best RAG framework 2026, RAG-Anything installation guide, multi-modal document retrieval, open source RAG system"
 author: "PyShine"
+image: /assets/img/diagrams/anything-analyzer/anything-analyzer-ai-pipeline.svg
 ---
 
 Modern documents are no longer just walls of text. Research papers embed figures alongside equations, financial reports weave tables between narrative paragraphs, and technical documentation mixes diagrams with code snippets. Traditional retrieval augmented generation systems treat everything as plain text, losing critical information in the process. **RAG-Anything** solves this problem as a comprehensive RAG framework that processes and queries documents containing interleaved text, images, tables, and mathematical equations through a single unified interface. Built on top of [LightRAG](https://github.com/HKUDS/LightRAG) by the HKUDS research group, RAG-Anything eliminates the need for multiple specialized tools and delivers end-to-end multimodal retrieval capabilities out of the box.

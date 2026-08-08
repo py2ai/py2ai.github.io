@@ -10,6 +10,7 @@ categories: [AI Agents, Security, Python]
 tags: [SkillSpector, NVIDIA, AI agent security, vulnerability scanner, prompt injection, MCP security, AI skills, Claude Code, Codex, Gemini CLI, open source]
 keywords: "NVIDIA SkillSpector tutorial, AI agent skills security scanner, how to scan AI skills for vulnerabilities, SkillSpector vs alternatives, prompt injection detection tool, MCP security audit, AI agent security best practices, SkillSpector installation guide, AI skills vulnerability scanner, Claude Code security tool"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## The Trust Problem in AI Agent Skills

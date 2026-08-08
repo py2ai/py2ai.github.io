@@ -10,6 +10,7 @@ categories: [React, Developer Tools, AI Agents]
 tags: [React Doctor, AI code review, React anti-patterns, AI coding agents, code quality, TypeScript, developer tools, React linting, AI-generated code, open source]
 keywords: "how to use React Doctor, React Doctor tutorial, AI code review tool, catching bad React code, React anti-pattern detection, AI agent code quality, React Doctor vs ESLint, React Doctor installation guide, AI-generated React code review, open source code quality tool"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 AI coding agents write code fast -- but that code is not always good React code. State in the wrong place, effects that cascade, missing accessibility attributes, security holes in server actions. React Doctor, an open-source tool from the Million team, scans your codebase and outputs a health score from 0 to 100, along with actionable diagnostics across 14 categories. With over 9,000 stars on GitHub and growing at 620 stars per day, it has become the go-to tool for keeping AI-generated React code honest.

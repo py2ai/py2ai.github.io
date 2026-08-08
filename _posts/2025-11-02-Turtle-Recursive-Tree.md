@@ -16,6 +16,7 @@ tags:
 - graphics
 - fractal
 title: Fractal Tree Generator in Python with Turtle
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # Fractal Tree Generator in Python
 

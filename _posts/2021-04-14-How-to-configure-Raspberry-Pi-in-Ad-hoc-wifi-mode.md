@@ -22,6 +22,7 @@ tags:
 - Networking
 - Tutorial
 title: How to configure Raspberry Pi in Ad hoc wifi mode
+image: /assets/img/diagrams/context-mode/context-mode-architecture.svg
 ---
 
 

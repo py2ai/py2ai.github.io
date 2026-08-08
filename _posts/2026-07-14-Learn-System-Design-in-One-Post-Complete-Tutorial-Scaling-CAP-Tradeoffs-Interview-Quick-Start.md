@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, System Design, Distributed Systems]
 keywords: "system design tutorial one post, learn system design fast, horizontal vs vertical scaling, load balancer cache CDN, message queue Kafka, sharding replication partitioning, CAP theorem consistency availability, strong vs eventual consistency, rate limiting circuit breaker idempotency, CQRS event sourcing, back of envelope estimation, system design interview process, design tradeoffs, system design quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn System Design in a Single Post: Complete Tutorial From Scaling and Caching to CAP and the Design Interview

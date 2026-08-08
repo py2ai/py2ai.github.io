@@ -14,6 +14,7 @@ tags:
   - Security
   - Tencent Cloud
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Why Sandboxing Matters for AI Agents

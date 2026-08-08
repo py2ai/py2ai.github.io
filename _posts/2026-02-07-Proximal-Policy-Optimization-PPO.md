@@ -5,6 +5,7 @@ date: 2026-02-07
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Proximal Policy Optimization (PPO) - a state-of-the-art reinforcement learning algorithm. Complete guide with clipped objective and PyTorch implementation."
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Part 7: Proximal Policy Optimization (PPO) - State-of-the-Art RL Algorithm

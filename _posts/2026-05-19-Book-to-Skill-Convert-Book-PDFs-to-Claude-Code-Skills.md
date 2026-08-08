@@ -10,6 +10,7 @@ seo:
   keywords: "book to skill, claude code, pdf, skill extraction, knowledge, ai agent"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /Book-to-Skill-Convert-Book-PDFs-to-Claude-Code-Skills/
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 You buy a great technical book. You read it once. Three months later, you can't remember what chapter 7 even covered. Searching the PDF gives you a list of pages, not answers. Asking Claude about the book leads to hallucinations or "I don't have that content." Taking notes produces a 200-line document you never open again.

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, TypeScript]
 tags: [CodeGraph, Claude Code, code knowledge graph, AI coding agents, token optimization, Gemini CLI, Cursor, Codex CLI, MCP server, code intelligence, static analysis]
 keywords: "CodeGraph v2 update, CodeGraph 38000 stars, CodeGraph token optimization, CodeGraph Gemini CLI, CodeGraph new platforms, AI coding agent token efficiency, CodeGraph vs manual code exploration, fewer tokens fewer tool calls, CodeGraph MCP server, pre-indexed code knowledge graph"
 author: "PyShine"
+image: /assets/img/diagrams/codegraph/codegraph-architecture.svg
 ---
 
 # CodeGraph v2: 38K Stars Update — Token Optimization, New Platforms, and 5x Growth

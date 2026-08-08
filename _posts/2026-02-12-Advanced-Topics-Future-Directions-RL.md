@@ -5,6 +5,7 @@ date: 2026-02-12
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Explore advanced topics and future directions in Reinforcement Learning. Complete guide with cutting-edge research and practical tips."
+image: /assets/img/diagrams/future-agi/future-agi-architecture.svg
 ---
 # Part 12: Advanced Topics & Future Directions in RL - Series Conclusion
 

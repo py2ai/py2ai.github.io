@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [DeepSeek-Reasonix, DeepSeek coding agent, terminal AI agent, prefix cache, AI coding CLI, tool-call repair, cost control, MCP, Ink TUI, React 19]
 keywords: "DeepSeek-Reasonix terminal coding agent, how to use DeepSeek AI coding agent, prefix cache stability AI agent, DeepSeek v4-flash cost control, terminal AI coding assistant tutorial, DeepSeek native coding agent setup, AI agent cache hit rate optimization, flash-first cost control coding, MCP bridge AI agent, Reasonix vs Claude Code comparison"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # DeepSeek-Reasonix: DeepSeek-Native AI Coding Agent for Your Terminal with Prefix-Cache Stability

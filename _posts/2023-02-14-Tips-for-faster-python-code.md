@@ -23,6 +23,7 @@ tags:
 - Best Practices
 - Optimization
 title: Python Performance Tips - Write Faster and More Efficient Code
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 

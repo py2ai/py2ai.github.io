@@ -23,6 +23,7 @@ tags:
 author: "PyShine"
 seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, helicopter SVG, AI helicopter drawing, LLM SVG benchmark, AI image generation comparison, deepseek vs glm vs qwen, which Ollama model is best, Ollama cloud models 2026, AI aviation art, flying helicopter SVG, animated SVG, rotor blades SVG, mechanical SVG, AI art comparison, complex SVG scene, aviation illustration, helicopter diagram"
+image: /assets/img/diagrams/ollama/ollama-api-ecosystem.svg
 ---
 
 # Which Ollama Cloud Model is Best? Flying Helicopter SVG Comparison (14 Models)

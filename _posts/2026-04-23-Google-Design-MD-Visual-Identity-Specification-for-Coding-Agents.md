@@ -10,6 +10,7 @@ categories: [Design Systems, AI Agents, Developer Tools]
 tags: [Open Source, Google, Design Systems, AI Agents, Design Tokens, Tailwind CSS, Developer Tools, WCAG Accessibility, TypeScript, DTCG]
 keywords: "Google DESIGN.md specification, design tokens for AI agents, how to describe visual identity to AI, design system for coding agents, Tailwind CSS design tokens export, DTCG design tokens standard, AI UI generation design system, WCAG contrast ratio linter, design.md CLI tool, AI coding agent design specification"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Google Design.md: Visual Identity Specification for Coding Agents

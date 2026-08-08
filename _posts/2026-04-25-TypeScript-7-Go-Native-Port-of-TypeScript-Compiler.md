@@ -8,6 +8,7 @@ keywords: "TypeScript 7, TypeScript Go, tsgo, native TypeScript compiler, Go por
 description: "TypeScript 7 is Microsoft's native Go port of the TypeScript compiler, delivering 5-10x faster cold starts, lower memory usage, and single binary deployment while maintaining full type-checking compatibility."
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 author: "PyShine"
+image: /assets/img/diagrams/compilers-tutorial/comp-ecosystem.svg
 ---
 
 ## Introduction

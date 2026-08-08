@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Portable Apps]
 tags: [OpenClaude-Portable, Claude Code, portable AI, USB drive AI, AI coding agent, Ollama, local AI, speed proxy, web dashboard, cross-platform, open source]
 keywords: "how to use OpenClaude-Portable, OpenClaude-Portable tutorial, portable Claude Code setup, AI coding agent USB drive, OpenClaude-Portable vs Claude Code, local AI speed proxy, Ollama prompt trimming, portable AI development, cross-platform AI agent, OpenClaude-Portable installation"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## What Is OpenClaude-Portable?

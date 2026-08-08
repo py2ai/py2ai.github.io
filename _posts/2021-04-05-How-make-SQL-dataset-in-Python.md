@@ -23,6 +23,7 @@ tags:
 - Tutorial
 - sqlite3
 title: SQL Database Basics in Python - Complete SQLite3 Tutorial
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

@@ -13,6 +13,7 @@ tags:
   - Video Generation
   - Reddit
 author: "PyShine"
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 # Reddit Video Maker Bot: Automated Content Creation from Reddit

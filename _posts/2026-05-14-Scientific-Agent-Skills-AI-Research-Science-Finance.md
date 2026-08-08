@@ -10,6 +10,7 @@ categories: [AI, Python, Research]
 tags: [Scientific Agent Skills, AI agents, research, science, finance, Python, open source, how to use, setup guide, tutorial]
 keywords: "how to use Scientific Agent Skills, Scientific Agent Skills tutorial, Scientific Agent Skills AI research, Scientific Agent Skills vs alternatives, Scientific Agent Skills installation guide, open source AI agent skills, Scientific Agent Skills Python setup, best AI research agent tools, Scientific Agent Skills for beginners, AI-powered scientific research"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## What Is Scientific Agent Skills?

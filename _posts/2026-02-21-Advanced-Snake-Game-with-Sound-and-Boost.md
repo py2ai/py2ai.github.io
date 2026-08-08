@@ -5,6 +5,7 @@ description: "Learn to build a feature-rich Snake game with Tkinter, procedural 
 featured-img: 2026-snake-again-sound/2026-snake-again-sound
 author: PyShine
 tags: [python, tkinter, game-development, audio, intermediate]
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 # Advanced Snake Game with Sound Effects and Boost Mechanic
 

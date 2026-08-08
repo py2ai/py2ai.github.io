@@ -22,6 +22,7 @@ tags:
 - Python
 - Computer Science
 title: Quicksort Algorithms in Python - Complete Guide with Multiple Schemes
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 

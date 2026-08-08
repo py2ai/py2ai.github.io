@@ -22,6 +22,7 @@ tags:
 - Strings
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 
 ## Learn Python Part 01 - Complete Beginner's Guide

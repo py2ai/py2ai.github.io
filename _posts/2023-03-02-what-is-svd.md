@@ -26,6 +26,7 @@ tags:
 - Machine Learning
 - NumPy
 title: What is Singular Value Decomposition (SVD) in Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

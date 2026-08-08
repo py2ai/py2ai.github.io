@@ -13,6 +13,7 @@ tags:
   - Multi-Agent Systems
   - Workflow Orchestration
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Oh My Codex (OMX): Multi-Agent Orchestration Layer for AI Development

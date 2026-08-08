@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Supermemory, AI memory, vector search, memory engine, AI agents, LLM integration, semantic search, knowledge management, open source, developer tools]
 keywords: "how to use Supermemory AI memory engine, Supermemory vs alternatives, AI memory layer for agents, Supermemory installation guide, vector search for AI applications, Supermemory tutorial, AI knowledge management open source, Supermemory integration with OpenAI, semantic memory for LLM agents, best AI memory engine"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 AI agents have a fundamental problem: they forget everything between conversations. Every session starts from scratch, forcing users to repeat context, re-explain preferences, and re-state project details. Supermemory solves this by providing a persistent memory and context layer that works across every major AI framework and client.

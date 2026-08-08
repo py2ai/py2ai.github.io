@@ -22,6 +22,7 @@ tags:
 - Publish-Subscribe
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # Faster Video Transfer Over WiFi Using ZeroMQ

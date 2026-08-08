@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, Linux, DevOps]
 keywords: "Linux command line tutorial one post, learn Linux CLI fast, Linux navigation pwd ls cd, Linux file operations cp mv rm mkdir, Linux find grep ripgrep sed awk, Linux permissions chmod chown octal rwx, Linux processes ps top kill nohup, Linux systemd journalctl, Linux networking curl ssh ip ss, Linux package manager apt dnf pacman, Linux filesystem hierarchy FHS, Linux quick start roadmap, tldr man pages"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn the Linux Command Line in a Single Post: Complete Tutorial From Files and Processes to Permissions and Networking

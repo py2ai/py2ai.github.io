@@ -10,6 +10,7 @@ categories: [AI Agents, Finance, TypeScript]
 tags: [Dexter, financial research, AI agent, autonomous agent, WhatsApp gateway, persistent memory, LLM, financial analysis, TypeScript, Bun]
 keywords: "Dexter autonomous financial research agent, how to use Dexter AI, Dexter vs ai-hedge-fund, financial research agent WhatsApp, AI financial analysis tool, Dexter persistent memory system, autonomous financial agent tutorial, Dexter LLM multi-provider, financial research agent with memory, Dexter DCF valuation skill"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Dexter: Autonomous Financial Research Agent with Persistent Memory and WhatsApp Gateway

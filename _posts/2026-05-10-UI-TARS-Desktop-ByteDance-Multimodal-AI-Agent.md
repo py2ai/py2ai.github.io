@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Developer Tools]
 tags: [UI-TARS, ByteDance, multimodal AI, GUI agent, browser automation, MCP, vision language model, desktop automation, AI agent, open source]
 keywords: "UI-TARS desktop tutorial, ByteDance multimodal AI agent, how to use UI-TARS, GUI agent natural language, AI browser automation, MCP agent framework, vision language model desktop control, UI-TARS vs computer use, open source AI agent, AI desktop automation tool"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # UI-TARS Desktop: ByteDance's Open-Source Multimodal AI Agent That Controls Your Computer

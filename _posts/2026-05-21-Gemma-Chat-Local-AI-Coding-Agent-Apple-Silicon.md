@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Gemma Chat, local AI coding agent, Apple Silicon, MLX, Gemma 4, offline coding, Electron app, React 19, vibe coding, AI assistant]
 keywords: "Gemma Chat local AI coding agent, how to run Gemma 4 locally on Mac, offline vibe coding Apple Silicon, MLX local LLM setup, Gemma Chat vs Ollama comparison, local AI coding assistant macOS, Apple Silicon AI agent tutorial, Gemma 4 MLX installation guide, offline code generation tool, privacy-first AI coding agent"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Gemma Chat: Local AI Coding Agent for Apple Silicon Powered by Gemma 4 via MLX

@@ -13,6 +13,7 @@ tags:
   - Developer Experience
   - Claude Code
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Claude Doctor: Diagnose Your AI Coding Sessions for Anti-Patterns

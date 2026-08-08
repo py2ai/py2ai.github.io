@@ -5,6 +5,7 @@ date: 2026-02-08
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Soft Actor-Critic (SAC) - a maximum entropy reinforcement learning algorithm. Complete guide with automatic temperature adjustment and PyTorch implementation."
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Part 8: Soft Actor-Critic (SAC) - Maximum Entropy Reinforcement Learning

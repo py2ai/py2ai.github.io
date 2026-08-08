@@ -5,6 +5,7 @@ date: 2026-02-04
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Deep Q-Networks (DQN) - extending Q-learning with neural networks. Complete PyTorch implementation with experience replay and target networks."
+image: /assets/img/diagrams/deep-ep/deep-ep-architecture.svg
 ---
 
 # Part 4: Deep Q-Networks (DQN) - Neural Networks for Reinforcement Learning

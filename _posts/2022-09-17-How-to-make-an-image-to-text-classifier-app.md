@@ -16,6 +16,7 @@ tags:
 - image processing
 - text classification
 title: How to make an image to text classifier application
+image: /assets/img/diagrams/awesome-gpt-image-2-prompts/image-generation-pipeline.svg
 ---
 
 Hi friends following is the code for Part 19 of the PyQt5 learning series. For details visit the pyshine channel below.

@@ -13,6 +13,7 @@ tags:
   - Governance
   - UK Government
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # ArcKit: Enterprise Architecture Governance and Vendor Procurement Toolkit

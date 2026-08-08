@@ -14,6 +14,7 @@ tags:
   - AI
   - Voice Dictation
 author: "PyShine"
+image: /assets/img/diagrams/fluidvoice/fluidvoice-architecture.svg
 ---
 
 # FluidVoice: On-Device Voice Dictation With AI Enhancement for macOS

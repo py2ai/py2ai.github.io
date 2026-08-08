@@ -25,6 +25,7 @@ tags:
 - Qt
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 # Building a Calculator Application with PySide6 Part 2

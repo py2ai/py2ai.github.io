@@ -12,6 +12,7 @@ tags:
   - Speculative Decoding
   - Python
 author: "PyShine"
+image: /assets/img/diagrams/dflash/dflash-block-diffusion-process.svg
 ---
 
 # DFlash: Block Diffusion for Lightning-Fast LLM Speculative Decoding

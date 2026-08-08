@@ -10,6 +10,7 @@ categories: [AI Design, Developer Tools, Open Source]
 tags: [Hallmark, AI design slop, anti-slop design skill, Claude Code design, Cursor design skill, Codex design, AI coding agent, design quality, CSS design system, AI UI quality]
 keywords: "Hallmark anti-AI-slop design skill, how to prevent AI design slop, Claude Code design quality skill, Cursor anti-slop rules, AI-generated UI quality improvement, Hallmark CSS design system, AI coding agent design rules, professional AI-generated interfaces, Hallmark installation guide, AI design quality checklist"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

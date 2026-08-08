@@ -22,6 +22,7 @@ tags:
 - File Management
 - Desktop Organizer
 title: Automatically Clean and Organize Windows Desktop with Python
+image: /assets/img/diagrams/claude-desktop-debian/claude-desktop-debian-build-architecture.svg
 ---
 
 

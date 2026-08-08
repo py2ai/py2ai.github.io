@@ -10,6 +10,7 @@ categories: [Open Source, Web Development, Developer Tools]
 tags: [html-ppt, AgentSkill, presentations, HTML slides, static site, CSS themes, canvas animations, presenter mode, developer tools, open source]
 keywords: "html-ppt-skill tutorial, how to create HTML presentations, AgentSkill for slides, HTML PPT studio, 36 themes presentations, CSS animation slides, canvas FX presentations, presenter mode HTML, static HTML slides no build, open source presentation tool, best HTML presentation framework, AI agent presentation skill"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # HTML PPT Skill: Studio AgentSkill with 36 Themes, 31 Layouts, and 47 Animations

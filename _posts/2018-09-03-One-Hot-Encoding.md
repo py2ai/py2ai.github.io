@@ -14,6 +14,8 @@ keywords:
 layout: post
 mathjax: true
 title: Importance of One Hot Encoding
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

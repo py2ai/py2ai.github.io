@@ -20,6 +20,7 @@ tags:
 - beginner
 - tutorial
 title: AnimeGANv3 ONNX GUI – Complete Beginner's Guide
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 ## Introduction
 

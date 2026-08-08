@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Real-Time, Web]
 keywords: "WebRTC tutorial one post, learn WebRTC fast, WebRTC signaling offer answer SDP, ICE candidates STUN TURN NAT traversal, getUserMedia camera microphone, codecs VP8 VP9 H.264 AV1 Opus, RTP SRTP DTLS-SRTP encryption, congestion control simulcast jitter buffer, RTCDataChannel SCTP P2P messaging, mesh vs SFU vs MCU topology, WebRTC quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn WebRTC in a Single Post: Complete Tutorial From Signaling and ICE to Media, Data Channels, and SFU Scaling

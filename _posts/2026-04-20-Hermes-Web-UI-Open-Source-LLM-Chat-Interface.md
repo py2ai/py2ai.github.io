@@ -8,6 +8,7 @@ permalink: /Hermes-Web-UI-Open-Source-LLM-Chat-Interface/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, LLM, Chat-Interface, Dashboard, Open-Source, Vue, TypeScript, Koa]
 author: PyShine
+image: /assets/img/diagrams/chatwoot/chatwoot-ai-features.svg
 ---
 
 # Hermes Web UI: Open-Source LLM Chat Dashboard for the Hermes Agent

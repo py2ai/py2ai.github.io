@@ -12,6 +12,7 @@ tags:
   - Python
   - Task Management
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Multica: Open-Source Managed Agents Platform

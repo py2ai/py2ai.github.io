@@ -13,6 +13,7 @@ tags:
   - Electron
   - TypeScript
 author: "PyShine"
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 # OpenScreen: Free Open-Source Screen Recording Studio
 

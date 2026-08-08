@@ -10,6 +10,7 @@ categories: [Developer Tools, AI Skills, Desktop Apps]
 tags: [Open Source, AI Skills, Desktop App, Tauri, Claude Code, Cursor, Developer Tools, Skill Management, React, SQLite]
 keywords: "Skills Manage desktop app, AI agent skill manager, how to manage Claude Code skills, AI coding agent skills manager, Tauri desktop app for AI skills, install skills for AI agents, Claude Code skill management, Cursor skills manager, AI agent skill marketplace, multi-platform AI skill installer"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

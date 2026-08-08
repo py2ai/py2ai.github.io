@@ -8,6 +8,7 @@ keywords: "Vaultwarden, Bitwarden alternative, self-hosted password manager, Rus
 description: "Vaultwarden is an unofficial Bitwarden server implementation written in Rust, offering a lightweight, self-hosted password management solution compatible with all official Bitwarden clients."
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 author: "PyShine"
+image: /assets/img/diagrams/rust-axum-tutorial/axum-arch.svg
 ---
 
 ## Introduction

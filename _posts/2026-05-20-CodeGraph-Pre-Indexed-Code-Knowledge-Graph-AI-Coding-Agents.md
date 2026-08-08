@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, TypeScript]
 tags: [CodeGraph, Claude Code, code knowledge graph, AI coding agents, tree-sitter, MCP server, Cursor, Codex CLI, code intelligence, static analysis]
 keywords: "CodeGraph code knowledge graph, how to use CodeGraph with Claude Code, CodeGraph vs manual code exploration, CodeGraph MCP server setup, AI coding agent code intelligence, tree-sitter code analysis, CodeGraph installation guide, CodeGraph for Cursor IDE, semantic code search AI agents, CodeGraph benchmark results"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # CodeGraph: Pre-Indexed Code Knowledge Graph for AI Coding Agents

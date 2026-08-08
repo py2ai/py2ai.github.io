@@ -13,6 +13,7 @@ tags:
   - TypeScript
   - API
 author: "PyShine"
+image: /assets/img/diagrams/free-claude-code/free-claude-code-architecture.svg
 ---
 
 # FreeLLMAPI: OpenAI-Compatible Proxy Stacking 16 Free LLM Providers

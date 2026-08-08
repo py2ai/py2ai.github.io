@@ -14,6 +14,7 @@ tags:
   - Modern Cpp
   - Learn to Code
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn C++ in a Single Post: A Complete Modern C++ Tutorial and Quick-Start Roadmap

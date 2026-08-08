@@ -10,6 +10,7 @@ categories: [Open Source, Swift, AI]
 tags: [Supertonic, text-to-speech, TTS, ONNX, Swift, multilingual, on-device, speech synthesis, iOS, open source]
 keywords: "how to use Supertonic, Supertonic TTS tutorial, on-device text-to-speech Swift, multilingual TTS ONNX, Supertonic vs other TTS engines, iOS text-to-speech setup, real-time speech synthesis, Supertonic installation guide, offline TTS mobile, open source text-to-speech"
 author: "PyShine"
+image: /assets/img/diagrams/supertonic/supertonic-architecture.svg
 ---
 
 ## What Is Supertonic?

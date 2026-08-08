@@ -10,6 +10,7 @@ categories: [JavaScript, Developer Tools, Open Source]
 tags: [Bun, JavaScript, TypeScript, runtime, bundler, test runner, package manager, Zig, Node.js alternative, developer tools]
 keywords: "how to use Bun JavaScript runtime, Bun vs Node.js performance comparison, Bun install tutorial guide, fastest JavaScript runtime 2026, Bun bundler test runner package manager, Zig JavaScript runtime alternative, replace Node.js with Bun, Bun TypeScript support out of the box, Bun package manager speed, all in one JavaScript toolchain"
 author: "PyShine"
+image: /assets/img/diagrams/fastapi-tutorial/fastapi-async-db.svg
 ---
 
 # Bun: The Fast JavaScript Runtime, Bundler, Test Runner, and Package Manager

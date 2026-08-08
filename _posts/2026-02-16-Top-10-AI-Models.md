@@ -28,6 +28,7 @@ tags:
 - Neural Networks
 - Technology
 mathjax: true
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Top 10 AI Models You Need to Know in 2026

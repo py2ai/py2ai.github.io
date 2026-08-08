@@ -23,6 +23,7 @@ tags:
 - Script
 - PDF Tools
 title: How to Split a PDF into Pages in Python with PyPDF2
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

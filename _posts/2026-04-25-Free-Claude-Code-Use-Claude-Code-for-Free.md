@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, Open Source]
 tags: [Free Claude Code, Claude Code, NVIDIA NIM, OpenRouter, DeepSeek, LM Studio, llama.cpp, AI coding assistant, free Claude Code alternative, proxy server, Discord bot, local LLM]
 keywords: "how to use Claude Code for free, Free Claude Code setup tutorial, Claude Code without Anthropic API key, Free Claude Code vs official Claude Code, NVIDIA NIM free tier Claude Code, OpenRouter free models Claude Code, run Claude Code locally with LM Studio, llama.cpp Claude Code proxy setup, Free Claude Code Discord bot tutorial, free AI coding assistant alternatives"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Free Claude Code: Use Claude Code CLI and VSCode for Free with NVIDIA NIM, OpenRouter, and Local Models

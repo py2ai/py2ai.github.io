@@ -24,6 +24,7 @@ tags:
 - Tutorial
 - Python
 title: PytQt5 Video and Audio GUI with start and stop buttons
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

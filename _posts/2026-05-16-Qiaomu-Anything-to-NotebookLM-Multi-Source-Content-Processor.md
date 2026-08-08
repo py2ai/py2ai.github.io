@@ -10,6 +10,7 @@ categories: [AI Tools, Python, Developer Tools]
 tags: [NotebookLM, content processing, paywall bypass, podcast generation, AI tools, Python, Claude Code skill, multi-source, document conversion, open source]
 keywords: "how to use Qiaomu NotebookLM, Qiaomu anything to NotebookLM tutorial, NotebookLM podcast generation, paywall bypass tool Python, multi-source content processor, NotebookLM CLI tool, Claude Code skill NotebookLM, convert articles to podcast, NotebookLM slide deck generation, open source content to podcast"
 author: "PyShine"
+image: /assets/img/diagrams/anything-analyzer/anything-analyzer-ai-pipeline.svg
 ---
 
 # Qiaomu: Anything to NotebookLM - Multi-Source Content Processor

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Roo Code, AI coding agent, VS Code extension, multi-agent, MCP integration, autonomous coding, developer tools, open source, custom modes, code generation]
 keywords: "how to use Roo Code AI agent, Roo Code VS Code extension tutorial, Roo Code vs Cline vs Cursor comparison, AI coding assistant multi-mode agents, Roo Code MCP integration setup, autonomous coding agent open source, Roo Code custom modes configuration, AI dev team in code editor, Roo Code installation guide, best AI coding assistant 2026"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Roo Code: AI Dev Team of Agents Right in Your Code Editor

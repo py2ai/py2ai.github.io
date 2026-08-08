@@ -14,6 +14,7 @@ tags:
   - Type Hints
   - Learn to Code
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Python in a Single Post: A Complete Python Tutorial from Basics to Async and Type Hints

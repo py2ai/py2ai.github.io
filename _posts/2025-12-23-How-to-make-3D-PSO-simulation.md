@@ -10,6 +10,7 @@ keywords:
 - Particle Swarm Optimization
 - Interactive visualization
 - Beginner tutorial
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Interactive 3D PSO with a Draggable Target in Python

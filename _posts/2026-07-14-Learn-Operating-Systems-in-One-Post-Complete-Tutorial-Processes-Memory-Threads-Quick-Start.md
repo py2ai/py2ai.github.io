@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Computer Science, Operating Systems]
 keywords: "operating systems tutorial one post, learn OS fast, process states context switch PCB, fork exec wait, CPU scheduling round robin preemptive, virtual memory pages TLB page fault swap, threads vs processes, deadlock conditions mutex semaphore condition variable, file descriptors inodes page cache, /proc strace lsof syscalls, operating systems quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/agentmemory/agentmemory-agent-ecosystem.svg
 ---
 
 # Learn Operating Systems in a Single Post: Complete Tutorial From Processes and Scheduling to Virtual Memory and Concurrency

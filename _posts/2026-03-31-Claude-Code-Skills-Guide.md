@@ -12,6 +12,7 @@ keywords:
 - AI workflows
 - custom commands
 - skill development
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Claude Code Skills Guide - Build Reusable AI Workflows

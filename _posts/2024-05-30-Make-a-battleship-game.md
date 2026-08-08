@@ -17,6 +17,7 @@ tags:
 - command line
 - tutorial
 title: Let's build a simple "Battleship" game
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 

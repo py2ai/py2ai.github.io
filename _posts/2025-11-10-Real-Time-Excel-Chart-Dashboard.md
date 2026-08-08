@@ -25,6 +25,7 @@ tags:
 - data-visualization
 - tutorial
 title: Real-Time Excel Chart Updater with Python and Watchdog
+image: /assets/img/diagrams/token-dashboard/token-dashboard-data-flow.svg
 ---
 
 # Real-Time Excel Chart Updater with Python and Watchdog

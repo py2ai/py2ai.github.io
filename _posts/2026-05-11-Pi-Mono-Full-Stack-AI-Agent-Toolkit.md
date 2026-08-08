@@ -10,6 +10,7 @@ categories: [AI Agents, TypeScript, Developer Tools]
 tags: [pi-mono, AI coding agent, LLM API, TypeScript, agent framework, coding assistant, terminal UI, multi-provider LLM, agent skills, open source]
 keywords: "pi-mono AI agent toolkit, how to use pi coding agent, pi-mono vs Claude Code, multi-provider LLM API TypeScript, AI agent framework tutorial, pi-mono installation guide, coding agent CLI terminal, unified LLM API 25 providers, pi-mono extensibility skills, open source AI coding assistant"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Pi Mono: The Full-Stack AI Agent Toolkit From libGDX Creator Mario Zechner

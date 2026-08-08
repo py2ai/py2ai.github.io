@@ -13,6 +13,7 @@ tags:
   - Open Source
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Learn Claude Code: Building AI Agents from Scratch

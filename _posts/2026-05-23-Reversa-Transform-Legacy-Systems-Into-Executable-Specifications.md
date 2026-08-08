@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Reversa, legacy system transformation, AI coding agents, executable specifications, code modernization, JavaScript, AI-driven development, specification generation, legacy code analysis, open source]
 keywords: "legacy system transformation for AI agents, how to convert legacy code to AI specifications, Reversa JavaScript tool tutorial, AI coding agent specification format, legacy code modernization with AI, Reversa vs manual code documentation, executable specifications for AI agents, Reversa installation guide, legacy system to AI agent pipeline, automated code specification generation"
 author: "PyShine"
+image: /assets/img/diagrams/dive-into-claude-code-vila/dive-into-claude-code-vila-extensibility-subagents.svg
 ---
 
 ## Introduction

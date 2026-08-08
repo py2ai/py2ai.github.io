@@ -13,6 +13,7 @@ tags:
   - GPU Computing
   - FP8
 author: "PyShine"
+image: /assets/img/diagrams/deepgemm/deepgemm-architecture.svg
 ---
 
 # DeepGEMM: Clean and Efficient FP8 GEMM Kernels with Fine-Grained Scaling

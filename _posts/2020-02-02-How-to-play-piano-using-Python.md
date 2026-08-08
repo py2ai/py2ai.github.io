@@ -21,6 +21,7 @@ tags:
 - threading
 - tutorial
 mathjax: true
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 # How to Play Piano with Python

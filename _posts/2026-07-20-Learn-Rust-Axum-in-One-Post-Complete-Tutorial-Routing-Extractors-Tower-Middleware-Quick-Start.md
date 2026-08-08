@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Backend, Rust]
 keywords: "Rust Axum tutorial one post, learn Axum fast, Axum router GET POST path params nest, Axum extractors State Path Query Json, Axum handler async IntoResponse error handling, Tower middleware layers from_fn, tracing tower-http CORS compression, sqlx async SQL compile-time checked, serde JSON, tokio async runtime, Axum Docker shuttle deploy, Axum quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Rust and Axum in a Single Post: Complete Tutorial From Routing and Extractors to Tower Middleware and Deployment

@@ -10,6 +10,7 @@ categories: [AI Agents, Privacy, Local LLM]
 tags: [Open Source, AI Agent, Local LLM, Privacy, Python, Browser Automation, Code Generation, Speech Recognition, Ollama, Autonomous AI]
 keywords: "AgenticSeek local AI agent, fully local autonomous AI agent, Manus AI open source alternative, how to run AI agent locally, privacy-first AI assistant, local LLM agent browser, zero API cost AI agent, AI agent with speech recognition, local AI code generation, self-hosted AI agent tool"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # AgenticSeek: The Fully Local Autonomous AI Agent That Replaces Cloud Dependency

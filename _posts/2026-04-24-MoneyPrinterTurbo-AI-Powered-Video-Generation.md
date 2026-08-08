@@ -10,6 +10,7 @@ categories: [AI Video, Content Creation, Python]
 tags: [Open Source, Python, AI Video Generation, TTS, LLM, Content Creation, Short Video, Automation, Streamlit, FastAPI]
 keywords: "MoneyPrinterTurbo AI video generator, how to create short videos with AI, AI video generation open source, automated video creation tool, AI short video maker Python, TTS video generation tool, AI video from text topic, open source video automation, AI video script generator, MoneyPrinterTurbo tutorial"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 # MoneyPrinterTurbo: AI-Powered One-Click Short Video Generation

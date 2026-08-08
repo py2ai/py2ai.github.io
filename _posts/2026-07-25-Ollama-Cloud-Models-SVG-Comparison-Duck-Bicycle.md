@@ -13,6 +13,7 @@ tags:
   - LLM
   - Comparison
 author: "PyShine"
+image: /assets/img/diagrams/ollama/ollama-api-ecosystem.svg
 ---
 
 # Ollama Cloud Models SVG Comparison: A Duck Driving a Bicycle

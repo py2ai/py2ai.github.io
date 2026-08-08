@@ -14,6 +14,7 @@ tags:
 - python-simulation
 - interactive
 title: Gravitational Time Dilation Simulation in Python
+image: /assets/img/diagrams/thunderbolt/thunderbolt-architecture.svg
 ---
 # Gravitational Time Dilation Simulation with Pygame
 

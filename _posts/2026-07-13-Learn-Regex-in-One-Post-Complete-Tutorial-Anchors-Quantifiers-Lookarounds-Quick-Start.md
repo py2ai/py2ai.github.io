@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Text Processing]
 keywords: "regex tutorial one post, learn regular expressions fast, regex anchors quantifiers, regex character classes [a-z], regex greedy vs lazy, regex capturing groups backreferences named groups, regex lookaround lookahead lookbehind, regex flags g i m s x, regex catastrophic backtracking, NFA DFA RE2 engine, PCRE JavaScript Python Go regex flavors, regex cheat sheet, regex quick start roadmap, regex email phone URL validation"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Regex in a Single Post: Complete Tutorial From Anchors and Quantifiers to Lookarounds and Backtracking

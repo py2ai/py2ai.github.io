@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, AI Agents]
 tags: [Token Dashboard, Claude Code, token analytics, cost tracking, AI agent monitoring, local dashboard, privacy-first, developer tools, open source, LLM costs]
 keywords: "how to use Token Dashboard, Token Dashboard tutorial, Claude Code token tracking, AI agent cost analytics, local LLM token dashboard, Token Dashboard vs alternatives, Claude Code cost monitoring, token usage optimization, privacy-first AI analytics, Token Dashboard installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Token Dashboard: Local Cost Analytics for Claude Code Sessions

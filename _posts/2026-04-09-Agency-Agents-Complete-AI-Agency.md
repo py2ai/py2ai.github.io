@@ -12,6 +12,7 @@ tags:
   - Multi-Agent Systems
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Agency Agents: A Complete AI Agency at Your Fingertips

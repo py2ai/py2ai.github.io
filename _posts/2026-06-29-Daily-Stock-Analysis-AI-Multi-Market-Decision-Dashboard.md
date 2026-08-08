@@ -13,6 +13,7 @@ tags:
   - Open Source
   - LLM
 author: "PyShine"
+image: /assets/img/diagrams/daily-stock-analysis/dsa-architecture.svg
 ---
 
 ## Introduction

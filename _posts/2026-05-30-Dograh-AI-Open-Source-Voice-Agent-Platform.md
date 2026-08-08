@@ -10,6 +10,7 @@ categories: [AI, Open Source, Voice AI]
 tags: [dograh, voice-ai, pipecat, webrtc, telephony, fastapi, nextjs, open-source, llm, tts, stt, mcp, docker, workflow-builder]
 keywords: "open source voice AI platform, self-hosted voice agent builder, Dograh AI alternative to Vapi, drag and drop voice workflow builder, Pipecat voice pipeline framework, WebRTC voice agent deployment, multi-provider LLM STT TTS integration, telephony AI agent open source, MCP server voice AI integration, Python TypeScript voice AI SDK"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Dograh AI: Open-Source Voice Agent Platform with Drag-and-Drop Workflow Builder

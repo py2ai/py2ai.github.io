@@ -12,6 +12,7 @@ keywords:
   - zombie shooter game
   - pygame tutorial
   - pygame basic tutorial
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 

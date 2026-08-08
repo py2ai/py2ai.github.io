@@ -14,6 +14,7 @@ tags:
   - TTS
   - LLM
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # HuggingFace Speech-to-Speech: Build Voice Agents With Open-Source Models

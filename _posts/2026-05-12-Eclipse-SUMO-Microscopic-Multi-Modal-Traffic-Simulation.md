@@ -10,6 +10,7 @@ categories: [Open Source, Simulation, Transportation]
 tags: [Eclipse SUMO, traffic simulation, microscopic simulation, multi-modal transport, TraCI, urban mobility, emissions modeling, autonomous driving, Python, open source]
 keywords: "how to use Eclipse SUMO, SUMO traffic simulation tutorial, Eclipse SUMO vs VISSIM comparison, microscopic traffic simulation open source, SUMO TraCI Python API guide, multi-modal traffic simulation setup, SUMO network import OpenStreetMap, traffic light optimization SUMO, autonomous driving simulation SUMO, SUMO installation and configuration guide"
 author: "PyShine"
+image: /assets/img/diagrams/sumo/sumo-architecture.svg
 ---
 
 ## Introduction

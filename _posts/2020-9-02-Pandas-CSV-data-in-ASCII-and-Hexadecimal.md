@@ -7,6 +7,7 @@ featured-img: pandas
 description: This code will demonstrate how to convert pandas data to numeric form 
 keywords: [Pandas, Dataframe, Hexadecimal, ASCII, Python]
 tags: [Pandas, Dataframe, Hexadecimal, ASCII, Python]
+image: /assets/img/diagrams/openmetadata/openmetadata-architecture.svg
 ---
 Source code and sample csv data file are available:[download]
 

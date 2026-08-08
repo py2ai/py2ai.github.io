@@ -23,6 +23,7 @@ tags:
 - Deep Learning
 - Tutorial
 title: How to perform online video processing from the client's...
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

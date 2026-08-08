@@ -10,6 +10,7 @@ categories: [AI Design, Web Development, Developer Tools]
 tags: [Claude Design, DESIGN.md, AI design systems, UI scaffolding, VoltAgent, design tokens, AI coding, front-end development, Claude Code, open source]
 keywords: "how to use awesome claude design, DESIGN.md format for AI agents, Claude Design design system scaffolding, AI coding design systems, awesome-claude-design tutorial, VoltAgent design inspirations, Claude Code design tokens, AI UI generation workflow, design system inspirations for AI, how to create design systems with AI"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-agent-skills/awesome-agent-skills-categories.svg
 ---
 
 # Awesome Claude Design: 68 Ready-to-Use Design System Inspirations for AI Coding

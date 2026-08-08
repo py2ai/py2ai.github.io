@@ -5,6 +5,7 @@ date: 2026-07-08
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools]
 tags: [ai-agents, parallel-agents, agent-development, typescript, claude-code, codex, cursor, automation, developer-tools]
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## 1. Introduction

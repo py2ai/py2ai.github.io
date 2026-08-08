@@ -10,6 +10,7 @@ seo:
   keywords: "ppt, powerpoint, image-first, claude code skill, presentation, ai slides"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /PPT-Image-First-Image-First-PowerPoint-Skill/
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 Creating a compelling PowerPoint presentation is harder than it looks. Most AI-powered PPT tools fall into two traps: they either produce generic template-filled slides that look polished but lack substance, or they generate shallow content that reads like a PPT but cannot actually support a real presentation. **PPT Image-First** takes a fundamentally different approach — it treats presentation creation as a conversation-first, image-first design workflow where real visual previews drive every decision.

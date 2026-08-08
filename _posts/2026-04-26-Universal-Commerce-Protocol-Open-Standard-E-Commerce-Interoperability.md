@@ -10,6 +10,7 @@ categories: [Open Source, E-Commerce, Developer Tools]
 tags: [UCP, Universal Commerce Protocol, e-commerce interoperability, open standard, agentic commerce, payment protocol, API specification, commerce integration, developer tools, open source]
 keywords: "Universal Commerce Protocol tutorial, UCP open standard for e-commerce, how to implement UCP specification, agentic commerce protocol guide, UCP vs traditional payment APIs, commerce interoperability standard, UCP capability negotiation, payment handler specification, MCP commerce integration, open source commerce protocol for developers"
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # Universal Commerce Protocol: The Open Standard Breaking Down E-Commerce Silos

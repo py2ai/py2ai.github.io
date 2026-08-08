@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Compound Engineering, Claude Code plugin, AI coding agents, Codex plugin, Cursor plugin, multi-agent review, compound development, AI skills, developer productivity, open source]
 keywords: "Compound Engineering plugin tutorial, how to install Compound Engineering for Claude Code, Compound Engineering vs other Claude Code plugins, AI agent code review skills, compound development workflow guide, Claude Code skills and agents, Codex plugin installation, Cursor AI plugin setup, multi-agent code review system, AI coding agent productivity tools"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Compound Engineering Plugin: AI Skills and Agents That Make Each Unit of Work Easier Than the Last

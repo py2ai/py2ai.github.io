@@ -8,6 +8,7 @@ permalink: /huggingface-transformers-definitive-ml-framework
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [machine-learning, transformers, huggingface, nlp, computer-vision, pytorch, deep-learning, llm]
 author: "PyShine"
+image: /assets/img/diagrams/huggingface-transformers/huggingface-transformers-architecture.svg
 ---
 
 ## Introduction

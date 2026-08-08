@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Backend, Real-Time]
 keywords: "WebSocket tutorial one post, learn WebSocket fast, HTTP upgrade Sec-WebSocket-Key 101 Switching Protocols handshake, WebSocket frames opcode text binary ping pong close masking fragmentation, WebSocket server rooms broadcast backpressure, WebSocket scaling sticky sessions Redis pub/sub cross-server, wss TLS ping interval reconnect, WebSocket vs SSE vs long-polling vs HTTP/2 streams, Socket.IO ws library, WebSocket quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn WebSocket in a Single Post: Complete Tutorial From Handshake and Frames to Rooms, Scaling, and Production

@@ -12,6 +12,7 @@ categories: [AI Design, Developer Tools, Open Source]
 tags: [Huashu Design, Claude Code, AI design skill, HTML prototypes, design philosophies, AI coding agents, design system, slide decks, motion design, infographics]
 keywords: "Huashu Design skill tutorial, how to use Huashu Design with Claude Code, AI design skill for coding agents, HTML native design AI, 20 design philosophies, brand asset protocol AI, design direction advisor, AI slide deck generator, AI prototype tool, Claude Code design skill"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Huashu Design: HTML-Native Design Skill for AI Coding Agents

@@ -10,6 +10,7 @@ categories: [Open Source, TypeScript, 3D Graphics]
 tags: [SuperSplat, Gaussian splatting, 3D editing, neural rendering, PlayCanvas, TypeScript, NeRF, 3D visualization, open source, splat editor]
 keywords: "how to use SuperSplat, SuperSplat tutorial, 3D Gaussian splat editor, Gaussian splatting visualization, SuperSplat vs other splat editors, PlayCanvas SuperSplat setup, neural rendering editing tool, 3D splat editing workflow, open source Gaussian splat tool, NeRF editing software"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 ## What is SuperSplat?

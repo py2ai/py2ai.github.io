@@ -8,6 +8,7 @@ permalink: /Tailslayer-Reducing-Tail-Latency-RAM-Reads/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [cpp, performance, memory, latency, systems-programming]
 author: PyShine
+image: /assets/img/diagrams/ponytail/ponytail-architecture.svg
 ---
 
 ## Introduction

@@ -10,6 +10,7 @@ seo:
   keywords: "tech debt, code quality, claude code skill, audit, refactoring, ai, technical debt"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /Tech-Debt-Skill-AI-Powered-Technical-Debt-Audit/
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 Every codebase accumulates technical debt. The question isn't whether you have it — it's whether you know where it hides, how bad it really is, and what to fix first. Most "code review" tools produce generic best-practice checklists that feel comprehensive but lead to zero action. **Tech-Debt-Skill** takes a fundamentally different approach: it forces Claude Code to understand your codebase *before* judging it, cite specific file locations on every finding, and explicitly surface things that look bad but are actually fine.

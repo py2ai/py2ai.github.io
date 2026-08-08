@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, Open Source]
 tags: [diagram design, Claude Code, editorial diagrams, SVG diagrams, AI coding, HTML SVG, design systems, technical diagrams, AI skills, open source]
 keywords: "diagram design Claude Code skill, how to create editorial diagrams with AI, best diagram types for technical documentation, self-contained HTML SVG diagrams, Claude Code skill tutorial, AI diagram generation without Figma, editorial diagram design system, progressive disclosure AI skills, brand onboarding for diagrams, diagram design open source tool"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Diagram Design: 13 Editorial Diagram Types for Claude Code That Your Designer Will Actually Like

@@ -10,6 +10,7 @@ categories: [Developer Tools, AI Agents, Open Source]
 tags: [agent-style, AI writing rules, coding agents, LLM writing quality, Claude Code, Codex CLI, technical writing, anti-patterns, developer tools, open source]
 keywords: "how to use agent-style for AI agents, agent-style writing rules tutorial, AI agent writing quality improvement, agent-style vs prose linter, 21 writing rules for LLM, agent-style installation guide, Claude Code writing rules, Codex CLI style enforcement, AI agent anti-patterns, technical writing rules for AI"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Agent Style: 21 Writing Rules That Make AI Agents Write Like Tech Pros

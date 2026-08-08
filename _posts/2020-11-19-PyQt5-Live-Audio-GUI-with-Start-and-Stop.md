@@ -23,6 +23,7 @@ tags:
 - Thread Management
 - Threading
 title: PyQt5 Live Audio GUI with Start and Stop Thread Management
+image: /assets/img/diagrams/stop-slop/stop-slop-detection-pipeline.svg
 ---
 
 

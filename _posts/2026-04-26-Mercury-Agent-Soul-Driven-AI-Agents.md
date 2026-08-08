@@ -10,6 +10,7 @@ categories: [AI, Agents, Open Source, TypeScript]
 tags: [mercury-agent, ai-agent, soul-driven, second-brain, telegram-bot, cli, permissions, token-budget, sqlite, vercel-ai-sdk, typescript, open-source]
 keywords: "mercury agent, soul-driven ai agent, second brain memory, ai agent permissions, token budget ai, telegram ai bot, cli ai agent, vercel ai sdk, sqlite fts5, ai agent framework, open source ai agent"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Mercury Agent: Soul-Driven AI Agents with Permission-Hardened Tools and Second Brain Memory

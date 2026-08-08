@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, Knowledge Management]
 tags: [knowledge graph, AI code analysis, codebase visualization, graph database, developer tools, open source, code intelligence, AI agents, code understanding, repository analysis]
 keywords: "AI knowledge graph from codebase, how to visualize code dependencies, Graphified code analysis tool, open source code knowledge graph, AI-powered code understanding, codebase visualization tool, knowledge graph for developers, code repository analysis AI, Graphified installation guide, code intelligence graph tool"
 author: "PyShine"
+image: /assets/img/diagrams/codebase-memory-mcp/codebase-memory-mcp-agents.svg
 ---
 
 # Graphified: AI Knowledge Graph From Any Codebase

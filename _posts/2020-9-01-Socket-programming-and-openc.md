@@ -18,6 +18,7 @@ tags:
 - Python
 - WiFi
 title: Socket programming to send and receive webcam video
+image: /assets/img/diagrams/free-programming-books/free-programming-books-ecosystem.svg
 ---
 
 

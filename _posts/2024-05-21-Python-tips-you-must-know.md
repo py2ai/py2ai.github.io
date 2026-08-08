@@ -25,6 +25,7 @@ tags:
 - Python Skills
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/english-level-up-tips/learning-path-roadmap.svg
 ---
 
 # Python Tips and Tricks You Must Know

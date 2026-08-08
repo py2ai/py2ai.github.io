@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Infrastructure]
 keywords: "Nginx tutorial one post, learn Nginx fast, nginx.conf http server location blocks directives, nginx static file root alias try_files, nginx reverse proxy proxy_pass upstream, nginx load balancing round_robin least_conn ip_hash, nginx TLS HTTPS Let's Encrypt certbot HTTP/2, nginx caching proxy_cache gzip, nginx rate limiting security headers HSTS, nginx reload zero downtime, nginx quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/android-reverse-engineering-skill/are-api-extraction-flow.svg
 ---
 
 # Learn Nginx in a Single Post: Complete Tutorial From Configuration to Reverse Proxy, TLS, and Production

@@ -9,6 +9,7 @@ categories: [AI, Education, Open Source]
 tags: [AI, Machine Learning, Education, Beginners, TensorFlow, PyTorch, Curriculum, Microsoft, Neural Networks, Computer Vision, NLP, Reinforcement Learning]
 keywords: [AI for beginners, Microsoft AI curriculum, free AI course, machine learning for beginners, TensorFlow tutorial, PyTorch tutorial, neural networks, computer vision, NLP, reinforcement learning, AI ethics, open source AI education]
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # AI for Beginners: Microsoft's Free 12-Week Curriculum From Symbolic AI to Multi-Agent Systems

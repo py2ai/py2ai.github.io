@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Observability]
 keywords: "Prometheus tutorial one post, learn Prometheus fast, Prometheus metric types counter gauge histogram summary, labels cardinality explosion, Prometheus pull model scrape /metrics service discovery, push gateway batch jobs, PromQL instant range vector rate increase sum by histogram_quantile, recording rules, alerting rules Alertmanager routing dedupe silence, Grafana dashboards, Prometheus federation, Thanos long-term storage, remote_write Mimir Cortex, Prometheus HA retention, Prometheus quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Prometheus in a Single Post: Complete Tutorial From Metrics and the Pull Model to PromQL, Alerting, and Grafana

@@ -14,6 +14,7 @@ tags:
   - Networking
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # Tailscale's Open-Source Client: A WireGuard Mesh VPN with the Data Plane Fully Open

@@ -22,6 +22,7 @@ tags:
 - csv
 - tutorial
 mathjax: true
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # How to Make a Matplotlib and PyQt5 GUI

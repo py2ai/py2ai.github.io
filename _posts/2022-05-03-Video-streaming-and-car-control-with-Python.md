@@ -17,6 +17,7 @@ tags:
 - Video Streaming
 - Car Control
 title: Video streaming and Car Control in Python
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

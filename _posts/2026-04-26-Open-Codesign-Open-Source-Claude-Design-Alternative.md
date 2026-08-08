@@ -12,6 +12,7 @@ categories: [AI Design, Open Source, Developer Tools]
 tags: [Open CoDesign, Claude Design alternative, AI design tool, open source design, BYOK, multi-model, Electron app, local-first, prompt to prototype, design to code]
 keywords: "Open CoDesign open source Claude Design alternative, how to use Open CoDesign for AI design, Open CoDesign vs Claude Design comparison, BYOK multi-model design tool, local-first AI design application, prompt to prototype open source, AI design tool with Ollama support, Open CoDesign installation tutorial, desktop AI design tool Electron, open source design to code tool, open codesign, open codesing, opencodesign"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Open CoDesign: Open-Source Claude Design Alternative with Multi-Model Support

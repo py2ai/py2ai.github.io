@@ -10,6 +10,7 @@ categories: [AI Research, Python, Open Source]
 tags: [local deep research, AI research assistant, SimpleQA, LLM, search engines, open source, privacy, encrypted database, agentic research, Python]
 keywords: "local deep research tutorial, how to use local deep research, AI research assistant locally, SimpleQA benchmark 95%, local LLM research tool, private AI research assistant, agentic research framework, open source research tool, local deep research vs perplexity, AI research with citations"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

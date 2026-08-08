@@ -23,6 +23,7 @@ tags:
 - Networking
 - Tutorial
 title: How to easily stream webcam video over wifi with...
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

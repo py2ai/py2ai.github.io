@@ -14,6 +14,7 @@ tags:
   - Gemma
   - Google
 author: "PyShine"
+image: /assets/img/diagrams/knowledge-catalog/knowledge-catalog-architecture.svg
 ---
 # Google AI Edge Gallery: On-Device AI for Mobile
 

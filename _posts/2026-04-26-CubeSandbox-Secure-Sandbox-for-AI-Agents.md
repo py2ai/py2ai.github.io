@@ -5,6 +5,8 @@ date: 2026-04-26
 categories: [ai, security, open-source, rust]
 tags: [sandbox, ai-agents, rust, kvm, ebpf, security, tencent, virtualization]
 author: pyshine
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Table of Contents

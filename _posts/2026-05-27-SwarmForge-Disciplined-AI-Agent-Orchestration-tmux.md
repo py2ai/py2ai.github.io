@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [SwarmForge, Uncle Bob, AI agent orchestration, tmux, multi-agent coordination, Clean Code, TDD, mutation testing, git worktrees, AI coding agents]
 keywords: "tmux-based AI agent orchestration, how to orchestrate multiple AI agents with tmux, SwarmForge tutorial Uncle Bob, multi-agent AI coding workflow, git worktree AI agent isolation, AI agent constitution layer, tmux swarm coordination, SwarmForge installation guide, disciplined AI agent orchestration, file-based AI agent handoffs"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # SwarmForge: Disciplined AI Agent Orchestration with tmux

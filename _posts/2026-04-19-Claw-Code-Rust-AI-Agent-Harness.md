@@ -13,6 +13,7 @@ tags:
   - Autonomous Development
   - CLI
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Claw Code: Open-Source Rust AI Agent Harness for Autonomous Development

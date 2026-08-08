@@ -10,6 +10,7 @@ categories: [Open Source, Rust, AI]
 tags: [RuView, WiFi sensing, spatial intelligence, Rust, indoor positioning, signal processing, privacy-first, no camera, ambient computing, open source]
 keywords: "how to use RuView, RuView WiFi spatial intelligence, RuView tutorial, WiFi positioning without video, Rust spatial computing, indoor navigation WiFi, privacy-first spatial awareness, RuView vs camera-based systems, WiFi signal processing Rust, ambient computing open source"
 author: "PyShine"
+image: /assets/img/diagrams/rust-axum-tutorial/axum-arch.svg
 ---
 
 ## What Is RuView? WiFi Spatial Intelligence Without Cameras

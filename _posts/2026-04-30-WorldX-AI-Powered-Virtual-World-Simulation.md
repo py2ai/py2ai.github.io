@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Game Development]
 tags: [WorldX, AI simulation, autonomous agents, procedural generation, emergent narrative, LLM agents, Phaser 3, pixel art, AI world building, open source]
 keywords: "how to use WorldX, WorldX tutorial, AI world simulation, one-sentence world generation, autonomous AI agents, LLM procedural generation, WorldX vs AI dungeon, emergent narrative simulation, pixel art AI game, WorldX installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 
 # WorldX: One-Sentence AI World Simulation with Autonomous Agents

@@ -13,6 +13,7 @@ tags:
   - Knowledge Graph
   - TypeScript
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 # GitNexus: The Zero-Server Code Intelligence Engine

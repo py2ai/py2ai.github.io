@@ -23,6 +23,7 @@ tags:
 - Python GUI
 - Tutorial
 title: How to open and show the SQL database file in a PyQt5 GUI
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

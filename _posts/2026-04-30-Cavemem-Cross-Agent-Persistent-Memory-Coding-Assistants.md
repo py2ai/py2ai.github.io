@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [cavemem, persistent memory, AI coding agent, SQLite, MCP, Claude Code, Cursor, compression, hybrid search, local-first]
 keywords: "cavemem persistent memory setup, how to give AI coding agents memory, cross-agent memory SQLite MCP, cavemem vs other memory tools, Claude Code persistent memory, local-first AI agent storage, caveman grammar compression, hybrid search BM25 vector, AI coding assistant session continuity, privacy-aware agent memory"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Cavemem: Cross-Agent Persistent Memory for Coding Assistants

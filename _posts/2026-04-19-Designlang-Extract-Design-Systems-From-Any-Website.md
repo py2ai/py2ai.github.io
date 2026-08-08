@@ -13,6 +13,7 @@ tags:
   - Design Tokens
   - Web Development
 author: "PyShine"
+image: /assets/img/diagrams/ai-website-cloner/ai-website-cloner-agent-pipeline.svg
 ---
 
 # Designlang: Extract Complete Design Systems From Any Website

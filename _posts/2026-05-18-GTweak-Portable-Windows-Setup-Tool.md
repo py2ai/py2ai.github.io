@@ -10,6 +10,7 @@ categories: [Windows, System Administration, Open Source]
 tags: [GTweak, Windows optimization, Windows debloat, privacy tools, system tweak, portable tool, C#, open source, Windows setup, performance tuning]
 keywords: "how to use GTweak, GTweak Windows optimization tool, portable Windows setup tool, Windows debloat guide, GTweak vs O&O ShutUp10, Windows privacy tweaks, GTweak installation guide, open source Windows optimizer, Windows performance tuning tool, GTweak configuration tutorial"
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 ## What Is GTweak?

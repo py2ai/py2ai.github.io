@@ -10,6 +10,7 @@ categories: [Reinforcement Learning, Python, Open Source]
 tags: [SUMO-RL, reinforcement learning, traffic simulation, Gymnasium, PettingZoo, multi-agent, traffic signal control, SUMO, OpenAI Gym, Python]
 keywords: "SUMO-RL tutorial, reinforcement learning traffic control, SUMO simulator Gymnasium, multi-agent traffic signal, PettingZoo traffic environment, Stable Baselines3 traffic, SUMO-RL installation guide, traffic signal optimization RL, SUMO-RL vs alternatives, OpenAI Gym traffic simulation"
 author: "PyShine"
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 
 # SUMO-RL: Reinforcement Learning for Traffic Signal Control with OpenAI Gym

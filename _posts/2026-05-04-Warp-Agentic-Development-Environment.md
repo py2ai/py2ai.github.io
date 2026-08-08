@@ -10,6 +10,7 @@ categories: [Developer Tools, Rust, AI Agents]
 tags: [Warp, terminal, Rust, AI agents, agentic development, MCP, multi-agent orchestration, GPU rendering, developer tools, open source]
 keywords: "Warp terminal agentic development, how to use Warp AI agent, Warp vs iTerm2 comparison, Warp terminal Rust tutorial, agentic development environment setup, Warp multi-agent orchestration, Warp MCP integration guide, Warp terminal AI coding, best AI terminal emulator, Warp Claude Code harness"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 # Warp: The Agentic Development Environment Born Out of the Terminal

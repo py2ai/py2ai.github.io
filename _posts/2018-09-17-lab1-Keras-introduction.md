@@ -15,6 +15,7 @@ keywords:
 layout: post
 mathjax: true
 title: Lab1 Keras Basic Model
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

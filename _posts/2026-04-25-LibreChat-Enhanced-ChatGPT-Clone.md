@@ -10,6 +10,7 @@ categories: [AI, Chatbot, Open Source, Self-Hosting]
 tags: [librechat, chatgpt-clone, self-hosted, ai-agents, mcp, multi-model, open-source, typescript, docker, deployment]
 keywords: "librechat self hosted, librechat vs chatgpt, librechat installation, librechat docker, librechat agents, librechat mcp, librechat multi model, librechat features, librechat deployment, librechat open source"
 author: "PyShine"
+image: /assets/img/diagrams/ai-website-cloner/ai-website-cloner-agent-pipeline.svg
 ---
 
 # LibreChat: The Enhanced ChatGPT Clone with 35K+ Stars

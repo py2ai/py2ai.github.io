@@ -7,6 +7,7 @@ tags: [ai-agents, coding-assistants, tdd, workflow, skills-framework]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Explore obra/superpowers - a comprehensive skills framework that transforms AI coding assistants into disciplined software engineers with test-driven development, systematic debugging, and subagent-driven development workflows."
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

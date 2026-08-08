@@ -10,6 +10,7 @@ categories: [AI Design, Developer Tools, Open Source]
 tags: [DESIGN.md, design tokens, AI coding agents, visual identity, Tailwind CSS, DTCG, design systems, Google Labs, front-end development, AI-assisted coding]
 keywords: "how to use DESIGN.md for AI coding, DESIGN.md visual identity specification, design tokens for AI agents, Google Labs DESIGN.md tutorial, DESIGN.md vs design systems comparison, AI coding agent design context, Tailwind CSS design token export, DTCG W3C design tokens format, DESIGN.md linting and validation, design system specification for beginners"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # DESIGN.md: Google's Visual Identity Specification for AI Coding Agents

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [12-Factor Agents, LLM agents, context engineering, agent architecture, Humanlayer, BAML, structured outputs, AI agent patterns, production AI, deterministic agents]
 keywords: "12 factor agents methodology, how to build reliable LLM agents, context engineering for AI agents, own your prompts own your context window, agent loop pattern deterministic code, stateless reducer agent pattern, small focused AI agents, human in the loop AI agents, BAML structured outputs agents, production grade LLM software"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

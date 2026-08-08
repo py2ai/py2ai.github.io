@@ -13,6 +13,7 @@ tags:
   - Anti-Detection
   - Web Scraping
 author: "PyShine"
+image: /assets/img/diagrams/agent-browser/agent-browser-architecture.svg
 ---
 
 # Camofox Browser: Anti-Detection Browser Server for AI Agents

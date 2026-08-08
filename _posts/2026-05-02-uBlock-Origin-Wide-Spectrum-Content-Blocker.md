@@ -10,6 +10,7 @@ categories: [Privacy, Open Source, Browser Extensions]
 tags: [uBlock Origin, ad blocker, privacy, content blocker, tracker blocker, browser extension, open source, Firefox, Chrome, malware blocking, coin miner blocker, filter lists]
 keywords: "how to use uBlock Origin, best ad blocker browser extension, uBlock Origin vs Adblock Plus, uBlock Origin setup guide, uBlock Origin dynamic filtering, uBlock Origin filter lists tutorial, privacy browser extension 2026, uBlock Origin advanced mode, how to block trackers with uBlock, uBlock Origin custom filters"
 author: "PyShine"
+image: /assets/img/diagrams/ublock/ublock-architecture.svg
 ---
 
 # uBlock Origin: The Essential Wide-Spectrum Content Blocker for Privacy

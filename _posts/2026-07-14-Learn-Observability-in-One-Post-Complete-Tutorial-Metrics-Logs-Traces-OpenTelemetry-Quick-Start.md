@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Observability]
 keywords: "observability tutorial one post, learn observability fast, metrics logs traces three pillars, Prometheus counters gauges histograms, structured logs Loki ELK, distributed tracing spans trace ID OpenTelemetry Jaeger, OTel collector pipeline vendor neutral, Grafana dashboards PromQL, SLI SLO error budget burn rate alerting, on-call runbook, observability quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Observability in a Single Post: Complete Tutorial From Metrics, Logs, and Traces to OpenTelemetry and SLO Alerting

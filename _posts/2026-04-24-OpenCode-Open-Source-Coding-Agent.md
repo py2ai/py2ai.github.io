@@ -10,6 +10,7 @@ categories: [AI Coding, Developer Tools, Open Source]
 tags: [Open Source, AI Coding Agent, Developer Tools, LLM, Terminal, Go, TypeScript, LSP, Multi-Provider, OpenCode]
 keywords: "OpenCode open source coding agent, AI coding agent terminal tool, open source alternative to Claude Code, OpenCode vs GitHub Copilot, AI coding agent multiple LLM providers, terminal-based AI coding assistant, OpenCode 148K stars, LSP integration AI coding, client server AI coding agent, best open source AI coding tool"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # OpenCode: The Open Source AI Coding Agent

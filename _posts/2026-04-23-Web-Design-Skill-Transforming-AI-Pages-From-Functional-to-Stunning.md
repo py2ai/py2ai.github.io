@@ -10,6 +10,7 @@ categories: [Web Development, AI Design, Developer Tools]
 tags: [Open Source, AI Design, CSS, Web Development, Design System, oklch, Typography, Animation, UI Design, SKILL.md]
 keywords: "web design skill for AI agents, how to improve AI-generated web pages, AI design system skill, oklch color system for AI, AI anti-slop design rules, Claude Code web design skill, AI CSS design system, transform AI pages to stunning, AI web page design quality, SKILL.md design skill"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

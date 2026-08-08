@@ -13,6 +13,7 @@ tags:
   - LangGraph
   - Multi-Agent Systems
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # AI Hedge Fund: Multi-Agent Investment System

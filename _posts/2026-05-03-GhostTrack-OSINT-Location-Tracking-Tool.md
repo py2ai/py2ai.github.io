@@ -10,6 +10,7 @@ categories: [OSINT, Python, Security Tools]
 tags: [GhostTrack, OSINT, IP tracking, phone number lookup, username search, information gathering, Python tool, open source intelligence, cybersecurity, privacy]
 keywords: "how to use GhostTrack OSINT tool, GhostTrack IP tracker tutorial, open source intelligence gathering, phone number tracking Python, username search social media, OSINT tools for beginners, GhostTrack installation guide, IP geolocation tool, social media account finder, information gathering techniques"
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # GhostTrack: Open Source OSINT Tool for Location and Identity Tracking

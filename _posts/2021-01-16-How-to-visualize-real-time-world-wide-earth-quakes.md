@@ -23,6 +23,7 @@ tags:
 - Data Visualization
 - Maps
 title: Visualize Real-Time Worldwide Earthquakes in Python with Folium
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 
 

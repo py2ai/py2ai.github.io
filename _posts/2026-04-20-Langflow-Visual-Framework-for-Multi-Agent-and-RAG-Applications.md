@@ -8,6 +8,7 @@ permalink: /blog/2026/04/20/Langflow-Visual-Framework-Multi-Agent-RAG/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [langflow, ai-agents, rag, visual-builder, llm, mcp, langchain, open-source]
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

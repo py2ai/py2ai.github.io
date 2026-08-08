@@ -24,6 +24,7 @@ tags:
 - GUI
 - Drag and Drop
 title: Drag and Drop CSV File GUI with Matplotlib and PyQt5
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 ## PyQt5 and Matplotlib
 

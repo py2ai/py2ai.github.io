@@ -14,6 +14,7 @@ tags:
   - Python
   - Next.js
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # Onyx: Open Source AI Platform with Advanced RAG and Agent Capabilities

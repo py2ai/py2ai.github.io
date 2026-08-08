@@ -14,6 +14,7 @@ tags:
   - GitOps
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/meshery/meshery-architecture.svg
 ---
 
 ## Introduction

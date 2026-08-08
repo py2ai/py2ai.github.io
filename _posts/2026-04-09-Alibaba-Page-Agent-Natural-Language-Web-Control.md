@@ -13,6 +13,7 @@ tags:
   - Web Automation
   - TypeScript
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Alibaba Page-Agent: Control Web Interfaces with Natural Language

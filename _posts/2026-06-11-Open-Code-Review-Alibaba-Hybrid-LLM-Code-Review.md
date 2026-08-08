@@ -10,6 +10,7 @@ categories: [AI Tools, Go, Developer Tools, Code Review]
 tags: [open-code-review, code review, LLM, hybrid architecture, deterministic pipeline, Alibaba, Go, static analysis, security scanning, developer tools, AI code review, OpenAI, Anthropic]
 keywords: "how to use open code review, Alibaba open code review hybrid LLM, AI code review tool, deterministic pipeline code review, LLM agent code review, line-level code review comments, NPE detection code review, thread safety analysis tool, XSS SQL injection detection, OpenAI Anthropic code review integration, automated code review Go, battle-tested code review tool, hybrid static analysis LLM"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 ## Introduction

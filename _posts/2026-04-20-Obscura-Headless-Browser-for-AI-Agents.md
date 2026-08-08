@@ -8,6 +8,7 @@ permalink: /Obscura-Headless-Browser-for-AI-Agents/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [Rust, Headless Browser, AI Agents, Web Scraping, CDP, Anti-Detection]
 author: PyShine
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

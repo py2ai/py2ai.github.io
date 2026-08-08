@@ -6,6 +6,7 @@ categories: [ai, privacy, meeting-tools]
 tags: [meetily, ai-meeting-assistant, privacy-first, local-ai, transcription, open-source]
 permalink: /Meetily-Privacy-First-AI-Meeting-Assistant/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/meetily/meetily-ai-providers.svg
 ---
 
 ## 1. Introduction

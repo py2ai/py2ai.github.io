@@ -17,6 +17,7 @@ tags:
 - Python
 - OpenCV
 title: How to send video over UDP socket and save it as MP4 at...
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

@@ -14,6 +14,7 @@ tags:
   - Geopolitics
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/token-dashboard/token-dashboard-data-flow.svg
 ---
 
 ## Introduction

@@ -14,6 +14,7 @@ tags:
   - Metaprogramming
   - Learn to Code
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Ruby in a Single Post: A Complete Ruby Tutorial from Blocks and Mixins to Metaprogramming and Rails

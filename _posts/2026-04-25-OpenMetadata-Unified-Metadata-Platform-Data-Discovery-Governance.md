@@ -10,6 +10,7 @@ categories: [Data Engineering, Open Source, Developer Tools]
 tags: [OpenMetadata, metadata management, data discovery, data governance, data lineage, data quality, data observability, MCP integration, open source, data catalog]
 keywords: "how to use OpenMetadata, OpenMetadata tutorial, OpenMetadata vs DataHub comparison, data catalog open source, OpenMetadata installation guide, data governance platform, metadata management best practices, data lineage tracking tool, OpenMetadata Docker deployment, data quality profiling"
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # OpenMetadata: Unified Metadata Platform for Data Discovery, Observability, and Governance

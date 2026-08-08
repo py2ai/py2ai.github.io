@@ -16,6 +16,7 @@ tags:
 - interoperability
 - tutorial
 title: Run C++ Code from Python – Step-by-Step Guide
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 Python is an incredibly versatile language, but sometimes you might need the speed and performance of C++. This tutorial explains how to **run C++ code directly from Python**, making it easy to integrate both languages. You’ll learn how to write, compile, and execute a temporary C++ program from a Python script using the **`subprocess`** and **`tempfile`** modules. This is a great way to understand cross-language execution and automation using Python!

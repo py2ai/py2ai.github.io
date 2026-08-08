@@ -10,6 +10,7 @@ categories: [AI, Python, Video Analytics]
 tags: [NVIDIA, video search, GPU acceleration, vision agents, video analytics, AI blueprint, summarization, Python, RAG, multimodal]
 keywords: "how to use NVIDIA video search blueprint, NVIDIA video analytics tutorial, GPU-accelerated video search, video summarization AI, NVIDIA AI Blueprint setup, vision agents video analytics, multimodal RAG video search, NVIDIA video search vs alternatives, video content analysis GPU, open source video search tool"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 NVIDIA's Video Search and Summarization (VSS) Blueprint delivers a production-grade reference architecture for building GPU-accelerated video search and summarization pipelines that transform how organizations process, analyze, and retrieve insights from video data. With 822+ stars and growing at 28 stars per day, this open-source blueprint combines real-time video intelligence, downstream analytics, and agentic AI workflows into a single deployable system powered by NVIDIA NIM microservices and cutting-edge vision language models.

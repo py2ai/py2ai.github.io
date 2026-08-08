@@ -23,6 +23,7 @@ tags:
 - Video Streaming
 - Multi-client
 title: Transfer Video Over Sockets from Multiple Clients in Python
+image: /assets/img/diagrams/free-programming-books/free-programming-books-ecosystem.svg
 ---
 
 

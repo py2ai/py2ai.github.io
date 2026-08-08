@@ -13,6 +13,7 @@ tags:
   - LLM
   - Developer Tools
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Goose: Open Source AI Agent That Codes, Tests, and Executes

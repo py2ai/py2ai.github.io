@@ -15,6 +15,7 @@ tags:
   - Skill
   - Documentation
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Stop Slop: The Open-Source Skill That Removes AI Writing Patterns From Your Prose

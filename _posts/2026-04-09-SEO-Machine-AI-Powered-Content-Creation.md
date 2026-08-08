@@ -13,6 +13,7 @@ tags:
   - Open Source
   - Claude Code
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # SEO Machine: AI-Powered Content Creation Workspace

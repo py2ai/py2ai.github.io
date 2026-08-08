@@ -8,6 +8,7 @@ permalink: /PureMac-Open-Source-macOS-Cleaner/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [macos, open-source, privacy, system-utility, cleaner]
 author: PyShine
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 ## Introduction

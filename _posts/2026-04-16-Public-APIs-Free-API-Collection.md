@@ -12,6 +12,7 @@ tags:
   - Development
   - Resources
 author: "PyShine"
+image: /assets/img/diagrams/free-claude-code/free-claude-code-architecture.svg
 ---
 
 # Public APIs: The Ultimate Free API Collection for Developers

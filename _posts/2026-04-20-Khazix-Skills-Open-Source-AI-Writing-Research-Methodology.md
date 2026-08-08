@@ -8,6 +8,7 @@ permalink: /khazix-skills-open-source-ai-writing-research-methodology/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Writing, Research, Skills, Claude-Code, Methodology, Open-Source]
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 Most AI writing tools produce content that reads like it was written by AI. The sentences are perfectly structured, the transitions are mechanically smooth, and every paragraph ends with a tidy summary. Khazix Skills takes the opposite approach: it is an open-source toolkit designed to make AI-assisted writing sound like a real person -- specifically, like Digital Life Khazix, one of China's most distinctive AI content creators.

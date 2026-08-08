@@ -16,6 +16,7 @@ tags:
 - Virtual Environments
 - Development Tips
 title: Learn Python Tips and Tricks Part 03
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

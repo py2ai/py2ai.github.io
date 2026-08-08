@@ -14,6 +14,7 @@ tags:
   - Programming
   - Async
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Swift in a Single Post: A Complete Swift Tutorial from Optionals and Protocols to Async Actors and SwiftUI

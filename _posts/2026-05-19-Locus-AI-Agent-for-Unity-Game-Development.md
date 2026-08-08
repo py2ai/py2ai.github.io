@@ -10,6 +10,7 @@ seo:
   keywords: "locus, unity, game development, ai agent, coding, gamedev, ai"
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /Locus-AI-Agent-for-Unity-Game-Development/
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Building Unity games involves a relentless cycle of writing C# scripts, tweaking scene hierarchies, debugging runtime state, and managing asset references. What if an AI agent could handle the tedious parts while you focus on creative decisions? **Locus for Unity** is an open-source AI agent that operates directly inside your Unity workflow, writing code, reading and modifying assets, debugging runtime behavior, and even maintaining project knowledge across sessions.

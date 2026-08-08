@@ -10,6 +10,7 @@ categories: [AI Agents, Go, Developer Tools]
 tags: [Stash, AI memory, persistent memory, MCP, pgvector, Go, LLM agents, semantic recall, consolidation, developer tools]
 keywords: "Stash AI persistent memory system, how to give AI agents long-term memory, Stash MCP server setup, AI memory consolidation pipeline, pgvector semantic search for AI, Stash vs other AI memory tools, persistent memory for Claude Code, AI agent memory Go tutorial, contradiction detection AI memory, Stash installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/agentmemory/agentmemory-agent-ecosystem.svg
 ---
 
 # Stash: Persistent AI Memory System with 8-Stage Consolidation and MCP Integration

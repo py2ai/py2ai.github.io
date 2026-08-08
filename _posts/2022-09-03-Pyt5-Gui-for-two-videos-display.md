@@ -14,6 +14,7 @@ tags:
 - GUI
 - Programming
 title: How to stream two videos in PyQt5 GUI
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

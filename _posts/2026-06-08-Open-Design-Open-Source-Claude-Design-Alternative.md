@@ -12,6 +12,7 @@ categories: [AI Design, Open Source, Developer Tools]
 tags: [Open Design, Claude Design alternative, AI design tool, open source design, coding agent CLI, design systems, HyperFrames, local-first design, agent-native design, BYOK proxy]
 keywords: "Open Design open source Claude Design alternative, how to use Open Design locally, Open Design vs Claude Design comparison, AI design tool with coding agents, Open Design 261 plugins tutorial, local-first AI design studio, Open Design design systems setup, agent-native design tool for developers, Open Design installation guide, BYOK proxy AI design tool"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Introduction

@@ -13,6 +13,7 @@ tags:
   - RAG
   - Chat Platform
 author: "PyShine"
+image: /assets/img/diagrams/chatwoot/chatwoot-ai-features.svg
 ---
 
 # Onyx: Open Source AI Chat Platform with 26K Stars

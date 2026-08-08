@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Backend, Python]
 keywords: "FastAPI tutorial one post, learn FastAPI fast, FastAPI path operations params, Pydantic model validation serialization, FastAPI APIRouter routing, FastAPI dependency injection Depends, FastAPI async database SQLAlchemy asyncpg, FastAPI middleware auth OAuth2 JWT, FastAPI uvicorn gunicorn, Alembic migrations, FastAPI pytest httpx, FastAPI Docker serverless, FastAPI quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn FastAPI in a Single Post: Complete Tutorial From Path Operations and Pydantic to Async Databases and Production

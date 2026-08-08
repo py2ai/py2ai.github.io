@@ -14,6 +14,7 @@ tags:
   - Real-Time Collaboration
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/trek/trek-ai-mcp.svg
 ---
 
 # TREK: A Self-Hosted, Real-Time Collaborative Travel Planner with MCP Built In

@@ -13,6 +13,7 @@ tags:
   - SuperAgent
   - Long-Horizon Tasks
 author: "PyShine"
+image: /assets/img/diagrams/langflow/langflow-architecture.svg
 ---
 
 # Deer Flow: ByteDance's Open-Source Long-Horizon SuperAgent Framework

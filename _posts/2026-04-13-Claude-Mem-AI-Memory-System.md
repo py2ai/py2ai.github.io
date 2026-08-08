@@ -13,6 +13,7 @@ tags:
   - Developer Tools
   - Claude
 author: "PyShine"
+image: /assets/img/diagrams/agentmemory/agentmemory-agent-ecosystem.svg
 ---
 
 # Claude-Mem: Persistent Memory for AI Coding Assistants

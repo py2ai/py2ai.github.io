@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Security, Backend]
 keywords: "OAuth 2.0 OIDC tutorial one post, learn OAuth fast, OAuth roles resource owner client authorization server resource server, authorization code flow PKCE, client credentials device code, implicit password deprecated, access token refresh token scopes, JWT vs opaque token, OpenID Connect ID token userinfo, PKCE code_verifier code_challenge, state parameter CSRF, secure token storage SPA, OAuth security best practices, OAuth quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn OAuth 2.0 and OIDC in a Single Post: Complete Tutorial From Authorization Flows and Tokens to PKCE and Security

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [AI coding agents, AGENTS.md, Claude Code, Codex, Cursor, software engineering rules, Clean Code, Domain-Driven Design, refactoring, code quality, AI agent rules, developer tools, open source, coding standards, AI workflow]
 keywords: "how to use AGENTS.md rules for AI coding agents, agent-rules-books tutorial, Claude Code rules setup, Codex agent rules configuration, best AI coding agent rules, Clean Code rules for AI agents, Domain-Driven Design AGENTS.md, refactoring rules for coding agents, open source AI agent rules, AI coding agent configuration guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Agent Rules Books: Software Engineering Rules Distilled for AI Coding Agents

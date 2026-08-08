@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Networking, Infrastructure]
 keywords: "computer networking tutorial one post, learn networking fast, OSI 7 layers model explained, TCP/IP model layers, TCP 3-way handshake SYN SYN-ACK, TCP vs UDP difference, IP addresses ports encapsulation, DNS resolution process, TLS 1.3 handshake, HTTPS request lifecycle, IP routing subnets CIDR NAT, load balancing, dig curl wireshark netcat, firewall VPN, networking quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Computer Networking in a Single Post: Complete Tutorial From OSI Layers to DNS and HTTPS

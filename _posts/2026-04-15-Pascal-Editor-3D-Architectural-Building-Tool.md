@@ -13,6 +13,7 @@ tags:
   - WebGPU
   - Architecture
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # Pascal Editor: Open Source 3D Architectural Building Editor

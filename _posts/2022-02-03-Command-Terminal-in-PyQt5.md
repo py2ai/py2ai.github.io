@@ -21,6 +21,7 @@ tags:
 - Python
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/desktopcommander/desktopcommander-architecture.svg
 ---
 
 # PyQt5 Terminal Console

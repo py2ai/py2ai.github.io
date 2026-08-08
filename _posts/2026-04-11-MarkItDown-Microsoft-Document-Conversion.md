@@ -13,6 +13,7 @@ tags:
   - Markdown
   - Open Source
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # MarkItDown: Microsoft's Document to Markdown Converter

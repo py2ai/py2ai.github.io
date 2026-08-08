@@ -11,6 +11,7 @@ tags: [gpt-image-2, openai, evolink, image-api, prompt-engineering, ai-art, text
 keywords: "GPT-Image-2 API tutorial, GPT-Image-2 prompt engineering, OpenAI image generation API, Evolink GPT-Image-2, GPT-Image-2 prompt examples, AI image generation prompts, text to image API guide, GPT-Image-2 e-commerce prompts, GPT-Image-2 ad creative, image editing API"
 description: "Master GPT-Image-2 API with 763+ curated prompt cases across e-commerce, ad creative, portrait photography, poster design, character design, and UI mockup categories."
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## Introduction

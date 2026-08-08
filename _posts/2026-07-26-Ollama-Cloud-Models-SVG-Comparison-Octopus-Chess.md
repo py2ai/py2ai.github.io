@@ -21,6 +21,7 @@ tags:
 author: "PyShine"
 seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama cloud model comparison, octopus chess SVG, AI octopus drawing, LLM SVG benchmark, AI image generation comparison, deepseek vs glm vs qwen, which Ollama model is best, Ollama cloud models 2026, AI creative art, chess SVG art, octopus SVG, AI art comparison, complex SVG scene, animal game SVG"
+image: /assets/img/diagrams/ollama/ollama-api-ecosystem.svg
 ---
 
 # Which Ollama Cloud Model is Best? Octopus Playing Chess SVG Comparison (14 Models)

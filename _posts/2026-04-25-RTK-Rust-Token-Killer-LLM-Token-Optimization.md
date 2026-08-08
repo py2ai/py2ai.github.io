@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, Rust]
 tags: [RTK, Rust Token Killer, LLM token optimization, AI coding agents, Claude Code, CLI proxy, token savings, developer productivity, Rust tools, command line tools, AI context window, token compression]
 keywords: "how to reduce LLM token consumption with RTK, RTK Rust Token Killer tutorial, RTK vs manual token management, AI coding agent token optimization tool, Claude Code token savings CLI, Rust CLI proxy for LLM context, RTK installation and setup guide, best tool for reducing AI agent token usage, RTK token compression strategies, open source LLM token optimizer"
 author: "PyShine"
+image: /assets/img/diagrams/rust-axum-tutorial/axum-arch.svg
 ---
 
 # RTK (Rust Token Killer): Reduce LLM Token Consumption by 60-90% with This CLI Proxy

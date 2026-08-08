@@ -14,6 +14,7 @@ tags:
   - Async
   - Learn to Code
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Rust in a Single Post: A Complete Rust Tutorial from Ownership to Async

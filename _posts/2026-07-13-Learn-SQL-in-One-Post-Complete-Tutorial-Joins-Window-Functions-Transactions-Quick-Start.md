@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, Databases, Backend]
 keywords: "SQL tutorial one post, learn SQL fast, SQL joins explained, INNER JOIN LEFT JOIN RIGHT JOIN FULL OUTER JOIN, SQL window functions OVER PARTITION BY, SQL CTE WITH recursive, SQL transactions ACID BEGIN COMMIT ROLLBACK, SQL GROUP BY HAVING aggregates, SQL indexes EXPLAIN query plan, PostgreSQL MySQL SQLite tutorial, SQL window functions ROW_NUMBER RANK LAG, SQL normalization 3NF, SQL quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn SQL in a Single Post: Complete Tutorial From SELECT to Window Functions and ACID Transactions

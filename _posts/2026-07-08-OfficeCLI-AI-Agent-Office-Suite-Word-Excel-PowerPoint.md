@@ -5,6 +5,7 @@ date: 2026-07-08
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools, Automation]
 tags: [ai-agents, office-automation, word, excel, powerpoint, csharp, cli, automation, developer-tools]
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## 1. Introduction

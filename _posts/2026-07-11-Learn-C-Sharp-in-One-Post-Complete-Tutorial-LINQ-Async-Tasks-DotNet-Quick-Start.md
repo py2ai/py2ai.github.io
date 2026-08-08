@@ -15,6 +15,7 @@ tags:
   - LINQ
   - Async
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn C# in a Single Post: A Complete C# Tutorial from LINQ and Async to the .NET Runtime

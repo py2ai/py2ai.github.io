@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Open Source]
 tags: [WorldSeed, multi-agent systems, AI simulation, emergent behavior, Python framework, LLM Dungeon Master, YAML world definition, asymmetric information, autonomous agents, game engine]
 keywords: "how to use WorldSeed, WorldSeed multi-agent simulation tutorial, WorldSeed vs other agent frameworks, WorldSeed installation guide, emergent AI behavior simulation, Python world engine setup, LLM Dungeon Master for agents, YAML world definition tutorial, asymmetric information AI agents, open source multi-agent framework"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # WorldSeed: Emergent Multi-Agent World Engine

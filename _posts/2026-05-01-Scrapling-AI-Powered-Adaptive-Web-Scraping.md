@@ -10,6 +10,7 @@ categories: [AI Tools, Python, Web Scraping]
 tags: [Scrapling, web scraping, AI scraping, Python, anti-detection, MCP server, stealth scraping, adaptive scraping, data extraction, open source]
 keywords: "Scrapling AI web scraping tutorial, how to use Scrapling Python, adaptive web scraping AI, Scrapling vs Scrapy comparison, AI-powered web scraping Python, Scrapling stealth mode anti-detection, Scrapling MCP server integration, best web scraping tools 2026, Scrapling installation guide, intelligent web scraping framework"
 author: "PyShine"
+image: /assets/img/diagrams/scrapling/scrapling-adaptive-engine.svg
 ---
 
 Web scraping has always been a cat-and-mouse game. Websites change their structure, deploy anti-bot systems, and block automated requests -- while scrapers scramble to keep up. Scrapling, an AI-powered adaptive web scraping framework with over 38,000 stars on GitHub, fundamentally changes this dynamic. Built by Karim Shoair and battle-tested by hundreds of web scrapers daily, Scrapling combines intelligent element tracking, stealth browser automation, and MCP server integration into a single Python library that handles everything from a single request to a full-scale crawl.

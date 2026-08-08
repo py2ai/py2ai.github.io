@@ -12,6 +12,7 @@ tags:
   - AI Prediction
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## Introduction

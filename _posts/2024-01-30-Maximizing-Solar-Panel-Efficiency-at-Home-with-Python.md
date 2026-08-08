@@ -25,6 +25,7 @@ tags:
 - Renewable Energy
 - Python Scripts
 title: Maximizing Solar Panel Efficiency at Home with Python
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 ## A Money-Saving Approach

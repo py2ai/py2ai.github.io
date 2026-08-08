@@ -10,6 +10,7 @@ categories: [AI, Open Source, Python]
 tags: [OpenAI, privacy filter, PII detection, data redaction, token classification, NLP, transformer, data privacy, machine learning, open source]
 keywords: "OpenAI Privacy Filter tutorial, how to detect PII in text, privacy filter Python API, bidirectional token classification, PII redaction tool, OpenAI privacy filter installation, data sanitization machine learning, Viterbi decoding NER, privacy filter vs alternatives, open source PII detection"
 author: "PyShine"
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 # OpenAI Privacy Filter: Protecting Sensitive Data with Bidirectional Token Classification

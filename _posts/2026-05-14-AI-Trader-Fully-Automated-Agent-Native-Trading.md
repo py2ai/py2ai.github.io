@@ -10,6 +10,7 @@ categories: [AI, Python, Finance]
 tags: [AI-Trader, automated trading, AI agents, Python, stock trading, agent-native, open source, algorithmic trading, how to use, setup guide]
 keywords: "how to use AI-Trader, AI-Trader tutorial, AI-Trader automated trading, AI-Trader vs alternatives, AI-Trader installation guide, open source AI trading platform, AI-Trader Python setup, best automated trading framework, AI-Trader for beginners, agent-native trading system"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## What Is AI-Trader?

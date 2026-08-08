@@ -13,6 +13,7 @@ tags:
   - Space
   - AGC
 author: "PyShine"
+image: /assets/img/diagrams/apollo-11/apollo-agc-architecture.svg
 ---
 
 # Apollo 11: Original AGC Source Code - A Historic Software Heritage

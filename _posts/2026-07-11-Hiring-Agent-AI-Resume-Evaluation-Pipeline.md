@@ -14,6 +14,7 @@ tags:
   - Open Source
   - LLM
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Hiring Agent: An Open-Source AI Resume Evaluation Pipeline from HackerRank

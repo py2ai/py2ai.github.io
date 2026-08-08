@@ -10,6 +10,7 @@ categories: [AI Tools, Go, Developer Tools]
 tags: [Crush, agentic coding, Charm, Go, terminal UI, Bubble Tea, AI coding assistant, multi-provider LLM, open source, developer productivity]
 keywords: "Crush agentic coding tool, how to use Crush Charm, Crush vs Claude Code comparison, Go-based AI coding assistant, Charmbracelet Crush tutorial, terminal AI coding agent, multi-provider LLM coding tool, Crush installation guide, agentic coding terminal tool, open source AI coding assistant"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 ## What Is Crush?

@@ -10,6 +10,7 @@ categories: [AI, Video Generation, Multi-Agent]
 tags: [vimax, video-generation, multi-agent, ai-video, storyboarding, character-consistency, hkuds]
 keywords: [ViMax, agentic video generation, multi-agent framework, AI video creation, storyboard, character consistency, HKUDS]
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## What is ViMax?

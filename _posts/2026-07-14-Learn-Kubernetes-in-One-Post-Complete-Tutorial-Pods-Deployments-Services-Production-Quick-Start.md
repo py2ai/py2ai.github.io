@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, DevOps, Cloud Native]
 keywords: "Kubernetes tutorial one post, learn K8s fast, Kubernetes pod deployment service explained, Kubernetes control plane etcd API server, kubectl commands cheat sheet, Kubernetes ReplicaSet Deployment, Kubernetes Service ClusterIP NodePort LoadBalancer, Kubernetes Ingress ConfigMap Secret, Kubernetes Volume PersistentVolume PVC, Kubernetes HPA probes readiness liveness, Helm Kustomize, Kubernetes RBAC observability GitOps, Kubernetes quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Kubernetes in a Single Post: Complete Tutorial From Pods and Deployments to Services and Production

@@ -13,6 +13,7 @@ tags:
   - Python
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # DeepTutor: Agent-Native Personalized Learning Assistant

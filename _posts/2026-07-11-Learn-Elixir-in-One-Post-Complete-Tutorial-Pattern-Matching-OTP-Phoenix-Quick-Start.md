@@ -14,6 +14,7 @@ tags:
   - Programming
   - BEAM
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Elixir in a Single Post: A Complete Elixir Tutorial from Pattern Matching and Pipes to OTP and Phoenix LiveView

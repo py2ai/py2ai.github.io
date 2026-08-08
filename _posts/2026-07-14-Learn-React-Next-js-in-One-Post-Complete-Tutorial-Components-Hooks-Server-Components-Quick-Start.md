@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Web Development, Frontend]
 keywords: "React Next.js tutorial one post, learn React fast, React components JSX props, React hooks useState useEffect useRef useMemo useContext, custom hooks, React state management Zustand Redux TanStack Query, React Router routing, React forms validation Zod, Next.js App Router server components RSC, SSR SSG ISR, React testing library Vitest Playwright, deploy Vercel, React quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn React and Next.js in a Single Post: Complete Tutorial From Components and Hooks to Server Components and Deployment

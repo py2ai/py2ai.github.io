@@ -25,6 +25,7 @@ tags:
 - Interactive
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/system-design-tutorial/sd-components.svg
 ---
 
 ## Spring-Mass System Simulation with Pygame - Hooke's Law Physics

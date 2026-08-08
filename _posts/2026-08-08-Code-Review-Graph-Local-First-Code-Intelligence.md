@@ -15,6 +15,7 @@ tags:
   - Tree-sitter
   - Code Intelligence
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 # Code Review Graph: Local-First Code Intelligence for AI Assistants

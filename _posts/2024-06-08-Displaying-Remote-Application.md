@@ -21,6 +21,7 @@ tags:
 - Ubuntu
 - macOS
 title: Displaying Remote Application Windows Locally Using SSH...
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 In this tutorial, we'll walk you through the steps to display graphical applications running on a remote server on your local machine. This is especially useful for visualizing plots or running GUI-based applications from a remote server.
 

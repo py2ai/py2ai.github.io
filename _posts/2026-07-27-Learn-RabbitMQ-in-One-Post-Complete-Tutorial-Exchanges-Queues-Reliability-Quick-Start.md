@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Backend, Messaging]
 keywords: "RabbitMQ tutorial one post, learn RabbitMQ fast, RabbitMQ broker producer exchange queue consumer binding, RabbitMQ queue declare durable prefetch, direct fanout topic headers exchange, consumer ack nack dead-letter DLX, publisher confirms at-least-once idempotent, RabbitMQ cluster quorum queue mirrored, RabbitMQ streams append-only log, federation shovel cross-region, RabbitMQ vs Kafka, RabbitMQ quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn RabbitMQ in a Single Post: Complete Tutorial From Exchanges and Queues to Reliability, Streams, and Clustering

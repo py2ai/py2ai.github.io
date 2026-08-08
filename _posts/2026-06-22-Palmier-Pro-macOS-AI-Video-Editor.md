@@ -13,6 +13,7 @@ tags:
   - Video Editing
   - MCP
 author: "PyShine"
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 # Palmier Pro: The Open Source macOS Video Editor Built for AI

@@ -20,6 +20,7 @@ tags:
 - beginner
 - tutorial
 title: Wall Clock Tutorial with Tick Sound and Date Display
+image: /assets/img/diagrams/bilitickerbuy/bilitickerbuy-architecture.svg
 ---
 # PyShine Wall Clock Tutorial
 

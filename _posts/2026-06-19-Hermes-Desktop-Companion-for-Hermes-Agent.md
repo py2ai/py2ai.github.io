@@ -10,6 +10,7 @@ categories: [AI Agents, Desktop Apps, Open Source]
 tags: [Hermes Desktop, Hermes Agent, Electron, AI agent, desktop app, self-improving AI, multi-provider LLM, messaging gateways, TypeScript, open source]
 keywords: "Hermes Desktop tutorial, how to install Hermes Desktop, Hermes Agent desktop companion, Hermes Desktop vs ChatGPT desktop, self-improving AI agent desktop app, Hermes Desktop multi-provider LLM setup, Hermes Desktop messaging gateway integration, Hermes Desktop local LLM Ollama setup, Hermes Desktop secrets provider vault, open source AI agent desktop application"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction — The Desktop AI Agent Problem

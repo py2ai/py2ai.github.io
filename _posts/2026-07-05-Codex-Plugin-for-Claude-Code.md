@@ -13,6 +13,7 @@ tags:
   - OpenAI Codex
   - Developer Tools
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Codex Plugin for Claude Code: Integrate OpenAI Codex into Your Workflow

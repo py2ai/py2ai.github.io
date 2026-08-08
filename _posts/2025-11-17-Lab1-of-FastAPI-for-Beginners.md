@@ -20,6 +20,7 @@ tags:
 - beginner
 - tutorial
 title: FastAPI Lab1 – Build Your First Joke API
+image: /assets/img/diagrams/fastapi-tutorial/fastapi-async-db.svg
 ---
 ## Introduction
 

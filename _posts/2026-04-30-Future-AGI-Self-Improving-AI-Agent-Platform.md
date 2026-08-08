@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Developer Tools]
 tags: [Future AGI, AI agent evaluation, LLM tracing, agent simulation, AI guardrails, prompt optimization, OpenTelemetry, self-improving agents, AI monitoring, open source]
 keywords: "how to use Future AGI, Future AGI tutorial, Future AGI vs Langfuse comparison, AI agent evaluation platform, self-improving AI agents, LLM tracing OpenTelemetry, agent simulation testing, prompt optimization algorithms, AI guardrails open source, Future AGI installation guide"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Future AGI: The Open-Source Platform for Self-Improving AI Agents

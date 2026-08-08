@@ -13,6 +13,7 @@ tags:
   - Self-Hosted
   - Privacy
 author: "PyShine"
+image: /assets/img/diagrams/openclaw/openclaw-architecture.svg
 ---
 
 # OpenClaw: Your Own Personal AI Assistant That Runs Everywhere

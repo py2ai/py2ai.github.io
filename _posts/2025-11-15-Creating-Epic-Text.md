@@ -10,6 +10,7 @@ keywords:
 - Beginner tutorial
 - Programming
 - Fun projects
+image: /assets/img/diagrams/chinatextbook/chinatextbook-education-levels.svg
 ---
 
 # Creating Epic Text in Python with PyFiglet

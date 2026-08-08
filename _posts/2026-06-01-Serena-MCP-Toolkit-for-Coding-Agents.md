@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, Python]
 tags: [serena, MCP toolkit, coding agents, language server protocol, AI code intelligence, symbol-level operations, code refactoring, Claude Code, VSCode, JetBrains]
 keywords: "serena MCP toolkit tutorial, coding agent IDE tools, language server protocol for AI, symbol-level code operations, MCP server for coding agents, serena installation guide, AI code refactoring tools, cross-session memory for agents, LSP-based code intelligence, serena vs Aider comparison"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 MCP toolkit for coding agents has evolved from simple text search and replace toward semantic code understanding, but most tools still operate at the line-number level -- forcing AI agents to guess at code structure, count lines, and hope their edits land in the right place. Serena, from Oraios AI, changes this entirely: an MCP toolkit that gives AI coding agents IDE-like capabilities through symbol-level operations, supporting 40+ languages via the Language Server Protocol, with persistent cross-session memory, composable tool modes, and interactive debugging -- all built on the open Model Context Protocol standard and open source under the MIT license with 23,334 stars on GitHub.

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Productivity]
 tags: [Claude Code, AI coding agent, Opus 4.7, hub and spoke model, multi-model consensus, execution guardrails, persistent memory, autonomous coding, SaaS development, AI agent orchestration]
 keywords: "Claude Code engineering harness setup, how to run Claude Code for 8 hours autonomously, hub and spoke model AI agents, multi-model consensus code review, Claude Code execution guardrails, persistent memory for AI coding agents, Claude Opus 4.7 production workflow, AI agent token optimization, Claude Code subagent orchestration, autonomous coding session best practices"
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 # Claude Code Engineering Harness: Production-Grade Blueprint for 8+ Hour Autonomous Coding Sessions

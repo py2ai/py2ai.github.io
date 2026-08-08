@@ -8,6 +8,7 @@ permalink: /Prompts-Chat-Community-Prompt-Engineering-Platform/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [prompts, chatgpt, prompt-engineering, open-source, ai, community, mcp]
 author: PyShine
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## Introduction

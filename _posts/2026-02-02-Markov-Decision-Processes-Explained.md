@@ -5,6 +5,7 @@ date: 2026-02-02
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Deep dive into Markov Decision Processes (MDPs) - the mathematical foundation of Reinforcement Learning. Learn states, actions, transitions, rewards, and Bellman equations."
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Part 2: Markov Decision Processes Explained - Mathematical Foundation of RL

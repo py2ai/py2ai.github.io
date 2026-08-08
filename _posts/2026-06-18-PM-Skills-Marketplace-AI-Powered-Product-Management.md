@@ -10,6 +10,7 @@ categories: [AI Agents, Product Management, Developer Tools]
 tags: [PM Skills, product management, AI skills, Claude Code, product discovery, PRD, product strategy, AI workflows, go-to-market, product analytics]
 keywords: "PM Skills Marketplace tutorial, how to use PM Skills with Claude Code, AI product management skills framework, product discovery AI assistant workflow, PRD writing with AI Claude Code, product strategy frameworks AI tools, go-to-market planning AI assistant, product management AI workflows open source, Claude Code plugins for product managers, AI shipping kit vibe coding audit"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

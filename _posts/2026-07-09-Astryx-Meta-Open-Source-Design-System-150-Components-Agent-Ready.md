@@ -14,6 +14,7 @@ tags:
   - AI Agents
   - StyleX
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

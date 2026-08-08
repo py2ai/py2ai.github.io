@@ -9,6 +9,7 @@ featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools, Web Development]
 tags: [ai-coding, website-cloner, typescript, ai-agents, web-development, automation, templates]
 author: "PyShine"
+image: /assets/img/diagrams/ai-website-cloner/ai-website-cloner-agent-pipeline.svg
 ---
 
 # AI Website Cloner: Clone Any Website With One Command Using AI Coding Agents

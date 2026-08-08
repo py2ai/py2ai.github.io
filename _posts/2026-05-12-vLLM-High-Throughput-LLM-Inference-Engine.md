@@ -10,6 +10,7 @@ categories: [AI Infrastructure, Open Source, Python]
 tags: [vLLM, LLM inference, PagedAttention, continuous batching, GPU serving, KV cache, tensor parallelism, quantization, OpenAI API, distributed inference]
 keywords: "vLLM tutorial, how to use vLLM for LLM serving, vLLM PagedAttention explained, vLLM vs TGI vs Triton, vLLM installation guide, LLM inference optimization, vLLM distributed serving setup, vLLM quantization support, OpenAI compatible LLM server, high throughput LLM deployment"
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## Introduction

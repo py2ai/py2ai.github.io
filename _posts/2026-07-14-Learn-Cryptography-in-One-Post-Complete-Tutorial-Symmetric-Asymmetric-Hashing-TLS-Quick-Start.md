@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Security, Cryptography]
 keywords: "cryptography tutorial one post, learn cryptography fast, symmetric encryption AES GCM CBC, asymmetric encryption public private key RSA ECC, key exchange Diffie Hellman ECDH, hashing SHA-256 HMAC digital signatures, password storage bcrypt argon2 salt, TLS 1.3 HTTPS handshake, SSH host keys, PKI certificate authority X.509, JWT OAuth, end-to-end encryption Signal, zero-knowledge proofs, cryptography quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Cryptography in a Single Post: Complete Tutorial From Symmetric and Asymmetric Encryption to TLS and Applied Security

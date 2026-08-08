@@ -10,6 +10,7 @@ categories: [AI Agents, Finance, Developer Tools]
 tags: [Anthropic, Claude, financial services, AI agents, investment banking, equity research, fund administration, MCP connectors, private equity, wealth management]
 keywords: "Anthropic financial services AI agents, Claude for investment banking, how to use Claude for finance, AI agents for equity research, financial services AI automation, Claude Cowork plugin finance, Anthropic managed agents API, MCP data connectors finance, AI-powered financial modeling, Claude for fund administration"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Anthropic Financial Services: AI Agents for Finance Workflows

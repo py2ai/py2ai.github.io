@@ -16,6 +16,7 @@ tags:
 - graphics
 - fractal
 title: Make a Tree with Blossoms in Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 ## Overview

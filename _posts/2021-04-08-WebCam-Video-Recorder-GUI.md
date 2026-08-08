@@ -24,6 +24,7 @@ tags:
 - Python GUI
 - Tutorial
 title: How to make a simple webcam video recorder GUI in PyQt5
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

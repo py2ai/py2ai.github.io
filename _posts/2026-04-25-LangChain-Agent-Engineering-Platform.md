@@ -10,6 +10,7 @@ categories: [AI, LLM Framework, Agents]
 tags: [langchain, llm, agents, ai-agents, langgraph, rag, python, open-source, framework, multiagent]
 keywords: ["langchain agent engineering", "langchain vs langgraph", "langchain tutorial", "langchain rag pipeline", "langchain multi-agent", "langchain installation", "langchain features", "langchain ecosystem", "langchain python framework", "langchain agent workflow"]
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 LangChain is the most popular open-source framework for building agents and LLM-powered applications, with over 134,000 stars on GitHub. It provides a comprehensive toolkit that helps developers chain together interoperable components and third-party integrations to simplify AI application development. Whether you are building simple chatbots or complex multi-agent systems, LangChain offers the abstractions and utilities needed to future-proof your AI applications as the underlying technology evolves.

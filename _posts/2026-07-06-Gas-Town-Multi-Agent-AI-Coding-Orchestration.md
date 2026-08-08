@@ -6,6 +6,7 @@ categories: [ai, multi-agent, developer-tools]
 tags: [gas-town, multi-agent, ai-coding, orchestration, claude-code, github-copilot, open-source]
 permalink: /Gas-Town-Multi-Agent-AI-Coding-Orchestration/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

@@ -8,6 +8,7 @@ permalink: /Dive-into-Claude-Code-Systematic-AI-Coding-Analysis/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Claude-Code, Architecture, Agent-Design, LLM, Safety-Systems, Coding-Agent]
 author: PyShine
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## Introduction

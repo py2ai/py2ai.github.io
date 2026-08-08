@@ -10,6 +10,7 @@ categories: [AI Design, TypeScript, Developer Tools]
 tags: [lottie, AI animation, Claude Code, Codex, Lottie JSON, animation generation, TypeScript, AI design tools, production-ready, developer tools]
 keywords: "how to generate Lottie animations with AI, DiffusionStudio Lottie tutorial, Claude Code Lottie animation generation, AI-generated Lottie JSON, Codex animation creation, production-ready Lottie animations, Lottie animation AI agent, automated Lottie animation workflow, AI design tools for developers, Lottie JSON schema validation"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # DiffusionStudio Lottie: Generate Production-Ready Lottie Animations with AI Coding Agents

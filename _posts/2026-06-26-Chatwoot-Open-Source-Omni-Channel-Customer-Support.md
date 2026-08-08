@@ -13,6 +13,7 @@ tags:
   - AI
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/chatwoot/chatwoot-ai-features.svg
 ---
 
 # Chatwoot: Open-Source Omni-Channel Customer Support Platform

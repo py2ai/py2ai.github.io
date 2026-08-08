@@ -14,6 +14,7 @@ tags:
   - Programming
   - Android
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Kotlin in a Single Post: A Complete Kotlin Tutorial from Null Safety and Coroutines to Compose and KMP

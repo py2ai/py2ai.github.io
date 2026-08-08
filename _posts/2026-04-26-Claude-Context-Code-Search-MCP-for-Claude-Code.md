@@ -10,6 +10,7 @@ categories: [Developer Tools, AI Agents, Open Source]
 tags: [Claude Context, semantic code search, MCP plugin, Claude Code, code indexing, Milvus vector database, hybrid search, AI coding agents, codebase search, developer tools]
 keywords: "Claude Context MCP plugin tutorial, semantic code search for Claude Code, how to index codebase with Claude Context, Claude Context vs grep code search, MCP code search tool setup, hybrid search Milvus code indexing, AI coding agent codebase context, Claude Context installation guide, semantic search for large codebases, open source code search MCP server"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Claude Context: Semantic Code Search MCP Plugin for Claude Code and AI Coding Agents

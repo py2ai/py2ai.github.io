@@ -32,6 +32,7 @@ tags:
 - Python
 - JavaScript
 title: "Top AI Coding Assistant Frameworks: Build Your Own Intelligent Coding Assistant (2026)"
+image: /assets/img/diagrams/build-your-own-x/build-your-own-x-complexity.svg
 ---
 # Top AI Coding Assistant Frameworks: Build Your Own Intelligent Coding Assistant (2026)
 

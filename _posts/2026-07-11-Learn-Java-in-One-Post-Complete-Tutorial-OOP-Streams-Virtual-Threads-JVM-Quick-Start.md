@@ -14,6 +14,7 @@ tags:
   - Streams
   - Virtual Threads
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Java in a Single Post: A Complete Java Tutorial from OOP and Streams to Virtual Threads and the JVM

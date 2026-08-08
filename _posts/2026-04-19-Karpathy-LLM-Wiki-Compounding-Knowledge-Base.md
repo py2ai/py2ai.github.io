@@ -12,6 +12,7 @@ tags:
   - Knowledge Management
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/browserbase-skills/browserbase-skills-architecture.svg
 ---
 
 # Karpathy's LLM Wiki: Build a Compounding Knowledge Base With Your AI Agent

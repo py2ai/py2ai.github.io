@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Backend, Data Engineering]
 keywords: "Apache Kafka tutorial one post, learn Kafka fast, Kafka topics partitions offsets, Kafka producers consumers commit, Kafka consumer groups rebalance, Kafka replication ISR acks, at-least-once exactly-once delivery, Kafka Connect source sink Debezium, Kafka Streams windowing state stores, KSQL ksqlDB SQL on streams, Schema Registry Avro, Strimzi Kafka Kubernetes, Kafka quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Apache Kafka in a Single Post: Complete Tutorial From Topics and Partitions to Consumer Groups and Kafka Streams

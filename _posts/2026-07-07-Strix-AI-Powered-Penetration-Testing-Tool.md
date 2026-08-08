@@ -5,6 +5,7 @@ date: 2026-07-07
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Security, DevOps]
 tags: [ai-pentesting, cybersecurity, vulnerability-scanning, owasp, python, automation, devsecops]
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 ## 1. Introduction

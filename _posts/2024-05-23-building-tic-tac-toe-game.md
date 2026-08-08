@@ -19,6 +19,7 @@ tags:
 - Computer Science
 - Coding Challenges
 title: Building a Tic-Tac-Toe Game in Python!
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 ## Building a Tic-Tac-Toe Game in Python

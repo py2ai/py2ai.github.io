@@ -5,6 +5,7 @@ date: 2026-02-01
 categories: [Machine Learning, AI, Python]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Complete roadmap for learning Deep Reinforcement Learning from scratch. Covering theory, frameworks, mathematical foundations, and practical implementations."
+image: /assets/img/diagrams/deep-ep/deep-ep-architecture.svg
 ---
 # Deep Reinforcement Learning Series - Complete Roadmap and Guide
 

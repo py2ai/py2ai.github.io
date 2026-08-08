@@ -18,6 +18,8 @@ tags:
 - Machine Learning
 - Python
 title: How to install TVM on MAC OS
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

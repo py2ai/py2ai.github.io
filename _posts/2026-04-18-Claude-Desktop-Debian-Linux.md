@@ -12,6 +12,7 @@ tags:
   - Claude
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Claude Desktop for Debian: Native Linux Packaging with MCP, Cowork Mode, and Multi-Architecture Support

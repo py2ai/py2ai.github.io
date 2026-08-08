@@ -14,6 +14,7 @@ tags:
   - AI Agents
   - Terminal
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # DesktopCommanderMCP: Terminal and Filesystem Control for Claude

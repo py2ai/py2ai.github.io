@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, DevOps, CI/CD]
 keywords: "GitLab CI CD tutorial one post, learn GitLab CI fast, gitlab-ci.yml pipeline stages jobs, GitLab runners shared specific tags executors, GitLab variables protected masked environments, GitLab review apps, Auto DevOps, GitLab Pages container registry, GitLab Kubernetes agent, GitLab Terraform, GitLab CI quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn GitLab CI/CD in a Single Post: Complete Tutorial From Pipelines and Runners to Environments and Auto DevOps

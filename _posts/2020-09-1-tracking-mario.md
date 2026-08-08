@@ -24,6 +24,7 @@ tags:
 - Object Tracking
 - Mario
 title: How to Track Mario Game Character with OpenCV and Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

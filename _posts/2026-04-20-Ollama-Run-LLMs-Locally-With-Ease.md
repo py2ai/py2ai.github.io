@@ -8,6 +8,7 @@ permalink: /ollama-run-llms-locally-with-ease/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [ollama, llm, local-inference, gguf, gpu-acceleration, openai-compatible, go, llama-cpp]
 author: "PyShine"
+image: /assets/img/diagrams/dive-into-llms/dive-into-llms-concepts.svg
 ---
 
 ## Introduction

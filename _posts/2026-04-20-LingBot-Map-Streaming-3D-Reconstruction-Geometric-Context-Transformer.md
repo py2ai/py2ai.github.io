@@ -7,6 +7,7 @@ permalink: /2026/04/20/lingbot-map-streaming-3d-reconstruction-geometric-context
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [AI, 3D Reconstruction, Computer Vision, Transformer, DINOv2, Point Cloud, Streaming]
 author: "PyShine"
+image: /assets/img/diagrams/claude-context/claude-context-architecture.svg
 ---
 
 ## Introduction

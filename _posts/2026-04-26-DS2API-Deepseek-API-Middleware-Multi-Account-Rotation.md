@@ -10,6 +10,7 @@ categories: [Open Source, Developer Tools, AI]
 tags: [DS2API, DeepSeek, API middleware, multi-account rotation, OpenAI compatible, Claude compatible, Gemini compatible, load balancing, Go, Docker deployment, Vercel serverless]
 keywords: "DS2API DeepSeek API middleware, how to set up DS2API locally, DeepSeek to OpenAI API conversion, multi-account rotation DeepSeek, DS2API Docker deployment, DS2API vs alternatives, DeepSeek API proxy tutorial, Claude SDK with DeepSeek, Gemini compatible API middleware, DS2API configuration guide"
 author: "PyShine"
+image: /assets/img/diagrams/deepseek-reasonix/deepseek-reasonix-architecture.svg
 ---
 
 # DS2API: Deepseek-to-API Middleware with Multi-Account Rotation

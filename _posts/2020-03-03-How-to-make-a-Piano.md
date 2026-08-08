@@ -23,6 +23,7 @@ tags:
 - Sound
 - Game Development
 title: How to Make a Piano Application in Python with Pygame
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

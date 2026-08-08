@@ -12,6 +12,7 @@ tags:
 - Chess
 - Game Development
 title: Building a Simple Chess Game in Python
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 # Chess Game Tutorial

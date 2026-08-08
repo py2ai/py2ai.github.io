@@ -8,6 +8,7 @@ permalink: /Keychron-Open-Source-Keyboard-Hardware-Design/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [open-source, hardware, keyboards, CAD, mechanical-keyboards]
 author: PyShine
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Keychron Open Source Keyboard Hardware Design

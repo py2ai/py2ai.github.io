@@ -20,6 +20,7 @@ tags:
 - tutorial
 - python
 mathjax: true
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # How to Install Protocol Buffers (Protobuf) on macOS

@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Open Source]
 tags: [Agent-Reach, AI agents, internet search, web scraping, Twitter API, Reddit API, YouTube search, zero API fees, CLI tool, open source]
 keywords: "Agent-Reach AI agent internet search, how to use Agent-Reach, Agent-Reach tutorial, AI agent web search tool, zero API fee Twitter Reddit search, Agent-Reach installation guide, Agent-Reach vs alternatives, open source AI search CLI, Agent-Reach for developers, multi-platform AI agent search"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Agent-Reach: Give Your AI Agent Eyes to Search the Entire Internet

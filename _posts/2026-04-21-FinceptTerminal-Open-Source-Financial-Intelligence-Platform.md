@@ -13,6 +13,7 @@ tags:
   - Qt6
   - AI
 author: "PyShine"
+image: /assets/img/diagrams/CopilotKit-OpenGenerativeUI/CopilotKit-OpenGenerativeUI-architecture.svg
 ---
 
 # FinceptTerminal: Open-Source Financial Intelligence Platform with CFA-Level Analytics

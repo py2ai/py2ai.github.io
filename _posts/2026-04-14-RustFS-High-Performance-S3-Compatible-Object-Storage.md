@@ -14,6 +14,7 @@ tags:
   - Performance
   - Distributed Systems
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # RustFS: High-Performance S3-Compatible Object Storage

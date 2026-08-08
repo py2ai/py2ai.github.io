@@ -8,6 +8,7 @@ permalink: /browser-harness-ai-agent-browser-control/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Browser-Automation, CDP, LLM-Agents, Chrome-DevTools, Python, Self-Healing]
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

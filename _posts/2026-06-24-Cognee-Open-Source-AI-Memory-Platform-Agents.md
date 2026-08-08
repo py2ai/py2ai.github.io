@@ -15,6 +15,7 @@ tags:
   - Agents
   - MCP
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Cognee: The Open-Source AI Memory Platform That Gives Agents Persistent Long-Term Memory

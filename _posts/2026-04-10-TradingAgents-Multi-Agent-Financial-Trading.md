@@ -13,6 +13,7 @@ tags:
   - Multi-Agent Systems
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # TradingAgents: Multi-Agent LLM Framework for Financial Trading

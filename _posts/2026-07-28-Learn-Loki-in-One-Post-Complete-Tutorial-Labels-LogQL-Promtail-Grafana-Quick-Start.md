@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, DevOps, Observability]
 keywords: "Grafana Loki tutorial one post, learn Loki fast, Loki labels streams not indexed fields cardinality, Loki vs ELK Elasticsearch tradeoff, Promtail Docker logging driver OpenTelemetry push, Loki chunks boltdb-shipper S3 GCS storage, LogQL stream selector line filter parser json logfmt regexp, count_over_time rate sum by aggregation, Loki retention multi-tenant X-Scope-OrgID, Loki alerting ruler Alertmanager HA caching, Loki quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Loki in a Single Post: Complete Tutorial From Labels and LogQL to Promtail, Grafana, and Production

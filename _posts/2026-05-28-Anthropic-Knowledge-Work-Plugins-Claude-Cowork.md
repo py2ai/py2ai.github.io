@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Developer Tools]
 tags: [Anthropic, Claude, knowledge work plugins, AI agents, Claude Cowork, open source, Python, developer tools, AI productivity, knowledge management]
 keywords: "Anthropic knowledge work plugins tutorial, Claude Cowork plugins guide, how to use knowledge work plugins, Anthropic open source plugins, Claude AI productivity tools, knowledge work automation, Claude Cowork setup guide, AI knowledge management, Anthropic plugins for developers, Claude Cowork vs alternatives"
 author: "PyShine"
+image: /assets/img/diagrams/ai-auto-work/ai-auto-work-context-repair.svg
 ---
 
 # Anthropic Knowledge Work Plugins: Open Source Plugins for Claude Cowork

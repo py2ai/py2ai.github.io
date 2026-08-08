@@ -10,6 +10,7 @@ categories: [AI Tools, Open Source, Developer Tools]
 tags: [9router, AI router, Claude Code, Cursor, Codex, token saver, AI coding, open source, developer tools, LLM proxy]
 keywords: "9router AI coding router tutorial, how to use 9router with Claude Code, 9router vs alternatives, free AI coding proxy setup, 9router token saver guide, AI coding tool router comparison, 9router installation guide, 9router multi-provider fallback, best AI coding router 2026, 9router open source LLM proxy"
 author: "PyShine"
+image: /assets/img/diagrams/9router/9router-architecture.svg
 ---
 
 # 9Router: Free AI Coding Router with Token Saver and Auto-Fallback

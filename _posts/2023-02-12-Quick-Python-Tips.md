@@ -20,6 +20,7 @@ tags:
 - Software Development
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/english-level-up-tips/learning-path-roadmap.svg
 ---
 
 # 75+ Good Python Coding Examples for Software Development

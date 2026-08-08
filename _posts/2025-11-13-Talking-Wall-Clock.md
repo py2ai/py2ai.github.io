@@ -24,6 +24,7 @@ tags:
 - beginner
 - tutorial
 title: Talking Clock Tutorial with Text-to-Speech
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # PyShine Wall Clock Tutorial
 

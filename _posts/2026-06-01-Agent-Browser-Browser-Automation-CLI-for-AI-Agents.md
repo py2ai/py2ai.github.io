@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, Rust]
 tags: [agent-browser, browser automation, Rust CLI, Chrome DevTools Protocol, AI agents, CDP, Vercel, headless browser, web automation, observability dashboard]
 keywords: "agent-browser Rust CLI tutorial, browser automation for AI agents, Chrome DevTools Protocol Rust, headless browser automation CLI, agent-browser installation guide, CDP WebSocket browser control, React DevTools browser integration, browser observability dashboard, multi-provider browser automation, agent-browser vs Playwright comparison"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Browser automation for AI agents has long relied on Node.js-based tools like Playwright and Puppeteer, requiring hundreds of megabytes of dependencies and runtime overhead that slows down agent workflows. Agent-Browser, from Vercel Labs, reimagines this entirely: a 100% native Rust CLI that communicates directly with Chrome via the Chrome DevTools Protocol, achieving a 99x smaller install at 7 MB, 18x less memory at 8 MB, and a 1.6x faster cold start at 617ms -- all while providing 150+ commands, 8 browser providers, AI chat integration, React DevTools support, and an embedded observability dashboard, all open source under the Apache-2.0 license.

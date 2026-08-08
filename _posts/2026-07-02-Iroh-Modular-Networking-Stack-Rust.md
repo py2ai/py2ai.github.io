@@ -14,6 +14,7 @@ tags:
   - Hole-Punching
   - Relay
 author: "PyShine"
+image: /assets/img/diagrams/agentic-stack/agentic-stack-architecture.svg
 ---
 
 ## Introduction

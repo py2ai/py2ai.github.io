@@ -10,6 +10,7 @@ categories: [AI Tools, Open Source, Developer Tools]
 tags: [HTML-Anything, agentic HTML editor, AI HTML generator, 75 skills, 9 surfaces, Claude Code HTML, Cursor HTML, local AI agent, sandboxed preview, WeChat export]
 keywords: "HTML-Anything agentic HTML editor, how to use HTML-Anything locally, AI HTML generator with skills, HTML-Anything 75 skills 9 surfaces, local AI agent writes HTML, Claude Code HTML editor, Cursor HTML generation, sandboxed HTML preview tool, WeChat X Zhihu HTML export, zero API key HTML editor"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 ## Introduction

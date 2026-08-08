@@ -23,6 +23,7 @@ tags:
 - Image Processing
 - Photo Editor
 title: How to Make an OpenCV and PyQt5 GUI for Image Processing
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 

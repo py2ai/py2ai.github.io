@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Developer Tools]
 tags: [DSPy, agent skills, Claude Code, Codex CLI, GEPA optimizer, prompt optimization, LLM programming, DSPy 3.2, coding agents, open source]
 keywords: "how to use DSPy agent skills, DSPy agent skills tutorial, DSPy 3.2 skills for Claude Code, GEPA optimizer DSPy, DSPy coding agent integration, Claude Code DSPy skills, prompt optimization DSPy, DSPy fundamentals module, DSPy evaluation harness, DSPy agent skills installation"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # DSPy Agent Skills: Production-Grade DSPy 3.2 Skills for Coding Agents

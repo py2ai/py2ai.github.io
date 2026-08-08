@@ -13,6 +13,7 @@ tags:
   - AI Coding
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/browser-harness/browser-harness-architecture.svg
 ---
 
 ## Introduction

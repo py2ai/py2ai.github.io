@@ -19,6 +19,7 @@ tags:
 - beginner
 - tutorial
 title: Convert Images to Animated ASCII Art in Python – Beginner's Guide
+image: /assets/img/diagrams/awesome-gpt-image-2-prompts/image-generation-pipeline.svg
 ---
 ## Introduction
 

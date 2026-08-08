@@ -10,6 +10,7 @@ categories: [AI, Data Engineering]
 tags: [cocoindex, incremental-indexing, rag, llm-pipelines, data-engineering, vector-database, python, rust, ai-agents, knowledge-graph]
 keywords: "cocoindex incremental data indexing, LLM pipeline framework, RAG incremental indexing, AI agent data pipeline, delta-only data processing, Python Rust data framework, vector database indexing, knowledge graph pipeline"
 author: "PyShine"
+image: /assets/img/diagrams/cocoindex/cocoindex-architecture.svg
 ---
 
 ## What is CocoIndex?

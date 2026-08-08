@@ -8,6 +8,7 @@ permalink: /Agentic-Video-Editor-AI-Powered-Video-Production/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Video-Editing, Multi-Agent, Gemini, FFmpeg, Python, Automation]
 author: PyShine
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 Creating professional ad videos from raw footage has traditionally required skilled editors, expensive software, and hours of manual work. The Agentic Video Editor changes this equation entirely. It is an open-source, multi-agent pipeline that takes raw video footage and a creative brief as input, then autonomously produces polished ad videos through a coordinated sequence of AI-driven agents. Built on top of Google Gemini for intelligent decision-making and FFmpeg for reliable video processing, the system orchestrates scene detection, shot selection, trimming, compositing, and quality review without human intervention. The key innovation is its feedback loop: a Reviewer Agent scores each output, and if the quality falls below a threshold, specific feedback is routed back to the Director Agent for a revised edit plan. This iterative refinement cycle continues until the output meets quality standards or the maximum retry count is reached. The result is a system that can transform unstructured footage into compelling, short-form ad content with minimal human oversight.

@@ -5,6 +5,7 @@ date: 2026-04-02
 categories: [AI, LLM, Comparison, Technology]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "A detailed comparison between Anthropic's Claude Opus 4.6 and Alibaba's Qwen3.6 Plus Preview, analyzing their performance across 48 different tests including reasoning, creativity, and web design."
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Claude Opus 4.6 vs Qwen3.6 Plus Preview: A Comprehensive Comparison

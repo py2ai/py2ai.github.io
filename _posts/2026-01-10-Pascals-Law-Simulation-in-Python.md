@@ -10,6 +10,7 @@ keywords:
 - Pascal's Law
 - Hydraulic Press
 - STEM
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 # Visualizing Pascal's Law with Python and Pygame

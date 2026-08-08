@@ -7,6 +7,7 @@ permalink: /2026/04/20/anything-analyzer-universal-network-protocol-analysis-ai-
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [AI, Protocol Analysis, MITM, Electron, MCP, Reverse Engineering, Security, Network]
 author: "PyShine"
+image: /assets/img/diagrams/anything-analyzer/anything-analyzer-ai-pipeline.svg
 ---
 
 # Anything Analyzer: Universal Network Protocol Analysis with AI-Powered MITM and Browser Capture

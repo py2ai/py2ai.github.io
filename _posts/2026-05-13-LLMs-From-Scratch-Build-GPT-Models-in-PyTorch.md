@@ -10,6 +10,7 @@ categories: [AI, Machine Learning, Python]
 tags: [LLMs from scratch, build GPT model, PyTorch tutorial, transformer architecture, attention mechanism, language model training, deep learning, NLP, machine learning, Sebastian Raschka]
 keywords: "how to build LLM from scratch, LLMs from scratch tutorial, build GPT model PyTorch, transformer architecture explained, attention mechanism implementation, pretraining language models, finetuning LLM classification, instruction tuning DPO, Llama implementation from scratch, Sebastian Raschka LLM book"
 author: "PyShine"
+image: /assets/img/diagrams/build-your-own-x/build-your-own-x-complexity.svg
 ---
 
 # LLMs From Scratch: Build a GPT Model Step by Step in PyTorch

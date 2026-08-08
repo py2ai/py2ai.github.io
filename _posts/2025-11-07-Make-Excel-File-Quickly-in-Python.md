@@ -18,6 +18,7 @@ tags:
 - data-processing
 - tutorial
 title: Create Excel Files with Python – Complete Beginner's Guide
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 # Create Excel Files with Python – Complete Beginner's Guide
 

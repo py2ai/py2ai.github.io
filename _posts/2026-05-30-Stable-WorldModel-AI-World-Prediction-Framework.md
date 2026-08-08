@@ -10,6 +10,7 @@ categories: [AI Research, Python, Machine Learning]
 tags: [Stable-WorldModel, world models, model-predictive control, PyTorch, reinforcement learning, CEM solver, Gymnasium, LanceDB, AI research, open source]
 keywords: "Stable-WorldModel tutorial, how to train world models with MPC, model-predictive control Python, CEM solver world model, Gymnasium environment factors of variation, LanceDB dataset for RL, reproducible world model research, world model evaluation framework, LeWM learnable world model, DINO-WM implementation Python"
 author: "PyShine"
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 
 World model research with model-predictive control has long suffered from fragmentation -- researchers must build their own data pipelines, environment wrappers, planning solvers, and evaluation protocols, making it nearly impossible to compare results across papers. Stable-WorldModel, from a team including Yann LeCun, is an open-source Python platform that solves this problem by providing a unified interface for the three stages of world model research -- collecting data, training, and evaluating with model-predictive control -- across 30+ standardized environments with controllable factors of variation, 7 planning solvers, and 5 data formats.

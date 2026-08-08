@@ -12,6 +12,7 @@ tags:
   - Memory System
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/agentmemory/agentmemory-agent-ecosystem.svg
 ---
 
 # MemPalace: Local-First AI Memory That Hits 96.6% Recall Without a Single API Call

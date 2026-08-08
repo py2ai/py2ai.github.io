@@ -10,6 +10,7 @@ categories: [Developer Tools, Open Source, AI Agents]
 tags: [Claude Code, CLI tools, AI agents, developer productivity, MCP integrations, code review, AI coding, open source, template configuration, monitoring dashboard]
 keywords: "how to use Claude Code Templates, Claude Code Templates tutorial, Claude Code Templates vs alternatives, Claude Code Templates installation guide, open source Claude Code configuration, Claude Code agents setup, best Claude Code extensions, Claude Code Templates for beginners, Claude Code MCP integrations, Claude Code monitoring dashboard"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Claude Code Templates: The Ultimate CLI for Configuring and Monitoring Claude Code

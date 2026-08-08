@@ -10,6 +10,7 @@ categories: [AI Tools, Knowledge Management, Desktop Apps]
 tags: [tolaria, knowledge-management, markdown, git, ai-agents, mcp, desktop-app, tauri, react, rust, open-source]
 keywords: "tolaria knowledge management app, markdown knowledge base, git-first note taking, AI agent desktop app, MCP server vault tools, offline-first markdown editor, wikilink navigation, BlockNote editor, Tauri desktop app"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 ## Introduction

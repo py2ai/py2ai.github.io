@@ -13,6 +13,7 @@ tags:
   - Polymarket
   - Trading
 author: "PyShine"
+image: /assets/img/diagrams/openmetadata/openmetadata-architecture.svg
 ---
 
 # PolyData: Comprehensive Polymarket Data Pipeline for Trading Analysis

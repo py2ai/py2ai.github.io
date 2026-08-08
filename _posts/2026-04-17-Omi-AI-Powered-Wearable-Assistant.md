@@ -13,6 +13,7 @@ tags:
   - Python
   - Flutter
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Omi: Open-Source AI Wearable That Remembers Everything

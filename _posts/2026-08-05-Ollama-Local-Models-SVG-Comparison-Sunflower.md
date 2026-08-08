@@ -23,6 +23,8 @@ tags:
 author: "PyShine"
 seo:
   keywords: "best Ollama model for SVG, best LLM for SVG generation, Ollama local model comparison, sunflower SVG, AI sunflower drawing, LLM SVG benchmark, AI Fibonacci SVG, Fibonacci spiral SVG, mathematical art SVG, AI nature drawing, golden ratio SVG, phyllotaxis SVG, sunflower seeds SVG, AI art comparison, complex SVG scene, nature illustration, botanical SVG"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/local-deep-research/local-deep-research-architecture.svg
 ---
 
 # Which Ollama Local Model is Best? Sunflower SVG Comparison (16 Models)

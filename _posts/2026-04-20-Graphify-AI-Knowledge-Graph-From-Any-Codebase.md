@@ -12,6 +12,7 @@ tags:
   - Knowledge Graph
   - Tutorial
 author: "PyShine"
+image: /assets/img/diagrams/codebase-memory-mcp/codebase-memory-mcp-agents.svg
 ---
 
 # Graphify: Turn Any Codebase Into a Knowledge Graph With 71.5x Fewer Tokens

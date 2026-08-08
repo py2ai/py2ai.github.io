@@ -12,6 +12,7 @@ tags:
   - Tutorial
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 ## Introduction

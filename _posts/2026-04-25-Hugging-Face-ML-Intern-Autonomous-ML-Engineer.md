@@ -10,6 +10,7 @@ categories: [AI Agents, Machine Learning, Python]
 tags: [ML Intern, Hugging Face, autonomous ML engineer, AI agent, machine learning automation, model training, Python, open source, smolagents, LLM agents, research automation]
 keywords: "how to use Hugging Face ML Intern, ML Intern autonomous engineer tutorial, Hugging Face ML Intern setup guide, open source ML engineer agent, how to train models with ML Intern, ML Intern vs AutoGPT comparison, autonomous machine learning agent Python, Hugging Face ecosystem automation, ML Intern installation and configuration, AI agent for model training and deployment"
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 # Hugging Face ML Intern: An Open-Source Autonomous ML Engineer That Reads Papers, Trains Models, and Ships Code

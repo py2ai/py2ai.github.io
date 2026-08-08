@@ -8,6 +8,7 @@ permalink: /codeburn-see-where-your-ai-coding-tokens-go/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 tags: [AI, Claude-Code, Codex, Cursor, Token-Tracking, Cost-Optimization, Developer-Tools, TUI]
 author: "PyShine"
+image: /assets/img/diagrams/build-your-own-x/build-your-own-x-complexity.svg
 ---
 
 Every AI coding session burns tokens. But where do they actually go? Which tasks eat the most budget? Where does the AI nail it first try versus burning tokens on edit-test-fix retry loops? **CodeBurn** from [getagentseal/codeburn](https://github.com/getagentseal/codeburn) answers these questions with an interactive TUI dashboard that reads session data directly from disk -- no wrapper, no proxy, no API keys required.

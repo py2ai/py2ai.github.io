@@ -10,6 +10,7 @@ categories: [AI Agents, Python, Research Tools]
 tags: [AutoResearchClaw, autonomous research, AI research pipeline, paper generation, LLM agents, multi-agent systems, academic writing, self-evolving AI, research automation, Python]
 keywords: "how to use AutoResearchClaw, AutoResearchClaw tutorial, autonomous research pipeline, AI paper generation tool, AutoResearchClaw vs alternatives, research automation with AI, how to generate academic papers with AI, self-evolving research agent, multi-agent debate research, AutoResearchClaw installation guide, conference paper automation"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # AutoResearchClaw: Autonomous Research Pipeline From Idea to Paper

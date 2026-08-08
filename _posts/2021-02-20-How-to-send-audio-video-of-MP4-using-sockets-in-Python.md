@@ -22,6 +22,7 @@ tags:
 - TCP
 - OpenCV
 title: How to send audio and video using socket programming in...
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

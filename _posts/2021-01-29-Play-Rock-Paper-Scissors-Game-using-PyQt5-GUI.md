@@ -20,6 +20,7 @@ tags:
 - Machine Learning
 - GUI
 title: Play Rock Paper Scissors Game using PyQt5 GUI
+image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.svg
 ---
 
 

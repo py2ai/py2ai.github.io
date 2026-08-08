@@ -15,6 +15,7 @@ tags:
   - RAG
   - Data Extraction
 author: "PyShine"
+image: /assets/img/diagrams/openmetadata/openmetadata-architecture.svg
 ---
 
 # OpenDataLoader PDF: Transform PDFs into AI-Ready Data

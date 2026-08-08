@@ -11,6 +11,7 @@ tags:
 - full-wave-bridge
 - ac dc rectifier simulation
 title: AC to DC conversion Simulation in Python
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 This tutorial walks through building a **Full Wave Bridge Rectifier Simulation** using **Python and Pygame**. The simulation visually demonstrates how **AC (Alternating Current)** is converted into **DC (Direct Current)** using **four diodes** arranged in a bridge circuit.

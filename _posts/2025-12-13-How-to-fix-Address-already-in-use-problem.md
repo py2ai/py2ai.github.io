@@ -14,6 +14,7 @@ tags:
 - tcp
 - dev-tools
 featured-img: 20251213-psutil-port/20251213-psutil-port
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Automatically Free a Busy Port in Python Using psutil

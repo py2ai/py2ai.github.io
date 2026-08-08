@@ -5,6 +5,7 @@ date: 2026-02-03
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Q-Learning from scratch with complete Python implementation. Understand Q-table, Bellman equation, exploration-exploitation, and practical examples."
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 
 # Part 3: Q-Learning from Scratch - Complete Implementation Guide

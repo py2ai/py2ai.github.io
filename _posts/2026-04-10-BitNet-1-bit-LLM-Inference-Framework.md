@@ -13,6 +13,7 @@ tags:
   - Inference
   - Open Source
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 ## Introduction

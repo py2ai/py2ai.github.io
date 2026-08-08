@@ -8,6 +8,7 @@ permalink: /gbrain-self-wiring-knowledge-graph-ai-agents/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [AI, Knowledge-Graph, Agent-Framework, Open-Source, Y-Combinator, Postgres]
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 Your AI agent is smart but forgetful. Every conversation starts from scratch. Every meeting context is lost. Every person you mention is a stranger. **GBrain** fixes this by giving your agent a persistent, **self-wiring knowledge graph** that compounds daily. GBrain is the memory layer for AI agents — it wires itself up as it learns.

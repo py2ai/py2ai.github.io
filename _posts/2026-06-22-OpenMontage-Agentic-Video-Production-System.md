@@ -14,6 +14,7 @@ tags:
   - Agentic
   - LLM
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 # OpenMontage - Agentic Video Production System

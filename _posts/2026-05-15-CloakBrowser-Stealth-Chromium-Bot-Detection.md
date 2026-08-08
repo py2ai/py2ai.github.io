@@ -10,6 +10,7 @@ categories: [Open Source, Python, Developer Tools]
 tags: [CloakBrowser, stealth browser, bot detection, web scraping, Python, automation, Chromium, anti-detection, browser automation, open source]
 keywords: "how to use CloakBrowser, CloakBrowser tutorial, CloakBrowser vs Selenium, stealth browser Python, bypass bot detection, CloakBrowser installation guide, anti-detection browser, web scraping without detection, CloakBrowser setup, open source stealth browser"
 author: "PyShine"
+image: /assets/img/diagrams/cloakbrowser/cloakbrowser-architecture.svg
 ---
 
 # CloakBrowser: Stealth Chromium That Passes All Bot Detection Tests

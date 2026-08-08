@@ -23,6 +23,7 @@ tags:
 - Web Development
 - Tutorial
 title: How to stream multiple videos on an HTML webpage
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 <br>

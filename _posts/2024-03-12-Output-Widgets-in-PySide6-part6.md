@@ -24,6 +24,7 @@ tags:
 - Qt
 - Programming Tutorial
 title: Exploring Output Widgets in PySide6 (Part 6)
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 In this tutorial, we'll delve into the usage of various output widgets in PySide6 to display information to users in graphical user interface (GUI) applications. Output widgets allow us to present data in different formats, such as progress bars, digital segment displays, and text labels. We'll build a simple example application to demonstrate how to incorporate different output widgets in PySide6.

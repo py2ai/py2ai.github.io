@@ -23,6 +23,7 @@ tags:
 - Iterator
 - Python Basics
 title: Difference Between Yield and Return in Python - Complete Guide
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 yield keyword means: 

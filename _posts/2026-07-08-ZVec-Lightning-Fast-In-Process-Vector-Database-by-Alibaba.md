@@ -5,6 +5,7 @@ date: 2026-07-08
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Database, Infrastructure]
 tags: [vector-database, embeddings, similarity-search, c++, alibaba, rag, ai-infrastructure, performance]
+image: /assets/img/diagrams/fastapi-tutorial/fastapi-async-db.svg
 ---
 
 ## 1. Introduction

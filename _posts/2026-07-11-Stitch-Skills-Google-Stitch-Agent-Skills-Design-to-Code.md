@@ -14,6 +14,7 @@ tags:
   - Claude Code
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Stitch Skills: Google Labs' Agent Skills Bridge for Design-to-Code with Stitch

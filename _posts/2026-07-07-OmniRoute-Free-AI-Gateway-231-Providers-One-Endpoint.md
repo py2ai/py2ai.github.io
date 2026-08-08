@@ -5,6 +5,7 @@ date: 2026-07-07
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 categories: [AI, Developer Tools]
 tags: [ai-gateway, llm, api, claude-code, codex, openai, anthropic, typescript, open-source]
+image: /assets/img/diagrams/free-claude-code/free-claude-code-architecture.svg
 ---
 
 ## 1. Introduction

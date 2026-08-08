@@ -13,6 +13,7 @@ tags:
   - Volcengine
   - RAG
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # OpenViking: Open-Source Context Database for AI Agents

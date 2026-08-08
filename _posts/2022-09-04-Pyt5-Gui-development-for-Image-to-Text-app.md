@@ -16,6 +16,7 @@ tags:
 - Pytesseract
 - Python
 title: How to extract text from image in Python
+image: /assets/img/diagrams/awesome-gpt-image-2-prompts/image-generation-pipeline.svg
 ---
 
 Hi friends following is the code for Part 18 of the PyQt5 learning series.

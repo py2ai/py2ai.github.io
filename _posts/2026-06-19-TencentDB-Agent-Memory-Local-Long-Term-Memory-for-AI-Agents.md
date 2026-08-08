@@ -10,6 +10,7 @@ categories: [AI Agents, Memory Systems, Open Source]
 tags: [TencentDB, Agent Memory, Long-term Memory, AI Agents, Local Storage, TypeScript, Open Source]
 keywords: "TencentDB Agent Memory tutorial, how to install memory-tencentdb plugin, AI agent long-term memory system, TencentDB Agent Memory vs Mem0, local agent memory SQLite, OpenClaw memory plugin setup, Hermes agent memory integration, symbolic memory Mermaid canvas, L0 L1 L2 L3 memory layering, fully local AI agent memory"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 TencentDB Agent Memory is a fully local long-term memory system for AI agents that combines symbolic short-term memory with layered long-term memory. Built as a plugin for OpenClaw and Hermes Agent, it cuts token usage by up to 61.38%, improves task pass rates by 51.52%, and raises persona accuracy from 48% to 76% -- all running locally with SQLite and sqlite-vec, no external API required.

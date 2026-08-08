@@ -13,6 +13,7 @@ tags:
   - Test-Driven Development
   - Agentic Workflows
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Superpowers: The Agentic Skills Framework That Transforms AI Agents Into Systematic Engineers

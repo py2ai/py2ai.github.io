@@ -13,6 +13,7 @@ tags:
   - Forecasting
   - Google Research
 author: "PyShine"
+image: /assets/img/diagrams/stable-worldmodel/stable-worldmodel-architecture.svg
 ---
 
 # TimesFM: Google's Foundation Model for Time Series Forecasting

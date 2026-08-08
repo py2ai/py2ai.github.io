@@ -10,6 +10,7 @@ categories: [AI Tools, Knowledge Management, Open Source]
 tags: [LLM Wiki, knowledge base, AI knowledge management, document organization, knowledge graph, Tauri desktop app, LLM ingest pipeline, vector search, Obsidian, cross-platform]
 keywords: "how to use LLM Wiki, LLM Wiki tutorial, turn documents into knowledge base, AI knowledge management tool, LLM Wiki vs RAG, knowledge graph community detection, two-step chain of thought ingest, personal wiki with AI, LLM Wiki installation guide, organize documents with AI"
 author: "PyShine"
+image: /assets/img/diagrams/browserbase-skills/browserbase-skills-architecture.svg
 ---
 
 # LLM Wiki: Turn Documents Into an Organized Knowledge Base with AI

@@ -13,6 +13,7 @@ tags:
   - DevOps
   - Open Source
 author: "PyShine"
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Harbor: Enterprise Cloud Native Registry for Container Security

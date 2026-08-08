@@ -15,6 +15,7 @@ tags:
 categories: [Tutorial, Backend, Search]
 keywords: "Elasticsearch OpenSearch tutorial one post, learn Elasticsearch fast, inverted index tokens postings, mapping analyzers tokenization, query DSL bool match filter, BM25 scoring relevance, aggregations buckets metrics terms, Elasticsearch cluster nodes shards replicas routing, ELK stack Logstash Beats Kibana, vector search kNN embeddings, Elasticsearch quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Elasticsearch and OpenSearch in a Single Post: Complete Tutorial From Inverted Indexes to Sharding and Query DSL

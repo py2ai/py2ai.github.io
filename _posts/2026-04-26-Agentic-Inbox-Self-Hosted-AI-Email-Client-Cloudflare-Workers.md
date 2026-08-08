@@ -10,6 +10,7 @@ categories: [Open Source, Cloudflare, AI Agents]
 tags: [Agentic Inbox, Cloudflare Workers, AI email client, self-hosted email, Durable Objects, Workers AI, email agent, MCP server, open source email, Cloudflare Email Routing]
 keywords: "how to set up Agentic Inbox, self-hosted AI email client, Cloudflare Workers email agent, Agentic Inbox tutorial, AI email auto-reply, Cloudflare Durable Objects email, MCP email server, open source email client Cloudflare, Agentic Inbox deployment guide, AI email assistant self-hosted"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-inbox/agentic-inbox-agent-workflow.svg
 ---
 
 # Agentic Inbox: Self-Hosted AI Email Client on Cloudflare Workers

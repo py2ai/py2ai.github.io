@@ -19,6 +19,7 @@ tags:
 - OpenCV
 - Multi-Client
 title: Transfer video over sockets from multiple clients and...
+image: /assets/img/diagrams/free-programming-books/free-programming-books-ecosystem.svg
 ---
 
 

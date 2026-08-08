@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, WebAssembly, Systems]
 keywords: "WebAssembly tutorial one post, learn wasm fast, wat text format s-expressions stack machine, wasm module structure types functions imports exports, linear memory shared JS, WebAssembly instantiate imports exports, Rust C++ Go wasm targets, WASI system interface filesystem sockets, Component Model WIT, Wasmtime Wasmer WasmEdge runtimes, wasm quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn WebAssembly in a Single Post: Complete Tutorial From Modules and Memory to WASI and the Component Model

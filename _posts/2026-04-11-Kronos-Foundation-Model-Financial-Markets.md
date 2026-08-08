@@ -14,6 +14,7 @@ tags:
   - Python
   - Open Source
 author: "PyShine"
+image: /assets/img/diagrams/financial-services/financial-services-agents.svg
 ---
 
 # Kronos: Open-Source Foundation Model for Financial Market Forecasting

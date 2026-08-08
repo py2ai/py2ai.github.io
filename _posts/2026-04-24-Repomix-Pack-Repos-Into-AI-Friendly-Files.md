@@ -10,6 +10,7 @@ categories: [AI Tools, Developer Tools, Open Source]
 tags: [Open Source, AI Tools, Developer Tools, LLM, Code Packaging, Security, Token Counting, MCP, Repomix, TypeScript]
 keywords: "Repomix pack repos for AI, how to feed code to LLMs, AI-friendly code packaging tool, Repomix vs alternatives, pack repository into single file for AI, Repomix security check code, token counting for LLM context, MCP server for code context, Repomix tutorial guide, best tool for LLM code context"
 author: "PyShine"
+image: /assets/img/diagrams/dive-into-claude-code-vila/dive-into-claude-code-vila-extensibility-subagents.svg
 ---
 
 # Repomix: Pack Your Entire Repository Into a Single AI-Friendly File

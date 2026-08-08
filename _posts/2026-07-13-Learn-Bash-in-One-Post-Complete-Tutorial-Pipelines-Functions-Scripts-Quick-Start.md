@@ -18,6 +18,7 @@ tags:
 categories: [Tutorial, Linux, Scripting]
 keywords: "Bash tutorial one post, learn Bash scripting fast, bash pipelines pipes redirection explained, bash if elif else test, bash for while loop, bash functions arguments getopts, bash arrays associative, bash string manipulation parameter expansion, set -euo pipefail robust script, bash trap cleanup EXIT, shellcheck bash linting, bash process substitution, bash exit codes, bash quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn Bash in a Single Post: Complete Tutorial From Variables and Pipelines to Robust Scripts

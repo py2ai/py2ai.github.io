@@ -22,6 +22,7 @@ tags:
 - Data Processing
 - XLSX
 title: How to Read and Write Excel XLSX Files in Python
+image: /assets/img/diagrams/openai-agents-python/openai-agents-python-agent-loop.svg
 ---
 
 Welcome to Pyshine  

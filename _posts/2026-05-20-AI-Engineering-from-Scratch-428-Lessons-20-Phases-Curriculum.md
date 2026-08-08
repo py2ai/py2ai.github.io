@@ -9,6 +9,7 @@ categories: [AI, Education, Open Source]
 tags: [ai-engineering, curriculum, machine-learning, deep-learning, llm, agents, open-source, education]
 keywords: [AI engineering from scratch, AI curriculum, machine learning course, deep learning from scratch, LLM engineering, agent engineering, open source AI education]
 author: "PyShine"
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## What is AI Engineering from Scratch?

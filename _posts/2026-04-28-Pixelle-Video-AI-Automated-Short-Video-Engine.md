@@ -10,6 +10,7 @@ categories: [AI, Video Generation, Open Source]
 tags: [Pixelle-Video, AI video generation, short video, automated video, AI content creation, video engine, open source, Python, LLM, video production]
 keywords: "how to use Pixelle-Video, Pixelle-Video tutorial, AI short video generator, automated video production tool, Pixelle-Video vs other AI video tools, Pixelle-Video installation guide, AI video generation Python, best AI video generator 2026, Pixelle-Video setup configuration, open source video generation framework"
 author: "PyShine"
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 Pixelle-Video is an AI automated short video engine that transforms a simple text topic into a complete, polished video with zero manual editing. With over 7,200 stars on GitHub, this open-source project from AIDC-AI automates every step of short video production -- from script writing and AI image generation to voice narration, background music, and final video composition. Whether you are a content creator looking to scale your output or a developer interested in AI-powered media pipelines, Pixelle-Video provides a modular, extensible framework built on top of ComfyUI workflows and large language models.

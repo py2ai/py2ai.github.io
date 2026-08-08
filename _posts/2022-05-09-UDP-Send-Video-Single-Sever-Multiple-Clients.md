@@ -16,6 +16,7 @@ tags:
 - Video Streaming
 title: UDP Single server to multiple clients
 toc: true
+image: /assets/img/diagrams/agentic-video-editor/agentic-video-editor-agent-tools.svg
 ---
 
 

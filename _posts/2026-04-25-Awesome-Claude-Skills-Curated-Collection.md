@@ -10,6 +10,7 @@ categories: [AI, Claude, Developer Tools, Resources]
 tags: [claude, claude-skills, claude-code, mcp, awesome-list, ai-agents, workflow-automation, composio, open-source, resources, productivity, developer-tools, ai-customization, claude-api, agent-skills]
 keywords: "awesome claude skills, claude skills list, claude code skills, claude mcp skills, claude workflow automation, claude ai customization, claude skills tutorial, claude code extensions, claude agent skills, composio claude skills, how to use claude skills, claude skills api, claude skills marketplace, best claude skills, claude skills development"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Awesome Claude Skills: The Ultimate Curated Collection for Claude AI Workflows

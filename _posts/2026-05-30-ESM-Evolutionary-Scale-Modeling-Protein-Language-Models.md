@@ -10,6 +10,7 @@ categories: [AI Models, Bioinformatics, Open Source]
 tags: [ESM, ESMC, ESMFold2, protein language model, structure prediction, ESM Atlas, sparse autoencoders, protein design, AlphaFold, Chan Zuckerberg Biohub]
 keywords: "ESM protein language model tutorial, ESMC 6B parameter model, ESMFold2 structure prediction, protein structure prediction Python, ESM Atlas 6.8 billion proteins, sparse autoencoders protein interpretability, ESM3 multimodal generative model, protein design with language models, ESM vs AlphaFold comparison, evolutionary scale modeling bioinformatics"
 author: "PyShine"
+image: /assets/img/diagrams/tailscale/tailscale-architecture.svg
 ---
 
 Protein language models have transformed how we understand and design biological molecules, learning the grammar of life from billions of evolutionary sequences. ESM, from the Chan Zuckerberg Biohub, represents the next frontier: a world model for protein biology that combines ESMC, a state-of-the-art protein language model with up to 6 billion parameters, ESMFold2, a structure prediction system that surpasses AlphaFold3 on protein-protein complexes, and the ESM Atlas, a map of 6.8 billion proteins with over one billion predicted structures -- all open source under the MIT license and published in the journal Science.

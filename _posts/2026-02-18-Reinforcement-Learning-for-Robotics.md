@@ -5,6 +5,7 @@ date: 2026-02-18
 categories: [Machine Learning, AI, Python, Robotics, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn how Reinforcement Learning is revolutionizing robotics. Explore real-world robot control, sim-to-real transfer, and practical applications with code examples."
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 # Reinforcement Learning for Robotics - Real-World Robot Control
 

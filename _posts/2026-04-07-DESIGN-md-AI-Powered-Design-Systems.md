@@ -13,6 +13,7 @@ tags:
   - UI/UX
   - Developer Tools
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 ## The Problem: AI Agents and Inconsistent UI

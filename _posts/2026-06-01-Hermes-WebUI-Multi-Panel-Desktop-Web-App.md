@@ -12,6 +12,7 @@ seo:
 meta:
   description: "Hermes WebUI delivers a lightweight dark-themed web interface for Hermes Agent with three-panel layout, vanilla JS SPA, no-build philosophy, and multi-provider AI support across OpenAI, Anthropic, Gemini, DeepSeek, and OpenRouter."
 featured-img: ai-coding-frameworks/ai-coding-frameworks
+image: /assets/img/diagrams/claude-desktop-debian/claude-desktop-debian-build-architecture.svg
 ---
 
 ## Introduction

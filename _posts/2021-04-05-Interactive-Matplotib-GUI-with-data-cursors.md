@@ -21,6 +21,7 @@ tags:
 - Data Visualization
 - Tutorial
 mathjax: true
+image: /assets/img/diagrams/openmetadata/openmetadata-architecture.svg
 ---
 
 # Interactive Matplotlib GUI with Data Cursors

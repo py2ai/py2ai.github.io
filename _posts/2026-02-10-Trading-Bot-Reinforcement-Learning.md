@@ -5,6 +5,7 @@ date: 2026-02-10
 categories: [Machine Learning, AI, Python, Trading]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn to build a Trading Bot using Reinforcement Learning. Complete guide with market environment, reward design, and PyTorch implementation."
+image: /assets/img/diagrams/deep-learning-tutorial/dl-architectures.svg
 ---
 
 # Part 10: Trading Bot with Reinforcement Learning - Build an AI Trader

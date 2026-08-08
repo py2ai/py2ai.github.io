@@ -10,6 +10,7 @@ categories: [AI Design, Open Source, Developer Tools]
 tags: [Open Design, Claude Design, AI design, open source, design systems, coding agents, SKILL.md, DESIGN.md, AI slop, prompt engineering]
 keywords: "Open Design open source Claude Design alternative, how to use Open Design, Open Design vs Claude Design comparison, AI design tool for coding agents, Open Design installation guide, open source AI design framework, Open Design skills and design systems, AI anti-slop design rules, Open Design tutorial, best AI design tool for developers"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 Open Design is the open-source Claude Design alternative that transforms any coding agent into a professional design engine. While Anthropic's Claude Design demonstrated that LLMs can produce high-quality design artifacts, it remains closed-source, paid-only, and cloud-only. Open Design breaks free from these constraints with 19 composable Skills, 71 brand-grade Design Systems, and zero vendor lock-in -- you bring your own coding agent, and Open Design wires it into a skill-driven design workflow. Instead of paying per generation or being locked into a single provider, you get a local-first, agent-agnostic framework that runs on your machine, respects your data, and lets you swap coding agents as easily as changing a configuration file.

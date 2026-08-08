@@ -17,6 +17,7 @@ tags:
 categories: [Tutorial, Databases, Backend]
 keywords: "PostgreSQL tutorial one post, learn Postgres fast, psql client, PostgreSQL data types JSONB, PostgreSQL indexes B-tree GIN GiST BRIN, EXPLAIN ANALYZE query tuning, PostgreSQL MVCC multi version concurrency, isolation levels serializable, VACUUM autovacuum bloat, PostgreSQL replication streaming replica, pgbouncer connection pool, pg_dump backup, PostgreSQL quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/ansible-tutorial/ans-flow.svg
 ---
 
 # Learn PostgreSQL in a Single Post: Complete Tutorial From Tables and Indexes to MVCC and Operations

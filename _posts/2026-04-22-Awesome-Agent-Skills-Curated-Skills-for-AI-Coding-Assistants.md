@@ -7,6 +7,7 @@ tags: [ai-agents, claude-code, codex, cursor, copilot, skills, agent-skills, vol
 author: "PyShine"
 image: /assets/img/diagrams/awesome-agent-skills/awesome-agent-skills-ecosystem.svg
 description: "A curated collection of 1100+ agent skills compatible with 8+ AI coding assistants including Claude Code, Codex, Cursor, Copilot, and more. Discover how skills enhance AI coding workflows."
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 ---
 
 # Awesome Agent Skills: Curated Skills for AI Coding Assistants

@@ -5,6 +5,7 @@ date: 2026-04-01
 categories: [AI, Machine Learning, Multi-Agent Systems, Python]
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 description: "Explore MiroFish, an open-source multi-agent AI prediction engine that simulates thousands of intelligent agents to predict future outcomes. Learn how to build digital sandboxes for scenario simulation."
+image: /assets/img/diagrams/ai-engineering/ai-engineering-architecture.svg
 ---
 
 ## MiroFish - AI Swarm Intelligence Engine for Predicting the Future

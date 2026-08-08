@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, TypeScript]
 tags: [Understand Anything, knowledge graph, codebase visualization, Claude Code plugin, multi-agent pipeline, Tree-sitter, LLM analysis, code exploration, developer productivity, interactive dashboard]
 keywords: "Understand Anything knowledge graph tutorial, how to visualize codebase architecture, Claude Code plugin for code exploration, interactive knowledge graph for developers, Tree-sitter LLM hybrid code analysis, Understand Anything vs Sourcegraph comparison, multi-agent pipeline codebase scanner, how to understand large codebase quickly, AI-powered code navigation tool, open source codebase visualization"
 author: "PyShine"
+image: /assets/img/diagrams/anything-analyzer/anything-analyzer-ai-pipeline.svg
 ---
 
 # Understand Anything: Turn Any Codebase Into an Interactive Knowledge Graph

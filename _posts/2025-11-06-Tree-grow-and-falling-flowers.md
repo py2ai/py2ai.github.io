@@ -18,6 +18,7 @@ tags:
 - physics
 - tutorial
 title: Animated Flower Tree with Python Turtle – Growing &...
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 # Animated Flower Tree with Python Turtle – Growing & Falling Flowers
 

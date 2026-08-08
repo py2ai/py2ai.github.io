@@ -20,6 +20,7 @@ tags:
 - TCP
 - UDP
 title: How to send audio data using socket programming in Python
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 

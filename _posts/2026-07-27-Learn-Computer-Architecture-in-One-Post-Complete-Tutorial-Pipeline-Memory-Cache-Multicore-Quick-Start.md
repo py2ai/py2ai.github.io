@@ -16,6 +16,7 @@ tags:
 categories: [Tutorial, Computer Science, Architecture]
 keywords: "computer architecture tutorial one post, learn computer architecture fast, ISA instruction set registers addressing, CPU pipeline fetch decode execute writeback, pipeline hazards structural data control, forwarding bypass branch prediction out-of-order, memory hierarchy registers L1 L2 L3 cache RAM SSD latency, cache hit miss associativity cache line coherence MESI, false sharing, multicore SMP NUMA SIMD AVX GPU, memory consistency sequential TSO weak relaxed, barriers, computer architecture quick start roadmap"
 author: "PyShine"
+image: /assets/img/diagrams/agentmemory/agentmemory-agent-ecosystem.svg
 ---
 
 # Learn Computer Architecture in a Single Post: Complete Tutorial From CPU Pipeline to Memory Hierarchy, Cache, and Multicore

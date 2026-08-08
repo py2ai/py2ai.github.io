@@ -14,6 +14,7 @@ tags:
   - vLLM
   - SGLang
 author: "PyShine"
+image: /assets/img/diagrams/lmcache/lmcache-architecture.svg
 ---
 
 ## What Is LMCache

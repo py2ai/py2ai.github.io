@@ -18,6 +18,7 @@ tags:
 - data-processing
 - tutorial
 title: Create Excel Files with Python and pandas
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 ## Introduction

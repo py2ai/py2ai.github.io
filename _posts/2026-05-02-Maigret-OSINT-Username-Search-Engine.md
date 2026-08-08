@@ -10,6 +10,7 @@ categories: [OSINT, Security, Python]
 tags: [Maigret, OSINT, username search, open source intelligence, Python, security tools, account discovery, digital forensics, privacy, cyber security]
 keywords: "how to use Maigret OSINT tool, Maigret username search tutorial, OSINT username finder Python, Maigret vs Sherlock comparison, best OSINT tools 2026, Maigret installation guide, account discovery across social media, open source intelligence username search, Maigret recursive search feature, digital footprint analysis tool"
 author: "PyShine"
+image: /assets/img/diagrams/academic-research-skills/academic-research-skills-architecture.svg
 ---
 
 # Maigret: OSINT Username Search Engine Across 3,000+ Sites

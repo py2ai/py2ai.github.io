@@ -13,6 +13,7 @@ tags:
   - Multimodal AI
   - Knowledge Graphs
 author: "PyShine"
+image: /assets/img/diagrams/anything-analyzer/anything-analyzer-ai-pipeline.svg
 ---
 
 # RAG-Anything: All-in-One Multimodal RAG Framework

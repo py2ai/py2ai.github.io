@@ -10,6 +10,7 @@ categories: [AI Agents, Open Source, Developer Tools]
 tags: [Sim Studio AI, AI agents, visual workflow builder, agent orchestration, DAG execution, LLM providers, automation platform, open source, workflow engine, AI automation]
 keywords: "Sim Studio AI visual workflow builder, how to build AI agents with Sim Studio, Sim Studio AI vs LangChain, open source AI agent orchestration platform, Sim Studio AI tutorial, visual DAG workflow builder, AI agent automation tool, Sim Studio AI installation guide, best AI agent orchestration tools, Sim Studio AI self-hosted deployment"
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 ## Introduction

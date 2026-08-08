@@ -12,6 +12,7 @@ tags:
   - Codex CLI
   - Workflow
 author: "PyShine"
+image: /assets/img/diagrams/awesome-codex-skills/awesome-codex-skills-anatomy.svg
 ---
 
 # Oh-My-Codex: A Workflow Layer for OpenAI Codex CLI

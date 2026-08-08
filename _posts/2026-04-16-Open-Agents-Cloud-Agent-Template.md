@@ -13,6 +13,7 @@ tags:
   - Vercel
   - AI
 author: "PyShine"
+image: /assets/img/diagrams/12-factor-agents/12-factor-agents-architecture.svg
 ---
 
 # Open Agents: Open Source Template for Building Cloud Agents

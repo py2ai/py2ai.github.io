@@ -5,6 +5,7 @@ date: 2026-02-05
 categories: [Machine Learning, AI, Python, Deep RL]
 featured-img: 2026-feb-deeprl/2026-feb-deeprl
 description: "Learn Policy Gradient Methods - directly optimizing policies in Reinforcement Learning. Complete guide with REINFORCE algorithm and PyTorch implementation."
+image: /assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg
 ---
 
 # Part 5: Policy Gradient Methods - Learning Policies Directly

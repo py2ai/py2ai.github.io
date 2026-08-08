@@ -10,6 +10,7 @@ categories: [AI Agents, Developer Tools, Claude Code]
 tags: [Claude Code, plugins, Anthropic, MCP server, LSP, skills, agents, hooks, marketplace, AI coding, developer tools, enterprise integrations]
 keywords: "Claude Code plugins directory, how to install Claude Code plugins, Claude Code plugin development, Claude Code MCP server integration, Claude Code skills and commands, Anthropic official plugins, Claude Code LSP servers, Claude Code marketplace, build Claude Code plugin, Claude Code enterprise integrations"
 author: "PyShine"
+image: /assets/img/diagrams/awesome-claude-design/awesome-claude-design-design-md-format.svg
 ---
 
 # Claude Code Plugins Official: The Definitive Directory of 100+ Extensions for AI Coding

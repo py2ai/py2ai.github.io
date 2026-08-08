@@ -10,6 +10,7 @@ categories: [Open Source, Developer Tools, AI]
 tags: [Kami, document design system, AI documents, WeasyPrint, presentation tool, typography, PDF generation, content formatting, serif typography, design system]
 keywords: "Kami document design system, how to use Kami for AI documents, Kami vs traditional document tools, Kami WeasyPrint tutorial, AI document formatting tool, Kami design system installation, warm parchment document design, ink-blue accent typography, Kami content to presentation, best AI document design tool"
 author: "PyShine"
+image: /assets/img/diagrams/agent-governance-toolkit/agent-governance-toolkit-architecture.svg
 ---
 
 # Kami: The Document Design System Where Good Content Meets Good Paper
