@@ -19,7 +19,7 @@ image: /assets/img/diagrams/claude-code-game-studios/ccgs-coordination-system.sv
 
 OpenScreen is a free, open-source alternative to Screen Studio that helps you create beautiful product demos and walkthroughs. If you don't want to pay $29/month for Screen Studio but need a simpler solution for making professional screen recordings, OpenScreen is the perfect choice.
 
-![OpenScreen Preview](https://raw.githubusercontent.com/siddharthvaddem/openscreen/main/public/preview3.png)
+![OpenScreen Preview](/assets/img/posts/openscreen-preview3.webp)
 
 ## What is OpenScreen?
 
