@@ -1,4 +1,194 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-09T04:26:56+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">AI Coding FAQ: 20 Most Asked Questions in 2026</title><link href="https://pyshine.com/AI-Coding-FAQ-20-Most-Asked-Questions-2026/" rel="alternate" type="text/html" title="AI Coding FAQ: 20 Most Asked Questions in 2026" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/AI-Coding-FAQ-20-Most-Asked-Questions-2026</id><content type="html" xml:base="https://pyshine.com/AI-Coding-FAQ-20-Most-Asked-Questions-2026/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-09T13:24:45+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</title><link href="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/" rel="alternate" type="text/html" title="LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-the-Two-Phases-of-LLM-Inference</id><content type="html" xml:base="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/"><![CDATA[<h1 id="llm-prompt-vs-decode-understanding-the-two-phases-of-llm-inference">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</h1>
+
+<p>When you send a request to a large language model – whether through ChatGPT, a local Ollama instance, or a production API – the model does not process your input and generate output in a single uniform step. Instead, every LLM inference request is split into two fundamentally different computational phases: <strong>prompt processing</strong> (also called prefill) and <strong>decoding</strong> (also called autoregressive generation).</p>
+
+<p>Understanding the difference between these two phases is essential for anyone working with LLMs – from engineers optimizing inference servers to developers choosing sampling parameters. The two phases have different computational bottlenecks, different memory access patterns, and different optimization strategies. Confusing them leads to poor performance tuning, wrong hardware choices, and misunderstood latency budgets.</p>
+
+<h2 id="the-core-difference-in-one-sentence">The Core Difference in One Sentence</h2>
+
+<p><strong>Prompt (prefill)</strong> processes all input tokens at once in a single parallel forward pass; <strong>decode</strong> generates output tokens one at a time, each requiring a separate forward pass that depends on the previous token.</p>
+
+<h2 id="phase-1-prompt--prefill">Phase 1: Prompt / Prefill</h2>
+
+<p><img src="/assets/img/diagrams/llm-prompt-vs-decode/llm-prompt-vs-decode.svg" alt="LLM Prompt vs Decode Architecture" /></p>
+
+<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
+
+<p>The diagram above illustrates the complete LLM inference pipeline, split into two phases with fundamentally different computational characteristics. Let us break down each component in detail.</p>
+
+<p><strong>Phase 1: Prompt / Prefill (Left Side)</strong></p>
+
+<p>The prefill phase begins when the user’s input prompt arrives at the model. Every token in the prompt – whether it is 10 tokens or 10,000 tokens – is processed simultaneously in a single forward pass through the transformer layers. This is the key property that makes prefill qualitatively different from decoding: all tokens are embedded and attended to each other in parallel.</p>
+
+<p><strong>Token Embedding Layer</strong>
+The input tokens (“The”, “cat”, “sat”, “on”, “the”) are first converted into dense vector representations through an embedding lookup. This step is essentially free in computational terms – it is a simple table lookup that maps each token ID to a high-dimensional vector (typically 4096 to 12288 dimensions for modern LLMs). All five tokens are embedded simultaneously with no sequential dependency.</p>
+
+<p><strong>Transformer Layers (Parallel Computation)</strong>
+Once embedded, all token vectors pass through the transformer layers together. At each layer, the self-attention mechanism allows every token to attend to every other token in the prompt. This means the computation is a dense matrix-matrix multiplication: the query matrix (all tokens) is multiplied by the key matrix (all tokens), producing an attention score matrix of size N x N where N is the prompt length. This is where the GPU’s tensor cores shine – large matrix multiplications are exactly what GPUs are designed for.</p>
+
+<p>The arithmetic intensity (ratio of FLOPs to bytes transferred from memory) is high during prefill because the matrices are large. The GPU compute cores are fully saturated, making this phase <strong>compute-bound</strong>. Adding more prompt tokens only marginally increases latency because the GPU can parallelize the work across its thousands of cores.</p>
+
+<p><strong>KV Cache Construction</strong>
+As the prompt tokens pass through each transformer layer, the model computes and stores the key (K) and value (V) tensors for every token at every layer. These K,V pairs are written to the KV cache – a persistent memory buffer that will be reused during the decode phase. For a model like Llama-2 7B with 32 layers, 32 attention heads, and 128-dimensional heads, each token’s KV cache consumes approximately 0.5 MB in FP16 precision. A 4,000-token prompt therefore requires roughly 2 GB of KV cache storage.</p>
+
+<p><strong>Output: First Generated Token</strong>
+After the final transformer layer, the model produces a probability distribution (logits) over its entire vocabulary (typically 32,000 to 128,000 tokens). The highest-probability token (or a sampled token, depending on the decoding strategy) becomes the first output token. This token is also the starting point for the decode phase.</p>
+
+<p><strong>Key Performance Characteristic</strong>
+Prefill latency scales sub-linearly with prompt length because the computation is parallelized. Doubling the prompt length does not double the prefill time – it increases it by a much smaller factor because the GPU has spare compute capacity. The primary metric for prefill performance is Time To First Token (TTFT), which measures how long the user waits before seeing the first word of the response.</p>
+
+<h2 id="phase-2-decode--autoregressive-generation">Phase 2: Decode / Autoregressive Generation</h2>
+
+<p><strong>Phase 2: Decode (Right Side)</strong></p>
+
+<p>Once the first token is generated, the model enters the decode phase. This is where the fundamental asymmetry becomes apparent: instead of processing many tokens in parallel, the model now processes exactly ONE token at a time.</p>
+
+<p><strong>Single-Token Forward Pass</strong>
+The most recently generated token is fed back into the transformer as the input. Unlike prefill where all tokens were processed together, here only a single token’s query vector needs to be computed. However, this single query must still attend to ALL previous tokens’ keys and values stored in the KV cache. This transforms the computation from a matrix-matrix multiplication (prefill) into a matrix-vector multiplication (decode).</p>
+
+<p><strong>KV Cache: Read and Append</strong>
+The decode phase reads the entire KV cache from GPU memory (HBM) for every single token it generates. This is the critical bottleneck: the GPU must load potentially gigabytes of KV cache data from memory just to produce one token. After computing the new token’s K,V values, they are appended to the cache, making it slightly larger for the next step.</p>
+
+<p>The arithmetic intensity is extremely low during decode – the GPU performs a tiny amount of computation (one token’s attention) relative to the massive amount of data it must load from memory. This makes decoding <strong>memory-bandwidth-bound</strong>: the GPU’s compute cores are mostly idle, waiting for data to arrive from memory.</p>
+
+<p><strong>Autoregressive Loop</strong>
+After each token is generated, the process repeats: the new token becomes the input for the next step, the KV cache grows by one entry, and another forward pass produces the next token. This loop continues until the model generates an end-of-sequence (EOS) token or a maximum length is reached. The sequential nature of this loop means decode latency scales linearly with output length – 100 output tokens require 100 sequential forward passes.</p>
+
+<p><strong>Key Performance Characteristic</strong>
+Decode latency is measured in Time Per Output Token (TPOT). Because each step is memory-bound, the GPU’s peak compute capability (TFLOPS) is largely irrelevant – what matters is memory bandwidth (GB/s). This is why two GPUs with similar FLOPS but different memory bandwidth can have vastly different decode performance. As context length grows, the KV cache grows, and each decode step becomes slower because more data must be loaded from memory.</p>
+
+<h2 id="why-the-distinction-matters">Why the Distinction Matters</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>Prompt (Prefill)</th>
+      <th>Decode (Autoregressive)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Tokens per step</td>
+      <td>All input tokens</td>
+      <td>1 token</td>
+    </tr>
+    <tr>
+      <td>Computation type</td>
+      <td>Matrix-matrix</td>
+      <td>Matrix-vector</td>
+    </tr>
+    <tr>
+      <td>Bottleneck</td>
+      <td>Compute (FLOPS)</td>
+      <td>Memory bandwidth (GB/s)</td>
+    </tr>
+    <tr>
+      <td>GPU utilization</td>
+      <td>High (cores saturated)</td>
+      <td>Low (memory-bound)</td>
+    </tr>
+    <tr>
+      <td>Latency scaling</td>
+      <td>Sub-linear with input length</td>
+      <td>Linear with output length</td>
+    </tr>
+    <tr>
+      <td>Primary metric</td>
+      <td>TTFT (Time To First Token)</td>
+      <td>TPOT (Time Per Output Token)</td>
+    </tr>
+    <tr>
+      <td>KV cache</td>
+      <td>Write (build)</td>
+      <td>Read + Append (grow)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This distinction has profound implications for LLM serving infrastructure:</p>
+
+<ol>
+  <li>
+    <p><strong>Batching strategies differ</strong>: During prefill, you want large batches to maximize GPU utilization. During decode, batching helps amortize memory loads but each request in the batch adds its own KV cache to the memory pressure.</p>
+  </li>
+  <li>
+    <p><strong>Hardware selection</strong>: For prefill-heavy workloads (short prompts, long outputs), you need high memory bandwidth. For decode-heavy workloads, you need large memory capacity to hold many KV caches.</p>
+  </li>
+  <li>
+    <p><strong>Optimization targets</strong>: Systems like vLLM optimize decode through PagedAttention, which reduces KV cache memory waste. Other systems like speculative decoding aim to parallelize the decode phase by guessing multiple future tokens.</p>
+  </li>
+</ol>
+
+<h2 id="decoding-strategies-choosing-the-next-token">Decoding Strategies: Choosing the Next Token</h2>
+
+<p>The bottom section of the diagram shows the five most common decoding strategies. After each decode step, the model outputs a probability distribution (logits passed through softmax) over its entire vocabulary. The decoding strategy determines how the next token is selected from this distribution.</p>
+
+<p><strong>1. Greedy Decoding</strong>
+The simplest strategy: always pick the token with the highest probability (argmax). This is deterministic – the same prompt always produces the same output. While fast and predictable, greedy decoding tends to produce repetitive, generic text. It is suitable for factual tasks like translation or code generation where consistency matters more than creativity.</p>
+
+<p><strong>2. Temperature Sampling</strong>
+Before applying softmax, the logits are divided by a temperature value T. When T &gt; 1, the distribution becomes flatter, making lower-probability tokens more likely – this increases randomness and creativity. When T &lt; 1, the distribution becomes sharper, concentrating probability on the top tokens – this makes output more focused and deterministic. Temperature = 0 is equivalent to greedy decoding.</p>
+
+<p><strong>3. Top-k Sampling</strong>
+Only the k highest-probability tokens are kept; the rest are set to zero probability. The remaining k tokens are renormalized and sampled from. This prevents extremely unlikely tokens from being selected while still allowing controlled randomness. A common value is k = 40, which provides a good balance between diversity and coherence.</p>
+
+<p><strong>4. Top-p (Nucleus) Sampling</strong>
+Instead of fixing the number of candidate tokens (like top-k), nucleus sampling keeps the smallest set of tokens whose cumulative probability exceeds a threshold p (typically 0.9 or 0.95). This is adaptive: when the model is confident (one token dominates), only a few candidates are considered. When the model is uncertain (many tokens have similar probability), more candidates are included. Nucleus sampling generally produces the most natural-sounding text.</p>
+
+<p><strong>5. Beam Search</strong>
+Instead of maintaining a single sequence, beam search tracks B parallel sequences (beams) simultaneously. At each step, it expands all beams and keeps the top-B sequences by cumulative log probability. This explores multiple paths and can find higher-quality outputs than single-sequence methods. However, beam search is computationally expensive (B times the memory and compute) and is best suited for tasks like machine translation or summarization where there is a clear quality metric. It is less useful for open-ended text generation where diversity is valued.</p>
+
+<h2 id="practical-implications-for-developers">Practical Implications for Developers</h2>
+
+<p><strong>Choosing a decoding strategy</strong> depends on your use case:</p>
+
+<ul>
+  <li><strong>Code generation / factual Q&amp;A</strong>: Use greedy or low temperature (T = 0.1-0.3) for deterministic, accurate outputs</li>
+  <li><strong>Creative writing / brainstorming</strong>: Use temperature (T = 0.7-0.9) or top-p (p = 0.9) for diverse, creative outputs</li>
+  <li><strong>Translation / summarization</strong>: Use beam search (B = 4-8) for the highest quality structured output</li>
+  <li><strong>Chatbots / conversational AI</strong>: Use top-p (p = 0.9) with moderate temperature for natural, varied responses</li>
+</ul>
+
+<p><strong>Optimizing inference latency</strong> requires understanding which phase dominates:</p>
+
+<ul>
+  <li>If your workload has long prompts and short outputs (e.g., document Q&amp;A), prefill dominates. Optimize by using a faster GPU or reducing prompt length.</li>
+  <li>If your workload has short prompts and long outputs (e.g., creative writing), decode dominates. Optimize by using GPUs with higher memory bandwidth or techniques like speculative decoding.</li>
+</ul>
+
+<p><strong>KV cache memory</strong> is often the hidden bottleneck. For a 7B parameter model serving a 4,000-token context, each concurrent request requires approximately 2 GB of KV cache. On a 40 GB GPU, this limits you to roughly 15-20 concurrent requests before running out of memory – even though the model weights only occupy 14 GB. This is why systems like vLLM with PagedAttention are critical for production deployments: they reduce KV cache memory waste from 60-80% down to under 4%, dramatically increasing throughput.</p>
+
+<h2 id="related-concepts">Related Concepts</h2>
+
+<ul>
+  <li><strong>Speculative decoding</strong>: Uses a smaller “draft” model to guess multiple tokens, which the larger model verifies in a single forward pass – partially parallelizing the decode phase</li>
+  <li><strong>Flash Attention</strong>: Optimizes the attention computation by reducing memory reads/writes, benefiting both prefill and decode</li>
+  <li><strong>KV cache quantization</strong>: Reduces KV cache memory by storing keys and values in lower precision (e.g., INT8 instead of FP16), trading slight quality loss for 2x memory savings</li>
+  <li><strong>Continuous batching</strong>: Dynamically adds and removes requests from a batch during decode, maximizing GPU utilization without waiting for all requests to finish</li>
+</ul>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (Vaswani et al., 2017)</a> – The original Transformer paper that introduced self-attention</li>
+  <li><a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention (Kwon et al., 2023)</a> – The vLLM paper that revolutionized KV cache management</li>
+  <li><a href="https://huggingface.co/docs/transformers/v4.56.1/en/kv_cache">Hugging Face KV Cache Documentation</a> – Practical guide to KV cache strategies in the Transformers library</li>
+</ul>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/AI-Coding-FAQ-20-Most-Asked-Questions-2026/">AI Coding FAQ: 20 Most Asked Questions</a></li>
+  <li><a href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">Learn System Design in One Post</a></li>
+  <li><a href="/FreeLLMAPI-OpenAI-Compatible-Proxy-16-Free-LLM-Providers/">FreeLLMAPI: OpenAI-Compatible Proxy Stacking 16 Free LLM Providers</a></li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The distinction between prompt (prefill) and decode (autoregressive) is not just an academic curiosity – it is the single most important factor in understanding LLM inference performance. Prefill is compute-bound and parallelizable; decode is memory-bandwidth-bound and inherently sequential. The decoding strategy you choose (greedy, temperature, top-k, top-p, or beam search) determines the quality and character of the output, while the phase distinction determines which hardware and system optimizations will be effective.</p>
+
+<p>By understanding these two phases, you can make informed decisions about hardware selection, batching strategies, memory management, and decoding parameters – whether you are running a single model locally or serving millions of requests per day in production.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Machine Learning" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn the critical difference between the prompt (prefill) and decode (autoregressive) phases of LLM inference, why they have fundamentally different performance characteristics, and how decoding strategies shape model output.]]></summary></entry><entry><title type="html">AI Coding FAQ: 20 Most Asked Questions in 2026</title><link href="https://pyshine.com/AI-Coding-FAQ-20-Most-Asked-Questions-2026/" rel="alternate" type="text/html" title="AI Coding FAQ: 20 Most Asked Questions in 2026" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/AI-Coding-FAQ-20-Most-Asked-Questions-2026</id><content type="html" xml:base="https://pyshine.com/AI-Coding-FAQ-20-Most-Asked-Questions-2026/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p>AI coding tools have moved from novelty to necessity in 2026. Whether you are a solo developer shipping side projects or an enterprise team managing monorepos with millions of lines, the questions are remarkably consistent: what is an agent, how is it different from autocomplete, should I run models locally, and what on earth is MCP. This post answers the twenty most-searched questions about AI coding, LLMs, MCP, and RAG, with practical answers grounded in the tooling landscape of 2026.</p>
 
@@ -2455,145 +2645,4 @@ npx <span class="nt">-y</span> @kaneo/mcp
   <li>Cloud: <a href="https://cloud.kaneo.app">https://cloud.kaneo.app</a></li>
   <li>Discord: <a href="https://discord.gg/rU4tSyhXXU">https://discord.gg/rU4tSyhXXU</a></li>
   <li>Documentation: <a href="https://kaneo.app/docs/core">https://kaneo.app/docs/core</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Project Management" /><category term="Project Management" /><category term="Open Source" /><category term="TypeScript" /><category term="React" /><category term="Hono" /><category term="PostgreSQL" /><category term="Docker" /><category term="Self-Hosted" /><summary type="html"><![CDATA[A free, open-source, self-hosted project management platform focused on simplicity and speed. Built with Hono, React, PostgreSQL, and Docker for teams that want an invisible tool.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/kaneo/kaneo-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/kaneo/kaneo-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">OpenCut: A Free and Open Source Video Editor for Web, Desktop, and Mobile</title><link href="https://pyshine.com/OpenCut-Open-Source-Video-Editor/" rel="alternate" type="text/html" title="OpenCut: A Free and Open Source Video Editor for Web, Desktop, and Mobile" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/OpenCut-Open-Source-Video-Editor</id><content type="html" xml:base="https://pyshine.com/OpenCut-Open-Source-Video-Editor/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>OpenCut is a free and open source video editor that runs on the web, on the desktop, and on mobile devices from a single codebase. It is positioned as an open source alternative to CapCut, the short-form video editor that dominates mobile content creation but ships as closed source and increasingly as a paid product. Where CapCut locks its features behind a single vendor, OpenCut ships under the MIT license and invites inspection, extension, and self-hosting.</p>
-
-<p>The project is in the middle of a ground-up rewrite. The previous version, still live at <a href="https://opencut.app">opencut.app</a> and preserved as a public archive at <a href="https://github.com/opencut-app/opencut-classic">opencut-app/opencut-classic</a>, proved that a browser-based editor could handle real editing work: timelines, masks, keyframe curves, audio waveforms, and MP4 export. The rewrite takes those lessons and rebuilds the engine on a Rust core, adds a plugin-first architecture so third parties can extend the editor without forking it, exposes an MCP server so AI agents can drive the editor programmatically, and introduces a headless mode so the same engine can render projects in batch and on CI.</p>
-
-<p>This post walks through what OpenCut is, why it exists, how its architecture fits together, how the plugin system and MCP server work, and how to install and develop against it. The source for everything described here lives in the <a href="https://github.com/OpenCut-app/OpenCut">OpenCut-app/OpenCut</a> repository.</p>
-
-<h2 id="why-opencut">Why OpenCut</h2>
-
-<p>The short-form video market is enormous, and almost all of it runs through a small number of closed, proprietary editors. Creators who want to script repetitive edits, render on a server farm, or simply own their toolchain are out of luck. OpenCut addresses three concrete problems that no single closed product solves well.</p>
-
-<p>The first is lock-in. A project file in a closed editor is only useful for as long as the vendor keeps the product alive and the terms affordable. OpenCut’s project format, timeline model, and rendering pipeline are all open and documented in the source, so a project saved today remains renderable by anyone who can compile the code.</p>
-
-<p>The second is reach. A creator might start a cut on a phone, refine it on a laptop, and finish it in a browser on a borrowed machine. OpenCut compiles its core to native code for desktop and mobile and to WebAssembly for the web, so the same timeline, effects, and renderer behave identically across all three surfaces. There is no separate “mobile cut-down” with a reduced feature set.</p>
-
-<p>The third is automation. Modern content workflows are increasingly agentic: a script or an AI assistant trims silence, generates captions, applies a brand template, and exports. Closed editors expose at most a narrow plugin API. OpenCut treats automation as a first-class citizen through its Editor API, an MCP server for AI agents, and a headless mode that can render without a window. The same operations a human performs in the UI are available to a program, with no second implementation to drift out of sync.</p>
-
-<p>Under the hood the rewrite is built on a Rust core, with TypeScript for the web UI and proto and moon for build tooling and toolchain pinning. The result is a single codebase that produces native desktop binaries, a web app, and an automation server, all backed by one rendering engine.</p>
-
-<h2 id="how-it-works">How It Works</h2>
-
-<p><img src="/assets/img/diagrams/opencut/opencut-architecture.svg" alt="OpenCut Architecture" /></p>
-
-<p>The architecture diagram above maps the complete data path through OpenCut, from the moment media is imported to the moment final pixels are composited for preview or export. Reading the graph from top to bottom reveals four colour-coded tiers, each representing a distinct responsibility in the system, and the arrows trace how a command travels from an input down to the rendering engine and back out as frames.</p>
-
-<p>Green nodes mark the inputs that drive the editor. The Web Browser, Desktop App, and Mobile App are the three human-facing surfaces, and all three are built from a single codebase that shares one Rust core. The fourth green node, the AI Agent, is drawn with a dashed border to signal that it is a non-human, automated input. It never opens the UI; instead it issues commands through the MCP server on the right of the diagram.</p>
-
-<p>The blue nodes form the in-process layers of the OpenCut editor itself. The UI Layer is where human input lands, rendering the timeline, the preview canvas, the properties panels, and the scripting tab. The Scripting Tab lets advanced users write short programs that manipulate a project, and every script ultimately resolves to calls against the Editor API.</p>
-
-<p>The Plugin System is coloured orange because it is a tooling surface rather than a process. Third-party plugins register against the public Editor API instead of reaching into private internals, which is exactly what makes the architecture plugin-first. The Editor API is the thick blue node at the centre of the tier, and every other editor component converges on it: the UI drives it, scripts call it, and plugins extend it.</p>
-
-<p>The lower-left of the diagram holds the Rust core, shown in purple to mark it as the computational backend. It is organised as a short pipeline that media flows through. The Media Processing node decodes video, audio, and image files into a common internal representation that the rest of the engine can consume.</p>
-
-<p>The Timeline node owns the edit decision list: track ordering, clip placement, and frame-accurate timing. Time inside OpenCut is represented as an integer tick count at a high tick rate rather than floating-point seconds, which eliminates the rounding errors that accumulate when snapping to frame boundaries on fractional frame rates such as 23.976 or 29.97.</p>
-
-<p>The Effects node is where masks, filters, transforms, and keyframed animations are evaluated against the timeline’s clips. Effects feed the Rendering Engine, the compositor that produces final frames. Because this pipeline is implemented in Rust and exposed to the web through WebAssembly, the browser gets GPU-accelerated compositing without relying on a hand-written JavaScript fallback.</p>
-
-<p>The lower-right of the diagram holds the MCP server, drawn in orange to mark it as a tooling surface for automation rather than a human UI. An AI Agent issues MCP calls into the AI Agent Interface, which routes those calls to the Automation API. The Automation API is the same surface the Editor API exposes, so anything a human can do in the UI, a script or agent can do programmatically.</p>
-
-<p>The Automation API dispatches long-running work to Headless Mode, which can render projects without any window open at all. This is what makes batch rendering and CI-driven export possible, because a render farm or a build server can drive the same engine a creator uses interactively.</p>
-
-<p>Because Headless Mode speaks the same Automation API as the interactive editor, an agent does not need a separate rendering SDK. It submits the same operations a user would, against the same project model, and the headless runtime simply skips the window creation step. This removes an entire class of bugs where an export pipeline subtly disagrees with the editor.</p>
-
-<p>The Scripting Tab sits inside the editor tier for the same reason. It is not a parallel automation path with its own semantics; it is a direct way for a human to write the same calls an agent would make through MCP. A script developed in the tab can later be wrapped as a plugin or handed to an agent with no translation, because all three share the Editor API as their contract.</p>
-
-<p>The final edge, from Headless Mode back into the Rendering Engine, closes the loop. Headless rendering reuses the exact same Rust compositor as the interactive editor, which guarantees that an automated export is pixel-identical to what a user sees on screen. No separate export code path exists, so there is no risk of the rendered output drifting from the preview.</p>
-
-<p>The end-to-end data flow, following the arrows in the diagram, resolves to the following steps:</p>
-
-<ol>
-  <li>A user opens the editor on the web, desktop, or mobile, sending input to the UI Layer.</li>
-  <li>The UI Layer, the Scripting Tab, and plugins all funnel their intent through the Editor API.</li>
-  <li>The Editor API imports media into Media Processing and edits the Timeline.</li>
-  <li>Media Processing decodes assets and feeds clips onto the Timeline.</li>
-  <li>The Timeline applies Effects, which are then composited by the Rendering Engine.</li>
-  <li>Separately, the Editor API exposes an Automation API consumed by the MCP server.</li>
-  <li>An AI Agent calls the AI Agent Interface, which routes commands to the Automation API.</li>
-  <li>The Automation API submits batch jobs to Headless Mode.</li>
-  <li>Headless Mode renders through the same Rendering Engine, producing output identical to the interactive preview.</li>
-</ol>
-
-<p>The colour scheme is deliberate and carries meaning throughout the diagram. Green is reserved for inputs, both human and automated. Blue marks the in-process editor layers that a human interacts with directly. Orange marks tooling surfaces that expose capabilities externally, namely the plugin system and the MCP server. Purple marks the Rust-backed backend where the real computation happens. Together the four tiers make a single guarantee: every path, whether started by a click or by an agent, ends at the same Rust compositor, so OpenCut behaves the same no matter who or what is driving it.</p>
-
-<h2 id="plugin-architecture">Plugin Architecture</h2>
-
-<p>OpenCut is described as plugin-first, and that phrase has a specific architectural meaning. In many editors, plugins are an afterthought: the core is built for the built-in UI, and an extension API is bolted on later by exposing whatever internal functions happen to be reachable. The result is a fragile surface that breaks every release and cannot reach the full power of the editor.</p>
-
-<p>OpenCut inverts that relationship. The Editor API is the single choke point through which the editor’s own UI, its scripting tab, and third-party plugins all operate. Because the built-in UI is itself just another consumer of the Editor API, the API is guaranteed to be complete: if a feature exists in the UI, the calls that implement it are part of the public surface, and a plugin can make them too.</p>
-
-<p>This has three practical consequences. First, a plugin can automate any editing task a human can perform, including tasks that involve the timeline, effects, masks, keyframes, media imports, and exports. Second, plugins do not depend on private internals, so they survive upgrades to the core far more reliably than plugins that reach into implementation details. Third, the scripting tab and the plugin system share the same API, so a script that works interactively can be packaged as a plugin with no rewrite.</p>
-
-<p>The plugin system is one of the headline features of the ongoing rewrite, alongside the Editor API itself. Together they turn OpenCut from a single application into a platform: third parties can ship effects, transitions, caption generators, brand templates, and workflow automation without forking the project. The same surface also feeds the MCP server, so a plugin’s capabilities become reachable by an AI agent without any additional integration work.</p>
-
-<h2 id="mcp-server-for-ai-agents">MCP Server for AI Agents</h2>
-
-<p>The Model Context Protocol, or MCP, is a standardised way for AI agents to call external tools. OpenCut exposes an MCP server that turns the editor into a tool an agent can drive. Where a human clicks to split a clip, an agent issues an MCP call that performs the same split against the same timeline.</p>
-
-<p>This matters because video editing is full of repetitive, well-specified work that is painful to do by hand but trivial to describe: trim the silence out of an interview, generate captions from the transcript, apply a lower-third template, cut to a beat, and export at a target resolution. An agent with access to the OpenCut MCP server can perform each of these as a sequence of tool calls, and a creator can review the result rather than perform every step.</p>
-
-<p>The MCP server in the architecture diagram sits on the lower right, coloured orange to mark it as a tooling surface. An AI Agent enters through the AI Agent Interface, which validates and routes incoming calls. Those calls reach the Automation API, which is the same API the Editor API exposes internally. From there, long-running operations such as rendering are dispatched to Headless Mode, which can run without a window and therefore on a server.</p>
-
-<p>Headless Mode is the piece that makes agent-driven workflows practical at scale. Because rendering can happen without a GUI, an agent can submit a render job and poll for completion, or a CI pipeline can export a project as part of a build. The render goes through the same Rust Rendering Engine as the interactive editor, so the output matches what a human would see. There is no second, divergent export pipeline to maintain.</p>
-
-<p>The combination of the Editor API, the plugin system, and the MCP server means OpenCut has one consistent automation surface. A script in the scripting tab, a packaged plugin, and an AI agent all speak the same vocabulary of operations, and they all bottom out at the same Rust core. That consistency is what allows OpenCut to serve both a creator editing by hand and a pipeline editing by code.</p>
-
-<h2 id="installation">Installation</h2>
-
-<p>OpenCut uses <a href="https://moonrepo.dev/proto">proto</a> to pin its toolchain, so every developer and CI machine gets the exact same versions of the language tools automatically. Start by cloning the repository and installing the pinned tools.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/OpenCut-app/OpenCut.git
-<span class="nb">cd </span>OpenCut
-proto use
-</code></pre></div></div>
-
-<p>The <code class="language-plaintext highlighter-rouge">proto use</code> command reads the <code class="language-plaintext highlighter-rouge">.prototools</code> file at the repo root and installs the pinned versions of moon, bun, and rust. If you do not yet have proto installed, it can be installed on Linux, macOS, and WSL with the official installer.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bash &lt;<span class="o">(</span>curl <span class="nt">-fsSL</span> https://moonrepo.dev/install/proto.sh<span class="o">)</span>
-</code></pre></div></div>
-
-<p>On Windows, use PowerShell to install proto.</p>
-
-<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">irm</span><span class="w"> </span><span class="nx">https://moonrepo.dev/install/proto.ps1</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">iex</span><span class="w">
-</span></code></pre></div></div>
-
-<p>If shims fail to run on Windows, allow local scripts for the current user.</p>
-
-<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Set-ExecutionPolicy</span><span class="w"> </span><span class="nt">-Scope</span><span class="w"> </span><span class="nx">CurrentUser</span><span class="w"> </span><span class="nx">RemoteSigned</span><span class="w">
-</span></code></pre></div></div>
-
-<p>Once <code class="language-plaintext highlighter-rouge">proto use</code> has installed the pinned tools, the web and API development servers can be started with moon.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>moon run web:dev       <span class="c"># web editor on localhost:5173</span>
-moon run api:dev       <span class="c"># api server on localhost:8787</span>
-</code></pre></div></div>
-
-<p>The web app is built with Vite and TanStack Router and runs in any modern browser. The API app runs on Cloudflare Workers via the Elysia adapter. The project is MIT licensed, so it can be self-hosted, audited, and modified without restriction.</p>
-
-<h2 id="development">Development</h2>
-
-<p>OpenCut is a monorepo managed by moon, with projects discovered under <code class="language-plaintext highlighter-rouge">apps/*</code> and <code class="language-plaintext highlighter-rouge">crates/*</code>. The web editor lives in <code class="language-plaintext highlighter-rouge">apps/web</code>, the API server in <code class="language-plaintext highlighter-rouge">apps/api</code>, and the native desktop app in <code class="language-plaintext highlighter-rouge">apps/desktop</code>. The desktop app is built with the GPUI Rust toolkit and is still early in development.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>moon run web:dev       <span class="c"># vite dev server for the web editor</span>
-moon run api:dev       <span class="c"># elysia api dev server</span>
-moon run desktop:dev   <span class="c"># cargo run for the desktop app</span>
-</code></pre></div></div>
-
-<p>The desktop target has its own check and build tasks, mirroring the standard cargo workflow.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>moon run desktop:check   <span class="c"># cargo check</span>
-moon run desktop:build   <span class="c"># cargo build --release</span>
-</code></pre></div></div>
-
-<p>The first desktop build compiles GPUI from source and takes a while, which is expected. Platform requirements differ: macOS needs the Xcode command line tools for the Metal renderer, Windows needs no extra dependencies, and Linux renders through Vulkan and needs Wayland or X11 development packages plus a C toolchain and cmake.</p>
-
-<p>The project is honest about its status. The rewrite is actively in progress, and the maintainers are not yet accepting outside contributions while the architecture is being designed. Anyone who wants to follow along, ask questions, or report issues can open an issue on the main repository. The classic version, which is the one currently running at <a href="https://opencut.app">opencut.app</a>, remains available at <a href="https://github.com/opencut-app/opencut-classic">opencut-app/opencut-classic</a> for anyone who needs a working editor today.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>OpenCut is an ambitious attempt to rebuild a category of software that has been almost entirely closed. By putting a Rust core at the centre and compiling it to native code and WebAssembly, it delivers one editor across web, desktop, and mobile without compromising on the renderer. By making the Editor API the single surface that the UI, the scripting tab, and plugins all share, it guarantees that the extension model is as powerful as the built-in experience. By adding an MCP server and a headless mode, it turns the editor into a tool that AI agents and CI pipelines can drive directly.</p>
-
-<p>The result is a video editor that is open, cross-platform, and automatable, and whose interactive and automated code paths converge on the same Rust compositor. Whether you are a creator looking for an honest alternative to CapCut, a developer who wants to script a rendering pipeline, or an agent builder who needs a real video tool to call, OpenCut is worth watching as the rewrite matures. The source is on GitHub under the MIT license, the classic version is live today, and the rewrite is under active development.</p>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Video Editing" /><category term="Rust" /><category term="AI" /><category term="OpenCut" /><category term="video editor" /><category term="Rust" /><category term="MCP" /><category term="open source" /><category term="CapCut alternative" /><category term="plugin architecture" /><category term="headless rendering" /><category term="WebAssembly" /><summary type="html"><![CDATA[OpenCut is an open source alternative to CapCut, rewritten around a Rust core, a plugin-first architecture, an MCP server for AI agents, and a headless mode for batch rendering. This guide covers its architecture, plugin system, MCP integration, installation, and development workflow.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/opencut/opencut-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/opencut/opencut-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Project Management" /><category term="Project Management" /><category term="Open Source" /><category term="TypeScript" /><category term="React" /><category term="Hono" /><category term="PostgreSQL" /><category term="Docker" /><category term="Self-Hosted" /><summary type="html"><![CDATA[A free, open-source, self-hosted project management platform focused on simplicity and speed. Built with Hono, React, PostgreSQL, and Docker for teams that want an invisible tool.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/kaneo/kaneo-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/kaneo/kaneo-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
