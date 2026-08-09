@@ -1,4 +1,223 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-09T13:24:45+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</title><link href="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/" rel="alternate" type="text/html" title="LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-the-Two-Phases-of-LLM-Inference</id><content type="html" xml:base="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/"><![CDATA[<h1 id="llm-prompt-vs-decode-understanding-the-two-phases-of-llm-inference">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-09T13:41:49+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</title><link href="https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/" rel="alternate" type="text/html" title="LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive</id><content type="html" xml:base="https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/"><![CDATA[<h1 id="llm-decode-deep-dive-kv-cache-gpu-vram-and-the-memory-bottleneck">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</h1>
+
+<p>In the <a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">previous post</a>, we established that LLM inference has two phases: prompt (prefill) and decode. We learned that prefill is compute-bound while decode is memory-bandwidth-bound. But we did not answer the deeper question: <strong>what exactly lives in GPU VRAM during decode, and why does it create a bottleneck?</strong></p>
+
+<p>This post goes under the hood. We will dissect the KV-cache, map it to physical GPU VRAM, trace the exact memory reads and writes that happen during each decode step, and explain why adding more GPU compute power does not make decoding faster. We will also cover the three major optimization techniques – PagedAttention, FlashAttention, and KV cache quantization – that production systems use to mitigate this bottleneck.</p>
+
+<h2 id="what-is-the-kv-cache">What Is the KV-Cache?</h2>
+
+<p>The KV-cache is a memory buffer that stores intermediate computation results from the transformer’s self-attention layers. Specifically, it stores the <strong>Key (K)</strong> and <strong>Value (V)</strong> tensors for every token that has been processed so far – both the prompt tokens and all generated output tokens.</p>
+
+<p>Without the KV-cache, generating the Nth output token would require recomputing the K and V tensors for all N-1 previous tokens from scratch. For a 1,000-token output, that means recomputing 999 tokens’ attention values 1,000 times – a quadratic cost that makes autoregressive generation impractically slow.</p>
+
+<p>The KV-cache eliminates this redundancy. Once a token’s K and V tensors are computed, they are stored in the cache and reused for every subsequent token. This reduces the per-token cost from O(N) to O(1) in terms of computation – but at the cost of O(N) memory storage that must be read every step.</p>
+
+<h2 id="the-kv-cache-formula">The KV-Cache Formula</h2>
+
+<p><img src="/assets/img/diagrams/llm-kv-cache-vram/kv-cache-vram-anatomy.svg" alt="KV-Cache and GPU VRAM Anatomy" /></p>
+
+<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
+
+<p>The diagram above provides a comprehensive view of how the KV-cache interacts with GPU VRAM during the decode phase. Let us examine each section in detail.</p>
+
+<p><strong>Section 1: GPU VRAM Allocation</strong></p>
+
+<p>The left section shows the physical memory layout of an NVIDIA A100 40GB GPU when serving a 13B parameter model. VRAM is divided into three categories:</p>
+
+<p><strong>Model Weights (26 GB, 65%)</strong>
+The model’s parameters are loaded into VRAM once at startup and never change. For a 13B parameter model in FP16 (2 bytes per parameter), this consumes 26 GB. This memory is static – it persists for the entire lifetime of the server and is shared across all concurrent requests. The model weights are read during every forward pass (both prefill and decode), but they are never written to.</p>
+
+<p><strong>KV-Cache (12 GB, 30%)</strong>
+This is the dynamic portion that grows and shrinks with each request. When a new request arrives, the prefill phase populates the KV-cache with all prompt tokens’ K,V values. During decode, each new token’s K,V values are appended. When the request completes, its KV-cache is freed. The 12 GB shown here is a snapshot – in practice, the KV-cache budget is configured as a fraction of total VRAM (typically 30-40%) and determines how many concurrent requests the server can handle.</p>
+
+<p><strong>Activations (2 GB, 5%)</strong>
+Temporary tensors created during the forward pass – intermediate attention scores, FFN outputs, softmax results. These are allocated, used, and freed within a single forward pass. Their size depends on batch size and sequence length but is generally small compared to weights and KV-cache.</p>
+
+<p>The critical insight is that <strong>only the KV-cache portion is dynamic</strong>. Model weights and activation budgets are predictable, but KV-cache usage depends on the length of each conversation – which is unknown until the request completes. This unpredictability is the root cause of memory management challenges in LLM serving.</p>
+
+<p><strong>Section 2: KV-Cache Structure</strong></p>
+
+<p>The right-top section shows the internal structure of the KV-cache. For each transformer layer, there are separate K and V tensors, each with dimensions [num_heads x head_dim x seq_len]. The total KV-cache size follows this formula:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>KV_cache_bytes = 2 (K+V) x 2 (FP16) x num_layers x num_heads x head_dim x seq_len
+</code></pre></div></div>
+
+<p>For Llama-2 7B (32 layers, 32 heads, 128 dim): each token requires <code class="language-plaintext highlighter-rouge">2 x 2 x 32 x 32 x 128 = 524,288 bytes = 0.5 MB</code>. A 4,000-token context therefore needs 2 GB of KV-cache. A 32,000-token context needs 16 GB – nearly half the A100’s total VRAM.</p>
+
+<p>The cache is replicated across all N transformer layers, meaning the memory cost scales with both context length and model depth. Deeper models (more layers) have proportionally larger KV-caches for the same context length.</p>
+
+<p><strong>Section 3: Decode Step Memory Flow</strong></p>
+
+<p>The bottom section traces the five steps of a single decode iteration, showing exactly what data moves between VRAM and GPU compute cores:</p>
+
+<p><strong>Step 1 - Load KV-Cache</strong>: The entire KV-cache for this request is read from VRAM (HBM) into the GPU’s streaming multiprocessors. For a 4,000-token context, this means loading 2 GB of data. This is the dominant cost of the decode step.</p>
+
+<p><strong>Step 2 - Compute Q</strong>: The query vector for the single new token is computed. This is a tiny matrix-vector multiplication – one token through the embedding and projection layers. The computation is negligible compared to the memory load in Step 1.</p>
+
+<p><strong>Step 3 - Attention</strong>: The single query vector is multiplied by all cached keys (Q x K^T), producing attention scores. These scores are softmax-normalized and multiplied by all cached values, producing a context vector. The arithmetic intensity (FLOPs per byte of data loaded) is extremely low – roughly 1-2 FLOPs per byte, compared to ~100 FLOPs per byte during prefill.</p>
+
+<p><strong>Step 4 - Append K,V</strong>: The new token’s K and V values are computed and appended to the KV-cache in VRAM. The cache grows by one entry (0.5 MB for Llama-7B). This is a small write but it means the next decode step must load slightly more data.</p>
+
+<p><strong>Step 5 - Output Logits</strong>: The context vector passes through the remaining layers and produces a probability distribution over the vocabulary. The next token is sampled from this distribution, and the loop repeats from Step 1.</p>
+
+<p><strong>Section 4: Arithmetic Intensity and the Roofline Model</strong></p>
+
+<p>The comparison panel shows why decode is fundamentally memory-bound, using the roofline model framework:</p>
+
+<ul>
+  <li><strong>Arithmetic intensity</strong> = FLOPs performed / bytes loaded from memory</li>
+  <li><strong>Prefill</strong>: ~100 FLOPs/byte (large matrix-matrix multiplications, high utilization)</li>
+  <li><strong>Decode</strong>: ~1-2 FLOPs/byte (matrix-vector multiplication, mostly loading data)</li>
+  <li><strong>Ridge point</strong>: ~50-100 FLOPs/byte (the transition from memory-bound to compute-bound)</li>
+</ul>
+
+<p>Because decode’s arithmetic intensity (1-2) is far below the ridge point (50-100), the GPU is memory-bound: it spends most of its time waiting for data to arrive from VRAM, not performing computations. The GPU’s compute cores (TFLOPS) are largely idle – utilization is typically below 5% during single-request decode.</p>
+
+<p>This is why an H100 (989 TFLOPS FP16) is only about 2x faster than an A100 (312 TFLOPS FP16) for decode, despite having 3x more compute: the bottleneck is memory bandwidth (H100: 3,350 GB/s vs A100: 1,555 GB/s), not compute.</p>
+
+<p><strong>Section 5: KV-Cache Growth</strong></p>
+
+<p>The bar chart shows how KV-cache size scales linearly with context length. Each additional token adds approximately 0.5 MB (for a 7B model). This linear growth has two consequences:</p>
+
+<ol>
+  <li><strong>Memory capacity</strong>: Longer contexts require more VRAM. A 32K-token context on Llama-7B needs 16 GB of KV-cache alone, leaving little room for other requests.</li>
+  <li><strong>Memory bandwidth</strong>: Each decode step must load the entire KV-cache. At 32K tokens, that is 16 GB loaded per token. At A100’s 1,555 GB/s bandwidth, the theoretical minimum time per token is 16 GB / 1,555 GB/s = ~10 ms. This means a maximum of ~100 tokens/second – and that is the theoretical best case with zero overhead.</li>
+</ol>
+
+<h2 id="gpu-memory-hierarchy-why-vram-bandwidth-matters">GPU Memory Hierarchy: Why VRAM Bandwidth Matters</h2>
+
+<p>To understand why decode is slow, we need to understand the GPU memory hierarchy:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Memory Level</th>
+      <th>Capacity</th>
+      <th>Bandwidth</th>
+      <th>Latency</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Registers (per SM)</td>
+      <td>~256 KB</td>
+      <td>~10 TB/s</td>
+      <td>1 cycle</td>
+    </tr>
+    <tr>
+      <td>L1 Cache (per SM)</td>
+      <td>~192 KB</td>
+      <td>~5 TB/s</td>
+      <td>~30 cycles</td>
+    </tr>
+    <tr>
+      <td>L2 Cache (shared)</td>
+      <td>~40 MB</td>
+      <td>~2 TB/s</td>
+      <td>~200 cycles</td>
+    </tr>
+    <tr>
+      <td><strong>VRAM / HBM</strong></td>
+      <td><strong>40-80 GB</strong></td>
+      <td><strong>1.5-3.4 TB/s</strong></td>
+      <td><strong>~400 cycles</strong></td>
+    </tr>
+    <tr>
+      <td>System RAM (CPU)</td>
+      <td>128-512 GB</td>
+      <td>~100 GB/s</td>
+      <td>~10,000 cycles</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>During decode, the KV-cache lives in VRAM (HBM) because it is too large for L2 cache (which is only 40 MB). Every decode step requires loading the entire KV-cache from HBM through the L2 cache into the streaming multiprocessors’ registers.</p>
+
+<p>The HBM bandwidth (1,555 GB/s on A100) sounds enormous, but when you are loading 2-16 GB per token, it becomes the hard limit on decode speed. No amount of additional compute can overcome this – the data physically must travel from HBM to the compute cores.</p>
+
+<h2 id="how-many-concurrent-requests-can-you-serve">How Many Concurrent Requests Can You Serve?</h2>
+
+<p>The KV-cache budget directly determines the maximum number of concurrent requests. Here is the calculation for an A100 40GB serving Llama-2 7B:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Total VRAM:                40 GB
+- Model weights (FP16):   -14 GB
+- Activation budget:       -2 GB
+= KV-cache budget:         24 GB
+
+Per-request KV-cache (4K context): 2 GB
+Max concurrent requests: 24 / 2 = 12
+
+Per-request KV-cache (8K context): 4 GB
+Max concurrent requests: 24 / 4 = 6
+</code></pre></div></div>
+
+<p>With 12 concurrent requests at 4K context, the server must load 12 x 2 GB = 24 GB of KV-cache data per decode step across all requests. At 1,555 GB/s, this takes ~15 ms, yielding a maximum throughput of 12 / 0.015 = ~800 tokens/second across all requests.</p>
+
+<p>Doubling the context to 8K halves the concurrent requests (6) and doubles the per-step load time (8 GB per request), yielding roughly the same aggregate throughput but half the concurrency.</p>
+
+<h2 id="three-optimization-techniques">Three Optimization Techniques</h2>
+
+<h3 id="1-pagedattention-vllm">1. PagedAttention (vLLM)</h3>
+
+<p>Traditional KV-cache management pre-allocates a contiguous block of VRAM for each request based on its maximum possible sequence length. If a request is allowed up to 4K tokens, 2 GB is reserved even if the actual output is only 100 tokens. This wastes 60-80% of KV-cache memory through internal fragmentation.</p>
+
+<p>PagedAttention, introduced by vLLM, applies the operating system’s virtual memory paging concept to KV-cache management. Instead of one contiguous block, the KV-cache is stored in fixed-size blocks (typically 16 tokens) that can be scattered across VRAM. A per-request block table maps logical token positions to physical block locations.</p>
+
+<p>This eliminates internal fragmentation (a request uses exactly the blocks it needs), enables copy-on-write sharing for common prefixes (multiple requests sharing the same system prompt reference the same blocks), and allows dynamic memory reclamation. vLLM reports 2-4x throughput improvement over prior systems, primarily by serving more concurrent requests with the same VRAM.</p>
+
+<h3 id="2-flashattention">2. FlashAttention</h3>
+
+<p>FlashAttention does not reduce the KV-cache size – it reduces the number of memory reads/writes during the attention computation itself. Standard attention materializes the full N x N attention matrix in HBM, requiring multiple reads and writes. FlashAttention uses tiling to compute attention in blocks that fit in the GPU’s fast L1 cache / shared memory (SRAM), avoiding the round-trip to HBM for intermediate results.</p>
+
+<p>For decode, FlashAttention-2 and FlashAttention-3 provide optimized kernels that fuse the QK^T multiplication, softmax, and V multiplication into a single pass over the KV-cache. This reduces HBM accesses from O(N^2) to O(N) per decode step, though the KV-cache must still be loaded once per token. The practical benefit is a 2-4x reduction in attention kernel time.</p>
+
+<h3 id="3-kv-cache-quantization">3. KV-Cache Quantization</h3>
+
+<p>KV-cache quantization reduces the precision of stored K and V tensors from FP16 (2 bytes) to INT8 (1 byte) or even INT4 (0.5 bytes). This directly halves or quarters the VRAM required for the KV-cache, allowing either more concurrent requests or longer contexts.</p>
+
+<p>For Llama-2 7B at 4K context:</p>
+<ul>
+  <li>FP16 KV-cache: 2.0 GB per request (12 concurrent on A100)</li>
+  <li>INT8 KV-cache: 1.0 GB per request (24 concurrent on A100)</li>
+  <li>INT4 KV-cache: 0.5 GB per request (48 concurrent on A100)</li>
+</ul>
+
+<p>The quality impact is generally minimal for INT8 (perplexity increase of less than 1%) but becomes noticeable at INT4, especially for long contexts where attention scores become more sensitive to precision. Most production systems use INT8 as the sweet spot.</p>
+
+<h2 id="practical-implications">Practical Implications</h2>
+
+<p><strong>For local LLM users (Ollama, llama.cpp)</strong>: The KV-cache is why your GPU runs out of memory with long contexts. An 8GB GPU can run a 7B model (14GB in FP16 – offloaded partially to CPU) but may struggle with 8K context because the KV-cache alone needs 4GB. Using a smaller context window or KV-cache quantization (INT8/INT4) can dramatically reduce memory usage.</p>
+
+<p><strong>For production serving (vLLM, TGI)</strong>: The KV-cache budget is the primary tuning parameter. Set it too low and you under-utilize the GPU; set it too high and you risk out-of-memory errors when traffic spikes. PagedAttention makes this less critical by eliminating fragmentation, but the total budget still must fit in VRAM alongside model weights.</p>
+
+<p><strong>For hardware selection</strong>: If your workload is decode-heavy (short prompts, long outputs), prioritize memory bandwidth over compute. An A100 80GB (2,000 GB/s) will outperform an A100 40GB (1,555 GB/s) even though both have the same compute capability, because the larger VRAM allows more concurrent requests and the higher bandwidth serves them faster.</p>
+
+<p><strong>For model selection</strong>: Models with Grouped-Query Attention (GQA) or Multi-Query Attention (MQA) have smaller KV-caches because they share K,V heads across query heads. Llama-2 70B uses GQA with 8 KV heads (instead of 64), reducing KV-cache size by 8x compared to standard Multi-Head Attention. This is why larger models can sometimes serve more concurrent requests than smaller ones.</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention (Kwon et al., 2023)</a> – The vLLM paper that introduced paged KV-cache management</li>
+  <li><a href="https://arxiv.org/abs/2205.14135">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness (Dao et al., 2022)</a> – The IO-aware attention algorithm that reduces HBM accesses</li>
+  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (Vaswani et al., 2017)</a> – The original Transformer paper defining the attention mechanism</li>
+  <li><a href="https://huggingface.co/docs/transformers/v4.56.1/en/kv_cache">Hugging Face KV Cache Documentation</a> – Practical guide to KV cache strategies and quantization</li>
+</ul>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</a></li>
+  <li><a href="/AI-Coding-FAQ-20-Most-Asked-Questions-2026/">AI Coding FAQ: 20 Most Asked Questions</a></li>
+  <li><a href="/FreeLLMAPI-OpenAI-Compatible-Proxy-16-Free-LLM-Providers/">FreeLLMAPI: OpenAI-Compatible Proxy Stacking 16 Free LLM Providers</a></li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The KV-cache is the invisible elephant in GPU VRAM during LLM inference. It is the reason decode is memory-bandwidth-bound, the reason long contexts are expensive, and the reason concurrent request capacity is limited. Understanding its structure, growth pattern, and relationship to GPU memory hierarchy is essential for anyone building or optimizing LLM systems.</p>
+
+<p>The three optimization techniques – PagedAttention (eliminating memory waste), FlashAttention (reducing memory accesses), and KV-cache quantization (reducing memory size) – address different aspects of the same bottleneck. Production systems like vLLM combine all three to achieve throughput levels that would be impossible with naive KV-cache management.</p>
+
+<p>As context windows continue to grow (128K, 1M tokens), the KV-cache bottleneck will only become more severe. Future innovations in attention mechanisms (linear attention, state-space models like Mamba) aim to eliminate the KV-cache entirely, but for the foreseeable future, understanding and optimizing the KV-cache remains the most impactful lever for LLM inference performance.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="GPU" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Understand how the KV-cache maps to GPU VRAM during LLM decoding, why decode is memory-bandwidth-bound, and how PagedAttention, FlashAttention, and KV cache quantization solve the VRAM bottleneck.]]></summary></entry><entry><title type="html">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</title><link href="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/" rel="alternate" type="text/html" title="LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-the-Two-Phases-of-LLM-Inference</id><content type="html" xml:base="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/"><![CDATA[<h1 id="llm-prompt-vs-decode-understanding-the-two-phases-of-llm-inference">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</h1>
 
 <p>When you send a request to a large language model – whether through ChatGPT, a local Ollama instance, or a production API – the model does not process your input and generate output in a single uniform step. Instead, every LLM inference request is split into two fundamentally different computational phases: <strong>prompt processing</strong> (also called prefill) and <strong>decoding</strong> (also called autoregressive generation).</p>
 
@@ -2435,214 +2654,4 @@ ds4&gt;
 
 <p>The differentiators add up. Sophisticated planning via GOAP enables novel paths to goals that were never explicitly programmed. Superior extensibility means new actions and goals extend the system without editing existing finite state machine definitions. Goal orientation means agents find their own way to a result rather than following hand-wired transitions. For teams already invested in Java, Kotlin, and Spring, Embabel offers a path to production-grade agentic AI without leaving the platform they trust.</p>
 
-<p>The project is young but ambitious, with a roadmap that includes budget-aware agents, agent federation, and ports to other platforms. It is open source under the Apache 2.0 license, created by Rod Johnson and a team of experienced engineers. To go deeper, explore the <a href="https://github.com/embabel/embabel-agent">source code on GitHub</a>, read the <a href="https://docs.embabel.com">reference documentation</a>, or try the interactive <a href="https://hub.embabel.com">Embabel hub</a> where an Embabel agent answers questions about the framework in natural language.</p>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Java" /><category term="Developer Tools" /><category term="Embabel" /><category term="AI agents" /><category term="JVM" /><category term="Kotlin" /><category term="Java" /><category term="Spring Boot" /><category term="agentic AI" /><category term="GOAP" /><category term="planning" /><category term="LLM" /><category term="domain model" /><category term="framework" /><summary type="html"><![CDATA[A deep dive into the Embabel Agent Framework, a JVM agentic AI framework created by Spring founder Rod Johnson. Learn how its non-LLM planning engine, OODA loop, and strongly typed domain model differentiate it from finite state machine approaches. Complete guide with architecture diagram, key concepts, installation, and quick start.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/embabel-agent/embabel-agent-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/embabel-agent/embabel-agent-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Kaneo: Open-Source Project Management Platform</title><link href="https://pyshine.com/Kaneo-Open-Source-Project-Management/" rel="alternate" type="text/html" title="Kaneo: Open-Source Project Management Platform" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/Kaneo-Open-Source-Project-Management</id><content type="html" xml:base="https://pyshine.com/Kaneo-Open-Source-Project-Management/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>Project management software is one of the most crowded categories in modern tooling, yet most teams still end up fighting their tools instead of doing their work. Kaneo is a free, open-source project management platform that takes the opposite stance. It is self-hosted, MIT licensed, and built around a single principle: the best tools are invisible. Instead of adding every possible feature, Kaneo amplifies a team’s natural workflow so the tool fades into the background and the work stays in focus.</p>
-
-<p>The project lives on GitHub at <a href="https://github.com/usekaneo/kaneo">usekaneo/kaneo</a> and ships a marketing site at <a href="https://kaneo.app">kaneo.app</a> alongside a managed <a href="https://cloud.kaneo.app">Kaneo Cloud</a> offering. It is written primarily in TypeScript, organized as a pnpm and Turborepo monorepo, and deployed either through a purpose-built CLI called <a href="https://github.com/usekaneo/drim">drim</a>, through Docker Compose, or through a packaged Helm chart for Kubernetes. The community gathers on <a href="https://discord.gg/rU4tSyhXXU">Discord</a>, and contributions are welcomed under the MIT license.</p>
-
-<p>This post walks through what Kaneo is, why it exists, how its architecture fits together, how to install it, how to use it day to day, and which features matter most. Whether you are evaluating a Jira alternative, a Linear alternative, or a Trello alternative, Kaneo is worth understanding because it deliberately rejects the feature-bloat race in favor of focus and ownership.</p>
-
-<h2 id="why-kaneo">Why Kaneo</h2>
-
-<p>The creator of Kaneo, Andrej, built it after years of using bloated, overcomplicated project management platforms that distracted from actual work. The core observation is that the problem with most tools is not that they lack features, it is that they have too many. Every unnecessary notification, every unused workflow state, and every configuration surface pulls a team away from what matters: building great products.</p>
-
-<p>Kaneo is built on the principle that less is more. Every feature exists because it solves a real problem, not because it looks impressive in a demo. This philosophy shows up across the product. The interface is clean and centered on the work rather than on the tool. The platform is self-hosted by default, so your data stays yours and you are not locked into a vendor’s pricing or roadmap. Performance is treated as a first-class concern, so the board and list views respond instantly even on large workspaces. And the whole project is open source under the permissive MIT license, so you can audit, customize, and extend it without asking permission.</p>
-
-<p>For teams that care about control, privacy, and a focused execution experience, Kaneo occupies a clear niche. It gives you clean planning, focused execution, and full ownership of your workflow from backlog to release. It is not trying to be everything to everyone; it is trying to be the invisible layer that helps a team move faster.</p>
-
-<h2 id="how-it-works">How It Works</h2>
-
-<p>Kaneo follows a modern, layered architecture that separates the presentation tier, the API tier, the backend services, and the data tier, while keeping deployment simple through containerization. The diagram below shows how users, the Kaneo application, backend services, storage, and deployment tooling connect to form a complete request and data flow.</p>
-
-<p><img src="/assets/img/diagrams/kaneo/kaneo-architecture.svg" alt="Kaneo Architecture Diagram" /></p>
-
-<p>The diagram is organized into horizontal bands that map directly to Kaneo’s runtime responsibilities. Reading it top to bottom traces a single user action from click to persisted row, while the side band captures how the whole stack is delivered. Each color carries semantic meaning: green marks input from users, blue marks the application layers and processes, purple marks backend services and storage, and orange marks the deployment tooling. This consistent coloring makes it easy to scan where a request enters, where it is processed, and where it lands.</p>
-
-<p>At the top, in green, sit the human entry points: the Web Browser and the Mobile Client. Browsers load the Kaneo Web App, which is a React 19 single-page application built with Vite, TanStack Router, TanStack Query, and Tailwind CSS. The routing is file-based through TanStack Router, server state is cached and synchronized through TanStack Query, and the rich text editor for task descriptions is powered by TipTap. Mobile and other programmatic clients, including scripts and CI pipelines, talk to the API Server directly over its REST API. These two surfaces are the only things end users ever touch, which keeps the perceived surface area of the product small even though the underlying system is capable.</p>
-
-<p>The blue band in the middle represents the Kaneo application layer. The Web App communicates with the API Server, which is a Hono application running on Node.js. Hono was chosen because it is fast, lightweight, and built around web standards, which keeps cold starts and per-request overhead low. The API Server is the central orchestrator for the entire backend. It validates every incoming request with Zod and Valibot, enforces sessions and API keys through better-auth, and then dispatches work to the domain modules: Project Management, Task Tracking, Labels and Priorities, and the GitHub and Gitea integrations. Each module owns its own controllers and schema, which keeps the codebase navigable as features grow.</p>
-
-<p>Alongside the domain modules, the API Server fans two kinds of work outward. The first is the WebSocket Sync layer, which broadcasts task and project changes to every connected client so that moving a card on one screen instantly reflects on every other open board. The second is the MCP Server, which exposes a Model Context Protocol endpoint at <code class="language-plaintext highlighter-rouge">/api/mcp</code>. This lets AI tools like Claude Desktop and Cursor manage tasks, projects, and labels directly, giving agentic coding workflows a unified project context instead of forcing humans to copy information back and forth. The same API that powers the web UI therefore also powers automation and AI agents, with no separate integration tier to maintain.</p>
-
-<p>The purple band represents the backend services and the data tier. better-auth handles authentication, sessions, social sign-in through GitHub, Google, and Discord, magic links, OTP, and API keys. Drizzle ORM provides a typed schema, versioned migrations, and query building on top of PostgreSQL, so every domain module persists its data through the same safe, typed boundary and the schema is reviewable in version control. Redis is used as a cache and a pub/sub bus for events, scheduled jobs, and due-date reminders, which is what enables the realtime broadcast and the background scheduler to run without overloading the database. All of these services ultimately funnel through Drizzle into PostgreSQL, the single source of truth for projects, tasks, labels, comments, activity, and workspaces.</p>
-
-<p>The orange band on the side captures the deployment and tooling story, which is central to Kaneo’s promise of invisible ownership. drim is a Go CLI that generates the <code class="language-plaintext highlighter-rouge">docker-compose.yml</code>, <code class="language-plaintext highlighter-rouge">Caddyfile</code>, and <code class="language-plaintext highlighter-rouge">.env</code>, installs Docker if it is missing, and brings the whole stack up with one command, including automatic HTTPS through Caddy. Docker Compose runs the API, the Web App, and PostgreSQL as containers and is the fastest way to try Kaneo locally or on a single server, which is why it is the default path in the documentation. The Helm chart targets teams running Kubernetes in production and includes deployment, service, ingress, HPA, and PVC templates.</p>
-
-<p>Together these bands describe a complete request lifecycle. A browser loads the Web App, which calls the API Server over HTTPS. The API Server authenticates the request with better-auth, routes it to the right domain module, reads or writes through Drizzle ORM into PostgreSQL, publishes any resulting events to Redis, and broadcasts changes back over WebSocket to every open client. When a team wants to deploy, drim or Docker Compose stands the whole thing up in minutes. This separation of concerns, combined with simple delivery tooling, is exactly what lets Kaneo stay fast and focused while remaining trivially self-hostable.</p>
-
-<p>Concretely, a single task update flows through the system in the following steps:</p>
-
-<ol>
-  <li>The user drags a card in the Web App, which issues a <code class="language-plaintext highlighter-rouge">PATCH /api/tasks/:id</code> request to the API Server.</li>
-  <li>The API Server validates the payload with Zod and confirms the session and permissions through better-auth and the permissions package.</li>
-  <li>The Task Tracking domain module updates the row through Drizzle ORM, which executes the SQL against PostgreSQL.</li>
-  <li>The API Server publishes the change as an event to Redis, which fans it out to the WebSocket Sync layer.</li>
-  <li>The WebSocket layer pushes the update to every connected client, so all open boards reflect the new status instantly.</li>
-  <li>If a due date changed, the scheduler picks it up from the database and queues a reminder through the configured notification channels.</li>
-</ol>
-
-<p>This layered flow is what makes Kaneo feel instantaneous while keeping every concern in its own place. The frontend never talks to PostgreSQL directly, the API never reaches into another module’s schema, and realtime delivery is decoupled from request handling through Redis. The same disciplined boundary also applies to integrations: GitHub and Gitea webhooks arrive at dedicated endpoints, are translated into activity, and flow back out through the WebSocket layer, so external systems and the web UI stay consistent without ad hoc glue code.</p>
-
-<p>The deployment side mirrors the same predictability. A fresh server goes from empty to a secured Kaneo instance through a short, repeatable lifecycle:</p>
-
-<ol>
-  <li>drim is installed from the official install script and verifies that the Docker daemon is reachable.</li>
-  <li>drim generates the <code class="language-plaintext highlighter-rouge">docker-compose.yml</code>, <code class="language-plaintext highlighter-rouge">Caddyfile</code>, and <code class="language-plaintext highlighter-rouge">.env</code> from your answers or flags.</li>
-  <li>Docker Compose pulls the bundled Kaneo image and the PostgreSQL image and starts both services.</li>
-  <li>The API waits for PostgreSQL to pass its health check, then runs any pending Drizzle migrations.</li>
-  <li>Caddy terminates TLS for the configured domain and reverse-proxies traffic to the Web App and API.</li>
-  <li>The instance is live and reachable over HTTPS, with the database persisted to a named volume.</li>
-</ol>
-
-<p>Because every layer has a clear job and every deployment step is generated rather than hand-written, the same diagram that describes a task update also describes how the system is stood up and operated. That symmetry, more than any single feature, is the practical payoff of Kaneo’s architecture: it is simple enough to reason about end to end, yet complete enough to run a real team’s workflow from backlog to release.</p>
-
-<h2 id="installation">Installation</h2>
-
-<p>Kaneo offers three primary installation paths, each tuned for a different level of operational comfort. The fastest is drim, the one-click deployment CLI, which is ideal if you want things to just work on a fresh Linux server.</p>
-
-<h3 id="one-click-deployment-with-drim">One-Click Deployment with drim</h3>
-
-<p>Install drim and run its setup wizard. The CLI generates the required configuration files, installs Docker if it is missing, provisions automatic HTTPS through Caddy, and brings the stack up.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-fsSL</span> https://assets.kaneo.app/install.sh | sh
-drim setup
-</code></pre></div></div>
-
-<p>To install and deploy in a single step with a domain and automatic HTTPS, pass the flags directly to the install script:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-fsSL</span> https://assets.kaneo.app/install.sh | sh <span class="nt">-s</span> <span class="nt">--</span> <span class="nt">--setup</span> <span class="nt">--domain</span><span class="o">=</span>kaneo.example.com
-</code></pre></div></div>
-
-<p>Once the command finishes, your Kaneo instance is running with the database, API, and web frontend all configured and reachable over HTTPS.</p>
-
-<h3 id="quick-start-with-docker-compose">Quick Start with Docker Compose</h3>
-
-<p>The fastest way to try Kaneo locally is with Docker Compose. Save the following as <code class="language-plaintext highlighter-rouge">compose.yml</code>, copy <code class="language-plaintext highlighter-rouge">.env.sample</code> to <code class="language-plaintext highlighter-rouge">.env</code>, set <code class="language-plaintext highlighter-rouge">POSTGRES_PASSWORD</code> and <code class="language-plaintext highlighter-rouge">AUTH_SECRET</code>, and run <code class="language-plaintext highlighter-rouge">docker compose up -d</code>.</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">services</span><span class="pi">:</span>
-  <span class="na">postgres</span><span class="pi">:</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">postgres:16-alpine</span>
-    <span class="na">env_file</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">.env</span>
-    <span class="na">ports</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s2">"</span><span class="s">5432:5432"</span>
-    <span class="na">volumes</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">postgres_data:/var/lib/postgresql/data</span>
-    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
-    <span class="na">healthcheck</span><span class="pi">:</span>
-      <span class="na">test</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">CMD-SHELL"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">pg_isready</span><span class="nv"> </span><span class="s">-U</span><span class="nv"> </span><span class="s">kaneo</span><span class="nv"> </span><span class="s">-d</span><span class="nv"> </span><span class="s">kaneo"</span><span class="pi">]</span>
-      <span class="na">interval</span><span class="pi">:</span> <span class="s">10s</span>
-      <span class="na">timeout</span><span class="pi">:</span> <span class="s">5s</span>
-      <span class="na">retries</span><span class="pi">:</span> <span class="m">5</span>
-
-  <span class="na">kaneo</span><span class="pi">:</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">ghcr.io/usekaneo/kaneo:latest</span>
-    <span class="na">ports</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s2">"</span><span class="s">5173:5173"</span>
-    <span class="na">env_file</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">.env</span>
-    <span class="na">depends_on</span><span class="pi">:</span>
-      <span class="na">postgres</span><span class="pi">:</span>
-        <span class="na">condition</span><span class="pi">:</span> <span class="s">service_healthy</span>
-    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
-
-<span class="na">volumes</span><span class="pi">:</span>
-  <span class="na">postgres_data</span><span class="pi">:</span>
-</code></pre></div></div>
-
-<p>Generate a strong <code class="language-plaintext highlighter-rouge">AUTH_SECRET</code> with OpenSSL, then open <a href="http://localhost:5173">http://localhost:5173</a> in your browser.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>openssl rand <span class="nt">-hex</span> 32
-</code></pre></div></div>
-
-<h3 id="development-setup">Development Setup</h3>
-
-<p>To hack on Kaneo itself, clone the repository and use pnpm with Turborepo. The project requires Node 20.19 or newer.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/usekaneo/kaneo.git
-<span class="nb">cd </span>kaneo
-pnpm <span class="nb">install
-</span>pnpm dev
-</code></pre></div></div>
-
-<p>Refer to the <code class="language-plaintext highlighter-rouge">ENVIRONMENT_SETUP.md</code> file in the repository root for the full list of required environment variables and for troubleshooting common issues such as CORS configuration.</p>
-
-<h3 id="kubernetes-deployment">Kubernetes Deployment</h3>
-
-<p>For production Kubernetes clusters, Kaneo ships a comprehensive Helm chart under <code class="language-plaintext highlighter-rouge">charts/kaneo</code>. It includes deployment, service, ingress, HPA, PVC, and validation templates, with documented values for TLS, storage, and scaling. See the chart’s README for installation and production configuration examples.</p>
-
-<h2 id="usage">Usage</h2>
-
-<p>Day to day, Kaneo centers on a small set of focused workflows. The workspace is the top-level container, and inside it you create projects. Each project has a board and a list view that share the same source of truth, so planning in the list view and executing in the board view keeps statuses, priorities, and labels perfectly in sync.</p>
-
-<p>A typical session looks like this. You sign in, open a workspace, and land on a project board with columns such as Backlog, To Do, In Progress, In Review, and Done. You create a task, assign an owner, set a priority, attach labels, and pick a due date. Dragging a card between columns updates its status immediately and broadcasts the change to every other connected client through the WebSocket layer.</p>
-
-<p>Tasks support a rich text editor built on TipTap, file attachments, subtasks, comments, activity history, and relations to other tasks. Labels act as the primary cross-cutting organizational axis, representing streams like <code class="language-plaintext highlighter-rouge">onboarding</code>, <code class="language-plaintext highlighter-rouge">backend</code>, or <code class="language-plaintext highlighter-rouge">customer-feedback</code>, and they combine with priority and due dates for sharper planning. Because label naming is consistent across a workspace, filtering stays useful as the project grows.</p>
-
-<p>For teams that connect planning to code, the native GitHub and Gitea integrations sync issues and keep product planning aligned with development execution. Outgoing webhooks can fan events out to Slack, Discord, Telegram, or any custom HTTP endpoint. The scheduler runs due-date reminders so nothing slips through the cracks, and the REST API plus the MCP server let you automate Kaneo from scripts, CI pipelines, or AI coding agents.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create a task through the REST API</span>
-curl <span class="nt">-X</span> POST https://kaneo.example.com/api/tasks <span class="se">\</span>
-  <span class="nt">-H</span> <span class="s2">"Authorization: Bearer </span><span class="nv">$KANEO_API_KEY</span><span class="s2">"</span> <span class="se">\</span>
-  <span class="nt">-H</span> <span class="s2">"Content-Type: application/json"</span> <span class="se">\</span>
-  <span class="nt">-d</span> <span class="s1">'{
-    "projectId": "proj_abc123",
-    "title": "Ship release notes",
-    "priority": "high",
-    "status": "in-progress",
-    "labels": ["docs", "release"]
-  }'</span>
-</code></pre></div></div>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Run the MCP server for an AI coding agent</span>
-npx <span class="nt">-y</span> @kaneo/mcp
-</code></pre></div></div>
-
-<h2 id="features">Features</h2>
-
-<h3 id="board-and-list-views">Board and List Views</h3>
-
-<p>Kaneo keeps planning operational with less dashboard theater and more visible ownership. The board view is a drag-and-drop kanban where cards move between status columns in real time. The list view presents the same work as a compact table for planning and triage. Because both views read and write the same data, switching between them never causes drift.</p>
-
-<h3 id="labels-and-priorities">Labels and Priorities</h3>
-
-<p>Labels are central to Kaneo’s flow. Use them to group initiatives, surface cross-cutting work, and keep prioritization clear across board and list views. Combine labels with priority levels and due dates to build a focused, filterable backlog without introducing heavy process.</p>
-
-<h3 id="native-github-and-gitea-integrations">Native GitHub and Gitea Integrations</h3>
-
-<p>Kaneo connects project management to the code repository. Native integrations for GitHub and self-hosted Gitea sync issues and map labels, so development execution and product planning stay aligned. Webhook handlers translate repository events into activity that appears on the relevant tasks.</p>
-
-<h3 id="mcp-server-for-ai-tools">MCP Server for AI Tools</h3>
-
-<p>Every Kaneo instance ships a built-in HTTP MCP endpoint at <code class="language-plaintext highlighter-rouge">/api/mcp</code>, and a stdio client is available through the <code class="language-plaintext highlighter-rouge">@kaneo/mcp</code> package on npm. This lets AI tools like Claude Desktop and Cursor manage tasks, projects, and labels directly, giving agentic coding workflows a unified project context.</p>
-
-<h3 id="authentication-and-security">Authentication and Security</h3>
-
-<p>Authentication is handled by better-auth, which supports email and password, magic links, OTP, API keys, and social sign-in through GitHub, Google, and Discord. Permissions are enforced through a dedicated package, and the platform is designed with a privacy-first stance and minimal analytics so teams that care about control can run it confidently.</p>
-
-<h3 id="realtime-collaboration">Realtime Collaboration</h3>
-
-<p>A WebSocket layer broadcasts task and project changes to every connected client. Moving a card, updating a description, or posting a comment is reflected instantly across the team, which keeps distributed teams in sync without manual refreshes.</p>
-
-<h3 id="self-hosted-by-default">Self-Hosted by Default</h3>
-
-<p>Deploy with Docker, drim, or Helm and keep full ownership of your infrastructure and data. There are no mandatory phone-home calls and no forced telemetry. For teams that prefer not to self-host, Kaneo Cloud offers a managed option with the same product.</p>
-
-<h3 id="internationalization">Internationalization</h3>
-
-<p>Kaneo ships with translations for many languages, including English, Spanish, French, German, Portuguese, Russian, Chinese, Japanese, Korean, and more, with a schema-validated i18n workflow that keeps translations consistent across releases.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Kaneo is a refreshing entry in the project management space precisely because it refuses to compete on feature count. It is free, open source, MIT licensed, and self-hosted by default, which gives teams genuine ownership of their workflow and their data. The architecture is clean: a React and Vite web app talking to a Hono API, persisted through Drizzle ORM into PostgreSQL, with Redis for events, better-auth for identity, and a WebSocket layer for realtime updates. Deployment is deliberately painless thanks to the drim CLI, Docker Compose, and a Helm chart for Kubernetes.</p>
-
-<p>For teams that have grown tired of bloated platforms and want a tool that amplifies their natural workflow instead of forcing adaptation, Kaneo is well worth a try. Clone the repository, run <code class="language-plaintext highlighter-rouge">drim setup</code>, or spin up the Docker Compose stack and see how an invisible project management tool feels. If it saves your team time, consider sponsoring the project on GitHub or joining the community on Discord to help shape its future.</p>
-
-<ul>
-  <li>Repository: <a href="https://github.com/usekaneo/kaneo">https://github.com/usekaneo/kaneo</a></li>
-  <li>Website: <a href="https://kaneo.app">https://kaneo.app</a></li>
-  <li>Cloud: <a href="https://cloud.kaneo.app">https://cloud.kaneo.app</a></li>
-  <li>Discord: <a href="https://discord.gg/rU4tSyhXXU">https://discord.gg/rU4tSyhXXU</a></li>
-  <li>Documentation: <a href="https://kaneo.app/docs/core">https://kaneo.app/docs/core</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Project Management" /><category term="Project Management" /><category term="Open Source" /><category term="TypeScript" /><category term="React" /><category term="Hono" /><category term="PostgreSQL" /><category term="Docker" /><category term="Self-Hosted" /><summary type="html"><![CDATA[A free, open-source, self-hosted project management platform focused on simplicity and speed. Built with Hono, React, PostgreSQL, and Docker for teams that want an invisible tool.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/kaneo/kaneo-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/kaneo/kaneo-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+<p>The project is young but ambitious, with a roadmap that includes budget-aware agents, agent federation, and ports to other platforms. It is open source under the Apache 2.0 license, created by Rod Johnson and a team of experienced engineers. To go deeper, explore the <a href="https://github.com/embabel/embabel-agent">source code on GitHub</a>, read the <a href="https://docs.embabel.com">reference documentation</a>, or try the interactive <a href="https://hub.embabel.com">Embabel hub</a> where an Embabel agent answers questions about the framework in natural language.</p>]]></content><author><name>PyShine</name></author><category term="AI Agents" /><category term="Java" /><category term="Developer Tools" /><category term="Embabel" /><category term="AI agents" /><category term="JVM" /><category term="Kotlin" /><category term="Java" /><category term="Spring Boot" /><category term="agentic AI" /><category term="GOAP" /><category term="planning" /><category term="LLM" /><category term="domain model" /><category term="framework" /><summary type="html"><![CDATA[A deep dive into the Embabel Agent Framework, a JVM agentic AI framework created by Spring founder Rod Johnson. Learn how its non-LLM planning engine, OODA loop, and strongly typed domain model differentiate it from finite state machine approaches. Complete guide with architecture diagram, key concepts, installation, and quick start.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/embabel-agent/embabel-agent-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/embabel-agent/embabel-agent-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
