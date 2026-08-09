@@ -238,6 +238,6 @@ The architecture combining Clojure, ClojureScript, Rust, and WebAssembly is tech
 
 - [DESIGN-md-AI-Powered-Design-Systems](/DESIGN-md-AI-Powered-Design-Systems/) - Explores AI-powered design systems, a topic that aligns closely with Penpot's design tokens and MCP server capabilities.
 - [Awesome-Design-Systems-Curated-Collection](/Awesome-Design-Systems-Curated-Collection/) - A curated collection of design system resources, directly relevant since Penpot is a tool for building design systems at scale.
-- [Claude-Code-Complete-Guide](/Claude-Code-Complete-Guide/) - A guide to AI-assisted coding, relevant because Penpot's MCP server integrates with AI coding tools for design-to-code workflows.
+- [Claude-Code-Complete-Guide](/claude-code-complete-guide/) - A guide to AI-assisted coding, relevant because Penpot's MCP server integrates with AI coding tools for design-to-code workflows.
 - [Harbor-Cloud-Native-Registry](/Harbor-Cloud-Native-Registry/) - Covers an open-source infrastructure tool with Docker and Kubernetes deployment, similar to Penpot's self-hosting model.
 - [MarkItDown-Microsoft-Document-Conversion](/MarkItDown-Microsoft-Document-Conversion/) - Discusses format conversion, thematically related to Penpot's design-to-code conversion using open standards.

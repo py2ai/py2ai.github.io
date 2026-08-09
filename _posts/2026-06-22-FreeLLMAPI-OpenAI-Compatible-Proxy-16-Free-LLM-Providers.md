@@ -288,6 +288,6 @@ Whether you are prototyping an AI feature, running Claude Code on a budget, or j
 
 ## Related Posts
 
-- [Harbor: The Open Source Container Registry](/Harbor-The-Open-Source-Container-Registry/)
-- [LiteRT-LM: On-Device AI for Everyone](/LiteRT-LM-On-Device-AI-for-Everyone/)
-- [Claude Code: AI-Powered Development in Your Terminal](/Claude-Code-AI-Powered-Development-in-Your-Terminal/)
+- [Harbor: The Open Source Container Registry](/Harbor-Cloud-Native-Registry/)
+- [LiteRT-LM: On-Device AI for Everyone](/Google-LiteRT-LM-Edge-LLM-Inference-Framework/)
+- [Claude Code: AI-Powered Development in Your Terminal](/claude-code-complete-guide/)

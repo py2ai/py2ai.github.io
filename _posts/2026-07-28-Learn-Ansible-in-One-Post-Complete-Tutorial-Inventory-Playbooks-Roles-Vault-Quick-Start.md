@@ -27,7 +27,7 @@ Ansible is an **agentless** configuration-management tool — you write YAML "pl
 
 ![Ansible Roadmap](/assets/img/diagrams/ansible-tutorial/ans-roadmap.svg)
 
-The roadmap moves from inventory (Stage 1), through playbooks (Stage 2), modules (Stage 3), roles (Stage 4), and production (Stage 5). The [Linux CLI tutorial](/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Text-Quick-Start/) is a prerequisite — Ansible runs Linux commands.
+The roadmap moves from inventory (Stage 1), through playbooks (Stage 2), modules (Stage 3), roles (Stage 4), and production (Stage 5). The [Linux CLI tutorial](/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/) is a prerequisite — Ansible runs Linux commands.
 
 ---
 

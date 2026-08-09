@@ -261,7 +261,7 @@ Interceptors are the gRPC analog of Express middleware: auth, logging, metrics, 
 gRPC is the internal-service layer — these PyShine tutorials connect to it:
 
 - **[Learn REST API in One Post](/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/)** — the alternative API style for public/edge; the comparison above.
-- **[Learn Go in One Post](/Learn-Git-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/)** — Go is the dominant gRPC language; the server/client snippets above are Go.
+- **[Learn Go in One Post](/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/)** — Go is the dominant gRPC language; the server/client snippets above are Go.
 - **[Learn Python in One Post](/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/)** — `grpcio` / `grpcio-tools` for Python gRPC.
 - **[Learn Kubernetes in One Post](/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/)** — gRPC services deploy to K8s; health checks wire to liveness probes.
 - **[Learn Observability in One Post](/Learn-Observability-in-One-Post-Complete-Tutorial-Metrics-Logs-Traces-OpenTelemetry-Quick-Start/)** — OTel trace context propagates through gRPC metadata.

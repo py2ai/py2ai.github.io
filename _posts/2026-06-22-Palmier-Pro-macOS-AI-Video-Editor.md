@@ -208,6 +208,6 @@ separately as a commercial-tier subscription.
 
 #### Related PyShine Posts
 
-- [Harbor - Open-Source AI Container Registry Platform](/Harbor-AI-Self-Hosting-Open-Registry-Platform/)
+- [Harbor - Open-Source AI Container Registry Platform](/Harbor-Cloud-Native-Registry/)
 - [AI Hedge Fund - Multi-Agent Investment System](/AI-Hedge-Fund-Multi-Agent-Investment-System/)
 - [FreeLLMAPI - OpenAI-Compatible Proxy Across 16 LLM Providers](/FreeLLMAPI-OpenAI-Compatible-Proxy-16-Free-LLM-Providers/)

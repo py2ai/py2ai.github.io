@@ -370,4 +370,4 @@ If you want to try it yourself, head to [JCodesMore/ai-website-cloner-template](
 ## Related Posts
 
 - [OpenAI Codex Plugin for Claude Code](/OpenAI-Codex-Plugin-for-Claude-Code/)
-- [Claude Code: Architecture and Orchestration](/Claude-Code-Architecture-and-Orchestration/)
+- [Claude Code: Architecture and Orchestration](/Everything-Claude-Code-AI-Agent-Harness/)

@@ -197,7 +197,7 @@ The interviewer isn't grading your knowledge of Kafka — they're grading how yo
 
 - [Designing Data-Intensive Applications](https://dataintensive.net/) by Martin Kleppmann — the canonical book; read it cover to cover.
 - [The System Design Primer](https://github.com/donnemartin/system-design-primer) — free, exhaustive, interview-focused.
-- [System Design Interview (Vol 1 & 2)](by Alex Xu) — worked examples with diagrams.
+- [System Design Interview (Vol 1 & 2)](https://www.systemdesigninterview.com/) by Alex Xu — worked examples with diagrams.
 - [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/) — the production checklist.
 - [High Scalability](https://highscalability.com/) — real-world architectures of large systems.
 

@@ -254,8 +254,8 @@ WorldMonitor represents a thoughtful approach to the problem of global intellige
 
 ## Related Posts
 
-- [AI Hedge Fund: AI-Powered Investment Analysis](/AI-Hedge-Fund-Open-Source-Investment-Analysis/) - financial intelligence with AI-driven analysis
-- [TimesFM: Google's Time Series Foundation Model](/TimesFM-Google-Time-Series-Foundation-Model/) - data analysis for time series forecasting
+- [AI Hedge Fund: AI-Powered Investment Analysis](/AI-Hedge-Fund-Multi-Agent-Investment-System/) - financial intelligence with AI-driven analysis
+- [TimesFM: Google's Time Series Foundation Model](/TimesFM-Time-Series-Foundation-Model/) - data analysis for time series forecasting
 - [Top AI Coding Assistant Frameworks](/Top-AI-Coding-Assistant-Frameworks-Build-Your-Own/) - TypeScript frameworks for building tools
 - [Claudian: Claude Code as AI Collaborator](/Claudian-Claude-Code-Obsidian-Plugin/) - AI integration patterns
-- [Harbor: Open Source Container Registry](/Harbor-Open-Source-Container-Registry/) - infrastructure tooling for self-hosting
+- [Harbor: Open Source Container Registry](/Harbor-Cloud-Native-Registry/) - infrastructure tooling for self-hosting
