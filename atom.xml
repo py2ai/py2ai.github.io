@@ -1,4 +1,195 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-09T23:49:54+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</title><link href="https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/" rel="alternate" type="text/html" title="LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive</id><content type="html" xml:base="https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/"><![CDATA[<h1 id="llm-decode-deep-dive-kv-cache-gpu-vram-and-the-memory-bottleneck">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-09T23:59:35+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Attention Mechanism: The Heart of the Transformer</title><link href="https://pyshine.com/LLM-Attention-Mechanism-Heart-of-Transformer/" rel="alternate" type="text/html" title="LLM Attention Mechanism: The Heart of the Transformer" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Attention-Mechanism-Heart-of-Transformer</id><content type="html" xml:base="https://pyshine.com/LLM-Attention-Mechanism-Heart-of-Transformer/"><![CDATA[<h1 id="llm-attention-mechanism-the-heart-of-the-transformer">LLM Attention Mechanism: The Heart of the Transformer</h1>
+
+<p>If the transformer is the engine of modern AI, attention is its combustion chamber. Every breakthrough in large language models – from GPT to Llama to Gemini – is built on the same fundamental operation: self-attention. Despite its centrality, attention is often explained either too abstractly (with analogies that obscure the mechanics) or too mathematically (with equations that hide the intuition).</p>
+
+<p>This post traces attention from first principles. We will cover what Q, K, and V actually represent, why multi-head attention exists, how grouped-query attention (GQA) reduces the KV-cache bottleneck we discussed in our <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">previous post</a>, and why causal masking is essential for autoregressive generation. This is the fourth post in our LLM internals series, following <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization</a> (which produces the embeddings that attention consumes).</p>
+
+<h2 id="self-attention-the-core-operation">Self-Attention: The Core Operation</h2>
+
+<p><img src="/assets/img/diagrams/llm-attention/llm-attention-mechanism.svg" alt="LLM Attention Mechanism" /></p>
+
+<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
+
+<p>The diagram above breaks down the attention mechanism into six interconnected sections. Let us examine each in detail.</p>
+
+<p><strong>Section 1: Self-Attention – Q, K, V Computation</strong></p>
+
+<p>The left section shows the complete self-attention pipeline for a single attention head. The process begins with input embeddings – the output of the tokenization pipeline we covered in the <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">previous post</a>. Each token has been converted to a dense vector of dimension d_model (typically 4096 for a 7B model).</p>
+
+<p><strong>Query, Key, Value Projections</strong>
+Each input embedding is multiplied by three learned weight matrices – W_Q, W_K, and W_V – to produce three new vectors for each token: the Query (Q), Key (K), and Value (V). These projections are the model’s way of extracting three different “views” of each token:</p>
+
+<ul>
+  <li><strong>Query (Q)</strong>: “What am I looking for?” – This vector encodes what information the current token needs from other tokens.</li>
+  <li><strong>Key (K)</strong>: “What do I contain?” – This vector encodes what information this token offers to others.</li>
+  <li><strong>Value (V)</strong>: “If you select me, here is my contribution” – This vector is the actual content that gets passed along if the attention weight is high.</li>
+</ul>
+
+<p>The projection matrices W_Q, W_K, and W_V are learned during training. They transform the generic embedding into specialized roles. The dimensionality is reduced from d_model to d_k (typically d_model / num_heads = 4096/32 = 128) to keep the computation manageable.</p>
+
+<p><strong>Attention Score Computation (Q x K^T)</strong>
+The attention scores are computed by taking the dot product of each token’s Query with every token’s Key. This produces an N x N matrix (where N is the sequence length) where entry (i, j) represents how strongly token i should attend to token j. A high score means “token i finds token j relevant.”</p>
+
+<p>The dot product is a natural similarity measure: vectors pointing in similar directions produce high scores. This is why attention is sometimes called “content-based addressing” – the Query “queries” the Keys, and the most similar Keys get the highest attention weights.</p>
+
+<p><strong>Scaling and Softmax</strong>
+The raw scores are divided by sqrt(d_k) to prevent the values from growing too large (which would push softmax into regions with vanishing gradients). Then softmax is applied across each row, converting scores into probabilities that sum to 1. This ensures the attention weights form a valid probability distribution.</p>
+
+<p><strong>Weighted Sum (softmax x V)</strong>
+The attention probabilities are multiplied by the Value matrix, producing a weighted average of all tokens’ Values. Tokens with high attention weights contribute more to the output; tokens with low weights contribute less. The result is a context-aware representation of each token – one that has incorporated information from all relevant tokens in the sequence.</p>
+
+<p><strong>The Attention Formula</strong>
+The entire operation is captured in one elegant equation:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Attention(Q, K, V) = softmax(Q x K^T / sqrt(d_k)) x V
+</code></pre></div></div>
+
+<p>This single formula, introduced in the “Attention Is All You Need” paper, is the mathematical heart of every modern LLM.</p>
+
+<p><strong>Section 2: Multi-Head Attention</strong></p>
+
+<p>A single attention head can only learn one type of relationship. But language has many different types of relationships – syntactic (subject-verb agreement), semantic (coreference: “it” refers to “cat”), positional (next word prediction), and structural (paragraph-level coherence).</p>
+
+<p>Multi-head attention solves this by running multiple attention heads in parallel, each with its own Q, K, V projections. The diagram shows four heads, each learning a different attention pattern:</p>
+
+<ul>
+  <li><strong>Head 1</strong>: Syntax – attending to grammatically related tokens (subject attends to verb)</li>
+  <li><strong>Head 2</strong>: Coreference – attending to referent tokens (“it” attends to “cat”)</li>
+  <li><strong>Head 3</strong>: Position – attending to nearby tokens (sequential context)</li>
+  <li><strong>Head 4</strong>: Semantics – attending to conceptually related tokens</li>
+</ul>
+
+<p>Each head operates on a reduced dimension d_k = d_model / num_heads. The outputs of all heads are concatenated and multiplied by an output projection matrix W_O, producing the final output with the same dimension as the input.</p>
+
+<p>For Llama-2 7B: d_model = 4096, num_heads = 32, d_k = 128. Each head processes 128-dimensional Q, K, V vectors, and the 32 heads’ outputs are concatenated back to 4096 dimensions.</p>
+
+<p><strong>Section 3: MHA vs MQA vs GQA</strong></p>
+
+<p>The right section compares three attention variants that differ in how many Key and Value heads they use:</p>
+
+<p><strong>Multi-Head Attention (MHA)</strong>
+The original design: every query head has its own K and V head. If there are H query heads, there are also H KV heads. This provides maximum expressiveness but means the KV-cache (which stores K and V for all heads) is at its largest. For Llama-2 7B with 32 heads, each token’s KV-cache occupies 0.5 MB. GPT-3 and the original Transformer use MHA.</p>
+
+<p><strong>Multi-Query Attention (MQA)</strong>
+Introduced by Shazeer in 2019, MQA uses multiple query heads but only a SINGLE shared K and V head. All query heads attend to the same keys and values. This reduces the KV-cache by a factor of H (e.g., 32x for Llama-2 7B), dramatically improving decode speed. However, quality degrades because the model loses the ability to compute different K, V representations for different heads. PaLM and Falcon use MQA.</p>
+
+<p><strong>Grouped-Query Attention (GQA)</strong>
+Introduced by Ainslie et al. in 2023, GQA is the sweet spot between MHA and MQA. Query heads are divided into G groups, and each group shares a single K and V head. When G = H, it is MHA; when G = 1, it is MQA. The typical choice is G = 8, which reduces the KV-cache by 8x while maintaining quality close to MHA.</p>
+
+<p>GQA is the industry standard as of 2026: Llama-2 70B, Llama-3 (all sizes), Mistral, Mixtral, and Gemma all use GQA with 8 KV groups. The quality-speed tradeoff is favorable because the KV-cache reduction directly addresses the memory-bandwidth bottleneck of decode (as explained in our <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache deep dive</a>).</p>
+
+<p>For Llama-2 70B (80 layers, 64 query heads, 8 KV heads, 128 dim): each token’s KV-cache is <code class="language-plaintext highlighter-rouge">2 x 2 x 80 x 8 x 128 = 327,680 bytes = 0.33 MB</code>, compared to 2.62 MB with MHA. At 32K context, this saves 73 GB of VRAM per request.</p>
+
+<p><strong>Section 4: Causal Masking</strong></p>
+
+<p>The bottom-left section shows the causal masking matrix – a critical component that prevents tokens from “seeing the future.” The 5x5 grid shows which token pairs are allowed to attend to each other:</p>
+
+<ul>
+  <li><strong>Green cells (lower triangle)</strong>: Token i CAN attend to token j (where j &lt;= i). “sat” can attend to “The”, “cat”, and itself.</li>
+  <li><strong>Red X (upper triangle)</strong>: Token i CANNOT attend to token j (where j &gt; i). “cat” cannot attend to “sat” or “on”.</li>
+</ul>
+
+<p>Without causal masking, the model could cheat during training by looking ahead at future tokens. This would make training trivially easy but would break autoregressive generation – at inference time, future tokens do not exist yet.</p>
+
+<p>During prefill (prompt processing), causal masking is applied to the full N x N attention matrix. During decode, the single new token’s query attends to ALL cached K, V values – no masking is needed because all cached tokens are in the past.</p>
+
+<p><strong>Section 5: Attention Complexity</strong></p>
+
+<p>The bottom-right table compares the computational complexity of attention during prefill vs decode:</p>
+
+<ul>
+  <li><strong>Prefill</strong>: O(N^2 x d) compute and O(N^2) memory for the attention matrix. All N tokens are processed in parallel, making this compute-bound.</li>
+  <li><strong>Decode</strong>: O(N x d) compute per token. The single query vector attends to N cached K, V values. This is memory-bandwidth-bound because the entire KV-cache must be loaded for each token.</li>
+</ul>
+
+<p>The O(N^2) complexity of prefill is why processing a 100K-token prompt takes significantly longer than a 1K-token prompt. The linear O(N) complexity of decode (per token) is why each output token is fast individually but the total decode time scales linearly with output length.</p>
+
+<h2 id="how-attention-heads-learn-different-patterns">How Attention Heads Learn Different Patterns</h2>
+
+<p>Research into attention head interpretability has revealed that different heads naturally specialize for different linguistic tasks:</p>
+
+<p><strong>Syntactic Heads</strong>: Some heads consistently attend from verbs to their subjects and objects. For example, in “The cat that the dog chased ran away”, a syntactic head will have “ran” attend directly to “cat” (skipping the relative clause).</p>
+
+<p><strong>Coreference Heads</strong>: Certain heads track pronoun references. In “The cat sat on the mat because it was tired”, a coreference head will have “it” attend to “cat” with high weight.</p>
+
+<p><strong>Positional Heads</strong>: Some heads are primarily driven by position rather than content. They attend to the immediately preceding token, the token two positions back, or other fixed offsets. These heads help the model track word order.</p>
+
+<p><strong>Rare Word Heads</strong>: Some heads specialize in attending to rare or unusual tokens, helping the model incorporate information from unusual vocabulary.</p>
+
+<p>This specialization emerges naturally from training – no explicit instruction tells heads what to specialize in. The multi-head architecture provides the capacity for diverse attention patterns, and gradient descent discovers which specializations are useful for language modeling.</p>
+
+<h2 id="the-on2-problem-and-why-it-matters">The O(N^2) Problem and Why It Matters</h2>
+
+<p>The attention computation requires an N x N matrix (where N is the sequence length) because every token must compute its similarity with every other token. This quadratic scaling is the fundamental limitation of the Transformer architecture:</p>
+
+<ul>
+  <li><strong>N = 1,000</strong>: 1 million attention scores (manageable)</li>
+  <li><strong>N = 10,000</strong>: 100 million scores (significant memory)</li>
+  <li><strong>N = 100,000</strong>: 10 billion scores (requires special techniques)</li>
+  <li><strong>N = 1,000,000</strong>: 1 trillion scores (requires architectural changes)</li>
+</ul>
+
+<p>This is why extending context windows beyond 128K tokens is difficult. The attention matrix alone for 1M tokens in FP16 would consume 2 TB of memory – far exceeding any GPU’s VRAM.</p>
+
+<p>Several approaches address this:</p>
+<ul>
+  <li><strong>FlashAttention</strong>: Does not reduce the O(N^2) complexity but avoids materializing the full matrix in HBM, reducing memory from O(N^2) to O(N)</li>
+  <li><strong>Sliding Window Attention</strong>: Each token only attends to a local window of W tokens, reducing to O(N x W)</li>
+  <li><strong>Sparse Attention</strong>: Only attend to selected token pairs based on patterns, reducing to O(N x k)</li>
+  <li><strong>Linear Attention</strong>: Approximate attention with kernel functions, achieving O(N) complexity</li>
+  <li><strong>State Space Models (Mamba, RWKV)</strong>: Replace attention entirely with recurrent structures that have O(1) memory per step</li>
+</ul>
+
+<h2 id="gqa-why-it-became-the-industry-standard">GQA: Why It Became the Industry Standard</h2>
+
+<p>The transition from MHA to GQA is one of the most impactful architectural changes in recent LLM history. Here is why:</p>
+
+<p><strong>The Problem with MHA</strong>: The KV-cache grows with both sequence length and the number of attention heads. For a 70B model with 64 heads, each token requires 2.6 MB of KV-cache. At 32K context, that is 85 GB – more than two A100 40GB GPUs can hold.</p>
+
+<p><strong>The Problem with MQA</strong>: While MQA reduces the KV-cache by 64x, it degrades quality because all 64 query heads must share the same K and V representations. Different heads cannot learn different key-value patterns, limiting the model’s expressiveness.</p>
+
+<p><strong>The GQA Solution</strong>: By using 8 KV groups (instead of 64 or 1), GQA achieves an 8x KV-cache reduction while maintaining quality within 1% of MHA. The key insight is that most attention heads within a group learn similar patterns, so sharing K, V projections within a group loses little information.</p>
+
+<p><strong>Uptraining</strong>: Ainslie et al. showed that existing MHA checkpoints can be converted to GQA with only 5% of the original pretraining compute. This means models do not need to be trained from scratch – they can be “uptrained” to GQA cheaply.</p>
+
+<p><strong>Industry Adoption</strong>: As of 2026, virtually all open-weight LLMs use GQA with 8 groups: Llama-2 70B, Llama-3 (8B, 70B, 405B), Mistral 7B, Mixtral 8x7B, and Gemma 2. This convergence on GQA-8 represents the empirical consensus that 8 KV groups is the optimal quality-speed tradeoff.</p>
+
+<h2 id="practical-implications">Practical Implications</h2>
+
+<p><strong>For model selection</strong>: If you are choosing between models for a memory-constrained deployment, GQA models can serve more concurrent requests. A Llama-2 70B (GQA-8) can serve roughly 8x more concurrent requests than a hypothetical MHA version at the same context length.</p>
+
+<p><strong>For inference optimization</strong>: GQA is complementary to other optimizations. You can combine GQA (reduces KV-cache size) with FlashAttention (reduces HBM accesses) and KV-cache quantization (reduces precision) for multiplicative improvements. Modern inference servers like vLLM and TensorRT-LLM support all three simultaneously.</p>
+
+<p><strong>For training cost</strong>: The GQA uptraining recipe means you can train with MHA (slightly higher quality during training) and convert to GQA for deployment, getting the best of both worlds for only 5% additional compute.</p>
+
+<p><strong>For context window extension</strong>: GQA’s KV-cache reduction is a necessary (but not sufficient) condition for long context windows. Without GQA, a 128K context on a 70B model would require 340 GB of KV-cache – impossible on any single GPU. With GQA-8, it requires 42 GB, which fits on an A100 80GB.</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (Vaswani et al., 2017)</a> – The paper that introduced self-attention and the Transformer architecture</li>
+  <li><a href="https://arxiv.org/abs/1911.02150">Fast Transformer Decoding: One Write-Head is All You Need (Shazeer, 2019)</a> – The Multi-Query Attention (MQA) paper</li>
+  <li><a href="https://arxiv.org/abs/2305.13245">GQA: Training Generalized Multi-Query Transformer Models (Ainslie et al., 2023)</a> – The Grouped-Query Attention paper</li>
+  <li><a href="https://arxiv.org/abs/2205.14135">FlashAttention: Fast and Memory-Efficient Exact Attention (Dao et al., 2022)</a> – IO-aware attention that reduces HBM accesses</li>
+</ul>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">LLM Tokenization: How Text Becomes Numbers</a></li>
+  <li><a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</a></li>
+  <li><a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</a></li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Self-attention is the operation that makes the Transformer powerful. By computing Query-Key similarity, the model dynamically decides which tokens to focus on for each position. Multi-head attention extends this by running parallel heads that specialize in different linguistic phenomena – syntax, coreference, position, semantics.</p>
+
+<p>The evolution from MHA to MQA to GQA reflects the practical reality of LLM deployment: the KV-cache bottleneck (covered in our previous post) is so severe that reducing the number of K, V heads became the single most impactful architectural change. GQA-8 is now the industry standard because it achieves 8x KV-cache reduction with negligible quality loss, and the uptraining recipe makes it accessible to existing MHA checkpoints.</p>
+
+<p>Causal masking completes the picture by ensuring the model cannot peek at future tokens during training – a seemingly simple constraint that is essential for autoregressive generation. Without it, the model would learn to depend on future information that does not exist at inference time.</p>
+
+<p>Together, these components – self-attention, multi-head parallelism, GQA efficiency, and causal masking – form the attention mechanism that powers every modern LLM. Understanding them is essential for anyone who wants to go beyond using LLMs as black boxes and start optimizing, customizing, or building with them.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Attention" /><category term="Transformer" /><category term="Tutorial" /><summary type="html"><![CDATA[Understand self-attention, multi-head attention, grouped-query attention (GQA), and causal masking -- the core mechanism that lets LLMs decide what to focus on when processing text.]]></summary></entry><entry><title type="html">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</title><link href="https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/" rel="alternate" type="text/html" title="LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive</id><content type="html" xml:base="https://pyshine.com/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/"><![CDATA[<h1 id="llm-decode-deep-dive-kv-cache-gpu-vram-and-the-memory-bottleneck">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</h1>
 
 <p>In the <a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">previous post</a>, we established that LLM inference has two phases: prompt (prefill) and decode. We learned that prefill is compute-bound while decode is memory-bandwidth-bound. But we did not answer the deeper question: <strong>what exactly lives in GPU VRAM during decode, and why does it create a bottleneck?</strong></p>
 
@@ -2383,249 +2574,4 @@ sum(rate(checkout_requests_total[5m]))
 
 <p>If the guide helps your preparation, starring the repository on GitHub is the simplest way to support it and makes it easier for the next candidate to find. The repository is maintained on personal time and only stays current because contributors keep adding their interview experiences. Explore it, use it, and if you have an interview experience worth sharing, add it back so the cycle continues.</p>
 
-<p>The full repository is available at <a href="https://github.com/litu54/DevOps-Interview-Guide">litu54/DevOps-Interview-Guide</a>.</p>]]></content><author><name>PyShine</name></author><category term="DevOps" /><category term="SRE" /><category term="Cloud" /><category term="Interview" /><category term="Open Source" /><category term="DevOps" /><category term="SRE" /><category term="Kubernetes" /><category term="Docker" /><category term="Terraform" /><category term="AWS" /><category term="Azure" /><category term="GCP" /><category term="CI/CD" /><category term="Ansible" /><category term="Linux" /><category term="Interview" /><summary type="html"><![CDATA[A community-driven collection of 151 real DevOps, SRE, and Cloud engineering interview write-ups from 85 companies. See the exact questions candidates were asked in 2025 and 2026, organized by company for targeted interview prep.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/devops-interview-guide/devops-interview-topics.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/devops-interview-guide/devops-interview-topics.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">DwarfStar (ds4): A Native Inference Engine for DeepSeek V4 Flash</title><link href="https://pyshine.com/DwarfStar-Native-Inference-Engine/" rel="alternate" type="text/html" title="DwarfStar (ds4): A Native Inference Engine for DeepSeek V4 Flash" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/DwarfStar-Native-Inference-Engine</id><content type="html" xml:base="https://pyshine.com/DwarfStar-Native-Inference-Engine/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>Running capable large language models locally used to mean leaning on a general-purpose GGUF runner. DwarfStar, also known by its repository name <code class="language-plaintext highlighter-rouge">ds4</code>, takes a different stance. It is a small, native inference engine optimized first for a single model family, DeepSeek V4 Flash, and it is built and tested as one cohesive unit rather than as a plug-and-play loader for arbitrary weights. The result is a system that is deliberately narrow but unusually fast and tightly integrated.</p>
-
-<p>DwarfStar is the work of Salvatore Sanfilippo, better known as antirez, the creator of Redis. It is licensed under the MIT license and developed openly on GitHub at <a href="https://github.com/antirez/ds4">antirez/ds4</a>. Beyond the core engine, the repository ships the supporting ecosystem needed to make local inference practical: GGUF tooling, imatrix collection, quantization, quality testing, directional steering data, and a coding agent that runs against the live inference session.</p>
-
-<p>The project is candid about how it was built. It was developed with strong assistance from GPT 5.5, 5.6, and Claude Fable, with humans leading the ideas, testing, and debugging. It also stands on the shoulders of <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a> and GGML; while <code class="language-plaintext highlighter-rouge">ds4.c</code> does not link against GGML, the quantization layouts, kernels, and GGUF ecosystem pioneered by that project were an essential reference. This post walks through what DwarfStar is, how it works, the backends it targets, its measured performance, and how to install and use it.</p>
-
-<h2 id="what-is-dwarfstar">What is DwarfStar</h2>
-
-<p>DwarfStar is a self-contained native inference engine. Its primary target is DeepSeek V4 Flash, a routed mixture-of-experts model. It also supports GLM 5.2, and on very high-memory machines it can run DeepSeek V4 PRO. The defining design choice is that DwarfStar is not a general GGUF runner. Model loading, prompt rendering, tool calls, KV state management, the HTTP server, and the coding agent are all built and tested together for these specific models.</p>
-
-<p>This narrow focus pays off in several ways. Because the engine knows the exact tensor layout, quantization mix, metadata, and optional multi-token-prediction state of the supported GGUFs, it can apply aggressive optimizations that a generic loader cannot safely assume. The 2-bit quantizations, for example, quantize only the routed mixture-of-experts weights, leaving shared experts, projections, and routing untouched to protect quality. The engine verifies that these aggressive quants behave well: they call tools reliably and work under coding agents.</p>
-
-<p>Several features distinguish DwarfStar from a typical local runner:</p>
-
-<ul>
-  <li><strong>SSD streaming</strong> for low-RAM machines, where routed experts are cached and loaded from the GGUF file on demand while non-routed weights stay resident.</li>
-  <li><strong>Tensor parallelism</strong> over RDMA, so two Macs connected by Thunderbolt 5 can split a single decode across GPUs.</li>
-  <li><strong>Pipeline parallelism</strong> across multiple machines, gluing their RAM together to fit larger models and to accelerate long prefills.</li>
-  <li><strong>Micro-batching</strong> in the server, grouping decode rows across resident sessions for higher aggregate throughput.</li>
-  <li><strong>GGUF tools</strong> for offline imatrix collection, quantization, and quality scoring against official continuation fixtures.</li>
-  <li><strong>Directional steering</strong>, using single-vector activation directions to adjust model behavior without fine-tuning.</li>
-</ul>
-
-<p>The software is described as beta quality and fast-changing, with a full QA run executed before each release. It is opportunistic about model support, following the best open weights for useful local machine sizes such as 128 GB laptops and 512 GB workstations, and a model may be removed when a better replacement arrives.</p>
-
-<h2 id="how-it-works">How It Works</h2>
-
-<p><img src="/assets/img/diagrams/dwarfstar/dwarfstar-architecture.svg" alt="DwarfStar Inference Architecture" /></p>
-
-<p>The architecture diagram above shows how a request flows through DwarfStar from input to executed tokens on a hardware backend. Read it top to bottom: inputs enter at the top, pass through the engine in the middle, and dispatch to a backend below, while offline tooling on the side prepares the model weights.</p>
-
-<p>The top band is the input layer, colored green to mark user-facing entry points. Two sources feed the engine. The first is the user prompt, which can arrive from the interactive CLI, an agent session, or an OpenAI- and Anthropic-compatible HTTP endpoint.</p>
-
-<p>The second source is the tool calls: tool schemas expressed in DSML, OpenAI, or Anthropic wire formats. These two inputs are the only externally visible surfaces of the system; everything below them is internal to the engine.</p>
-
-<p>That internal placement is deliberate. Because there is no protocol boundary between the agent and the model, DwarfStar keeps latency low and avoids the translation overhead a socket-based stack would impose.</p>
-
-<p>The middle band, colored blue for processes, is the DwarfStar engine. It holds four tightly coupled stages that share one process and one KV state. The first stage is prompt rendering, which converts messages and tool definitions into the exact DeepSeek chat template, including DSML tool blocks.</p>
-
-<p>The second stage is model loading. It reads a supported GGUF and maps the specific tensor layout, quantization mix, and metadata into the resident graph. Knowing the exact layout in advance lets the engine apply optimizations a generic loader cannot, such as quantizing only the routed mixture-of-experts weights.</p>
-
-<p>The third stage is the KV cache. It holds compressed attention state, including the indexer and compressor frontiers of DeepSeek’s multi-head latent attention, and persists snapshots to disk so long agent sessions and server restarts resume without reprocessing a prefix.</p>
-
-<p>The fourth stage is the inference graph. It runs prefill and decode, applies micro-batching when multiple server sessions are resident, and feeds token state back into the KV cache. Because all four stages live in one process, the agent can drive inference directly with no KV mismatch by construction.</p>
-
-<p>The bottom-left band, colored purple for backends, is where the graph executes. The Metal backend targets Macs with 96 GB or more of unified memory and is the primary development target.</p>
-
-<p>When the model does not fit, smaller Macs fall back to SSD streaming, where routed experts are cached and loaded from the GGUF on demand. The CUDA backend handles NVIDIA multi-GPU systems, including DGX Spark and eight-card servers such as 8xL40S, with tensor and pipeline parallelism.</p>
-
-<p>The ROCm backend targets Strix Halo systems like the Framework Desktop. Each backend implements the same graph contract, so the engine above it does not change when you switch hardware.</p>
-
-<p>The bottom-right band lists the supported model weights. DeepSeek V4 Flash is the primary target, with 2-bit routed quants that fit on 96 to 128 GB machines. GLM 5.2 is supported with routed Q2_K and Q4_K layouts.</p>
-
-<p>DeepSeek V4 PRO is the high-memory target, runnable on 512 GB workstations and across distributed Mac Studio pairs. Model loading only accepts these specific GGUFs because the engine relies on their exact layout rather than parsing an arbitrary file.</p>
-
-<p>The side band, colored orange for tools, holds the offline GGUF tooling. imatrix collects calibration data for the routed mixture-of-experts layers, which guides the quantization step so aggressive 2-bit quants stay accurate.</p>
-
-<p>Quantization then produces the IQ2_XXS, Q2_K, MXFP4, and Q4_K GGUF files the engine loads. Quality testing scores those files against a 100-case fixture built from official DeepSeek continuations, so 2-bit quants are validated to call tools reliably before they ship.</p>
-
-<p>The data flow is a closed loop: tooling feeds the supported models, the models feed model loading, model loading feeds inference, and inference dispatches to the backend. That vertical integration for a small set of models is the central reason DwarfStar can be both fast and reliable on consumer hardware.</p>
-
-<h2 id="backends">Backends</h2>
-
-<p>DwarfStar supports three GPU backends, each chosen for a class of machine where capable open-weight models actually fit.</p>
-
-<p><strong>Metal</strong> is the primary target and the default on macOS. It runs on Macs with 96 GB or more of unified memory, making the model resident for the fastest path. When the model does not fit, Metal also implements SSD streaming, where the non-routed weights stay resident while routed experts are kept in an in-memory cache and loaded from the GGUF file on cache misses. Two MacBooks can also be combined for tensor parallelism over RDMA on Thunderbolt 5.</p>
-
-<p><strong>NVIDIA CUDA</strong> targets multi-GPU systems, including DGX Spark and servers with older Ada Lovelace cards that newer frameworks may no longer support well. With <code class="language-plaintext highlighter-rouge">--cuda-tensor-parallel</code>, DeepSeek V4 Flash tensor and routed-expert work is split across an even number of GPUs, with paired devices holding a 50/50 split of routed experts and a row-sharded vocabulary head. GLM 5.2 uses normal layer placement across the selected devices.</p>
-
-<p><strong>ROCm</strong> targets AMD Strix Halo systems such as the Framework Desktop. It shares the same graph backend contract and KV session format as Metal and CUDA, and it supports SSD streaming for GLM 5.2 when the full model would not fit.</p>
-
-<p>There is also a CPU reference and debug path, but the documentation is explicit that the CPU backend is not the production target. Normal inference should use Metal, CUDA, or ROCm. The CLI and server share the same KV session and snapshot format across all backends, so sessions remain portable across compatible builds.</p>
-
-<h2 id="performance">Performance</h2>
-
-<p>DwarfStar reports throughput at context frontiers rather than as a single whole-run average, using <code class="language-plaintext highlighter-rouge">ds4-bench</code> with a fixed token sequence and incremental prefill so each row measures only the newly added token interval.</p>
-
-<p>On an 8xL40S NVIDIA server using the imatrix Q4 model with CUDA tensor parallelism, the server is reported to deliver 120 t/s aggregated generation and 2000 t/s prefill when serving multiple resident sessions with micro-batching. This is the configuration intended to turn a server with older Ada Lovelace cards into a multi-user LLM server for an organization.</p>
-
-<p>Representative single-machine numbers from the project include the following, measured with the standard benchmark input and 128 greedy generation tokens at each frontier:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Machine</th>
-      <th>Backend</th>
-      <th style="text-align: right">Context</th>
-      <th style="text-align: right">Prefill</th>
-      <th style="text-align: right">Generation</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>MacBook Pro M5 Max, 128 GB</td>
-      <td>Metal</td>
-      <td style="text-align: right">2048</td>
-      <td style="text-align: right">790.18 t/s</td>
-      <td style="text-align: right">39.35 t/s</td>
-    </tr>
-    <tr>
-      <td>MacBook Pro M5 Max, 128 GB</td>
-      <td>Metal</td>
-      <td style="text-align: right">65536</td>
-      <td style="text-align: right">398.50 t/s</td>
-      <td style="text-align: right">27.64 t/s</td>
-    </tr>
-    <tr>
-      <td>DGX Spark GB10, 128 GB</td>
-      <td>CUDA</td>
-      <td style="text-align: right">2048</td>
-      <td style="text-align: right">825.76 t/s</td>
-      <td style="text-align: right">18.05 t/s</td>
-    </tr>
-    <tr>
-      <td>DGX Spark GB10, 128 GB</td>
-      <td>CUDA</td>
-      <td style="text-align: right">65536</td>
-      <td style="text-align: right">822.98 t/s</td>
-      <td style="text-align: right">13.84 t/s</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Distributed inference changes the picture. Pipeline parallelism across two M5 Max MacBooks on Thunderbolt 5 accelerates long prefills, with measured speedups of 1.38x at 9421 tokens up to 1.85x at 63819 tokens. Generation, however, is strictly autoregressive and pays at least one cross-machine hop per token, so distributed generation is slower than a single local process. Distributed inference is therefore mainly for fitting larger models and speeding up long prefills, not for faster decode.</p>
-
-<p>Tensor parallelism over RDMA, in contrast, runs a single decode across two Macs at the same time. On two M5 Max 128 GB MacBooks running GLM 5.2, tensor parallel decode reaches about 16.8 t/s with full memory residency, compared to about 4.8 t/s for SSD streaming on one Mac. The <code class="language-plaintext highlighter-rouge">--power N</code> option lets users trade throughput for lower heat, fan noise, and battery drain by targeting a percentage of GPU usage.</p>
-
-<h2 id="installation">Installation</h2>
-
-<p>DwarfStar builds from source with <code class="language-plaintext highlighter-rouge">make</code>. First clone the repository and download a model. The <code class="language-plaintext highlighter-rouge">download_model.sh</code> script fetches verified GGUF files from Hugging Face, stores them under <code class="language-plaintext highlighter-rouge">./gguf/</code>, resumes partial downloads, and points <code class="language-plaintext highlighter-rouge">./ds4flash.gguf</code> at the selected main model.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/antirez/ds4.git
-<span class="nb">cd </span>ds4
-
-<span class="c"># Download a model (prefer the imatrix versions)</span>
-./download_model.sh ds4f-q2      <span class="c"># 96/128 GB RAM machines</span>
-./download_model.sh ds4f-q4      <span class="c"># &gt;= 256 GB RAM machines</span>
-./download_model.sh glm-antirez-q2  <span class="c"># GLM 5.2 routed Q2_K</span>
-</code></pre></div></div>
-
-<p>Then build for your platform. On macOS the default target is Metal. On Linux, plain <code class="language-plaintext highlighter-rouge">make</code> prints the available targets instead of selecting a CUDA target implicitly.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make                  <span class="c"># macOS Metal</span>
-make cuda-spark       <span class="c"># Linux CUDA, DGX Spark / GB10</span>
-make cuda-generic     <span class="c"># Linux CUDA, other local CUDA GPUs</span>
-make strix-halo       <span class="c"># Linux ROCm, AMD Strix Halo</span>
-make cpu              <span class="c"># CPU-only diagnostics build</span>
-</code></pre></div></div>
-
-<p>For a known CUDA architecture, set <code class="language-plaintext highlighter-rouge">CUDA_ARCH</code> explicitly, for example when cross-building:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make cuda <span class="nv">CUDA_ARCH</span><span class="o">=</span>sm_89
-make cuda <span class="nv">CUDA_ARCH</span><span class="o">=</span>native
-</code></pre></div></div>
-
-<p>The build produces the <code class="language-plaintext highlighter-rouge">ds4</code> CLI, the <code class="language-plaintext highlighter-rouge">ds4-server</code> HTTP server, the <code class="language-plaintext highlighter-rouge">ds4-agent</code> coding agent, the <code class="language-plaintext highlighter-rouge">ds4-bench</code> benchmark tool, and the <code class="language-plaintext highlighter-rouge">ds4-eval</code> capability evaluator. Run <code class="language-plaintext highlighter-rouge">./ds4 --help</code> and <code class="language-plaintext highlighter-rouge">./ds4-server --help</code> for the full flag list.</p>
-
-<h2 id="usage">Usage</h2>
-
-<h3 id="one-shot-and-interactive-cli">One-shot and interactive CLI</h3>
-
-<p>For a one-shot prompt, pass <code class="language-plaintext highlighter-rouge">-p</code>:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4 <span class="nt">-p</span> <span class="s2">"Explain Redis streams in one paragraph."</span>
-</code></pre></div></div>
-
-<p>Without <code class="language-plaintext highlighter-rouge">-p</code>, the interactive multi-turn prompt starts. It keeps the rendered chat transcript and the live graph KV checkpoint, so each turn extends the previous conversation. Useful commands include <code class="language-plaintext highlighter-rouge">/help</code>, <code class="language-plaintext highlighter-rouge">/think</code>, <code class="language-plaintext highlighter-rouge">/think-max</code>, <code class="language-plaintext highlighter-rouge">/nothink</code>, <code class="language-plaintext highlighter-rouge">/ctx N</code>, <code class="language-plaintext highlighter-rouge">/read FILE</code>, and <code class="language-plaintext highlighter-rouge">/quit</code>. The CLI defaults to thinking mode; use <code class="language-plaintext highlighter-rouge">/nothink</code> for direct answers.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4
-ds4&gt;
-</code></pre></div></div>
-
-<h3 id="ssd-streaming-for-low-ram-machines">SSD streaming for low-RAM machines</h3>
-
-<p>When the model does not fit in RAM, SSD streaming keeps non-routed weights resident while routed experts are loaded from the GGUF on cache misses. Start with the automatic cache budget:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4 <span class="nt">-m</span> ./ds4flash.gguf <span class="nt">--ssd-streaming</span> <span class="nt">--ctx</span> 32768 <span class="nt">--nothink</span>
-</code></pre></div></div>
-
-<p>If startup reports the expert cache is too large, set the routed expert cache explicitly with a memory budget:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4 <span class="nt">-m</span> ./ds4flash.gguf <span class="nt">--ssd-streaming</span> <span class="nt">--ssd-streaming-cache-experts</span> 32GB <span class="nt">--ctx</span> 32768
-</code></pre></div></div>
-
-<h3 id="http-server">HTTP server</h3>
-
-<p>Start a local OpenAI- and Anthropic-compatible server. Enabling the disk KV cache lets agent clients reuse expensive prefills across sessions and restarts.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4-server <span class="nt">--ctx</span> 100000 <span class="nt">--kv-disk-dir</span> /tmp/ds4-kv <span class="nt">--kv-disk-space-mb</span> 8192
-</code></pre></div></div>
-
-<p>A minimal chat completion request against the local server:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl http://127.0.0.1:8000/v1/chat/completions <span class="se">\</span>
-  <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
-  <span class="nt">-d</span> <span class="s1">'{
-    "model":"deepseek-v4-flash",
-    "messages":[{"role":"user","content":"List three Redis design principles."}],
-    "stream":true
-  }'</span>
-</code></pre></div></div>
-
-<p>For multi-user serving on CUDA, keep multiple KV sessions resident so decode rows can be grouped across requests. The tested 8xL40S host is configured for up to 16 resident sessions:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4-server <span class="nt">--cuda</span> <span class="nt">--cuda-tensor-parallel</span> <span class="se">\</span>
-  <span class="nt">--gpu-vram</span> auto <span class="se">\</span>
-  <span class="nt">--gpu-devices</span> 0,2,4,6,1,3,5,7 <span class="se">\</span>
-  <span class="nt">--model</span> <span class="s2">"</span><span class="nv">$MODEL</span><span class="s2">"</span> <span class="se">\</span>
-  <span class="nt">--ctx</span> 100000 <span class="se">\</span>
-  <span class="nt">--batched-session</span> 16 <span class="se">\</span>
-  <span class="nt">--host</span> 0.0.0.0
-</code></pre></div></div>
-
-<h3 id="native-coding-agent">Native coding agent</h3>
-
-<p>DwarfStar includes a native coding agent that controls inference from within the agent itself, with no socket or API boundary. The session is represented by the on-disk KV cache, tool calls are handled natively in the model’s DSML format, and KV cache mismatches are impossible by construction. Agent sessions are stored under <code class="language-plaintext highlighter-rouge">~/.ds4/kvcache</code>; use <code class="language-plaintext highlighter-rouge">/save</code>, <code class="language-plaintext highlighter-rouge">/list</code>, and <code class="language-plaintext highlighter-rouge">/switch</code> to persist and resume sessions without a prefill stage.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4-agent <span class="nt">--cuda</span> <span class="nt">--cuda-tensor-parallel</span> <span class="se">\</span>
-  <span class="nt">--gpu-vram</span> auto <span class="se">\</span>
-  <span class="nt">--gpu-devices</span> 0,2,4,6,1,3,5,7 <span class="se">\</span>
-  <span class="nt">--model</span> <span class="s2">"</span><span class="nv">$MODEL</span><span class="s2">"</span> <span class="se">\</span>
-  <span class="nt">--ctx</span> 100000
-</code></pre></div></div>
-
-<h3 id="benchmarking">Benchmarking</h3>
-
-<p><code class="language-plaintext highlighter-rouge">ds4-bench</code> measures instantaneous prefill and generation throughput at context frontiers rather than a whole-run average, saving the live KV state to memory between frontiers and restoring it after a fixed greedy generation probe.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./ds4-bench <span class="se">\</span>
-  <span class="nt">-m</span> ds4flash.gguf <span class="se">\</span>
-  <span class="nt">--prompt-file</span> speed-bench/promessi_sposi.txt <span class="se">\</span>
-  <span class="nt">--ctx-start</span> 2048 <span class="se">\</span>
-  <span class="nt">--ctx-max</span> 65536 <span class="se">\</span>
-  <span class="nt">--step-incr</span> 2048 <span class="se">\</span>
-  <span class="nt">--gen-tokens</span> 128
-</code></pre></div></div>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>DwarfStar is a focused experiment in what a native inference engine can be when it is built for a small set of models rather than for every GGUF in existence. By keeping model loading, prompt rendering, tool calls, KV state, the HTTP server, and the coding agent in one cohesive codebase, it removes the seams that usually cost latency and introduce KV mismatches. The aggressive 2-bit routed quantizations, validated against a 100-case quality fixture, let capable models like DeepSeek V4 Flash run on 96 GB Macs, while SSD streaming extends the same models to smaller machines.</p>
-
-<p>The backends meet users where their hardware is: Metal on high-memory Macs, CUDA on multi-GPU NVIDIA servers including older Ada Lovelace cards, and ROCm on Strix Halo systems. The performance numbers are concrete, from 120 t/s aggregated generation on an 8xL40S server to roughly 16.8 t/s resident decode across two MacBooks using tensor parallelism over RDMA. The distributed pipeline parallelism mode shows a clear path to running the full DeepSeek V4 PRO across two 512 GB Mac Studios.</p>
-
-<p>The project is also a candid example of modern AI-assisted development, built with strong assistance from GPT 5.5, 5.6, and Claude Fable while humans lead the ideas, testing, and debugging, and it openly acknowledges its debt to llama.cpp and GGML. It is beta quality and fast-changing, but for anyone who wants to run DeepSeek V4 Flash or GLM 5.2 locally with a tightly integrated, hackable engine, DwarfStar is well worth a close look. The code is on GitHub at <a href="https://github.com/antirez/ds4">antirez/ds4</a> under the MIT license.</p>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Open Source" /><category term="LLM" /><category term="Inference" /><category term="DwarfStar" /><category term="ds4" /><category term="DeepSeek V4 Flash" /><category term="GLM 5.2" /><category term="LLM inference" /><category term="Metal" /><category term="CUDA" /><category term="ROCm" /><category term="GGUF" /><category term="antirez" /><category term="Salvatore Sanfilippo" /><summary type="html"><![CDATA[DwarfStar is a small native inference engine by Salvatore Sanfilippo, optimized first for DeepSeek V4 Flash. This guide covers its architecture, backends, performance, installation, and usage.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/dwarfstar/dwarfstar-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/dwarfstar/dwarfstar-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+<p>The full repository is available at <a href="https://github.com/litu54/DevOps-Interview-Guide">litu54/DevOps-Interview-Guide</a>.</p>]]></content><author><name>PyShine</name></author><category term="DevOps" /><category term="SRE" /><category term="Cloud" /><category term="Interview" /><category term="Open Source" /><category term="DevOps" /><category term="SRE" /><category term="Kubernetes" /><category term="Docker" /><category term="Terraform" /><category term="AWS" /><category term="Azure" /><category term="GCP" /><category term="CI/CD" /><category term="Ansible" /><category term="Linux" /><category term="Interview" /><summary type="html"><![CDATA[A community-driven collection of 151 real DevOps, SRE, and Cloud engineering interview write-ups from 85 companies. See the exact questions candidates were asked in 2025 and 2026, organized by company for targeted interview prep.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/devops-interview-guide/devops-interview-topics.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/devops-interview-guide/devops-interview-topics.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
