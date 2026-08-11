@@ -1,4 +1,154 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-11T00:58:24+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</title><link href="https://pyshine.com/I-Built-an-LLM-From-Scratch/" rel="alternate" type="text/html" title="I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU" /><published>2026-08-10T00:00:00+00:00</published><updated>2026-08-10T00:00:00+00:00</updated><id>https://pyshine.com/I-Built-an-LLM-From-Scratch</id><content type="html" xml:base="https://pyshine.com/I-Built-an-LLM-From-Scratch/"><![CDATA[<h1 id="i-built-an-llm-from-scratch-30m-parameters-4-hours-1-gpu">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-11T12:50:26+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">MCP vs API: Why Traditional REST Endpoints Are Failing AI Agents</title><link href="https://pyshine.com/MCP-vs-API-Why-Traditional-REST-Fails-AI-Agents/" rel="alternate" type="text/html" title="MCP vs API: Why Traditional REST Endpoints Are Failing AI Agents" /><published>2026-08-11T00:00:00+00:00</published><updated>2026-08-11T00:00:00+00:00</updated><id>https://pyshine.com/MCP-vs-API-Why-Traditional-REST-Fails-AI-Agents</id><content type="html" xml:base="https://pyshine.com/MCP-vs-API-Why-Traditional-REST-Fails-AI-Agents/"><![CDATA[<h1 id="mcp-vs-api-why-traditional-rest-endpoints-are-failing-ai-agents">MCP vs API: Why Traditional REST Endpoints Are Failing AI Agents</h1>
+
+<p>Before 2023, giving software access to a third-party service was a solved problem. You read the REST docs, pulled an API key, wrote a wrapper class, and called it a day. AI agents have broken that model. When an LLM needs to reach GitHub, Slack, Postgres, Google Calendar, the local filesystem, and a half-dozen internal microservices in the span of a single reasoning trace, the cost of hand-written glue stops being linear and starts being architectural. Each new app reinvents the same connector, each connector has its own auth story, and every change to a downstream API means patching every client that ever integrated it.</p>
+
+<p>The Model Context Protocol (MCP), released by Anthropic in November 2024 and donated to the Linux Foundation, is the most serious attempt yet to fix this. It is an open protocol, not a vendor feature, and it reframes the problem in the same way USB-C reframed peripheral cables: instead of every device shipping its own plug, everyone agrees on a socket. This post explains why traditional APIs and raw OpenAI-style function calling fail agentic workloads, how MCP is structured, what primitives it adds beyond plain endpoints, and how to decide when to use which.</p>
+
+<p>This post stands on its own, but it sits naturally alongside our earlier posts on <a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">how LLMs call tools via sampling</a> and <a href="/I-Built-an-LLM-From-Scratch/">what it takes to build one from scratch</a>.</p>
+
+<h2 id="the-architectural-gap-at-a-glance">The Architectural Gap at a Glance</h2>
+
+<p><img src="/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" alt="MCP vs Traditional APIs Comparison Diagram" /></p>
+
+<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
+
+<p>The diagram breaks the argument into six panels. Let us walk through them.</p>
+
+<p><strong>Panel 1: Traditional API Integration (Status Quo)</strong></p>
+
+<p>The top-left panel shows how tool access works today without a protocol. The LLM sits in the center, and every external service it might need – GitHub via REST and OAuth, Slack via webhooks and a bot token, Postgres through a SQL driver, Google Calendar through another REST API, the local filesystem through OS-specific calls – connects to it through a separate piece of hand-written glue. Each connector uses a different color and dashed style to make the point visually: the red dashed line for GitHub carries its own parser for GitHub-flavored JSON, the orange path for Slack speaks a vendor-specific schema, the purple path into Postgres has no standard auth story at all, and the blue line to the filesystem is just whatever the OS gives you. There is no protocol, no discovery, no standard shape for errors or streaming. The list of pain points at the bottom is the structural consequence: every app multiplies every service into a custom connector, tool schemas are hard-coded into prompt payloads, and there is no shared notion of resources, prompt templates, or state.</p>
+
+<p><strong>Panel 2: The MCP Architecture</strong></p>
+
+<p>The top-middle panel shows the same connectivity under MCP. A single host – which could be Claude Desktop, Cursor, VS Code, or your own agent code – sits at the top. Below it is the MCP protocol bus itself: JSON-RPC 2.0 over stdio for local servers, Streamable HTTP or SSE for remote ones. Below the bus, every external system is wrapped in an MCP server: Filesystem, Database, GitHub, Slack, Calendar. Each server exposes tools, resources, and prompts through the same wire protocol. All five connector lines are identical in color and weight because they are all the same protocol – the only thing that changes is the server implementation. The properties at the bottom summarize the economic argument: write a server once and use it in any MCP client, discover tools and resources dynamically at connection time, authenticate through a standardized OAuth 2.1 flow (and its Enterprise-Managed Authorization extension for orgs), and rely on an open standard rather than a vendor lock-in.</p>
+
+<p><strong>Panel 3: Capability Primitives</strong></p>
+
+<p>The top-right panel makes the abstraction difference concrete. A REST API exposes one primitive: endpoints addressed by URL, responding to GET/POST/PUT/DELETE with JSON that your code has to interpret. That is enough for a human programmer writing a client. It is not enough for an LLM that has to discover what is available, browse data without copying it all into context, and reuse prompt templates that were authored alongside the tool. MCP layers three explicit primitives on top of the transport: <strong>Tools</strong> are callable functions with JSON Schema inputs, chosen autonomously by the model; <strong>Resources</strong> are browsable data identified by URIs (for example <code class="language-plaintext highlighter-rouge">file:///project/main.py</code> or <code class="language-plaintext highlighter-rouge">db://orders/recent</code>) that the model can read into context without inventing endpoints; <strong>Prompts</strong> are reusable, server-defined prompt templates with typed arguments that any client can list via a <code class="language-plaintext highlighter-rouge">/prompts/list</code> call. REST has no standard equivalent for resources or prompts – each integration invents its own. Additional MCP primitives listed at the bottom include Sampling (servers can ask the client’s LLM to generate), Roots (clients declare which resources are in scope), Elicitation (servers can ask the user a question mid-call), and transport choices that cover both local and remote deployments.</p>
+
+<p><strong>Panel 4: Discovery and Invocation</strong></p>
+
+<p>The bottom-left panel contrasts the lifecycle of a tool call on each stack. Under REST and raw function calling, a developer writes the JSON Schema by hand, the schema is sent inline with every single API request, your own code executes the call when the model asks for it, and any change to the upstream API forces a schema update in every client. Under MCP, the client connects to the server once (over stdio or HTTP), issues a <code class="language-plaintext highlighter-rouge">tools/list</code> request that returns schemas dynamically, the server executes the call and returns a structured result, and adding a new tool to a server requires zero client code changes – existing clients discover it on their next connection. The yellow callout at the bottom states the critical difference: REST schemas are static payloads you maintain per client; MCP schemas are discovered live at connection time, travel separately from the prompt (so they do not burn token budget), and update automatically when the server changes. The latest 2026-07-28 specification even makes list responses cacheable with deterministic ordering, so tool catalogs stay stable across reconnects and upstream prompt caches remain hit.</p>
+
+<p><strong>Panel 5: The N x M Integration Problem</strong></p>
+
+<p>The bottom-middle panel is the network-effect picture every architect eventually draws. Before MCP, four clients (Claude, Cursor, VS Code, your own app) connecting to four services (GitHub, Slack, Postgres, Calendar) requires 16 custom connectors, shown as a dense red mesh. Each connector is maintained independently. After MCP, the same picture collapses into a star: four clients and four servers each connect once to the protocol bus, producing N + M total integrations instead of N x M. Every MCP-compatible client – Claude Code, Cursor, Windsurf, Zed, Continue, the official Anthropic MCP connector in the Messages API – speaks to every MCP-compatible server, and vice versa. This is the same dynamic that made USB and HTTP successful, and it is the reason MCP adoption has outpaced every earlier tool-use standard: once the protocol exists, the economics of adding a new server flip from “write N wrappers” to “write one.”</p>
+
+<p><strong>Panel 6: When to Use Which</strong></p>
+
+<p>The bottom-right panel is a pragmatic decision guide. Plain function calling is still the right answer when tools are private to one application, when you want zero infrastructure overhead, when business logic is tightly coupled to the tool, when a single model provider is acceptable, when you are running tight low-latency loops, or when you are prototyping. MCP is the right answer when the same tool needs to work across multiple clients, when you want vendor and model portability, when tools expose browsable data, when reusable prompt templates matter, when centralized governance and audit matter, when an existing third-party server already exists, or when standardized OAuth and enterprise authorization are requirements. The yellow footer states the single most important sentence in this debate: MCP does not replace function calling – it sits above it. Internally every MCP tool call still flows through the model’s native tool-use mechanism; MCP standardizes how tools are discovered, packaged, transported, and authenticated so that the same implementation works with any host.</p>
+
+<h2 id="why-rest-breaks-for-agents">Why REST Breaks for Agents</h2>
+
+<p>REST was designed for deterministic programs making deterministic calls against stable URLs. Agents violate every assumption in that sentence.</p>
+
+<p><strong>Tools are selected, not hard-coded.</strong> In a normal program you know at compile time whether you will call <code class="language-plaintext highlighter-rouge">POST /issues</code>. In an agent, the model decides at inference time whether it needs GitHub, Slack, or neither, and it can chain several calls in a single turn. That means the agent needs a live catalog of what is available, not a list baked into client code.</p>
+
+<p><strong>Schemas are part of the prompt budget.</strong> OpenAI-style function calling sends every tool schema inline with every request. With a dozen tools the schema payload can be thousands of tokens before the user says a word. Those tokens come out of the context window and the billing meter. MCP separates tool discovery from the request path: catalogs are fetched once per connection, cached, and only the selected tool’s definition is material to a given call.</p>
+
+<p><strong>Auth is per-vendor and per-user.</strong> GitHub wants a PAT or OAuth app, Slack wants a bot token with scopes, Postgres wants a connection string, Google wants OAuth with its own consent screen. An agent that connects to six services is an OAuth coordination nightmare for end users and a compliance nightmare for security teams. MCP’s authorization framework standardizes OAuth 2.1 with RFC 9207 issuer validation, and the Enterprise-Managed Authorization (EMA) extension lets organizations bind MCP auth to their existing IdP so users are connected to every approved server on first login with zero per-app consent.</p>
+
+<p><strong>Context is not just responses.</strong> Agents need to browse data, not just hit endpoints. “What files are in this directory?” is a natural question that REST does not answer in any standardized way – every filesystem wrapper invents its own listing endpoint. MCP resources model this directly as URI-addressed data that clients can enumerate, read, and watch for changes.</p>
+
+<p><strong>State persists across calls.</strong> A REST call is stateless by design; a database MCP server typically holds a connection pool, a working directory, or an authenticated session across many tool invocations. Modeling those long-lived interactions with raw function calling forces every app to reimplement session management.</p>
+
+<p><strong>Ecosystem economics are wrong.</strong> The marginal cost of adding a new AI client (say, a new IDE) under REST is re-implementing every existing connector. Under MCP the marginal cost is near zero: the IDE speaks the protocol, and every existing server just works. That is why the server ecosystem grew to thousands of implementations within a year of launch.</p>
+
+<h2 id="what-mcp-actually-looks-like">What MCP Actually Looks Like</h2>
+
+<p>An MCP server is a small process that speaks JSON-RPC. The Python SDK makes a minimal server trivial:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">mcp.server.fastmcp</span> <span class="kn">import</span> <span class="n">FastMCP</span>
+
+<span class="n">mcp</span> <span class="o">=</span> <span class="n">FastMCP</span><span class="p">(</span><span class="s">"docs"</span><span class="p">)</span>
+
+<span class="o">@</span><span class="n">mcp</span><span class="p">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">search_docs</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+    <span class="s">"""Search the internal documentation index."""</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+
+<span class="o">@</span><span class="n">mcp</span><span class="p">.</span><span class="n">resource</span><span class="p">(</span><span class="s">"file://docs/{path}"</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_doc</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">docs_store</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<span class="o">@</span><span class="n">mcp</span><span class="p">.</span><span class="n">prompt</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">summarize_doc</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s">"Read the following document and produce a 3-bullet summary:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">get_doc</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s">"</span>
+
+<span class="n">mcp</span><span class="p">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Three decorators expose the three primitives: a search tool the model can call, a resource the model can read by URI, and a prompt template the client can invoke. The same server can run over stdio (for Claude Desktop or a local IDE) or over HTTP (for remote deployment). On the client side, an Anthropic API call against a remote MCP server uses the MCP connector, introduced as a beta feature in the Messages API:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claude-opus-4-6"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"max_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user"</span><span class="p">,</span><span class="w"> </span><span class="nl">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Find docs about MCP auth"</span><span class="p">}],</span><span class="w">
+  </span><span class="nl">"mcp_servers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"url"</span><span class="p">,</span><span class="w"> </span><span class="nl">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://mcp.example.com/sse"</span><span class="p">,</span><span class="w"> </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"docs"</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"tools"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mcp_toolset"</span><span class="p">,</span><span class="w"> </span><span class="nl">"mcp_server_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"docs"</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The client no longer needs to implement the protocol itself – Anthropic’s API handles tool discovery, invocation, and result marshaling against the remote server.</p>
+
+<h2 id="the-2026-07-28-specification">The 2026-07-28 Specification</h2>
+
+<p>The most recent MCP specification (released July 28, 2026) addresses the most common engineering objections to the early versions. The headline change is a stateless protocol core: the original MCP required an <code class="language-plaintext highlighter-rouge">initialize</code>/<code class="language-plaintext highlighter-rouge">initialized</code> handshake and a session ID carried in an <code class="language-plaintext highlighter-rouge">Mcp-Session-Id</code> header, which made load balancing awkward because any request had to land on the server instance that held the session. Every request is now self-describing, carrying protocol version, client identity, and client capabilities in <code class="language-plaintext highlighter-rouge">_meta</code>, which means requests can land on any instance behind a plain round-robin load balancer without shared storage. Method and tool names travel in <code class="language-plaintext highlighter-rouge">Mcp-Method</code> and <code class="language-plaintext highlighter-rouge">Mcp-Name</code> HTTP headers so gateways can route and authorize on headers alone. Server-to-client requests (sampling and elicitation) are redesigned as Multi Round-Trip Requests (MRTR) to remove the need for permanently open bidirectional streams, and list responses now carry cache hints with deterministic ordering so tool catalogs can be cached across reconnects without invalidating upstream prompt caches. The SDKs for TypeScript, Python, Go, and C# were updated in lockstep.</p>
+
+<p>This matters because the stateless rewrite converts MCP from a promising local-only protocol into something that can be deployed like any other HTTP service behind existing API gateways, CDNs, and identity providers – which is the precondition for serious enterprise adoption.</p>
+
+<h2 id="when-not-to-use-mcp">When Not to Use MCP</h2>
+
+<p>It is easy to reach for MCP for every tool call and end up with unnecessary infrastructure. Three situations in which plain function calling is a better answer:</p>
+
+<p><strong>Single-app tools.</strong> If a tool only exists inside your own application and you have no intent to share it across editors, agents, or services, wrapping it in an MCP server adds a process boundary, a transport layer, and an SDK dependency for zero reuse benefit. Keep it as a function.</p>
+
+<p><strong>Hot loops.</strong> A tool that gets called thousands of times per reasoning trace – a calculator, a string transformer, a tiny lookup – pays measurable latency for the JSON-RPC round trip, even over stdio. Inline those as native functions.</p>
+
+<p><strong>Rapid prototypes.</strong> MCP is a protocol, which means you have a build step, a process to supervise, and a versioning story. For a weekend hack or an early experiment, define a few tools directly in the API call and ship.</p>
+
+<p>The correct architecture for most production agents in 2026 is a mix: MCP servers for reusable third-party integrations (GitHub, Slack, databases, internal knowledge bases, shared file systems), plain function calls for tightly coupled application logic, and the MCP connector or an embedded client library to bridge the two worlds into a single tool list for the model.</p>
+
+<h2 id="lessons-from-building-with-mcp">Lessons from Building With MCP</h2>
+
+<p><strong>Treat tool schemas as UX.</strong> A tool with a vague description or a permissive schema will be mis-called by even frontier models. A good schema is precise about required fields, lists enums explicitly, and gives concrete examples in the description. MCP makes this easier because the schema lives next to the code that implements the tool, so you can iterate on both together.</p>
+
+<p><strong>Resources scale context.</strong> Pulling entire files or tables into the prompt destroys the context window. Modeling data as MCP resources lets the client decide what to pull and when, and keeps large corpora on the server until the model actually needs them.</p>
+
+<p><strong>Auth is the hardest part.</strong> Plan OAuth from day one. For local single-user servers a personal token is fine; for anything shared across a team, implement the MCP authorization flow against your IdP rather than rolling your own.</p>
+
+<p><strong>Version your tools.</strong> The new deprecation policy in the 2026-07-28 spec guarantees a twelve-month minimum window for deprecated methods. Use it. Clients in the wild will be older than you expect.</p>
+
+<p><strong>The star topology wins.</strong> Once you have three or more clients connecting to three or more services, the N x M math becomes unanswerable without a protocol. The moment you find yourself writing the third wrapper for the same upstream API, stop and write an MCP server instead.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">LLM Sampling and Decoding Strategies: Temperature, Top-k, Top-p, Min-p, and Beam Search</a></li>
+  <li><a href="/I-Built-an-LLM-From-Scratch/">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</a></li>
+  <li><a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">LLM Training Pipeline: From Pretraining to RLHF and DPO</a></li>
+  <li><a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</a></li>
+</ul>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://modelcontextprotocol.io/">Model Context Protocol official site</a> – Documentation, quickstart, and specification</li>
+  <li><a href="https://modelcontextprotocol.io/specification/latest">MCP specification (latest)</a> – The authoritative protocol reference</li>
+  <li><a href="https://github.com/modelcontextprotocol">Model Context Protocol GitHub organization</a> – SDKs for TypeScript, Python, Go, C# and the official servers repository</li>
+  <li><a href="https://www.anthropic.com/news/model-context-protocol">Introducing the Model Context Protocol (Anthropic announcement)</a> – Original launch post, November 2024</li>
+  <li><a href="https://blog.modelcontextprotocol.io/posts/2026-07-28/">The 2026-07-28 Specification</a> – Stateless core, MRTR, header-based routing, and authorization hardening</li>
+  <li><a href="https://platform.openai.com/docs/guides/function-calling">OpenAI function calling guide</a> – The vendor-side tool-use API that MCP complements</li>
+  <li><a href="https://json-schema.org/">JSON Schema</a> – The schema language used by MCP tool definitions</li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Traditional REST endpoints are not failing because REST is bad. They are failing because REST was designed for programs that know exactly what call they want to make, and AI agents do not. Agents discover tools at runtime, chain them across reasoning traces, share them across applications, and need more than endpoints – they need browsable data, reusable prompts, standardized auth, and a transport that works both locally and across the network. MCP packages those requirements into a single open protocol that replaces an N x M grid of custom connectors with an N + M star. It does not replace function calling; it sits above it, the same way USB sits above the electronics inside your laptop. If you are building agents that touch more than a couple of services, or publishing integrations that you want to work across Claude, Cursor, VS Code, and the dozens of MCP-compatible clients shipping this year, MCP is no longer early-adopter technology – it is the integration layer the ecosystem has already converged on.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="MCP" /><category term="Agents" /><category term="API" /><category term="Tutorial" /><summary type="html"><![CDATA[Why REST APIs and raw function calling break down when you connect LLMs to dozens of services, and how Anthropic's open Model Context Protocol (MCP) replaces N x M custom glue code with a single N + M standard covering tools, resources, and prompts.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</title><link href="https://pyshine.com/I-Built-an-LLM-From-Scratch/" rel="alternate" type="text/html" title="I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU" /><published>2026-08-10T00:00:00+00:00</published><updated>2026-08-10T00:00:00+00:00</updated><id>https://pyshine.com/I-Built-an-LLM-From-Scratch</id><content type="html" xml:base="https://pyshine.com/I-Built-an-LLM-From-Scratch/"><![CDATA[<h1 id="i-built-an-llm-from-scratch-30m-parameters-4-hours-1-gpu">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</h1>
 
 <p>There is a particular kind of understanding that only comes from building the thing yourself. I have written about tokenizers, attention, KV-caches, and sampling in this series – but writing about components is not the same as watching a matrix of random numbers slowly learn to tell stories. So I built a small GPT from scratch in plain PyTorch: 30 million parameters, trained on children’s stories for about four hours on a single RTX 4090, for roughly two dollars of electricity. No Trainer class, no Lightning, no configuration files – about 600 lines of code where every tensor operation is mine. This post is the honest account of what happened, what broke, and what I learned.</p>
 
@@ -2116,431 +2266,4 @@ curl http://localhost:11434/v1/models
 
 <p>The AI coding landscape in 2026 is layered but learnable. Autocomplete, assistants, and agents form a spectrum of autonomy; MCP and RAG are the connective tissue that makes agents useful in your actual environment; and the choice of model and hardware is a trade-off between capability, cost, privacy, and control. The twenty questions above cover the concepts developers search for most, and the unifying thread is that none of these tools are magic. They are components in a stack, each with clear strengths and failure modes, and the developers who get the most value are the ones who understand the stack well enough to choose the right layer for each job.</p>
 
-<p>If you take away one thing, make it this: start with autocomplete, add an assistant, and adopt an agent only when you can confidently review its work. Write a CLAUDE.md or AGENTS.md early, because persistent instructions compound. Run models locally when privacy or cost matters, use the frontier cloud models for hard reasoning, and always keep a human in the loop for production. The tools will keep evolving, but the principles of scoping tasks, verifying outputs, and understanding what is inside the context window will stay relevant well beyond 2026.</p>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Tutorial" /><category term="AI" /><category term="FAQ" /><category term="LLM" /><category term="Coding Agents" /><category term="MCP" /><category term="RAG" /><category term="2026" /><summary type="html"><![CDATA[The definitive 2026 FAQ answering the top 20 searched questions about AI coding agents, LLMs, MCP, RAG, local inference, fine-tuning, benchmarks, and the modern AI coding stack.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/ai-coding-faq/ai-coding-landscape-2026.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/ai-coding-faq/ai-coding-landscape-2026.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">AI for Beginners: Microsoft’s Free 12-Week Curriculum From Symbolic AI to Multi-Agent Systems</title><link href="https://pyshine.com/AI-For-Beginners-Microsoft-AI-Curriculum/" rel="alternate" type="text/html" title="AI for Beginners: Microsoft’s Free 12-Week Curriculum From Symbolic AI to Multi-Agent Systems" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/AI-For-Beginners-Microsoft-AI-Curriculum</id><content type="html" xml:base="https://pyshine.com/AI-For-Beginners-Microsoft-AI-Curriculum/"><![CDATA[<h1 id="ai-for-beginners-microsofts-free-12-week-curriculum-from-symbolic-ai-to-multi-agent-systems">AI for Beginners: Microsoft’s Free 12-Week Curriculum From Symbolic AI to Multi-Agent Systems</h1>
-
-<p>Artificial intelligence is everywhere — from the spam filter in your inbox to the recommendation engine on your favorite streaming platform. Yet for all its ubiquity, finding a coherent, hands-on introduction to AI can feel like wandering through a maze of scattered tutorials, half-baked Medium posts, and code snippets that never quite work.</p>
-
-<p><strong>Microsoft’s AI for Beginners</strong> cuts through the noise. It’s a <strong>12-week, 24-lesson curriculum</strong> that takes you from symbolic AI and classical machine learning all the way to deep learning, reinforcement learning, multi-agent systems, and AI ethics — with every lesson grounded in runnable Jupyter Notebooks using <strong>TensorFlow</strong> and <strong>PyTorch</strong>. It’s free, open source, beginner-friendly, and has earned over <strong>63,000 stars</strong> on GitHub.</p>
-
-<p>Whether you’re a developer looking to add AI to your toolkit, a student exploring the field, or a curious self-learner who wants more than a surface-level buzzword tour, this curriculum is one of the most complete and approachable starting points available.</p>
-
-<hr />
-
-<h2 id="what-ai-for-beginners-offers">What AI for Beginners Offers</h2>
-
-<p>AI for Beginners is not a video course or a paywalled certification. It’s a <strong>community-driven, fully open-source curriculum</strong> hosted on GitHub. Here’s what you get:</p>
-
-<ul>
-  <li><strong>24 lessons</strong> across 12 weeks, each with a lecture-style markdown document and hands-on lab</li>
-  <li><strong>Jupyter Notebooks</strong> in both TensorFlow and PyTorch — two of the most widely-used deep learning frameworks</li>
-  <li><strong>A Vue.js quiz application</strong> to test your knowledge as you progress</li>
-  <li><strong>50+ language translations</strong> including Spanish, French, Chinese, Japanese, German, Hindi, and many more</li>
-  <li><strong>Beginner-friendly prerequisites</strong> — you need basic Python and high-school math, nothing more</li>
-  <li><strong>A vibrant community</strong> with active maintainers, contributors, and learners worldwide</li>
-</ul>
-
-<p>The curriculum was originally created by the Microsoft Cloud Advocates team and has since been expanded and maintained by a global community. It’s designed for self-paced study — no deadlines, no enrollment, no cost.</p>
-
-<hr />
-
-<h2 id="the-12-week-curriculum-breakdown">The 12-Week Curriculum Breakdown</h2>
-
-<p>The curriculum moves from foundational concepts to advanced topics, building week by week. Here’s what each week covers:</p>
-
-<h3 id="weeks-12-ai-fundamentals-and-classical-machine-learning">Weeks 1–2: AI Fundamentals and Classical Machine Learning</h3>
-
-<p>The opening weeks establish the conceptual backbone. You’ll explore what AI actually is (and isn’t), then dive into classical machine learning — the kinds of problems that don’t require neural networks.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Week</th>
-      <th>Lessons</th>
-      <th>Focus</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Week 1</strong></td>
-      <td>1–2</td>
-      <td>Introduction to AI: history, terminology, and the landscape of AI approaches</td>
-    </tr>
-    <tr>
-      <td><strong>Week 2</strong></td>
-      <td>3–4</td>
-      <td>Symbolic AI and classical machine learning: regression, classification, clustering, and dimensionality reduction</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>By the end of Week 2, you’ll have trained your first models using scikit-learn and understood the difference between supervised, unsupervised, and reinforcement learning.</p>
-
-<h3 id="weeks-34-neural-networks-and-deep-learning">Weeks 3–4: Neural Networks and Deep Learning</h3>
-
-<p>This is where the curriculum transitions from classical ML to modern deep learning — the engine behind most of today’s AI breakthroughs.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Week</th>
-      <th>Lessons</th>
-      <th>Focus</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Week 3</strong></td>
-      <td>5–6</td>
-      <td>Neural networks from scratch: perceptrons, layers, backpropagation, and gradient descent</td>
-    </tr>
-    <tr>
-      <td><strong>Week 4</strong></td>
-      <td>7–8</td>
-      <td>Advanced neural network architectures: CNNs for images, RNNs and Transformers for sequences</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>You’ll implement a neural network from scratch in pure Python (no frameworks), then recreate the same network using TensorFlow and PyTorch to understand what the libraries are actually doing under the hood.</p>
-
-<h3 id="weeks-56-computer-vision-and-natural-language-processing">Weeks 5–6: Computer Vision and Natural Language Processing</h3>
-
-<p>The curriculum then branches into the two most commercially important AI application areas: seeing and understanding.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Week</th>
-      <th>Lessons</th>
-      <th>Focus</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Week 5</strong></td>
-      <td>9–10</td>
-      <td>Computer Vision: image classification, object detection, and image segmentation using CNNs</td>
-    </tr>
-    <tr>
-      <td><strong>Week 6</strong></td>
-      <td>11–12</td>
-      <td>Natural Language Processing: text classification, sentiment analysis, and language models including the transformer architecture</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Hands-on labs include building an image classifier on the CIFAR-10 dataset and a sentiment analyzer for text — both complete with evaluation metrics and real-world considerations.</p>
-
-<h3 id="weeks-78-advanced-ai-techniques">Weeks 7–8: Advanced AI Techniques</h3>
-
-<p>The middle portion of the curriculum introduces specialized AI approaches that go beyond standard supervised learning.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Week</th>
-      <th>Lessons</th>
-      <th>Focus</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Week 7</strong></td>
-      <td>13–14</td>
-      <td>Genetic algorithms and evolutionary computation: optimization techniques inspired by natural selection</td>
-    </tr>
-    <tr>
-      <td><strong>Week 8</strong></td>
-      <td>15–16</td>
-      <td>Reinforcement learning: agents, environments, rewards, and algorithms like Q-learning and Deep Q-Networks (DQN)</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The reinforcement learning section culminates in a practical lab where you train an agent to navigate a grid world — a visceral introduction to how self-learning agents work.</p>
-
-<h3 id="weeks-910-multi-agent-systems-and-ai-ethics">Weeks 9–10: Multi-Agent Systems and AI Ethics</h3>
-
-<p>As the curriculum progresses, it scales up from single agents to multi-agent interactions and introduces the critical (and often overlooked) ethical dimension of AI.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Week</th>
-      <th>Lessons</th>
-      <th>Focus</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Week 9</strong></td>
-      <td>17–18</td>
-      <td>Multi-agent systems: multiple agents collaborating, competing, and communicating</td>
-    </tr>
-    <tr>
-      <td><strong>Week 10</strong></td>
-      <td>19–20</td>
-      <td>AI ethics: fairness, bias, transparency, privacy, and the societal impact of AI</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The ethics module is a standout — it doesn’t just list principles, it presents real case studies and encourages you to think critically about the systems you build.</p>
-
-<h3 id="weeks-1112-emerging-topics-and-capstone">Weeks 11–12: Emerging Topics and Capstone</h3>
-
-<p>The final weeks bring everything together and point toward the future.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Week</th>
-      <th>Lessons</th>
-      <th>Focus</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Week 11</strong></td>
-      <td>21–22</td>
-      <td>Emerging trends: GANs, generative models, and the latest developments in AI</td>
-    </tr>
-    <tr>
-      <td><strong>Week 12</strong></td>
-      <td>23–24</td>
-      <td>Capstone project and course wrap-up</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The capstone project ties together everything you’ve learned into a single end-to-end AI system.</p>
-
-<hr />
-
-<h2 id="key-features-with-code-examples">Key Features With Code Examples</h2>
-
-<h3 id="dual-framework-support-tensorflow-and-pytorch">Dual Framework Support: TensorFlow and PyTorch</h3>
-
-<p>Every major lab comes in <strong>two flavors</strong>: TensorFlow/Keras and PyTorch. This is invaluable because both frameworks are dominant in industry and research. Here’s what a typical notebook looks like in both:</p>
-
-<p><strong>TensorFlow/Keras version:</strong></p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
-<span class="kn">from</span> <span class="nn">tensorflow</span> <span class="kn">import</span> <span class="n">keras</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">keras</span><span class="p">.</span><span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)),</span>
-    <span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">),</span>
-    <span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'softmax'</span><span class="p">)</span>
-<span class="p">])</span>
-
-<span class="n">model</span><span class="p">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s">'adam'</span><span class="p">,</span>
-              <span class="n">loss</span><span class="o">=</span><span class="s">'sparse_categorical_crossentropy'</span><span class="p">,</span>
-              <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s">'accuracy'</span><span class="p">])</span>
-
-<span class="n">model</span><span class="p">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p><strong>PyTorch version:</strong></p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
-<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="n">optim</span>
-
-<span class="k">class</span> <span class="nc">SimpleNN</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">ReLU</span><span class="p">()</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">784</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">SimpleNN</span><span class="p">()</span>
-<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="p">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p>Having both implementations side-by-side teaches you the conceptual equivalence between the frameworks — a skill that becomes critical when you need to switch between them in production.</p>
-
-<h3 id="the-vuejs-quiz-application">The Vue.js Quiz Application</h3>
-
-<p>Learning without feedback is hard. The curriculum includes a <strong>Vue.js-powered quiz application</strong> that provides instant assessment after each lesson:</p>
-
-<ul>
-  <li>Multiple-choice and coding challenges</li>
-  <li>Instant feedback with explanations</li>
-  <li>Progress tracking across all 24 lessons</li>
-  <li>Works in any browser — no installation needed</li>
-</ul>
-
-<p>The quiz app is also a great example of how to build an interactive frontend for an educational platform, and you can explore its source code to learn Vue.js patterns.</p>
-
-<h3 id="hands-on-labs-not-just-theory">Hands-On Labs, Not Just Theory</h3>
-
-<p>Every lesson follows the same structure:</p>
-
-<ol>
-  <li><strong>Read</strong> the markdown lesson for conceptual background</li>
-  <li><strong>Run</strong> the Jupyter Notebook lab with step-by-step code</li>
-  <li><strong>Experiment</strong> with exercises and extension tasks</li>
-  <li><strong>Verify</strong> your understanding with the quiz app</li>
-</ol>
-
-<p>Here’s a concrete example from the computer vision module — training a CNN on CIFAR-10:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
-<span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">models</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-
-<span class="p">(</span><span class="n">train_images</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">),</span> <span class="p">(</span><span class="n">test_images</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">.</span><span class="n">cifar10</span><span class="p">.</span><span class="n">load_data</span><span class="p">()</span>
-
-<span class="n">train_images</span><span class="p">,</span> <span class="n">test_images</span> <span class="o">=</span> <span class="n">train_images</span> <span class="o">/</span> <span class="mf">255.0</span><span class="p">,</span> <span class="n">test_images</span> <span class="o">/</span> <span class="mf">255.0</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="p">.</span><span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">MaxPooling2D</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">MaxPooling2D</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">Flatten</span><span class="p">(),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">),</span>
-    <span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<span class="p">])</span>
-
-<span class="n">model</span><span class="p">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s">'adam'</span><span class="p">,</span>
-              <span class="n">loss</span><span class="o">=</span><span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">losses</span><span class="p">.</span><span class="n">SparseCategoricalCrossentropy</span><span class="p">(</span><span class="n">from_logits</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
-              <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s">'accuracy'</span><span class="p">])</span>
-
-<span class="n">history</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_images</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                    <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">test_images</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">))</span>
-</code></pre></div></div>
-
-<h3 id="50-language-translations">50+ Language Translations</h3>
-
-<p>One of the most remarkable aspects of the curriculum is its accessibility. The community has translated the materials into over 50 languages, including:</p>
-
-<ul>
-  <li>Spanish, French, German, Italian, Portuguese</li>
-  <li>Chinese, Japanese, Korean</li>
-  <li>Hindi, Urdu, Bengali</li>
-  <li>Arabic, Russian, Turkish</li>
-  <li>And many more</li>
-</ul>
-
-<p>This makes AI education genuinely accessible to a global audience — a rarity in a field where most content is English-only.</p>
-
-<h3 id="easy-setup-and-quick-start">Easy Setup and Quick Start</h3>
-
-<p>Getting started takes minutes. You don’t need a GPU, a cloud account, or any paid tools:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
-git clone https://github.com/microsoft/AI-For-Beginners.git
-<span class="nb">cd </span>AI-For-Beginners
-
-<span class="c"># Install dependencies</span>
-pip <span class="nb">install</span> <span class="nt">-r</span> requirements.txt
-
-<span class="c"># Launch Jupyter</span>
-jupyter notebook
-</code></pre></div></div>
-
-<p>Most labs run fine on a standard laptop CPU. For heavier deep learning experiments, Google Colab offers free GPU access — and the curriculum’s notebooks are pre-configured to work with Colab out of the box.</p>
-
-<hr />
-
-<h2 id="who-should-use-this-curriculum">Who Should Use This Curriculum</h2>
-
-<p>AI for Beginners is designed for a specific audience, and it’s worth being honest about who that is — and who might want to look elsewhere.</p>
-
-<h3 id="ideal-for">Ideal For</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Audience</th>
-      <th>Why It Works</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Developers new to AI</strong></td>
-      <td>You already code in Python and want to understand ML/DL without a math PhD. The curriculum meets you where you are.</td>
-    </tr>
-    <tr>
-      <td><strong>CS students seeking structure</strong></td>
-      <td>Your university’s AI courses are theoretical? This provides the practical, hands-on counterpoint.</td>
-    </tr>
-    <tr>
-      <td><strong>Self-learners</strong></td>
-      <td>You’ve watched YouTube tutorials but never actually built anything. This forces you to ship working models.</td>
-    </tr>
-    <tr>
-      <td><strong>Career changers</strong></td>
-      <td>You want a credible, free portfolio piece for AI roles. The capstone project and notebook portfolio demonstrate practical skill.</td>
-    </tr>
-    <tr>
-      <td><strong>Teachers and trainers</strong></td>
-      <td>You need structured, free material for a workshop or course. The lesson plans are ready to use.</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="less-suitable-for">Less Suitable For</h3>
-
-<ul>
-  <li><strong>Complete programming novices</strong> — you should learn Python basics first (try <a href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">PyShine’s Python tutorial</a>)</li>
-  <li><strong>Researchers or PhD students</strong> — this is a breadth-first survey, not a deep research track. For specialized topics, look at academic papers and graduate-level texts.</li>
-  <li><strong>People seeking a credential</strong> — there’s no certificate or certification. What you get is knowledge and a portfolio of working projects.</li>
-</ul>
-
-<hr />
-
-<h2 id="what-makes-it-different">What Makes It Different</h2>
-
-<p>Several things set AI for Beginners apart from the sea of online AI courses:</p>
-
-<p><strong>1. It’s genuinely beginner-friendly.</strong> The writers don’t assume you know what a tensor is or why gradients matter. Concepts are introduced progressively, with metaphors and visualizations that build intuition before formalism.</p>
-
-<p><strong>2. It teaches both TensorFlow and PyTorch.</strong> Most courses pick one framework. Teaching both — and showing the same concepts in both — gives you a flexibility that employers value.</p>
-
-<p><strong>3. Ethics is woven in, not an afterthought.</strong> Week 10 isn’t a token “AI ethics” chapter tacked on at the end. It’s integrated throughout the curriculum, reminding you that the systems you build have real societal impact.</p>
-
-<p><strong>4. It’s community-maintained.</strong> With 63,000+ stars and contributions from hundreds of developers, the curriculum stays current. Topics like LLMs and generative AI have been added as the field has evolved.</p>
-
-<p><strong>5. It’s completely free, forever.</strong> No paywalls, no premium tiers, no “certificate” upsell. The curriculum is MIT-licensed — you can use it for personal learning, teaching, or even commercial training.</p>
-
-<p><strong>6. It covers the full AI landscape.</strong> Many courses focus narrowly on deep learning. AI for Beginners covers symbolic AI, genetic algorithms, reinforcement learning, multi-agent systems — giving you a mental map of the entire field, not just the current trendy subfield.</p>
-
-<hr />
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>If you’ve been waiting for the “right time” to learn AI, or if you’ve tried other resources and found them either too superficial or too academic, <strong>AI for Beginners</strong> is the sweet spot. It’s:</p>
-
-<ul>
-  <li><strong>Comprehensive</strong> — 12 weeks, 24 lessons, covering the full AI landscape</li>
-  <li><strong>Practical</strong> — every concept is backed by a runnable Jupyter Notebook</li>
-  <li><strong>Accessible</strong> — 50+ languages, CPU-friendly, zero cost</li>
-  <li><strong>Modern</strong> — maintained by a 63k-star community, updated with current topics</li>
-  <li><strong>Ethical</strong> — AI ethics is treated as a first-class concern</li>
-</ul>
-
-<p>The repository is one of the most-starred educational resources on GitHub for a reason: it delivers on the promise of its name. For beginners, it’s the most complete, approachable, and practical starting point available today.</p>
-
-<p><strong>Repository</strong>: <a href="https://github.com/microsoft/AI-For-Beginners">github.com/microsoft/AI-For-Beginners</a><br />
-<strong>Stars</strong>: 63K+ | <strong>License</strong>: MIT | <strong>Translations</strong>: 50+ languages</p>
-
-<hr />
-
-<h2 id="related-guides">Related Guides</h2>
-
-<ul>
-  <li><strong><a href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">Learn Machine Learning in One Post</a></strong> — The ML concepts that underpin Weeks 2–4 of the curriculum</li>
-  <li><strong><a href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">Learn Deep Learning in One Post</a></strong> — A focused deep dive into the neural network architectures covered in Weeks 3–4</li>
-  <li><strong><a href="/Learn-Linear-Algebra-for-ML-in-One-Post-Complete-Tutorial-Vectors-Matrices-SVD-Eigen-Quick-Start/">Learn Linear Algebra for ML in One Post</a></strong> — The math foundation you’ll want under your belt before Week 3</li>
-  <li><strong><a href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">Learn Python in One Post</a></strong> — The programming language used throughout the curriculum</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Education" /><category term="Open Source" /><category term="AI" /><category term="Machine Learning" /><category term="Education" /><category term="Beginners" /><category term="TensorFlow" /><category term="PyTorch" /><category term="Curriculum" /><category term="Microsoft" /><category term="Neural Networks" /><category term="Computer Vision" /><category term="NLP" /><category term="Reinforcement Learning" /><summary type="html"><![CDATA[Microsoft's AI for Beginners is a 12-week, 24-lesson curriculum covering AI fundamentals, neural networks, computer vision, NLP, genetic algorithms, reinforcement learning, and AI ethics. Hands-on labs with TensorFlow and PyTorch, a Vue.js quiz app, and 50+ language translations — completely free.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" /><media:content medium="image" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+<p>If you take away one thing, make it this: start with autocomplete, add an assistant, and adopt an agent only when you can confidently review its work. Write a CLAUDE.md or AGENTS.md early, because persistent instructions compound. Run models locally when privacy or cost matters, use the frontier cloud models for hard reasoning, and always keep a human in the loop for production. The tools will keep evolving, but the principles of scoping tasks, verifying outputs, and understanding what is inside the context window will stay relevant well beyond 2026.</p>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Tutorial" /><category term="AI" /><category term="FAQ" /><category term="LLM" /><category term="Coding Agents" /><category term="MCP" /><category term="RAG" /><category term="2026" /><summary type="html"><![CDATA[The definitive 2026 FAQ answering the top 20 searched questions about AI coding agents, LLMs, MCP, RAG, local inference, fine-tuning, benchmarks, and the modern AI coding stack.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/ai-coding-faq/ai-coding-landscape-2026.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/ai-coding-faq/ai-coding-landscape-2026.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
