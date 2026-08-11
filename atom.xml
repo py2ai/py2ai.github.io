@@ -1,4 +1,194 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-10T10:19:02+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</title><link href="https://pyshine.com/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/" rel="alternate" type="text/html" title="LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4" /><published>2026-08-10T00:00:00+00:00</published><updated>2026-08-10T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ</id><content type="html" xml:base="https://pyshine.com/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/"><![CDATA[<h1 id="llm-quantization-running-70b-models-on-a-laptop-with-fp16-int8-and-int4">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-11T00:58:24+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</title><link href="https://pyshine.com/I-Built-an-LLM-From-Scratch/" rel="alternate" type="text/html" title="I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU" /><published>2026-08-10T00:00:00+00:00</published><updated>2026-08-10T00:00:00+00:00</updated><id>https://pyshine.com/I-Built-an-LLM-From-Scratch</id><content type="html" xml:base="https://pyshine.com/I-Built-an-LLM-From-Scratch/"><![CDATA[<h1 id="i-built-an-llm-from-scratch-30m-parameters-4-hours-1-gpu">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</h1>
+
+<p>There is a particular kind of understanding that only comes from building the thing yourself. I have written about tokenizers, attention, KV-caches, and sampling in this series – but writing about components is not the same as watching a matrix of random numbers slowly learn to tell stories. So I built a small GPT from scratch in plain PyTorch: 30 million parameters, trained on children’s stories for about four hours on a single RTX 4090, for roughly two dollars of electricity. No Trainer class, no Lightning, no configuration files – about 600 lines of code where every tensor operation is mine. This post is the honest account of what happened, what broke, and what I learned.</p>
+
+<p>This is the eighth post in our LLM internals series, and it ties the previous seven together: <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization</a>, <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">attention</a>, <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache</a>, <a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">inference phases</a>, the <a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">training pipeline</a>, <a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">quantization</a>, and <a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">sampling strategies</a>.</p>
+
+<h2 id="the-journey-at-a-glance">The Journey at a Glance</h2>
+
+<p><img src="/assets/img/diagrams/llm-from-scratch/llm-from-scratch-journey.svg" alt="I Built an LLM From Scratch" /></p>
+
+<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
+
+<p>The diagram breaks the project into six panels: the build pipeline, the model anatomy, the training loop, the loss curve, the learning progression, and the true cost.</p>
+
+<p><strong>Panel 1: The Build Pipeline</strong></p>
+
+<p>The top-left panel shows the five stages in order. First, train a BPE tokenizer on the corpus itself – I used a vocabulary of 8,192, far smaller than GPT-2’s 50,257, because a children’s-story vocabulary is tiny and a small vocab shrinks the embedding table. Second, implement the GPT blocks: causal multi-head attention, feed-forward networks, residual connections, and LayerNorm. Third, build the data pipeline that slices tokenized text into 256-token windows with targets shifted by one position. Fourth, run the training loop. Fifth, generate text with the sampling strategies from the previous post. The whole thing is about 600 lines of PyTorch, and the result is a model that writes coherent stories after four hours.</p>
+
+<p><strong>Panel 2: Model Anatomy</strong></p>
+
+<p>The top-middle panel shows where the 30 million parameters live. The configuration is deliberately modest: 8 layers, 8 heads, d_model of 512, context of 256 tokens. The surprise for most people is the distribution: the MLP blocks hold 57% of all parameters (16.8M), attention holds only 28% (8.4M), and the tied embedding matrix holds the remaining 14%. Attention gets the glory in explanations of transformers, but the feed-forward networks store most of the model’s knowledge. Tying the input embedding and output projection matrices saves 4.2M parameters and measurably trains better.</p>
+
+<p><strong>Panel 3: The Training Loop</strong></p>
+
+<p>The top-right panel shows the loop itself: forward pass on a batch of 64 by 256 tokens, cross-entropy loss on next-token prediction, <code class="language-plaintext highlighter-rouge">loss.backward()</code>, and an AdamW step with a learning-rate schedule – repeated 20,000 times. The loop body is about 15 lines. The details around it decide whether the run lives or dies: warmup of 500 steps, cosine decay from 3e-4 to 3e-5, gradient clipping at 1.0, bf16 autocast, weight decay 0.1. Each of those settings exists because a run failed without it.</p>
+
+<p><strong>Panel 4: The Loss Curve</strong></p>
+
+<p>The bottom-left panel plots training loss across the 20,000 steps, and its shape tells you what the model is learning. The first sanity check happens at step 0: with random weights, the model is uniform over the vocabulary, so the loss must equal ln(8,192) = 9.0. If your step-0 loss is anything else, a bug is already hiding somewhere. The curve then drops fast to about 4.0 in the first thousand steps (the model learns vocabulary), grinds slowly from 4.0 to 2.2 (grammar), and flattens toward 1.8 (narrative structure). A loss of 1.8 means the model has narrowed the next token down to roughly e^1.8 – about six likely candidates – at every position.</p>
+
+<p><strong>Panel 5: What It Learned, When</strong></p>
+
+<p>The bottom-middle panel shows generations from saved checkpoints, all given the prompt “Once upon a time”. At step 0 the output is noise: “zj qw fjqp zzz kx”. At step 500, common words appear without syntax: “the and of a to was”. At step 5,000, grammar emerges: “the cat sat on the mat and said”. At step 20,000, the model tells a story with consistent entities: “a little fox named Pip found a red…”. Capabilities always emerged in the same order – vocabulary, then syntax, then meaning. Never the reverse.</p>
+
+<p><strong>Panel 6: Cost and Hard Lessons</strong></p>
+
+<p>The bottom-right panel totals the bill: one RTX 4090, 4.2 hours, about 330 million tokens seen, roughly two dollars of power and wear. The lessons cost more than the money: the loss curve is your debugger, data quality beats model size, gradient clipping saves runs, and small models teach the same mechanics as frontier ones – only the scale differs.</p>
+
+<h2 id="stage-1-the-tokenizer">Stage 1: The Tokenizer</h2>
+
+<p>Everything in the <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization post</a> became real the moment I trained my own BPE tokenizer. The corpus is <a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories</a> – a synthetic dataset of short children’s stories generated by GPT-3.5/4, designed so that small models can actually learn grammar and narrative. Training BPE on it with a target vocabulary of 8,192 took minutes, and the resulting merges were a delight to inspect: “once”, “upon”, “little”, and “ mommy” (with the leading space) were among the first merges learned.</p>
+
+<p>Two decisions mattered here. First, a small vocabulary: TinyStories uses simple English, so 8,192 tokens covers it well, and the embedding table shrinks to 4.2M parameters instead of the 25.7M that GPT-2’s vocabulary would cost. Second, training the tokenizer on the same corpus as the model: an off-the-shelf tokenizer wastes hundreds of vocabulary slots on tokens the corpus never uses.</p>
+
+<h2 id="stage-2-the-model">Stage 2: The Model</h2>
+
+<p>The model is a GPT-2-style decoder-only transformer, small enough to train quickly but complete enough that every mechanism from the <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">attention post</a> is present. The core block is about 50 lines:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+
+<span class="k">class</span> <span class="nc">Block</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">n_head</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">ln1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MultiheadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_head</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">ln2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">d_model</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">GELU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">ln1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">attn</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">need_weights</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">a</span>                       <span class="c1"># residual connection
+</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">ln2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>   <span class="c1"># residual connection
+</span>        <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<p>The full model stacks eight of these blocks between a token-plus-position embedding and a final LayerNorm with a tied output projection. Two implementation details bit me. First, the causal mask: <code class="language-plaintext highlighter-rouge">nn.MultiheadAttention</code> expects a boolean mask where <code class="language-plaintext highlighter-rouge">True</code> means “blocked”, so the mask is an upper-triangular matrix of <code class="language-plaintext highlighter-rouge">True</code> above the diagonal – getting this backwards lets the model cheat by looking at the future, and the loss drops suspiciously fast before you notice. Second, initialization: PyTorch’s defaults work, but scaling the residual-path projections down by 1/sqrt(2 * n_layer) (as GPT-2 does) noticeably stabilized the early loss curve.</p>
+
+<h2 id="stage-3-the-data-pipeline">Stage 3: The Data Pipeline</h2>
+
+<p>The data pipeline tokenizes the entire corpus once, concatenates it into a single token stream, and slices out random 256-token windows at every training step. The target sequence is the input sequence shifted by one position – the model learns to predict token t+1 from tokens 0..t at every position in parallel. That shift is the entire “dataset engineering” of GPT pretraining:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_batch</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">"cuda"</span><span class="p">):</span>
+    <span class="n">ix</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">-</span> <span class="n">ctx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tokens</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">ctx</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ix</span><span class="p">]).</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tokens</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">ctx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ix</span><span class="p">]).</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+</code></pre></div></div>
+
+<p>With 64 sequences of 256 tokens per step, every optimizer step sees 16,384 tokens. Over 20,000 steps the model consumed about 330 million tokens – several passes over the TinyStories training split.</p>
+
+<h2 id="stage-4-the-training-loop">Stage 4: The Training Loop</h2>
+
+<p>The loop is the least glamorous and most instructive part:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">vocab_size</span><span class="o">=</span><span class="mi">8192</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">n_layer</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">n_head</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="mi">256</span><span class="p">).</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">3e-4</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20_000</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">get_batch</span><span class="p">(</span><span class="n">train_tokens</span><span class="p">)</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="n">cosine_lr</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mf">3e-4</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="mf">3e-5</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="mi">20_000</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">opt</span><span class="p">.</span><span class="n">param_groups</span><span class="p">:</span>
+        <span class="n">g</span><span class="p">[</span><span class="s">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lr</span>
+
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">autocast</span><span class="p">(</span><span class="s">"cuda"</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">):</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">logits</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8192</span><span class="p">),</span> <span class="n">y</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">opt</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">utils</span><span class="p">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">opt</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">500</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"step </span><span class="si">{</span><span class="n">step</span><span class="si">:</span><span class="mi">6</span><span class="n">d</span><span class="si">}</span><span class="s">  loss </span><span class="si">{</span><span class="n">loss</span><span class="p">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="s">  lr </span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">e</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Every line earned its place. The warmup prevents early loss explosions when the AdamW second-moment estimates are garbage. Gradient clipping saved the run twice – around step 12,000 a single bad batch spiked the gradient norm to 40, and without clipping that one step would have poisoned the weights. bf16 autocast doubled throughput on the 4090 with zero visible effect on the loss curve. The cosine decay to a small nonzero floor produced the classic late-training improvement in the final 2,000 steps.</p>
+
+<h2 id="stage-5-generation">Stage 5: Generation</h2>
+
+<p>Generation reuses exactly the machinery from the <a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">sampling post</a>: forward pass, take the logits of the last position, divide by temperature, truncate with top-p, sample, append, repeat. At this scale there is no need for a KV-cache – a 256-token context recomputes in milliseconds – but adding one later is a satisfying exercise from the <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache post</a>.</p>
+
+<p>The checkpoint samples were the emotional payoff of the whole project. Watching “zj qw fjqp” become “the and of a to” become “the cat sat on the mat” become an actual story about a fox named Pip – that progression, more than any paper, is what taught me what pretraining actually does. The model never sees a labeled example of grammar. Syntax emerges purely because predicting the next token is easier when you know how sentences work.</p>
+
+<h2 id="what-it-actually-cost">What It Actually Cost</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Used</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GPU</td>
+      <td>1x RTX 4090 (24 GB)</td>
+    </tr>
+    <tr>
+      <td>Training time</td>
+      <td>4.2 hours</td>
+    </tr>
+    <tr>
+      <td>Tokens seen</td>
+      <td>~330 million</td>
+    </tr>
+    <tr>
+      <td>Power and wear</td>
+      <td>~$2</td>
+    </tr>
+    <tr>
+      <td>Lines of code</td>
+      <td>~600</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The contrast with frontier training is the point: GPT-3 cost an estimated $4.6M in compute. My model is 6,000 times smaller and speaks only in children’s stories, but every mechanism – embeddings, attention, residuals, layernorm, AdamW, cosine schedules, sampling – is the same machinery. Scale adds capability; it does not add new principles.</p>
+
+<h2 id="lessons-learned">Lessons Learned</h2>
+
+<p><strong>The loss curve is the debugger.</strong> A plateau at 3.5 means something different from a plateau at 2.0. A sudden spike means a bad batch or an LR problem. A NaN after step 10,000 usually means missing gradient clipping. You learn to read the curve the way a mechanic learns to listen to an engine.</p>
+
+<p><strong>Data quality beats model size.</strong> TinyStories is synthetic, clean, and narrow – and that is exactly why a 30M model can master it. Doubling the model on noisy web text would have produced a worse result for more money.</p>
+
+<p><strong>Gradient clipping is not optional.</strong> It is two lines of code and it saved the run twice. Every untrained urge to skip it should be resisted.</p>
+
+<p><strong>Sanity checks catch bugs early.</strong> The ln(vocab) check at step 0, overfitting a single batch to near-zero loss, and generating text every 500 steps caught three separate bugs in one afternoon.</p>
+
+<p><strong>Small models teach big mechanics.</strong> Everything in this series – the attention math, the KV-cache tradeoff, the quantization formats, the sampling knobs – exists in this 600-line program. If you want to understand LLMs, building one at this scale is the highest-value weekend you can spend.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">LLM Tokenization: How Text Becomes Numbers</a></li>
+  <li><a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">LLM Attention Mechanism: The Heart of the Transformer</a></li>
+  <li><a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">LLM Decode: KV-Cache and GPU VRAM Deep Dive</a></li>
+  <li><a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode: Understanding the Two Phases of Inference</a></li>
+  <li><a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">LLM Training Pipeline: From Pretraining to RLHF and DPO</a></li>
+  <li><a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</a></li>
+  <li><a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">LLM Sampling and Decoding Strategies: Temperature, Top-k, Top-p, Min-p, and Beam Search</a></li>
+</ul>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://github.com/karpathy/nanoGPT">nanoGPT by Andrej Karpathy</a> – the cleanest minimal GPT training implementation</li>
+  <li><a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories dataset</a> – the corpus used for this build</li>
+  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (paper)</a> – the original transformer architecture</li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Building an LLM from scratch is not about competing with anyone’s model. A 30M-parameter GPT trained on children’s stories will never answer your emails. What it gives you is something no amount of reading can: the moment a loss curve bends and random weights become grammar, you stop thinking of LLMs as magic and start thinking of them as machines. Every post in this series describes one component of that machine – but assembling all of them with your own hands is what makes the understanding permanent. If you have a GPU and a free afternoon, take the 600 lines and run them. The fox named Pip is waiting.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="PyTorch" /><category term="Transformer" /><category term="Tutorial" /><summary type="html"><![CDATA[A first-person account of building and training a small GPT from scratch in PyTorch: BPE tokenizer, transformer blocks, training loop, loss curves, and the lessons that only become obvious when every line of code is yours.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/llm-from-scratch/llm-from-scratch-journey.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/llm-from-scratch/llm-from-scratch-journey.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</title><link href="https://pyshine.com/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/" rel="alternate" type="text/html" title="LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4" /><published>2026-08-10T00:00:00+00:00</published><updated>2026-08-10T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ</id><content type="html" xml:base="https://pyshine.com/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/"><![CDATA[<h1 id="llm-quantization-running-70b-models-on-a-laptop-with-fp16-int8-and-int4">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</h1>
 
 <p>A Llama-2 70B model in FP32 precision requires 280 GB of GPU memory – far more than any single consumer GPU can provide. Quantization compresses those weights into 35 GB (INT4) or 70 GB (INT8), making it possible to run the model on a single RTX 4090 (24 GB) with offloading, or on a Mac Studio with unified memory. The catch is a small quality drop, typically 1-3% on standard benchmarks. This post explains how quantization works, the tradeoffs between formats, and which method to choose for your hardware.</p>
 
@@ -2353,478 +2543,4 @@ jupyter notebook
   <li><strong><a href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">Learn Deep Learning in One Post</a></strong> — A focused deep dive into the neural network architectures covered in Weeks 3–4</li>
   <li><strong><a href="/Learn-Linear-Algebra-for-ML-in-One-Post-Complete-Tutorial-Vectors-Matrices-SVD-Eigen-Quick-Start/">Learn Linear Algebra for ML in One Post</a></strong> — The math foundation you’ll want under your belt before Week 3</li>
   <li><strong><a href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">Learn Python in One Post</a></strong> — The programming language used throughout the curriculum</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Education" /><category term="Open Source" /><category term="AI" /><category term="Machine Learning" /><category term="Education" /><category term="Beginners" /><category term="TensorFlow" /><category term="PyTorch" /><category term="Curriculum" /><category term="Microsoft" /><category term="Neural Networks" /><category term="Computer Vision" /><category term="NLP" /><category term="Reinforcement Learning" /><summary type="html"><![CDATA[Microsoft's AI for Beginners is a 12-week, 24-lesson curriculum covering AI fundamentals, neural networks, computer vision, NLP, genetic algorithms, reinforcement learning, and AI ethics. Hands-on labs with TensorFlow and PyTorch, a Vue.js quiz app, and 50+ language translations — completely free.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" /><media:content medium="image" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">AirLLM: Run 70B LLMs on a 4GB GPU Without Quantization</title><link href="https://pyshine.com/airllm-70b-llm-4gb-gpu/" rel="alternate" type="text/html" title="AirLLM: Run 70B LLMs on a 4GB GPU Without Quantization" /><published>2026-08-08T00:00:00+00:00</published><updated>2026-08-08T00:00:00+00:00</updated><id>https://pyshine.com/AirLLM-70B-LLM-4GB-GPU</id><content type="html" xml:base="https://pyshine.com/airllm-70b-llm-4gb-gpu/"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>The GPU memory bottleneck is the elephant in the room of modern AI. As large language models scale from 7B to 70B to 400B and beyond, the VRAM required just to hold the model weights has become a showstopper for most developers. A full-precision 70B model needs roughly 140GB of VRAM – that’s four A100-80GB cards or a single H100, neither of which is within reach of the average developer, student, or small team.</p>
-
-<p>The conventional wisdom says the only path forward is quantization (shrinking model weights from FP16 to 4-bit or 8-bit), distillation (training a smaller model to mimic a larger one), or pruning (removing weights). Each approach trades quality for size, and quantization in particular can degrade model behavior in subtle ways that are hard to detect.</p>
-
-<p><strong>AirLLM</strong> by Gavin Li challenges this assumption. It lets you run 70B models on a single 4GB GPU card – <strong>without quantization, distillation, or pruning</strong>. Even more remarkably, it scales to 405B Llama 3.1 on 8GB, 671B DeepSeek-V3 on ~12GB, and Kimi K3 (2.8T parameters) on under 4GB. The trick is not about making the model smaller – it’s about making the model loading smarter.</p>
-
-<h2 id="what-is-airllm">What Is AirLLM?</h2>
-
-<p>AirLLM is a Python library that performs <strong>layer-by-layer model streaming</strong> for inference. Instead of loading the entire model into GPU memory at once, it processes one transformer layer at a time, keeping only the current layer’s weights on the GPU. For Mixture of Experts (MoE) models, it goes even further: it streams one expert at a time within each layer, loading only the expert weights that the current token actually routes to.</p>
-
-<p>This approach exploits a key insight about transformer inference: during a forward pass, each layer processes the hidden state sequentially. You don’t need all layers in memory simultaneously – you only need the one you’re currently computing. The hidden state (which is relatively small, typically a few MB per token) passes between layers, and each layer’s weights are loaded and discarded as needed.</p>
-
-<h3 id="the-technical-approach">The Technical Approach</h3>
-
-<p>AirLLM’s architecture centers on three core techniques:</p>
-
-<p><strong>1. Layer-wise streaming.</strong> The model is decomposed into individual transformer layers, each saved as a separate file. During inference, layers are loaded one at a time onto the GPU. After a layer processes the hidden state, the layer’s weights are freed from GPU memory and the next layer is loaded. This creates a constant memory footprint proportional to the size of a single layer, not the total model.</p>
-
-<p><strong>2. MoE expert streaming.</strong> For Mixture of Experts models (like Mixtral, DeepSeek-V3, Qwen3-MoE), AirLLM further decomposes each layer. MoE layers contain multiple “expert” feed-forward networks, and a router selects which expert(s) to activate for each token. AirLLM loads only the selected expert(s) at inference time, rather than loading all experts. This dramatically reduces memory for models with many experts per layer.</p>
-
-<p><strong>3. Hidden state accumulation.</strong> The hidden state (the intermediate representation of the input) is maintained on the GPU throughout the forward pass. Since the hidden state size is determined by the hidden dimension and sequence length – not the model size – it remains manageable even for trillion-parameter models. For a 4096-token sequence with a 4096 hidden dimension, the hidden state is roughly 4096 × 4096 × 2 bytes ≈ 32MB, trivial compared to the model weights.</p>
-
-<p>The result: VRAM requirements scale with <strong>per-layer size</strong>, not <strong>total model size</strong>. A 70B model and a 7B model with the same layer architecture use roughly the same amount of GPU memory, because each layer has the same dimensions. The 70B model just has more layers, processed sequentially.</p>
-
-<h2 id="key-features">Key Features</h2>
-
-<h3 id="run-70b-models-on-4gb-gpu">Run 70B Models on 4GB GPU</h3>
-
-<p>The headline feature: full-precision 70B inference on a consumer-grade 4GB GPU card (like the RTX 3050, RTX 3060 4GB, or the 4GB M-series Macs). No quantization required – the model runs in its original FP16 or BF16 precision.</p>
-
-<h3 id="run-405b-llama-31-on-8gb">Run 405B Llama 3.1 on 8GB</h3>
-
-<p>Llama 3.1 405B is the flagship model in the Llama family, with 405 billion parameters in its full version. AirLLM runs it on a single 8GB GPU by streaming layers one at a time.</p>
-
-<h3 id="run-671b-deepseek-v3-on-12gb">Run 671B DeepSeek-V3 on ~12GB</h3>
-
-<p>DeepSeek-V3 is a Mixture of Experts model with a total of 671 billion parameters (activated parameters are much smaller per token). AirLLM leverages MoE expert streaming to load only the active experts, fitting the inference pipeline into ~12GB.</p>
-
-<h3 id="run-28t-kimi-k3-on-under-4gb">Run 2.8T Kimi K3 on Under 4GB</h3>
-
-<p>Kimi K3 is the largest open-source model released to date at 2.8 trillion parameters. Thanks to its sparse MoE architecture and AirLLM’s per-expert streaming, it runs in just 3.72GB of VRAM on an RTX 6000 Ada.</p>
-
-<h3 id="sparse-moe-expert-streaming">Sparse MoE Expert Streaming</h3>
-
-<p>For MoE models, AirLLM loads only the expert(s) that each token’s router selects. If a layer has 64 experts and a token routes to 2, only those 2 experts’ weights are loaded. This is the key enabler for running trillion-parameter MoE models on small GPUs.</p>
-
-<h3 id="fp8-model-support-v30">FP8 Model Support (v3.0)</h3>
-
-<p>Version 3.0 adds support for FP8 models, further reducing memory footprint. When combined with expert streaming, FP8 models like Qwen3-235B fit into approximately 3GB of VRAM.</p>
-
-<h3 id="cpu-inference">CPU Inference</h3>
-
-<p>Don’t have a GPU? AirLLM supports CPU inference as well. While slower, it makes running large models accessible on any machine with sufficient RAM and disk space.</p>
-
-<h3 id="macos-support">MacOS Support</h3>
-
-<p>AirLLM runs natively on Apple Silicon (M1, M2, M3) using the MLX framework. This means MacBook and Mac mini users can run 70B+ models without any NVIDIA GPU.</p>
-
-<h3 id="automatic-model-detection-automodel">Automatic Model Detection (AutoModel)</h3>
-
-<p>AirLLM’s <code class="language-plaintext highlighter-rouge">AutoModel</code> class automatically detects the model architecture from its HuggingFace configuration, so you don’t need to specify a model class explicitly. One line of code handles Llama, Qwen, Mistral, Mixtral, DeepSeek, Phi, Gemma, ChatGLM, Baichuan, InternLM, and more.</p>
-
-<h3 id="apache-20-licensed">Apache 2.0 Licensed</h3>
-
-<p>AirLLM is released under the Apache 2.0 license, making it free for both personal and commercial use.</p>
-
-<h2 id="installation">Installation</h2>
-
-<p>Getting started with AirLLM is straightforward:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>airllm
-</code></pre></div></div>
-
-<p>That’s it. AirLLM works with PyTorch and automatically detects your hardware (GPU or CPU).</p>
-
-<h2 id="usage-examples">Usage Examples</h2>
-
-<h3 id="basic-inference">Basic Inference</h3>
-
-<p>The simplest way to use AirLLM is through the <code class="language-plaintext highlighter-rouge">AutoModel</code> class:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">MAX_LENGTH</span> <span class="o">=</span> <span class="mi">128</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"meta-llama/Llama-2-70b-hf"</span><span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"What is the capital of France?"</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="n">MAX_LENGTH</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h3 id="running-a-70b-model-on-4gb-gpu">Running a 70B Model on 4GB GPU</h3>
-
-<p>The same code works for the 70B version – AirLLM handles the layer streaming automatically:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"meta-llama/Llama-3-70B-Instruct"</span><span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Explain quantum computing in simple terms."</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="running-405b-llama-31-on-8gb">Running 405B Llama 3.1 on 8GB</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"meta-llama/Llama-3.1-405B-Instruct"</span><span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Write a Python function that sorts a linked list."</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="running-deepseek-v3-671b-on-12gb">Running DeepSeek-V3 (671B) on ~12GB</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"deepseek-ai/DeepSeek-V3"</span><span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Explain the difference between supervised and unsupervised learning."</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="running-kimi-k3-28t-on-under-4gb">Running Kimi K3 (2.8T) on Under 4GB</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"moonshotai/Kimi-K3"</span><span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Write a haiku about artificial intelligence."</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="cpu-inference-1">CPU Inference</h3>
-
-<p>No GPU? No problem:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"mistralai/Mistral-7B-Instruct-v0.1"</span><span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Hello, how are you?"</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">],</span>  <span class="c1"># .cpu() is the default
-</span>    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="macos-inference">MacOS Inference</h3>
-
-<p>On Apple Silicon, install MLX and use the same code:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>airllm mlx torch
-</code></pre></div></div>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"HuggingFaceTB/SmolLM2-135M"</span><span class="p">)</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="p">[</span><span class="s">"What is the meaning of life?"</span><span class="p">],</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">],</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="using-compression-for-speed">Using Compression for Speed</h3>
-
-<p>AirLLM also supports optional block-wise quantization (4-bit or 8-bit) to speed up inference by up to 3x when disk loading is the bottleneck:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">airllm</span> <span class="kn">import</span> <span class="n">AutoModel</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="s">"garage-bAInd/Platypus2-70B-instruct"</span><span class="p">,</span>
-    <span class="n">compression</span><span class="o">=</span><span class="s">"4bit"</span>
-<span class="p">)</span>
-
-<span class="n">input_text</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Explain the transformer architecture."</span><span class="p">]</span>
-
-<span class="n">input_tokens</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">(</span>
-    <span class="n">input_text</span><span class="p">,</span>
-    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
-    <span class="n">return_attention_mask</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">padding</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
-
-<span class="n">generation_output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span>
-    <span class="n">input_tokens</span><span class="p">[</span><span class="s">"input_ids"</span><span class="p">].</span><span class="n">cuda</span><span class="p">(),</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generation_output</span><span class="p">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</code></pre></div></div>
-
-<h3 id="profiling-and-configuration">Profiling and Configuration</h3>
-
-<p>Enable profiling to see time spent in each stage:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="s">"meta-llama/Llama-2-70b-hf"</span><span class="p">,</span>
-    <span class="n">profiling_mode</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<p>Specify a custom path for layer shards:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="s">"meta-llama/Llama-2-70b-hf"</span><span class="p">,</span>
-    <span class="n">layer_shards_saving_path</span><span class="o">=</span><span class="s">"/path/to/save/layer/shards"</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<p>Use a HuggingFace token for gated models:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="s">"meta-llama/Llama-3-70B"</span><span class="p">,</span>
-    <span class="n">hf_token</span><span class="o">=</span><span class="s">"HF_API_TOKEN"</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<h2 id="performance-benchmarks">Performance Benchmarks</h2>
-
-<p>The following table summarizes what AirLLM users have achieved across different model sizes and configurations:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Model</th>
-      <th>Total Parameters</th>
-      <th>Minimum VRAM</th>
-      <th>Notes</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Mistral 7B / Phi-3 8B</td>
-      <td>7B</td>
-      <td>~1-2 GB</td>
-      <td>Standard dense model</td>
-    </tr>
-    <tr>
-      <td>Qwen3-32B</td>
-      <td>32B</td>
-      <td>~2-3 GB</td>
-      <td>Dense model</td>
-    </tr>
-    <tr>
-      <td>Mixtral 8x7B (MoE)</td>
-      <td>47B</td>
-      <td>~1-3 GB</td>
-      <td>MoE expert streaming</td>
-    </tr>
-    <tr>
-      <td>Qwen3-235B (MoE)</td>
-      <td>235B</td>
-      <td>~3 GB</td>
-      <td>MoE + FP8 support</td>
-    </tr>
-    <tr>
-      <td>Llama 3 70B</td>
-      <td>70B</td>
-      <td>~4 GB</td>
-      <td>Full FP16 precision</td>
-    </tr>
-    <tr>
-      <td>Llama 3.1 405B</td>
-      <td>405B</td>
-      <td>~8 GB</td>
-      <td>Layer streaming</td>
-    </tr>
-    <tr>
-      <td>DeepSeek-V3</td>
-      <td>671B</td>
-      <td>~12 GB</td>
-      <td>MoE + FP8</td>
-    </tr>
-    <tr>
-      <td>Kimi K3</td>
-      <td>2.8T</td>
-      <td>~3.7 GB</td>
-      <td>Sparse MoE, per-expert streaming</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The key insight is that VRAM requirements do not scale with total model size – they scale with <strong>per-layer size</strong>. This is why a 2.8T MoE model can run in less VRAM than a 70B dense model: each layer in the 2.8T model is actually smaller when only the active experts are loaded.</p>
-
-<h3 id="speed-considerations">Speed Considerations</h3>
-
-<p>The trade-off for this memory efficiency is speed. Because layers are loaded sequentially from disk, inference is slower than with a fully loaded model. However, AirLLM mitigates this with several optimizations:</p>
-
-<ul>
-  <li><strong>Prefetching</strong>: The next layer is loaded while the current layer is being computed, overlapping I/O and compute by up to 10%.</li>
-  <li><strong>Block-wise quantization</strong>: Optional 4-bit or 8-bit compression reduces layer size, speeding up disk loading by up to 3x with minimal accuracy loss.</li>
-  <li><strong>MoE expert streaming</strong>: Loading only the needed experts means less data to transfer per layer.</li>
-</ul>
-
-<p>For many use cases – research, exploration, prototyping – the speed difference is acceptable given the ability to run models that would otherwise require multi-GPU clusters.</p>
-
-<h2 id="supported-models">Supported Models</h2>
-
-<p>AirLLM works out of the box with virtually every popular open LLM through its <code class="language-plaintext highlighter-rouge">AutoModel</code> class:</p>
-
-<ul>
-  <li><strong>Llama</strong>: Llama 2, Llama 3, Llama 3.1, Llama 3.3, Llama 4</li>
-  <li><strong>Qwen</strong>: Qwen 1, Qwen 2, Qwen 2.5, Qwen 3 (including MoE and FP8 variants)</li>
-  <li><strong>DeepSeek</strong>: DeepSeek V2, V3, R1</li>
-  <li><strong>Mistral &amp; Mixtral</strong>: All variants</li>
-  <li><strong>Phi</strong>: Phi-3, Phi-4</li>
-  <li><strong>Gemma</strong>: Gemma 1, Gemma 2</li>
-  <li><strong>ChatGLM</strong>: ChatGLM series</li>
-  <li><strong>Baichuan</strong>: Baichuan series</li>
-  <li><strong>InternLM</strong>: InternLM series</li>
-  <li><strong>Yi</strong>: Yi series</li>
-</ul>
-
-<p>New models are typically supported the day they’re released, as <code class="language-plaintext highlighter-rouge">AutoModel</code> reads the HuggingFace configuration and adapts automatically.</p>
-
-<h2 id="who-should-use-airllm">Who Should Use AirLLM?</h2>
-
-<h3 id="developers-without-high-end-gpus">Developers without High-End GPUs</h3>
-
-<p>If you’ve ever wanted to experiment with 70B+ models but couldn’t justify the cost of an A100 or H100, AirLLM is for you. A laptop with a 4GB GPU or an Apple Silicon Mac can now run state-of-the-art models.</p>
-
-<h3 id="students-and-researchers">Students and Researchers</h3>
-
-<p>AirLLM democratizes access to large models for academic research. Students can fine-tune, evaluate, and experiment with 70B+ models on personal hardware without needing cluster access.</p>
-
-<h3 id="cost-conscious-teams">Cost-Conscious Teams</h3>
-
-<p>For small teams and startups, AirLLM eliminates the need for expensive multi-GPU deployments in many scenarios. A single RTX 3060 (4GB) can handle inference workloads that previously required a full server rack.</p>
-
-<h3 id="privacy-sensitive-applications">Privacy-Sensitive Applications</h3>
-
-<p>Running large models locally – without sending data to cloud APIs – is critical for confidential data processing. AirLLM makes local inference viable for organizations that cannot use cloud-based LLM services.</p>
-
-<h3 id="rapid-prototyping">Rapid Prototyping</h3>
-
-<p>When you need to quickly test a model’s capabilities without setting up a full inference infrastructure, AirLLM provides the fastest path from “HuggingFace model ID” to “running inference.”</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>AirLLM represents a fundamentally different approach to LLM inference. Instead of trying to fit the entire model into GPU memory through compression, it asks a simpler question: do you need the entire model in memory at once? The answer, for transformer inference, is no – and the implications are staggering.</p>
-
-<p>By streaming layers one at a time and further decomposing MoE layers into individual experts, AirLLM breaks the VRAM bottleneck that has defined LLM deployment for years. A 4GB GPU – once capable of running only 7B models – can now handle 70B. An 8GB card can run 405B. And the 2.8T Kimi K3 runs on under 4GB, a feat that seemed impossible just months ago.</p>
-
-<p>The trade-off is speed: sequential layer loading means slower inference than a fully loaded multi-GPU setup. But for the vast majority of use cases – research, prototyping, exploration, privacy-sensitive workloads – this is an acceptable trade. The ability to run state-of-the-art models on commodity hardware without quantization or quality loss changes what’s possible for individual developers and small teams.</p>
-
-<p>As models continue to grow larger, AirLLM’s approach becomes increasingly compelling. The layer-streaming technique scales with model depth rather than model width, making it inherently future-proof for trillion-parameter architectures. Combined with FP8 support, CPU inference, MacOS compatibility, and automatic model detection, AirLLM is a vital tool in the inference optimization toolkit.</p>
-
-<p><strong>Resources:</strong></p>
-<ul>
-  <li><a href="https://github.com/lyogavin/airllm">AirLLM on GitHub</a></li>
-  <li><a href="https://pypi.org/project/airllm/">AirLLM on PyPI</a></li>
-  <li><a href="https://colab.research.google.com/github/lyogavin/airllm/blob/main/air_llm/examples/run_all_types_of_models.ipynb">Colab Example Notebook</a></li>
-  <li><a href="https://arxiv.org/abs/2212.09720">AirLLM Paper on arXiv</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="LLM" /><category term="Inference" /><category term="GPU" /><category term="Open Source" /><category term="AirLLM" /><category term="LLM" /><category term="GPU" /><category term="Inference" /><category term="MoE" /><category term="Mixture of Experts" /><category term="70B" /><category term="DeepSeek" /><category term="Llama" /><category term="FP8" /><category term="CPU" /><category term="MacOS" /><category term="Apache 2.0" /><summary type="html"><![CDATA[Learn how AirLLM runs 70B large language models on a single 4GB GPU card without quantization, distillation, or pruning. Explore MoE streaming, FP8 support, and real-world performance.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" /><media:content medium="image" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Education" /><category term="Open Source" /><category term="AI" /><category term="Machine Learning" /><category term="Education" /><category term="Beginners" /><category term="TensorFlow" /><category term="PyTorch" /><category term="Curriculum" /><category term="Microsoft" /><category term="Neural Networks" /><category term="Computer Vision" /><category term="NLP" /><category term="Reinforcement Learning" /><summary type="html"><![CDATA[Microsoft's AI for Beginners is a 12-week, 24-lesson curriculum covering AI fundamentals, neural networks, computer vision, NLP, genetic algorithms, reinforcement learning, and AI ethics. Hands-on labs with TensorFlow and PyTorch, a Vue.js quiz app, and 50+ language translations — completely free.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" /><media:content medium="image" url="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
