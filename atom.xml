@@ -1,4 +1,339 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-13T01:33:19+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Positional Encoding: How LLMs Know Word Order Without Recurrence</title><link href="https://pyshine.com/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/" rel="alternate" type="text/html" title="Positional Encoding: How LLMs Know Word Order Without Recurrence" /><published>2026-08-12T00:00:00+00:00</published><updated>2026-08-12T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal</id><content type="html" xml:base="https://pyshine.com/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/"><![CDATA[<h1 id="positional-encoding-how-llms-know-word-order-without-recurrence">Positional Encoding: How LLMs Know Word Order Without Recurrence</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-14T00:20:32+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down</title><link href="https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/" rel="alternate" type="text/html" title="Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down" /><published>2026-08-14T00:00:00+00:00</published><updated>2026-08-14T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling</id><content type="html" xml:base="https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/"><![CDATA[<h1 id="mixture-of-experts-how-llms-scale-to-trillions-without-slowing-down">Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down</h1>
+
+<p>Every token you generate with GPT-4, DeepSeek-V3, or Mixtral activates only a fraction of the model’s parameters. A 671-billion-parameter model can run at the speed of a 37-billion-parameter model because not all parameters participate in every forward pass. This is not quantization, not distillation, not some clever kernel trick – it is <strong>Mixture of Experts (MoE)</strong>, the sparse architecture that decouples model capacity (total parameters, i.e., knowledge) from inference cost (active parameters, i.e., compute per token).</p>
+
+<p>In late 2023, Mistral AI released Mixtral 8x7B: 47 billion total parameters but only 13 billion active per token, matching or beating Llama 2 70B on benchmarks while running 4-6x faster. In December 2024, DeepSeek-V3 pushed the idea to 671 billion total parameters with just 37 billion active, achieving frontier-model quality at a fraction of the inference cost. Today, MoE is no longer a research curiosity – it is the default architecture for frontier-scale LLMs.</p>
+
+<p>This post explains how MoE works, why it scales, what goes wrong during training (spoiler: routers love to play favorites), and how models like DeepSeek-V3 engineered around the problems. It follows our earlier posts on <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">the attention mechanism</a>, <a href="/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/">positional encoding</a>, and <a href="/I-Built-an-LLM-From-Scratch/">building an LLM from scratch</a>.</p>
+
+<p><img src="/assets/img/diagrams/llm-moe/llm-mixture-of-experts-moe.svg" alt="Mixture of Experts Architecture Diagram" /></p>
+
+<h2 id="the-dense-scaling-wall">The Dense Scaling Wall</h2>
+
+<p>In a traditional “dense” transformer, every single parameter participates in every single forward pass for every single token. Each transformer block has two sublayers: a multi-head self-attention layer and a feed-forward network (FFN, also called MLP). The attention layer mixes information across tokens; the FFN processes each token independently through an up-projection, a non-linearity (typically SwiGLU in modern models), and a down-projection.</p>
+
+<p>The FFN is where roughly two-thirds of the model’s parameters and compute live. For a hidden dimension <code class="language-plaintext highlighter-rouge">D</code> and FFN intermediate dimension <code class="language-plaintext highlighter-rouge">F</code> (typically <code class="language-plaintext highlighter-rouge">F = 8D/3</code> in SwiGLU models), the FFN performs two matrix multiplications per token: <code class="language-plaintext highlighter-rouge">D x F</code> and <code class="language-plaintext highlighter-rouge">F x D</code>. That is <code class="language-plaintext highlighter-rouge">8D²</code> multiply-adds per layer per token. To make the model smarter – to give it more knowledge, more linguistic patterns, more reasoning patterns – you widen <code class="language-plaintext highlighter-rouge">D</code> or add more layers, and the compute cost grows proportionally.</p>
+
+<p>This creates a brutal trade-off:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Total params</th>
+      <th>Active params/token</th>
+      <th>Relative FLOPs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Llama 2 7B</td>
+      <td>7B</td>
+      <td>7B</td>
+      <td>1x</td>
+    </tr>
+    <tr>
+      <td>Llama 2 70B</td>
+      <td>70B</td>
+      <td>70B</td>
+      <td>10x</td>
+    </tr>
+    <tr>
+      <td>Mixtral 8x7B</td>
+      <td>47B</td>
+      <td><strong>13B</strong></td>
+      <td>~1.8x</td>
+    </tr>
+    <tr>
+      <td>DeepSeek-V3</td>
+      <td>671B</td>
+      <td><strong>37B</strong></td>
+      <td>~5x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A dense 70B model needs 10x more compute per token than a 7B model. Mixtral 8x7B has more parameters than a 70B model but needs less compute per token than a 13B model. That is the promise of sparsity: <strong>you can have a library of a million books without reading every book to answer every question</strong>.</p>
+
+<h2 id="the-core-idea-sparse-activation">The Core Idea: Sparse Activation</h2>
+
+<p>The mental model is a library. A dense model reads every book in the library to answer every question. A MoE model has a librarian (the router) who quickly selects a small number of relevant books (experts), reads only those, and combines what they say. The library (total parameters) can be enormous, but the reading time (compute per token) stays small.</p>
+
+<p>Instead of one large FFN in each transformer block, an MoE block places <code class="language-plaintext highlighter-rouge">N</code> smaller FFNs – called <strong>experts</strong> – in parallel, plus a lightweight <strong>router</strong> (or gate) network that decides which experts should process each token. The router picks the top <code class="language-plaintext highlighter-rouge">k</code> experts for each token, sends the token through only those experts, and combines their outputs with a weighted sum.</p>
+
+<p>For Mixtral 8x7B, <code class="language-plaintext highlighter-rouge">N = 8</code> experts and <code class="language-plaintext highlighter-rouge">k = 2</code> – each token activates 2 out of 8 experts. For DeepSeek-V3, <code class="language-plaintext highlighter-rouge">N = 256</code> routed experts plus 1 shared expert, and <code class="language-plaintext highlighter-rouge">k = 8</code>.</p>
+
+<p>Crucially, <strong>only the FFN becomes sparse</strong>. The self-attention layers remain dense and shared across all tokens. The attention mechanism needs to see the entire sequence to compute attention weights; making it sparse would break the core computation. But the FFN is embarrassingly per-token, making it the natural place to introduce expert routing.</p>
+
+<h2 id="anatomy-of-an-moe-layer">Anatomy of an MoE Layer</h2>
+
+<p>Let us trace what happens to a single token as it passes through an MoE layer.</p>
+
+<h3 id="step-1-the-router-computes-scores">Step 1: The Router Computes Scores</h3>
+
+<p>The router is a single linear layer: <code class="language-plaintext highlighter-rouge">scores = W_g · x</code>, where <code class="language-plaintext highlighter-rouge">x</code> is the token’s hidden state (dimension <code class="language-plaintext highlighter-rouge">D</code>) and <code class="language-plaintext highlighter-rouge">W_g</code> is a learned weight matrix of shape <code class="language-plaintext highlighter-rouge">(D, N)</code> that projects to one score per expert. This is followed by a softmax to convert scores to probabilities across experts:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>p = softmax(scores)    # shape (N,)
+</code></pre></div></div>
+
+<h3 id="step-2-top-k-selection">Step 2: Top-k Selection</h3>
+
+<p>The router selects the <code class="language-plaintext highlighter-rouge">k</code> experts with the highest probabilities. For Mixtral, <code class="language-plaintext highlighter-rouge">k = 2</code>; for Switch Transformer, <code class="language-plaintext highlighter-rouge">k = 1</code>; for DeepSeek-V3, <code class="language-plaintext highlighter-rouge">k = 8</code>. The probabilities for the selected experts are re-normalized so they sum to 1, giving weights <code class="language-plaintext highlighter-rouge">w_1, w_2, ..., w_k</code>.</p>
+
+<p>All unselected experts are completely skipped. Their weights are not loaded, not computed, not touched. This is where the compute savings come from.</p>
+
+<h3 id="step-3-expert-computation">Step 3: Expert Computation</h3>
+
+<p>The token’s hidden state is dispatched to each of the <code class="language-plaintext highlighter-rouge">k</code> selected experts. Each expert is an independent SwiGLU FFN with its own set of weights. The expert computes an output: <code class="language-plaintext highlighter-rouge">y_i = Expert_i(x)</code> for each selected expert <code class="language-plaintext highlighter-rouge">i</code>.</p>
+
+<h3 id="step-4-weighted-combination">Step 4: Weighted Combination</h3>
+
+<p>The outputs are combined using the router weights:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y = w_1 * Expert_1(x) + w_2 * Expert_2(x) + ... + w_k * Expert_k(x)
+</code></pre></div></div>
+
+<p>This weighted sum becomes the output of the MoE layer, which is then passed through the residual connection and layer norm just like a regular FFN output.</p>
+
+<h3 id="minimal-pytorch-implementation">Minimal PyTorch Implementation</h3>
+
+<p>Here is a simplified MoE FFN that illustrates the core logic. This is for clarity – real implementations use grouped GEMMs, expert parallelism, and capacity-based batching for efficiency:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+
+<span class="k">class</span> <span class="nc">Expert</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""A single SwiGLU FFN expert."""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">w1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">w2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">w3</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c1"># SwiGLU gate
+</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">w2</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="n">silu</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">w1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">w3</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">MoELayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""Simplified Mixture of Experts FFN layer."""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_experts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">num_experts</span> <span class="o">=</span> <span class="n">num_experts</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">top_k</span> <span class="o">=</span> <span class="n">top_k</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">gate</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">num_experts</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">experts</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">ModuleList</span><span class="p">([</span>
+            <span class="n">Expert</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_experts</span><span class="p">)</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># x shape: (batch, seq_len, dim)
+</span>        <span class="n">B</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">shape</span>
+        <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>  <span class="c1"># (B*T, D)
+</span>
+        <span class="c1"># Step 1: Router scores
+</span>        <span class="n">router_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">gate</span><span class="p">(</span><span class="n">x_flat</span><span class="p">)</span>  <span class="c1"># (B*T, num_experts)
+</span>        <span class="n">router_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">router_logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Step 2: Select top-k experts
+</span>        <span class="n">top_weights</span><span class="p">,</span> <span class="n">top_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">topk</span><span class="p">(</span><span class="n">router_probs</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">top_k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">top_weights</span> <span class="o">=</span> <span class="n">top_weights</span> <span class="o">/</span> <span class="n">top_weights</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c1"># renormalize
+</span>
+        <span class="c1"># Step 3+4: Dispatch to experts and combine
+</span>        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x_flat</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">expert_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_experts</span><span class="p">):</span>
+            <span class="c1"># Find tokens routed to this expert
+</span>            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">top_indices</span> <span class="o">==</span> <span class="n">expert_idx</span><span class="p">).</span><span class="nb">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (B*T,)
+</span>            <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="p">.</span><span class="nb">any</span><span class="p">():</span>
+                <span class="k">continue</span>
+            <span class="n">expert_input</span> <span class="o">=</span> <span class="n">x_flat</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="n">expert_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">experts</span><span class="p">[</span><span class="n">expert_idx</span><span class="p">](</span><span class="n">expert_input</span><span class="p">)</span>
+            <span class="c1"># Weight by routing probability for each k slot
+</span>            <span class="k">for</span> <span class="n">k_slot</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">top_k</span><span class="p">):</span>
+                <span class="n">slot_mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">top_indices</span><span class="p">[:,</span> <span class="n">k_slot</span><span class="p">]</span> <span class="o">==</span> <span class="n">expert_idx</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">slot_mask</span><span class="p">.</span><span class="nb">any</span><span class="p">():</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">slot_mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">top_weights</span><span class="p">[</span><span class="n">slot_mask</span><span class="p">,</span> <span class="n">k_slot</span><span class="p">:</span><span class="n">k_slot</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">experts</span><span class="p">[</span><span class="n">expert_idx</span><span class="p">](</span><span class="n">x_flat</span><span class="p">[</span><span class="n">slot_mask</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">out</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Real implementations (like Megablocks, DeepSeek’s custom kernels, or vLLM’s MoE backend) avoid the Python loop over experts. They use a “permute → batch GEMM → unpermute” pattern: tokens are gathered by expert ID into contiguous batches, each expert processes its batch in one large matrix multiplication, and the outputs are scattered back to their original positions. This yields dramatically better GPU utilization.</p>
+
+<h2 id="expert-specialization">Expert Specialization</h2>
+
+<p>After training, experts automatically self-organize into specialized roles. The router learns to send different types of tokens to different experts, and each expert becomes better at processing the tokens it consistently receives.</p>
+
+<p>Studies of trained MoE models (most notably the Mixtral paper [2]) have found that experts specialize in predictable patterns:</p>
+
+<ul>
+  <li><strong>Syntax experts</strong> specialize in function words: “the”, “is”, “and”, “of”, “in”</li>
+  <li><strong>Knowledge experts</strong> specialize in named entities and factual content: “Paris”, “Einstein”, “DNA”</li>
+  <li><strong>Code experts</strong> specialize in programming constructs: “def”, “class”, “return”, “import”, “if”, “for”</li>
+  <li><strong>Math experts</strong> specialize in numbers and reasoning: “=”, “+”, “solve”, numeric tokens</li>
+  <li><strong>Multilingual experts</strong> specialize in non-English scripts: Chinese characters, Arabic, Japanese</li>
+  <li><strong>Punctuation experts</strong> specialize in formatting tokens: newlines, brackets, commas</li>
+</ul>
+
+<p>This specialization is entirely emergent – nothing in the architecture explicitly assigns roles to experts. It is a natural consequence of the load-balancing pressure plus the router learning to minimize loss. Code tokens consistently sent to expert 2 will cause expert 2’s gradients to specialize toward code representations, which in turn makes the router even more likely to send code tokens to expert 2, creating a reinforcing feedback loop.</p>
+
+<p>This specialization is why MoE models can learn more effectively than dense models of the same active parameter count: each expert can afford to be a narrow specialist rather than a generalist forced to compress all knowledge into one FFN.</p>
+
+<h2 id="the-load-balancing-problem">The Load Balancing Problem</h2>
+
+<p>If you train the naive MoE described above, it will fail. The router will quickly converge to sending almost all tokens to a small handful of experts. The favored experts get well-trained, which makes them even more favored (since they produce lower loss), while the ignored experts receive no gradient signal and remain essentially random. This is called <strong>expert collapse</strong>, and it is the fundamental training challenge for MoE.</p>
+
+<h3 id="why-collapse-happens">Why Collapse Happens</h3>
+
+<p>The router’s objective is to minimize the language modeling loss. If expert 3 happens to produce slightly better outputs early in training, the router increases the probability of routing to expert 3, which gives expert 3 more training signal, making it even better, and so on. This is a positive feedback loop that leads to a few “winner” experts processing 80-90% of all tokens while the rest starve. The model effectively wastes the capacity of the unused experts.</p>
+
+<h3 id="auxiliary-load-balancing-loss">Auxiliary Load-Balancing Loss</h3>
+
+<p>The fix, introduced by Shazeer et al. [1] and refined in Switch Transformer [3], is to add an <strong>auxiliary loss</strong> term that penalizes uneven expert assignment:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L_balance = alpha * N * sum_i(f_i * P_i)
+</code></pre></div></div>
+
+<p>where:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">N</code> is the number of experts</li>
+  <li><code class="language-plaintext highlighter-rouge">f_i</code> is the fraction of tokens dispatched to expert <code class="language-plaintext highlighter-rouge">i</code> in the current batch</li>
+  <li><code class="language-plaintext highlighter-rouge">P_i</code> is the mean router probability assigned to expert <code class="language-plaintext highlighter-rouge">i</code> across all tokens</li>
+  <li><code class="language-plaintext highlighter-rouge">alpha</code> is a small coefficient (typically 0.01 to 0.001)</li>
+</ul>
+
+<p>This loss is minimized when both <code class="language-plaintext highlighter-rouge">f_i</code> and <code class="language-plaintext highlighter-rouge">P_i</code> are uniform (<code class="language-plaintext highlighter-rouge">1/N</code> for all experts). It jointly penalizes dispatching too many tokens to one expert (high <code class="language-plaintext highlighter-rouge">f_i</code>) and assigning high router probabilities to one expert (high <code class="language-plaintext highlighter-rouge">P_i</code>). The total training loss becomes <code class="language-plaintext highlighter-rouge">L_total = L_LM + L_balance</code>.</p>
+
+<h3 id="capacity-factor">Capacity Factor</h3>
+
+<p>In addition to the auxiliary loss, implementations use a <strong>capacity factor</strong> to enforce a hard limit on how many tokens each expert can process in a batch:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>capacity_per_expert = (B * T / N) * capacity_factor
+</code></pre></div></div>
+
+<p>where <code class="language-plaintext highlighter-rouge">capacity_factor</code> is typically around 1.25 (meaning each expert can handle up to 25% more than its “fair share”). Tokens that would overflow an expert’s capacity are either dropped (sent via the residual connection without expert processing) or routed to a backup expert. This prevents GPU memory overflow and ensures balanced computation across distributed devices.</p>
+
+<h3 id="shared-experts">Shared Experts</h3>
+
+<p>DeepSeek-V3 [5] introduced a key refinement: <strong>shared experts</strong>. In addition to the 256 routed experts, each MoE layer includes 1 shared expert that processes every token unconditionally. The shared expert captures common, universal patterns (like basic syntax and frequent token combinations) that should not be routed, while the routed experts handle specialized knowledge. The output becomes:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y = SharedExpert(x) + sum_i(w_i * RoutedExpert_i(x))
+</code></pre></div></div>
+
+<p>This design choice reduces the routing burden on the most common tokens and improves stability, while still providing the benefits of fine-grained specialization for the routed experts.</p>
+
+<h2 id="moe-through-time">MoE Through Time</h2>
+
+<p>Let us trace how MoE evolved from a research idea to the dominant architecture for frontier models.</p>
+
+<h3 id="2017-sparsely-gated-moe-shazeer-et-al">2017: Sparsely-Gated MoE (Shazeer et al.)</h3>
+
+<p>The original MoE layer was introduced by Shazeer et al. at Google in “Outrageously Large Neural Networks” [1]. They demonstrated that a language model with 137 billion parameters using 10K experts (with top-2 routing) could achieve better perplexity than a dense baseline with a fraction of the compute. However, the approach was limited to a per-token routing mechanism that was difficult to scale in distributed training, and it took several years for the systems infrastructure to catch up.</p>
+
+<h3 id="2021-switch-transformer-fedus-et-al-google">2021: Switch Transformer (Fedus et al., Google)</h3>
+
+<p>Google’s Switch Transformer [3] simplified routing to top-1 (each token goes to exactly one expert) and scaled to 1.6 trillion parameters – the first trillion-parameter language model. They introduced the auxiliary load-balancing loss and selective precision training to stabilize large-scale MoE. Despite the impressive scale, Switch models were not released openly, and the architecture remained largely confined to Google’s infrastructure.</p>
+
+<h3 id="2023-mixtral-8x7b-mistral-ai">2023: Mixtral 8x7B (Mistral AI)</h3>
+
+<p>Mixtral 8x7B [2], released in December 2023, brought MoE to the open-source community. With 47 billion total parameters (8 experts of ~7B each, though actual parameter count is ~47B not 56B due to shared attention layers), top-2 routing, and 13 billion active parameters per token, Mixtral matched or outperformed Llama 2 70B and GPT-3.5 on most benchmarks while running at the speed of a 13B model. Crucially, it was released as open weights and worked with standard inference frameworks, making MoE accessible to everyone.</p>
+
+<h3 id="2024-deepseek-v2-and-v3">2024: DeepSeek-V2 and V3</h3>
+
+<p>DeepSeek-V2 (May 2024) [4] introduced Multi-head Latent Attention (MLA) to reduce KV-cache memory and scaled MoE to 236 billion total parameters with 21 billion active per layer, using 64 routed experts. DeepSeek-V3 (December 2024) [5] pushed further to <strong>671 billion total parameters</strong> with <strong>37 billion active</strong>, using:</p>
+
+<ul>
+  <li><strong>256 fine-grained routed experts</strong> (smaller, more numerous experts than Mixtral’s 8)</li>
+  <li><strong>1 shared expert</strong> always active (absorbing common patterns)</li>
+  <li><strong>Top-8 routing</strong> (more experts per token, enabling finer composition)</li>
+  <li><strong>Auxiliary-loss-free load balancing</strong> using a complementary sequence-wise bias</li>
+</ul>
+
+<p>DeepSeek-V3 demonstrated that a 671B MoE could be trained on just 2.788 million H800 GPU hours (a fraction of what dense frontier models cost) while matching closed models like GPT-4o and Claude 3.5 Sonnet on many benchmarks. It was a watershed moment showing that MoE + careful systems engineering could deliver frontier quality at radically lower cost.</p>
+
+<h3 id="2025-and-beyond">2025 and Beyond</h3>
+
+<p>Qwen3-MoE, Llama 4 Scout/Maverick, Grok, and the open GPT-OSS-120B all use MoE architectures. The trend is clear: more experts, finer granularity, auxiliary innovations like shared experts, and better systems for expert parallelism. The dense scaling era for frontier models is effectively over.</p>
+
+<h2 id="inference-challenges">Inference Challenges</h2>
+
+<p>MoE introduces systems challenges that dense models do not face:</p>
+
+<h3 id="expert-parallelism">Expert Parallelism</h3>
+
+<p>Since each expert processes a different subset of tokens, experts can be distributed across multiple GPUs. This is called <strong>expert parallelism (EP)</strong>. For DeepSeek-V3, the 256 experts per layer can be sharded across many GPUs – a typical deployment uses EP=320 (experts spread across 320 GPU ranks) for the MoE layers, while attention layers use tensor parallelism (TP=4).</p>
+
+<h3 id="all-to-all-communication">All-to-All Communication</h3>
+
+<p>When experts are distributed across GPUs, tokens must be sent to the GPU holding their selected experts, and the outputs must be sent back. This is an <strong>all-to-all</strong> communication pattern that is expensive on standard networking. DeepSeek and other MoE deployments rely on high-bandwidth interconnects (InfiniBand, NVLink) and custom communication kernels to hide this latency.</p>
+
+<h3 id="memory-trade-off">Memory Trade-off</h3>
+
+<p>MoE models <strong>require more VRAM</strong> than a dense model of the same active parameter count. You must store all expert weights in memory even though only a fraction are active per token. Mixtral 8x7B needs ~90GB in FP16 (similar to a dense 70B), despite running at 13B speed. MoE trades memory for speed: you spend more memory to get faster inference with more total knowledge.</p>
+
+<h3 id="batch-effects">Batch Effects</h3>
+
+<p>In dense models, larger batches improve GPU throughput monotonically. In MoE models, the routing pattern varies per token, which can lead to load imbalance across GPUs in a batch. Advanced batching strategies (like continuous batching used in vLLM and SGLang) and expert-aware scheduling are required to achieve good throughput.</p>
+
+<h2 id="when-to-use-moe-and-when-not-to">When to Use MoE (and When Not To)</h2>
+
+<p>MoE is not a free lunch. It makes sense when:</p>
+
+<ul>
+  <li>You need <strong>frontier-level capability</strong> and can afford the multi-GPU deployment</li>
+  <li>You want to <strong>scale knowledge capacity</strong> without proportional inference cost</li>
+  <li>You have the <strong>systems infrastructure</strong> for expert parallelism and high-bandwidth communication</li>
+</ul>
+
+<p>Dense models remain preferable when:</p>
+
+<ul>
+  <li>You are deploying on a <strong>single GPU</strong> or consumer hardware (the memory overhead is prohibitive)</li>
+  <li>You need <strong>simple, predictable latency</strong> (MoE has variable latency due to routing and communication)</li>
+  <li>You are fine-tuning a <strong>small specialist model</strong> (7B-14B dense is usually better than 47B MoE for narrow tasks)</li>
+</ul>
+
+<p>For many practical use cases – especially local inference on a single GPU – well-quantized dense models (as discussed in our <a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">quantization post</a>) remain the best choice. But at the frontier, MoE is now the default.</p>
+
+<h2 id="practical-takeaways">Practical Takeaways</h2>
+
+<ol>
+  <li>
+    <p><strong>MoE replaces the FFN, not attention.</strong> Self-attention stays dense; only the feed-forward network is split into experts. If someone says “MoE attention,” they are almost always talking about something experimental.</p>
+  </li>
+  <li>
+    <p><strong>Top-k selection with k=2 is the sweet spot for quality vs cost.</strong> Switch Transformer used k=1 for simplicity; Mixtral used k=2; DeepSeek-V3 uses k=8 with fine-grained experts. Higher k gives better quality but costs more compute.</p>
+  </li>
+  <li>
+    <p><strong>Load balancing is not optional.</strong> Without auxiliary loss (or DeepSeek-V3’s bias-based alternative), routers collapse. Expect to see 1-2 experts taking 50%+ of tokens if you skip it.</p>
+  </li>
+  <li>
+    <p><strong>More experts + smaller experts (fine-grained MoE) is the modern trend.</strong> DeepSeek-V3’s 256 small experts outperform Mixtral’s 8 large experts per active parameter. The routing overhead is amortized, and specialization is sharper.</p>
+  </li>
+  <li>
+    <p><strong>MoE inference is memory-bound, not compute-bound.</strong> You need more VRAM than a dense model of equivalent speed. The main cost is holding all expert weights.</p>
+  </li>
+  <li>
+    <p><strong>Shared experts improve stability.</strong> Adding one always-active shared expert captures universal patterns and reduces the routing load on common tokens. This is a simple, effective technique that will likely become standard.</p>
+  </li>
+</ol>
+
+<h2 id="summary">Summary</h2>
+
+<p>Mixture of Experts breaks the fundamental assumption that model capacity must cost proportional compute. By replacing the FFN with a pool of parallel experts and a learned router, MoE models can store vastly more knowledge while keeping inference costs manageable. The architecture has evolved rapidly from Shazeer’s 2017 proposal to Switch Transformer’s trillion-parameter proof of concept, to Mixtral’s open-source breakthrough, to DeepSeek-V3’s production-grade 671B model with 256 fine-grained experts.</p>
+
+<p>The challenges – expert collapse, all-to-all communication, memory overhead – are real but increasingly well-understood. As of 2026, every major frontier model uses MoE or a similar sparse mechanism. Understanding how it works is no longer optional for anyone working with LLMs at scale.</p>
+
+<h2 id="references">References</h2>
+
+<p>[1] Shazeer, N. et al. “Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer.” ICLR 2017. <a href="https://arxiv.org/abs/1701.06538">arXiv:1701.06538</a></p>
+
+<p>[2] Jiang, A.Q. et al. “Mixtral of Experts.” 2024. <a href="https://arxiv.org/abs/2401.04088">arXiv:2401.04088</a></p>
+
+<p>[3] Fedus, W., Zoph, B., Shazeer, N. “Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity.” JMLR 2022. <a href="https://arxiv.org/abs/2101.03961">arXiv:2101.03961</a></p>
+
+<p>[4] DeepSeek-AI. “DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model.” 2024. <a href="https://arxiv.org/abs/2405.04434">arXiv:2405.04434</a></p>
+
+<p>[5] DeepSeek-AI. “DeepSeek-V3 Technical Report.” 2024. <a href="https://arxiv.org/abs/2412.19437">arXiv:2412.19437</a></p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Mixture of Experts" /><category term="MoE" /><category term="Transformer" /><category term="DeepSeek" /><category term="Mixtral" /><category term="Sparse Models" /><category term="Tutorial" /><summary type="html"><![CDATA[How Mixture of Experts (MoE) breaks the link between model size and inference cost, from the original sparsely-gated MoE layer and Switch Transformer to Mixtral 8x7B, DeepSeek-V3's 256 fine-grained experts, and the routing, load balancing, and expert parallelism that power today's frontier models.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/llm-moe/llm-mixture-of-experts-moe.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/llm-moe/llm-mixture-of-experts-moe.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Positional Encoding: How LLMs Know Word Order Without Recurrence</title><link href="https://pyshine.com/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/" rel="alternate" type="text/html" title="Positional Encoding: How LLMs Know Word Order Without Recurrence" /><published>2026-08-12T00:00:00+00:00</published><updated>2026-08-12T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal</id><content type="html" xml:base="https://pyshine.com/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/"><![CDATA[<h1 id="positional-encoding-how-llms-know-word-order-without-recurrence">Positional Encoding: How LLMs Know Word Order Without Recurrence</h1>
 
 <p>Recurrent neural networks processed tokens one at a time, left to right. The order of words was baked into the computation graph. When the Transformer [1] replaced recurrence with self-attention in 2017, it gained parallelism and long-range gradient flow – but it lost something fundamental: self-attention is <strong>permutation-equivariant</strong>. Shuffle the input tokens, and the attention scores stay the same. “Dog bites man” produces the same activations as “Man bites dog” unless you explicitly tell the model which position each token occupies.</p>
 
@@ -2005,224 +2340,4 @@ w i d est &lt;/w&gt;  (3x)
 
 <p>The key takeaways are: (1) tokens are not words – they are subword units whose boundaries are determined by the tokenizer’s training data; (2) tokenization efficiency varies by language, with English being the most efficient and non-Latin scripts being 2-3x more expensive; (3) the vocabulary size is a design tradeoff between sequence length and embedding table memory; (4) context windows are measured in tokens, not characters, so tokenizer efficiency directly determines how much content you can process.</p>
 
-<p>Understanding tokenization is not just academic – it is the foundation for cost optimization, context window management, and multilingual model selection. Every token saved is real money saved and real context budget preserved.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Tokenization" /><category term="NLP" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn how LLMs convert human text into numbers using Byte-Pair Encoding (BPE), why tokenization affects cost and performance, and how vocabulary size, special tokens, and context windows shape model behavior.]]></summary></entry><entry><title type="html">LLM Training Pipeline: From Pretraining to RLHF and DPO</title><link href="https://pyshine.com/LLM-Training-Pipeline-Pretraining-SFT-RLHF/" rel="alternate" type="text/html" title="LLM Training Pipeline: From Pretraining to RLHF and DPO" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Training-Pipeline-Pretraining-SFT-RLHF</id><content type="html" xml:base="https://pyshine.com/LLM-Training-Pipeline-Pretraining-SFT-RLHF/"><![CDATA[<h1 id="llm-training-pipeline-from-pretraining-to-rlhf-and-dpo">LLM Training Pipeline: From Pretraining to RLHF and DPO</h1>
-
-<p>A capable LLM like Llama-3 or GPT-4 is not born in a single training run. It is built in three distinct stages, each with different data, objectives, and compute requirements. The first stage – pretraining – teaches the model language, facts, and basic reasoning by predicting the next token across trillions of words. The second stage – supervised fine-tuning (SFT) – teaches it to follow instructions and hold conversations. The third stage – RLHF or DPO – aligns the model’s outputs with human preferences for helpfulness, honesty, and harmlessness.</p>
-
-<p>Understanding this pipeline is essential for anyone who wants to fine-tune models, evaluate training options, or reason about why models behave the way they do. This is the fifth post in our LLM internals series, following our coverage of <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization</a>, <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">attention</a>, <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache</a>, and <a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">inference phases</a>.</p>
-
-<h2 id="the-three-stage-pipeline">The Three-Stage Pipeline</h2>
-
-<p><img src="/assets/img/diagrams/llm-training/llm-training-pipeline.svg" alt="LLM Training Pipeline" /></p>
-
-<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
-
-<p>The diagram above shows the complete training pipeline with three stages side by side, followed by a comparison table and a conceptual loss curve. Let us examine each stage in detail.</p>
-
-<p><strong>Stage 1: Pretraining (The Foundation)</strong></p>
-
-<p>Pretraining is where the model learns the fundamentals. The training data consists of trillions of tokens scraped from the internet: web pages (Common Crawl), books, code repositories (GitHub), Wikipedia, scientific papers, and more. For Llama-3, this dataset comprises approximately 15 trillion tokens – roughly 60 terabytes of text.</p>
-
-<p><strong>The Objective: Next-Token Prediction</strong></p>
-
-<p>The model is given a sequence of tokens and asked to predict the next one. If the input is “The cat sat on the”, the model should output a high probability for “mat” (or “floor”, “chair”, etc.). The loss function is cross-entropy:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L = -sum log P(token_i | tokens_0..i-1)
-</code></pre></div></div>
-
-<p>This seemingly simple task forces the model to learn grammar, facts, reasoning patterns, code structure, and world knowledge. To predict the next token accurately across diverse text, the model must build an internal representation of how language works.</p>
-
-<p><strong>Training Details</strong></p>
-
-<p>Pretraining consumes approximately 90% of the total training compute. For a 7B parameter model, this means roughly 6,000 H100-days of GPU time. Key hyperparameters include:</p>
-
-<ul>
-  <li>Learning rate: ~3e-4 with a warmup schedule (starts low, rises, then decays)</li>
-  <li>Batch size: ~4 million tokens (achieved through gradient accumulation)</li>
-  <li>Context length: 4K-8K tokens per sequence</li>
-  <li>Optimizer: AdamW with weight decay</li>
-  <li>Precision: BF16 mixed precision (saves memory while maintaining stability)</li>
-</ul>
-
-<p><strong>The Output: A Base Model</strong></p>
-
-<p>After pretraining, you have a “base model” – a powerful next-token predictor that has absorbed vast knowledge but cannot follow instructions. If you ask a base model “What is the capital of France?”, it might respond with “What is the capital of Germany?” (completing your question with more questions) rather than answering. The base model completes text; it does not converse.</p>
-
-<p><strong>Stage 2: Supervised Fine-Tuning (SFT)</strong></p>
-
-<p>SFT transforms the base model into an instruction-following assistant. The training data changes from raw text to high-quality instruction-response pairs: a human-written prompt and an ideal response. The diagram shows an example pair where the human asks “Explain what a database index is” and the assistant provides a clear explanation.</p>
-
-<p><strong>The Objective: Response Prediction</strong></p>
-
-<p>The loss function is the same cross-entropy as pretraining, but it is only computed on the response tokens – the prompt tokens are masked. This teaches the model to generate good responses given prompts, without trying to learn to generate the prompts themselves:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L = -sum log P(response_tokens | prompt_tokens)
-</code></pre></div></div>
-
-<p><strong>Training Data Sources</strong></p>
-
-<p>SFT data comes from several sources:</p>
-<ul>
-  <li>Human-written demonstrations (expensive but high quality)</li>
-  <li>Synthetic data generated by larger models (e.g., GPT-4 generating training pairs for a smaller model)</li>
-  <li>Distilled from existing conversation datasets</li>
-  <li>Open-source datasets like OpenOrca, FLAN, and UltraChat</li>
-</ul>
-
-<p>The dataset is much smaller than pretraining: typically 100K to 10M examples, compared to 15 trillion tokens. Despite this small size, SFT is remarkably effective because the model has already learned language and knowledge during pretraining – it just needs to learn the format of instruction following.</p>
-
-<p><strong>Training Details</strong></p>
-
-<p>SFT uses a much lower learning rate (~2e-5, about 10x lower than pretraining) to avoid destroying the knowledge learned during pretraining. Training runs for only 1-3 epochs to prevent overfitting. The total compute is approximately 5% of pretraining.</p>
-
-<p><strong>The Output: An Instruct Model</strong></p>
-
-<p>After SFT, the model can follow instructions and hold conversations. However, it may produce harmful, biased, or low-quality outputs because it has only learned to mimic the format of helpful responses, not the values underlying them. An SFT model might happily provide instructions for harmful activities if asked in the right way.</p>
-
-<p><strong>Stage 3: RLHF or DPO (Alignment)</strong></p>
-
-<p>The alignment stage teaches the model to be helpful, harmless, and honest. There are two main approaches:</p>
-
-<p><strong>RLHF (Reinforcement Learning from Human Feedback)</strong></p>
-
-<p>RLHF, introduced by OpenAI in the InstructGPT paper, works in two steps:</p>
-
-<p>Step 1: Train a Reward Model (RM). Human raters compare two or more model responses to the same prompt and choose the preferred one. A separate reward model is trained on these comparisons to predict which response a human would prefer. The RM takes a (prompt, response) pair and outputs a scalar score.</p>
-
-<p>Step 2: Optimize the Policy with PPO. The SFT model (now called the “policy”) generates responses, the reward model scores them, and the Proximal Policy Optimization (PPO) algorithm updates the policy to maximize the reward. A KL divergence penalty keeps the policy close to the SFT model to prevent it from gaming the reward model.</p>
-
-<p>RLHF is powerful but complex: it requires training a separate reward model, sampling from the policy during training (expensive), and tuning multiple hyperparameters (PPO learning rate, KL penalty coefficient, reward model learning rate). GPT-4, Claude 2, and Llama-2 Chat all use RLHF.</p>
-
-<p><strong>DPO (Direct Preference Optimization)</strong></p>
-
-<p>DPO, introduced by Rafailov et al. in 2023, simplifies the alignment process dramatically. The key insight is that the reward model can be expressed in terms of the policy itself, eliminating the need for a separate RM. DPO directly optimizes the policy using preference pairs (prompt, chosen response, rejected response) with a simple binary classification loss:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L = -log sigmoid(beta * (
-  log_pi(chosen) - log_pi_ref(chosen)
-  - log_pi(rejected) + log_pi_ref(rejected)
-))
-</code></pre></div></div>
-
-<p>This increases the probability of the preferred response and decreases the probability of the rejected response, relative to a reference model (the SFT model). DPO is simpler, more stable, and faster to train than RLHF, while achieving comparable or better results. Llama-3, Mistral, and Zephyr all use DPO.</p>
-
-<p><strong>Training Data for Alignment</strong></p>
-
-<p>Both RLHF and DPO require preference data: tuples of (prompt, chosen_response, rejected_response). This data is collected by:</p>
-<ul>
-  <li>Human raters comparing model outputs (expensive, slow)</li>
-  <li>AI feedback (e.g., Constitutional AI where a model critiques its own outputs)</li>
-  <li>Preference synthesis from existing datasets</li>
-</ul>
-
-<p>The dataset is typically 100K to 1M preference pairs – much smaller than SFT data.</p>
-
-<h3 id="the-comparison-table">The Comparison Table</h3>
-
-<p>The diagram’s comparison table highlights the key differences across stages:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Aspect</th>
-      <th>Pretraining</th>
-      <th>SFT</th>
-      <th>RLHF / DPO</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Goal</td>
-      <td>Learn language &amp; knowledge</td>
-      <td>Follow instructions</td>
-      <td>Align with preferences</td>
-    </tr>
-    <tr>
-      <td>Data volume</td>
-      <td>~15T tokens</td>
-      <td>~100K-10M examples</td>
-      <td>~100K-1M preferences</td>
-    </tr>
-    <tr>
-      <td>Compute</td>
-      <td>~90% of total</td>
-      <td>~5% of total</td>
-      <td>~5% of total</td>
-    </tr>
-    <tr>
-      <td>Learning rate</td>
-      <td>~3e-4</td>
-      <td>~2e-5</td>
-      <td>~5e-7</td>
-    </tr>
-    <tr>
-      <td>Can chat?</td>
-      <td>No</td>
-      <td>Yes (basic)</td>
-      <td>Yes (aligned)</td>
-    </tr>
-    <tr>
-      <td>Safety?</td>
-      <td>No</td>
-      <td>Minimal</td>
-      <td>Yes</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The most important insight: pretraining dominates compute (90%) and is where the model acquires its knowledge. SFT and RLHF are relatively cheap (5% each) but transform the model’s behavior. This is why “fine-tuning” a pretrained model is so much cheaper than training from scratch.</p>
-
-<h3 id="the-loss-curve">The Loss Curve</h3>
-
-<p>The bottom of the diagram shows a conceptual loss curve. Pretraining shows a large, gradual loss decrease over months of training. SFT produces a small additional drop. RLHF/DPO produces an even smaller change in loss but a significant change in behavior quality – the loss reduction is small because the model is already good at generating text; alignment is about changing what it chooses to generate, not improving its raw predictive ability.</p>
-
-<h2 id="why-three-stages-instead-of-one">Why Three Stages Instead of One?</h2>
-
-<p>You might wonder: why not train on instruction-response data from the start? The answer is data efficiency and capability.</p>
-
-<p><strong>Pretraining on raw text is data-efficient</strong>: The internet contains trillions of tokens of raw text but only millions of high-quality instruction pairs. By pretraining on raw text, the model learns language patterns, facts, and reasoning from the vast majority of available data. If you trained only on instruction pairs, the model would see 1000x less data and would be far less knowledgeable.</p>
-
-<p><strong>SFT adds format without destroying knowledge</strong>: By fine-tuning with a low learning rate on a small dataset, SFT teaches the model the conversational format without overwriting the knowledge learned during pretraining. The model already “knows” what France’s capital is; SFT just teaches it to answer the question rather than continue the text.</p>
-
-<p><strong>Alignment adds values without reducing capability</strong>: RLHF/DPO makes tiny adjustments to the model’s output distribution, steering it toward helpful and safe responses. The change in the loss function is small, but the change in user experience is dramatic – the model becomes reliable enough for production deployment.</p>
-
-<h2 id="what-can-go-wrong-at-each-stage">What Can Go Wrong at Each Stage</h2>
-
-<p><strong>Pretraining failures</strong>: If the training data contains too much low-quality content (spam, duplicates, toxic text), the model will learn those patterns. If the learning rate is too high, the model can diverge (loss spikes to infinity). If the context length is too short, the model cannot learn long-range dependencies.</p>
-
-<p><strong>SFT failures</strong>: If the SFT data is too homogeneous (all from one source), the model will overfit to that style. If the learning rate is too high, the model “forgets” pretraining knowledge (catastrophic forgetting). If you train for too many epochs, the model memorizes the training data and loses generalization ability.</p>
-
-<p><strong>Alignment failures</strong>: If the reward model (in RLHF) is poorly calibrated, the policy will exploit its weaknesses (reward hacking). If the KL penalty is too low, the model drifts too far from the SFT model and becomes incoherent. If the preference data is biased, the model will reflect those biases. DPO avoids the reward model issue but can still suffer from distribution shift if the preference data does not match the model’s output distribution.</p>
-
-<h2 id="practical-implications">Practical Implications</h2>
-
-<p><strong>For fine-tuning</strong>: If you want to customize a model for your use case, you typically start from an SFT model (not a base model) and apply either continued SFT on your data or DPO with your preference pairs. Fine-tuning a base model requires significant SFT data to first teach it the conversational format.</p>
-
-<p><strong>For cost estimation</strong>: The 90/5/5 compute split means that training a model from scratch is dominated by pretraining costs. If you can start from a pretrained base model (like Llama-3-8B-Base), your fine-tuning costs are only 10% of training from scratch. If you start from an SFT model (like Llama-3-8B-Instruct), your alignment costs are only 5%.</p>
-
-<p><strong>For model selection</strong>: Base models are useful for research and custom pipelines where you want full control over the output format. SFT models are useful for general instruction following. Aligned models (RLHF/DPO) are what you want for production chatbot deployments where safety and helpfulness matter.</p>
-
-<p><strong>For evaluation</strong>: Each stage requires different evaluation metrics. Base models are evaluated on perplexity (how well they predict text) and downstream benchmarks (MMLU, HellaSwag). SFT models are evaluated on instruction-following benchmarks (AlpacaEval, MT-Bench). Aligned models are evaluated on safety benchmarks (TruthfulQA, BBQ) and human preference ratings.</p>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://arxiv.org/abs/2203.02155">Training Language Models to Follow Instructions with Human Feedback (Ouyang et al., 2022)</a> – The InstructGPT paper that introduced RLHF for LLMs</li>
-  <li><a href="https://arxiv.org/abs/2305.18290">Direct Preference Optimization: Your Language Model is Secretly a Reward Model (Rafailov et al., 2023)</a> – The DPO paper that simplified alignment</li>
-</ul>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">LLM Attention Mechanism: The Heart of the Transformer</a></li>
-  <li><a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">LLM Tokenization: How Text Becomes Numbers</a></li>
-  <li><a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</a></li>
-  <li><a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</a></li>
-</ul>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>The three-stage training pipeline – pretraining, SFT, and RLHF/DPO – is the recipe that transforms random weights into a helpful assistant. Each stage has a distinct purpose: pretraining builds knowledge, SFT builds conversational ability, and alignment builds trustworthiness. The compute distribution (90/5/5) means that most of the cost is in pretraining, which is why open-source base models are so valuable – they let you skip 90% of the cost and focus on customization.</p>
-
-<p>RLHF and DPO represent two philosophies of alignment. RLHF explicitly models human preferences through a reward model and optimizes against it with reinforcement learning. DPO implicitly captures preferences through a clever mathematical reformulation that eliminates the reward model entirely. As of 2026, DPO has become the preferred method for open-source models due to its simplicity and stability, while RLHF remains common in large-scale proprietary training where the complexity is justified by scale.</p>
-
-<p>Understanding this pipeline demystifies the process of creating LLMs. A model is not “trained” in one shot – it is carefully sculpted through stages that each add a layer of capability. This staged approach is what makes modern LLMs both knowledgeable (from pretraining) and usable (from SFT and alignment).</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Training" /><category term="RLHF" /><category term="Tutorial" /><summary type="html"><![CDATA[Understand the three-stage LLM training pipeline: pretraining on trillions of tokens, supervised fine-tuning for instruction following, and RLHF/DPO for alignment with human preferences.]]></summary></entry></feed>
+<p>Understanding tokenization is not just academic – it is the foundation for cost optimization, context window management, and multilingual model selection. Every token saved is real money saved and real context budget preserved.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Tokenization" /><category term="NLP" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn how LLMs convert human text into numbers using Byte-Pair Encoding (BPE), why tokenization affects cost and performance, and how vocabulary size, special tokens, and context windows shape model behavior.]]></summary></entry></feed>
