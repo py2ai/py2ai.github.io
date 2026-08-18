@@ -1,4 +1,482 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-14T01:28:07+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down</title><link href="https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/" rel="alternate" type="text/html" title="Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down" /><published>2026-08-14T00:00:00+00:00</published><updated>2026-08-14T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling</id><content type="html" xml:base="https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/"><![CDATA[<h1 id="mixture-of-experts-how-llms-scale-to-trillions-without-slowing-down">Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-18T00:52:39+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods</title><link href="https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/" rel="alternate" type="text/html" title="Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods" /><published>2026-08-16T00:00:00+00:00</published><updated>2026-08-16T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA</id><content type="html" xml:base="https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/"><![CDATA[<h1 id="parameter-efficient-fine-tuning-lora-qlora-and-adapter-methods">Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods</h1>
+
+<p>In 2021, Microsoft Research introduced a paper with a quiet revolution inside its title: “LoRA: Low-Rank Adaptation of Large Language Models.” Two years later, a follow-up paper added three letters – QLoRA – and changed the game again. Together, these methods shattered the long-held assumption that adapting a large language model to a new task requires retraining it from top to bottom on clusters of GPUs.</p>
+
+<p>Before LoRA, fine-tuning a 7B model needed 32GB of VRAM per optimizer (Adam needs 2x the parameter count for momentum and variance states). Fine-tuning a 65B model needed 8x 80GB A100s. Fine-tuning a 175B model was out of reach for all but a handful of organizations. Today, with QLoRA, you can fine-tune a 65B model on a single 48GB GPU at 99% of the quality of 16-bit fine-tuning. This post explains how.</p>
+
+<p>This post is the thirteenth in our series understanding LLMs from the inside out, following <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">the attention mechanism</a>, <a href="/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/">positional encoding</a>, <a href="/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/">Mixture of Experts</a>, and earlier installments on <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization</a>, <a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">quantization</a>, and <a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">training pipelines</a>.</p>
+
+<p><img src="/assets/img/diagrams/llm-lora/llm-lora-peft.svg" alt="Parameter-Efficient Fine-Tuning (LoRA, QLoRA, PEFT) Diagram" /></p>
+
+<h2 id="the-problem-full-fine-tuning-does-not-scale">The Problem: Full Fine-Tuning Does Not Scale</h2>
+
+<p>In a standard transformer, every single weight participates in every single forward pass. When you fine-tune a pretrained model for a downstream task – say, making a Llama 2 7B model expert at medical text – you update every weight in the network. For a 7B parameter model, that means 7 billion values change. For a 65B model, 65 billion values change.</p>
+
+<p>The problem is not just the training cost – it is the storage and deployment cost. For each task-specific variant you want to serve, you need a separate copy of the full model. If you want your 70B model to speak eight different domains (legal, medical, financial, code, etc.), you need eight separate 70B model files, each ~140GB in FP16. That is a terabyte of model weights just to serve eight specialized skills.</p>
+
+<p>More fundamentally, full fine-tuning risks <strong>catastrophic forgetting</strong>. A model trained on 1.4 trillion tokens of general text forgets its general knowledge when retrained on a small specialized dataset. Fine-tune Llama 2 7B on a corpus of legal contracts and it will become better at legal drafting, but its ability to reason about code or explain quantum mechanics degrades – sometimes severely.</p>
+
+<p>Parameter-Efficient Fine-Tuning (PEFT) solves all three problems at once:</p>
+<ol>
+  <li><strong>Cost</strong>: train on 0.01-1% of parameters, cutting GPU requirements by orders of magnitude</li>
+  <li><strong>Storage</strong>: store one adapter file per task, not one full model; adapts are typically 1-100 megabytes</li>
+  <li><strong>Retention</strong>: the base model weights stay frozen, preserving general capability while the adapter learns domain-specific patterns</li>
+</ol>
+
+<h2 id="the-core-idea-what-if-we-only-train-the-change">The Core Idea: What If We Only Train the Change?</h2>
+
+<p>Imagine a weight matrix <code class="language-plaintext highlighter-rouge">W</code> with shape <code class="language-plaintext highlighter-rouge">(d_out, d_in)</code>. Full fine-tuning updates every entry: <code class="language-plaintext highlighter-rouge">W' = W + dW</code>, where <code class="language-plaintext highlighter-rouge">dW</code> has the full shape <code class="language-plaintext highlighter-rouge">(d_out, d_in)</code>. For a typical transformer linear layer with <code class="language-plaintext highlighter-rouge">d = 4096</code>, that is 4096 x 4096 = 16.8 million learnable parameters per matrix.</p>
+
+<p>The PEFT insight: <strong>the effective rank of the task-specific update <code class="language-plaintext highlighter-rouge">dW</code> is very low</strong>.</p>
+
+<p>Pretrained models already encode a vast amount of knowledge. When you adapt one to a new task, you are not inventing new capabilities from scratch – you are reorienting, sharpening, and combining existing capabilities. This reorientation can be expressed as a small number of directions in weight space, rather than a full matrix.</p>
+
+<p>Formally, if <code class="language-plaintext highlighter-rouge">dW</code> has rank <code class="language-plaintext highlighter-rouge">r</code>, it can be written as the product of two smaller matrices:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dW = B @ A
+</code></pre></div></div>
+
+<p>where <code class="language-plaintext highlighter-rouge">B</code> has shape <code class="language-plaintext highlighter-rouge">(d_out, r)</code> and <code class="language-plaintext highlighter-rouge">A</code> has shape <code class="language-plaintext highlighter-rouge">(r, d_in)</code>. The rank <code class="language-plaintext highlighter-rouge">r</code> is a small constant (typically 8-64) independent of the model dimension <code class="language-plaintext highlighter-rouge">d</code>. Instead of <code class="language-plaintext highlighter-rouge">d_out * d_in</code> trainable parameters, you have <code class="language-plaintext highlighter-rouge">r * (d_out + d_in)</code>. For <code class="language-plaintext highlighter-rouge">d = 4096</code> and <code class="language-plaintext highlighter-rouge">r = 16</code>, that is 131,072 parameters instead of 16,777,216 – a 128x reduction per linear layer.</p>
+
+<h2 id="anatomy-of-lora">Anatomy of LoRA</h2>
+
+<p>LoRA (Low-Rank Adaptation), introduced by Hu et al. at Microsoft Research in 2021 [3], is the most widely used PEFT method. It adds trainable low-rank matrices to selected linear layers while keeping the base weights frozen.</p>
+
+<h3 id="the-forward-pass">The Forward Pass</h3>
+
+<p>For a linear layer originally computing <code class="language-plaintext highlighter-rouge">h = Wx</code>, LoRA changes the computation to:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>h = Wx + (alpha / r) * B A x
+</code></pre></div></div>
+
+<p>where:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">W</code> is frozen (pretrained weights, unchanged during fine-tuning)</li>
+  <li><code class="language-plaintext highlighter-rouge">A</code> has shape <code class="language-plaintext highlighter-rouge">(r, d)</code> initialized from a Gaussian distribution</li>
+  <li><code class="language-plaintext highlighter-rouge">B</code> has shape <code class="language-plaintext highlighter-rouge">(d, r)</code> initialized to zero</li>
+  <li><code class="language-plaintext highlighter-rouge">alpha/r</code> is a scaling factor (alpha is typically set equal to r, making the scale 1.0)</li>
+</ul>
+
+<p>The initial zero initialization of <code class="language-plaintext highlighter-rouge">B</code> is critical: at the start of training, <code class="language-plaintext highlighter-rouge">B = 0</code>, so <code class="language-plaintext highlighter-rouge">dW = B @ A = 0</code>, meaning the model begins as an exact copy of the pretrained base. Training proceeds by computing gradients only for <code class="language-plaintext highlighter-rouge">B</code> and <code class="language-plaintext highlighter-rouge">A</code>, not for <code class="language-plaintext highlighter-rouge">W</code>.</p>
+
+<h3 id="targeting-specific-layers">Targeting Specific Layers</h3>
+
+<p>In practice, LoRA is typically applied to:</p>
+<ul>
+  <li>Query and Value projection matrices in the attention mechanism (<code class="language-plaintext highlighter-rouge">W_q</code> and <code class="language-plaintext highlighter-rouge">W_v</code>)</li>
+  <li>Less commonly, Key and Output projections (<code class="language-plaintext highlighter-rouge">W_k</code> and <code class="language-plaintext highlighter-rouge">W_o</code>)</li>
+  <li>Sometimes the Feed-Forward Network linear layers</li>
+</ul>
+
+<p>Applying LoRA to <code class="language-plaintext highlighter-rouge">W_q</code> and <code class="language-plaintext highlighter-rouge">W_v</code> is the minimum effective configuration and usually achieves competitive results. Applying it to all four attention projections plus FFN layers increases the trainable parameter count and can improve quality on difficult tasks.</p>
+
+<h3 id="merging-at-inference-time">Merging at Inference Time</h3>
+
+<p>At deployment time, <code class="language-plaintext highlighter-rouge">B</code> and <code class="language-plaintext highlighter-rouge">A</code> can be merged into the base weights:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W_merged = W + B @ A
+</code></pre></div></div>
+
+<p>This means the LoRA-adapted model has exactly the same architecture and forward pass as the base model at inference time. There is <strong>zero latency overhead</strong> compared to full fine-tuning. This is a critical advantage over adapter methods that insert extra layers into the forward pass.</p>
+
+<h3 id="minimal-pytorch-implementation">Minimal PyTorch Implementation</h3>
+
+<p>Here is a simplified LoRA layer:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="k">class</span> <span class="nc">LoRALinear</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""Linear layer with Low-Rank Adaptation."""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">16.0</span><span class="p">,</span>
+                 <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="c1"># Frozen base weight
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="p">,</span> <span class="n">out_features</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">base</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c1"># LoRA parameters
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">lora_A</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">torch</span><span class="p">.</span><span class="n">empty</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">in_features</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">lora_B</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">torch</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">out_features</span><span class="p">,</span> <span class="n">rank</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">scaling</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">rank</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+
+        <span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="n">kaiming_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">lora_A</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">math</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">base_out</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">base</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">lora_out</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">linear</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="bp">self</span><span class="p">.</span><span class="n">lora_A</span><span class="p">)</span>
+        <span class="n">lora_out</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">linear</span><span class="p">(</span><span class="n">lora_out</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">lora_B</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">scaling</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base_out</span> <span class="o">+</span> <span class="n">lora_out</span>
+
+    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">base</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">lora_B</span> <span class="o">@</span> <span class="bp">self</span><span class="p">.</span><span class="n">lora_A</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">scaling</span>
+</code></pre></div></div>
+
+<p>The implementation shows the key design choices: frozen base, trainable low-rank pair, dropout on the LoRA path, and the merge operation for inference.</p>
+
+<h2 id="why-low-rank-works-the-intrinsic-dimension-hypothesis">Why Low-Rank Works: The Intrinsic Dimension Hypothesis</h2>
+
+<p>The idea that pretrained models have low effective dimensionality for downstream tasks was formalized by Aghajanyan et al. (2020) [1]. They showed that for several NLP tasks, the optimal fine-tuning update <code class="language-plaintext highlighter-rouge">dW</code> lives approximately in a subspace of dimension 30-200, regardless of the total model size. This means that even a rank-200 decomposition captures nearly all of the task-relevant signal in a weight update that could be millions of parameters wide.</p>
+
+<p>Hu et al. (2021) [3] validated this for transformer fine-tuning: for most layers, the top few singular values of <code class="language-plaintext highlighter-rouge">dW</code> dominate the spectrum, and using just 4-16 rank components recovers 95-99% of the fine-tuning quality. A rank of 16 is generally sufficient for most tasks; a rank of 64 is overkill for all but the most demanding applications.</p>
+
+<p>The bar chart in Panel 3 of the diagram illustrates this: quality plateaus rapidly as rank increases beyond 16, with <code class="language-plaintext highlighter-rouge">r = 16</code> already at 99% of the full-rank quality. This is why the “sweet spot” for LoRA is almost always in the range <code class="language-plaintext highlighter-rouge">r = 8</code> to <code class="language-plaintext highlighter-rouge">r = 32</code>.</p>
+
+<h2 id="qlora-4-bit-quantization-meets-lora">QLoRA: 4-bit Quantization Meets LoRA</h2>
+
+<p>If LoRA reduced fine-tuning cost by 100x, QLoRA reduced it by another 10x. Introduced by Dettmers et al. at the University of Washington in 2023 [4], QLoRA combines LoRA with 4-bit quantization of the base weights, enabling fine-tuning of 65B parameter models on a single consumer GPU.</p>
+
+<h3 id="the-memory-problem-in-lora">The Memory Problem in LoRA</h3>
+
+<p>Even with LoRA, full-precision fine-tuning of large models is expensive because:</p>
+<ul>
+  <li>The base model weights <code class="language-plaintext highlighter-rouge">W</code> must be loaded into GPU memory in full precision for computation</li>
+  <li>Gradients for the LoRA parameters <code class="language-plaintext highlighter-rouge">B</code> and <code class="language-plaintext highlighter-rouge">A</code> are stored in full precision</li>
+  <li>Optimizer states (Adam momentum and variance) for the LoRA parameters also require memory</li>
+</ul>
+
+<p>For a 7B model in FP16, the base weights alone occupy 14GB. For a 65B model, 130GB. This requires multiple GPUs just to hold the model.</p>
+
+<h3 id="qloras-solution">QLoRA’s Solution</h3>
+
+<p>QLoRA uses four techniques to minimize memory:</p>
+
+<p><strong>1. 4-bit NormalFloat Quantization</strong></p>
+
+<p>NormalFloat (NF4) is a quantization scheme designed specifically for neural network weights [5]. Unlike standard 4-bit quantization (which is optimized for uniform distributions), NF4 uses a quantization grid optimized for Gaussian distributions – which is exactly what pretrained transformer weights follow. NF4 achieves near-lossless compression: a 7B model quantized to NF4 loses only ~0.1% accuracy compared to FP16, while using 4x less memory.</p>
+
+<p><strong>2. Double Quantization</strong></p>
+
+<p>QLoRA quantizes the quantization constants themselves. The NF4 quantization uses a lookup table of 256 values; QLoRA stores this table in 8-bit instead of the original 32-bit. This saves an additional ~0.5GB per 65B model with effectively zero quality loss.</p>
+
+<p><strong>3. Paged Optimizers</strong></p>
+
+<p>Traditional CUDA out-of-memory errors occur when the optimizer state (Adam momentum and variance buffers) exceeds GPU memory. QLoRA uses a paged memory management system inspired by operating system virtual memory: optimizer states that do not fit in GPU memory are spilled to CPU RAM on demand and brought back when needed. This allows fine-tuning models whose optimizer states exceed GPU VRAM without crashing.</p>
+
+<p><strong>4. Dequantize-on-the-Fly</strong></p>
+
+<p>During the forward pass, QLoRA dequantizes only the weights being used for the current matrix multiplication from NF4 to BF16. The computation happens in BF16 (preserving precision), then the result is passed to the next layer. The dequantized weights are discarded after the computation, keeping peak memory low.</p>
+
+<h3 id="what-qlora-achieves">What QLoRA Achieves</h3>
+
+<p>The results in the QLoRA paper [4] are striking:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Method</th>
+      <th>GPU Memory</th>
+      <th>Adapter Quality</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>7B</td>
+      <td>Full FT FP16</td>
+      <td>32GB+</td>
+      <td>100%</td>
+    </tr>
+    <tr>
+      <td>7B</td>
+      <td>QLoRA NF4</td>
+      <td>8GB</td>
+      <td>99%</td>
+    </tr>
+    <tr>
+      <td>65B</td>
+      <td>Full FT FP16</td>
+      <td>800GB+</td>
+      <td>100%</td>
+    </tr>
+    <tr>
+      <td>65B</td>
+      <td>QLoRA NF4</td>
+      <td>48GB</td>
+      <td>99%</td>
+    </tr>
+    <tr>
+      <td>70B</td>
+      <td>QLoRA NF4</td>
+      <td>52GB</td>
+      <td>99%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A single A6000 (48GB) or 2x RTX 3090 (2x24GB) can now fine-tune models that previously required 8x A100s. The quality gap between QLoRA and full FP16 fine-tuning is typically &lt;1 point on standard benchmarks, and in some cases QLoRA actually outperforms full fine-tuning because the 4-bit quantization acts as a regularizer.</p>
+
+<h3 id="minimal-qlora-workflow">Minimal QLoRA Workflow</h3>
+
+<p>Here is how you fine-tune a model with QLoRA using the <code class="language-plaintext highlighter-rouge">transformers</code> and <code class="language-plaintext highlighter-rouge">peft</code> libraries:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">BitsAndBytesConfig</span>
+<span class="kn">from</span> <span class="nn">peft</span> <span class="kn">import</span> <span class="n">LoraConfig</span><span class="p">,</span> <span class="n">get_peft_model</span><span class="p">,</span> <span class="n">TaskType</span>
+<span class="kn">from</span> <span class="nn">datasets</span> <span class="kn">import</span> <span class="n">load_dataset</span>
+
+<span class="c1"># Step 1: 4-bit quantization config
+</span><span class="n">bnb_config</span> <span class="o">=</span> <span class="n">BitsAndBytesConfig</span><span class="p">(</span>
+    <span class="n">load_in_4bit</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">bnb_4bit_quant_type</span><span class="o">=</span><span class="s">"nf4"</span><span class="p">,</span>
+    <span class="n">bnb_4bit_compute_dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">,</span>
+    <span class="n">bnb_4bit_use_double_quant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Step 2: Load model quantized to NF4
+</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s">"meta-llama/Llama-2-7b-hf"</span><span class="p">,</span>
+    <span class="n">quantization_config</span><span class="o">=</span><span class="n">bnb_config</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s">"auto"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Step 3: LoRA config
+</span><span class="n">lora_config</span> <span class="o">=</span> <span class="n">LoraConfig</span><span class="p">(</span>
+    <span class="n">task_type</span><span class="o">=</span><span class="n">TaskType</span><span class="p">.</span><span class="n">CAUSAL_LM</span><span class="p">,</span>
+    <span class="n">r</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+    <span class="n">lora_alpha</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">lora_dropout</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">target_modules</span><span class="o">=</span><span class="p">[</span><span class="s">"q_proj"</span><span class="p">,</span> <span class="s">"v_proj"</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># Step 4: Apply LoRA
+</span><span class="n">model</span> <span class="o">=</span> <span class="n">get_peft_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">lora_config</span><span class="p">)</span>
+<span class="n">model</span><span class="p">.</span><span class="n">print_trainable_parameters</span><span class="p">()</span>
+<span class="c1"># trainable params: 4,194,304 || all params: 6,742,609,920 || 0.0622%
+</span>
+<span class="c1"># Step 5: Train on your dataset
+</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="s">"your-org/your-dataset"</span><span class="p">)</span>
+<span class="c1"># ... training loop with Trainer ...
+</span>
+<span class="c1"># Step 6: Save adapter (40MB, not 14GB)
+</span><span class="n">model</span><span class="p">.</span><span class="n">save_pretrained</span><span class="p">(</span><span class="s">"./lora-adapter"</span><span class="p">)</span>
+<span class="n">tokenizer</span><span class="p">.</span><span class="n">save_pretrained</span><span class="p">(</span><span class="s">"./lora-adapter"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The key point: after training, you save only the adapter weights (a few dozen megabytes), not the full model. You can then combine this adapter with any copy of the base model for inference, or chain multiple adapters for different domains.</p>
+
+<h2 id="the-peft-method-zoo">The PEFT Method Zoo</h2>
+
+<p>LoRA is not the only PEFT method. Several related techniques have been developed, each with different trade-offs:</p>
+
+<h3 id="houlsby-adapters-2019-2">Houlsby Adapters (2019) [2]</h3>
+
+<p>The original adapter-based approach inserts a small bottleneck MLP (multi-layer perceptron) after each attention and FFN sublayer. Each adapter consists of a down-projection to a small hidden dimension (typically 64-256), a non-linearity, and an up-projection back to the original dimension. The adapter adds parameters in series rather than parallel, meaning the forward pass is extended:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>h = LayerNorm(x + Attention(x) + Adapter_1(x))
+h = LayerNorm(h + FFN(h) + Adapter_2(h))
+</code></pre></div></div>
+
+<p>Adapters typically add ~3.6% overhead to the parameter count and introduce a small latency penalty (the extra matrix multiplication). They have largely been superseded by LoRA for most use cases.</p>
+
+<h3 id="prefix-tuning-2021-6">Prefix Tuning (2021) [6]</h3>
+
+<p>Prefix tuning prepends a sequence of learnable vectors to the Key and Value tensors at every attention layer. These “virtual tokens” provide context that the model attends to, allowing task-specific behavior without modifying any weights. The trainable parameters are the prefix vectors (typically 512 tokens x 4096 dimensions per layer), which is ~0.1% of the total parameter count.</p>
+
+<p>Prefix tuning is effective for generation tasks (summarization, dialogue) but less so for discriminative tasks (classification, extraction). The inference cost is slightly higher because the prefix tokens are attended to at every layer.</p>
+
+<h3 id="prompt-tuning-2021-7">Prompt Tuning (2021) [7]</h3>
+
+<p>Prompt tuning is a simplification of prefix tuning: instead of prepending prefixes at every attention layer, it prepends learnable embedding vectors only at the input layer. The model’s own attention mechanism propagates these task-specific prompts through the network. The trainable parameter count is the smallest of any PEFT method (~0.01%) but the quality is also the weakest, especially for large models or difficult tasks.</p>
+
+<h3 id="ia3-2022-8">IA3 (2022) [8]</h3>
+
+<p>IA3 (Infused Adapter by Inhibiting and Amplifying Inner Activations) introduces learned vectors that rescale element-wise the Key, Value, and FFN intermediate activations. The idea is that task adaptation can be expressed as amplifying or attenuating existing activation channels rather than adding new transformations:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>h = (l_v * V(x)) @ softmax((l_q * Q(x)) @ (l_k * K(x))^T / sqrt(d))
+</code></pre></div></div>
+
+<p>where <code class="language-plaintext highlighter-rouge">l_q</code>, <code class="language-plaintext highlighter-rouge">l_k</code>, <code class="language-plaintext highlighter-rouge">l_v</code> are trainable vectors of shape <code class="language-plaintext highlighter-rouge">(d,)</code>. IA3 has extremely few trainable parameters (~0.02%) and surprisingly strong performance on certain tasks. It won the BigBench Hard Leaderboard in 2022 using the T5-XXL model.</p>
+
+<h3 id="method-comparison">Method Comparison</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>What is Trained</th>
+      <th>Relative Params</th>
+      <th>Inference Overhead</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Full FT</td>
+      <td>All weights</td>
+      <td>100%</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Houlsby Adapters</td>
+      <td>Bottleneck MLPs at every layer</td>
+      <td>~3.6%</td>
+      <td>Small (extra MLP per layer)</td>
+    </tr>
+    <tr>
+      <td>Prefix Tuning</td>
+      <td>Virtual K,V tokens at every attention layer</td>
+      <td>~0.1%</td>
+      <td>Small (extra token attention)</td>
+    </tr>
+    <tr>
+      <td>Prompt Tuning</td>
+      <td>Input-level soft prompt embeddings</td>
+      <td>~0.01%</td>
+      <td>None (single embedding lookup)</td>
+    </tr>
+    <tr>
+      <td>IA3</td>
+      <td>Rescaling vectors on K, V, FFN</td>
+      <td>~0.02%</td>
+      <td>None (element-wise multiply)</td>
+    </tr>
+    <tr>
+      <td>LoRA</td>
+      <td>Low-rank B,A on selected linear layers</td>
+      <td>0.1-1%</td>
+      <td>None (merged into base)</td>
+    </tr>
+    <tr>
+      <td>QLoRA</td>
+      <td>LoRA + 4-bit NF4 base</td>
+      <td>0.1-1%</td>
+      <td>None (merged, base is 4-bit)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>LoRA’s key advantage over all competing methods is its zero-inference-cost design. The merge step produces an exact copy of the base model with the full-rank update baked in, so serving a LoRA-adapted model has identical latency and memory to serving the base model.</p>
+
+<h2 id="multi-adapter-serving">Multi-Adapter Serving</h2>
+
+<p>Because LoRA adapters are small (typically 10-100MB) and can be merged into the base model at inference time, you can serve a single base model with multiple task-specific adapters. A 70B base model in FP16 occupies ~140GB of VRAM. A separate 70B fine-tuned copy for each task would require 140GB per task. With LoRA, you store one 140GB base plus a few hundred MB of adapters for each task.</p>
+
+<p>Frameworks like vLLM and Text Generation Inference (TGI) now support dynamic adapter loading: you can swap between adapters without restarting the server, and even batch requests from different tasks together on the same GPU. This makes LoRA the backbone of multi-task LLM serving architectures.</p>
+
+<h2 id="hyperparameter-guide">Hyperparameter Guide</h2>
+
+<p>Getting LoRA right is mostly about choosing the target modules, rank, and learning rate:</p>
+
+<p><strong>Rank (<code class="language-plaintext highlighter-rouge">r</code>):</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">r = 8-16</code>: Good default for most tasks; trains quickly, adapters are small</li>
+  <li><code class="language-plaintext highlighter-rouge">r = 32-64</code>: Useful for complex tasks with large datasets (&gt;100K examples)</li>
+  <li><code class="language-plaintext highlighter-rouge">r = 128+</code>: Only for the hardest tasks; may overfit on small datasets</li>
+</ul>
+
+<p><strong>Alpha and Scale:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">alpha = r</code> gives <code class="language-plaintext highlighter-rouge">alpha/r = 1.0</code>, which is the most common setting</li>
+  <li>Some practitioners set <code class="language-plaintext highlighter-rouge">alpha = 2 * r</code> to make the LoRA contribution larger during early training</li>
+</ul>
+
+<p><strong>Target Modules:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">["q_proj", "v_proj"]</code>: Minimum effective; ~0.05% of model parameters</li>
+  <li><code class="language-plaintext highlighter-rouge">["q_proj", "k_proj", "v_proj", "o_proj"]</code>: Full attention; ~0.1%</li>
+  <li><code class="language-plaintext highlighter-rouge">["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]</code>: Full attention + FFN; ~0.3-1%</li>
+</ul>
+
+<p><strong>Dropout:</strong></p>
+<ul>
+  <li>0.05 is the standard choice; helps prevent overfitting on small datasets</li>
+  <li>Can be reduced to 0.01 or 0 for very large datasets</li>
+</ul>
+
+<p><strong>Learning Rate:</strong></p>
+<ul>
+  <li>1e-4 to 5e-4 is typical for the LoRA parameters</li>
+  <li>The base model learning rate is effectively 0 (frozen)</li>
+</ul>
+
+<h2 id="recent-advances">Recent Advances</h2>
+
+<p>Several improvements to LoRA have been proposed since 2021:</p>
+
+<p><strong>DoRA (Weight-Decomposed Low-Rank Adaptation, 2024) [9]:</strong> DoRA decomposes the weight matrix into magnitude and direction components, training only the direction via LoRA while normalizing the magnitude. This improves training stability and can achieve better quality than standard LoRA for the same rank.</p>
+
+<p><strong>LoRA+ (2024) [10]:</strong> LoRA+ applies different learning rates to the B and A matrices, using a 16:1 ratio (B gets the higher LR). This addresses the asymmetry in initialization: B starts at zero (needs more LR to learn) while A starts from Gaussian (converges faster).</p>
+
+<p><strong>PiSSA (Principal Singular Value Adaptation, 2024) [11]:</strong> Instead of initializing B to zero and A to Gaussian, PiSSA initializes the LoRA parameters using the principal singular vectors of the pretrained weight matrix. This makes fine-tuning start closer to the pretrained optimum, leading to faster convergence and better final quality.</p>
+
+<h2 id="when-to-use-peft-and-when-not-to">When to Use PEFT (and When Not To)</h2>
+
+<p>PEFT is the default choice when:</p>
+<ul>
+  <li>You need to adapt a large model to a specific domain or task</li>
+  <li>You have limited GPU resources (single GPU or small cluster)</li>
+  <li>You want to serve multiple task variants from one base model</li>
+  <li>You need fast iteration on multiple fine-tuning experiments</li>
+</ul>
+
+<p>Full fine-tuning may still be preferable when:</p>
+<ul>
+  <li>You have sufficient compute and need maximum quality on a single task</li>
+  <li>You are training a model from scratch (no pretrained base exists)</li>
+  <li>The task requires fundamentally new capabilities not present in the base model</li>
+  <li>You need the model to forget or unlearn specific knowledge</li>
+</ul>
+
+<h2 id="practical-takeaways">Practical Takeaways</h2>
+
+<ol>
+  <li>
+    <p><strong>LoRA is the default.</strong> It achieves quality competitive with full fine-tuning at 100x lower cost and zero inference overhead. Unless you have a specific reason to use another method, use LoRA.</p>
+  </li>
+  <li>
+    <p><strong>QLoRA makes large-model fine-tuning accessible.</strong> With 4-bit NF4 quantization, models up to 70B parameters can be fine-tuned on consumer hardware. This has democratized model adaptation.</p>
+  </li>
+  <li>
+    <p><strong>Rank is cheap but not free.</strong> <code class="language-plaintext highlighter-rouge">r = 16</code> is almost always sufficient. Going higher than <code class="language-plaintext highlighter-rouge">r = 64</code> rarely improves quality and increases both training time and adapter size.</p>
+  </li>
+  <li>
+    <p><strong>Target more layers for hard tasks.</strong> For domain adaptation with large datasets (&gt;100K examples), applying LoRA to all attention projections plus FFN layers (not just Q and V) gives better results.</p>
+  </li>
+  <li>
+    <p><strong>Adapters are portable and composable.</strong> You can stack multiple LoRA adapters (e.g., one for domain adaptation, one for instruction tuning) and merge them sequentially or simultaneously.</p>
+  </li>
+  <li>
+    <p><strong>The ecosystem is mature.</strong> Hugging Face PEFT, vLLM, TGI, and Unsloth all support LoRA/QLoRA out of the box. Training a LoRA model in 2026 is a matter of configuring the right hyperparameters, not implementing algorithms from scratch.</p>
+  </li>
+</ol>
+
+<h2 id="summary">Summary</h2>
+
+<p>Parameter-Efficient Fine-Tuning has transformed how we adapt large language models. LoRA’s insight – that task-specific weight updates live in low-dimensional subspaces – enabled training 0.1% of a model’s parameters while preserving 99% of its quality. QLoRA combined this with 4-bit quantization to bring 65B-model fine-tuning to a single consumer GPU. The PEFT ecosystem has matured into a reliable, well-supported stack with multiple methods for different trade-off profiles.</p>
+
+<p>For anyone working with LLMs in 2026, understanding PEFT is not optional. It is the practical answer to “how do I customize this powerful model to my domain without a supercomputer?” and the foundation of modern multi-task LLM serving architectures.</p>
+
+<h2 id="references">References</h2>
+
+<p>[1] Aghajanyan, A. et al. “Intrinsic Dimensionality Explains the Effectiveness of Language Model Fine-Tuning.” ACL 2021. <a href="https://arxiv.org/abs/2012.13255">arXiv:2012.13255</a></p>
+
+<p>[2] Houlsby, N. et al. “Parameter-Efficient Transfer Learning for NLP.” ICML 2019. <a href="https://arxiv.org/abs/1902.00751">arXiv:1902.00751</a></p>
+
+<p>[3] Hu, E.J. et al. “LoRA: Low-Rank Adaptation of Large Language Models.” ICLR 2022. <a href="https://arxiv.org/abs/2106.09685">arXiv:2106.09685</a></p>
+
+<p>[4] Dettmers, T. et al. “QLoRA: Efficient Finetuning of Quantized LLMs.” ACL 2024. <a href="https://arxiv.org/abs/2305.14314">arXiv:2305.14314</a></p>
+
+<p>[5] Dettmers, T. et al. “LLM.int8(): 8-bit Matrix Multiplication for Transformers at the Scale of 100 Billions of Parameters.” ICLR 2023. <a href="https://arxiv.org/abs/2208.07339">arXiv:2208.07339</a></p>
+
+<p>[6] Li, X.L., Liang, P. “Prefix-Tuning: Optimizing Continuous Prompts for Generation.” ACL 2021. <a href="https://arxiv.org/abs/2101.00190">arXiv:2101.00190</a></p>
+
+<p>[7] Lester, B., Al-Rfou, R., Constant, N. “The Power of Scale for Parameter-Efficient Prompt Tuning.” EMNLP 2021. <a href="https://arxiv.org/abs/2104.08691">arXiv:2104.08691</a></p>
+
+<p>[8] Liu, H. et al. “IA3: Infused Adapter by Inhibiting and Amplifying Inner Activations.” ICML 2022. <a href="https://arxiv.org/abs/2205.05638">arXiv:2205.05638</a></p>
+
+<p>[9] Liu, S.Y. et al. “DoRA: Weight-Decomposed Low-Rank Adaptation.” ICML 2024. <a href="https://arxiv.org/abs/2402.09353">arXiv:2402.09353</a></p>
+
+<p>[10] Hayou, S. et al. “LoRA+: Efficient Low Rank Adaptation of Large Models.” ICML 2024. <a href="https://arxiv.org/abs/2402.12354">arXiv:2402.12354</a></p>
+
+<p>[11] Meng, F. et al. “PiSSA: Principal Singular Values and Singular Vectors Adaptation of Large Language Models.” NeurIPS 2024. <a href="https://arxiv.org/abs/2404.02948">arXiv:2404.02948</a></p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Fine-Tuning" /><category term="LoRA" /><category term="QLoRA" /><category term="PEFT" /><category term="Adapter" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn how Parameter-Efficient Fine-Tuning (PEFT) methods like LoRA and QLoRA let you adapt a 70B model to your domain on a single GPU by training only 0.1-1% of the parameters. From the original Houlsby adapters and prompt tuning to Microsoft's LoRA and the QLoRA breakthrough that made 4-bit fine-tuning practical.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/llm-lora/llm-lora-peft.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/llm-lora/llm-lora-peft.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down</title><link href="https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/" rel="alternate" type="text/html" title="Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down" /><published>2026-08-14T00:00:00+00:00</published><updated>2026-08-14T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling</id><content type="html" xml:base="https://pyshine.com/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/"><![CDATA[<h1 id="mixture-of-experts-how-llms-scale-to-trillions-without-slowing-down">Mixture of Experts: How LLMs Scale to Trillions Without Slowing Down</h1>
 
 <p>Every token you generate with GPT-4, DeepSeek-V3, or Mixtral activates only a fraction of the model’s parameters. A 671-billion-parameter model can run at the speed of a 37-billion-parameter model because not all parameters participate in every forward pass. This is not quantization, not distillation, not some clever kernel trick – it is <strong>Mixture of Experts (MoE)</strong>, the sparse architecture that decouples model capacity (total parameters, i.e., knowledge) from inference cost (active parameters, i.e., compute per token).</p>
 
@@ -2148,196 +2626,4 @@ Instead of maintaining a single sequence, beam search tracks B parallel sequence
 
 <p>The distinction between prompt (prefill) and decode (autoregressive) is not just an academic curiosity – it is the single most important factor in understanding LLM inference performance. Prefill is compute-bound and parallelizable; decode is memory-bandwidth-bound and inherently sequential. The decoding strategy you choose (greedy, temperature, top-k, top-p, or beam search) determines the quality and character of the output, while the phase distinction determines which hardware and system optimizations will be effective.</p>
 
-<p>By understanding these two phases, you can make informed decisions about hardware selection, batching strategies, memory management, and decoding parameters – whether you are running a single model locally or serving millions of requests per day in production.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Machine Learning" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn the critical difference between the prompt (prefill) and decode (autoregressive) phases of LLM inference, why they have fundamentally different performance characteristics, and how decoding strategies shape model output.]]></summary></entry><entry><title type="html">LLM Tokenization: How Text Becomes Numbers</title><link href="https://pyshine.com/LLM-Tokenization-How-Text-Becomes-Numbers/" rel="alternate" type="text/html" title="LLM Tokenization: How Text Becomes Numbers" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Tokenization-How-Text-Becomes-Numbers</id><content type="html" xml:base="https://pyshine.com/LLM-Tokenization-How-Text-Becomes-Numbers/"><![CDATA[<h1 id="llm-tokenization-how-text-becomes-numbers">LLM Tokenization: How Text Becomes Numbers</h1>
-
-<p>Large language models do not read text. They process sequences of integers. Before a single token of your prompt reaches the transformer layers, it must pass through a tokenizer – a deterministic algorithm that chops raw text into discrete units called tokens and maps each one to a unique integer ID. This process, called tokenization, is the invisible bridge between human language and machine computation.</p>
-
-<p>Despite being the very first step in the LLM pipeline, tokenization is poorly understood by most practitioners. It affects everything from API costs to context window limits, from multilingual performance to code generation quality. In this post, we will trace the complete journey from raw text to embedding vectors, explain the Byte-Pair Encoding (BPE) algorithm that powers most modern tokenizers, and show why tokenization choices have outsized practical consequences.</p>
-
-<p>This is the third post in our LLM internals series, following <a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode</a> and <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-Cache and GPU VRAM Deep Dive</a>.</p>
-
-<h2 id="the-tokenization-pipeline">The Tokenization Pipeline</h2>
-
-<p><img src="/assets/img/diagrams/llm-tokenization/llm-tokenization-pipeline.svg" alt="LLM Tokenization Pipeline" /></p>
-
-<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
-
-<p>The diagram above traces the complete tokenization pipeline through six interconnected sections. Let us examine each in detail.</p>
-
-<p><strong>Section 1: Raw Text to Tokens</strong></p>
-
-<p>The process begins with a raw string – human-readable text composed of Unicode characters. The input “The quick brown fox jumps” enters the tokenizer, which splits it into five discrete token units. Note a critical detail: whitespace is typically attached to the following word rather than being a standalone token. The token “ quick” includes the leading space. This is not arbitrary – it reduces the total number of tokens by combining the space with the word, and it preserves the information needed to reconstruct the original text.</p>
-
-<p>The tokenizer does not simply split on word boundaries. Punctuation, contractions, numbers, and code all follow language-specific rules. The word “don’t” might become [“don”, “‘t”] or [“do”, “n’t”] depending on the tokenizer. The string “3.14159” might be one token or several, depending on whether the tokenizer learned to merge digit sequences during training.</p>
-
-<p><strong>Section 2: Token to Vocabulary ID</strong></p>
-
-<p>Once the text is split into tokens, each token is looked up in a fixed vocabulary table that maps strings to integer IDs. The vocabulary is learned during tokenizer training (before model training begins) and never changes during inference. “The” maps to ID 464, “ quick” to ID 2068, “ brown” to ID 7511, and so on.</p>
-
-<p>These integer IDs are what the model actually processes. The transformer never sees the string “fox” – it sees the integer 21831. The vocabulary size is a critical design decision: Llama-2 uses 32,000 tokens, GPT-4 uses approximately 128,000, and Llama-3 uses 128,256. A larger vocabulary means more tokens are represented as single units (reducing sequence length) but also means the embedding table is larger (increasing memory usage).</p>
-
-<p><strong>Section 3: Byte-Pair Encoding (BPE)</strong></p>
-
-<p>BPE is the algorithm that builds the vocabulary. It was originally a data compression technique and was adapted for NLP by Sennrich et al. in 2015. The algorithm works in four stages:</p>
-
-<p><strong>Stage 0 – Bytes</strong>: Start with the 256 possible byte values as the initial vocabulary. Every character is represented as a single byte. At this stage, the word “the” requires 3 tokens (t, h, e), and a long text produces a very long token sequence.</p>
-
-<p><strong>Stage 1-1000 – Frequent Pairs</strong>: Count all adjacent token pairs across the training corpus. Find the most frequent pair (e.g., “t” + “h” appears millions of times) and merge them into a new token “th”. Repeat this process: next, “th” + “e” might merge into “the”. Each merge adds one new token to the vocabulary.</p>
-
-<p><strong>Stage 1000-32000 – Subwords</strong>: After thousands of merges, common words like “quick”, “brown”, and “jumps” have been merged into single tokens. Rare words that did not appear frequently enough in the training data remain split into subword units. For example, “tokenization” might become [“token”, “iz”, “ation”] – three tokens that together cover the word without needing a dedicated vocabulary entry.</p>
-
-<p><strong>Final Vocabulary</strong>: The process stops when the target vocabulary size is reached (e.g., 32,000 for Llama-2). The resulting vocabulary contains: individual bytes (for fallback), common subwords, and frequent whole words. This design means the tokenizer can represent ANY text – even words it has never seen before – as a sequence of subword tokens, without ever producing an “unknown” token.</p>
-
-<p><strong>Section 4: Token IDs to Embedding Vectors</strong></p>
-
-<p>After tokenization, the integer IDs are converted to dense vectors through an embedding lookup. The embedding table is a matrix of shape [vocab_size x dim] – for Llama-2 7B, this is [32000 x 4096], occupying approximately 250 MB in FP16. Each row of this matrix is the learned vector representation of one token.</p>
-
-<p>The lookup is a simple indexing operation: token ID 464 retrieves row 464 from the embedding matrix, producing a 4096-dimensional vector. These vectors are learned during model training – they are not random. Tokens with similar meanings tend to have similar embeddings because the model learns to place them near each other in vector space.</p>
-
-<p>The output of this step is a sequence of embedding vectors – one per input token – that then flows through the transformer layers (self-attention, feed-forward networks, layer normalization) to produce the final output.</p>
-
-<p><strong>Section 5: Why Tokenization Matters</strong></p>
-
-<p>Tokenization efficiency varies dramatically across languages and content types:</p>
-
-<p><strong>English (Efficient)</strong>: English text averages approximately 1.3 tokens per word because the tokenizer has been trained predominantly on English data. “Hello world” = 2 tokens. “Tokenization is easy” = 4 tokens. This efficiency means English prompts are cheaper and fit more content within the context window.</p>
-
-<p><strong>Chinese (Less Efficient)</strong>: Chinese characters typically require 2-3 tokens each because Chinese text was less common in the training corpus. The same meaning “Hello world” in Chinese requires 6 tokens – 3x more than English. This has real cost implications: processing 1 million Chinese characters costs approximately 3x more than 1 million English words.</p>
-
-<p><strong>Code (Variable)</strong>: Programming code is tokenized inconsistently. “def foo(): return 42” becomes approximately 9 tokens. Whitespace indentation in Python is tokenized separately, meaning deeply nested code consumes more tokens. This is why code-heavy prompts can quickly consume context window budget.</p>
-
-<p><strong>Section 6: Special Tokens and Context Window</strong></p>
-
-<p>Special tokens are non-text tokens reserved for structural purposes. They are inserted by the model’s chat template, not by the user:</p>
-
-<ul>
-  <li><strong>BOS (Beginning of Sequence)</strong>: Marks the start of input</li>
-  <li><strong>EOS (End of Sequence)</strong>: Signals the model to stop generating</li>
-  <li><strong>PAD (Padding)</strong>: Fills batches when sequences have different lengths</li>
-  <li><strong>UNK (Unknown)</strong>: Fallback for tokens not in vocabulary (rare with BPE)</li>
-  <li><strong>[INST]</strong>: Llama-2’s instruction marker for chat formatting</li>
-  <li>
-    <table>
-      <tbody>
-        <tr>
-          <td>**&lt;</td>
-          <td>im_start</td>
-          <td>&gt;**: GPT-style system message marker</td>
-        </tr>
-      </tbody>
-    </table>
-  </li>
-</ul>
-
-<p>The <strong>context window</strong> is the maximum number of tokens the model can process in a single request, including both input (prompt) and output (generated text). The diagram shows how context windows have grown exponentially: from GPT-3’s 2K tokens (2020) to Gemini 1.5 Pro’s 1M tokens (2024). Each 4x increase in context window roughly doubles the KV-cache memory requirement (as explained in our <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache deep dive</a>).</p>
-
-<h2 id="how-bpe-actually-works-a-worked-example">How BPE Actually Works: A Worked Example</h2>
-
-<p>Let us trace through a simplified BPE training process. Suppose our training corpus contains:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>low (5x)    lower (2x)    newest (6x)    widest (3x)
-</code></pre></div></div>
-
-<p><strong>Step 0</strong>: Initialize vocabulary with characters. Each word is split into characters plus an end-of-word marker:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>l o w &lt;/w&gt;  (5x)
-l o w e r &lt;/w&gt;  (2x)
-n e w e s t &lt;/w&gt;  (6x)
-w i d e s t &lt;/w&gt;  (3x)
-</code></pre></div></div>
-
-<p><strong>Step 1</strong>: Count all adjacent pairs. The pair (e, s) appears in “newest” (6x) and “widest” (3x) = 9 total. This is the most frequent pair. Merge:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>l o w &lt;/w&gt;  (5x)
-l o w e r &lt;/w&gt;  (2x)
-n e w es t &lt;/w&gt;  (6x)
-w i d es t &lt;/w&gt;  (3x)
-</code></pre></div></div>
-
-<p><strong>Step 2</strong>: Next most frequent pair is (es, t) appearing 9 times. Merge:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>l o w &lt;/w&gt;  (5x)
-l o w e r &lt;/w&gt;  (2x)
-n e w est &lt;/w&gt;  (6x)
-w i d est &lt;/w&gt;  (3x)
-</code></pre></div></div>
-
-<p><strong>Step 3</strong>: The pair (l, o) appears 7 times (5x in “low” + 2x in “lower”). Merge:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lo w &lt;/w&gt;  (5x)
-lo w e r &lt;/w&gt;  (2x)
-n e w est &lt;/w&gt;  (6x)
-w i d est &lt;/w&gt;  (3x)
-</code></pre></div></div>
-
-<p><strong>Step 4</strong>: The pair (lo, w) appears 7 times. Merge:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>low &lt;/w&gt;  (5x)
-low e r &lt;/w&gt;  (2x)
-n e w est &lt;/w&gt;  (6x)
-w i d est &lt;/w&gt;  (3x)
-</code></pre></div></div>
-
-<p>After 4 merges, “low” is now a single token. If we continue, eventually “newest” and “widest” will become single tokens, and the vocabulary will contain both common words and subword fragments.</p>
-
-<p>At inference time, the tokenizer applies the learned merges in order. The word “lower” (not in the training data as a whole) would be tokenized as [“low”, “er”] – two subword tokens that together cover the word.</p>
-
-<h2 id="tokenizer-variants-bpe-vs-wordpiece-vs-sentencepiece">Tokenizer Variants: BPE vs WordPiece vs SentencePiece</h2>
-
-<p>While BPE is the most common algorithm, there are important variants:</p>
-
-<p><strong>Byte-Level BPE (used by GPT-4, Llama-3)</strong>: Instead of operating on Unicode characters, it operates on raw bytes. This guarantees that any text can be tokenized without an UNK token, because there are only 256 possible bytes and they cover all possible inputs. GPT-4’s tokenizer (cl100k_base) and Llama-3’s tokenizer both use byte-level BPE.</p>
-
-<p><strong>WordPiece (used by BERT)</strong>: Similar to BPE but uses a different merge criterion. Instead of merging the most frequent pair, WordPiece merges the pair that maximizes the likelihood of the training data. This tends to produce slightly different subword boundaries.</p>
-
-<p><strong>SentencePiece (used by Llama-2, T5)</strong>: A library that implements BPE or Unigram tokenization but treats the input as a raw byte stream – no pre-tokenization into words. This means it does not need whitespace to delimit tokens and can handle languages without word boundaries (Chinese, Japanese, Thai) more naturally. Llama-2 uses SentencePiece with BPE.</p>
-
-<p><strong>Unigram (used by T5, ALBERT)</strong>: Starts with a large vocabulary and iteratively removes tokens that contribute least to the likelihood of the training data. This produces a probabilistic tokenizer where a given text can have multiple valid tokenizations, and the one with the highest probability is chosen.</p>
-
-<h2 id="practical-implications">Practical Implications</h2>
-
-<p><strong>API Costs</strong>: All major LLM APIs (OpenAI, Anthropic, Google) charge per token, not per character or word. Understanding tokenization helps you estimate costs:</p>
-<ul>
-  <li>1 English word ~= 1.3 tokens</li>
-  <li>1 Chinese character ~= 2.5 tokens</li>
-  <li>1 line of Python code ~= 10-15 tokens</li>
-  <li>1 page of text (~500 words) ~= 650 tokens</li>
-</ul>
-
-<p>At GPT-4’s pricing of $0.01 per 1K input tokens, processing a 100-page document (65,000 tokens) costs $0.65 per request. If the document is in Chinese, the cost triples to ~$2.00.</p>
-
-<p><strong>Context Window Budget</strong>: Every token in your prompt counts against the context window. A 4K-token context window holds approximately 3,000 English words or ~1,500 Chinese characters. Knowing your tokenizer helps you maximize the useful content within the budget. Use <code class="language-plaintext highlighter-rouge">len(tokenizer.encode(text))</code> to check token counts before sending requests.</p>
-
-<p><strong>Multilingual Performance</strong>: Models with tokenizers trained predominantly on English (like early GPT models) are less efficient and sometimes less capable in other languages. The higher token count for non-English text means less context fits in the window, and the model has less “room” to reason. Models like Llama-3 (128K vocab) and Qwen (152K vocab) explicitly expanded their vocabulary to include more non-English tokens, improving both efficiency and quality.</p>
-
-<p><strong>Code Generation</strong>: Code tokenization is particularly tricky. Python’s significant whitespace means indentation tokens are critical. Some tokenizers handle this well (GPT-4), while others waste tokens on repeated whitespace. If you are building a coding assistant, test your tokenizer on representative code snippets to understand the token overhead.</p>
-
-<p><strong>Prompt Engineering</strong>: Certain words and phrases are more token-efficient than others. “However” is one token in most tokenizers, while “nevertheless” might be two or three. When optimizing prompts for cost or context window, replacing verbose phrases with concise alternatives that happen to be single tokens can save meaningful budget.</p>
-
-<h2 id="tokenization-tools">Tokenization Tools</h2>
-
-<p>You can experiment with tokenization using these open-source libraries:</p>
-
-<ul>
-  <li><strong><a href="https://github.com/openai/tiktoken">tiktoken</a></strong>: OpenAI’s fast BPE tokenizer (Rust + Python). Supports GPT-3.5 and GPT-4 tokenizers. Use <code class="language-plaintext highlighter-rouge">tiktoken.encoding_for_model("gpt-4")</code> to get the correct tokenizer.</li>
-  <li><strong><a href="https://github.com/google/sentencepiece">SentencePiece</a></strong>: Google’s tokenizer library supporting BPE and Unigram. Used by Llama-2, T5, and many other models.</li>
-  <li><strong><a href="https://huggingface.co/docs/tokenizers">Hugging Face tokenizers</a></strong>: Rust-based library supporting BPE, WordPiece, and Unigram with a Python interface. Works with any model on the Hub.</li>
-</ul>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://arxiv.org/abs/1508.07909">Neural Machine Translation of Rare Words with Subword Units (Sennrich et al., 2015)</a> – The paper that introduced BPE for NLP</li>
-  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (Vaswani et al., 2017)</a> – The Transformer paper that uses token embeddings as input</li>
-</ul>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</a></li>
-  <li><a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">LLM Decode Deep Dive: KV-Cache, GPU VRAM, and the Memory Bottleneck</a></li>
-  <li><a href="/AI-Coding-FAQ-20-Most-Asked-Questions-2026/">AI Coding FAQ: 20 Most Asked Questions</a></li>
-</ul>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Tokenization is the first and most fundamental step in the LLM pipeline. It determines how much text fits in your context window, how much you pay per API call, and how well the model handles different languages. BPE – the dominant algorithm – elegantly balances vocabulary size with coverage by starting from individual bytes and iteratively merging the most frequent pairs.</p>
-
-<p>The key takeaways are: (1) tokens are not words – they are subword units whose boundaries are determined by the tokenizer’s training data; (2) tokenization efficiency varies by language, with English being the most efficient and non-Latin scripts being 2-3x more expensive; (3) the vocabulary size is a design tradeoff between sequence length and embedding table memory; (4) context windows are measured in tokens, not characters, so tokenizer efficiency directly determines how much content you can process.</p>
-
-<p>Understanding tokenization is not just academic – it is the foundation for cost optimization, context window management, and multilingual model selection. Every token saved is real money saved and real context budget preserved.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Tokenization" /><category term="NLP" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn how LLMs convert human text into numbers using Byte-Pair Encoding (BPE), why tokenization affects cost and performance, and how vocabulary size, special tokens, and context windows shape model behavior.]]></summary></entry></feed>
+<p>By understanding these two phases, you can make informed decisions about hardware selection, batching strategies, memory management, and decoding parameters – whether you are running a single model locally or serving millions of requests per day in production.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Machine Learning" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn the critical difference between the prompt (prefill) and decode (autoregressive) phases of LLM inference, why they have fundamentally different performance characteristics, and how decoding strategies shape model output.]]></summary></entry></feed>
