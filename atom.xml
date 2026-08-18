@@ -1,4 +1,403 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-18T00:52:39+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods</title><link href="https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/" rel="alternate" type="text/html" title="Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods" /><published>2026-08-16T00:00:00+00:00</published><updated>2026-08-16T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA</id><content type="html" xml:base="https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/"><![CDATA[<h1 id="parameter-efficient-fine-tuning-lora-qlora-and-adapter-methods">Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-18T01:01:50+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LLM Alignment: RLHF, DPO, and How Models Learn to Be Helpful</title><link href="https://pyshine.com/LLM-Alignment-RLHF-DPO-How-Models-Learn-to-Be-Helpful/" rel="alternate" type="text/html" title="LLM Alignment: RLHF, DPO, and How Models Learn to Be Helpful" /><published>2026-08-17T00:00:00+00:00</published><updated>2026-08-17T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Alignment-RLHF-DPO-How-Models-Learn-to-Be-Helpful</id><content type="html" xml:base="https://pyshine.com/LLM-Alignment-RLHF-DPO-How-Models-Learn-to-Be-Helpful/"><![CDATA[<h1 id="llm-alignment-rlhf-dpo-and-how-models-learn-to-be-helpful">LLM Alignment: RLHF, DPO, and How Models Learn to Be Helpful</h1>
+
+<p>A pretrained large language model is an incredible statistical achievement. It has absorbed trillions of tokens of human knowledge and can predict the next token with astonishing accuracy. But a pretrained model does not know what to say. If you ask it “How do I hack into a system?”, it will answer. If you ask it to write a poem about existential dread, it will do that too – with equal enthusiasm, because from its perspective, every completion is just one more statistical prediction.</p>
+
+<p>Alignment is the process of teaching a pretrained model what it <em>should</em> say. The goal is to make models helpful (they understand intent and provide useful answers), harmless (they refuse dangerous requests), and honest (they do not fabricate information). This post explains how alignment works, from the original RLHF (Reinforcement Learning from Human Feedback) pipeline popularized by InstructGPT, to the modern DPO (Direct Preference Optimization) approach that has become the standard for open-source models.</p>
+
+<p>This post is the fourteenth in our series understanding LLMs from the inside out, following <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">the attention mechanism</a>, <a href="/LLM-Positional-Encoding-RoPE-ALiBi-Sinusoidal/">positional encoding</a>, <a href="/LLM-Mixture-of-Experts-MoE-Sparse-Scaling/">Mixture of Experts</a>, <a href="/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/">Parameter-Efficient Fine-Tuning</a>, and earlier installments on <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization</a>, <a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">quantization</a>, and <a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">training pipelines</a>.</p>
+
+<p><img src="/assets/img/diagrams/llm-alignment/llm-llm-alignment-rlhf-dpo.svg" alt="LLM Alignment (RLHF, DPO) Diagram" /></p>
+
+<h2 id="why-alignment-is-needed">Why Alignment Is Needed</h2>
+
+<p>Consider the difference between a base model and an aligned model when asked the same question:</p>
+
+<p><strong>Prompt</strong>: “How can I make a bomb?”</p>
+
+<p><strong>Base model response</strong>: A detailed, step-by-step guide with chemical formulas and safety notes. The model is doing what it was trained to do: predict the most likely continuation given the context. From its training data (which includes public chemistry textbooks, history of weapons, etc.), the most likely completion happens to be dangerous.</p>
+
+<p><strong>Aligned model response</strong>: “I’m sorry, I can’t help with that. If you’re interested in chemistry, I’d be happy to explain safe household chemical reactions or the science behind explosives at a high level.” The aligned model recognizes the dangerous intent, refuses the request, and offers a constructive alternative.</p>
+
+<p>This is the alignment problem in a nutshell: pretrained models optimize for <em>next-token prediction accuracy</em>, but we want them to optimize for <em>helpfulness, harmlessness, and honesty</em>. These two objectives are not the same, and bridging the gap requires a separate training pipeline after pretraining.</p>
+
+<h2 id="the-three-stage-alignment-pipeline">The Three-Stage Alignment Pipeline</h2>
+
+<p>The standard alignment approach, refined through the InstructGPT and GPT-4 programs [1][2], consists of three sequential stages:</p>
+
+<ol>
+  <li><strong>Supervised Fine-Tuning (SFT)</strong>: Teach the model to follow instructions on high-quality demonstration data</li>
+  <li><strong>Reward Model (RM) Training</strong>: Learn a scoring function from human preference comparisons</li>
+  <li><strong>Reinforcement Learning (PPO or DPO)</strong>: Optimize the policy toward high-reward responses while staying close to the base model</li>
+</ol>
+
+<p>Each stage addresses a different aspect of alignment. SFT teaches format and basic helpfulness. The reward model encodes nuanced human preferences. PPO or DPO pushes the model toward those preferences while preventing reward hacking.</p>
+
+<h2 id="stage-1-supervised-fine-tuning-sft">Stage 1: Supervised Fine-Tuning (SFT)</h2>
+
+<p>SFT is the simplest alignment stage. You take a high-quality dataset of (instruction, response) pairs and train the model to generate the response given the instruction. The loss function is standard cross-entropy:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L_SFT = -sum_t log P_theta(y_t | x, y_&lt;t)
+</code></pre></div></div>
+
+<p>where <code class="language-plaintext highlighter-rouge">x</code> is the instruction/prompt and <code class="language-plaintext highlighter-rouge">y</code> is the target response.</p>
+
+<h3 id="what-sft-achieves">What SFT Achieves</h3>
+
+<p>SFT teaches the model to:</p>
+<ul>
+  <li>Understand instruction-following format (respond directly, don’t just continue)</li>
+  <li>Adopt a helpful, conversational tone</li>
+  <li>Follow multi-step instructions</li>
+  <li>Know when to say “I don’t know” or ask for clarification</li>
+</ul>
+
+<p>The SFT dataset is curated: responses are written by skilled annotators or come from high-quality sources like Stack Overflow, code repositories, and human-written tutorials. The quality of the SFT data directly determines the quality ceiling of the aligned model.</p>
+
+<h3 id="what-sft-does-not-achieve">What SFT Does Not Achieve</h3>
+
+<p>SFT has limitations. It teaches the model what good responses look like, but it does not teach it to <em>choose</em> between two good responses. When two responses are both valid but one is more helpful, more harmless, or more honest than the other, SFT cannot distinguish. This is because SFT treats all training examples as equally correct – it learns to match each one, not to prefer one over another.</p>
+
+<p>SFT also teaches the model to reproduce the <em>average</em> quality of its training data. If some responses are mediocre, the model learns to produce mediocre responses some of the time. The model does not learn to consistently produce the <em>best</em> response.</p>
+
+<h2 id="stage-2-the-reward-model">Stage 2: The Reward Model</h2>
+
+<p>To go beyond SFT, we need a way to teach the model <em>preferences</em> – that response A is better than response B for the same prompt. This is where the reward model comes in.</p>
+
+<h3 id="collecting-human-preference-data">Collecting Human Preference Data</h3>
+
+<p>The first step is to collect pairwise comparison data. Human annotators are given a prompt and two responses (A and B) and asked to choose which one is better. The dimensions of “better” can include helpfulness, harmlessness, honesty, factuality, and following instructions.</p>
+
+<p>For each prompt X, the annotator produces a pair <code class="language-plaintext highlighter-rouge">(Y_w, Y_l)</code> where <code class="language-plaintext highlighter-rouge">Y_w</code> is the winner and <code class="language-plaintext highlighter-rouge">Y_l</code> is the loser. A large-scale alignment dataset might contain 100K-500K such pairs.</p>
+
+<h3 id="training-the-reward-model">Training the Reward Model</h3>
+
+<p>The reward model <code class="language-plaintext highlighter-rouge">r_phi(X, Y)</code> is a neural network that takes a prompt X and a response Y and outputs a scalar score. It shares the same architecture as the language model (typically the same backbone) but replaces the language modeling head with a single-output scalar head.</p>
+
+<p>The reward model is trained on the preference pairs using the Bradley-Terry loss [3]:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>loss = -log sigma( r_phi(X, Y_w) - r_phi(X, Y_l) )
+</code></pre></div></div>
+
+<p>This loss encourages the reward model to assign a higher score to the winner than to the loser. The sigmoid function converts the score difference into a probability, and the loss is minimized when the winner’s score is much higher than the loser’s.</p>
+
+<h3 id="what-the-reward-model-encodes">What the Reward Model Encodes</h3>
+
+<p>The reward model implicitly learns a multi-dimensional value function. Different aspects of a response contribute to its score:</p>
+<ul>
+  <li><strong>Helpfulness</strong>: Does the response address the user’s intent?</li>
+  <li><strong>Harmlessness</strong>: Is the response safe and non-dangerous?</li>
+  <li><strong>Honesty</strong>: Does the response avoid fabricating information?</li>
+  <li><strong>Instruction following</strong>: Does the response follow the format requested?</li>
+  <li><strong>Clarity</strong>: Is the response well-organized and easy to understand?</li>
+  <li><strong>Tone</strong>: Is the tone appropriate for the context?</li>
+</ul>
+
+<p>The reward model is trained to assign a high score to responses that satisfy all these criteria and a low score to responses that violate them. Once trained, it serves as an automated proxy for human judgment.</p>
+
+<h2 id="stage-3-ppo--reinforcement-learning-with-human-feedback">Stage 3: PPO – Reinforcement Learning with Human Feedback</h2>
+
+<p>With a reward model in hand, we can now use reinforcement learning to optimize the language model policy. The algorithm of choice is Proximal Policy Optimization (PPO) [4], adapted for the language modeling setting.</p>
+
+<h3 id="the-ppo-objective">The PPO Objective</h3>
+
+<p>The PPO loss for language model alignment is:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L_PPO = E[ r_phi(X, Y) - beta * KL(pi_theta || pi_ref) ]
+</code></pre></div></div>
+
+<p>This combines two terms:</p>
+<ol>
+  <li><strong>Reward maximization</strong>: The model generates responses Y, scores them with the reward model, and tries to maximize the average score <code class="language-plaintext highlighter-rouge">r_phi(X, Y)</code></li>
+  <li><strong>KL penalty</strong>: The KL divergence between the current policy <code class="language-plaintext highlighter-rouge">pi_theta</code> and the reference policy <code class="language-plaintext highlighter-rouge">pi_ref</code> (typically the SFT model) penalizes the model for deviating too far from what it already learned</li>
+</ol>
+
+<p>The <code class="language-plaintext highlighter-rouge">beta</code> hyperparameter controls the strength of the KL penalty. It is typically set so that the KL divergence stays around 0.01-0.1 nats per token.</p>
+
+<h3 id="why-the-kl-penalty-is-essential">Why the KL Penalty Is Essential</h3>
+
+<p>Without the KL penalty, the model can exploit the reward model. This is called <em>reward hacking</em>: the model discovers quirks in the reward model and produces responses that score high but are not actually better. For example:</p>
+<ul>
+  <li>The model might learn that very long responses score higher (because longer responses appear more thorough to the reward model)</li>
+  <li>The model might learn to include certain phrases that the reward model associates with high quality</li>
+  <li>The model might drift away from natural language and start producing text that looks good to the reward model but is nonsensical to humans</li>
+</ul>
+
+<p>The KL penalty keeps the model within a “trust region” around the SFT distribution, preventing these pathologies.</p>
+
+<h3 id="the-ppo-algorithm">The PPO Algorithm</h3>
+
+<p>For each training batch, PPO follows this sequence:</p>
+
+<ol>
+  <li>Generate responses Y from the current policy pi_theta for a batch of prompts X</li>
+  <li>Score each response with the reward model r_phi(X, Y)</li>
+  <li>Compute the KL divergence between pi_theta and pi_ref for each response</li>
+  <li>Compute the importance sampling ratio: <code class="language-plaintext highlighter-rouge">ratio = pi_theta(Y|X) / pi_old(Y|X)</code></li>
+  <li>Clip the ratio to <code class="language-plaintext highlighter-rouge">[1 - eps, 1 + eps]</code> (typically eps = 0.2) to prevent large policy updates</li>
+  <li>Compute the clipped surrogate objective and update pi_theta</li>
+</ol>
+
+<p>The clipping in step 5 is a key innovation of PPO. It ensures that the policy does not change too much in a single update, stabilizing training and preventing reward hacking through sudden large shifts.</p>
+
+<h3 id="implementation-sketch">Implementation Sketch</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+
+<span class="k">def</span> <span class="nf">ppo_step</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">ref_model</span><span class="p">,</span> <span class="n">reward_model</span><span class="p">,</span> <span class="n">prompts</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+    <span class="c1"># Generate responses
+</span>    <span class="n">responses</span> <span class="o">=</span> <span class="n">policy</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">full_text</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="s">" "</span> <span class="o">+</span> <span class="n">r</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">responses</span><span class="p">)]</span>
+
+    <span class="c1"># Compute reward model scores
+</span>    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">reward_model</span><span class="p">(</span><span class="n">full_text</span><span class="p">)</span>  <span class="c1"># scalar per example
+</span>
+    <span class="c1"># Compute log probs for current and reference policies
+</span>    <span class="n">log_probs</span> <span class="o">=</span> <span class="n">policy</span><span class="p">.</span><span class="n">log_probs</span><span class="p">(</span><span class="n">full_text</span><span class="p">)</span>
+    <span class="n">ref_log_probs</span> <span class="o">=</span> <span class="n">ref_model</span><span class="p">.</span><span class="n">log_probs</span><span class="p">(</span><span class="n">full_text</span><span class="p">)</span>
+
+    <span class="c1"># Compute KL divergence
+</span>    <span class="n">kl</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_probs</span> <span class="o">-</span> <span class="n">ref_log_probs</span><span class="p">).</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Compute importance ratio (simplified: use mean log prob ratio)
+</span>    <span class="n">ratio</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_probs</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_probs</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">).</span><span class="n">detach</span><span class="p">())</span>
+
+    <span class="c1"># Clipped surrogate
+</span>    <span class="n">surr1</span> <span class="o">=</span> <span class="n">ratio</span> <span class="o">*</span> <span class="p">(</span><span class="n">rewards</span> <span class="o">-</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">kl</span><span class="p">)</span>
+    <span class="n">surr2</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">rewards</span> <span class="o">-</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">kl</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="p">.</span><span class="nb">min</span><span class="p">(</span><span class="n">surr1</span><span class="p">,</span> <span class="n">surr2</span><span class="p">).</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="c1"># Update policy
+</span>    <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>This is a simplified sketch – a production implementation needs to handle token-level granularity, advantage estimation, and multiple optimization epochs per batch.</p>
+
+<h2 id="dpo-bypassing-the-reward-model">DPO: Bypassing the Reward Model</h2>
+
+<p>In 2023, Rafailov et al. [5] introduced Direct Preference Optimization (DPO), which showed that the reward model can be bypassed entirely. DPO achieves alignment directly from preference pairs without training an intermediate reward model or running PPO.</p>
+
+<h3 id="the-dpo-loss">The DPO Loss</h3>
+
+<p>DPO derives its loss from the same Bradley-Terry preference framework but avoids explicitly modeling a reward function. The loss is:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>L_DPO = -log sigma( beta * [
+    log pi_theta(Y_w|X) - log pi_theta(Y_l|X)
+    - log pi_ref(Y_w|X) + log pi_ref(Y_l|X)
+] )
+</code></pre></div></div>
+
+<p>This looks complex, but the intuition is straightforward:</p>
+<ul>
+  <li>The model should assign higher log-probability to the winner <code class="language-plaintext highlighter-rouge">Y_w</code> than to the loser <code class="language-plaintext highlighter-rouge">Y_l</code></li>
+  <li>The comparison is relative to the reference model <code class="language-plaintext highlighter-rouge">pi_ref</code>, which anchors the optimization</li>
+  <li><code class="language-plaintext highlighter-rouge">beta</code> controls how strongly the model should prefer the winner over the loser</li>
+</ul>
+
+<h3 id="why-dpo-works">Why DPO Works</h3>
+
+<p>The DPO loss can be interpreted as finding the policy that maximizes the reward model’s implicit objective without explicitly training a reward model. The key insight is that the reward model’s optimal policy can be written in closed form as:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pi*(Y|X) = (1/Z(X)) * pi_ref(Y|X) * exp(1/beta * r_phi(X, Y))
+</code></pre></div></div>
+
+<p>where <code class="language-plaintext highlighter-rouge">Z(X)</code> is a normalization constant. Taking the log and rearranging, we get exactly the DPO loss formula.</p>
+
+<p>In practice, DPO’s simplicity is its greatest strength:</p>
+<ul>
+  <li>No separate reward model to train and maintain</li>
+  <li>No PPO with complex hyperparameters (learning rate scheduling, clip range, number of epochs)</li>
+  <li>No reward hacking to worry about</li>
+  <li>Implementation is straightforward: it is essentially a cross-entropy loss with a preference formulation</li>
+</ul>
+
+<h3 id="dpo-vs-rlhf-comparison">DPO vs RLHF Comparison</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>RLHF</th>
+      <th>DPO</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Reward model</td>
+      <td>Required (separate training)</td>
+      <td>Not needed</td>
+    </tr>
+    <tr>
+      <td>Complexity</td>
+      <td>High (RM + PPO with tuning)</td>
+      <td>Low (single loss function)</td>
+    </tr>
+    <tr>
+      <td>Stability</td>
+      <td>Moderate (PPO can be unstable)</td>
+      <td>High (standard supervised optimization)</td>
+    </tr>
+    <tr>
+      <td>Data format</td>
+      <td>Prompt + response + preference</td>
+      <td>Prompt + preference pair</td>
+    </tr>
+    <tr>
+      <td>Compute cost</td>
+      <td>~3x SFT (RM + PPO)</td>
+      <td>~1x SFT</td>
+    </tr>
+    <tr>
+      <td>Quality</td>
+      <td>State-of-the-art</td>
+      <td>Matches or exceeds RLHF on benchmarks</td>
+    </tr>
+    <tr>
+      <td>Inference</td>
+      <td>Same as base model</td>
+      <td>Same as base model</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>DPO has become the default alignment method for open-source projects. The standard recipe for open-source model alignment today is:</p>
+
+<ol>
+  <li>Train base model on text corpus</li>
+  <li>SFT on instruction-following data</li>
+  <li>DPO on preference pairs</li>
+</ol>
+
+<h2 id="alternative-alignment-approaches">Alternative Alignment Approaches</h2>
+
+<p>Several other alignment methods have been developed, each with different trade-offs:</p>
+
+<h3 id="constitutional-ai-2022">Constitutional AI (2022)</h3>
+
+<p>Constitutional AI [6] uses a set of principles (a “constitution”) rather than human comparisons to guide alignment. The model generates responses, then self-critiques them against constitutional rules, and revises if needed. This reduces reliance on human annotation and improves scalability.</p>
+
+<h3 id="direct-alignment-language-models-2023">Direct Alignment Language Models (2023)</h3>
+
+<p>DALM [7] reformulates alignment as a direct language modeling problem. Instead of training a separate reward model or using PPO, it converts the preference optimization into a next-token prediction task by constructing preference-aware sequences.</p>
+
+<h3 id="iterative-dpo-2024">Iterative DPO (2024)</h3>
+
+<p>Iterative DPO [8] improves DPO by using the aligned model itself to generate preference data, creating an alignment feedback loop. The model generates candidate responses, a judge (or the model itself) ranks them, and DPO is retrained on the new preferences.</p>
+
+<h3 id="on-policy-dpo-2024">On-Policy DPO (2024)</h3>
+
+<p>Standard DPO uses the same data for multiple optimization steps, which can degrade quality over time. On-Policy DPO [9] generates fresh responses from the current policy for each DPO update, maintaining the on-policy property that PPO was designed to preserve.</p>
+
+<h2 id="practical-alignment-workflow">Practical Alignment Workflow</h2>
+
+<p>Here is how you would align an open-source model in 2026:</p>
+
+<h3 id="step-1-sft">Step 1: SFT</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">TrainingArguments</span>
+<span class="kn">from</span> <span class="nn">trl</span> <span class="kn">import</span> <span class="n">SFTTrainer</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">SFTTrainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">sft_data</span><span class="p">,</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">TrainingArguments</span><span class="p">(</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="s">"./sft-output"</span><span class="p">,</span>
+        <span class="n">per_device_train_batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">2e-5</span><span class="p">,</span>
+        <span class="n">num_train_epochs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">packing</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_seq_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">trainer</span><span class="p">.</span><span class="n">train</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h3 id="step-2-dpo">Step 2: DPO</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">trl</span> <span class="kn">import</span> <span class="n">DPOTrainer</span><span class="p">,</span> <span class="n">DPOConfig</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">DPOTrainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">ref_model</span><span class="o">=</span><span class="n">ref_model</span><span class="p">,</span>  <span class="c1"># the SFT model, frozen
+</span>    <span class="n">args</span><span class="o">=</span><span class="n">DPOConfig</span><span class="p">(</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="s">"./dpo-output"</span><span class="p">,</span>
+        <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span>
+        <span class="n">num_train_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">per_device_train_batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">preference_data</span><span class="p">,</span>  <span class="c1"># {prompt, chosen, rejected}
+</span><span class="p">)</span>
+<span class="n">trainer</span><span class="p">.</span><span class="n">train</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">trl</code> library (Transformers Reinforcement Learning) provides a unified interface for SFT, DPO, and PPO. The preference dataset format is simple: each example has a <code class="language-plaintext highlighter-rouge">prompt</code>, a <code class="language-plaintext highlighter-rouge">chosen</code> response, and a <code class="language-plaintext highlighter-rouge">rejected</code> response.</p>
+
+<h3 id="step-3-evaluating-alignment-quality">Step 3: Evaluating Alignment Quality</h3>
+
+<p>Alignment quality is evaluated using benchmarks like:</p>
+<ul>
+  <li><strong>MT-Bench</strong>: Multi-turn dialogue evaluation using GPT-4 as a judge</li>
+  <li><strong>AlpacaEval</strong>: Single-turn evaluation comparing model responses to a reference</li>
+  <li><strong>Open-Ended Chain-of-Thought (OE-CoT)</strong>: Tests reasoning quality with human judgment</li>
+</ul>
+
+<p>These benchmarks measure helpfulness, instruction following, factuality, and safety across diverse tasks.</p>
+
+<h2 id="why-alignment-is-more-important-than-pretraining">Why Alignment Is More Important Than Pretraining</h2>
+
+<p>For many years, the prevailing view was that pretraining scale was the dominant factor in model capability. While scale still matters, alignment has emerged as an equally important factor for real-world usefulness:</p>
+
+<ul>
+  <li>A well-aligned 7B model can outperform a poorly aligned 70B model on user-facing tasks</li>
+  <li>Alignment enables a base model to be adapted to specific domains or interaction styles without retraining</li>
+  <li>Safety alignment prevents models from being misused, which is critical for deployment</li>
+</ul>
+
+<p>The alignment stage is where pretrained capability is converted into practical utility. A model that can do the task but refuses to help is not useful. A model that can do the task but sometimes produces dangerous or false information is not trustworthy. Alignment bridges this gap.</p>
+
+<h2 id="takeaways">Takeaways</h2>
+
+<ol>
+  <li>
+    <p><strong>Alignment transforms a base model into an assistant.</strong> Pretraining teaches knowledge and capability; alignment teaches helpfulness, harmlessness, and honesty.</p>
+  </li>
+  <li>
+    <p><strong>The three-stage pipeline is SFT -&gt; RM -&gt; PPO/DPO.</strong> SFT teaches format; the reward model encodes preferences; PPO or DPO optimizes the policy.</p>
+  </li>
+  <li>
+    <p><strong>DPO is the modern default.</strong> It achieves alignment quality matching or exceeding RLHF with a simpler pipeline (no reward model, no PPO). For open-source projects, DPO is the preferred approach.</p>
+  </li>
+  <li>
+    <p><strong>Data quality matters more than algorithm sophistication.</strong> Both SFT and preference training succeed or fail based on the quality and coverage of the data.</p>
+  </li>
+  <li>
+    <p><strong>Alignment is never complete.</strong> New capabilities (tool use, multi-modal reasoning) require new alignment data and methods. The alignment pipeline is continuously evolving as model capabilities expand.</p>
+  </li>
+</ol>
+
+<h2 id="references">References</h2>
+
+<p>[1] Ouyang, L. et al. “Training language models to follow instructions with human feedback.” NeurIPS 2022. <a href="https://arxiv.org/abs/2203.02155">arXiv:2203.02155</a></p>
+
+<p>[2] Bubeck, S. et al. “Sparks of Artificial General Intelligence: Early experiments with GPT-4.” 2023. <a href="https://arxiv.org/abs/2303.12712">arXiv:2303.12712</a></p>
+
+<p>[3] Bradley, R.A., Terry, M.E. “Conditional logit analysis of choice behavior.” 1952.</p>
+
+<p>[4] Schulman, J. et al. “Proximal Policy Optimization Algorithms.” 2017. <a href="https://arxiv.org/abs/1707.06347">arXiv:1707.06347</a></p>
+
+<p>[5] Rafailov, R. et al. “Direct Preference Optimization: Your Language Model is Secretly a Reward Model.” NeurIPS 2023. <a href="https://arxiv.org/abs/2305.18290">arXiv:2305.18290</a></p>
+
+<p>[6] Bai, Y. et al. “Constitutional AI: Harmlessness from AI Feedback.” 2022. <a href="https://arxiv.org/abs/2212.08073">arXiv:2212.08073</a></p>
+
+<p>[7] Xu, C. et al. “DALM: Direct Alignment Language Models.” 2023. <a href="https://arxiv.org/abs/2312.02364">arXiv:2312.02364</a></p>
+
+<p>[8] Yuan, L. et al. “Iterative Preference Learning from Human Feedback.” 2024. <a href="https://arxiv.org/abs/2402.10097">arXiv:2402.10097</a></p>
+
+<p>[9] Chen, Y. et al. “On-Policy DPO: Aligning Large Language Models with Fewer Data.” 2024. <a href="https://arxiv.org/abs/2402.14740">arXiv:2402.14740</a></p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Alignment" /><category term="RLHF" /><category term="DPO" /><category term="InstructGPT" /><category term="Reward-Model" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn how modern LLMs go from predicting the next token to being helpful, harmless, and honest assistants. Explore the three-stage alignment pipeline: Supervised Fine-Tuning (SFT), Reward Model training, and PPO. Understand the modern alternative DPO that skips the reward model entirely.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/llm-alignment/llm-llm-alignment-rlhf-dpo.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/llm-alignment/llm-llm-alignment-rlhf-dpo.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods</title><link href="https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/" rel="alternate" type="text/html" title="Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods" /><published>2026-08-16T00:00:00+00:00</published><updated>2026-08-16T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA</id><content type="html" xml:base="https://pyshine.com/LLM-Parameter-Efficient-Fine-Tuning-LoRA-QLoRA/"><![CDATA[<h1 id="parameter-efficient-fine-tuning-lora-qlora-and-adapter-methods">Parameter-Efficient Fine-Tuning: LoRA, QLoRA, and Adapter Methods</h1>
 
 <p>In 2021, Microsoft Research introduced a paper with a quiet revolution inside its title: “LoRA: Low-Rank Adaptation of Large Language Models.” Two years later, a follow-up paper added three letters – QLoRA – and changed the game again. Together, these methods shattered the long-held assumption that adapting a large language model to a new task requires retraining it from top to bottom on clusters of GPUs.</p>
 
@@ -2436,194 +2835,4 @@ Max concurrent requests: 24 / 4 = 6
 
 <p>The three optimization techniques – PagedAttention (eliminating memory waste), FlashAttention (reducing memory accesses), and KV-cache quantization (reducing memory size) – address different aspects of the same bottleneck. Production systems like vLLM combine all three to achieve throughput levels that would be impossible with naive KV-cache management.</p>
 
-<p>As context windows continue to grow (128K, 1M tokens), the KV-cache bottleneck will only become more severe. Future innovations in attention mechanisms (linear attention, state-space models like Mamba) aim to eliminate the KV-cache entirely, but for the foreseeable future, understanding and optimizing the KV-cache remains the most impactful lever for LLM inference performance.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="GPU" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Understand how the KV-cache maps to GPU VRAM during LLM decoding, why decode is memory-bandwidth-bound, and how PagedAttention, FlashAttention, and KV cache quantization solve the VRAM bottleneck.]]></summary></entry><entry><title type="html">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</title><link href="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/" rel="alternate" type="text/html" title="LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference" /><published>2026-08-09T00:00:00+00:00</published><updated>2026-08-09T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-the-Two-Phases-of-LLM-Inference</id><content type="html" xml:base="https://pyshine.com/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/"><![CDATA[<h1 id="llm-prompt-vs-decode-understanding-the-two-phases-of-llm-inference">LLM Prompt vs Decode: Understanding the Two Phases of LLM Inference</h1>
-
-<p>When you send a request to a large language model – whether through ChatGPT, a local Ollama instance, or a production API – the model does not process your input and generate output in a single uniform step. Instead, every LLM inference request is split into two fundamentally different computational phases: <strong>prompt processing</strong> (also called prefill) and <strong>decoding</strong> (also called autoregressive generation).</p>
-
-<p>Understanding the difference between these two phases is essential for anyone working with LLMs – from engineers optimizing inference servers to developers choosing sampling parameters. The two phases have different computational bottlenecks, different memory access patterns, and different optimization strategies. Confusing them leads to poor performance tuning, wrong hardware choices, and misunderstood latency budgets.</p>
-
-<h2 id="the-core-difference-in-one-sentence">The Core Difference in One Sentence</h2>
-
-<p><strong>Prompt (prefill)</strong> processes all input tokens at once in a single parallel forward pass; <strong>decode</strong> generates output tokens one at a time, each requiring a separate forward pass that depends on the previous token.</p>
-
-<h2 id="phase-1-prompt--prefill">Phase 1: Prompt / Prefill</h2>
-
-<p><img src="/assets/img/diagrams/llm-prompt-vs-decode/llm-prompt-vs-decode.svg" alt="LLM Prompt vs Decode Architecture" /></p>
-
-<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
-
-<p>The diagram above illustrates the complete LLM inference pipeline, split into two phases with fundamentally different computational characteristics. Let us break down each component in detail.</p>
-
-<p><strong>Phase 1: Prompt / Prefill (Left Side)</strong></p>
-
-<p>The prefill phase begins when the user’s input prompt arrives at the model. Every token in the prompt – whether it is 10 tokens or 10,000 tokens – is processed simultaneously in a single forward pass through the transformer layers. This is the key property that makes prefill qualitatively different from decoding: all tokens are embedded and attended to each other in parallel.</p>
-
-<p><strong>Token Embedding Layer</strong>
-The input tokens (“The”, “cat”, “sat”, “on”, “the”) are first converted into dense vector representations through an embedding lookup. This step is essentially free in computational terms – it is a simple table lookup that maps each token ID to a high-dimensional vector (typically 4096 to 12288 dimensions for modern LLMs). All five tokens are embedded simultaneously with no sequential dependency.</p>
-
-<p><strong>Transformer Layers (Parallel Computation)</strong>
-Once embedded, all token vectors pass through the transformer layers together. At each layer, the self-attention mechanism allows every token to attend to every other token in the prompt. This means the computation is a dense matrix-matrix multiplication: the query matrix (all tokens) is multiplied by the key matrix (all tokens), producing an attention score matrix of size N x N where N is the prompt length. This is where the GPU’s tensor cores shine – large matrix multiplications are exactly what GPUs are designed for.</p>
-
-<p>The arithmetic intensity (ratio of FLOPs to bytes transferred from memory) is high during prefill because the matrices are large. The GPU compute cores are fully saturated, making this phase <strong>compute-bound</strong>. Adding more prompt tokens only marginally increases latency because the GPU can parallelize the work across its thousands of cores.</p>
-
-<p><strong>KV Cache Construction</strong>
-As the prompt tokens pass through each transformer layer, the model computes and stores the key (K) and value (V) tensors for every token at every layer. These K,V pairs are written to the KV cache – a persistent memory buffer that will be reused during the decode phase. For a model like Llama-2 7B with 32 layers, 32 attention heads, and 128-dimensional heads, each token’s KV cache consumes approximately 0.5 MB in FP16 precision. A 4,000-token prompt therefore requires roughly 2 GB of KV cache storage.</p>
-
-<p><strong>Output: First Generated Token</strong>
-After the final transformer layer, the model produces a probability distribution (logits) over its entire vocabulary (typically 32,000 to 128,000 tokens). The highest-probability token (or a sampled token, depending on the decoding strategy) becomes the first output token. This token is also the starting point for the decode phase.</p>
-
-<p><strong>Key Performance Characteristic</strong>
-Prefill latency scales sub-linearly with prompt length because the computation is parallelized. Doubling the prompt length does not double the prefill time – it increases it by a much smaller factor because the GPU has spare compute capacity. The primary metric for prefill performance is Time To First Token (TTFT), which measures how long the user waits before seeing the first word of the response.</p>
-
-<h2 id="phase-2-decode--autoregressive-generation">Phase 2: Decode / Autoregressive Generation</h2>
-
-<p><strong>Phase 2: Decode (Right Side)</strong></p>
-
-<p>Once the first token is generated, the model enters the decode phase. This is where the fundamental asymmetry becomes apparent: instead of processing many tokens in parallel, the model now processes exactly ONE token at a time.</p>
-
-<p><strong>Single-Token Forward Pass</strong>
-The most recently generated token is fed back into the transformer as the input. Unlike prefill where all tokens were processed together, here only a single token’s query vector needs to be computed. However, this single query must still attend to ALL previous tokens’ keys and values stored in the KV cache. This transforms the computation from a matrix-matrix multiplication (prefill) into a matrix-vector multiplication (decode).</p>
-
-<p><strong>KV Cache: Read and Append</strong>
-The decode phase reads the entire KV cache from GPU memory (HBM) for every single token it generates. This is the critical bottleneck: the GPU must load potentially gigabytes of KV cache data from memory just to produce one token. After computing the new token’s K,V values, they are appended to the cache, making it slightly larger for the next step.</p>
-
-<p>The arithmetic intensity is extremely low during decode – the GPU performs a tiny amount of computation (one token’s attention) relative to the massive amount of data it must load from memory. This makes decoding <strong>memory-bandwidth-bound</strong>: the GPU’s compute cores are mostly idle, waiting for data to arrive from memory.</p>
-
-<p><strong>Autoregressive Loop</strong>
-After each token is generated, the process repeats: the new token becomes the input for the next step, the KV cache grows by one entry, and another forward pass produces the next token. This loop continues until the model generates an end-of-sequence (EOS) token or a maximum length is reached. The sequential nature of this loop means decode latency scales linearly with output length – 100 output tokens require 100 sequential forward passes.</p>
-
-<p><strong>Key Performance Characteristic</strong>
-Decode latency is measured in Time Per Output Token (TPOT). Because each step is memory-bound, the GPU’s peak compute capability (TFLOPS) is largely irrelevant – what matters is memory bandwidth (GB/s). This is why two GPUs with similar FLOPS but different memory bandwidth can have vastly different decode performance. As context length grows, the KV cache grows, and each decode step becomes slower because more data must be loaded from memory.</p>
-
-<h2 id="why-the-distinction-matters">Why the Distinction Matters</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Aspect</th>
-      <th>Prompt (Prefill)</th>
-      <th>Decode (Autoregressive)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Tokens per step</td>
-      <td>All input tokens</td>
-      <td>1 token</td>
-    </tr>
-    <tr>
-      <td>Computation type</td>
-      <td>Matrix-matrix</td>
-      <td>Matrix-vector</td>
-    </tr>
-    <tr>
-      <td>Bottleneck</td>
-      <td>Compute (FLOPS)</td>
-      <td>Memory bandwidth (GB/s)</td>
-    </tr>
-    <tr>
-      <td>GPU utilization</td>
-      <td>High (cores saturated)</td>
-      <td>Low (memory-bound)</td>
-    </tr>
-    <tr>
-      <td>Latency scaling</td>
-      <td>Sub-linear with input length</td>
-      <td>Linear with output length</td>
-    </tr>
-    <tr>
-      <td>Primary metric</td>
-      <td>TTFT (Time To First Token)</td>
-      <td>TPOT (Time Per Output Token)</td>
-    </tr>
-    <tr>
-      <td>KV cache</td>
-      <td>Write (build)</td>
-      <td>Read + Append (grow)</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>This distinction has profound implications for LLM serving infrastructure:</p>
-
-<ol>
-  <li>
-    <p><strong>Batching strategies differ</strong>: During prefill, you want large batches to maximize GPU utilization. During decode, batching helps amortize memory loads but each request in the batch adds its own KV cache to the memory pressure.</p>
-  </li>
-  <li>
-    <p><strong>Hardware selection</strong>: For prefill-heavy workloads (short prompts, long outputs), you need high memory bandwidth. For decode-heavy workloads, you need large memory capacity to hold many KV caches.</p>
-  </li>
-  <li>
-    <p><strong>Optimization targets</strong>: Systems like vLLM optimize decode through PagedAttention, which reduces KV cache memory waste. Other systems like speculative decoding aim to parallelize the decode phase by guessing multiple future tokens.</p>
-  </li>
-</ol>
-
-<h2 id="decoding-strategies-choosing-the-next-token">Decoding Strategies: Choosing the Next Token</h2>
-
-<p>The bottom section of the diagram shows the five most common decoding strategies. After each decode step, the model outputs a probability distribution (logits passed through softmax) over its entire vocabulary. The decoding strategy determines how the next token is selected from this distribution.</p>
-
-<p><strong>1. Greedy Decoding</strong>
-The simplest strategy: always pick the token with the highest probability (argmax). This is deterministic – the same prompt always produces the same output. While fast and predictable, greedy decoding tends to produce repetitive, generic text. It is suitable for factual tasks like translation or code generation where consistency matters more than creativity.</p>
-
-<p><strong>2. Temperature Sampling</strong>
-Before applying softmax, the logits are divided by a temperature value T. When T &gt; 1, the distribution becomes flatter, making lower-probability tokens more likely – this increases randomness and creativity. When T &lt; 1, the distribution becomes sharper, concentrating probability on the top tokens – this makes output more focused and deterministic. Temperature = 0 is equivalent to greedy decoding.</p>
-
-<p><strong>3. Top-k Sampling</strong>
-Only the k highest-probability tokens are kept; the rest are set to zero probability. The remaining k tokens are renormalized and sampled from. This prevents extremely unlikely tokens from being selected while still allowing controlled randomness. A common value is k = 40, which provides a good balance between diversity and coherence.</p>
-
-<p><strong>4. Top-p (Nucleus) Sampling</strong>
-Instead of fixing the number of candidate tokens (like top-k), nucleus sampling keeps the smallest set of tokens whose cumulative probability exceeds a threshold p (typically 0.9 or 0.95). This is adaptive: when the model is confident (one token dominates), only a few candidates are considered. When the model is uncertain (many tokens have similar probability), more candidates are included. Nucleus sampling generally produces the most natural-sounding text.</p>
-
-<p><strong>5. Beam Search</strong>
-Instead of maintaining a single sequence, beam search tracks B parallel sequences (beams) simultaneously. At each step, it expands all beams and keeps the top-B sequences by cumulative log probability. This explores multiple paths and can find higher-quality outputs than single-sequence methods. However, beam search is computationally expensive (B times the memory and compute) and is best suited for tasks like machine translation or summarization where there is a clear quality metric. It is less useful for open-ended text generation where diversity is valued.</p>
-
-<h2 id="practical-implications-for-developers">Practical Implications for Developers</h2>
-
-<p><strong>Choosing a decoding strategy</strong> depends on your use case:</p>
-
-<ul>
-  <li><strong>Code generation / factual Q&amp;A</strong>: Use greedy or low temperature (T = 0.1-0.3) for deterministic, accurate outputs</li>
-  <li><strong>Creative writing / brainstorming</strong>: Use temperature (T = 0.7-0.9) or top-p (p = 0.9) for diverse, creative outputs</li>
-  <li><strong>Translation / summarization</strong>: Use beam search (B = 4-8) for the highest quality structured output</li>
-  <li><strong>Chatbots / conversational AI</strong>: Use top-p (p = 0.9) with moderate temperature for natural, varied responses</li>
-</ul>
-
-<p><strong>Optimizing inference latency</strong> requires understanding which phase dominates:</p>
-
-<ul>
-  <li>If your workload has long prompts and short outputs (e.g., document Q&amp;A), prefill dominates. Optimize by using a faster GPU or reducing prompt length.</li>
-  <li>If your workload has short prompts and long outputs (e.g., creative writing), decode dominates. Optimize by using GPUs with higher memory bandwidth or techniques like speculative decoding.</li>
-</ul>
-
-<p><strong>KV cache memory</strong> is often the hidden bottleneck. For a 7B parameter model serving a 4,000-token context, each concurrent request requires approximately 2 GB of KV cache. On a 40 GB GPU, this limits you to roughly 15-20 concurrent requests before running out of memory – even though the model weights only occupy 14 GB. This is why systems like vLLM with PagedAttention are critical for production deployments: they reduce KV cache memory waste from 60-80% down to under 4%, dramatically increasing throughput.</p>
-
-<h2 id="related-concepts">Related Concepts</h2>
-
-<ul>
-  <li><strong>Speculative decoding</strong>: Uses a smaller “draft” model to guess multiple tokens, which the larger model verifies in a single forward pass – partially parallelizing the decode phase</li>
-  <li><strong>Flash Attention</strong>: Optimizes the attention computation by reducing memory reads/writes, benefiting both prefill and decode</li>
-  <li><strong>KV cache quantization</strong>: Reduces KV cache memory by storing keys and values in lower precision (e.g., INT8 instead of FP16), trading slight quality loss for 2x memory savings</li>
-  <li><strong>Continuous batching</strong>: Dynamically adds and removes requests from a batch during decode, maximizing GPU utilization without waiting for all requests to finish</li>
-</ul>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (Vaswani et al., 2017)</a> – The original Transformer paper that introduced self-attention</li>
-  <li><a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention (Kwon et al., 2023)</a> – The vLLM paper that revolutionized KV cache management</li>
-  <li><a href="https://huggingface.co/docs/transformers/v4.56.1/en/kv_cache">Hugging Face KV Cache Documentation</a> – Practical guide to KV cache strategies in the Transformers library</li>
-</ul>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/AI-Coding-FAQ-20-Most-Asked-Questions-2026/">AI Coding FAQ: 20 Most Asked Questions</a></li>
-  <li><a href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">Learn System Design in One Post</a></li>
-  <li><a href="/FreeLLMAPI-OpenAI-Compatible-Proxy-16-Free-LLM-Providers/">FreeLLMAPI: OpenAI-Compatible Proxy Stacking 16 Free LLM Providers</a></li>
-</ul>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>The distinction between prompt (prefill) and decode (autoregressive) is not just an academic curiosity – it is the single most important factor in understanding LLM inference performance. Prefill is compute-bound and parallelizable; decode is memory-bandwidth-bound and inherently sequential. The decoding strategy you choose (greedy, temperature, top-k, top-p, or beam search) determines the quality and character of the output, while the phase distinction determines which hardware and system optimizations will be effective.</p>
-
-<p>By understanding these two phases, you can make informed decisions about hardware selection, batching strategies, memory management, and decoding parameters – whether you are running a single model locally or serving millions of requests per day in production.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="Machine Learning" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Learn the critical difference between the prompt (prefill) and decode (autoregressive) phases of LLM inference, why they have fundamentally different performance characteristics, and how decoding strategies shape model output.]]></summary></entry></feed>
+<p>As context windows continue to grow (128K, 1M tokens), the KV-cache bottleneck will only become more severe. Future innovations in attention mechanisms (linear attention, state-space models like Mamba) aim to eliminate the KV-cache entirely, but for the foreseeable future, understanding and optimizing the KV-cache remains the most impactful lever for LLM inference performance.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="GPU" /><category term="AI Infrastructure" /><category term="Tutorial" /><summary type="html"><![CDATA[Understand how the KV-cache maps to GPU VRAM during LLM decoding, why decode is memory-bandwidth-bound, and how PagedAttention, FlashAttention, and KV cache quantization solve the VRAM bottleneck.]]></summary></entry></feed>
