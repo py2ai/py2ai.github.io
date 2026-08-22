@@ -5,7 +5,6 @@ description: "A 55,997-star public archive has captured 200+ verbatim system pro
 date: 2026-08-21 09:00:00 +0000
 header-img: "img/post-bg.jpg"
 permalink: /System-Prompts-Leaks-The-Hidden-Rules-Powering-ChatGPT-Claude-Gemini-Grok/
-featured-img: system-prompts-leaks/1_taxonomy
 tags:
   - System-Prompts
   - AI-Security
