@@ -4,6 +4,7 @@ title: "dotnet/skills: Microsoft's 80+ AI Agent Skills for .NET, C#, and MSBuild
 description: "Microsoft's dotnet/skills repository ships 15 plugins with 80+ skills and 13 custom agents that teach Claude Code, Copilot CLI, Cursor, and Codex CLI how to build, test, debug, and upgrade .NET applications. Here is the plugin taxonomy, SKILL.md anatomy, the SkillValidator A/B evaluation pipeline, and the multi-agent test generation pipeline."
 date: 2026-08-23
 header-img: "img/post-bg.jpg"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /dotnet-skills-Microsoft-AI-Agent-Skills-NET-CSharp-MSBuild/
 tags:
   - dotnet-skills

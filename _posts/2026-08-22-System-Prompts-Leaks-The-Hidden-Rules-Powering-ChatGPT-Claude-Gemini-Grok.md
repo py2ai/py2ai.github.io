@@ -4,6 +4,7 @@ title: "System Prompts Leaks: The Hidden Rules Powering ChatGPT, Claude, Gemini,
 description: "A 55,997-star public archive has captured 200+ verbatim system prompts from Anthropic, OpenAI, Google, xAI, Microsoft, Meta, Perplexity and 25 more providers. The Washington Post built an interactive story from the data. Here are the seven-layer anatomy of a production prompt, the five categories of attack that leak them, and a five-layer defense-in-depth pipeline."
 date: 2026-08-21 09:00:00 +0000
 header-img: "img/post-bg.jpg"
+featured-img: ai-coding-frameworks/ai-coding-frameworks
 permalink: /System-Prompts-Leaks-The-Hidden-Rules-Powering-ChatGPT-Claude-Gemini-Grok/
 tags:
   - System-Prompts
