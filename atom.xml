@@ -1,4 +1,398 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-27T12:22:28+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Needle 2: A 14MB Foundation Model for Tiny Devices</title><link href="https://pyshine.com/Needle-2-14MB-Foundation-Model-Tiny-Devices/" rel="alternate" type="text/html" title="Needle 2: A 14MB Foundation Model for Tiny Devices" /><published>2026-08-27T00:00:00+00:00</published><updated>2026-08-27T00:00:00+00:00</updated><id>https://pyshine.com/Needle-2-14MB-Foundation-Model-for-Tiny-Devices</id><content type="html" xml:base="https://pyshine.com/Needle-2-14MB-Foundation-Model-Tiny-Devices/"><![CDATA[<h1 id="needle-2-a-14mb-foundation-model-for-tiny-devices">Needle 2: A 14MB Foundation Model for Tiny Devices</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-27T23:56:31+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">PyShine Screen Recorder: Native C++ Engine for Perfect A/V Sync</title><link href="https://pyshine.com/PyShine-Screen-Recorder-Native-Cpp-Engine/" rel="alternate" type="text/html" title="PyShine Screen Recorder: Native C++ Engine for Perfect A/V Sync" /><published>2026-08-28T00:00:00+00:00</published><updated>2026-08-28T00:00:00+00:00</updated><id>https://pyshine.com/PyShine-Screen-Recorder-Native-Cpp-Engine</id><content type="html" xml:base="https://pyshine.com/PyShine-Screen-Recorder-Native-Cpp-Engine/"><![CDATA[<h1 id="pyshine-screen-recorder-native-c-engine-for-perfect-av-sync">PyShine Screen Recorder: Native C++ Engine for Perfect A/V Sync</h1>
+
+<p>Screen recording seems simple until you try to build one. The moment you combine audio and video capture on Windows, you discover the painful realities of thread scheduling, the Python GIL, GPU texture management, and the elusive quest for perfect audio/video synchronization. PyShine Screen Recorder is a professional, open-source screen recording application that tackles these problems head-on with a hybrid architecture: a PyQt6 GUI on top, and a native C++ recording engine underneath that runs entirely outside the Python Global Interpreter Lock.</p>
+
+<p>This post walks through the architecture, the A/V sync mechanism that makes recordings drift-free regardless of length, the capture pipeline that delivers near-lossless 1080p video, and the polished user experience that ties it all together.</p>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/1_architecture.svg" alt="PyShine Screen Recorder Architecture" /></p>
+
+<h2 id="understanding-the-system-architecture">Understanding the System Architecture</h2>
+
+<p>The architecture diagram above illustrates the layered design that separates the user interface from the heavy lifting of media capture and encoding. Let’s break down each component:</p>
+
+<p><strong>PyQt6 GUI Layer</strong></p>
+
+<p>The top layer is the user interface built with PyQt6. This is where the user interacts with the application through the main window, recorder controls, settings panel, audio level meter, and the region selector overlay. The GUI is responsible for presenting a polished dark-themed experience with indigo accents, but it deliberately avoids performing any media capture work itself. This separation is critical because PyQt6 runs on the Python interpreter, and any capture work done in Python would be subject to GIL contention, which is the root cause of the audio “tick-tick” spikes that plague many Python-based recorders.</p>
+
+<p><strong>Python ctypes Wrapper (NativeRecorder)</strong></p>
+
+<p>Between the GUI and the native engine sits a thin ctypes wrapper class called <code class="language-plaintext highlighter-rouge">NativeRecorder</code> (implemented in <code class="language-plaintext highlighter-rouge">native_recorder.py</code>). This wrapper loads <code class="language-plaintext highlighter-rouge">recorder.dll</code> at runtime, sets up C function signatures for type safety, and bridges Qt signals to native callback functions. It exposes a clean Pythonic API (<code class="language-plaintext highlighter-rouge">start_recording</code>, <code class="language-plaintext highlighter-rouge">stop_recording</code>, <code class="language-plaintext highlighter-rouge">set_audio_mode</code>) while delegating all the actual work to the native engine. The wrapper also handles preview frame callbacks and audio level metering by converting C function pointer callbacks into Qt signals that the GUI can subscribe to.</p>
+
+<p><strong>Native C++ Engine (recorder.dll)</strong></p>
+
+<p>The heart of the application is the native C++ engine compiled into <code class="language-plaintext highlighter-rouge">recorder.dll</code>. This DLL exports a C ABI (using <code class="language-plaintext highlighter-rouge">extern "C"</code>) so it can be called from Python via ctypes without any C++ name mangling issues. The engine spawns native <code class="language-plaintext highlighter-rouge">std::thread</code> instances for video capture, audio capture, and the writer pipeline. Because these threads are pure C++ and never acquire the Python GIL, they run uninterrupted regardless of what the Python GUI is doing. This is the single most important architectural decision in the project - it eliminates the audio glitches, frame drops, and stuttering that occur when capture threads compete with Python’s garbage collector and event loop.</p>
+
+<p><strong>DXGI Desktop Duplication</strong></p>
+
+<p>For screen capture, the engine uses the DXGI Desktop Duplication API, which is a GPU-accelerated capture method available on Windows 10 and later. Unlike older approaches like BitBlt or PrintWindow, Desktop Duplication gives you a Direct3D staging texture containing the full desktop contents, captured on the GPU with minimal CPU overhead. The engine creates this staging texture once and reuses it for every frame, eliminating the per-frame allocation that previously caused stutter and freeze on longer recordings.</p>
+
+<p><strong>WASAPI Audio Capture</strong></p>
+
+<p>For audio, the engine uses the Windows Audio Session API (WASAPI) in loopback mode. WASAPI is the lowest-level audio API available on Windows without writing a kernel-mode driver. By using direct COM calls rather than a higher-level library like PortAudio, the engine avoids an entire abstraction layer and gains precise control over buffer timing. When the microphone is enabled, the engine captures from the microphone endpoint; when disabled, it automatically falls back to system audio loopback (the eRender endpoint in loopback mode), so you always get audio even if you forget to plug in a mic.</p>
+
+<p><strong>FFmpeg Encoding and Two-Pass Muxing</strong></p>
+
+<p>The captured raw video frames are piped to an FFmpeg subprocess via stdin as <code class="language-plaintext highlighter-rouge">rawvideo</code> data, while audio is written directly to a temporary WAV file. FFmpeg encodes the video stream to H.264 with the <code class="language-plaintext highlighter-rouge">ultrafast</code> preset and a CRF (Constant Rate Factor) of 1, which is visually lossless quality. When recording stops, a second FFmpeg pass muxes the temporary video and audio files into the final MP4 output. This two-pass approach separates the concerns of capture and muxing, allowing each to run at its own pace without blocking the other.</p>
+
+<p><strong>Data Flow</strong></p>
+
+<p>The flow begins when the user clicks record. The GUI calls the Python wrapper, which calls the native <code class="language-plaintext highlighter-rouge">recorder_start</code> function. The native engine spawns three threads: one for DXGI screen capture, one for WASAPI audio capture, and a writer thread that consumes from a producer-consumer queue. Video frames flow from DXGI through the staging texture into the FFmpeg stdin pipe, while audio samples flow from WASAPI into a temporary WAV file. When the user stops, the threads are joined, the FFmpeg pipe is closed, and a final muxing pass combines everything into the output MP4.</p>
+
+<p><strong>Key Insights</strong></p>
+
+<p>The hybrid Python-plus-C++ architecture is increasingly common in performance-critical desktop applications. Python excels at rapid GUI development, configuration management, and cross-platform compatibility, but it fails at real-time media processing due to the GIL. By pushing the real-time work into a native DLL with a clean C ABI, you get the best of both worlds: a Python-friendly API for the UI layer and bare-metal performance for the capture pipeline. This pattern generalizes to any domain where Python needs to interact with hardware or real-time systems - audio processing, sensor data acquisition, robotics control, and game engine integration all benefit from the same approach.</p>
+
+<h2 id="how-av-sync-actually-works">How A/V Sync Actually Works</h2>
+
+<p>The hardest problem in screen recording is not capture - it is synchronization. If audio and video drift apart even slightly, the result is unwatchable. After 10 minutes, a 50ms offset becomes obvious. After an hour, it is unbearable.</p>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/2_avsync.svg" alt="A/V Sync Mechanism" /></p>
+
+<h3 id="understanding-the-av-sync-mechanism">Understanding the A/V Sync Mechanism</h3>
+
+<p>The A/V sync diagram above shows the four-mechanism approach that PyShine Screen Recorder uses to guarantee perfect synchronization regardless of recording length. Let’s examine each mechanism in detail:</p>
+
+<p><strong>Audio Start Gate (g_video_first_frame_written)</strong></p>
+
+<p>The first mechanism is an audio start gate. When recording begins, the audio thread starts capturing immediately, but all captured audio is dropped until the video thread signals that it has written its first frame. This is tracked via a boolean flag called <code class="language-plaintext highlighter-rouge">g_video_first_frame_written</code>. The rationale is simple: audio capture can start almost instantly because WASAPI buffers are ready the moment the session is initialized, but video capture has to wait for the DXGI Desktop Duplication API to deliver the first desktop frame. If audio started writing before video, the audio timeline would begin before the video timeline, causing a permanent offset. By gating audio on the first video frame, the engine guarantees that audio sample 0 corresponds exactly to video frame 0.</p>
+
+<p><strong>Producer-Consumer Queue with Writer Thread</strong></p>
+
+<p>The second mechanism is a producer-consumer architecture that decouples capture from writing. The video capture thread (producer) pushes frames into a bounded queue, and a dedicated writer thread (consumer) pulls frames from the queue and writes them to FFmpeg. This decoupling is essential because the capture rate and the encode rate are not perfectly matched. DXGI delivers frames whenever the desktop changes, which can be faster or slower than the target FPS. The writer thread smooths out these variations by maintaining a steady output rate regardless of capture jitter.</p>
+
+<p><strong>Duplicate-Frame Catch-Up</strong></p>
+
+<p>The third mechanism is the most innovative. When the capture queue is empty (because the desktop has not changed or the capture thread is momentarily slow), the writer thread does not skip a frame. Instead, it writes a duplicate of the last captured frame. This is the key to maintaining a strict constant frame rate (CFR). If the writer skipped frames when the queue was empty, the video timeline would fall behind the audio timeline. By duplicating frames, the video timeline advances at the same rate as the audio timeline, no matter what. The presentation timestamps (PTS) are simply the frame index (0, 1, 2, 3, …), so every frame is exactly 1/FPS seconds apart.</p>
+
+<p><strong>Cumulative Audio PTS</strong></p>
+
+<p>The fourth mechanism ensures audio PTS advances linearly with the actual sample count. Each audio chunk written to the WAV file is tagged with a cumulative PTS based on the number of samples written so far. This is in contrast to wall-clock-based PTS, which can drift if the system clock has jitter or if the audio thread is briefly delayed. By using sample count as the PTS source, the audio timeline is locked to the actual data, not to the system clock. Combined with the audio start gate, this means the audio timeline starts at exactly the right moment and advances at exactly the right rate.</p>
+
+<p><strong>Why This Matters</strong></p>
+
+<p>Most screen recorders handle A/V sync poorly. The common approach is to timestamp each frame with the wall clock at capture time and hope for the best. This works for short recordings but drifts over time because the wall clock and the actual data rate are not perfectly aligned. PyShine Screen Recorder’s approach is fundamentally different: the video timeline is defined by frame count, the audio timeline is defined by sample count, and both start at the same moment (the first video frame). This makes the sync mathematically exact rather than approximately correct.</p>
+
+<p><strong>Practical Implications</strong></p>
+
+<p>For the end user, this means you can record a 2-hour lecture or a 4-hour gaming session and the audio will stay perfectly in sync with the video from start to finish. There is no gradual drift, no sudden desync after silent periods, and no need to manually realign tracks in a video editor. The recording is ready to use the moment FFmpeg finishes the final muxing pass.</p>
+
+<h2 id="the-capture-pipeline-from-desktop-to-mp4">The Capture Pipeline: From Desktop to MP4</h2>
+
+<p>Capturing a desktop at 1080p and encoding it to near-lossless H.264 in real time requires a carefully designed pipeline. Every stage must be efficient, and every pixel must be handled correctly to maintain quality.</p>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/3_capture_pipeline.svg" alt="Capture Pipeline" /></p>
+
+<h3 id="understanding-the-capture-pipeline">Understanding the Capture Pipeline</h3>
+
+<p>The capture pipeline diagram shows the journey of video data from the Windows desktop to the final MP4 file. Let’s trace each stage:</p>
+
+<p><strong>DXGI Desktop Duplication API</strong></p>
+
+<p>The pipeline begins with the DXGI Desktop Duplication API, introduced in Windows 8. This API provides GPU-accelerated access to the desktop composited output. Unlike older capture methods (BitBlt, PrintWindow, Mirror Drivers), Desktop Duplication does not require the CPU to read pixel data from the GPU - instead, it provides a Direct3D texture that already contains the desktop contents. This is dramatically faster and has lower latency. The API also handles multi-monitor setups correctly, allowing the recorder to target a specific display by index.</p>
+
+<p><strong>Cached Staging Texture</strong></p>
+
+<p>A subtle but critical optimization is the cached staging texture. When you call <code class="language-plaintext highlighter-rouge">IDXGIOutputDuplication::AcquireNextFrame</code>, you get a texture that you need to copy to a staging texture before you can read it on the CPU. The naive approach is to create a new staging texture for every frame. This causes per-frame GPU allocation, which leads to stutter and eventual freeze on longer recordings because the GPU memory allocator has to do more and more work. PyShine Screen Recorder creates the staging texture once during initialization and reuses it for every frame. This is a single-line change in code but a night-and-day difference in stability.</p>
+
+<p><strong>Resolution Handling: 4K to 1080p Downscaling</strong></p>
+
+<p>The recorder targets 1080p (1920x1080) as its native output resolution. When capturing from a 4K monitor (3840x2160), the frames must be downscaled. The diagram shows the decision point: if the source resolution is greater than 1080p, a 2x2 box filter is applied. The box filter is an area-averaging filter that takes each 2x2 block of pixels and replaces them with their average. This is theoretically optimal for a 2:1 downscale because it uses all the source data, produces no aliasing (unlike nearest-neighbor), and introduces no blurring (unlike bilinear interpolation on non-integer ratios). For non-2:1 ratios, bilinear interpolation is used as a fallback.</p>
+
+<p><strong>Even-Dimension Enforcement</strong></p>
+
+<p>After downscaling (or when capturing at native 1080p), the engine enforces even dimensions on both width and height. This is required for the <code class="language-plaintext highlighter-rouge">yuv420p</code> pixel format used by FFmpeg, which subsamples chroma channels in 2x2 blocks. If the width or height is odd, the chroma subsampling would have to handle a half-pixel at the edge, which can cause color artifacts or encoding failures. By forcing both dimensions even, the engine avoids this edge case entirely.</p>
+
+<p><strong>Region Crop at Capture Time</strong></p>
+
+<p>When the user selects a custom region, the cropping is done in the native C++ engine at capture time, not in post-processing. This means only the selected pixels are ever copied or encoded, saving CPU and bandwidth. The crop is applied after downscaling and even-dimension enforcement, so the region coordinates are in the final output resolution space. This is more efficient than capturing the full screen and cropping in FFmpeg, because the encoder never sees the pixels outside the region.</p>
+
+<p><strong>FFmpeg stdin Pipe</strong></p>
+
+<p>The final stage of the video pipeline is the FFmpeg subprocess. The native engine spawns FFmpeg with the <code class="language-plaintext highlighter-rouge">rawvideo</code> input format reading from stdin, configured to encode with the <code class="language-plaintext highlighter-rouge">libx264</code> codec, <code class="language-plaintext highlighter-rouge">ultrafast</code> preset, CRF 1 (visually lossless), High profile, and <code class="language-plaintext highlighter-rouge">yuv420p</code> pixel format. Raw RGB frames are written to FFmpeg’s stdin pipe, and FFmpeg encodes them to the temporary video file. Using a subprocess pipe rather than a library API means the encoder runs in its own process with its own memory space, which isolates the GUI from any encoding crashes and allows FFmpeg to use its own thread pool for encoding.</p>
+
+<p><strong>Key Insight: Why CRF 1 and ultrafast</strong></p>
+
+<p>The choice of CRF 1 with the <code class="language-plaintext highlighter-rouge">ultrafast</code> preset is deliberate. CRF 1 produces a visually lossless output (the bitrate is very high, but the quality is essentially identical to the source). The <code class="language-plaintext highlighter-rouge">ultrafast</code> preset minimizes CPU usage during encoding, which is critical because the CPU is also busy with capture, audio, and the GUI. The High profile is chosen for universal compatibility - it can be played on virtually any device or browser without codec issues. The <code class="language-plaintext highlighter-rouge">yuv420p</code> format ensures compatibility with older players that do not support 4:2:2 or 4:4:4 chroma subsampling.</p>
+
+<h2 id="user-experience-from-launch-to-mp4">User Experience: From Launch to MP4</h2>
+
+<p>A great architecture is wasted if the user experience is painful. PyShine Screen Recorder pairs its native engine with a carefully designed UI.</p>
+
+<p><img src="/assets/img/diagrams/pyshine-screen-recorder/4_ui_workflow.svg" alt="User Workflow" /></p>
+
+<h3 id="understanding-the-user-workflow">Understanding the User Workflow</h3>
+
+<p>The workflow diagram shows the complete user journey from launching the application to receiving the final MP4 file. Let’s walk through it:</p>
+
+<p><strong>Launch and Main Window</strong></p>
+
+<p>The application is launched with <code class="language-plaintext highlighter-rouge">python -m screen_recorder</code> (or by running the standalone EXE). The main window appears with a compact, dark-themed layout. The UI uses a three-tier surface palette (background, surface, elevated) to create visual depth without heavy shadows, matching the aesthetic of modern applications like VS Code, Linear, and Notion. Indigo (#6366f1) is used as the accent color because it is professional and less saturated than purple, which can feel childish.</p>
+
+<p><strong>Capture Mode Selection</strong></p>
+
+<p>The user chooses between two capture modes. In “Full Display” mode, the recorder captures the entire contents of a selected monitor. This supports multi-monitor setups, so you can record your second monitor while keeping your primary monitor free for notes or chat. In “Custom Region” mode, an overlay appears with 8 resize handles (one on each corner and one on each edge), a drag-to-move area, and confirm/cancel buttons. The overlay is drawn in a margin ring OUTSIDE the selected rectangle, so the marching-ants border and REC indicator never appear in the recorded video.</p>
+
+<p><strong>Settings Panel</strong></p>
+
+<p>Before recording, the user can open the settings panel to configure the output directory, frame rate (30 or 24 FPS), microphone toggle, and system audio toggle. Settings are stored in the platform’s standard configuration directory using JSON, so they persist across sessions. The system audio toggle is automatically enabled when the microphone is disabled, ensuring you always get some audio track.</p>
+
+<p><strong>Recording State</strong></p>
+
+<p>Once recording starts (via F9 hotkey or the record button), the application enters the recording state. An animated recording boundary overlay appears on screen - a dotted marching-ants border with a pulsing REC indicator. This overlay is drawn outside the capture region so it never appears in the video. The status bar shows the recording duration and the actual achieved FPS, so you can verify the recording is healthy at a glance. The audio level meter provides real-time stereo RMS and peak monitoring from the native engine, so you can confirm your microphone is picking up sound.</p>
+
+<p><strong>Pause and Resume</strong></p>
+
+<p>During recording, the user can pause and resume with Ctrl+P. Pause temporarily halts capture without stopping the recording session, which is useful for taking breaks during a long lecture or switching contexts during a tutorial. When resumed, the recording continues in the same file, with the writer thread maintaining the CFR timeline as if the pause never happened.</p>
+
+<p><strong>Stop and Muxing</strong></p>
+
+<p>When the user stops recording (F9 again), a friendly dialog appears explaining that FFmpeg is muxing the final MP4. This muxing step combines the temporary video and audio files into the final output. The dialog reads “This may take a while, please wait…” rather than mentioning muxing internals, because end users do not care about FFmpeg - they just want to know the app is working on it. Once muxing completes, the MP4 is saved to the output directory and a history entry appears in the UI.</p>
+
+<p><strong>History Panel</strong></p>
+
+<p>The history panel shows all recordings made in the current session. Each entry includes a thumbnail (generated by seeking ~1 second into the video and picking the first non-black frame), the file path, and a delete button. Deleting a recording from the UI also removes the file from disk, so you can clean up unwanted takes without leaving the application.</p>
+
+<h2 id="installation">Installation</h2>
+
+<h3 id="windows-standalone-exe---recommended">Windows (Standalone EXE - Recommended)</h3>
+
+<ol>
+  <li>Download <code class="language-plaintext highlighter-rouge">ScreenRecorder.exe</code> from the <a href="https://github.com/pyshine-labs/PyShine-Screen-Recorder/releases">Releases page</a></li>
+  <li>Run directly - no extraction or installation required</li>
+</ol>
+
+<blockquote>
+  <p>No Python installation required. Windows 10/11 (64-bit) supported.</p>
+</blockquote>
+
+<h3 id="from-source-developers">From Source (Developers)</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Clone the repository</span>
+git clone https://github.com/pyshine-labs/PyShine-Screen-Recorder.git
+<span class="nb">cd </span>PyShine-Screen-Recorder
+
+<span class="c"># Create a virtual environment (recommended)</span>
+python <span class="nt">-m</span> venv .venv
+.venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+
+<span class="c"># Install the package in development mode</span>
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="nb">.</span>
+
+<span class="c"># Or install dependencies directly</span>
+pip <span class="nb">install</span> <span class="nt">-r</span> requirements.txt
+</code></pre></div></div>
+
+<p>To run the application:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> screen_recorder
+</code></pre></div></div>
+
+<h3 id="building-the-native-c-recorder-dll">Building the Native C++ Recorder DLL</h3>
+
+<p>If you are building from source, you need to compile the native C++ recorder DLL before the application can record.</p>
+
+<p><strong>Prerequisites:</strong></p>
+<ul>
+  <li>Python &gt;= 3.10</li>
+  <li>PyInstaller (for EXE builds): <code class="language-plaintext highlighter-rouge">pip install pyinstaller</code></li>
+  <li>Visual Studio 2022 Build Tools (C++ workload) and CMake</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Builds recorder.dll -&gt; bin/Release/recorder.dll</span>
+native<span class="se">\b</span>uild.bat
+</code></pre></div></div>
+
+<h3 id="building-the-portable-exe">Building the Portable EXE</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> PyInstaller screen_recorder.spec <span class="nt">--noconfirm</span>
+</code></pre></div></div>
+
+<p>The output is located at <code class="language-plaintext highlighter-rouge">dist/ScreenRecorder.exe</code>.</p>
+
+<h2 id="usage">Usage</h2>
+
+<h3 id="running-the-application">Running the Application</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> screen_recorder
+</code></pre></div></div>
+
+<h3 id="keyboard-shortcuts">Keyboard Shortcuts</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shortcut</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">F9</code></td>
+      <td>Start / Stop recording</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Ctrl+P</code></td>
+      <td>Pause / Resume recording</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Ctrl+Q</code></td>
+      <td>Quit application</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Esc</code></td>
+      <td>Cancel region selection</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">F1</code></td>
+      <td>Open help dialog</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="basic-workflow">Basic Workflow</h3>
+
+<ol>
+  <li>Launch the application - the main window appears with controls.</li>
+  <li>Select a capture source - choose a display or draw a region using the overlay selector.</li>
+  <li>Configure audio - enable microphone and/or system audio in Settings.</li>
+  <li>Start recording - press F9 or click the Record button.</li>
+  <li>Stop recording - press F9 again. The MP4 file is saved to your output directory.</li>
+</ol>
+
+<h2 id="features">Features</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Native C++ recording engine</td>
+      <td>WASAPI audio and DXGI screen capture via native threads (no GIL interference)</td>
+    </tr>
+    <tr>
+      <td>100% A/V sync</td>
+      <td>Producer-consumer architecture with duplicate-frame catch-up for strict CFR</td>
+    </tr>
+    <tr>
+      <td>Near-lossless quality</td>
+      <td>CRF 1 (visually lossless) H.264 encoding with ultrafast preset</td>
+    </tr>
+    <tr>
+      <td>1080p native resolution</td>
+      <td>Full 1920x1080 capture; 4K downscaled via 2x2 box filter</td>
+    </tr>
+    <tr>
+      <td>Cached GPU staging texture</td>
+      <td>Staging texture created once and reused every frame to prevent stutter</td>
+    </tr>
+    <tr>
+      <td>Region selection</td>
+      <td>8 resize handles, drag-to-move, native C++ region crop at capture time</td>
+    </tr>
+    <tr>
+      <td>Multi-monitor support</td>
+      <td>Select which display to capture</td>
+    </tr>
+    <tr>
+      <td>Microphone + system audio</td>
+      <td>WASAPI capture with automatic fallback to system loopback</td>
+    </tr>
+    <tr>
+      <td>System tray icon</td>
+      <td>Recording controls (start/stop/pause/resume) from the tray</td>
+    </tr>
+    <tr>
+      <td>Animated boundary overlay</td>
+      <td>Marching-ants border with pulsing REC indicator, drawn outside capture region</td>
+    </tr>
+    <tr>
+      <td>Professional dark UI</td>
+      <td>3-tier surface palette, indigo accents, circular icon buttons</td>
+    </tr>
+    <tr>
+      <td>Audio level meter</td>
+      <td>Real-time stereo RMS and peak monitoring from the native engine</td>
+    </tr>
+    <tr>
+      <td>Settings panel</td>
+      <td>Output directory, FPS (30/24), microphone toggle, system audio toggle</td>
+    </tr>
+    <tr>
+      <td>Live recording history</td>
+      <td>Delete recordings from the UI also removes the file from disk</td>
+    </tr>
+    <tr>
+      <td>Pause/resume support</td>
+      <td>Pause and resume during active recording</td>
+    </tr>
+    <tr>
+      <td>MP4 output</td>
+      <td>FFmpeg with two-pass muxing (video + audio)</td>
+    </tr>
+    <tr>
+      <td>F9 hotkey</td>
+      <td>Start/stop recording with a single keypress</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="recorderdll-not-found">recorder.dll not found</h3>
+
+<p>The native C++ recorder DLL must be present for the application to record. If you are running from source, build it first:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd </span>native
+build.bat
+</code></pre></div></div>
+
+<p>The DLL will be placed at <code class="language-plaintext highlighter-rouge">bin/Release/recorder.dll</code>.</p>
+
+<h3 id="audio-sounds-glitchy-or-has-tick-tick-spikes">Audio sounds glitchy or has tick-tick spikes</h3>
+
+<p>This was a known issue in earlier versions caused by Python’s GIL interfering with the audio capture thread. The native C++ engine eliminates this entirely by running all capture on native <code class="language-plaintext highlighter-rouge">std::thread</code>s that never acquire the GIL. If you still hear glitches, ensure you are running the latest version and that no other application is heavily loading the CPU.</p>
+
+<h3 id="av-drift-after-silent-periods">A/V drift after silent periods</h3>
+
+<p>Fixed in v1.0.8. WASAPI loopback delivers zero packets when the system is silent, which previously caused the audio timeline to stop advancing. The engine now fills silence gaps with zero samples (with a 50ms tolerance to avoid jitter contamination), keeping the audio timeline locked to the video timeline.</p>
+
+<h3 id="audio-clicks-on-peak-samples">Audio clicks on peak samples</h3>
+
+<p>Fixed in v1.0.8. The float32 to int16 conversion previously used <code class="language-plaintext highlighter-rouge">lroundf(v * 32768.0f)</code>, which overflowed <code class="language-plaintext highlighter-rouge">int16_t</code> when <code class="language-plaintext highlighter-rouge">v == 1.0f</code> (32768 wraps to -32768, producing a loud negative spike on every peak). The conversion now multiplies by <code class="language-plaintext highlighter-rouge">32767.0f</code> and clamps at the <code class="language-plaintext highlighter-rouge">long</code> stage before the cast.</p>
+
+<h3 id="blank-thumbnails-in-history">Blank thumbnails in history</h3>
+
+<p>Fixed in v1.0.8. The thumbnail generator now seeks ~1 second into the video and picks the first non-black frame (brightness &gt; 30), falling back to the first frame if all are black.</p>
+
+<h3 id="recording-freezes-on-long-recordings">Recording freezes on long recordings</h3>
+
+<p>This was caused by per-frame allocation of the GPU staging texture. The cached staging texture (created once, reused every frame) eliminates this. Ensure you are running v1.0.6 or later.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>PyShine Screen Recorder demonstrates that you do not have to choose between a Python-friendly development experience and native-level performance. By pushing the real-time capture pipeline into a C++ DLL with a clean C ABI, the application achieves perfect A/V sync, near-lossless video quality, and rock-solid stability on long recordings - all while keeping a PyQt6 GUI that is pleasant to develop and easy to extend.</p>
+
+<p>The key takeaways for anyone building similar software are: keep the GIL out of the capture path, gate audio on the first video frame, use duplicate-frame catch-up for strict CFR, cache your GPU resources, and downscale with area-averaging when the ratio is 2:1. These principles apply far beyond screen recording - they are the foundation of any real-time media pipeline on Windows.</p>
+
+<p>The project is open source under the MIT license, with prebuilt binaries available for Windows users who just want to record, and full source for developers who want to learn from or extend the architecture.</p>
+
+<h2 id="links">Links</h2>
+
+<ul>
+  <li><a href="https://github.com/pyshine-labs/PyShine-Screen-Recorder">GitHub Repository</a></li>
+  <li><a href="https://github.com/pyshine-labs/PyShine-Screen-Recorder/releases">Releases Page</a></li>
+  <li><a href="https://www.pyshine.com">PyShine Website</a></li>
+</ul>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="/Needle-2-14MB-Foundation-Model-for-Tiny-Devices/">Needle 2: 14MB Foundation Model for Tiny Devices</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Python" /><category term="C++" /><category term="Screen Recording" /><category term="WASAPI" /><category term="DXGI" /><summary type="html"><![CDATA[A professional screen recorder built with PyQt6 and a native C++ engine featuring DXGI Desktop Duplication, WASAPI audio capture, and guaranteed A/V synchronization.]]></summary></entry><entry><title type="html">Needle 2: A 14MB Foundation Model for Tiny Devices</title><link href="https://pyshine.com/Needle-2-14MB-Foundation-Model-Tiny-Devices/" rel="alternate" type="text/html" title="Needle 2: A 14MB Foundation Model for Tiny Devices" /><published>2026-08-27T00:00:00+00:00</published><updated>2026-08-27T00:00:00+00:00</updated><id>https://pyshine.com/Needle-2-14MB-Foundation-Model-for-Tiny-Devices</id><content type="html" xml:base="https://pyshine.com/Needle-2-14MB-Foundation-Model-Tiny-Devices/"><![CDATA[<h1 id="needle-2-a-14mb-foundation-model-for-tiny-devices">Needle 2: A 14MB Foundation Model for Tiny Devices</h1>
 
 <p>Needle 2 is an open 45-million-parameter model built by Cactus Compute that does one thing exceptionally well: tool calling. The entire model, weights and engine combined, ships as a single 14MB binary that runs a full session in approximately 28MB of RAM. That is smaller than a typical podcast MP3. It trades wins on benchmarks with models 5x to 70x larger – FunctionGemma 270M, LFM2.5 230M, and Apple FM – while using only 2 bits per weight against their 16-bit floating point.</p>
 
@@ -2368,194 +2762,4 @@ PE(pos, 2i+1) &amp;= \cos\left(pos / 10000^{2i/d}\right)
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>Traditional REST endpoints are not failing because REST is bad. They are failing because REST was designed for programs that know exactly what call they want to make, and AI agents do not. Agents discover tools at runtime, chain them across reasoning traces, share them across applications, and need more than endpoints – they need browsable data, reusable prompts, standardized auth, and a transport that works both locally and across the network. MCP packages those requirements into a single open protocol that replaces an N x M grid of custom connectors with an N + M star. It does not replace function calling; it sits above it, the same way USB sits above the electronics inside your laptop. If you are building agents that touch more than a couple of services, or publishing integrations that you want to work across Claude, Cursor, VS Code, and the dozens of MCP-compatible clients shipping this year, MCP is no longer early-adopter technology – it is the integration layer the ecosystem has already converged on.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="MCP" /><category term="Agents" /><category term="API" /><category term="Tutorial" /><summary type="html"><![CDATA[Why REST APIs and raw function calling break down when you connect LLMs to dozens of services, and how Anthropic's open Model Context Protocol (MCP) replaces N x M custom glue code with a single N + M standard covering tools, resources, and prompts.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</title><link href="https://pyshine.com/I-Built-an-LLM-From-Scratch/" rel="alternate" type="text/html" title="I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU" /><published>2026-08-10T00:00:00+00:00</published><updated>2026-08-10T00:00:00+00:00</updated><id>https://pyshine.com/I-Built-an-LLM-From-Scratch</id><content type="html" xml:base="https://pyshine.com/I-Built-an-LLM-From-Scratch/"><![CDATA[<h1 id="i-built-an-llm-from-scratch-30m-parameters-4-hours-1-gpu">I Built an LLM From Scratch: 30M Parameters, 4 Hours, 1 GPU</h1>
-
-<p>There is a particular kind of understanding that only comes from building the thing yourself. I have written about tokenizers, attention, KV-caches, and sampling in this series – but writing about components is not the same as watching a matrix of random numbers slowly learn to tell stories. So I built a small GPT from scratch in plain PyTorch: 30 million parameters, trained on children’s stories for about four hours on a single RTX 4090, for roughly two dollars of electricity. No Trainer class, no Lightning, no configuration files – about 600 lines of code where every tensor operation is mine. This post is the honest account of what happened, what broke, and what I learned.</p>
-
-<p>This is the eighth post in our LLM internals series, and it ties the previous seven together: <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization</a>, <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">attention</a>, <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache</a>, <a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">inference phases</a>, the <a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">training pipeline</a>, <a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">quantization</a>, and <a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">sampling strategies</a>.</p>
-
-<h2 id="the-journey-at-a-glance">The Journey at a Glance</h2>
-
-<p><img src="/assets/img/diagrams/llm-from-scratch/llm-from-scratch-journey.svg" alt="I Built an LLM From Scratch" /></p>
-
-<h3 id="understanding-the-diagram">Understanding the Diagram</h3>
-
-<p>The diagram breaks the project into six panels: the build pipeline, the model anatomy, the training loop, the loss curve, the learning progression, and the true cost.</p>
-
-<p><strong>Panel 1: The Build Pipeline</strong></p>
-
-<p>The top-left panel shows the five stages in order. First, train a BPE tokenizer on the corpus itself – I used a vocabulary of 8,192, far smaller than GPT-2’s 50,257, because a children’s-story vocabulary is tiny and a small vocab shrinks the embedding table. Second, implement the GPT blocks: causal multi-head attention, feed-forward networks, residual connections, and LayerNorm. Third, build the data pipeline that slices tokenized text into 256-token windows with targets shifted by one position. Fourth, run the training loop. Fifth, generate text with the sampling strategies from the previous post. The whole thing is about 600 lines of PyTorch, and the result is a model that writes coherent stories after four hours.</p>
-
-<p><strong>Panel 2: Model Anatomy</strong></p>
-
-<p>The top-middle panel shows where the 30 million parameters live. The configuration is deliberately modest: 8 layers, 8 heads, d_model of 512, context of 256 tokens. The surprise for most people is the distribution: the MLP blocks hold 57% of all parameters (16.8M), attention holds only 28% (8.4M), and the tied embedding matrix holds the remaining 14%. Attention gets the glory in explanations of transformers, but the feed-forward networks store most of the model’s knowledge. Tying the input embedding and output projection matrices saves 4.2M parameters and measurably trains better.</p>
-
-<p><strong>Panel 3: The Training Loop</strong></p>
-
-<p>The top-right panel shows the loop itself: forward pass on a batch of 64 by 256 tokens, cross-entropy loss on next-token prediction, <code class="language-plaintext highlighter-rouge">loss.backward()</code>, and an AdamW step with a learning-rate schedule – repeated 20,000 times. The loop body is about 15 lines. The details around it decide whether the run lives or dies: warmup of 500 steps, cosine decay from 3e-4 to 3e-5, gradient clipping at 1.0, bf16 autocast, weight decay 0.1. Each of those settings exists because a run failed without it.</p>
-
-<p><strong>Panel 4: The Loss Curve</strong></p>
-
-<p>The bottom-left panel plots training loss across the 20,000 steps, and its shape tells you what the model is learning. The first sanity check happens at step 0: with random weights, the model is uniform over the vocabulary, so the loss must equal ln(8,192) = 9.0. If your step-0 loss is anything else, a bug is already hiding somewhere. The curve then drops fast to about 4.0 in the first thousand steps (the model learns vocabulary), grinds slowly from 4.0 to 2.2 (grammar), and flattens toward 1.8 (narrative structure). A loss of 1.8 means the model has narrowed the next token down to roughly e^1.8 – about six likely candidates – at every position.</p>
-
-<p><strong>Panel 5: What It Learned, When</strong></p>
-
-<p>The bottom-middle panel shows generations from saved checkpoints, all given the prompt “Once upon a time”. At step 0 the output is noise: “zj qw fjqp zzz kx”. At step 500, common words appear without syntax: “the and of a to was”. At step 5,000, grammar emerges: “the cat sat on the mat and said”. At step 20,000, the model tells a story with consistent entities: “a little fox named Pip found a red…”. Capabilities always emerged in the same order – vocabulary, then syntax, then meaning. Never the reverse.</p>
-
-<p><strong>Panel 6: Cost and Hard Lessons</strong></p>
-
-<p>The bottom-right panel totals the bill: one RTX 4090, 4.2 hours, about 330 million tokens seen, roughly two dollars of power and wear. The lessons cost more than the money: the loss curve is your debugger, data quality beats model size, gradient clipping saves runs, and small models teach the same mechanics as frontier ones – only the scale differs.</p>
-
-<h2 id="stage-1-the-tokenizer">Stage 1: The Tokenizer</h2>
-
-<p>Everything in the <a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">tokenization post</a> became real the moment I trained my own BPE tokenizer. The corpus is <a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories</a> – a synthetic dataset of short children’s stories generated by GPT-3.5/4, designed so that small models can actually learn grammar and narrative. Training BPE on it with a target vocabulary of 8,192 took minutes, and the resulting merges were a delight to inspect: “once”, “upon”, “little”, and “ mommy” (with the leading space) were among the first merges learned.</p>
-
-<p>Two decisions mattered here. First, a small vocabulary: TinyStories uses simple English, so 8,192 tokens covers it well, and the embedding table shrinks to 4.2M parameters instead of the 25.7M that GPT-2’s vocabulary would cost. Second, training the tokenizer on the same corpus as the model: an off-the-shelf tokenizer wastes hundreds of vocabulary slots on tokens the corpus never uses.</p>
-
-<h2 id="stage-2-the-model">Stage 2: The Model</h2>
-
-<p>The model is a GPT-2-style decoder-only transformer, small enough to train quickly but complete enough that every mechanism from the <a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">attention post</a> is present. The core block is about 50 lines:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
-<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
-
-<span class="k">class</span> <span class="nc">Block</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">n_head</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">ln1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MultiheadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_head</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">ln2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">d_model</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="n">GELU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
-        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">ln1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">attn</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">need_weights</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">a</span>                       <span class="c1"># residual connection
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">ln2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>   <span class="c1"># residual connection
-</span>        <span class="k">return</span> <span class="n">x</span>
-</code></pre></div></div>
-
-<p>The full model stacks eight of these blocks between a token-plus-position embedding and a final LayerNorm with a tied output projection. Two implementation details bit me. First, the causal mask: <code class="language-plaintext highlighter-rouge">nn.MultiheadAttention</code> expects a boolean mask where <code class="language-plaintext highlighter-rouge">True</code> means “blocked”, so the mask is an upper-triangular matrix of <code class="language-plaintext highlighter-rouge">True</code> above the diagonal – getting this backwards lets the model cheat by looking at the future, and the loss drops suspiciously fast before you notice. Second, initialization: PyTorch’s defaults work, but scaling the residual-path projections down by 1/sqrt(2 * n_layer) (as GPT-2 does) noticeably stabilized the early loss curve.</p>
-
-<h2 id="stage-3-the-data-pipeline">Stage 3: The Data Pipeline</h2>
-
-<p>The data pipeline tokenizes the entire corpus once, concatenates it into a single token stream, and slices out random 256-token windows at every training step. The target sequence is the input sequence shifted by one position – the model learns to predict token t+1 from tokens 0..t at every position in parallel. That shift is the entire “dataset engineering” of GPT pretraining:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_batch</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">"cuda"</span><span class="p">):</span>
-    <span class="n">ix</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">-</span> <span class="n">ctx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,))</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tokens</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">ctx</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ix</span><span class="p">]).</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tokens</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">ctx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ix</span><span class="p">]).</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
-</code></pre></div></div>
-
-<p>With 64 sequences of 256 tokens per step, every optimizer step sees 16,384 tokens. Over 20,000 steps the model consumed about 330 million tokens – several passes over the TinyStories training split.</p>
-
-<h2 id="stage-4-the-training-loop">Stage 4: The Training Loop</h2>
-
-<p>The loop is the least glamorous and most instructive part:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">vocab_size</span><span class="o">=</span><span class="mi">8192</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">n_layer</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">n_head</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="mi">256</span><span class="p">).</span><span class="n">cuda</span><span class="p">()</span>
-<span class="n">opt</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">3e-4</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20_000</span><span class="p">):</span>
-    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">get_batch</span><span class="p">(</span><span class="n">train_tokens</span><span class="p">)</span>
-    <span class="n">lr</span> <span class="o">=</span> <span class="n">cosine_lr</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mf">3e-4</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="mf">3e-5</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="mi">20_000</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">opt</span><span class="p">.</span><span class="n">param_groups</span><span class="p">:</span>
-        <span class="n">g</span><span class="p">[</span><span class="s">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lr</span>
-
-    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="n">autocast</span><span class="p">(</span><span class="s">"cuda"</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">):</span>
-        <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">logits</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8192</span><span class="p">),</span> <span class="n">y</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-
-    <span class="n">opt</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
-    <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">utils</span><span class="p">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">opt</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">500</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"step </span><span class="si">{</span><span class="n">step</span><span class="si">:</span><span class="mi">6</span><span class="n">d</span><span class="si">}</span><span class="s">  loss </span><span class="si">{</span><span class="n">loss</span><span class="p">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="s">  lr </span><span class="si">{</span><span class="n">lr</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">e</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p>Every line earned its place. The warmup prevents early loss explosions when the AdamW second-moment estimates are garbage. Gradient clipping saved the run twice – around step 12,000 a single bad batch spiked the gradient norm to 40, and without clipping that one step would have poisoned the weights. bf16 autocast doubled throughput on the 4090 with zero visible effect on the loss curve. The cosine decay to a small nonzero floor produced the classic late-training improvement in the final 2,000 steps.</p>
-
-<h2 id="stage-5-generation">Stage 5: Generation</h2>
-
-<p>Generation reuses exactly the machinery from the <a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">sampling post</a>: forward pass, take the logits of the last position, divide by temperature, truncate with top-p, sample, append, repeat. At this scale there is no need for a KV-cache – a 256-token context recomputes in milliseconds – but adding one later is a satisfying exercise from the <a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">KV-cache post</a>.</p>
-
-<p>The checkpoint samples were the emotional payoff of the whole project. Watching “zj qw fjqp” become “the and of a to” become “the cat sat on the mat” become an actual story about a fox named Pip – that progression, more than any paper, is what taught me what pretraining actually does. The model never sees a labeled example of grammar. Syntax emerges purely because predicting the next token is easier when you know how sentences work.</p>
-
-<h2 id="what-it-actually-cost">What It Actually Cost</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Resource</th>
-      <th>Used</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>GPU</td>
-      <td>1x RTX 4090 (24 GB)</td>
-    </tr>
-    <tr>
-      <td>Training time</td>
-      <td>4.2 hours</td>
-    </tr>
-    <tr>
-      <td>Tokens seen</td>
-      <td>~330 million</td>
-    </tr>
-    <tr>
-      <td>Power and wear</td>
-      <td>~$2</td>
-    </tr>
-    <tr>
-      <td>Lines of code</td>
-      <td>~600</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The contrast with frontier training is the point: GPT-3 cost an estimated $4.6M in compute. My model is 6,000 times smaller and speaks only in children’s stories, but every mechanism – embeddings, attention, residuals, layernorm, AdamW, cosine schedules, sampling – is the same machinery. Scale adds capability; it does not add new principles.</p>
-
-<h2 id="lessons-learned">Lessons Learned</h2>
-
-<p><strong>The loss curve is the debugger.</strong> A plateau at 3.5 means something different from a plateau at 2.0. A sudden spike means a bad batch or an LR problem. A NaN after step 10,000 usually means missing gradient clipping. You learn to read the curve the way a mechanic learns to listen to an engine.</p>
-
-<p><strong>Data quality beats model size.</strong> TinyStories is synthetic, clean, and narrow – and that is exactly why a 30M model can master it. Doubling the model on noisy web text would have produced a worse result for more money.</p>
-
-<p><strong>Gradient clipping is not optional.</strong> It is two lines of code and it saved the run twice. Every untrained urge to skip it should be resisted.</p>
-
-<p><strong>Sanity checks catch bugs early.</strong> The ln(vocab) check at step 0, overfitting a single batch to near-zero loss, and generating text every 500 steps caught three separate bugs in one afternoon.</p>
-
-<p><strong>Small models teach big mechanics.</strong> Everything in this series – the attention math, the KV-cache tradeoff, the quantization formats, the sampling knobs – exists in this 600-line program. If you want to understand LLMs, building one at this scale is the highest-value weekend you can spend.</p>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/LLM-Tokenization-How-Text-Becomes-Numbers/">LLM Tokenization: How Text Becomes Numbers</a></li>
-  <li><a href="/LLM-Attention-Mechanism-Heart-of-Transformer/">LLM Attention Mechanism: The Heart of the Transformer</a></li>
-  <li><a href="/LLM-Decode-KV-Cache-GPU-VRAM-Deep-Dive/">LLM Decode: KV-Cache and GPU VRAM Deep Dive</a></li>
-  <li><a href="/LLM-Prompt-vs-Decode-Understanding-Two-Phases-Inference/">LLM Prompt vs Decode: Understanding the Two Phases of Inference</a></li>
-  <li><a href="/LLM-Training-Pipeline-Pretraining-SFT-RLHF/">LLM Training Pipeline: From Pretraining to RLHF and DPO</a></li>
-  <li><a href="/LLM-Quantization-FP16-INT8-INT4-GGUF-AWQ-GPTQ/">LLM Quantization: Running 70B Models on a Laptop with FP16, INT8, and INT4</a></li>
-  <li><a href="/LLM-Sampling-Decoding-Strategies-Temperature-TopK-TopP/">LLM Sampling and Decoding Strategies: Temperature, Top-k, Top-p, Min-p, and Beam Search</a></li>
-</ul>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ul>
-  <li><a href="https://github.com/karpathy/nanoGPT">nanoGPT by Andrej Karpathy</a> – the cleanest minimal GPT training implementation</li>
-  <li><a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories dataset</a> – the corpus used for this build</li>
-  <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (paper)</a> – the original transformer architecture</li>
-</ul>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Building an LLM from scratch is not about competing with anyone’s model. A 30M-parameter GPT trained on children’s stories will never answer your emails. What it gives you is something no amount of reading can: the moment a loss curve bends and random weights become grammar, you stop thinking of LLMs as magic and start thinking of them as machines. Every post in this series describes one component of that machine – but assembling all of them with your own hands is what makes the understanding permanent. If you have a GPU and a free afternoon, take the 600 lines and run them. The fox named Pip is waiting.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="PyTorch" /><category term="Transformer" /><category term="Tutorial" /><summary type="html"><![CDATA[A first-person account of building and training a small GPT from scratch in PyTorch: BPE tokenizer, transformer blocks, training loop, loss curves, and the lessons that only become obvious when every line of code is yours.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/llm-from-scratch/llm-from-scratch-journey.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/llm-from-scratch/llm-from-scratch-journey.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+<p>Traditional REST endpoints are not failing because REST is bad. They are failing because REST was designed for programs that know exactly what call they want to make, and AI agents do not. Agents discover tools at runtime, chain them across reasoning traces, share them across applications, and need more than endpoints – they need browsable data, reusable prompts, standardized auth, and a transport that works both locally and across the network. MCP packages those requirements into a single open protocol that replaces an N x M grid of custom connectors with an N + M star. It does not replace function calling; it sits above it, the same way USB sits above the electronics inside your laptop. If you are building agents that touch more than a couple of services, or publishing integrations that you want to work across Claude, Cursor, VS Code, and the dozens of MCP-compatible clients shipping this year, MCP is no longer early-adopter technology – it is the integration layer the ecosystem has already converged on.</p>]]></content><author><name>PyShine</name></author><category term="LLM" /><category term="MCP" /><category term="Agents" /><category term="API" /><category term="Tutorial" /><summary type="html"><![CDATA[Why REST APIs and raw function calling break down when you connect LLMs to dozens of services, and how Anthropic's open Model Context Protocol (MCP) replaces N x M custom glue code with a single N + M standard covering tools, resources, and prompts.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/mcp-vs-api/mcp-vs-api-comparison.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
