@@ -1,0 +1,2399 @@
+
+
+  <!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Theme initialization to prevent flash -->
+  <script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
+
+  <!-- Pinterest & Google verification -->
+  <meta name="p:domain_verify" content="fb68a8459fe32b8b072bcd5cc620d125"/>
+  <meta name="google-site-verification" content="WAkFPi5cvufClnQetgIl0STmvvwHhVf8jfyENFWhsxU" />
+  <meta name="google-site-verification" content="g2pFZlv-92XQD67BPgiVHsvZ4TZH13Ucvmmvvv36kU4" />
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>colibri: Run 744B MoE Models on Consumer Hardware in Pure C | PyShine</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="colibri: Run 744B MoE Models on Consumer Hardware in Pure C" />
+<meta name="author" content="PyShine" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Learn how colibri streams frontier Mixture-of-Experts models (744B to 2.8T parameters) from disk using a single C file, treating VRAM, RAM, and NVMe as one inference hierarchy with a JIT-for-weights approach." />
+<meta property="og:description" content="Learn how colibri streams frontier Mixture-of-Experts models (744B to 2.8T parameters) from disk using a single C file, treating VRAM, RAM, and NVMe as one inference hierarchy with a JIT-for-weights approach." />
+<link rel="canonical" href="https://pyshine.com/colibri-Run-744B-MoE-Models-Pure-C/" />
+<meta property="og:url" content="https://pyshine.com/colibri-Run-744B-MoE-Models-Pure-C/" />
+<meta property="og:site_name" content="PyShine" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-09-01T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="colibri: Run 744B MoE Models on Consumer Hardware in Pure C" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"PyShine"},"dateModified":"2026-09-01T00:00:00+00:00","datePublished":"2026-09-01T00:00:00+00:00","description":"Learn how colibri streams frontier Mixture-of-Experts models (744B to 2.8T parameters) from disk using a single C file, treating VRAM, RAM, and NVMe as one inference hierarchy with a JIT-for-weights approach.","headline":"colibri: Run 744B MoE Models on Consumer Hardware in Pure C","mainEntityOfPage":{"@type":"WebPage","@id":"https://pyshine.com/colibri-Run-744B-MoE-Models-Pure-C/"},"name":"{{ page.title escape }}","url":"https://pyshine.com/colibri-Run-744B-MoE-Models-Pure-C/"}</script>
+<!-- End Jekyll SEO tag -->
+  <!-- This will generate canonical link automatically -->
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="post">
+  <meta property="og:url" content="https://pyshine.com/colibri-Run-744B-MoE-Models-Pure-C/">
+  <meta property="og:title" content="colibri: Run 744B MoE Models on Consumer Hardware in Pure C">
+  <meta property="og:description" content="Learn how colibri streams frontier Mixture-of-Experts models (744B to 2.8T parameters) from disk using a single C file, treating VRAM, RAM, and NVMe as one i...">
+  <meta property="og:image" content="https://pyshine.com/assets/img/posts/pyshines.jpg">
+  <meta property="og:site_name" content="PyShine">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://pyshine.com/colibri-Run-744B-MoE-Models-Pure-C/">
+  <meta name="twitter:title" content="colibri: Run 744B MoE Models on Consumer Hardware in Pure C">
+  <meta name="twitter:description" content="Learn how colibri streams frontier Mixture-of-Experts models (744B to 2.8T parameters) from disk using a single C file, treating VRAM, RAM, and NVMe as one i...">
+  <meta name="twitter:image" content="https://pyshine.com/assets/img/posts/pyshines.jpg">
+
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="Im0K82YsmEDy08+6wyUIZA" async></script>
+
+  <!-- Favicon & App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icons/apple-touch-icon.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png?v=qA3OXqyw77">
+  <link rel="manifest" href="/assets/img/icons/manifest.json?v=qA3OXqyw77">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+
+  <!-- App & Theme Info -->
+  <meta name="apple-mobile-web-app-title" content="Sleek">
+  <meta name="application-name" content="Sleek">
+  <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77">
+  <meta name="theme-color" content="#ffffff">
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-TCVFBKF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-TCVFBKF');
+</script>
+
+  
+
+  <!-- Critical CSS Inline -->
+  <style class="inlineCSS">
+    /* Critical CSS - inlined by Jekyll at build time */
+    :root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --text-color: #343851;
+  --text-secondary: #5a5f7a;
+  --heading-color: #313237;
+  --link-color: #277cea;
+  --link-hover: #68a4f1;
+  --border-color: #dce6f0;
+  --card-bg: #ffffff;
+  --card-border: #ededed;
+  --code-bg: #f6f8fa;
+  --code-text: #25292e;
+  --header-bg: #ffffff;
+  --header-text: #000000;
+  --header-shadow: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #dbdbdb;
+  --input-text: #343851;
+  --button-bg: #222325;
+  --button-text: #ffffff;
+  --success-color: #8fd896;
+  --error-color: #ff6161;
+  --table-header-bg: #f5f5f5;
+  --table-row-hover: #f9f9f9;
+  --blockquote-bg: #f5f5f5;
+  --blockquote-border: #277cea;
+  --pre-bg: #f6f8fa;
+  --hr-color: #dce6f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --hero-bg: #dde5ea;
+  --hero-overlay: rgba(52, 56, 81, 0.8);
+  /* Syntax highlighting colors - VSCode Light+ theme */
+  --syntax-bg: #ffffff;
+  --syntax-text: #383a42;
+  --syntax-comment: #a0a1a7;
+  --syntax-keyword: #e45649;
+  --syntax-string: #50a14f;
+  --syntax-function: #4078f2;
+  --syntax-number: #986801;
+  --syntax-type: #c18401;
+  --syntax-operator: #0184bc;
+  --syntax-punctuation: #383a42;
+  --syntax-variable: #e06c75;
+  --syntax-constant: #986801;
+  --syntax-class: #c18401;
+  --syntax-regex: #50a14f;
+  --syntax-error: #e45649;
+  --syntax-warning: #c18401;
+  --syntax-diff-add: #50a14f;
+  --syntax-diff-del: #e45649;
+  --syntax-diff-add-bg: #e6ffed;
+  --syntax-diff-del-bg: #ffebe9;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.1);
+  /* Copy button colors - light theme */
+  --copy-btn-bg-start: #4facfe;
+  --copy-btn-bg-end: #00f2fe;
+  --copy-btn-border: #4facfe;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --copy-btn-hover-bg-start: #00f2fe;
+  --copy-btn-hover-bg-end: #4facfe;
+  --copy-btn-hover-border: #00f2fe;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --text-color: #ffffff;
+  --text-secondary: #8b949e;
+  --heading-color: #ffffff;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --border-color: #30363d;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --code-bg: #161b22;
+  --code-text: #ffffff;
+  --header-bg: #0d1117;
+  --header-text: #e6e6e6;
+  --header-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #0d1117;
+  --input-border: #30363d;
+  --input-text: #ffffff;
+  --button-bg: #21262d;
+  --button-text: #ffffff;
+  --success-color: #3fb950;
+  --error-color: #f85149;
+  --table-header-bg: #161b22;
+  --table-row-hover: #21262d;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #58a6ff;
+  --pre-bg: #161b22;
+  --hr-color: #30363d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hero-bg: #161b22;
+  --hero-overlay: rgba(13, 17, 23, 0.85);
+  /* Syntax highlighting colors - Night Owl theme */
+  --syntax-bg: #011627;
+  --syntax-text: #d6deeb;
+  --syntax-comment: #637777;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-function: #82aaff;
+  --syntax-number: #f78c6c;
+  --syntax-type: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-punctuation: #89ddff;
+  --syntax-variable: #f78c6c;
+  --syntax-constant: #f78c6c;
+  --syntax-class: #ffcb6b;
+  --syntax-regex: #c3e88d;
+  --syntax-error: #c792ea;
+  --syntax-warning: #ffcb6b;
+  --syntax-diff-add: #c3e88d;
+  --syntax-diff-del: #c792ea;
+  --syntax-diff-add-bg: #1e3a1e;
+  --syntax-diff-del-bg: #3a1e1e;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.05);
+  /* Copy button colors - dark theme */
+  --copy-btn-bg-start: #1f6feb;
+  --copy-btn-bg-end: #388bfd;
+  --copy-btn-border: #1f6feb;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --copy-btn-hover-bg-start: #388bfd;
+  --copy-btn-hover-bg-end: #1f6feb;
+  --copy-btn-hover-border: #58a6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] body {
+  background-color: #0d1117;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] a {
+  color: #58a6ff;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .post-content p,
+[data-theme="dark"] .post-content li,
+[data-theme="dark"] .post-content td,
+[data-theme="dark"] .post-content th,
+[data-theme="dark"] .post-content figure {
+  color: #ffffff !important;
+}
+
+/* Dark theme table styles */
+[data-theme="dark"] .post-content table {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table thead,
+[data-theme="dark"] .post-content table th {
+  background-color: #21262d;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table td {
+  background-color: #0d1117;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table tr:hover td {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .post-content code:not(.highlight code) {
+  color: #ffffff !important;
+  background-color: #30363d;
+}
+
+/* Ensure syntax tokens inside code blocks have no individual background */
+[data-theme="dark"] .highlight code,
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight span {
+  background-color: transparent;
+}
+
+/* Ensure syntax text color is applied in dark theme */
+[data-theme="dark"] .highlight {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight code {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .site {
+  background-color: #0d1117;
+}
+
+[data-theme="dark"] .blog {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-card {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .footer {
+  background-color: #161b22;
+  color: #8b949e;
+}
+
+/* Header dark theme */
+[data-theme="dark"] .header {
+  background: #0d1117 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__logo {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__logo:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__link,
+[data-theme="dark"] .header__dropdown-toggle {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__toggle span {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .header__links {
+  background: #0d1117;
+}
+
+[data-theme="dark"] .header__dropdown-menu {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__dropdown-item {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__dropdown-item:hover {
+  background: #21262d;
+}
+
+/* YouTube section dark theme */
+[data-theme="dark"] #youtube-video {
+  background: #161b22 !important;
+}
+
+/* Back to top button dark theme */
+[data-theme="dark"] .back-to-top {
+  background: #21262d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .back-to-top:hover {
+  background: #30363d;
+}
+
+/* Related posts dark theme */
+[data-theme="dark"] .related-posts {
+  border-top-color: #30363d;
+}
+
+[data-theme="dark"] .related-post-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .related-posts__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__excerpt {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .related-post-card__date {
+  color: #8b949e;
+}
+
+/* Link preview dark theme */
+[data-theme="dark"] .link-preview-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .link-preview-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .link-preview-description {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .link-preview-domain {
+  color: #8b949e;
+}
+
+/* Code header container for copy button positioning */
+.code-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.code-header .copy-btn {
+  position: relative;
+  z-index: 10;
+}
+
+  </style>
+
+  <!-- Main CSS -->
+  <link rel="preload" href="/assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/css/main.css"></noscript>
+
+  <script type="text/javascript">
+    /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+(function(w){"use strict";if(!w.loadCSS){w.loadCSS=function(){}}
+var rp=loadCSS.relpreload={};rp.support=(function(){var ret;try{ret=w.document.createElement("link").relList.supports("preload")}catch(e){ret=!1}
+return function(){return ret}})();rp.bindMediaToggle=function(link){var finalMedia=link.media||"all";function enableStylesheet(){link.media=finalMedia}
+if(link.addEventListener){link.addEventListener("load",enableStylesheet)}else if(link.attachEvent){link.attachEvent("onload",enableStylesheet)}
+setTimeout(function(){link.rel="stylesheet";link.media="only x"});setTimeout(enableStylesheet,3000)};rp.poly=function(){if(rp.support()){return}
+var links=w.document.getElementsByTagName("link");for(var i=0;i<links.length;i++){var link=links[i];if(link.rel==="preload"&&link.getAttribute("as")==="style"&&!link.getAttribute("data-loadcss")){link.setAttribute("data-loadcss",!0);rp.bindMediaToggle(link)}}};if(!rp.support()){rp.poly();var run=w.setInterval(rp.poly,500);if(w.addEventListener){w.addEventListener("load",function(){rp.poly();w.clearInterval(run)})}else if(w.attachEvent){w.attachEvent("onload",function(){rp.poly();w.clearInterval(run)})}}
+if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}
+else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this))
+
+  </script>
+
+  
+</head>
+
+
+  <!-- Zoomable SVG Viewer CSS -->
+  <link rel="stylesheet" href="/assets/css/svg-viewer.css">
+
+  <body class="site" itemscope itemtype="https://schema.org/WebPage">
+
+    
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCVFBKF"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager -->
+    
+
+    <header class="header"
+  itemscope
+  itemtype="http://schema.org/SiteNavigationElement"
+  aria-label="Main navigation">
+
+  <div class="container">
+    <div class="header__inner">
+
+      <!-- Logo -->
+      <a class="header__logo" href="/">
+        <div class="header__logo--container">
+          <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve">
+<g>
+	<path d="M18.121,9.88l-7.832-7.836c-0.155-0.158-0.428-0.155-0.584,0L1.842,9.913c-0.262,0.263-0.073,0.705,0.292,0.705h2.069v7.042c0,0.227,0.187,0.414,0.414,0.414h3.725c0.228,0,0.414-0.188,0.414-0.414v-3.313h2.483v3.313c0,0.227,0.187,0.414,0.413,0.414h3.726c0.229,0,0.414-0.188,0.414-0.414v-7.042h2.068h0.004C18.331,10.617,18.389,10.146,18.121,9.88 M14.963,17.245h-2.896v-3.313c0-0.229-0.186-0.415-0.414-0.415H8.342c-0.228,0-0.414,0.187-0.414,0.415v3.313H5.032v-6.628h9.931V17.245z M3.133,9.79l6.864-6.868l6.867,6.868H3.133z"></path>
+
+	
+	
+</g>
+</svg>
+
+        </div>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header__links">
+        <div class="header__links-wrapper">
+
+          
+            
+              <a class="header__link" href="/">
+                Home
+              </a>
+            
+          
+            
+              <a class="header__link" href="/categories">
+                Posts
+              </a>
+            
+          
+            
+              <a class="header__link" href="/all-posts/">
+                All Posts
+              </a>
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Tutorials
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/tutorials/">
+                    🔍 View All Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Rust-in-One-Post-Complete-Tutorial-Ownership-Borrow-Async-Quick-Start/">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-JavaScript-TypeScript-in-One-Post-Complete-Tutorial-Async-Types-Quick-Start/">
+                    JavaScript / TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Java-in-One-Post-Complete-Tutorial-OOP-Streams-Virtual-Threads-JVM-Quick-Start/">
+                    Java
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-CPP-in-One-Post-Complete-Tutorial-Modern-Cpp-Quick-Start/">
+                    C++
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-SQL-in-One-Post-Complete-Tutorial-Joins-Window-Functions-Transactions-Quick-Start/">
+                    SQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">
+                    Docker
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">
+                    Kubernetes
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Git-in-One-Post-Complete-Tutorial-Branches-Rebase-Workflows-Quick-Start/">
+                    Git
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/">
+                    Linux CLI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">
+                    REST API
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-GraphQL-in-One-Post-Complete-Tutorial-Schema-Queries-Mutations-Resolvers-Apollo-Quick-Start/">
+                    GraphQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-React-Next-js-in-One-Post-Complete-Tutorial-Components-Hooks-Server-Components-Quick-Start/">
+                    React / Next.js
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">
+                    FastAPI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">
+                    Deep Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">
+                    System Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Bash-in-One-Post-Complete-Tutorial-Pipelines-Functions-Scripts-Quick-Start/">
+                    Bash
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Regex-in-One-Post-Complete-Tutorial-Anchors-Quantifiers-Lookarounds-Quick-Start/">
+                    Regex
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Terraform-in-One-Post-Complete-Tutorial-HCL-State-Modules-Providers-Quick-Start/">
+                    Terraform
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Redis-in-One-Post-Complete-Tutorial-Data-Structures-Caching-Persistence-Quick-Start/">
+                    Redis
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-PostgreSQL-in-One-Post-Complete-Tutorial-Indexes-MVCC-Performance-Quick-Start/">
+                    PostgreSQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-gRPC-Protobuf-in-One-Post-Complete-Tutorial-Proto-Streaming-Interceptors-Quick-Start/">
+                    gRPC / Protobuf
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-WebSocket-in-One-Post-Complete-Tutorial-Handshake-Frames-Scaling-Quick-Start/">
+                    WebSocket
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Categories
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/">
+                    All Categories
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-developertools">
+                    Developer Tools
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-opensource">
+                    Open Source
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aiagents">
+                    AI Agents
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-python">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-machinelearning">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-typescript">
+                    TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-tutorial">
+                    Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-rust">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aidesign">
+                    AI Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-security">
+                    Security
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-devops">
+                    DevOps
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-go">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-webdevelopment">
+                    Web Development
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Applications
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/solar-map/">
+                    Solar Helper
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Clipboard-App-for-Two-PCs/">
+                    Clipboard App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo_correction">
+                    Online Photo Correction
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo">
+                    Online Passport Photo 20KB
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/finger.html">
+                    Online Fingers Scanner
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/avatars">
+                    Online Make Avatars
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/kanban/debounce.html">
+                    Online Reminder App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/converter.html">
+                    Online Image Resize
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/translator.html">
+                    Online Live Translator
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-sv.html">
+                    Procreate Swatch Viewer
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-bv.html">
+                    Procreate Brush Viewer
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Games
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/games/snake/">
+                    Snake Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/flappy-bird/">
+                    Flappy Bird
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/tetris/">
+                    Tetris
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/memory-match/">
+                    Memory Match
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/pong/">
+                    Pong
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/2048/">
+                    2048
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/battleship/">
+                    Battleship
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/go/">
+                    GO Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/chess/">
+                    Chess Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/copter/">
+                    Copter Game
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+              <a class="header__link" href="/about">
+                About
+              </a>
+            
+          
+            
+              <a class="header__link" href="/contact">
+                Contact
+              </a>
+            
+          
+            
+              <a class="header__link" href="/privacy">
+                Privacy Policy
+              </a>
+            
+          
+            
+              <a class="header__link" href="/disclaimer">
+                Disclaimer
+              </a>
+            
+          
+
+        </div>
+      </nav>
+
+      <!-- Language Switcher -->
+      
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <div class="header__toggle">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </div>
+
+<style>
+/* ==================================================
+   🔒 HEADER — ALWAYS VISIBLE, FULL WIDTH COLOR
+================================================== */
+.header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 10000;
+  background: var(--header-bg, #ffffff) !important;
+  box-shadow: 0 1px 3px var(--header-shadow, rgba(0, 0, 0, 0.1));
+  transform: none !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header__inner{
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body{
+  padding-top: 56px;
+}
+
+/* ===============================
+   NAV BASE
+=============================== */
+.header__links-wrapper{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  flex-wrap:nowrap;
+}
+
+.header__link,
+.header__dropdown-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color: var(--header-text);
+  white-space:nowrap;
+  padding:3px 6px;
+}
+
+/* ===============================
+   DROPDOWN
+=============================== */
+.header__dropdown{
+  position:relative;
+}
+
+.dropdown-arrow{
+  font-size:1em;
+  transition:transform .2s ease;
+}
+
+.header__dropdown:hover .dropdown-arrow{
+  transform:rotate(180deg);
+}
+
+.header__dropdown-menu{
+  position:absolute;
+  top:100%;
+  left:0;
+  min-width:200px;
+  background:var(--card-bg, #ffffff);
+  border:1px solid var(--border-color, #dce6f0);
+  border-radius:8px;
+  padding:4px 0;
+  display:none;
+  z-index:9999;
+  box-shadow:0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.header__dropdown:hover .header__dropdown-menu{
+  display:block;
+}
+
+.header__dropdown-item{
+  display:block;
+  padding:8px 14px;
+  color:var(--text-color, #343851);
+  text-decoration:none;
+  font-size:13px;
+  transition:background-color 0.2s ease;
+}
+
+.header__dropdown-item:hover{
+  background:var(--bg-secondary, #f9f9f9);
+}
+
+/* ===============================
+   MOBILE
+=============================== */
+@media (max-width:768px){
+
+  body{
+    padding-top: 56px;
+  }
+
+  .header__inner{
+    min-height: 56px;
+  }
+
+  .header__links-wrapper{
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+  }
+
+  .header__dropdown-toggle{
+    justify-content:space-between;
+    padding:12px 14px;
+  }
+
+  .header__dropdown-menu{
+    position:static;
+    display:none;
+    background:var(--card-bg, #ffffff);
+    border:none;
+  }
+
+  .header__dropdown:hover .header__dropdown-menu{
+    display:block;
+  }
+
+  .header__dropdown-item{
+    padding:12px 18px;
+    background:var(--card-bg, #ffffff);
+    border-top:1px solid var(--border-color, #dce6f0);
+    font-size:14px;
+  }
+}
+
+/* ===============================
+   LANGUAGE SWITCHER
+=============================== */
+.header__lang-switcher{
+  display:inline-flex;
+  gap:.4rem;
+  align-items:center;
+  font-size:1.1rem;
+  margin-left:0.5rem;
+}
+.lang-flag.active{ text-decoration:underline }
+.lang-flag.disabled{ opacity:.5; filter:grayscale(100%) }
+
+/* ===============================
+   THEME TOGGLE BUTTON
+=============================== */
+.theme-toggle {
+  background: rgba(79, 172, 254, 0.15);
+  border: 2px solid #4facfe;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-left: 0.5rem;
+  color: #4facfe;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.3);
+  border-color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(79, 172, 254, 0.2);
+  border: 2px solid #6fc3ff;
+  color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.35);
+  border-color: #8fd4ff;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+</style>
+
+<script>
+(function() {
+  /* Theme toggle - use addEventListener only, no onclick */
+  var themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+  
+  /* Dropdown functionality for mobile */
+  var dropdowns = document.querySelectorAll('.header__dropdown');
+  
+  dropdowns.forEach(function(dropdown) {
+    var toggle = dropdown.querySelector('.header__dropdown-toggle');
+    var menu = dropdown.querySelector('.header__dropdown-menu');
+    
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          var isOpen = menu.style.display === 'block';
+          document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+          menu.style.display = isOpen ? 'none' : 'block';
+          var arrow = toggle.querySelector('.dropdown-arrow');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && !e.target.closest('.header__dropdown')) {
+      document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.querySelectorAll('.dropdown-arrow').forEach(function(a) { a.style.transform = ''; });
+    }
+  });
+})();
+</script>
+</header>
+
+
+    
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="colibri: Run 744B MoE Models on Consumer Hardware in Pure C">
+    
+        <div class="hero__wrap">
+
+          
+            <div class="hero__categories">
+              
+            </div>
+          
+
+          <h1 class="hero__title" itemprop="headline">colibri: Run 744B MoE Models on Consumer Hardware in Pure C</h1>
+
+          <p class="hero__meta">
+            <time datetime="2026-09-01T00:00:00+00:00" itemprop="datePublished">
+              01 Sep 2026
+            </time>
+            &nbsp;·&nbsp;
+            
+            <span itemprop="timeRequired">
+              
+                16 mins read
+              
+            </span>
+          </p>
+        </div>
+      </div>
+
+    <main class="site__content" role="main">
+
+      <div class="container post-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="post-toc" id="post-toc">
+          <h3 class="no-toc">Contents</h3>
+          <nav id="toc-list"></nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <article class="post-content"
+                 itemprop="articleBody"
+                 itemscope itemtype="https://schema.org/Article">
+
+          <h1 id="colibri-run-744b-moe-models-on-consumer-hardware-in-pure-c">colibri: Run 744B MoE Models on Consumer Hardware in Pure C</h1>
+
+<p>Frontier language models with hundreds of billions of parameters are normally gated behind hyperscaler-class GPU clusters. A 744B-parameter Mixture-of-Experts model like GLM-5.2 is expected to require multiple H100s and hundreds of gigabytes of VRAM. <code class="language-plaintext highlighter-rouge">colibri</code>, an open-source project from JustVugg, challenges that assumption by running the same model on a laptop with 25 GB of RAM and no GPU. Not fast, but correct - and the architecture behind that feat is worth understanding.</p>
+
+<p>The core insight is structural. A 744B MoE model activates only about 40B parameters per token, and only about 11 GB of those change from token to token (the routed experts). The remaining 94.6% of experts sit idle for any given token. Colibri asks the obvious question: if most experts are not needed, why keep them all in memory? The engine treats VRAM, RAM, and NVMe as a single multitier inference hierarchy and streams experts from disk on demand, like a JIT compiler that only compiles the hot paths. The result is a pure-C engine with zero runtime dependencies that runs frontier models on hardware you already own.</p>
+
+<h2 id="project-overview">Project Overview</h2>
+
+<p>Colibri is released under the Apache 2.0 license and the current version is 1.10.1. The engine is a single C file (<code class="language-plaintext highlighter-rouge">c/colibri.c</code>) plus small headers, with no BLAS, no Python at runtime, and no GPU required.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Repository</td>
+      <td><code class="language-plaintext highlighter-rouge">JustVugg/colibri</code></td>
+    </tr>
+    <tr>
+      <td>License</td>
+      <td>Apache 2.0</td>
+    </tr>
+    <tr>
+      <td>Language</td>
+      <td>C (engine) + Python (converter / API gateway)</td>
+    </tr>
+    <tr>
+      <td>Version</td>
+      <td>1.10.1</td>
+    </tr>
+    <tr>
+      <td>Engine size</td>
+      <td>Single C file + small headers</td>
+    </tr>
+    <tr>
+      <td>Dependencies</td>
+      <td>gcc/clang + OpenMP (runtime); Python (converter only)</td>
+    </tr>
+    <tr>
+      <td>GPU required</td>
+      <td>No (CPU-only by default)</td>
+    </tr>
+    <tr>
+      <td>Model range</td>
+      <td>7B to 2.8T parameters</td>
+    </tr>
+    <tr>
+      <td>Stars</td>
+      <td>~26,500</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="the-overall-architecture">The Overall Architecture</h2>
+
+<p>The engine is organized around a central principle: placement only ever decides speed, never semantics. The router makes the same decisions and the weights keep the same precision whether an expert answered from VRAM, RAM, or disk. The architecture diagram below shows how the pieces fit together.</p>
+
+<p><img src="/assets/img/diagrams/colibri/colibri-architecture.svg" alt="colibri Overall Architecture" /></p>
+
+<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
+
+<p><strong>The Engine (<code class="language-plaintext highlighter-rouge">colibri.c</code>)</strong>
+The runtime engine is a single C file. No BLAS, no Python at runtime, no GPU required. Python is used only by the one-time model converter and the optional OpenAI-compatible API gateway. The engine links against OpenMP (<code class="language-plaintext highlighter-rouge">libgomp</code> on Linux) for CPU parallelism and nothing else at runtime.</p>
+
+<p><strong>Router</strong>
+For each token, the router picks 8 experts per layer across 75 layers (for GLM-5.2). The dense part - attention, shared experts, and embeddings - stays resident in RAM. Only the routed experts are candidates for streaming.</p>
+
+<p><strong>JIT for Weights</strong>
+This is the central metaphor. A compiler JIT never compiles the whole program - it watches what actually runs and compiles the hot paths just in time. Colibri makes the same bet about a 744B parameter space: parameters are not resident state to be held, they are data to be staged across a heterogeneous storage hierarchy exactly when the router proves they are needed. Measured routing heat drives a per-layer LRU cache, a learned pinned hot-store, and one-layer-ahead prefetch.</p>
+
+<p><strong>PILOT (Router-Lookahead Prefetch)</strong>
+A separate thread runs the router one layer ahead so that the next layer’s experts are prefetched while the current layer computes. Routing is measurably 71.6% predictable one layer ahead, which means most prefetches hit before the demand read.</p>
+
+<p><strong>PIPE (Async I/O Overlap)</strong>
+A bounded async I/O pool loads missing experts while resident ones compute. Batch-union reads ensure each unique expert is read only once per batch of positions, and each expert’s three matrices are stored adjacent and read in a single <code class="language-plaintext highlighter-rouge">pread</code>.</p>
+
+<p><strong>Backends</strong>
+The engine supports CPU (OpenMP), CUDA (with a resident pipeline that keeps the residual stream on-device across layers), Metal (Apple Silicon unified memory), and Vulkan (with MXFP4 decode and a second-device expert tier). The profitable combination depends on compute, bandwidth, residency, and workload - the engine does not force a single path.</p>
+
+<p><strong>Semantic Guarantee</strong>
+This is the design constraint that ties everything together: insufficient fast memory may reduce speed, but the default policy never silently changes model precision or router semantics. The output is identical whether an expert answered from VRAM or from disk.</p>
+
+<h2 id="the-per-token-path">The Per-Token Path</h2>
+
+<p>Every layer of every token walks the same five steps. The design goal is that placement only ever decides speed - the router’s decisions and the weights’ precision are the same whether an expert answered from VRAM or from disk.</p>
+
+<p><img src="/assets/img/diagrams/colibri/colibri-token-path.svg" alt="colibri Per-Token Path" /></p>
+
+<h3 id="the-five-steps">The Five Steps</h3>
+
+<p><strong>1. ROUTE</strong>
+The router picks 8 experts of 256 per layer. The dense part (attention, shared experts, embeddings - about 17B params) stays resident in RAM at int4 (about 9.9 GB). Only the routed expert indices are candidates for staging.</p>
+
+<p><strong>2. UNION</strong>
+Batch-union reads each unique expert once across all positions in the batch. If two positions in the same batch both need expert 142 in layer 37, that expert is read from disk exactly once, not twice. This is a critical optimization because disk reads are the bottleneck.</p>
+
+<p><strong>3. PLACE</strong>
+The per-layer LRU cache and the learned pinned hot-store decide which tier each expert lands in: VRAM (if a GPU is present and the expert is hot enough), RAM (LRU cache or pinned), or NVMe (stream on demand). The placement decision is driven by measured routing heat recorded in <code class="language-plaintext highlighter-rouge">.coli_usage</code>.</p>
+
+<p><strong>4. OVERLAP</strong>
+The PIPE async I/O pool loads missing experts while resident ones compute. The PILOT thread has already prefetched the next layer’s experts. The goal is simple: never wait for the disk twice. Readahead and demand reads hit the same drive (deterministic hash routing) so nothing is cached twice.</p>
+
+<p><strong>5. LEARN</strong>
+After compute, the engine records which experts your workload actually routed to (<code class="language-plaintext highlighter-rouge">.coli_usage</code>, updated every turn) and pins the hottest ones automatically. Colibri literally gets faster the more you use it - the learning cache is workload-specific and persistent across sessions.</p>
+
+<h2 id="the-three-tier-memory-hierarchy">The Three-Tier Memory Hierarchy</h2>
+
+<p>The heart of colibri is its treatment of VRAM, RAM, and NVMe as a single multitier hierarchy rather than three separate memory requirements. The same engine spans the whole range: on a 25 GB laptop everything streams from disk (slow but correct); on a large host the entire expert set becomes resident and disk drops out of the decode path entirely.</p>
+
+<p><img src="/assets/img/diagrams/colibri/colibri-memory-hierarchy.svg" alt="colibri Memory Hierarchy" /></p>
+
+<h3 id="how-the-tiers-work">How the Tiers Work</h3>
+
+<p><strong>Dense Part (always resident in RAM)</strong>
+The dense part - attention, shared experts, and embeddings - is about 17B parameters. At int4 precision, it occupies about 9.9 GB and stays resident in RAM for the entire session. This never streams from disk.</p>
+
+<p><strong>Routed Experts (19,456 total, streamed on demand)</strong>
+GLM-5.2 has 75 MoE layers with 256 routed experts each, plus the MTP head - 19,456 experts total. At int4, each expert is about 19 MB, so the full set is about 370 GB on disk. They are streamed on demand with a per-layer LRU cache, a learned pinned hot-store, and an optional VRAM tier.</p>
+
+<p><strong>VRAM Tier (optional)</strong>
+If you have a GPU, the hottest experts can live in VRAM for fastest access. On a 6x RTX 5090 host with 251 GB RAM, the entire expert set becomes resident (<code class="language-plaintext highlighter-rouge">CUDA_EXPERT_GB=auto PIN_GB=all</code>) and disk drops out of the decode path entirely - delivering 5.8 to 6.8 tok/s.</p>
+
+<p><strong>Dual-SSD Striping</strong>
+Decode is disk-bound on most machines, and expert reads are read-only. If you have a second SSD, you can put a full copy of the model on it and let the engine stream from both drives at once. Each expert is routed to one drive by a deterministic hash, weighted by the two drives’ measured bandwidth. The aggregate bandwidth is the sum of both drives - a 9 GB/s + 3 GB/s pair reads experts about 33% faster than the fast drive alone. The mirror is validated at startup, never written, and a read error falls back to the primary (degrades instead of crashing).</p>
+
+<p><strong>Learning Cache</strong>
+Between the tiers sits a learning cache: the engine records which experts your workload routes to (<code class="language-plaintext highlighter-rouge">.coli_usage</code>, updated every turn) and pins the hottest ones automatically. On multi-socket hosts, <code class="language-plaintext highlighter-rouge">COLI_NUMA=1</code> interleaves the resident weights across memory controllers.</p>
+
+<h3 id="the-semantic-guarantee">The Semantic Guarantee</h3>
+
+<p>This bears repeating because it is what distinguishes colibri from lossy quantization schemes: placement only ever decides speed. The router makes the same decisions whether an expert answered from VRAM or from disk. The weights have the same precision. The output is identical. If you cannot fit the model in fast memory, you get a slower model - not a different model.</p>
+
+<h2 id="supported-models-and-backends">Supported Models and Backends</h2>
+
+<p>Colibri supports eight model families today, each implemented as a single C file that shares the same <code class="language-plaintext highlighter-rouge">coli chat</code> / <code class="language-plaintext highlighter-rouge">coli serve</code> / <code class="language-plaintext highlighter-rouge">coli web</code> front end. The engine spans from 7B (OLMoE) to 2.8T (Kimi K3) parameters.</p>
+
+<p><img src="/assets/img/diagrams/colibri/colibri-models-backends.svg" alt="colibri Models and Backends" /></p>
+
+<h3 id="model-families">Model Families</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Parameters</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GLM-5.2</td>
+      <td>744B MoE</td>
+      <td>Flagship, int4 streaming, 19,456 experts</td>
+    </tr>
+    <tr>
+      <td>GLM-5.3-Flash</td>
+      <td>321B</td>
+      <td>With vision support</td>
+    </tr>
+    <tr>
+      <td>Inkling</td>
+      <td>975B MoE</td>
+      <td>CUDA tier with bf16 residents</td>
+    </tr>
+    <tr>
+      <td>Kimi K3</td>
+      <td>2.8T</td>
+      <td>Largest supported model</td>
+    </tr>
+    <tr>
+      <td>DeepSeek V4 Flash</td>
+      <td>284B</td>
+      <td>CUDA kernels as a tier, double-buffered prefetch</td>
+    </tr>
+    <tr>
+      <td>Qwen3.8-Flash-Next</td>
+      <td>125B + 51B</td>
+      <td>n-gram, with tools and vision</td>
+    </tr>
+    <tr>
+      <td>Qwen3.6</td>
+      <td>35B-A3B</td>
+      <td>Smaller MoE</td>
+    </tr>
+    <tr>
+      <td>OLMoE</td>
+      <td>7B</td>
+      <td>Smallest, good for testing</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="backends">Backends</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Backend</th>
+      <th>Platform</th>
+      <th>Key Feature</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CPU</td>
+      <td>All (OpenMP)</td>
+      <td>Portable, no GPU needed, default path</td>
+    </tr>
+    <tr>
+      <td>CUDA</td>
+      <td>NVIDIA</td>
+      <td>Resident pipeline (<code class="language-plaintext highlighter-rouge">COLI_CUDA_PIPE=2</code>), speculative expert kernels</td>
+    </tr>
+    <tr>
+      <td>Metal</td>
+      <td>Apple Silicon</td>
+      <td>Unified memory, batched expert math</td>
+    </tr>
+    <tr>
+      <td>Vulkan</td>
+      <td>Cross-platform</td>
+      <td>MXFP4 decode, second-device expert tier (<code class="language-plaintext highlighter-rouge">COLI_VK_DEV2</code>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="local-cluster-mode">Local Cluster Mode</h3>
+
+<p>For distributed inference, colibri includes a coordinator-worker cluster mode. The coordinator keeps token generation, routing, and KV state local while disk-backed expert workers execute routed FFNs on other machines. A layer’s routed batch-union is sent as one persistent TCP request, so a token does not incur one round trip per expert.</p>
+
+<h2 id="installation-and-quick-start">Installation and Quick Start</h2>
+
+<h3 id="option-1-prebuilt-binary-no-compiler-needed">Option 1: Prebuilt Binary (No Compiler Needed)</h3>
+
+<p>Prebuilt archives are published for Linux, macOS, and Windows on the <a href="https://github.com/JustVugg/colibri/releases">Releases page</a>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Linux</span>
+<span class="nb">mkdir </span>colibri <span class="o">&amp;&amp;</span> <span class="nb">tar </span>xzf colibri-v1.10.1-linux-x86_64.tar.gz <span class="nt">-C</span> colibri <span class="o">&amp;&amp;</span> <span class="nb">cd </span>colibri
+python3 coli info  <span class="c"># engine ready</span>
+</code></pre></div></div>
+
+<p>On Windows, download the zip, extract it, install Python 3, and run from PowerShell:</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$</span><span class="nn">env</span><span class="p">:</span><span class="nv">COLI_MODEL</span><span class="o">=</span><span class="s2">"drive:/path/to/model/folder/"</span><span class="w">
+</span><span class="n">py</span><span class="w"> </span><span class="o">.</span><span class="nx">/coli</span><span class="w"> </span><span class="nx">chat</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="option-2-build-from-source">Option 2: Build from Source</h3>
+
+<p>Building from source produces the fastest binary for your CPU (<code class="language-plaintext highlighter-rouge">ARCH=native</code> unlocks the vector instructions your chip actually has).</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Linux (Ubuntu/Debian)</span>
+<span class="nb">sudo </span>apt update
+<span class="nb">sudo </span>apt <span class="nb">install</span> <span class="nt">-y</span> build-essential git python3
+
+<span class="c"># macOS</span>
+xcode-select <span class="nt">--install</span>
+brew <span class="nb">install </span>libomp git python
+
+<span class="c"># Get the code and build</span>
+git clone https://github.com/JustVugg/colibri.git
+<span class="nb">cd </span>colibri/c
+./setup.sh
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">setup.sh</code> checks your compiler and OpenMP, builds the engine, and runs a self-test. When it prints <code class="language-plaintext highlighter-rouge">engine self-test: 32/32</code>, the engine is working correctly.</p>
+
+<h3 id="get-the-model">Get the Model</h3>
+
+<p>A pre-converted GLM-5.2 int4 container is available on HuggingFace. Use the group-scaled (gs64) container with int8 MTP heads - the older per-row int4 containers measure about 9pp worse on quality benchmarks, and plain int4 MTP heads collapse to near-zero draft acceptance.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Download the recommended group-scaled int4 model</span>
+<span class="c"># https://huggingface.co/mastouri/GLM-5.2-colibri-int4-g64-with-int8-mtp</span>
+
+<span class="c"># Or convert from FP8 shards yourself</span>
+pip <span class="nb">install </span>torch safetensors huggingface_hub numpy
+./coli convert <span class="nt">--model</span> /path/to/your/model/directory
+</code></pre></div></div>
+
+<p>The conversion downloads FP8 shards one by one, converts them to the int4 container format, and prepares the MTP head for speculative decoding. It is resumable and does not require the full 756 GB FP8 checkpoint to exist on disk at once.</p>
+
+<h2 id="usage">Usage</h2>
+
+<h3 id="interactive-chat">Interactive Chat</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">COLI_MODEL</span><span class="o">=</span>/path/to/glm52_i4 ./coli chat
+</code></pre></div></div>
+
+<p>The engine automatically detects RAM budget, expert cache, and MTP settings. On startup it prints the model, precision, and resident memory:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>colibri v1.10.1 - GLM-5.2 - 744B MoE - int4 - streaming CPU
+ready in 32s - resident 9.9 GB
+</code></pre></div></div>
+
+<h3 id="openai-compatible-api-server">OpenAI-Compatible API Server</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">COLI_MODEL</span><span class="o">=</span>/path/to/glm52_i4 <span class="nv">COLI_API_KEY</span><span class="o">=</span>local-secret ./coli serve <span class="se">\</span>
+  <span class="nt">--host</span> 127.0.0.1 <span class="nt">--port</span> 8000 <span class="nt">--model-id</span> glm-5.2-colibri
+</code></pre></div></div>
+
+<p>Query it with any OpenAI-compatible client:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl http://127.0.0.1:8000/v1/chat/completions <span class="se">\</span>
+  <span class="nt">-H</span> <span class="s1">'Authorization: Bearer local-secret'</span> <span class="se">\</span>
+  <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+  <span class="nt">-d</span> <span class="s1">'{
+    "model": "glm-5.2-colibri",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "stream": true
+  }'</span>
+</code></pre></div></div>
+
+<h3 id="web-dashboard">Web Dashboard</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./coli web
+</code></pre></div></div>
+
+<p>The web dashboard shows live token metrics, a per-turn time breakdown, the VRAM/RAM/disk tier bar, and a live “Brain” view where all 19,456 experts are displayed as a cortex - color is the storage tier, brightness is routing heat, and every expert routed in a turn flashes white.</p>
+
+<h3 id="dual-ssd-for-higher-bandwidth">Dual-SSD for Higher Bandwidth</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">COLI_MODEL</span><span class="o">=</span>/fast/glm52_i4 <span class="nv">COLI_MODEL_MIRROR</span><span class="o">=</span>/second/glm52_i4 ./coli chat
+</code></pre></div></div>
+
+<p>For a second drive that cannot hold the whole model, colibri can rank a partial mirror from the expert history it already learns:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./coli mirror plan  <span class="nt">--model</span> /fast/glm52_i4 <span class="nt">--mirror</span> /second/glm52_i4 <span class="nt">--budget-gib</span> 200 <span class="nt">--reserve-gib</span> 20
+./coli mirror stage <span class="nt">--model</span> /fast/glm52_i4 <span class="nt">--mirror</span> /second/glm52_i4 <span class="nt">--budget-gib</span> 200 <span class="nt">--reserve-gib</span> 20
+./coli mirror verify <span class="nt">--model</span> /fast/glm52_i4 <span class="nt">--mirror</span> /second/glm52_i4
+</code></pre></div></div>
+
+<h2 id="benchmark-numbers">Benchmark Numbers</h2>
+
+<p>All numbers are measured by the community, not estimated. The full table with hardware configs is in the <a href="https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md">project benchmarks page</a>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Machine</th>
+      <th>Speed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>6x RTX 5090, 251 GB RAM (full residency)</td>
+      <td>5.8 to 6.8 tok/s</td>
+    </tr>
+    <tr>
+      <td>Apple M5 Max, 128 GB unified, Metal backend</td>
+      <td>1.83 tok/s warm</td>
+    </tr>
+    <tr>
+      <td>Dell DGX Spark (Grace ARM), 121 GB</td>
+      <td>2.4 tok/s</td>
+    </tr>
+    <tr>
+      <td>128 GB CPU-only desktop</td>
+      <td>1.8 tok/s warm</td>
+    </tr>
+    <tr>
+      <td>Single RTX 5070 Ti laptop</td>
+      <td>1.07 tok/s</td>
+    </tr>
+    <tr>
+      <td>Ryzen 9 9950X, 123 GB, PCIe 5.0 NVMe</td>
+      <td>1.23 tok/s</td>
+    </tr>
+    <tr>
+      <td>Intel Core Ultra 7, 24 GB RAM, WSL2</td>
+      <td>0.07 to 0.11 tok/s</td>
+    </tr>
+    <tr>
+      <td>Dev box baseline: 12 cores, 25 GB RAM</td>
+      <td>0.05 to 0.1 tok/s cold</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The baseline (25 GB RAM, no GPU) is 0.05 to 0.1 tokens per second - roughly one word every 10 to 20 seconds. Slow, but it produces correct output from a 744B frontier model on hardware that costs less than a single H100 GPU fan.</p>
+
+<h2 id="advanced-features">Advanced Features</h2>
+
+<h3 id="speculative-decoding-mtp">Speculative Decoding (MTP)</h3>
+
+<p>GLM-5.2 has a native Multi-Token Prediction (MTP) head that can draft tokens for the main model to verify. Colibri ships this with two rules learned through hard experience: the MTP head must be int8 (int4 heads collapse to near-zero draft acceptance), and draft and verify must compute the same function. The result is 2.2 to 2.8 tokens per forward pass when speculation pays off. When acceptance does not repay verification, MTP can be disabled.</p>
+
+<h3 id="compressed-kv-state">Compressed KV State</h3>
+
+<p>MLA attention stores a compressed KV state - 576 floats per token instead of 32,768, which is 57x smaller. The KV state persists across restarts, so conversations reopen warm with zero re-prefill. Token-exact forward validation against a <code class="language-plaintext highlighter-rouge">transformers</code> oracle confirms 32/32 test tokens match exactly.</p>
+
+<h3 id="open-hypotheses">Open Hypotheses</h3>
+
+<p>Colibri treats an optimization as a hypothesis until a controlled end-to-end A/B shows otherwise. The project openly publishes what works, what might work, and what still needs testing - including negative results. This makes it both an inference engine and an open research platform for systems-level ML optimization.</p>
+
+<h2 id="why-colibri-matters">Why colibri Matters</h2>
+
+<p>Colibri matters for three reasons. First, accessibility: it democratizes access to frontier-class LLMs, allowing them to run on standard consumer machines. Second, engineering honesty: it never silently reduces quality - placement only decides speed, never semantics. Third, research openness: it treats optimizations as testable hypotheses and publishes negative results alongside positive ones.</p>
+
+<p>The engine is deliberately small enough that the next useful optimization can come from anyone willing to measure it. Not renting intelligence behind an API - holding it: probing it, measuring it, improving it. That philosophy, combined with the technical elegance of treating storage as a first-class citizen of the inference pipeline, makes colibri a project worth watching.</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p><strong>Engine exits at startup on a fresh machine</strong>
+The engine links <code class="language-plaintext highlighter-rouge">libgomp.so.1</code> at runtime. A host that has never had a compiler installed may not carry it. Install the runtime package alone: <code class="language-plaintext highlighter-rouge">sudo apt install -y libgomp1</code>. Run <code class="language-plaintext highlighter-rouge">./coli doctor</code> to diagnose missing dependencies.</p>
+
+<p><strong>MTP speculation not helping</strong>
+Make sure you have the int8 MTP heads, not the int4 ones. Plain int4 MTP heads collapse to near-zero draft acceptance. Use the group-scaled (gs64) container with int8 MTP heads, which also fixes the reasoning-loop and EOS-starvation failures seen with the older per-row int4 containers.</p>
+
+<p><strong>Slow decode on a laptop</strong>
+Decode is disk-bound on most machines. Use a fast NVMe SSD, enable dual-SSD striping if you have a second drive, and let the learning cache warm up by running representative prompts first. The engine gets faster the more you use it.</p>
+
+<p><strong>ARM64 Linux (Graviton, Raspberry Pi)</strong>
+There is no prebuilt ARM64 archive. Build from source - the engine is portable C with OpenMP and no x86-only intrinsics, so <code class="language-plaintext highlighter-rouge">./setup.sh</code> builds it on ARM64 without source changes or extra flags.</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://github.com/JustVugg/colibri">colibri GitHub repository</a></li>
+  <li><a href="https://justvugg.github.io/colibri">Project website</a></li>
+  <li><a href="https://github.com/JustVugg/colibri/blob/main/docs/quickstart.md">Quick Start guide</a></li>
+  <li><a href="https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md">Benchmark protocol</a></li>
+  <li><a href="https://github.com/JustVugg/colibri/blob/main/GPU_BACKENDS.md">GPU backends guide</a></li>
+  <li><a href="https://huggingface.co/mastouri/GLM-5.2-colibri-int4-g64-with-int8-mtp">Pre-converted GLM-5.2 int4 model (gs64)</a></li>
+</ul>
+
+
+          <!-- Follow.it CTA -->
+          <section class="follow-cta" aria-label="Follow for updates">
+  <div class="follow-cta-content">
+    <img src="/assets/img/formit.png" alt="Follow.it" class="follow-cta-icon">
+    <p class="follow-cta-text">
+      Enjoyed this post? <a href="https://follow.it/pyshine?leanpub" target="_blank" rel="noopener noreferrer">Never miss out on future posts by following us</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .follow-cta {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--bg-color, #f8f9fa);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .follow-cta:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .follow-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .follow-cta-icon {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  
+  .follow-cta-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
+  
+  .follow-cta-text a {
+    color: var(--link-color, #0066cc);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .follow-cta-text a:hover {
+    color: var(--link-hover-color, #004499);
+    text-decoration: none;
+  }
+  
+  @media (max-width: 480px) {
+    .follow-cta {
+      padding: 1.25rem;
+    }
+    
+    .follow-cta-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .follow-cta-icon {
+      width: 100px;
+      height: auto;
+    }
+    
+    .follow-cta-text {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Dark theme support */
+  [data-theme="dark"] .follow-cta,
+  body.dark-theme .follow-cta {
+    background: var(--bg-color, #1e1e1e);
+    border-color: var(--border-color, #333);
+  }
+  
+  [data-theme="dark"] .follow-cta-text,
+  body.dark-theme .follow-cta-text {
+    color: var(--text-color, #e0e0e0);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a,
+  body.dark-theme .follow-cta-text a {
+    color: var(--link-color, #66b3ff);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a:hover,
+  body.dark-theme .follow-cta-text a:hover {
+    color: var(--link-hover-color, #99ccff);
+  }
+</style>
+
+          <!-- Syntax Highlighting -->
+          <link href="/assets/css/syntax.css" rel="stylesheet">
+          <script src="/assets/scripts/copyCode.js" async></script>
+
+          <!-- Ads -->
+          <section aria-label="Advertisements" class="ads mt-4">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+                    crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2976211678184829"
+                 data-ad-slot="7658460605"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </section>
+
+        </article>
+
+      </div>
+
+      <!-- Post Navigation -->
+      <nav class="post-navigation controls__inner mt-5" aria-label="Post navigation">
+        <div class="controls__item prev">
+          
+            <span>Previous</span>
+            <a href="/MiniMind-Train-LLM-From-Scratch/" rel="prev">
+              MiniMind: Train a 64M-Parameter LLM F...
+            </a>
+          
+        </div>
+
+        <div class="controls__item next">
+          
+            <span>Next</span>
+            <a href="/pdf-inspector-Fast-Rust-PDF-Extraction/" rel="next">
+              pdf-inspector: Fast Rust PDF Classifi...
+            </a>
+          
+        </div>
+      </nav>
+
+      <!-- Related Posts -->
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        <section class="related-posts mt-5" aria-label="Related Posts">
+          <div class="container">
+            <h2 class="related-posts__title">Related Posts</h2>
+            <div class="related-posts__grid">
+              
+                <a class="related-post-card" href="/Catch2-Natural-Cpp-Testing-Framework/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="Catch2: The Natural C++ Testing Framework with Expression Decomposition"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Catch2: The Natural C++ Testing Framework with Expression...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Catch2: The Natural C++ Testing Framework with Expression Decomposition Testing C++ code should not feel...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Sep 01, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/MiniMind-Train-LLM-From-Scratch/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="MiniMind: Train a 64M-Parameter LLM From Scratch in 2 Hours"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">MiniMind: Train a 64M-Parameter LLM From Scratch in 2 Hours</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        MiniMind: Train a 64M-Parameter LLM From Scratch in 2 Hours Most introductions to large language...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Sep 01, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/pdf-inspector-Fast-Rust-PDF-Extraction/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="pdf-inspector: Fast Rust PDF Classification and Text Extraction"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">pdf-inspector: Fast Rust PDF Classification and Text Extr...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        # pdf-inspector: Fast Rust PDF Classification and Text Extraction PDFs are the lingua franca of...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Sep 01, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/abseil-cpp-Google-Foundation-Cpp-Libraries/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="abseil-cpp: Google's Foundation C++ Libraries for the Modern Standard"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">abseil-cpp: Google's Foundation C++ Libraries for the Mod...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        abseil-cpp: Google’s Foundation C++ Libraries for the Modern Standard When you use protobuf, gRPC, OpenTelemetry...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Aug 31, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/meshoptimizer-Mesh-Optimization-GPU-Rendering/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="meshoptimizer: Making 3D Meshes Smaller and Faster to Render"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">meshoptimizer: Making 3D Meshes Smaller and Faster to Render</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        meshoptimizer: Making 3D Meshes Smaller and Faster to Render Every time a GPU renders a...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Aug 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/yaml-cpp-YAML-Parser-Emitter-Cpp/">
+                  
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks_thumb.jpg" 
+                           alt="yaml-cpp: A Complete YAML 1.2 Parser and Emitter in C++"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">yaml-cpp: A Complete YAML 1.2 Parser and Emitter in C++</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        yaml-cpp: A Complete YAML 1.2 Parser and Emitter in C++ YAML is the configuration format...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Aug 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+            </div>
+          </div>
+        </section>
+      
+
+    </main>
+
+    <!-- YouTube Video Section -->
+    <section id="youtube-video" style="text-align:center; padding:30px 20px; background:var(--bg-secondary, #f8f8f8);">
+      <div class="container">
+        <div style="margin-top:10px;">
+          <a href="https://www.youtube.com/@pyshine_official/shorts"
+            target="_blank"
+            style="background:#ff0000; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 24 24">
+              <path fill="#FFF" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8z"/>
+              <path fill="#FF0000" d="M9.75 15.02v-6l6 3z"/>
+            </svg>
+            Watch PyShine on YouTube
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+  <div class="container">
+    <div class="footer__links" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+      <a href="/" style="color: #00A8E8; text-decoration: none;">Home</a>
+      <a href="/about/" style="color: #00A8E8; text-decoration: none;">About</a>
+      <a href="/contact/" style="color: #00A8E8; text-decoration: none;">Contact</a>
+      <a href="/games/" style="color: #00A8E8; text-decoration: none;">Games</a>
+      <a href="/solar-map/" style="color: #00A8E8; text-decoration: none;">Solar Map</a>
+      <a href="/Clipboard-App-for-Two-PCs/" style="color: #00A8E8; text-decoration: none;">Clipboard App</a>
+      <a href="/privacy/" style="color: #00A8E8; text-decoration: none;">Privacy</a>
+      <a href="/disclaimer/" style="color: #00A8E8; text-decoration: none;">Disclaimer</a>
+    </div>
+    <nav class="social">
+      
+        <a class="social__link" target="_blank" rel="noopener noreferrer" href="https://github.com/pyshine-labs">
+          <svg class="social__icon" viewBox="0 0 20 20" width="20px" height="20px"><path d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+        </a>
+      
+      
+      
+    </nav>
+    <span>&copy; 2026 PyShine. All rights reserved.</span>
+  </div>
+</footer>
+<script async src="/assets/js/bundle.js"></script>
+
+<script async>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function( registration ) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  }
+</script>
+
+
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Button -->
+    <button id="mobile-toc-btn" class="mobile-toc-btn" aria-label="Table of Contents">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Modal -->
+    <div id="mobile-toc-modal" class="mobile-toc-modal">
+      <div class="mobile-toc-content">
+        <div class="mobile-toc-header">
+          <h3>Contents</h3>
+          <button class="mobile-toc-close" aria-label="Close">&times;</button>
+        </div>
+        <ul id="mobile-toc-list" class="mobile-toc-list"></ul>
+      </div>
+    </div>
+
+    <!-- MathJax -->
+    
+
+
+    <!-- Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+            crossorigin="anonymous"></script>
+
+    <!-- SIDEBAR TOC SCRIPT -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toc = document.getElementById("toc-list");
+      const mobileTocList = document.getElementById("mobile-toc-list");
+      const headings = document.querySelectorAll(
+        ".post-content h2:not(.no-toc), .post-content h3:not(.no-toc)"
+      );
+      if ((!toc && !mobileTocList) || headings.length === 0) return;
+
+      const ul = document.createElement("ul");
+      const mobileUl = document.createElement("ul");
+      mobileUl.className = "mobile-toc-list";
+
+      headings.forEach(h => {
+        const id = h.id || h.textContent.trim().toLowerCase().replace(/\s+/g, "-");
+        h.id = id;
+
+        const li = document.createElement("li");
+        const mobileLi = document.createElement("li");
+        
+        if (h.tagName === "H3") {
+          li.style.marginLeft = "1rem";
+          mobileLi.setAttribute("data-level", "3");
+        }
+
+        li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        mobileLi.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        
+        ul.appendChild(li);
+        mobileUl.appendChild(mobileLi);
+      });
+      
+      if (toc) toc.appendChild(ul);
+      if (mobileTocList) mobileTocList.appendChild(mobileUl);
+
+      /* Mobile TOC Modal */
+      const mobileTocBtn = document.getElementById("mobile-toc-btn");
+      const mobileTocModal = document.getElementById("mobile-toc-modal");
+      const mobileTocClose = mobileTocModal ? mobileTocModal.querySelector(".mobile-toc-close") : null;
+
+      if (mobileTocBtn && mobileTocModal) {
+        mobileTocBtn.addEventListener("click", function() {
+          mobileTocModal.classList.add("active");
+        });
+
+        if (mobileTocClose) {
+          mobileTocClose.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        }
+
+        mobileTocModal.addEventListener("click", function(e) {
+          if (e.target === mobileTocModal) {
+            mobileTocModal.classList.remove("active");
+          }
+        });
+
+        mobileUl.querySelectorAll("a").forEach(function(link) {
+          link.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        });
+      }
+    });
+    </script>
+
+    <!-- Back to Top Button Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const backToTopButton = document.getElementById("back-to-top");
+      if (!backToTopButton) return;
+
+      /* Show button when scrolled down 300px */
+      window.addEventListener("scroll", function() {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("visible");
+        } else {
+          backToTopButton.classList.remove("visible");
+        }
+      });
+
+      /* Smooth scroll to top when clicked */
+      backToTopButton.addEventListener("click", function() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+    </script>
+
+    <style>
+      /* Center post navigation */
+      .post-navigation.controls__inner {
+        justify-content: center !important;
+        gap: 4rem;
+      }
+      /* Related Posts Styles */
+      .related-posts {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+      }
+      .related-posts .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      .related-posts__title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading-color, #000000);
+        text-align: center;
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .related-post-card {
+        display: block;
+        text-decoration: none;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .related-post-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-4px);
+      }
+      .related-post-card__image {
+        width: 100%;
+        height: 100px;
+        background: var(--bg-secondary, #f5f5f5);
+      }
+      .related-post-card__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .related-post-card__content {
+        padding: 0.75rem;
+      }
+      .related-post-card__title {
+        font-size: 0.95rem;
+        margin: 0 0 0.4rem 0;
+        color: var(--heading-color, #000000);
+        line-height: 1.3;
+        font-weight: 600;
+      }
+      .related-post-card__excerpt {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+      }
+      .related-post-card__date {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #999);
+      }
+      @media (max-width: 992px) {
+        .related-posts__grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .related-posts__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Back to Top Button Styles */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg, #000000);
+        color: var(--button-text, #ffffff);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 9999;
+      }
+      .back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .back-to-top:hover {
+        background: var(--text-color, #333333);
+        box-shadow: 0 6px 16px var(--shadow-color, rgba(0, 0, 0, 0.4));
+        transform: translateY(-2px);
+      }
+      .back-to-top:active {
+        transform: translateY(0);
+      }
+      @media (max-width: 768px) {
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
+      }
+      /* Link Preview Styles */
+      .link-preview-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .link-preview-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
+      }
+      .link-preview-link {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        text-decoration: none;
+        width: 100%;
+      }
+      .link-preview-image {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary, #f5f5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .link-preview-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .link-preview-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--heading-color, #000000);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-domain {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #999999);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .link-preview-domain::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--border-color, #e0e0e0);
+        border-radius: 50%;
+      }
+      @media (max-width: 600px) {
+        .link-preview-card {
+          flex-direction: column;
+        }
+        .link-preview-image {
+          width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <!-- Zoomable SVG Viewer JS -->
+    <script src="/assets/js/svg-viewer.js" defer></script>
+  </body>
+</html>
+
+
