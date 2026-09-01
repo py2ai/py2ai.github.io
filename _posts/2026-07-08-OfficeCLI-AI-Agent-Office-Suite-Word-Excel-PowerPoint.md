@@ -52,7 +52,7 @@ The three-layer access model — **L1 Read, L2 DOM, L3 Raw XML** — is central 
 
 The workflow by which an AI agent interacts with Office documents through OfficeCLI follows a consistent seven-step pattern that enables autonomous, self-correcting document generation.
 
-![OfficeCLI Workflow](/assets/img/diagrams/officecli/officecli-workflow.svg)
+![OfficeCLI Workflow](/assets/img/diagrams/officecli/officecli-render-loop.svg)
 
 The cycle begins with an **agent request** — a natural-language task from the user such as "create a Q4 report deck with five slides." The agent translates this into a **CLI command** (e.g., `officecli create deck.pptx` followed by a series of `add` commands). OfficeCLI **parses** the target document into a DOM tree and performs the requested **operation** — reading, editing, or automating at the appropriate layer. The agent then **renders and verifies** the result using `view html`, `view screenshot`, or `validate` — examining the output to check for layout issues, overflow, or schema violations. OfficeCLI **returns structured JSON** describing the result, and the **agent acts** on this feedback: if everything looks good, it delivers; if there are issues, it reads the error code and suggestion, corrects its command, and retries. This feedback loop — the self-healing workflow — is what allows agents to produce high-quality documents without human intervention.
 
@@ -62,7 +62,7 @@ The workflow operates differently per document type. For **Word**, the agent man
 
 OfficeCLI's feature set is broad — it aims for full parity with what a human power user can do in Microsoft Office, while exposing everything through a consistent CLI and JSON interface.
 
-![OfficeCLI Features](/assets/img/diagrams/officecli/officecli-features.svg)
+![OfficeCLI Features](/assets/img/diagrams/officecli/officecli-plugins.svg)
 
 **Word automation** covers paragraphs (with frame properties, tab stops, character-based indents), runs (underline colors, positioned half-points), tables (virtual column operations — add, remove, move, copy-from — and horizontal merges), styles, textboxes and shapes (rotation, text direction, gradients, shadows, opacity), headers and footers, images (PNG/JPG/GIF/SVG), equations via LaTeX input, Mermaid diagrams converted to native editable shapes or full-fidelity PNGs, comments, footnotes, watermarks, bookmarks, tables of contents, charts, hyperlinks, and sections. Notably, Word support includes full internationalization and right-to-left text: per-script font slots, per-script BCP-47 language tags, complex-script bold/italic/size, `direction=rtl` cascading through every level from document defaults down to individual runs, and locale-aware page numbering for Hindi, Arabic, Thai, and CJK scripts.
 
@@ -76,7 +76,7 @@ Beyond per-format features, OfficeCLI provides several cross-cutting capabilitie
 
 The document processing pipeline describes how a file flows through OfficeCLI from input to delivered output. Understanding this pipeline is key to building reliable agent workflows.
 
-![OfficeCLI Document Pipeline](/assets/img/diagrams/officecli/officecli-document-pipeline.svg)
+![OfficeCLI Document Pipeline](/assets/img/diagrams/officecli/officecli-sdk-pipeline.svg)
 
 The pipeline begins with an **input file** — a `.docx`, `.xlsx`, `.pptx`, or a template plus JSON data. OfficeCLI **parses** the file's OOXML package into an in-memory DOM tree, assigning every element a stable path (e.g., `/body/p[1]`, `/Sheet1/A1`, `/slide[1]/shape[2]`). The **AI agent analysis** phase follows: the agent uses L1 read commands (`view outline`, `view text`, `view annotated`, `get`, `query`) to understand the document's structure and content. If the task is read-only, the agent extracts structured JSON output and returns it to the user. If the task requires modification, the agent proceeds to the **modify** phase using L2 DOM operations (`add`, `set`, `remove`, `move`, `swap`) or L3 raw XML operations (`raw-set`, `add-part`), with batch mode available for multi-operation efficiency and merge for template filling.
 
