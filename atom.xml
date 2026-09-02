@@ -1,4 +1,258 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-01T23:53:20+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Catch2: The Natural C++ Testing Framework with Expression Decomposition</title><link href="https://pyshine.com/Catch2-Natural-Cpp-Testing-Framework/" rel="alternate" type="text/html" title="Catch2: The Natural C++ Testing Framework with Expression Decomposition" /><published>2026-09-01T00:00:00+00:00</published><updated>2026-09-01T00:00:00+00:00</updated><id>https://pyshine.com/Catch2-Natural-Cpp-Testing-Framework</id><content type="html" xml:base="https://pyshine.com/Catch2-Natural-Cpp-Testing-Framework/"><![CDATA[<h1 id="catch2-the-natural-c-testing-framework-with-expression-decomposition">Catch2: The Natural C++ Testing Framework with Expression Decomposition</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-02T00:55:01+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Unlimited OCR: Constant KV-Cache for One-Shot Long-Horizon Document Parsing</title><link href="https://pyshine.com/unlimited-ocr-constant-kv-cache-long-horizon-parsing/" rel="alternate" type="text/html" title="Unlimited OCR: Constant KV-Cache for One-Shot Long-Horizon Document Parsing" /><published>2026-09-02T00:00:00+00:00</published><updated>2026-09-02T00:00:00+00:00</updated><id>https://pyshine.com/Unlimited-OCR-Constant-KV-Cache-Long-Horizon-Parsing</id><content type="html" xml:base="https://pyshine.com/unlimited-ocr-constant-kv-cache-long-horizon-parsing/"><![CDATA[<h1 id="unlimited-ocr-constant-kv-cache-for-long-horizon-parsing">Unlimited OCR: Constant KV-Cache for Long-Horizon Parsing</h1>
+
+<p>End-to-end OCR models that use a large language model as the decoder have a well-known weakness: as the output sequence grows, the accumulated KV cache drives up memory consumption and progressively slows generation. Humans, by contrast, show no such decline in efficiency when copying long passages. Baidu’s <strong>Unlimited-OCR</strong> tackles this gap head-on with a single architectural change — <strong>Reference Sliding Window Attention (R-SWA)</strong> — that keeps the KV cache constant for the entire decoding process, allowing the model to transcribe dozens of pages in a single 32K-token forward pass.</p>
+
+<p><img src="/assets/img/diagrams/unlimited-ocr/ocr-architecture.svg" alt="Unlimited-OCR Overall Architecture" /></p>
+
+<h2 id="the-problem-linear-kv-cache-growth">The Problem: Linear KV-Cache Growth</h2>
+
+<p>When an LLM decoder generates text autoregressively, each new token appends its key-value pair to the KV cache. After N tokens the cache holds N entries. For short outputs this is fine, but document transcription routinely produces tens of thousands of tokens. The cache grows linearly, memory consumption rises, and generation slows — exactly the opposite of how a human copies text.</p>
+
+<h2 id="the-solution-reference-sliding-window-attention">The Solution: Reference Sliding Window Attention</h2>
+
+<p>Unlimited-OCR takes DeepSeek-OCR as its baseline and replaces <strong>all attention layers</strong> in the decoder with Reference Sliding Window Attention. R-SWA splits the attention context into two parts:</p>
+
+<ol>
+  <li><strong>Reference window</strong> — a fixed-size set of persistent reference tokens that are never evicted. These act as a stable “working memory” anchor.</li>
+  <li><strong>Sliding window</strong> — the most recent tokens, with older entries evicted in FIFO order once the window is full.</li>
+</ol>
+
+<p>Because the combined size of the reference window plus the sliding window is fixed, the KV cache stays constant for the entire decoding run — regardless of whether the output is 100 tokens or 32,000.</p>
+
+<p><img src="/assets/img/diagrams/unlimited-ocr/ocr-rswa-mechanism.svg" alt="R-SWA Mechanism" /></p>
+
+<p>The result is an attention mechanism whose memory footprint does not grow with output length. Speed stays stable, the model never runs out of memory mid-transcription, and a single 32K-token forward pass can cover dozens of document pages.</p>
+
+<p>Beyond OCR, R-SWA is a general-purpose parsing attention mechanism — it is equally applicable to ASR, translation, and other long-horizon generation tasks.</p>
+
+<h2 id="inference-two-configs-and-a-pdf-pipeline">Inference: Two Configs and a PDF Pipeline</h2>
+
+<p>Unlimited-OCR ships with two image configurations:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Config</th>
+      <th>base_size</th>
+      <th>image_size</th>
+      <th>crop_mode</th>
+      <th>Use case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>gundam</strong></td>
+      <td>1024</td>
+      <td>640</td>
+      <td>True</td>
+      <td>Single images needing fine detail (crop tiles)</td>
+    </tr>
+    <tr>
+      <td><strong>base</strong></td>
+      <td>1024</td>
+      <td>1024</td>
+      <td>False</td>
+      <td>Multi-page / PDF processing (full image)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Single images can use either config. Multi-page and PDF processing always use <strong>base</strong>.</p>
+
+<p>For PDFs, the pipeline is straightforward: PyMuPDF (<code class="language-plaintext highlighter-rouge">fitz</code>) converts each page to a PNG image at 300 DPI, then the model’s <code class="language-plaintext highlighter-rouge">infer_multi</code> method processes all page images in a single pass.</p>
+
+<p>A n-gram repetition prevention step (<code class="language-plaintext highlighter-rouge">no_repeat_ngram_size=35</code>) with a configurable window (128 for single images, 1024 for multi-page) suppresses the repetition loops that autoregressive decoders sometimes fall into during very long outputs.</p>
+
+<p><img src="/assets/img/diagrams/unlimited-ocr/ocr-inference-pipeline.svg" alt="Inference Pipeline" /></p>
+
+<h3 id="quick-start-with-transformers">Quick Start with Transformers</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+
+<span class="n">model_name</span> <span class="o">=</span> <span class="s">'baidu/Unlimited-OCR'</span>
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="p">,</span>
+    <span class="n">trust_remote_code</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">use_safetensors</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">torch_dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nb">eval</span><span class="p">().</span><span class="n">cuda</span><span class="p">()</span>
+
+<span class="c1"># Single image — gundam config
+</span><span class="n">model</span><span class="p">.</span><span class="n">infer</span><span class="p">(</span>
+    <span class="n">tokenizer</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="o">=</span><span class="s">'&lt;image&gt;document parsing.'</span><span class="p">,</span>
+    <span class="n">image_file</span><span class="o">=</span><span class="s">'your_image.jpg'</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s">'output/'</span><span class="p">,</span>
+    <span class="n">base_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">crop_mode</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">32768</span><span class="p">,</span>
+    <span class="n">no_repeat_ngram_size</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">ngram_window</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">save_results</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Multi-page — base config only
+</span><span class="n">model</span><span class="p">.</span><span class="n">infer_multi</span><span class="p">(</span>
+    <span class="n">tokenizer</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="o">=</span><span class="s">'&lt;image&gt;Multi page parsing.'</span><span class="p">,</span>
+    <span class="n">image_files</span><span class="o">=</span><span class="p">[</span><span class="s">'page1.png'</span><span class="p">,</span> <span class="s">'page2.png'</span><span class="p">,</span> <span class="s">'page3.png'</span><span class="p">],</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s">'output/'</span><span class="p">,</span>
+    <span class="n">image_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">32768</span><span class="p">,</span>
+    <span class="n">no_repeat_ngram_size</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">ngram_window</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">save_results</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="pdf-processing">PDF Processing</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">tempfile</span><span class="p">,</span> <span class="n">fitz</span>  <span class="c1"># PyMuPDF
+</span>
+<span class="k">def</span> <span class="nf">pdf_to_images</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">fitz</span><span class="p">.</span><span class="nb">open</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">)</span>
+    <span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="p">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s">'pdf_ocr_'</span><span class="p">)</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">fitz</span><span class="p">.</span><span class="n">Matrix</span><span class="p">(</span><span class="n">dpi</span> <span class="o">/</span> <span class="mi">72</span><span class="p">,</span> <span class="n">dpi</span> <span class="o">/</span> <span class="mi">72</span><span class="p">)</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">doc</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s">'page_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="mi">04</span><span class="n">d</span><span class="si">}</span><span class="s">.png'</span><span class="p">)</span>
+        <span class="n">page</span><span class="p">.</span><span class="n">get_pixmap</span><span class="p">(</span><span class="n">matrix</span><span class="o">=</span><span class="n">mat</span><span class="p">).</span><span class="n">save</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">paths</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+    <span class="n">doc</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">paths</span>
+
+<span class="n">model</span><span class="p">.</span><span class="n">infer_multi</span><span class="p">(</span>
+    <span class="n">tokenizer</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="o">=</span><span class="s">'&lt;image&gt;Multi page parsing.'</span><span class="p">,</span>
+    <span class="n">image_files</span><span class="o">=</span><span class="n">pdf_to_images</span><span class="p">(</span><span class="s">'your_doc.pdf'</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">),</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s">'output/'</span><span class="p">,</span>
+    <span class="n">image_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">max_length</span><span class="o">=</span><span class="mi">32768</span><span class="p">,</span>
+    <span class="n">no_repeat_ngram_size</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">ngram_window</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">save_results</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="three-deployment-backends">Three Deployment Backends</h2>
+
+<p>Unlimited-OCR can be served three ways, each targeting a different use case:</p>
+
+<p><img src="/assets/img/diagrams/unlimited-ocr/ocr-deployment-backends.svg" alt="Deployment Backends" /></p>
+
+<h3 id="1-huggingface-transformers-native">1. HuggingFace Transformers (Native)</h3>
+
+<p>The simplest path. Install the pinned dependencies (Python 3.12, CUDA 12.9, torch 2.10, transformers 4.57) and call <code class="language-plaintext highlighter-rouge">model.infer()</code> or <code class="language-plaintext highlighter-rouge">model.infer_multi()</code> directly on GPU. Best for development and prototyping.</p>
+
+<h3 id="2-vllm-production-serving">2. vLLM (Production Serving)</h3>
+
+<p>The vLLM community contributed official support with ready-to-use Docker images:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Default (CUDA 13.0)</span>
+docker pull vllm/vllm-openai:unlimited-ocr
+
+<span class="c"># For Hopper GPUs (CUDA 12.9)</span>
+docker pull vllm/vllm-openai:unlimited-ocr-cu129
+</code></pre></div></div>
+
+<p>The official recipe is at <a href="https://recipes.vllm.ai/baidu/Unlimited-OCR">recipes.vllm.ai/baidu/Unlimited-OCR</a>. Best for production deployments that need PagedAttention and an OpenAI-compatible API.</p>
+
+<h3 id="3-sglang-streaming--batch">3. SGLang (Streaming + Batch)</h3>
+
+<p>SGLang provides a streaming server with a custom logit processor for the n-gram repetition prevention:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> sglang.launch_server <span class="se">\</span>
+  <span class="nt">--model</span> baidu/Unlimited-OCR <span class="se">\</span>
+  <span class="nt">--served-model-name</span> Unlimited-OCR <span class="se">\</span>
+  <span class="nt">--attention-backend</span> fa3 <span class="se">\</span>
+  <span class="nt">--page-size</span> 1 <span class="se">\</span>
+  <span class="nt">--mem-fraction-static</span> 0.8 <span class="se">\</span>
+  <span class="nt">--context-length</span> 32768 <span class="se">\</span>
+  <span class="nt">--enable-custom-logit-processor</span> <span class="se">\</span>
+  <span class="nt">--disable-overlap-schedule</span> <span class="se">\</span>
+  <span class="nt">--skip-server-warmup</span> <span class="se">\</span>
+  <span class="nt">--host</span> 0.0.0.0 <span class="nt">--port</span> 10000
+</code></pre></div></div>
+
+<p>For batch inference, the included <code class="language-plaintext highlighter-rouge">infer.py</code> script starts the SGLang server automatically and sends concurrent requests:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Image directory</span>
+python infer.py <span class="nt">--image_dir</span> ./examples/images <span class="nt">--output_dir</span> ./outputs <span class="se">\</span>
+  <span class="nt">--concurrency</span> 8 <span class="nt">--image_mode</span> gundam
+
+<span class="c"># PDF pages</span>
+python infer.py <span class="nt">--pdf</span> ./examples/document.pdf <span class="nt">--output_dir</span> ./outputs <span class="se">\</span>
+  <span class="nt">--concurrency</span> 8 <span class="nt">--image_mode</span> gundam
+</code></pre></div></div>
+
+<h2 id="key-design-decisions">Key Design Decisions</h2>
+
+<p><strong>Why keep the reference window fixed?</strong> The reference tokens act as a stable anchor — a “working memory” of the document’s overall context. Without them, the model would lose sight of earlier pages when transcribing later ones. With them, page 50 can still reference the structure established on page 1.</p>
+
+<p><strong>Why replace ALL attention layers?</strong> Partial replacement would leave some layers with growing caches, defeating the purpose. By replacing every decoder attention layer with R-SWA, the entire pipeline maintains a constant memory footprint.</p>
+
+<p><strong>Why n-gram repetition prevention?</strong> Autoregressive decoders can enter repetition loops during very long generations, especially when the attention context is constrained. The <code class="language-plaintext highlighter-rouge">no_repeat_ngram_size=35</code> parameter bans any 35-gram from repeating within the configurable window, and the custom logit processor zeroes out the offending logits before sampling.</p>
+
+<p><strong>Why is R-SWA general-purpose?</strong> The constant-KV-cache property is not specific to OCR. Any task that requires long-horizon autoregressive generation — ASR transcription, long-form translation, code generation — benefits from a decoder whose memory does not grow with output length.</p>
+
+<h2 id="availability">Availability</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GitHub</td>
+      <td><a href="https://github.com/baidu/Unlimited-OCR">github.com/baidu/Unlimited-OCR</a></td>
+    </tr>
+    <tr>
+      <td>HuggingFace model</td>
+      <td><a href="https://huggingface.co/baidu/Unlimited-OCR">huggingface.co/baidu/Unlimited-OCR</a></td>
+    </tr>
+    <tr>
+      <td>HuggingFace Spaces demo</td>
+      <td><a href="https://huggingface.co/spaces/baidu/Unlimited-OCR">huggingface.co/spaces/baidu/Unlimited-OCR</a></td>
+    </tr>
+    <tr>
+      <td>arXiv paper</td>
+      <td><a href="https://arxiv.org/abs/2606.23050">arxiv.org/abs/2606.23050</a></td>
+    </tr>
+    <tr>
+      <td>ModelScope</td>
+      <td><a href="https://modelscope.cn/models/PaddlePaddle/Unlimited-OCR">modelscope.cn/models/PaddlePaddle/Unlimited-OCR</a></td>
+    </tr>
+    <tr>
+      <td>Baidu Cloud</td>
+      <td><a href="https://cloud.baidu.com/doc/OCR/s/fmr1p39gb">cloud.baidu.com/doc/OCR/s/fmr1p39gb</a></td>
+    </tr>
+    <tr>
+      <td>vLLM recipe</td>
+      <td><a href="https://recipes.vllm.ai/baidu/Unlimited-OCR">recipes.vllm.ai/baidu/Unlimited-OCR</a></td>
+    </tr>
+    <tr>
+      <td>License</td>
+      <td>MIT</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://github.com/deepseek-ai/DeepSeek-OCR">DeepSeek-OCR (baseline)</a> — the model Unlimited-OCR builds upon</li>
+  <li><a href="https://github.com/deepseek-ai/DeepSeek-OCR-2">DeepSeek-OCR-2</a> — the next iteration from DeepSeek</li>
+  <li><a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> — Baidu’s classic OCR toolkit</li>
+  <li><a href="https://github.com/modelscope/ms-swift">ms-swift</a> — community training support for Unlimited-OCR</li>
+  <li><a href="https://arxiv.org/pdf/2606.23050">Unlimited-OCR paper (PDF)</a></li>
+</ul>
+
+<h2 id="summary">Summary</h2>
+
+<p>Unlimited-OCR is a focused, single-idea contribution: replace the decoder’s attention with a mechanism whose KV cache does not grow. That one change unlocks long-horizon parsing that stays fast and memory-stable for the entire output — whether it is one page or fifty. The model is MIT-licensed, available on HuggingFace, and deployable via Transformers, vLLM, or SGLang.</p>]]></content><author><name>PyShine</name></author><category term="OCR" /><category term="Baidu" /><category term="DeepSeek" /><category term="R-SWA" /><category term="KV Cache" /><category term="Document Parsing" /><category term="LLM" /><summary type="html"><![CDATA[Baidu's Unlimited-OCR uses Reference Sliding Window Attention to keep the KV cache constant throughout decoding, enabling transcription of dozens of pages in a single 32K-token forward pass.]]></summary></entry><entry><title type="html">Catch2: The Natural C++ Testing Framework with Expression Decomposition</title><link href="https://pyshine.com/Catch2-Natural-Cpp-Testing-Framework/" rel="alternate" type="text/html" title="Catch2: The Natural C++ Testing Framework with Expression Decomposition" /><published>2026-09-01T00:00:00+00:00</published><updated>2026-09-01T00:00:00+00:00</updated><id>https://pyshine.com/Catch2-Natural-Cpp-Testing-Framework</id><content type="html" xml:base="https://pyshine.com/Catch2-Natural-Cpp-Testing-Framework/"><![CDATA[<h1 id="catch2-the-natural-c-testing-framework-with-expression-decomposition">Catch2: The Natural C++ Testing Framework with Expression Decomposition</h1>
 
 <p>Testing C++ code should not feel like writing boilerplate. Catch2, the second most popular C++ unit testing framework according to the 2022 JetBrains C++ ecosystem survey, is built on the principle that tests should be natural to write and easy to read. Test names are free-form strings, assertions use standard C++ boolean expressions (decomposed automatically for failure reporting), and sections provide a fixture-free way to share setup code. This post explores Catch2’s architecture through its test execution pipeline, section tree model, expression decomposition mechanism, and multi-reporter system.</p>
 
@@ -3649,110 +3903,4 @@ For devices that must never touch the network, the engine is fetched once on a c
   <li><a href="/Cognee-Open-Source-AI-Memory-Platform-Agents/">Cognee: Open Source AI Memory Platform for Agents</a></li>
   <li><a href="/TencentDB-Agent-Memory-Local-Long-Term-Memory-for-AI-Agents/">TencentDB Agent Memory: Local Long-Term Memory for AI Agents</a></li>
   <li><a href="/ZeroStack-Minimal-Rust-Coding-Agent-Memory-Performance/">ZeroStack: Minimal Rust Coding Agent for Memory Performance</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Machine Learning" /><category term="Edge AI" /><category term="Python" /><category term="Tutorial" /><summary type="html"><![CDATA[Needle 2 is a 45M-parameter tool-calling model compressed to a single 14MB binary that runs in 28MB of RAM. Built on Simple Attention Networks and Cactus Quants, it runs on phones, wearables, robots, and browsers.]]></summary></entry><entry><title type="html">dotnet/skills: Microsoft’s 80+ AI Agent Skills for .NET, C#, and MSBuild, Explained</title><link href="https://pyshine.com/dotnet-skills-Microsoft-AI-Agent-Skills-NET-CSharp-MSBuild/" rel="alternate" type="text/html" title="dotnet/skills: Microsoft’s 80+ AI Agent Skills for .NET, C#, and MSBuild, Explained" /><published>2026-08-23T00:00:00+00:00</published><updated>2026-08-23T00:00:00+00:00</updated><id>https://pyshine.com/dotnet-skills-Microsoft-AI-Agent-Skills-NET-CSharp-MSBuild</id><content type="html" xml:base="https://pyshine.com/dotnet-skills-Microsoft-AI-Agent-Skills-NET-CSharp-MSBuild/"><![CDATA[<p><img src="/assets/dotnet-skills/1_taxonomy.svg" alt="Plugin Taxonomy" /></p>
-
-<h1 id="dotnetskills-microsofts-80-ai-agent-skills-for-net-c-and-msbuild-explained">dotnet/skills: Microsoft’s 80+ AI Agent Skills for .NET, C#, and MSBuild, Explained</h1>
-
-<blockquote>
-  <p>When Microsoft’s .NET team decided to teach AI coding agents how to work with C#, MSBuild, Blazor, MAUI, and the entire .NET ecosystem, they did not write a single tutorial. Instead, they published <a href="https://github.com/dotnet/skills">dotnet/skills</a> — a curated marketplace of <strong>15 plugins, 80+ skills, and 13 custom agents</strong> that follow the open <a href="https://agentskills.io">agentskills.io</a> standard and work with Claude Code, Copilot CLI, Cursor, Codex CLI, and VS Code. At <strong>4,567 stars and +914 per week</strong>, it is the most comprehensive vendor-published agent skill repository on GitHub.</p>
-</blockquote>
-
-<p>Every .NET developer who has tried to get an AI coding agent to correctly run <code class="language-plaintext highlighter-rouge">dotnet test</code>, generate binary logs, scaffold a Blazor project, or diagnose a build performance problem knows the frustration of the agent hallucinating APIs, inventing MSBuild targets, or choosing the wrong render mode. The dotnet/skills repository solves this by giving agents <strong>domain-specific instructions</strong> — written and maintained by the actual .NET team — that tell the agent exactly which commands to run, which patterns to follow, and which anti-patterns to avoid. This post breaks down four architectural views of the repository: the <strong>plugin taxonomy and multi-platform support</strong>, the <strong>SKILL.md anatomy and description routing system</strong>, the <strong>SkillValidator A/B evaluation pipeline</strong> that scientifically measures whether each skill actually helps, and the <strong>multi-agent test generation pipeline</strong> that coordinates seven specialized agents to write comprehensive unit tests.</p>
-
-<hr />
-
-<h2 id="1-plugin-taxonomy-and-multi-platform-support-diagram-1">1. Plugin Taxonomy and Multi-Platform Support (Diagram 1)</h2>
-
-<p>The opening diagram maps the full repository structure. At the root sits a single MIT-licensed repository that conforms to the <a href="https://agentskills.io">agentskills.io</a> open standard for agent skills. The root node records the headline statistics: 4,567 stars, 15 plugins, 80+ skills, MIT license. From the root, fifteen color-coded plugin nodes fan out, each representing a distinct .NET technology domain.</p>
-
-<p>The <strong>dotnet</strong> base plugin (purple, v0.2.3) provides the foundation: a C# language server (LSP) integration that gives coding agents real-time type information, completions, and diagnostics as they edit C# files. The <code class="language-plaintext highlighter-rouge">lsp.json</code> configuration tells the agent runtime how to start the OmniSharp or C# Dev Kit LSP server and route its responses back into the agent’s context. The <code class="language-plaintext highlighter-rouge">setup-local-sdk</code> skill within this plugin handles the common “I need to install .NET SDK X.Y on this machine” request.</p>
-
-<p>The <strong>dotnet-advanced</strong> plugin handles specialized scenarios: C# scripting with <code class="language-plaintext highlighter-rouge">dotnet-script</code>, P/Invoke signatures for native interop, and other edge cases that standard .NET development rarely touches but that AI agents consistently get wrong without guidance. The <strong>dotnet-ai</strong> plugin (green) is particularly interesting — it covers technology selection (choosing between ML.NET, Semantic Kernel, and Azure AI), LLM integration patterns, RAG pipeline construction, MCP server usage, and classic ML with ML.NET. This is the plugin that teaches agents how to build AI features within .NET applications themselves.</p>
-
-<p>The <strong>dotnet-aspnetcore</strong> and <strong>dotnet-blazor</strong> plugins cover web development. The Blazor plugin alone ships 9 skills: <code class="language-plaintext highlighter-rouge">create-blazor-project</code> (which guides the agent through render mode selection — Static SSR, Interactive Server, Interactive WebAssembly, or Auto — based on a structured decision table), <code class="language-plaintext highlighter-rouge">author-component</code>, <code class="language-plaintext highlighter-rouge">collect-user-input</code>, <code class="language-plaintext highlighter-rouge">configure-auth</code>, <code class="language-plaintext highlighter-rouge">coordinate-components</code>, <code class="language-plaintext highlighter-rouge">fetch-and-send-data</code>, <code class="language-plaintext highlighter-rouge">plan-ui-change</code>, <code class="language-plaintext highlighter-rouge">support-prerendering</code>, and <code class="language-plaintext highlighter-rouge">use-js-interop</code>. Each skill contains a detailed <code class="language-plaintext highlighter-rouge">SKILL.md</code> file with frontmatter, decision rules, code examples, and anti-pattern warnings.</p>
-
-<p>The <strong>dotnet-msbuild</strong> plugin (gold, v0.1.8) is the deepest plugin with 14 skills and 3 custom agents. It includes <code class="language-plaintext highlighter-rouge">binlog-generation</code> (teaching agents to always add the <code class="language-plaintext highlighter-rouge">/bl:{}</code> flag for binary logging), <code class="language-plaintext highlighter-rouge">build-perf-diagnostics</code>, <code class="language-plaintext highlighter-rouge">msbuild-antipatterns</code>, <code class="language-plaintext highlighter-rouge">target-authoring</code>, <code class="language-plaintext highlighter-rouge">property-patterns</code>, and <code class="language-plaintext highlighter-rouge">incremental-build</code>. The plugin also ships an MCP server — the <code class="language-plaintext highlighter-rouge">binlog</code> MCP server — that gives the agent programmatic access to binary log analysis tools via <code class="language-plaintext highlighter-rouge">dotnet dnx Microsoft.AITools.BinlogMcp</code>. The three custom agents (<code class="language-plaintext highlighter-rouge">msbuild.agent.md</code>, <code class="language-plaintext highlighter-rouge">msbuild-code-review.agent.md</code>, <code class="language-plaintext highlighter-rouge">build-perf.agent.md</code>) are specialized sub-agents that can be invoked for specific MSBuild tasks.</p>
-
-<p>The <strong>dotnet-test</strong> plugin (green, 20 skills + 10 agents) is the largest by skill count. It includes test execution skills (<code class="language-plaintext highlighter-rouge">run-tests</code>, <code class="language-plaintext highlighter-rouge">filter-syntax</code>), test quality skills (<code class="language-plaintext highlighter-rouge">test-anti-patterns</code>, <code class="language-plaintext highlighter-rouge">crap-score</code>, <code class="language-plaintext highlighter-rouge">test-smell-detection</code>, <code class="language-plaintext highlighter-rouge">assertion-quality</code>), test generation skills (<code class="language-plaintext highlighter-rouge">code-testing-agent</code>, <code class="language-plaintext highlighter-rouge">code-testing-extensions</code>), and testability analysis skills (<code class="language-plaintext highlighter-rouge">find-untested-sources</code>, <code class="language-plaintext highlighter-rouge">test-gap-analysis</code>, <code class="language-plaintext highlighter-rouge">testability-obstacle</code>). The 10 custom agents form a coordinated pipeline — Researcher, Planner, Implementer, Tester, Linter, Fixer, Quality Auditor, and others — that work together to generate comprehensive test suites. Diagram 4 explores this pipeline in detail.</p>
-
-<p>The remaining plugins cover <strong>dotnet-maui</strong> (8 skills for cross-platform mobile/desktop), <strong>dotnet-diag</strong> (5 skills for crash symbolication, trace collection, dump analysis, microbenchmarking), <strong>dotnet-upgrade</strong> (AOT compatibility, thread abort migration), <strong>dotnet-nuget</strong> (Central Package Management conversion), <strong>dotnet-template-engine</strong>, <strong>dotnet-test-migration</strong> (framework migration orchestrator), and <strong>dotnet11</strong> (.NET 11-specific APIs like System.Text.Json changes).</p>
-
-<p>The five platform nodes at the right of Diagram 1 — Claude Code, Copilot CLI, Cursor, Codex CLI, and VS Code — illustrate the cross-platform deployment story. Each platform has its own plugin discovery mechanism: Claude Code uses <code class="language-plaintext highlighter-rouge">.claude-plugin/marketplace.json</code>, Codex CLI uses <code class="language-plaintext highlighter-rouge">.codex-plugin/plugin.json</code>, Cursor uses <code class="language-plaintext highlighter-rouge">.cursor-plugin/marketplace.json</code>, VS Code uses settings.json configuration, and GitHub Copilot uses <code class="language-plaintext highlighter-rouge">.github/plugin/marketplace.json</code>. The repository ships all five manifests, so the same skills work everywhere.</p>
-
-<hr />
-
-<p><img src="/assets/dotnet-skills/2_skill_anatomy.svg" alt="Skill Anatomy and Routing" /></p>
-
-<h2 id="2-skillmd-anatomy-and-description-routing-diagram-2">2. SKILL.md Anatomy and Description Routing (Diagram 2)</h2>
-
-<p>Diagram 2 reveals the internal anatomy of a single skill file and the runtime routing mechanism that decides which skill to activate for a given user request. The flow starts at the top with a user message — for example, “add unit tests for OrderProcessor class” — which enters the <strong>Agent Runtime</strong> node (purple). The runtime’s <strong>Description Router</strong> reads all available <code class="language-plaintext highlighter-rouge">SKILL.md</code> frontmatter <code class="language-plaintext highlighter-rouge">description</code> fields and semantically matches the user’s intent to the best skill.</p>
-
-<p>The <strong>SKILL.md</strong> node (violet) shows the file structure. Every skill file has two parts: a <strong>YAML frontmatter</strong> block delimited by <code class="language-plaintext highlighter-rouge">---</code> containing <code class="language-plaintext highlighter-rouge">name</code>, <code class="language-plaintext highlighter-rouge">description</code>, and <code class="language-plaintext highlighter-rouge">license</code> fields, followed by a <strong>Markdown body</strong> with structured sections. The <code class="language-plaintext highlighter-rouge">description</code> field is the most critical — it is what the description router reads to decide whether to activate this skill. Writing a good description is so important that the repository ships its own <code class="language-plaintext highlighter-rouge">create-skill</code> authoring skill (under <code class="language-plaintext highlighter-rouge">.agents/skills/</code>) with guidance on writing descriptions that the runtime will route to correctly.</p>
-
-<p>Consider the <code class="language-plaintext highlighter-rouge">code-testing-agent</code> skill’s description as captured in the repository:</p>
-
-<blockquote>
-  <p>Generate or add unit tests for existing code, from one function to a complete project-wide suite. ALWAYS USE when asked to “write unit tests”, “add tests”, “generate tests”, “cover this untested method”… Polyglot: C#/.NET, Python/pytest, TS/JS, Go, Rust, Java, Ruby. DO NOT USE for only running/diagnosing tests, analyzing a coverage report, auditing test quality, or answering an MSTest API question without writing tests.</p>
-</blockquote>
-
-<p>This description is a masterclass in skill authoring. It includes positive triggers (“ALWAYS USE when…”), negative exclusions (“DO NOT USE for…”), polyglot capability declaration, and edge case handling. The Description Router uses this text to route requests like “add unit tests” to <code class="language-plaintext highlighter-rouge">code-testing-agent</code> rather than to <code class="language-plaintext highlighter-rouge">run-tests</code> or <code class="language-plaintext highlighter-rouge">writing-mstest-tests</code>.</p>
-
-<p>The five green routing example nodes show how different user intents map to different skills: “dotnet test –filter” routes to <code class="language-plaintext highlighter-rouge">run-tests</code> and <code class="language-plaintext highlighter-rouge">filter-syntax</code>; “dotnet build with bl flag” routes to <code class="language-plaintext highlighter-rouge">binlog-generation</code>; “create new Blazor app” routes to <code class="language-plaintext highlighter-rouge">create-blazor-project</code>; “add unit tests” routes to <code class="language-plaintext highlighter-rouge">code-testing-agent</code>; and “optimize EF query” routes to the EF Core optimization skill. Each routing decision happens automatically based on the semantic similarity between the user’s request and the skill descriptions.</p>
-
-<p>The <strong>Skill Execution</strong> node (green, bottom) shows what happens after routing. The agent loads the full SKILL.md body and follows its instructions — creating <code class="language-plaintext highlighter-rouge">.testagent/</code> directory artifacts, executing the Research-Plan-Implement pipeline, and finishing with a compact Requirement-Evidence table where each requested behavior cites an exact test name and validation rows cite the successful command.</p>
-
-<hr />
-
-<p><img src="/assets/dotnet-skills/3_validator_pipeline.svg" alt="SkillValidator Pipeline" /></p>
-
-<h2 id="3-skillvalidator-scientific-ab-evaluation-pipeline-diagram-3">3. SkillValidator: Scientific A/B Evaluation Pipeline (Diagram 3)</h2>
-
-<p>Diagram 3 reveals what makes dotnet/skills genuinely exceptional among agent skill repositories: the <a href="https://github.com/dotnet/skills/tree/main/eng/skill-validator">SkillValidator</a> tool. Most skill repositories on GitHub are just folders of markdown files. dotnet/skills ships a complete .NET application — written in C#, AOT-compiled, distributed as both a NuGet package and self-contained <code class="language-plaintext highlighter-rouge">.tar.gz</code> archives — that scientifically measures whether each skill actually improves agent performance.</p>
-
-<p>The pipeline starts at the left with the <strong>Input</strong> node: a <code class="language-plaintext highlighter-rouge">SKILL.md</code> file plus its companion <code class="language-plaintext highlighter-rouge">tests/eval.yaml</code> file. The eval.yaml follows the Vally schema with <code class="language-plaintext highlighter-rouge">stimuli:</code> (the test prompts), <code class="language-plaintext highlighter-rouge">graders:</code> (the evaluation criteria), and <code class="language-plaintext highlighter-rouge">defaults:</code> (configuration). The SkillValidator discovers these files by scanning directories for <code class="language-plaintext highlighter-rouge">SKILL.md</code> markers and parsing their frontmatter.</p>
-
-<p>The evaluation runs as a controlled experiment. Step <strong>2a — Baseline Run</strong> (red) runs the agent <strong>without</strong> the skill loaded on every eval scenario, collecting metrics: token usage, tool call count, execution time, errors, and task completion status. Step <strong>2b — Treatment Run</strong> (green) runs the same agent <strong>with</strong> the skill loaded on the same scenarios, collecting identical metrics. This A/B design isolates the skill’s causal effect — any performance difference between baseline and treatment is attributable to the skill itself.</p>
-
-<p>Step <strong>3 — Pairwise LLM Judge</strong> (blue) is where the evaluation gets sophisticated. Rather than using a simple score-based metric, SkillValidator uses an LLM as a pairwise comparative judge. The judge sees both the baseline output and the treatment output side-by-side and decides which is better. To mitigate position bias (the tendency for LLMs to prefer whichever output appears first), the judge runs each comparison twice with the outputs swapped, and the final verdict only counts if both runs agree. This technique, called position-swap bias mitigation, is borrowed from the LMSYS Chatbot Arena methodology.</p>
-
-<p>Step <strong>4 — Bootstrap Confidence Intervals</strong> (amber) adds statistical rigor. SkillValidator runs the full evaluation multiple times and uses bootstrapping to compute 95% confidence intervals on the improvement percentage. This prevents false positives where a skill appears to help but the improvement is within noise. The <code class="language-plaintext highlighter-rouge">--runs</code> flag controls how many repetitions to use; the repository’s own CI uses 5 runs by default.</p>
-
-<p>Step <strong>5 — Verdict</strong> (dark, right) produces the final report: whether the skill is worth keeping (yes/no), the improvement percentage, token efficiency delta, and full results saved to <code class="language-plaintext highlighter-rouge">.skill-validator-results/</code> as both JSON and markdown. The verdict feeds directly into the CI pipeline: the <code class="language-plaintext highlighter-rouge">evaluation.yml</code> GitHub Actions workflow runs SkillValidator on every PR that modifies a skill, and blocks PRs that regress the skill quality score below the configured threshold. The live dashboard at <a href="https://dotnet.github.io/skills/">dotnet.github.io/skills/</a> publishes accuracy and efficiency scoring trends for every contained plugin, so contributors can track whether their skills are improving or degrading over time.</p>
-
-<p>The SkillValidator also includes an <code class="language-plaintext highlighter-rouge">overfitting</code> detection mode that checks whether a skill is gaming the eval rather than genuinely helping — for example, by hardcoding answers to specific eval scenarios. The OverfittingJudge compares skill performance on eval scenarios versus held-out scenarios, and flags skills where the gap is suspiciously large. The <code class="language-plaintext highlighter-rouge">check</code> subcommand provides static analysis (no LLM required) that scans skills for external dependencies, reference issues, and structural problems before any evaluation runs.</p>
-
-<hr />
-
-<p><img src="/assets/dotnet-skills/4_test_pipeline.svg" alt="Multi-Agent Test Pipeline" /></p>
-
-<h2 id="4-multi-agent-test-generation-pipeline-diagram-4">4. Multi-Agent Test Generation Pipeline (Diagram 4)</h2>
-
-<p>Diagram 4 zooms into the <code class="language-plaintext highlighter-rouge">code-testing-agent</code> skill — the most complex skill in the repository — to show how it coordinates multiple specialized agents in a Research-Plan-Implement pipeline. This is not a single prompt; it is a full multi-agent system with state management, phase gates, and quality review.</p>
-
-<p>The pipeline starts when the <strong>code-testing-agent skill</strong> is activated by a user request like “add tests for OrderProcessor.” The skill first classifies scope: if the request is <strong>Broad</strong> (project-wide suite, multiple files/modules), the full multi-agent pipeline runs with <code class="language-plaintext highlighter-rouge">.testagent/</code> directory artifacts. If <strong>Focused</strong> (one function/class/file), the pipeline is skipped in favor of direct test writing.</p>
-
-<p>The <strong>Test Generator coordinator</strong> (dark node) manages pipeline state and creates the <code class="language-plaintext highlighter-rouge">.testagent/</code> working directory with three artifact files: <code class="language-plaintext highlighter-rouge">research.md</code>, <code class="language-plaintext highlighter-rouge">plan.md</code>, and <code class="language-plaintext highlighter-rouge">status.md</code>. These files persist across agent invocations, so if the conversation is interrupted and resumed, the coordinator can read <code class="language-plaintext highlighter-rouge">status.md</code> to determine which phase to continue from.</p>
-
-<p><strong>Phase 1 — Researcher Agent</strong> (violet) analyzes the codebase structure, finds untested sources, identifies existing test patterns and conventions, and maps coverage gaps. It writes its findings to <code class="language-plaintext highlighter-rouge">.testagent/research.md</code>. This phase is critical because the alternative — having a single agent try to understand the codebase and write tests simultaneously — consistently produces tests that don’t match project conventions or miss important code paths.</p>
-
-<p><strong>Phase 2 — Planner Agent</strong> (blue) reads the research findings and creates a phased test plan, prioritizing by risk (which untested code is most likely to break), estimating effort per module, and writing the plan to <code class="language-plaintext highlighter-rouge">.testagent/plan.md</code>. The plan is not just a list of files; it includes which test patterns to use for each module, which MSTest or xUnit features to leverage, and which test anti-patterns to avoid.</p>
-
-<p><strong>Phase 3 — Implementer Agent</strong> (green) writes tests per the plan, following project conventions (SDK-style vs packages.config, explicit Compile registration, sparse workspaces). The Implementer handles the full polyglot range: C#/.NET, Python/pytest, TypeScript/JavaScript, Go, Rust, Java, and Ruby. It compiles and runs tests before declaring a phase complete.</p>
-
-<p>Four <strong>supporting agents</strong> (amber, indigo, pink, cyan) orbit the Implementer. The <strong>Tester</strong> runs the narrowest relevant test command and validates a clean exit. The <strong>Linter</strong> checks test quality and detects test anti-patterns using the <code class="language-plaintext highlighter-rouge">test-anti-patterns</code> and <code class="language-plaintext highlighter-rouge">test-smell-detection</code> skills. The <strong>Fixer</strong> fixes failing tests and compilation errors. The <strong>Quality Auditor</strong> reviews test smells, runs CRAP score analysis, and performs testability migration assessment using the <code class="language-plaintext highlighter-rouge">testability-migration.agent.md</code> agent.</p>
-
-<p>The pipeline terminates with the <strong>Output</strong> node (dark, bottom): a <code class="language-plaintext highlighter-rouge">.testagent/status.md</code> file containing a Requirement-Evidence table where each requested behavior cites an exact test name (e.g., <code class="language-plaintext highlighter-rouge">OrderProcessor_CalculateTotal_ValidItems_ReturnsCorrectAmount</code>) and validation rows cite the successful command (e.g., <code class="language-plaintext highlighter-rouge">dotnet test --filter Category=OrderProcessor --exit-code 0</code>). This table is the skill’s proof of work — the user can verify that every requested behavior has a corresponding passing test.</p>
-
-<hr />
-
-<h2 id="5-what-this-means-for-net-developers-and-ai-agent-builders">5. What This Means for .NET Developers and AI Agent Builders</h2>
-
-<p>Three takeaways emerge from studying the dotnet/skills repository:</p>
-
-<p><strong>First: Vendor-authored agent skills are the new API documentation.</strong> Traditional XML doc comments and MSDN pages tell developers <em>what</em> an API does. Agent skills tell the AI agent <em>how to use</em> the API in context — which render mode to choose, which MSBuild switch to add, which test pattern to follow. If you are a .NET developer using AI coding agents, installing these skills (via <code class="language-plaintext highlighter-rouge">/plugin marketplace add dotnet/skills</code>) is the single highest-ROI action you can take. Your agent will stop hallucinating APIs and start following .NET team best practices.</p>
-
-<p><strong>Second: The SkillValidator is a blueprint for any team building agent skills.</strong> The A/B evaluation methodology — baseline without skill, treatment with skill, pairwise LLM judge with position-swap mitigation, bootstrap confidence intervals, overfitting detection — is directly applicable to any agent skill repository, whether you are building skills for Python, Rust, or domain-specific tools. The <a href="https://github.com/dotnet/skills/tree/main/eng/skill-validator/src">skill-validator source code</a> is open and well-documented, with separate <code class="language-plaintext highlighter-rouge">Check</code>, <code class="language-plaintext highlighter-rouge">Evaluate</code>, <code class="language-plaintext highlighter-rouge">Consolidate</code>, and <code class="language-plaintext highlighter-rouge">Rejudge</code> subcommands.</p>
-
-<p><strong>Third: Multi-agent coordination with persisted state is the pattern for complex coding tasks.</strong> The Research-Plan-Implement pipeline with <code class="language-plaintext highlighter-rouge">.testagent/</code> state files is not specific to test generation. The same pattern — a coordinator managing specialized sub-agents with phase gates and artifact files — applies to any complex coding task: refactoring, migration, performance optimization, security review. The key insight is that breaking the task into phases with persisted state between them produces dramatically better results than a single monolithic agent invocation.</p>
-
-<p>Whether you are a .NET developer looking to supercharge your AI coding agent, an ML engineer building agent skills for your own domain, or simply curious about how Microsoft’s .NET team approaches AI-assisted development, <a href="https://github.com/dotnet/skills">dotnet/skills</a> is one of the most instructive open-source repositories of 2026. Browse the <a href="https://github.com/dotnet/skills/tree/main/plugins">plugin directory</a>, read a few <code class="language-plaintext highlighter-rouge">SKILL.md</code> files, and try installing one in your coding agent of choice — you will immediately notice the difference.</p>]]></content><author><name>PyShine</name></author><category term="dotnet-skills" /><category term="AI-Agents" /><category term="Agent-Skills" /><category term="CSharp" /><category term=".NET" /><category term="MSBuild" /><category term="Blazor" /><category term="MAUI" /><category term="Copilot" /><category term="Claude-Code" /><category term="Skill-Validator" /><summary type="html"><![CDATA[Microsoft's dotnet/skills repository ships 15 plugins with 80+ skills and 13 custom agents that teach Claude Code, Copilot CLI, Cursor, and Codex CLI how to build, test, debug, and upgrade .NET applications. Here is the plugin taxonomy, SKILL.md anatomy, the SkillValidator A/B evaluation pipeline, and the multi-agent test generation pipeline.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/dotnet-skills/1_taxonomy.svg" /><media:content medium="image" url="https://pyshine.com/assets/dotnet-skills/1_taxonomy.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Machine Learning" /><category term="Edge AI" /><category term="Python" /><category term="Tutorial" /><summary type="html"><![CDATA[Needle 2 is a 45M-parameter tool-calling model compressed to a single 14MB binary that runs in 28MB of RAM. Built on Simple Attention Networks and Cactus Quants, it runs on phones, wearables, robots, and browsers.]]></summary></entry></feed>
