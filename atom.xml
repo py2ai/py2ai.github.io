@@ -1,4 +1,243 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-09T23:47:32+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">AutoHedge: An Autonomous Agent Hedge Fund Powered by Swarm Intelligence</title><link href="https://pyshine.com/AutoHedge-Autonomous-Agent-Hedge-Fund-Swarm-Intelligence/" rel="alternate" type="text/html" title="AutoHedge: An Autonomous Agent Hedge Fund Powered by Swarm Intelligence" /><published>2026-09-08T00:00:00+00:00</published><updated>2026-09-08T00:00:00+00:00</updated><id>https://pyshine.com/AutoHedge-Autonomous-Agent-Hedge-Fund-Swarm-Intelligence</id><content type="html" xml:base="https://pyshine.com/AutoHedge-Autonomous-Agent-Hedge-Fund-Swarm-Intelligence/"><![CDATA[<h2 id="what-is-autohedge">What is AutoHedge</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-11T12:32:46+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Understanding Kimi Delta Attention: The Linear Attention Powering Kimi K3</title><link href="https://pyshine.com/Understanding-Kimi-Delta-Attention/" rel="alternate" type="text/html" title="Understanding Kimi Delta Attention: The Linear Attention Powering Kimi K3" /><published>2026-09-11T00:00:00+00:00</published><updated>2026-09-11T00:00:00+00:00</updated><id>https://pyshine.com/Understanding-Kimi-Delta-Attention</id><content type="html" xml:base="https://pyshine.com/Understanding-Kimi-Delta-Attention/"><![CDATA[<h2 id="what-is-kimi-delta-attention">What is Kimi Delta Attention</h2>
+
+<p>Kimi Delta Attention (KDA) is a linear attention mechanism introduced by Moonshot AI in the <a href="https://arxiv.org/abs/2510.26692">Kimi Linear technical report</a>. It is a refinement of <a href="https://arxiv.org/abs/2412.06464">Gated DeltaNet</a> that replaces the coarse, per-head scalar decay gate with a <strong>fine-grained, channel-wise diagonal gate</strong>. The result is a recurrent state that can selectively forget and retain information along each feature dimension independently, which makes far better use of a fixed-size memory matrix.</p>
+
+<p>Two properties make KDA stand out. First, it is the first linear attention variant to <strong>outperform full softmax attention under fair comparisons</strong> across short-context, long-context, and reinforcement-learning regimes. Second, because it is a recurrent operator with a constant-size state, its memory does not grow with sequence length, so it drops the linearly expanding key-value (KV) cache that dominates cost in long-context inference.</p>
+
+<p>KDA is not just a research module. It is the workhorse of two shipped models: <strong>Kimi Linear</strong> (48B total / 3B activated, 1M context, MIT-licensed weights on <a href="https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct">Hugging Face</a>) and the <strong>2.8-trillion-parameter Kimi K3</strong>, where 69 of the 93 transformer layers are KDA layers. The KDA kernel is open-sourced in the <a href="https://github.com/fla-org/flash-linear-attention/tree/main/fla/ops/kda">flash-linear-attention</a> library.</p>
+
+<h2 id="the-kda-recurrence-scalar-gate-vs-channel-wise-gate">The KDA Recurrence: Scalar Gate vs Channel-wise Gate</h2>
+
+<p>The cleanest way to understand KDA is to write its state update next to the Gated DeltaNet baseline it extends.</p>
+
+<p>Gated DeltaNet keeps a memory matrix <code class="language-plaintext highlighter-rouge">S_t</code> and updates it with a rank-1 write and a scalar decay:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S_t = alpha_t * (I - beta_t k_t k_t^T) S_(t-1) + beta_t k_t v_t^T
+</code></pre></div></div>
+
+<p>Here <code class="language-plaintext highlighter-rouge">alpha_t</code> is a single scalar, so the entire state decays at one rate per head. Kimi Delta Attention replaces that scalar with a diagonal matrix:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S_t = (I - beta_t k_t k_t^T) Diag(alpha_t) S_(t-1) + beta_t k_t v_t^T
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Diag(alpha_t)</code> is a per-channel gate: every feature dimension now has its own forgetting rate. The diagram below traces how a token’s key, value, learning rate, and gate flow through the update.</p>
+
+<p><img src="/assets/img/diagrams/kimi-linear/kda-recurrence-mechanism.svg" alt="KDA recurrence mechanism" /></p>
+
+<h3 id="understanding-the-recurrence">Understanding the Recurrence</h3>
+
+<p><strong>The alpha gate - the core innovation.</strong> In Gated DeltaNet the decay <code class="language-plaintext highlighter-rouge">alpha_t</code> is shared across all channels of a head, which is a blunt instrument: a single rate must simultaneously let some features persist and let others fade. KDA’s <code class="language-plaintext highlighter-rouge">Diag(alpha_t)</code> makes the gate a vector the same width as the head dimension, so each channel independently decides how much of the previous state to keep. This is the difference between one volume knob and a full graphic equalizer. The network learns, per channel, how sticky or forgetful each slice of memory should be, which is what lets a small fixed-size recurrent state hold useful information over very long horizons.</p>
+
+<p><strong>The delta rule as online gradient descent.</strong> The term <code class="language-plaintext highlighter-rouge">(I - beta_t k_t k_t^T) S_(t-1) + beta_t k_t v_t^T</code> is the classic delta rule. It can be read as a rank-1 online gradient step that minimizes a reconstruction loss between the stored value associated with key <code class="language-plaintext highlighter-rouge">k_t</code> and the new value <code class="language-plaintext highlighter-rouge">v_t</code>. KDA keeps this rule intact, which is important: it preserves the well-understood stability and convergence behavior of the delta rule while only changing the decay structure around it. This is why the authors describe KDA as “more consistent with the classical delta rule” than other linear-attention variants.</p>
+
+<p><strong>The role of beta.</strong> <code class="language-plaintext highlighter-rouge">beta_t</code> is a learned learning rate that controls how aggressively the new write <code class="language-plaintext highlighter-rouge">k_t v_t^T</code> overwrites the existing state along the direction of <code class="language-plaintext highlighter-rouge">k_t</code>. A larger beta means the new token’s value takes precedence; the <code class="language-plaintext highlighter-rouge">(I - beta_t k_t k_t^T)</code> factor first erases the projection of the old state onto <code class="language-plaintext highlighter-rouge">k_t</code> so the write does not simply add on top of stale content.</p>
+
+<p><strong>Reading the output.</strong> The output at step <code class="language-plaintext highlighter-rouge">t</code> is produced by querying the updated state with the same key: <code class="language-plaintext highlighter-rouge">o_t = S_t k_t</code>. Because <code class="language-plaintext highlighter-rouge">S_t</code> is a matrix of fixed shape (head dimension by head dimension) rather than a list of past tokens, this read costs the same work regardless of how long the sequence is. That is the structural reason KDA’s memory stays constant as context grows to a million tokens.</p>
+
+<p><strong>Why fine-grained gating matters in practice.</strong> Real text mixes many kinds of information that should age at different rates: syntax that is relevant for one clause, entity identity that must persist for the whole document, and numeric facts that need to survive until a question references them. A single scalar decay forces a compromise. Per-channel decay lets the model allocate sticky channels to persistent facts and ephemeral channels to local context, which is the mechanism behind the reported quality gains over both Gated DeltaNet and full attention.</p>
+
+<h2 id="the-hybrid-31-stack">The Hybrid 3:1 Stack</h2>
+
+<p>KDA alone has one weakness shared by all linear-attention RNNs: a finite-state memory cannot, in theory, retrieve an arbitrary token from the distant past with the precision that full attention can. Moonshot AI’s answer is not to pick one mechanism but to <strong>interleave</strong> them. Kimi Linear stacks KDA layers and Multi-Head Latent Attention (MLA) layers in a 3:1 ratio: every three KDA layers are followed by one full-attention MLA layer.</p>
+
+<p><img src="/assets/img/diagrams/kimi-linear/kimi-linear-hybrid-stack.svg" alt="Kimi Linear hybrid stack" /></p>
+
+<h3 id="understanding-the-hybrid-architecture">Understanding the Hybrid Architecture</h3>
+
+<p><strong>The 27-layer layout.</strong> Kimi Linear’s base model has 27 transformer layers. Twenty of them are KDA layers and seven are Gated MLA layers, placed at layers 4, 8, 12, 16, 20, 24, and 27. That placement is deliberate: the full-attention layers are evenly spaced so that every block of KDA recurrence is never more than three layers away from a global-attention calibration step. The model gets the throughput of linear layers for the bulk of its compute and the exact global recall of full attention at regular checkpoints.</p>
+
+<p><strong>Why 3:1 and not 1:1 or 7:1.</strong> The report includes ablations on this ratio. A KDA-heavy stack like 7:1 trains well (the loss drops nicely) but generalizes worse on held-out evaluation, which is the classic signature of a recurrent model overfitting its finite state. A 1:1 ratio is stable but throws away most of the efficiency benefit because half the layers are full attention. Three-to-one is the Pareto point: enough full-attention layers to anchor global retrieval, with enough KDA layers to dominate the cost and memory profile.</p>
+
+<p><strong>No positional encoding on the MLA layers.</strong> Kimi Linear removes all explicit positional encodings (RoPE or otherwise) from the full-attention layers. Positional and ordering information is carried entirely by the KDA layers, whose recurrent structure is inherently order-aware. The report shows that this NoPE-plus-KDA combination extrapolates to long sequences more robustly than RoPE-augmented full attention, because the model never has to reason about out-of-distribution rotation angles.</p>
+
+<p><strong>The KV cache payoff.</strong> This is where the hybrid earns its keep. Full attention stores a key and a value for every token seen, so the KV cache grows linearly with sequence length and becomes the dominant memory cost at long context. KDA stores only a fixed recurrent state per layer. With a 3:1 split, three quarters of the layers never grow their memory, and the measured reduction at 1M tokens is about 75% less KV cache than an equivalent full-MLA model. At decode time this translates to roughly 6x higher throughput for a million-token context.</p>
+
+<h2 id="scaling-to-kimi-k3">Scaling to Kimi K3</h2>
+
+<p>KDA graduates from a 48B research model to the production backbone of <strong>Kimi K3</strong>, a 2.8-trillion-parameter Mixture-of-Experts model with a 1M-token context window. K3 keeps the same hybrid philosophy but scales every axis: depth, width, expert count, and the role of KDA within the stack.</p>
+
+<p><img src="/assets/img/diagrams/kimi-linear/kimi-k3-architecture.svg" alt="Kimi K3 architecture" /></p>
+
+<h3 id="understanding-the-kimi-k3-architecture">Understanding the Kimi K3 Architecture</h3>
+
+<p><strong>Layer composition.</strong> K3 has 93 transformer layers: 69 KDA layers, 24 Gated MLA layers, and 1 dense layer. That is roughly the same 3:1 KDA-to-MLA rhythm as Kimi Linear, scaled to frontier depth. The attention is wide (96 heads, attention hidden dimension 7168) and the MoE is extremely sparse: of 896 routed experts, only 16 fire per token, plus one shared expert. With 104B activated parameters out of 2.8T, K3 keeps its per-token compute tractable while spreading capacity across a huge expert pool.</p>
+
+<p><strong>Stable LatentMoE.</strong> The expert block is a LatentMoE that operates in a compressed latent space rather than the full hidden dimension. To stabilize optimization at 16-of-896 sparsity, Moonshot AI pairs it with SiT Unit GLU activations and a Quantile Balancing loss that keeps expert load evenly distributed. The combination is what the team calls Stable LatentMoE, and it is what makes extreme sparsity trainable without routing collapse.</p>
+
+<p><strong>Attention Residuals (AttnRes).</strong> K3 adds a second information-flow innovation alongside KDA. AttnRes replaces the standard single-source residual stream with a learned mixing operation: each layer can attend to a weighted combination of representations from all preceding layers rather than only the immediately previous one. Where KDA improves information flow across the sequence (the time/sequence axis), AttnRes improves information flow across depth (the layer axis). The two are complementary and are both credited with the reported 2.5x scaling-efficiency gain over Kimi K2.</p>
+
+<p><strong>Inside one KDA block.</strong> A single KDA block is Norm, a Linear projection, a ShortConvolution (a short causal depthwise convolution that injects local order bias), and then the KDA recurrence, followed by the Stable LatentMoE expert block. The ShortConvolution is part of why the full-attention layers can safely drop positional encoding: local ordering is handled by the conv, long-range recurrence by KDA, and global recall by the periodic MLA layers.</p>
+
+<p><strong>Deployment and scale.</strong> K3 is served on vLLM with a single hybrid KV-cache manager that holds both the fixed recurrent state of KDA layers and the growing KV cache of MLA layers side by side. At 1M tokens this mixed manager is what makes the context affordable; the <a href="https://vllm.ai/blog/2026-07-27-k3">vLLM day-0 support post</a> describes the prefill, decode, and speculative-decoding paths built specifically for KDA. Full weights are released on <a href="https://huggingface.co/moonshotai/Kimi-K3">Hugging Face</a>.</p>
+
+<h2 id="the-chunkwise-dplr-algorithm">The Chunkwise DPLR Algorithm</h2>
+
+<p>A recurrent rule is only useful if it can be computed efficiently. KDA’s state update is sequential by nature, which would make prefill of long prompts slow. Moonshot AI solves this with a bespoke <strong>chunkwise parallel algorithm</strong> built on a specialized Diagonal-Plus-Low-Rank (DPLR) parameterization of the transition dynamics.</p>
+
+<p><img src="/assets/img/diagrams/kimi-linear/kda-chunkwise-dplr-efficiency.svg" alt="KDA chunkwise DPLR efficiency" /></p>
+
+<h3 id="understanding-the-chunkwise-algorithm">Understanding the Chunkwise Algorithm</h3>
+
+<p><strong>Two execution modes.</strong> The KDA kernel switches between two algorithms based on sequence length. For long inputs (prefill), it runs in <strong>chunkwise mode</strong>, which processes the recurrence in fixed-size chunks that can be parallelized across the chunk dimension, turning a long sequential scan into a sequence of small matrix operations the GPU can batch. For short or streaming decode steps, it runs in <strong>fused recurrent mode</strong>, a step-by-step RNN update that uses constant memory per step. The dispatch happens inside the kernel so the model code does not change between training and serving.</p>
+
+<p><strong>The DPLR specialization.</strong> The general DPLR matrix form admits a chunkwise algorithm, but it is expensive. KDA uses a <strong>specialized variant</strong> of DPLR for its transition matrices that substantially reduces the computation while staying consistent with the classical delta rule. This is the key engineering contribution: by constraining the structure of the transition matrix, the chunkwise parallelization keeps the math equivalent to the sequential recurrence but cheap enough to run at speed on Hopper-class GPUs. The report frames this as “more consistent with the classical delta rule” than competing linear-attention chunk schemes, which is both a correctness and an efficiency claim.</p>
+
+<p><strong>The efficiency outcome.</strong> Measured against full Multi-Head Latent Attention with an identical training recipe, the KDA-based hybrid delivers three simultaneous wins: about 75% less KV cache at 1M tokens, up to 6x decoding throughput at that context (roughly 1.84ms per output token versus 11.48ms for MLA), and higher quality on MMLU-Pro, RULER, and RL-style benchmarks. On RULER at 128k context, Kimi Linear is Pareto-optimal: top accuracy at 3.98x speedup. The point of the chunkwise DPLR algorithm is that these are not purchased with a quality tax; they come from a faster, leaner recurrence that also models better.</p>
+
+<p><strong>Where the kernel lives.</strong> The production kernel (<code class="language-plaintext highlighter-rouge">chunk_kda</code>, <code class="language-plaintext highlighter-rouge">fused_recurrent_kda</code>, and the channel-wise <code class="language-plaintext highlighter-rouge">fused_kda_gate</code>) is open-sourced inside the <a href="https://github.com/fla-org/flash-linear-attention/tree/main/fla/ops/kda">flash-linear-attention</a> <code class="language-plaintext highlighter-rouge">fla.ops.kda</code> package, and the model ships with a vLLM serving path, so the speedups above are reproducible rather than paper-only numbers.</p>
+
+<h2 id="usage-run-kimi-linear">Usage: Run Kimi Linear</h2>
+
+<p>Kimi Linear ships as drop-in Hugging Face checkpoints and a vLLM serving path. Install the linear-attention kernel, load the instruction-tuned model, and generate.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install</span> <span class="nt">-U</span> fla-core
+</code></pre></div></div>
+
+<p>Inference with Hugging Face Transformers (requires <code class="language-plaintext highlighter-rouge">trust_remote_code=True</code> for the KDA modeling code):</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+
+<span class="n">model_name</span> <span class="o">=</span> <span class="s">"moonshotai/Kimi-Linear-48B-A3B-Instruct"</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="p">,</span>
+    <span class="n">torch_dtype</span><span class="o">=</span><span class="s">"auto"</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s">"auto"</span><span class="p">,</span>
+    <span class="n">trust_remote_code</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s">"role"</span><span class="p">:</span> <span class="s">"system"</span><span class="p">,</span> <span class="s">"content"</span><span class="p">:</span> <span class="s">"You are a helpful assistant provided by Moonshot-AI."</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"role"</span><span class="p">:</span> <span class="s">"user"</span><span class="p">,</span> <span class="s">"content"</span><span class="p">:</span> <span class="s">"Is 123 a prime?"</span><span class="p">},</span>
+<span class="p">]</span>
+<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">.</span><span class="n">apply_chat_template</span><span class="p">(</span>
+    <span class="n">messages</span><span class="p">,</span>
+    <span class="n">add_generation_prompt</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">,</span>
+<span class="p">).</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
+<span class="n">generated_ids</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">batch_decode</span><span class="p">(</span><span class="n">generated_ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p>For production, serve an OpenAI-compatible API with vLLM across multiple GPUs and the full 1M context window:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vllm serve moonshotai/Kimi-Linear-48B-A3B-Instruct <span class="se">\</span>
+  <span class="nt">--port</span> 8000 <span class="se">\</span>
+  <span class="nt">--tensor-parallel-size</span> 4 <span class="se">\</span>
+  <span class="nt">--max-model-len</span> 1048576 <span class="se">\</span>
+  <span class="nt">--trust-remote-code</span>
+</code></pre></div></div>
+
+<h2 id="key-features">Key Features</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Channel-wise diagonal gating</td>
+      <td><code class="language-plaintext highlighter-rouge">Diag(alpha_t)</code> gives each feature dimension its own decay rate instead of one scalar per head</td>
+    </tr>
+    <tr>
+      <td>Delta-rule update</td>
+      <td>State update is a rank-1 online gradient step, consistent with the classical delta rule</td>
+    </tr>
+    <tr>
+      <td>Specialized DPLR chunkwise algorithm</td>
+      <td>Cheap parallel prefill that stays mathematically equivalent to the sequential recurrence</td>
+    </tr>
+    <tr>
+      <td>Hybrid 3:1 KDA-to-MLA stack</td>
+      <td>Linear layers dominate cost; periodic full-attention layers anchor global recall</td>
+    </tr>
+    <tr>
+      <td>NoPE on full-attention layers</td>
+      <td>Positional information is carried by KDA’s recurrence, improving long-sequence extrapolation</td>
+    </tr>
+    <tr>
+      <td>Constant recurrent memory</td>
+      <td>KV usage stops growing with sequence length, ~75% cache reduction at 1M tokens</td>
+    </tr>
+    <tr>
+      <td>6x decoding throughput</td>
+      <td>Up to 6.3x faster time-per-output-token than MLA at 1M-token context</td>
+    </tr>
+    <tr>
+      <td>Outperforms full attention</td>
+      <td>Higher quality than full MLA on MMLU-Pro, RULER, and RL benchmarks under matched training</td>
+    </tr>
+    <tr>
+      <td>Scales to 2.8T</td>
+      <td>Backbone of 69 of Kimi K3’s 93 layers (24 Gated MLA + 1 dense)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Issue</th>
+      <th>Cause</th>
+      <th>Solution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ModuleNotFoundError: fla</code></td>
+      <td>Missing linear-attention kernel</td>
+      <td><code class="language-plaintext highlighter-rouge">pip install -U fla-core</code> (&gt;= 0.4.0)</td>
+    </tr>
+    <tr>
+      <td>Slow long-context decode</td>
+      <td>Running full-attention only / wrong kernel path</td>
+      <td>Ensure KDA layers use <code class="language-plaintext highlighter-rouge">chunk_kda</code>/<code class="language-plaintext highlighter-rouge">fused_recurrent_kda</code> from the <code class="language-plaintext highlighter-rouge">fla</code> package</td>
+    </tr>
+    <tr>
+      <td>OOM at 1M context with MLA</td>
+      <td>KV cache grows linearly</td>
+      <td>Use the KDA hybrid model; verify the mixed KV-cache manager is active</td>
+    </tr>
+    <tr>
+      <td>Quality drop on retrieval tasks</td>
+      <td>KDA ratio too high (e.g. 7:1)</td>
+      <td>Keep the 3:1 KDA-to-MLA ratio; full-attention layers are needed for global recall</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">trust_remote_code</code> required</td>
+      <td>KDA modeling is not yet in upstream Transformers</td>
+      <td>Pass <code class="language-plaintext highlighter-rouge">trust_remote_code=True</code> on model and tokenizer load</td>
+    </tr>
+    <tr>
+      <td>Poor long-sequence extrapolation</td>
+      <td>RoPE on full-attention layers</td>
+      <td>Use the NoPE configuration; let KDA carry positional information</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Kimi Delta Attention is a small, well-motivated change with outsize consequences. By promoting the decay gate from a scalar to a per-channel diagonal, it turns a fixed-size recurrent state into a memory that can selectively persist the facts worth keeping, which is enough to let a linear-attention layer match and exceed full attention. Paired with a 3:1 hybrid schedule and a specialized DPLR chunkwise algorithm, it removes the long-context tax of softmax attention: constant memory instead of a growing KV cache, and 6x decode throughput at a million tokens, with better quality rather than worse.</p>
+
+<p>The same module scales from a 48B open model to the 2.8T Kimi K3, where it forms the majority of the backbone and is one of two architectural updates credited with a 2.5x scaling-efficiency gain. For anyone building long-context or agentic systems where context length and decode cost are the binding constraints, KDA is currently the most production-ready linear-attention design to study and deploy.</p>
+
+<h2 id="links">Links</h2>
+
+<ul>
+  <li><a href="https://arxiv.org/abs/2510.26692">Kimi Linear paper (arXiv:2510.26692)</a></li>
+  <li><a href="https://github.com/MoonshotAI/Kimi-Linear">Kimi Linear code (GitHub)</a></li>
+  <li><a href="https://huggingface.co/moonshotai/Kimi-K3">Kimi K3 weights (Hugging Face)</a></li>
+  <li><a href="https://www.kimi.com/blog/kimi-k3">Kimi K3 announcement (kimi.com)</a></li>
+  <li><a href="https://vllm.ai/blog/2026-07-27-k3">vLLM Kimi K3 day-0 support</a></li>
+  <li><a href="https://github.com/fla-org/flash-linear-attention/tree/main/fla/ops/kda">KDA kernel in flash-linear-attention</a></li>
+  <li><a href="https://arxiv.org/abs/2412.06464">Gated DeltaNet (arXiv:2412.06464)</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="Kimi Delta Attention" /><category term="Linear Attention" /><category term="Moonshot AI" /><category term="Kimi K3" /><category term="LLM Architecture" /><category term="Deep Learning" /><category term="Open Source" /><summary type="html"><![CDATA[Kimi Delta Attention (KDA) is Moonshot AI's linear attention module that extends Gated DeltaNet with fine-grained, channel-wise diagonal gating and a specialized DPLR chunkwise algorithm. It keeps a fixed-size recurrent state instead of a growing KV cache, and when layered in a 3:1 hybrid with full Multi-Head Latent Attention it outperforms full attention while cutting KV cache by 75% and lifting decoding throughput 6x at a 1M-token context. KDA is the backbone of both Kimi Linear (48B/3B activated) and the 2.8T-parameter Kimi K3. This post breaks down the recurrence formula, the hybrid stack, the K3 architecture, and the chunkwise DPLR algorithm that makes it fast.]]></summary></entry><entry><title type="html">AutoHedge: An Autonomous Agent Hedge Fund Powered by Swarm Intelligence</title><link href="https://pyshine.com/AutoHedge-Autonomous-Agent-Hedge-Fund-Swarm-Intelligence/" rel="alternate" type="text/html" title="AutoHedge: An Autonomous Agent Hedge Fund Powered by Swarm Intelligence" /><published>2026-09-08T00:00:00+00:00</published><updated>2026-09-08T00:00:00+00:00</updated><id>https://pyshine.com/AutoHedge-Autonomous-Agent-Hedge-Fund-Swarm-Intelligence</id><content type="html" xml:base="https://pyshine.com/AutoHedge-Autonomous-Agent-Hedge-Fund-Swarm-Intelligence/"><![CDATA[<h2 id="what-is-autohedge">What is AutoHedge</h2>
 
 <p>AutoHedge is an enterprise-grade autonomous agent hedge fund that trades on your behalf. It combines swarm intelligence and specialised AI agents to perform end-to-end market analysis, risk management, and execution with minimal human intervention. Built to be the world’s most powerful autonomous agent hedge fund, it runs continuous analysis, generates and validates trading theses, sizes risk, and executes orders across supported venues.</p>
 
@@ -1617,115 +1856,4 @@ prime-agent shutdown <span class="o">[</span><span class="nt">--force</span><spa
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>Semantica is a pragmatic answer to the context and accountability gap in AI agent systems. By turning fragmented enterprise data into a governed, queryable Context Graph and knowledge graph with deterministic reasoning, PROV-O provenance, conflict detection, and decision intelligence, it lets a regulated enterprise answer “why did the AI do that?” in a format a regulator accepts, without sending data to a third-party SaaS or locking into a single graph backend. The source is on GitHub at <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a>, the package is on <a href="https://pypi.org/project/semantica/">PyPI</a>, and the documentation is at <a href="https://docs.getsemantica.ai/">docs.getsemantica.ai</a>.</p>]]></content><author><name>PyShine</name></author><category term="Semantica" /><category term="Knowledge Graph" /><category term="Context Graph" /><category term="AI Agents" /><category term="Provenance" /><category term="Ontology" /><category term="RDF" /><category term="Neo4j" /><category term="Open Source" /><category term="Python" /><summary type="html"><![CDATA[Semantica is an open-source, developer-first knowledge infrastructure layer for AI agents and decision systems, positioned as an alternative to expensive enterprise context platforms. It ingests fragmented enterprise data from files, web, databases, cloud stores, and streams, extracts entities and relationships, builds a Context Graph and knowledge graph governed by OWL, SHACL, and SKOS ontologies, and runs deterministic graph analytics, forward-chaining reasoning (Rete, Datalog, SPARQL), and W3C PROV-O provenance over all of it. Every agent decision becomes a first-class, queryable, causally-linked object with full audit trails exportable to JSON, CSV, or RDF. Polyglot graph storage supports both RDF (Oxigraph, Blazegraph, Jena, RDF4J) and labeled property graphs (Neo4j, FalkorDB, Apache AGE, AWS Neptune) behind one swappable API, plus vector stores for hybrid search. MIT-licensed, self-hosted, zero vendor lock-in, and built for high-stakes regulated domains like finance, healthcare, legal, and government.]]></summary></entry><entry><title type="html">Understanding Multihead Attention in LLaMA: From First Principles to RoPE, GQA, and KV Cache</title><link href="https://pyshine.com/Understanding-Multihead-Attention-in-LLaMA/" rel="alternate" type="text/html" title="Understanding Multihead Attention in LLaMA: From First Principles to RoPE, GQA, and KV Cache" /><published>2026-09-08T00:00:00+00:00</published><updated>2026-09-08T00:00:00+00:00</updated><id>https://pyshine.com/Understanding-Multihead-Attention-in-LLaMA</id><content type="html" xml:base="https://pyshine.com/Understanding-Multihead-Attention-in-LLaMA/"><![CDATA[<h2 id="why-attention">Why Attention</h2>
-
-<p>A transformer encoder or decoder builds a contextual representation for every token in a sequence. A token’s representation should depend on the other tokens around it - not just on a fixed word embedding. Attention is the operation that performs this contextual mixing: for each query token, it computes a weighted sum of value representations of all tokens, with weights derived from how strongly the query matches each key. Multihead attention runs this in parallel across multiple heads, each with its own notion of similarity, then recombines the results.</p>
-
-<h2 id="scaled-dot-product-attention-one-head">Scaled Dot-Product Attention (One Head)</h2>
-
-<p>A single attention head takes three matrices derived from the input: a query matrix <code class="language-plaintext highlighter-rouge">Q</code>, a key matrix <code class="language-plaintext highlighter-rouge">K</code>, and a value matrix <code class="language-plaintext highlighter-rouge">V</code>, each of shape <code class="language-plaintext highlighter-rouge">[seq_len, d_k]</code> (the head dimension). The output is a weighted sum of the values, where the weights come from how strongly each query matches each key.</p>
-
-<p><img src="/assets/img/diagrams/llama-multihead-attention/mha-scaled-dot-product.svg" alt="Scaled dot-product attention per head" /></p>
-
-<p>The computation in one head:</p>
-
-<ol>
-  <li><strong>Scores</strong> - <code class="language-plaintext highlighter-rouge">Q . K^T</code> gives a <code class="language-plaintext highlighter-rouge">[seq_len, seq_len]</code> matrix. Cell <code class="language-plaintext highlighter-rouge">[i, j]</code> measures how much query <code class="language-plaintext highlighter-rouge">i</code> attends to key <code class="language-plaintext highlighter-rouge">j</code>.</li>
-  <li><strong>Scale</strong> - divide by <code class="language-plaintext highlighter-rouge">sqrt(d_k)</code>. This keeps the dot products from growing large as <code class="language-plaintext highlighter-rouge">d_k</code> grows, which would push softmax into regions with vanishing gradients.</li>
-  <li><strong>Causal mask</strong> - set the upper triangle to <code class="language-plaintext highlighter-rouge">-inf</code> so each query can only attend to past and current positions. This is what makes a decoder autoregressive: at position <code class="language-plaintext highlighter-rouge">i</code>, the model cannot peek at future tokens.</li>
-  <li><strong>Softmax</strong> - normalise each row so the attention weights sum to 1.</li>
-  <li><strong>Weighted sum</strong> - multiply the attention weights by <code class="language-plaintext highlighter-rouge">V</code> to get the head’s output <code class="language-plaintext highlighter-rouge">[seq_len, d_v]</code>.</li>
-</ol>
-
-<p>In code:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">attention</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d_k</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">scores</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">@</span> <span class="n">k</span><span class="p">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">math</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d_k</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="p">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">"-inf"</span><span class="p">))</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">weights</span> <span class="o">@</span> <span class="n">v</span>
-</code></pre></div></div>
-
-<h2 id="multihead-attention">Multihead Attention</h2>
-
-<p>A single head can only learn one kind of relationship. Multihead attention projects the input into <code class="language-plaintext highlighter-rouge">n_heads</code> separate <code class="language-plaintext highlighter-rouge">(Q, K, V)</code> triples, runs attention in parallel on each, concatenates the results, and projects back to <code class="language-plaintext highlighter-rouge">d_model</code> with a final output projection.</p>
-
-<p><img src="/assets/img/diagrams/llama-multihead-attention/mha-overview.svg" alt="Multihead attention overview" /></p>
-
-<p>The dimensions: if <code class="language-plaintext highlighter-rouge">d_model</code> is the model dimension (e.g. 4096 in LLaMA-7B) and <code class="language-plaintext highlighter-rouge">n_heads</code> is the number of heads, then the head dimension is <code class="language-plaintext highlighter-rouge">d_k = d_model / n_heads</code>. Each head gets its own slice of the projected Q, K, and V. After all heads produce their outputs, concatenation gives a <code class="language-plaintext highlighter-rouge">[seq_len, n_heads * d_k] = [seq_len, d_model]</code> tensor, which the output projection <code class="language-plaintext highlighter-rouge">W_O</code> mixes back together.</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MultiHeadAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">n_heads</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">n_heads</span> <span class="o">=</span> <span class="n">n_heads</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">d_k</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">n_heads</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">w_q</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">w_k</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">w_v</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">.</span><span class="n">w_o</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">b</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">shape</span>
-        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">w_q</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">d_k</span><span class="p">).</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">w_k</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">d_k</span><span class="p">).</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">w_v</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">d_k</span><span class="p">).</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">attention</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">causal_mask</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">).</span><span class="n">contiguous</span><span class="p">().</span><span class="n">view</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">w_o</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h2 id="what-llama-changes">What LLaMA Changes</h2>
-
-<p>LLaMA keeps the multihead skeleton but makes three specific changes.</p>
-
-<p><img src="/assets/img/diagrams/llama-multihead-attention/mha-llama-modifications.svg" alt="LLaMA-specific modifications to multihead attention" /></p>
-
-<h3 id="rotary-position-embeddings-rope">Rotary Position Embeddings (RoPE)</h3>
-
-<p>Classic transformers add a learned position vector to each token embedding. The trouble is that this gives an absolute notion of position rather than a relative one, and generalisation to longer sequences suffers. LLaMA replaces additive position vectors with Rotary Position Embeddings, which rotate pairs of dimensions in Q and K based on their position. The rotation angles are chosen so that the dot product <code class="language-plaintext highlighter-rouge">Q . K^T</code> depends only on the <em>relative</em> offset between query and key positions, not their absolute positions. This means the model can attend based on relative distance, which generalises better to sequence lengths unseen during training.</p>
-
-<p>RoPE is applied to Q and K (not V). The rotation is applied per head, in the head dimension, by pairing adjacent dimensions and rotating each pair by an angle proportional to the position index.</p>
-
-<h3 id="grouped-query-attention-gqa">Grouped-Query Attention (GQA)</h3>
-
-<p>In standard multihead attention, each query head has its own key and value head. During autoregressive decoding, this means the KV cache (the cached past K and V tensors) stores one entry per head - and that memory grows linearly with both sequence length and <code class="language-plaintext highlighter-rouge">n_heads</code>. LLaMA-2 (70B) and LLaMA-3 use Grouped-Query Attention: instead of <code class="language-plaintext highlighter-rouge">n_heads</code> key and value heads, there are <code class="language-plaintext highlighter-rouge">n_kv_heads</code> where <code class="language-plaintext highlighter-rouge">n_kv_heads &lt; n_heads</code>. Each key and value head is shared by several query heads. This cuts the KV cache size and the bandwidth to read it on every token step, which is the main bottleneck in long-context inference. Multi-Query Attention is the extreme case where <code class="language-plaintext highlighter-rouge">n_kv_heads = 1</code>; LLaMA uses intermediate values (e.g. 8 KV heads for 64 query heads) which preserves most of the quality while still shrinking the cache.</p>
-
-<h3 id="kv-cache">KV Cache</h3>
-
-<p>During autoregressive decoding, each new token only appends one new row to Q, K, and V. The keys and values for all past positions do not change, so they are cached and reused on every step. The KV cache holds <code class="language-plaintext highlighter-rouge">[past_seq_len, n_kv_heads, d_k]</code> for K and V. On each forward pass, the model computes K and V only for the new token, appends them to the cache, and runs attention against the full cached K and V. This turns the per-step complexity from <code class="language-plaintext highlighter-rouge">O(seq_len^2)</code> (recomputing everything) into <code class="language-plaintext highlighter-rouge">O(seq_len)</code> (only the new query against the cached keys). The downside is the cache grows with sequence length, which is exactly the problem GQA helps with.</p>
-
-<h2 id="full-llama-decoder-layer">Full LLaMA Decoder Layer</h2>
-
-<p>The attention block is one of two sublayers in each LLaMA decoder layer. The other is a SwiGLU feed-forward network. Both are wrapped with residual connections and pre-norm RMSNorm.</p>
-
-<p><img src="/assets/img/diagrams/llama-multihead-attention/mha-decoder-layer.svg" alt="LLaMA decoder layer with attention and SwiGLU FFN" /></p>
-
-<p>A LLaMA decoder layer:</p>
-
-<ol>
-  <li><strong>Pre-norm</strong> - <code class="language-plaintext highlighter-rouge">RMSNorm</code> normalises the input. RMSNorm is a simpler variant of LayerNorm: it normalises by the root-mean-square of the activations and applies a learnable scale, with no mean subtraction and no bias.</li>
-  <li><strong>Multihead attention</strong> - RoPE, GQA, KV cache, causal mask, as described above.</li>
-  <li><strong>Residual</strong> - add the attention output back to the layer input.</li>
-  <li><strong>Pre-norm</strong> - another RMSNorm before the feed-forward sublayer.</li>
-  <li><strong>SwiGLU feed-forward</strong> - <code class="language-plaintext highlighter-rouge">W_gate</code> and <code class="language-plaintext highlighter-rouge">W_up</code> both project from <code class="language-plaintext highlighter-rouge">d_model</code> to <code class="language-plaintext highlighter-rouge">d_ff</code> (typically <code class="language-plaintext highlighter-rouge">d_ff = 2/3 * 4 * d_model</code> in LLaMA), the gate branch goes through SiLU (swish), the two are multiplied elementwise, and <code class="language-plaintext highlighter-rouge">W_down</code> projects back to <code class="language-plaintext highlighter-rouge">d_model</code>. SwiGLU replaces the ReLU activation used in the original transformer FFN.</li>
-  <li><strong>Residual</strong> - add the FFN output back to the post-attention residual.</li>
-</ol>
-
-<p>The output of this layer feeds into the next, and so on for <code class="language-plaintext highlighter-rouge">n_layers</code> (32 in LLaMA-7B, 80 in LLaMA-2 70B, and more in later models).</p>
-
-<h2 id="why-these-choices-matter">Why These Choices Matter</h2>
-
-<p>The three LLaMA-specific changes all bend the same dial: inference efficiency without giving up quality.</p>
-
-<ul>
-  <li><strong>RoPE</strong> drops the position embedding table (no learned vector per position) and gives relative attention that extrapolates to longer sequences.</li>
-  <li><strong>GQA</strong> cuts the KV cache size and the memory bandwidth spent re-reading it on every token step, which is the dominant cost in long-context decoding.</li>
-  <li><strong>KV cache</strong> reuses past K and V instead of recomputing them, turning per-step cost from quadratic to linear in context length.</li>
-</ul>
-
-<p>Together with RMSNorm (cheaper than LayerNorm), SwiGLU (better than ReLU FFN at equal parameter count), and the absence of bias terms, these are the changes that distinguish a LLaMA decoder from the original Transformer. The multihead attention skeleton - Q, K, V projections, parallel heads, scaled dot-product, causal mask, softmax, weighted sum, concat, output projection - is unchanged. What changed is how positions are encoded, how KV heads are shared, and how past computations are cached.</p>
-
-<h2 id="putting-it-together">Putting It Together</h2>
-
-<p>Multihead attention in LLaMA is the same multihead attention from “Attention Is All You Need”, with three engineering choices layered on top. The single-head computation stays <code class="language-plaintext highlighter-rouge">softmax((Q . K^T) / sqrt(d_k)) . V</code> with a causal mask. The multihead split into <code class="language-plaintext highlighter-rouge">n_heads</code> parallel heads and the concat-plus-output-projection recombination are unchanged. What is new is RoPE on Q and K (rotary position embeddings instead of additive ones), GQA (fewer KV heads than query heads, shared across groups), and the KV cache (past K and V kept across decoding steps). The attention block sits inside a LLaMA decoder layer between two RMSNorms and a SwiGLU feed-forward, with residual connections around each sublayer. The result is a model that runs faster on long contexts, generalises better to unseen sequence lengths, and reuses computation across decoding steps without sacrificing the core attention mechanism.</p>]]></content><author><name>PyShine</name></author><category term="LLaMA" /><category term="Multihead Attention" /><category term="Transformers" /><category term="RoPE" /><category term="GQA" /><category term="KV Cache" /><category term="Deep Learning" /><category term="NLP" /><summary type="html"><![CDATA[Multihead attention is the mechanism that lets a transformer look at every other token in a sequence when producing a representation for the current token. LLaMA - the open-weight model family from Meta - keeps the classic multihead attention skeleton but makes three specific changes that matter for inference speed and quality: Rotary Position Embeddings (RoPE) instead of additive position vectors, Grouped-Query Attention (GQA) to cut KV cache memory, and a KV cache that lets autoregressive decoding reuse past keys and values. This post walks through the whole stack: how a single attention head computes scaled dot-product attention, how multihead attention splits Q, K, V into parallel heads and recombines them, what LLaMA changes under the hood, and how the attention block fits inside a full LLaMA decoder layer alongside the SwiGLU feed-forward network and residual connections.]]></summary></entry></feed>
+<p>Semantica is a pragmatic answer to the context and accountability gap in AI agent systems. By turning fragmented enterprise data into a governed, queryable Context Graph and knowledge graph with deterministic reasoning, PROV-O provenance, conflict detection, and decision intelligence, it lets a regulated enterprise answer “why did the AI do that?” in a format a regulator accepts, without sending data to a third-party SaaS or locking into a single graph backend. The source is on GitHub at <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a>, the package is on <a href="https://pypi.org/project/semantica/">PyPI</a>, and the documentation is at <a href="https://docs.getsemantica.ai/">docs.getsemantica.ai</a>.</p>]]></content><author><name>PyShine</name></author><category term="Semantica" /><category term="Knowledge Graph" /><category term="Context Graph" /><category term="AI Agents" /><category term="Provenance" /><category term="Ontology" /><category term="RDF" /><category term="Neo4j" /><category term="Open Source" /><category term="Python" /><summary type="html"><![CDATA[Semantica is an open-source, developer-first knowledge infrastructure layer for AI agents and decision systems, positioned as an alternative to expensive enterprise context platforms. It ingests fragmented enterprise data from files, web, databases, cloud stores, and streams, extracts entities and relationships, builds a Context Graph and knowledge graph governed by OWL, SHACL, and SKOS ontologies, and runs deterministic graph analytics, forward-chaining reasoning (Rete, Datalog, SPARQL), and W3C PROV-O provenance over all of it. Every agent decision becomes a first-class, queryable, causally-linked object with full audit trails exportable to JSON, CSV, or RDF. Polyglot graph storage supports both RDF (Oxigraph, Blazegraph, Jena, RDF4J) and labeled property graphs (Neo4j, FalkorDB, Apache AGE, AWS Neptune) behind one swappable API, plus vector stores for hybrid search. MIT-licensed, self-hosted, zero vendor lock-in, and built for high-stakes regulated domains like finance, healthcare, legal, and government.]]></summary></entry></feed>
