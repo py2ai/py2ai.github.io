@@ -29,7 +29,10 @@ PSY Music Studio is a browser-based studio for AI song generation, built on top 
 
 Here is PSY Music Studio in action — a quick demo of the full generate-to-playback flow:
 
+<div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/poc7JaBjejA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+</div>
+<br>
 
 ## The Architecture: One File, Zero Build Step
 
