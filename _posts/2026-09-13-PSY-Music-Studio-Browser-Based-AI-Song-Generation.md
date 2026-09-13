@@ -27,18 +27,18 @@ AI music generation has been dominated by closed, subscription-based services th
 
 PSY Music Studio is a browser-based studio for AI song generation, built on top of the [YuE2](https://github.com/multimodal-art-projection/YuE) pipeline. You pick a model, VAE, backend, quantization, and device from dropdowns, enter a music style and lyrics with `[Verse]` / `[Chorus]` markers, click Generate, and watch the resolve → verify → load → plan → generate → synthesize → decode pipeline stream progress in real time via Server-Sent Events. When it finishes, an inline audio player appears with Download `.flac` and Open-containing-folder buttons. It is a single `webui.py` file with vanilla HTML/CSS/JS — no build step, no framework, no npm install. The full YuE2 source is included verbatim under `src/yue2/`, unmodified. Apache 2.0 licensed.
 
+![PSY Music Studio system architecture](/assets/img/diagrams/psy/psy-architecture.svg)
+
+## The Architecture: One File, Zero Build Step
+
+The design philosophy is refreshing in its simplicity. There is no React, no webpack, no TypeScript compilation, no frontend framework. The entire UI is vanilla HTML, CSS, and JavaScript served directly by a single FastAPI file.
+
 Here is PSY Music Studio in action — a quick demo of the full generate-to-playback flow:
 
 <div align="center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/poc7JaBjejA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 </div>
 <br>
-
-## The Architecture: One File, Zero Build Step
-
-The design philosophy is refreshing in its simplicity. There is no React, no webpack, no TypeScript compilation, no frontend framework. The entire UI is vanilla HTML, CSS, and JavaScript served directly by a single FastAPI file.
-
-![PSY Music Studio system architecture](/assets/img/diagrams/psy/psy-architecture.svg)
 
 The stack is intentionally thin:
 
