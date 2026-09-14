@@ -36,7 +36,7 @@ The design philosophy is refreshing in its simplicity. There is no React, no web
 Here is PSY Music Studio in action — a quick demo of the full generate-to-playback flow:
 
 <div align="center">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/poc7JaBjejA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9RxxBSqbKLE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 </div>
 <br>
 
