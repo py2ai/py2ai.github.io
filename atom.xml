@@ -1,4 +1,125 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-14T11:41:51+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">OpenDisplay: Your iPhone Is a Free Second Monitor for Your Mac (Open Source)</title><link href="https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor/" rel="alternate" type="text/html" title="OpenDisplay: Your iPhone Is a Free Second Monitor for Your Mac (Open Source)" /><published>2026-09-14T00:00:00+00:00</published><updated>2026-09-14T00:00:00+00:00</updated><id>https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor</id><content type="html" xml:base="https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor/"><![CDATA[<p>You already own a second monitor. It is in your pocket, or propped up on your desk charging, or sitting in a drawer because you upgraded last year. Apple knows this too - that is why Sidecar exists - but Sidecar refuses iPhones, demands both devices share one Apple ID, and only works on a short list of hardware pairs. The paid options are not much better: Duet Display wants a subscription, and Luna Display wants you to buy a hardware dongle.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-14T11:53:22+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">LocalSend: AirDrop for Every Device, Open Source and 91,000 Stars Strong</title><link href="https://pyshine.com/LocalSend-AirDrop-for-Every-Device-Open-Source/" rel="alternate" type="text/html" title="LocalSend: AirDrop for Every Device, Open Source and 91,000 Stars Strong" /><published>2026-09-14T00:00:00+00:00</published><updated>2026-09-14T00:00:00+00:00</updated><id>https://pyshine.com/LocalSend-AirDrop-for-Every-Device-Open-Source</id><content type="html" xml:base="https://pyshine.com/LocalSend-AirDrop-for-Every-Device-Open-Source/"><![CDATA[<p>Here is a small everyday tragedy: you take a photo on your phone and want it on your laptop. Between you and that goal sits a wall of bad options - a USB cable you cannot find, a cloud service that uploads your photo to another continent and back, a messaging app that compresses it, or an email that rejects the attachment. If both devices are made by Apple, AirDrop solves it. If they are not, or worse, if one is an iPhone and the other is a Windows PC, you are back to the cable.</p>
+
+<p><a href="https://localsend.org/">LocalSend</a> ends this. It is a free, open-source app - around 91,000 GitHub stars and Apache-2.0 licensed - that shares files and messages between any nearby devices over your local network. No internet connection, no accounts, no external servers, no file size limits, no compression. It runs on Android 5.0+, iOS 12.0+, Windows 10+, macOS 11+, Linux, and even Amazon’s Fire OS, from a single Flutter codebase. Your phone discovers your PC, you tap send, the file arrives encrypted. Done.</p>
+
+<p>What makes LocalSend worth a deep dive is not just that it works, but how it works: a fully specified REST protocol, encrypted with certificates each device generates on the fly, discovered over multicast UDP - all on a network that never touches the internet. Let’s look under the hood.</p>
+
+<p><img src="/assets/img/diagrams/localsend/localsend-architecture.svg" alt="LocalSend architecture" /></p>
+
+<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
+
+<p>The diagram above shows the whole system in one picture. Three design decisions explain almost everything about LocalSend.</p>
+
+<p><strong>1. One Flutter codebase, six platforms.</strong> The app is built with Flutter, so the same UI and logic compile to Android, iOS, Windows, macOS, Linux, and Fire OS. That is why LocalSend feels identical everywhere - the share sheet, the device list, the progress rings are the same on your phone and your PC. The build pins an exact Flutter version using fvm (a <code class="language-plaintext highlighter-rouge">.fvmrc</code> file), which keeps contributors from chasing framework drift, and the project also requires Rust for parts of the toolchain.</p>
+
+<p><strong>2. Every device is both a client and a server.</strong> This is the cleverest part of the design. Each LocalSend instance runs a small HTTP(S) server on TCP port 53317 and joins a UDP multicast group on the same port. When you send a file, your app is the HTTP client and the recipient’s app is the HTTP server. The protocol only needs one party to host a server, which means transfers can always be initiated in whichever direction works best for the network you are on.</p>
+
+<p><strong>3. The LAN is the whole world.</strong> Everything - discovery, negotiation, transfer - happens over your local network. No relay servers, no cloud storage, no sign-in. Unplug your router from the internet entirely and LocalSend keeps working. This is a privacy model, not a limitation: your files physically cannot be intercepted by a service you never sent them to.</p>
+
+<p>There is also a headless CLI for terminals (<code class="language-plaintext highlighter-rouge">localsend-cli send --to "Cute Tomato" report.pdf</code>), and a reverse-transfer mode where the recipient needs nothing but a browser - both covered below.</p>
+
+<h2 id="discovery-how-your-phone-finds-your-pc">Discovery: How Your Phone Finds Your PC</h2>
+
+<p>Before any file moves, devices must find each other. LocalSend’s discovery is a nice exercise in designing for unreliable networks.</p>
+
+<p><img src="/assets/img/diagrams/localsend/localsend-discovery.svg" alt="LocalSend discovery protocol" /></p>
+
+<h3 id="understanding-the-discovery-protocol">Understanding the Discovery Protocol</h3>
+
+<p><strong>The multicast announcement.</strong> When the app starts, it broadcasts a JSON announcement to UDP group 224.0.0.167 on port 53317. The message carries a generated alias (“Nice Orange”, “Secret Banana” - the friendly device names are half the charm), the device model and type, the port, the protocol (http or https), and a fingerprint.</p>
+
+<p><strong>The two-way reply.</strong> Every LocalSend member that hears the announcement replies with its own identity - preferably via an HTTP POST to <code class="language-plaintext highlighter-rouge">/api/localsend/v2/register</code> on the announcing device, or via a UDP message as fallback if the member cannot serve HTTP. This makes discovery two-way in a single exchange: you learn who is out there, and they learn you exist.</p>
+
+<p><strong>The fingerprint.</strong> Each device carries a fingerprint used to skip self-discovery and to remember devices across sessions. With encryption on, the fingerprint is the SHA-256 hash of the device’s TLS certificate - which doubles as a verifiable identity. No central authority issues it; your device minted its own certificate on first run.</p>
+
+<p><strong>When multicast is blocked.</strong> Some networks, VPNs, or AP-isolation settings swallow multicast. The protocol has a legacy fallback: fire the same <code class="language-plaintext highlighter-rouge">/register</code> request at every IP address on the local subnet. It is slower and noisier, but it always works, and it is exactly the kind of unglamorous engineering that makes an app feel reliable in hotel rooms and office networks.</p>
+
+<h2 id="the-transfer-metadata-first-bytes-later">The Transfer: Metadata First, Bytes Later</h2>
+
+<p>The transfer protocol reads like a polite conversation, and it is specified to the HTTP status code in the <a href="https://github.com/localsend/protocol">protocol repository</a> (currently v2.2).</p>
+
+<p><img src="/assets/img/diagrams/localsend/localsend-transfer.svg" alt="LocalSend transfer flow" /></p>
+
+<h3 id="understanding-the-transfer-flow">Understanding the Transfer Flow</h3>
+
+<p><strong>Step one: ask, do not push.</strong> The sender POSTs only file metadata to the receiver’s <code class="language-plaintext highlighter-rouge">/api/localsend/v2/prepare-upload</code> - file name, size, MIME type, an optional SHA-256 checksum, and even a preview thumbnail. The receiver’s user can then accept everything, cherry-pick a few files, reject with 403, or demand a PIN (a wrong one returns 401). Nothing has been transferred yet. This one decision - metadata before bytes - is what makes receiving files on your phone feel safe rather than terrifying.</p>
+
+<p><strong>Step two: parallel uploads with per-file tokens.</strong> On acceptance, the receiver returns a session ID and a one-time token per accepted file. The sender then POSTs the raw binary to <code class="language-plaintext highlighter-rouge">/api/localsend/v2/upload?sessionId=...&amp;fileId=...&amp;token=...</code>, and these calls run in parallel across files. The token binds the upload to the session, and a wrong token or a foreign IP gets 403. If a checksum was promised and the received bytes do not match, the receiver answers 422 - silent corruption is not on the menu.</p>
+
+<p><strong>Step three: cancel any time.</strong> Either side can abort the whole session with a single <code class="language-plaintext highlighter-rouge">/cancel</code> call.</p>
+
+<p><strong>The reverse mode: a browser is enough.</strong> When the receiving device has no LocalSend at all, the sender flips roles: its own server offers the files at <code class="language-plaintext highlighter-rouge">http://&lt;ip&gt;:53317</code>, and the recipient opens the URL in any browser and downloads. One honest detail from the spec: this fallback uses plain HTTP because browsers refuse self-signed certificates. It is a sensible trade for a LAN, and the spec says so out loud rather than pretending otherwise.</p>
+
+<h2 id="security-your-network-your-keys-your-rules">Security: Your Network, Your Keys, Your Rules</h2>
+
+<p><img src="/assets/img/diagrams/localsend/localsend-privacy.svg" alt="LocalSend security and privacy model" /></p>
+
+<h3 id="understanding-the-security-model">Understanding the Security Model</h3>
+
+<p><strong>Encryption without a certificate authority.</strong> LocalSend’s HTTPS uses a TLS certificate that each device generates on the fly at first launch. There is no CA, no domain, no renewal - the certificate is self-signed and self-minted, and its SHA-256 fingerprint acts as the device identity. For two devices on your own network, this gives you encrypted transport without begging any third party for permission.</p>
+
+<p><strong>Consent is the firewall.</strong> Requests from strangers are visible and rejectable: the PIN option, the per-file acceptance, the 403 rejection path. The threat model is honest in the spec - anyone on the same network can send you a request, and your acceptance is the gate.</p>
+
+<p><strong>What to know before you rely on it.</strong> Three caveats worth stating plainly. First, the browser fallback mode is unencrypted HTTP, by necessity. Second, you can disable encryption entirely in settings - the troubleshooting guide actually recommends it (plus 5 GHz WiFi) if transfers feel slow, which is fine on your own LAN and your own risk. Third, this all assumes a network you control: on guest WiFi, AP isolation may block peer-to-peer traffic entirely, and a corporate VPN may swallow local connections.</p>
+
+<h2 id="getting-it">Getting It</h2>
+
+<p>The recommended install channels are app stores and package managers, because the app does not self-update:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Platform</th>
+      <th>Where</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Windows</td>
+      <td><a href="https://github.com/microsoft/winget-pkgs/tree/master/manifests/l/LocalSend/LocalSend">Winget</a>, Scoop, Chocolatey, EXE installer, portable ZIP</td>
+    </tr>
+    <tr>
+      <td>macOS</td>
+      <td><a href="https://apps.apple.com/us/app/localsend/id1661733229">App Store</a>, Homebrew cask, DMG</td>
+    </tr>
+    <tr>
+      <td>Linux</td>
+      <td><a href="https://flathub.org/en/apps/org.localsend.localsend_app">Flathub</a>, Snap, Nixpkgs, AUR, DEB, AppImage</td>
+    </tr>
+    <tr>
+      <td>Android</td>
+      <td><a href="https://play.google.com/store/apps/details?id=org.localsend.localsend_app">Play Store</a>, <a href="https://f-droid.org/packages/org.localsend.localsend_app">F-Droid</a>, APK</td>
+    </tr>
+    <tr>
+      <td>iOS</td>
+      <td><a href="https://apps.apple.com/us/app/localsend/id1661733229">App Store</a></td>
+    </tr>
+    <tr>
+      <td>Fire OS</td>
+      <td>Amazon Appstore</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>After installing on two devices, make sure both are on the same network and that your firewall allows incoming TCP and UDP on port 53317 (<code class="language-plaintext highlighter-rouge">sudo ufw allow 53317</code> on Linux). If devices do not see each other: disable AP isolation on the router, set the Windows network profile to “private”, check the Local Network permission on macOS/iOS, and remember that some VPNs block LAN traffic by default. The full troubleshooting matrix lives in the <a href="https://github.com/localsend/localsend">README</a>.</p>
+
+<p>Nice extras: create an empty <code class="language-plaintext highlighter-rouge">settings.json</code> next to the executable for portable mode, and pass <code class="language-plaintext highlighter-rouge">--hidden</code> to start minimized to the tray. Windows binaries are code-signed, and the project publishes its signing policy.</p>
+
+<h2 id="why-this-matters">Why This Matters</h2>
+
+<p>AirDrop is excellent and locked to Apple hardware. Cloud transfer works everywhere and ships your files through someone else’s computer. LocalSend sits in the gap between them: it works everywhere, trusts nothing outside your network, and - because the <a href="https://github.com/localsend/protocol">protocol is fully specified</a> - it is an open standard rather than a private product. Third-party clients can (and do) implement the same protocol, from terminal tools to other stacks.</p>
+
+<p>The project is also a quiet masterclass in shipping real cross-platform software: one Flutter codebase, a pinned toolchain via fvm, community translations managed on <a href="https://hosted.weblate.org/projects/localsend/app">Weblate</a>, a Discord community, and a troubleshooting table that reads like it was written by people who actually sit behind firewalls. If you want to study how a small team makes six platforms feel like one product, clone the <a href="https://github.com/localsend/localsend">repository</a>.</p>
+
+<p>For the rest of us, it is simpler than that: install it on your phone and your computer, and the next photo, PDF, or 8 GB video moves between them in seconds - over the air you already own, for free.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor/">OpenDisplay: Your iPhone Is a Free Second Monitor for Your Mac</a></li>
+  <li><a href="https://pyshine.com/Vaultwarden-Self-Hosted-Bitwarden-Password-Manager-in-Rust/">Vaultwarden: Self-Hosted Bitwarden Password Manager in Rust</a></li>
+  <li><a href="https://pyshine.com/Project-NOMAD-Offline-Knowledge-Server/">Project NOMAD: Offline-First Knowledge Server</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="LocalSend" /><category term="Open Source" /><category term="Flutter" /><category term="File Sharing" /><category term="AirDrop" /><category term="Privacy" /><category term="Networking" /><category term="REST API" /><summary type="html"><![CDATA[LocalSend is a free, open-source AirDrop alternative that shares files, photos, and messages between any nearby devices over your local network - no internet, no accounts, no servers. One Flutter codebase runs on Android, iOS, Windows, macOS, Linux, and Fire OS, speaking a fully specified REST protocol with on-the-fly TLS encryption. Here is how the discovery, transfer, and security design actually works.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/localsend/localsend-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/localsend/localsend-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">OpenDisplay: Your iPhone Is a Free Second Monitor for Your Mac (Open Source)</title><link href="https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor/" rel="alternate" type="text/html" title="OpenDisplay: Your iPhone Is a Free Second Monitor for Your Mac (Open Source)" /><published>2026-09-14T00:00:00+00:00</published><updated>2026-09-14T00:00:00+00:00</updated><id>https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor</id><content type="html" xml:base="https://pyshine.com/OpenDisplay-iPhone-iPad-Spare-Mac-Free-Second-Monitor/"><![CDATA[<p>You already own a second monitor. It is in your pocket, or propped up on your desk charging, or sitting in a drawer because you upgraded last year. Apple knows this too - that is why Sidecar exists - but Sidecar refuses iPhones, demands both devices share one Apple ID, and only works on a short list of hardware pairs. The paid options are not much better: Duet Display wants a subscription, and Luna Display wants you to buy a hardware dongle.</p>
 
 <p><a href="https://github.com/peetzweg/opendisplay">OpenDisplay</a> is the missing option. It is a free, open-source project - about 3,300 stars on GitHub and climbing the trending charts as of this writing - that turns an iPhone, an iPad, or even a spare Mac into a <strong>true extended display</strong> for your Mac. Not a mirror: a real second monitor that macOS treats as its own, where you can drag windows, arrange it in System Settings, and read text at full Retina sharpness. It works over USB (lowest latency) or WiFi (zero config), and your touch input flows backward into macOS, so your iPhone becomes a touchscreen for your desktop. No subscription. No dongle. No account. No servers.</p>
 
@@ -2821,424 +2942,4 @@ teamai codebase <span class="nt">--lint</span> <span class="nt">--output</span> 
   <li><a href="/cowagent-open-source-super-ai-assistant/">CowAgent: Open Source Super AI Assistant</a></li>
   <li><a href="/WeKnora-Tencent-Open-Source-Knowledge-Framework-RAG-Agents-Wiki/">WeKnora: Tencent Open Source Knowledge Framework</a></li>
   <li><a href="/Everything-Claude-Code-AI-Agent-Harness/">Everything Claude Code: AI Agent Harness</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="TeamAI" /><category term="Tencent" /><category term="AI Agents" /><category term="Claude Code" /><category term="Skills" /><category term="Knowledge Graph" /><category term="Open Source" /><category term="Developer Tools" /><summary type="html"><![CDATA[TeamAI is an open source CLI from Tencent that manages your team's skills, rules, MCP, and knowledge across Claude Code, Codex, Cursor, CodeBuddy, OpenCode, OpenClaw, and other AI coding agents. It uses a shared Git repo as the single source of truth, distributing harness resources through a push-review-merge-pull workflow with SessionStart hooks for automatic sync. The three-layer architecture covers Team Execution (skills, rules, agents, hooks, MCP, env), Team Context (friction-scored learnings, BM25 + graph-boosted recall, codebase knowledge graph with WASM tree-sitter AST extraction), and Team Improvement (weekly digest, session analytics, web dashboard, KB maintenance). Built with TypeScript, Node 20+, commander, simple-git, and web-tree-sitter. MIT licensed, 2.9k stars, trending on GitHub. This post breaks down the architecture, the push-pull workflow, the codebase knowledge graph pipeline, and the agent support matrix.]]></summary></entry><entry><title type="html">YuE2: The Open Source Music AI That Rivals Suno v5</title><link href="https://pyshine.com/YuE2-Open-Source-Music-AI-Rivals-Suno/" rel="alternate" type="text/html" title="YuE2: The Open Source Music AI That Rivals Suno v5" /><published>2026-09-12T00:00:00+00:00</published><updated>2026-09-12T00:00:00+00:00</updated><id>https://pyshine.com/YuE2-Open-Source-Music-AI-Rivals-Suno</id><content type="html" xml:base="https://pyshine.com/YuE2-Open-Source-Music-AI-Rivals-Suno/"><![CDATA[<p>Imagine typing a few lines of lyrics and a style prompt, and getting back a complete song with vocals, accompaniment, and studio-quality audio. Now imagine doing that for free, on your own GPU, with a model whose internal composition plan you can read, edit, and re-render.</p>
-
-<p>That is YuE2.</p>
-
-<h2 id="what-is-yue2">What is YuE2</h2>
-
-<p><a href="https://github.com/multimodal-art-projection/YuE">YuE2</a> is an open source music generation model from <a href="https://huggingface.co/m-a-p">Multimodal Art Projection (m-a-p)</a>, a research community spanning HKUST, Tokenwave.AI, NYU, Stanford, MBZUAI, NOIZ, and ACE Studio. Released on September 9, 2026, it turns lyrics and a style prompt into complete songs with vocals and accompaniment at 48 kHz stereo quality.</p>
-
-<p>The headline: <strong>YuE2 best-of-8 achieves 6.9632 SongBench Avg on WildSongBench, the highest mean among all 17 evaluated systems</strong>, including Suno v5 (6.8721), Mureka 9 (6.9377), and Suno v6 (6.5562). This is an open-weights model matching or beating proprietary systems.</p>
-
-<p>The tagline says it best: <strong>Compose in symbols. Create in sound.</strong></p>
-
-<p>Three things make YuE2 different from every other music AI you have tried:</p>
-
-<ol>
-  <li><strong>White-box composition</strong>: YuE2 does not jump straight from text to audio. It first writes a melody-and-chord plan in ABC notation that you can read, play, and edit before rendering. This is the “score” layer.</li>
-  <li><strong>Zero-shot covers</strong>: Transcribe any recording into a melody score with SheetSage2, then re-render it in a completely different style. Mandarin pop becomes English jazz, no fine-tuning needed.</li>
-  <li><strong>Agentic editing</strong>: Talk to an agent about the composition. Ask it to change the harmony, add a saxophone solo, or swap the tempo. The agent revises the ABC score, checks musical invariants, and re-renders the song.</li>
-</ol>
-
-<h2 id="how-it-works-one-backbone-two-modes">How It Works: One Backbone, Two Modes</h2>
-
-<p>YuE2 uses a single AR-NAR Mixture-of-Transformers backbone that works in two stages.</p>
-
-<p><img src="/assets/img/diagrams/yue2/yue2-architecture.svg" alt="YuE2 AR-NAR architecture" /></p>
-
-<h3 id="stage-1-autoregressive-ar-transformer">Stage 1: Autoregressive (AR) Transformer</h3>
-
-<p>The AR transformer takes your lyrics and style prompt and predicts two things autoregressively:</p>
-
-<ol>
-  <li><strong>Symbolic score</strong> in ABC notation: a human-readable plan containing melody and chord symbols. This is the white-box layer you can inspect and edit.</li>
-  <li><strong>Semantic music tokens</strong>: discrete token sequences that capture the musical semantics, separated into vocal and accompaniment tracks using track-decoupled next-token prediction. This technique, inherited from YuE v1, overcomes the challenge of dense mixture signals in music.</li>
-</ol>
-
-<h3 id="stage-2-non-autoregressive-nar-flow-matching">Stage 2: Non-Autoregressive (NAR) Flow Matching</h3>
-
-<p>The NAR transformer takes the semantic tokens and generates acoustic latents using flow matching, a continuous generation method that avoids the slowness of token-by-token autoregression. These latents are then decoded by a VAE into 48 kHz stereo audio.</p>
-
-<p>The staged Python API makes this explicit: <code class="language-plaintext highlighter-rouge">plan()</code> then <code class="language-plaintext highlighter-rouge">generate_semantic()</code> then <code class="language-plaintext highlighter-rouge">synthesize()</code> then <code class="language-plaintext highlighter-rouge">decode()</code>. Each stage produces an artifact you can inspect, reuse, or replace.</p>
-
-<h2 id="three-modes-one-model">Three Modes, One Model</h2>
-
-<p>YuE2 supports three workflows from the same model checkpoint. The difference is where the score comes from.</p>
-
-<p><img src="/assets/img/diagrams/yue2/yue2-three-modes.svg" alt="YuE2 three modes" /></p>
-
-<h3 id="mode-1-create">Mode 1: Create</h3>
-
-<p>Give YuE2 lyrics and a style prompt. It writes a melody-and-chord plan, then renders it as a complete song. This is the default mode (<code class="language-plaintext highlighter-rouge">cot="full"</code>).</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">yue2</span> <span class="kn">import</span> <span class="n">YuE2Pipeline</span>
-
-<span class="k">with</span> <span class="n">YuE2Pipeline</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"m-a-p/YuE2-3B"</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">"cuda"</span><span class="p">)</span> <span class="k">as</span> <span class="n">pipe</span><span class="p">:</span>
-    <span class="n">song</span> <span class="o">=</span> <span class="n">pipe</span><span class="p">(</span>
-        <span class="n">style</span><span class="o">=</span><span class="s">"English, piano-pop, warm vocal, acoustic guitar"</span><span class="p">,</span>
-        <span class="n">lyrics</span><span class="o">=</span><span class="s">"Verse 1...</span><span class="se">\n</span><span class="s">Chorus..."</span><span class="p">,</span>
-        <span class="n">cot</span><span class="o">=</span><span class="s">"full"</span><span class="p">,</span>  <span class="c1"># default: generate editable plan
-</span>    <span class="p">)</span>
-    <span class="n">song</span><span class="p">.</span><span class="n">save_artifacts</span><span class="p">(</span><span class="s">"outputs/my-song"</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p>The output directory contains not just <code class="language-plaintext highlighter-rouge">audio.flac</code> but also the <code class="language-plaintext highlighter-rouge">score.abc</code> file, semantic tokens, acoustic latents, generation settings, and model identities. Everything is reproducible.</p>
-
-<h3 id="mode-2-cover">Mode 2: Cover</h3>
-
-<p>Take a source recording, transcribe it into a melody score with SheetSage2, then re-render it in a new style. Use <code class="language-plaintext highlighter-rouge">cot="melody"</code> with a score that has no chord symbols, so the accompaniment can adapt freely to the new style.</p>
-
-<p>The <a href="https://map-yue2.github.io/#agentic-music-editing">agentic demo</a> follows “The Last Train” through 9 steps and 14 versions, from Mandarin pop to English jazz with new harmony and a saxophone solo. On 948 cover works, YuE2 reaches 0.647 CLEWS mAP (versus 0.006 without a score), using the general generator without cover-specific fine-tuning.</p>
-
-<h3 id="mode-3-edit-agentic">Mode 3: Edit (Agentic)</h3>
-
-<p>Export the plan, revise the musical details, and re-render. You can ask an agent to change harmony, melody, tempo, or form. The agent revises the ABC score, checks musical invariants, and generates a new recording.</p>
-
-<blockquote>
-  <p>Use the yue2-music skill to create an English piano-pop song. Keep the original audio and score. Make a second version with jazz harmony, preserve the vocal melody and lyric order, and give me both versions to compare.</p>
-</blockquote>
-
-<p>Editing generates a new complete recording. It does not preserve the original waveform outside an edit. The editable score is the white-box interface: you can inspect the intended composition and intervene on it.</p>
-
-<h2 id="staged-pipeline-and-model-family">Staged Pipeline and Model Family</h2>
-
-<p>YuE2 is not a single model file. It is a family of specialized models, all available on Hugging Face.</p>
-
-<p><img src="/assets/img/diagrams/yue2/yue2-pipeline-models.svg" alt="YuE2 pipeline and model family" /></p>
-
-<h3 id="the-four-stage-api">The Four-Stage API</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Stage</th>
-      <th>Function</th>
-      <th>Input</th>
-      <th>Output</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td><code class="language-plaintext highlighter-rouge">plan()</code></td>
-      <td>Lyrics + style</td>
-      <td>Editable ABC score (melody + chords)</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td><code class="language-plaintext highlighter-rouge">generate_semantic()</code></td>
-      <td>Score + style</td>
-      <td>Semantic music tokens (AR prediction)</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td><code class="language-plaintext highlighter-rouge">synthesize()</code></td>
-      <td>Semantic tokens</td>
-      <td>Acoustic latents (NAR flow matching)</td>
-    </tr>
-    <tr>
-      <td>4</td>
-      <td><code class="language-plaintext highlighter-rouge">decode()</code></td>
-      <td>Acoustic latents</td>
-      <td>48 kHz stereo audio (VAE decoder)</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Each stage produces a saved artifact. You can reuse an exact plan across multiple renders, swap decoders, or intervene at any stage.</p>
-
-<h3 id="model-family">Model Family</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Model</th>
-      <th>Purpose</th>
-      <th>License</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://huggingface.co/m-a-p/YuE2-3B">YuE2-3B</a></td>
-      <td>Song generation, symbolic planning, covering, editing</td>
-      <td>CC BY-NC 4.0</td>
-    </tr>
-    <tr>
-      <td><a href="https://huggingface.co/m-a-p/YuE2-Vae">YuE2-Vae</a></td>
-      <td>Default generation and listening decoder</td>
-      <td>CC BY-NC 4.0</td>
-    </tr>
-    <tr>
-      <td><a href="https://huggingface.co/m-a-p/YuE2-Vae-legacy">YuE2-Vae-legacy</a></td>
-      <td>Benchmark decoder (reproducible evals)</td>
-      <td>CC BY-NC 4.0</td>
-    </tr>
-    <tr>
-      <td><a href="https://huggingface.co/m-a-p/SheetSage2">SheetSage2</a></td>
-      <td>Audio-to-score transcription for covers</td>
-      <td>CC BY-NC 4.0</td>
-    </tr>
-    <tr>
-      <td><a href="https://huggingface.co/m-a-p/MERT-v2-FullSong">MERT-v2-FullSong</a></td>
-      <td>Full-song music representations (SheetSage2’s encoder)</td>
-      <td>CC BY-NC 4.0</td>
-    </tr>
-    <tr>
-      <td><a href="https://huggingface.co/m-a-p/MERT-v2-30s">MERT-v2-30s</a></td>
-      <td>Music representations for short recordings</td>
-      <td>CC BY-NC 4.0</td>
-    </tr>
-    <tr>
-      <td><a href="https://huggingface.co/datasets/m-a-p/WildSongBench">WildSongBench</a></td>
-      <td>192 evaluation prompts and benchmark resources</td>
-      <td>CC BY 4.0</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="performance">Performance</h3>
-
-<p>On an NVIDIA RTX 4090 (24GB VRAM, BF16, no quantization):</p>
-<ul>
-  <li><strong>214.85-second song generated in 71.04 seconds</strong> (faster than real-time)</li>
-  <li><strong>Peak memory: 14.08 GiB</strong></li>
-  <li><strong>Output: 48 kHz stereo audio</strong></li>
-</ul>
-
-<h2 id="wildsongbench-how-yue2-compares">WildSongBench: How YuE2 Compares</h2>
-
-<p>WildSongBench uses 192 prompts with automatic evaluation across four metrics: SongBench Avg (overall), AudioBox PQ (production quality), MuLan (text-music alignment), and PER (phoneme error rate, lower is better).</p>
-
-<p><img src="/assets/img/diagrams/yue2/yue2-benchmark-comparison.svg" alt="YuE2 benchmark comparison" /></p>
-
-<h3 id="the-results">The Results</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>System</th>
-      <th>SongBench Avg</th>
-      <th>AudioBox PQ</th>
-      <th>MuLan</th>
-      <th>PER</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>YuE2 (best-of-8)</strong></td>
-      <td><strong>6.9632</strong></td>
-      <td>8.2714</td>
-      <td>0.5051</td>
-      <td>9.79%</td>
-    </tr>
-    <tr>
-      <td>Mureka 9</td>
-      <td>6.9377</td>
-      <td>8.0226</td>
-      <td>0.4394</td>
-      <td>11.69%</td>
-    </tr>
-    <tr>
-      <td>Suno v5</td>
-      <td>6.8721</td>
-      <td>8.1698</td>
-      <td><strong>0.5428</strong></td>
-      <td>8.10%</td>
-    </tr>
-    <tr>
-      <td>YuE2</td>
-      <td>6.7316</td>
-      <td>8.2598</td>
-      <td>0.5068</td>
-      <td>8.44%</td>
-    </tr>
-    <tr>
-      <td>Suno v5.5</td>
-      <td>6.7150</td>
-      <td>8.1955</td>
-      <td>0.5089</td>
-      <td>5.96%</td>
-    </tr>
-    <tr>
-      <td>Suno v4.5</td>
-      <td>6.6995</td>
-      <td>8.2541</td>
-      <td>0.5022</td>
-      <td><strong>5.80%</strong></td>
-    </tr>
-    <tr>
-      <td>Suno v6</td>
-      <td>6.5562</td>
-      <td>8.1296</td>
-      <td>0.4916</td>
-      <td>7.58%</td>
-    </tr>
-    <tr>
-      <td>LeVo 2</td>
-      <td>6.3247</td>
-      <td><strong>8.3966</strong></td>
-      <td>0.3542</td>
-      <td>26.12%</td>
-    </tr>
-    <tr>
-      <td>MiniMax Music 2.6</td>
-      <td>6.3222</td>
-      <td>8.1711</td>
-      <td>0.4251</td>
-      <td>24.55%</td>
-    </tr>
-    <tr>
-      <td>ACE-Step 1.5</td>
-      <td>6.0118</td>
-      <td>8.0518</td>
-      <td>0.4372</td>
-      <td>7.46%</td>
-    </tr>
-    <tr>
-      <td>YuE 1 (previous)</td>
-      <td>4.9165</td>
-      <td>7.8683</td>
-      <td>0.2623</td>
-      <td>36.38%</td>
-    </tr>
-  </tbody>
-</table>
-
-<p><strong>Key takeaways:</strong></p>
-
-<ul>
-  <li>YuE2 best-of-8 has the highest mean score among all 17 evaluated settings.</li>
-  <li>YuE2 standard (best-of-2) at 6.7316 is still competitive with Suno v5.5 (6.7150).</li>
-  <li>Suno v5 leads on MuLan (text-music alignment) and Suno v4.5 leads on PER (lowest phoneme error).</li>
-  <li>Rankings vary by metric; the small gap between the highest means does not establish statistical significance.</li>
-  <li>YuE2 jumped from 4.9165 (YuE 1) to 6.7316 (YuE2 standard), a massive generational improvement.</li>
-</ul>
-
-<h2 id="sota-companion-models">SOTA Companion Models</h2>
-
-<p>YuE2 ships with two companion models that are each state-of-the-art in their own right.</p>
-
-<p><strong>MERT2</strong> is a music understanding model that is SOTA on <strong>14 of 15 MARBLE metrics</strong>, with <strong>91.72% genre accuracy on GTZAN</strong>. It provides full-song music representations and serves as SheetSage2’s encoder. While MERT2 feature extraction is optional for generation, it powers music understanding tasks across the ecosystem.</p>
-
-<p><strong>SheetSage2</strong> is an audio-to-score transcription model that is SOTA on <strong>10 of 13 benchmark metrics</strong>, with <strong>82.51% vocal melody pitch-class F1 on RWC-Pop</strong>. It runs in a separate environment and loads its MERT2 encoder automatically. SheetSage2 is what makes zero-shot covers possible: it transcribes any recording into an ABC melody score that YuE2 can then re-render in a new style.</p>
-
-<h2 id="agent-skill">Agent Skill</h2>
-
-<p>YuE2 includes a <a href="https://github.com/multimodal-art-projection/YuE/blob/main/skills/yue2-music/SKILL.md">yue2-music skill</a> that teaches AI agents how to:</p>
-
-<ul>
-  <li>Generate songs from lyrics and style prompts</li>
-  <li>Transcribe and cover recordings</li>
-  <li>Edit ABC scores</li>
-  <li>Check musical invariants</li>
-  <li>Organize listening comparisons</li>
-</ul>
-
-<p>The skill works with any agent that supports <code class="language-plaintext highlighter-rouge">SKILL.md</code> packages, including Claude Code and Cursor. Install the Python runtime separately with <code class="language-plaintext highlighter-rouge">pip install .</code>, then point your agent at the skill directory.</p>
-
-<h2 id="quick-start">Quick Start</h2>
-
-<p><strong>Prerequisites:</strong> Linux, Python 3.12, NVIDIA GPU with BF16 support and 24 GB VRAM.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/multimodal-art-projection/YuE.git
-<span class="nb">cd </span>YuE
-python3.12 <span class="nt">-m</span> venv .venv
-<span class="nb">source</span> .venv/bin/activate
-python <span class="nt">-m</span> pip <span class="nb">install</span> <span class="nt">--upgrade</span> pip
-python <span class="nt">-m</span> pip <span class="nb">install</span> <span class="nb">.</span>
-python examples/generate.py <span class="nt">--output</span> outputs/first-song
-</code></pre></div></div>
-
-<p>Open <code class="language-plaintext highlighter-rouge">outputs/first-song/audio.flac</code>. The output directory also contains the score, semantic tokens, acoustic latents, generation settings, and model identities.</p>
-
-<h3 id="cot-settings">Cot Settings</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th>Setting</th>
-      <th>Behavior</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">cot="full"</code></td>
-      <td>Generate an editable melody-and-chord plan (default for new songs)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">cot="melody"</code></td>
-      <td>Use a melody plan with free accompaniment (recommended for covers)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">cot="off"</code></td>
-      <td>Generate directly from lyrics and style (no plan)</td>
-    </tr>
-    <tr>
-      <td><code class="language-plaintext highlighter-rouge">abc=...</code></td>
-      <td>Supply your own score in full or melody mode</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3 id="cover-a-song">Cover a Song</h3>
-
-<p>Transcribe a source recording with SheetSage2, review its melody ABC, and provide new lyrics or a target style:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">yue2</span> <span class="kn">import</span> <span class="n">YuE2Pipeline</span>
-
-<span class="k">with</span> <span class="n">YuE2Pipeline</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"m-a-p/YuE2-3B"</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">"cuda"</span><span class="p">)</span> <span class="k">as</span> <span class="n">pipe</span><span class="p">:</span>
-    <span class="n">cover</span> <span class="o">=</span> <span class="n">pipe</span><span class="p">(</span>
-        <span class="n">style</span><span class="o">=</span><span class="s">"English, jazz-funk, warm lead vocal, Rhodes, bass and drums"</span><span class="p">,</span>
-        <span class="n">lyrics</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s">"cover-lyrics.txt"</span><span class="p">).</span><span class="n">read</span><span class="p">(),</span>
-        <span class="n">abc</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s">"cover-score/score.abc"</span><span class="p">).</span><span class="n">read</span><span class="p">(),</span>
-        <span class="n">cot</span><span class="o">=</span><span class="s">"melody"</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">cover</span><span class="p">.</span><span class="n">save_artifacts</span><span class="p">(</span><span class="s">"outputs/cover"</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h3 id="edit-a-composition">Edit a Composition</h3>
-
-<p>Export a plan, revise the musical details, and render the edited score:</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">yue2</span> <span class="kn">import</span> <span class="n">YuE2Pipeline</span>
-
-<span class="k">with</span> <span class="n">YuE2Pipeline</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s">"m-a-p/YuE2-3B"</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s">"cuda"</span><span class="p">)</span> <span class="k">as</span> <span class="n">pipe</span><span class="p">:</span>
-    <span class="n">plan</span> <span class="o">=</span> <span class="n">pipe</span><span class="p">.</span><span class="n">plan</span><span class="p">(</span>
-        <span class="n">style</span><span class="o">=</span><span class="s">"English, piano-pop"</span><span class="p">,</span>
-        <span class="n">lyrics</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s">"lyrics.txt"</span><span class="p">).</span><span class="n">read</span><span class="p">(),</span>
-    <span class="p">)</span>
-    <span class="n">plan</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="s">"outputs/plan"</span><span class="p">)</span>
-    <span class="c1"># Edit outputs/plan/score.abc, then re-render:
-</span>    <span class="c1"># python examples/generate.py --request examples/song.json \
-</span>    <span class="c1">#   --abc-file edited.abc --cot full --output outputs/edited
-</span></code></pre></div></div>
-
-<h2 id="license">License</h2>
-
-<ul>
-  <li><strong>Code, agent skill, and documentation</strong>: <a href="https://github.com/multimodal-art-projection/YuE/blob/main/LICENSE">Apache 2.0</a></li>
-  <li><strong>Model weights</strong>: <a href="https://github.com/multimodal-art-projection/YuE/blob/main/MODEL_LICENSE">CC BY-NC 4.0</a> (non-commercial use only)</li>
-  <li><strong>Third-party components</strong>: retain their original licenses</li>
-</ul>
-
-<p>The non-commercial restriction on weights is important: if you want to build a commercial product, you will need to negotiate a separate license. The code itself is permissive Apache 2.0.</p>
-
-<h2 id="why-yue2-matters">Why YuE2 Matters</h2>
-
-<p>Most music AI tools are black boxes. You type a prompt, you get audio, and you have no idea what happened in between. If the melody is wrong, you re-roll. If the chords are off, you re-roll. You are rolling dice.</p>
-
-<p>YuE2 changes this. The symbolic score layer means you can see the plan before the audio exists. You can change a chord, adjust a melody, shift the tempo, and re-render. You can cover a song in a new style without fine-tuning. You can have a conversation with an agent about musical decisions. The model is not just a generator; it is a collaborator with a transparent inner life.</p>
-
-<p>And it does all of this at quality that matches or beats the best proprietary systems, with weights you can download from Hugging Face and run on a single consumer GPU.</p>
-
-<p>That is the open future of music creation.</p>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/ACE-Step-UI-Open-Source-AI-Music-Generation/">ACE Step UI: Open Source AI Music Generation</a></li>
-  <li><a href="/HyperFrames-Write-HTML-Render-Video-Built-for-Agents/">HyperFrames: Write HTML, Render Video, Built for AI Agents</a></li>
-  <li><a href="/Supertonic-On-Device-Multilingual-TTS/">Supertonic: On-Device Multilingual TTS</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="YuE2" /><category term="Music Generation" /><category term="Open Source" /><category term="AI Music" /><category term="AR-NAR" /><category term="Flow Matching" /><category term="Symbolic Planning" /><category term="m-a-p" /><summary type="html"><![CDATA[YuE2 from Multimodal Art Projection (m-a-p) is an open source music generation model that turns lyrics and a style prompt into complete songs with vocals and accompaniment. It uses an AR-NAR Mixture-of-Transformers backbone: an autoregressive transformer writes an editable melody-and-chord score in ABC notation and semantic music tokens, then a non-autoregressive flow matching model generates acoustic latents that a VAE decodes into 48 kHz stereo audio. On WildSongBench (192 prompts), YuE2 best-of-8 achieves 6.9632 SongBench Avg, the highest mean among all 17 evaluated systems including Suno v5/v6, Mureka 9, MiniMax Music, and ACE-Step. Three modes: CREATE (lyrics+style to song), COVER (zero-shot style transfer from transcribed melody), and EDIT (agentic conversation-driven score revision). Staged Python API: plan() to generate_semantic() to synthesize() to decode(). 3B parameters, Apache 2.0 code, CC BY-NC 4.0 weights, 24GB VRAM, runs locally on RTX 4090 (215s song in 71s). MERT2 is SOTA on 14/15 MARBLE metrics. SheetSage2 is SOTA on 10/13 transcription metrics. Includes agent skill for Claude Code, Cursor, and SKILL.md-compatible agents.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="TeamAI" /><category term="Tencent" /><category term="AI Agents" /><category term="Claude Code" /><category term="Skills" /><category term="Knowledge Graph" /><category term="Open Source" /><category term="Developer Tools" /><summary type="html"><![CDATA[TeamAI is an open source CLI from Tencent that manages your team's skills, rules, MCP, and knowledge across Claude Code, Codex, Cursor, CodeBuddy, OpenCode, OpenClaw, and other AI coding agents. It uses a shared Git repo as the single source of truth, distributing harness resources through a push-review-merge-pull workflow with SessionStart hooks for automatic sync. The three-layer architecture covers Team Execution (skills, rules, agents, hooks, MCP, env), Team Context (friction-scored learnings, BM25 + graph-boosted recall, codebase knowledge graph with WASM tree-sitter AST extraction), and Team Improvement (weekly digest, session analytics, web dashboard, KB maintenance). Built with TypeScript, Node 20+, commander, simple-git, and web-tree-sitter. MIT licensed, 2.9k stars, trending on GitHub. This post breaks down the architecture, the push-pull workflow, the codebase knowledge graph pipeline, and the agent support matrix.]]></summary></entry></feed>
