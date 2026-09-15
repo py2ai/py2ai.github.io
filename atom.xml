@@ -1,4 +1,93 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-15T01:03:04+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Oh My Hermes: The Operating Layer That Makes Your AI Coding Agent Professional</title><link href="https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent/" rel="alternate" type="text/html" title="Oh My Hermes: The Operating Layer That Makes Your AI Coding Agent Professional" /><published>2026-09-15T00:00:00+00:00</published><updated>2026-09-15T00:00:00+00:00</updated><id>https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent</id><content type="html" xml:base="https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent/"><![CDATA[<p>You have an AI coding agent. It is brilliant, tireless, and slightly chaotic. It bills like a law firm on tasks a junior could do. It says “done!” before anyone has checked. And it forgets everything you taught it the moment the session ends. We covered the agent itself before - <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a>, NousResearch’s self-improving agent with a quarter of a million GitHub stars. Today’s project is what sits on top of it.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-15T22:30:27+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Atlas: Source Control for Coding Agents - Every Commit Explained</title><link href="https://pyshine.com/Atlas-Source-Control-for-Coding-Agents/" rel="alternate" type="text/html" title="Atlas: Source Control for Coding Agents - Every Commit Explained" /><published>2026-09-16T00:00:00+00:00</published><updated>2026-09-16T00:00:00+00:00</updated><id>https://pyshine.com/Atlas-Source-Control-for-Coding-Agents</id><content type="html" xml:base="https://pyshine.com/Atlas-Source-Control-for-Coding-Agents/"><![CDATA[<p>Ask yourself an uncomfortable question: why did that function in your codebase look the way it does? Git tells you <em>what</em> changed and <em>who</em> committed it - but if the “who” was Claude Code last Tuesday, the commit message is a model’s one-line summary of a diff. The prompt that produced the change, the tool calls it made, the approach it tried first and abandoned - all of that lived in a scrollback buffer until the buffer scrolled. Agents now write a large share of the code, and they keep none of the reasoning behind it.</p>
+
+<p><a href="https://github.com/pacifio/atlas">Atlas</a> (MIT, 4.6k stars, trending right now) is built directly against that gap. It is a desktop IDE - Tauri, Rust core, macOS today - that treats agent sessions the way git treats files: every session is recorded locally, every commit is linked back to the session that produced it as a <em>checkpoint</em>, and months later you can select that checkpoint and chat with it. It runs Claude Code, Codex, its own native agent, and anything from the <a href="https://github.com/zed-industries/agent-client-protocol">ACP</a> registry side by side against the same codebase, with shared memory so a decision Claude Code made shows up in Codex’s next prompt.</p>
+
+<p>That combination - version control for reasoning, plus one shared context layer across agents - is genuinely new. Let’s look at how it works.</p>
+
+<p><img src="/assets/img/diagrams/atlas/atlas-architecture.svg" alt="Atlas architecture" /></p>
+
+<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
+
+<p>The diagram above shows the whole system, and the thing that makes it hang together is stated plainly in the README: Atlas runs your agents as they are, and enriches what they see.</p>
+
+<p><strong>1. One send path for every agent.</strong> Claude Code and Codex run as external subprocesses over ACP - the most-used, most-tested integration path. Atlas’s native agent runs in-process on a hard fork of the Codex engine (documented in <code class="language-plaintext highlighter-rouge">CONTEXT.md</code> and ADR-0004 in the repo). Beyond those, Atlas can spawn any agent from the ACP registry - Cursor, OpenCode, Kilo Code and more - pulling each one’s official binary automatically. All of them go through the same send path, so every feature below applies no matter which agent you pick. Your existing subscriptions keep working as-is.</p>
+
+<p><strong>2. The <code class="language-plaintext highlighter-rouge">.atlas/</code> directory is the record.</strong> Every session lands in <code class="language-plaintext highlighter-rouge">sessions.db</code> (SQLite, inside the gitignored <code class="language-plaintext highlighter-rouge">.atlas/</code> folder) with prompts, messages, tool calls, the files each one touched, and the patches applied. Secrets are scrubbed <em>before anything touches disk</em> - the local store is never itself a disclosure risk. Around it live the knowledge base (plain markdown with backlinks and a link graph), spaces (spatial boards as JSON), and sessions as JSONL.</p>
+
+<p><strong>3. Commits are observed, not intercepted.</strong> This is the detail that makes the checkpoint system trustworthy: Atlas watches git rather than wrapping it. A commit made from a terminal, from another editor, or while Atlas was closed entirely still finds its session. The project calls the one binary-format exception out honestly - the checkpoint record is SQLite because it is <em>queried</em>, not read; everything else is markdown, JSON, and JSONL you can read in vim.</p>
+
+<p><strong>4. It is a real IDE underneath.</strong> CodeMirror editor with per-project state, a real git commit graph with stage/unstage/commit and file diffs, a block terminal where each command carries its own output and exit code, split view, a browser tab with real logins and cookies, and a research tab that searches <a href="https://arxiv.org/">arXiv</a> and Semantic Scholar so you can @-mention a paper into a prompt.</p>
+
+<h2 id="the-context-pipeline-five-layers-before-every-prompt">The Context Pipeline: Five Layers Before Every Prompt</h2>
+
+<p><img src="/assets/img/diagrams/atlas/atlas-context-pipeline.svg" alt="Atlas context pipeline" /></p>
+
+<h3 id="understanding-the-pipeline">Understanding the Pipeline</h3>
+
+<p>Before your message reaches the agent, Atlas assembles context around it - and the layers map exactly to the three chronic failures of agent work (agents start from zero every session; switching agents loses the thread; context lives in ten places).</p>
+
+<p><strong>@ mentions resolve locally, in Rust.</strong> Files, folders, symbols, branches, commits, notes, skills, papers, and past sessions all resolve before the prompt is sent. Crucially, folders become a <em>pointer</em>, not a paste: @-ing a 5,000-line file sends a path the agent reads on demand, so one mention does not squat in your context window for the rest of the session.</p>
+
+<p><strong>Shared memory crosses agent boundaries.</strong> Active plans, decisions, file changes, failures, and architecture notes are written by <em>any</em> agent and read by <em>all</em> of them. Neither Claude Code nor Codex can read the other’s history on its own - Atlas can, and does, injecting it every turn. Switching agents mid-task no longer means starting the explanation over.</p>
+
+<p><strong>Semantic matching runs on your machine.</strong> Your message is embedded on-device and matched against the project’s memory index - local embeddings with HNSW search. Retrieval never leaves the device.</p>
+
+<p><strong>First messages get a handoff.</strong> A curated fact pack plus the tail of your last session in this project - including one run by a <em>different</em> agent.</p>
+
+<p><strong>Everything you already wrote feeds in continuously.</strong> Your knowledge notes, <code class="language-plaintext highlighter-rouge">CLAUDE.md</code>, <code class="language-plaintext highlighter-rouge">AGENTS.md</code>, Claude Code’s memory files, and Codex’s history are folded into one index. Skills work the same inclusive way: SKILL.md files scoped globally or per project get enabled per agent by symlinking into that agent’s own skills directory, and <em>packs</em> install a whole GitHub repo of skills, subagents, commands, hooks, and rules via the <a href="https://www.skills.sh/">skills.sh</a> index.</p>
+
+<h2 id="checkpoints-version-control-for-reasoning">Checkpoints: Version Control for Reasoning</h2>
+
+<p><img src="/assets/img/diagrams/atlas/atlas-checkpoints.svg" alt="Atlas checkpoints" /></p>
+
+<h3 id="understanding-the-checkpoint-lifecycle">Understanding the Checkpoint Lifecycle</h3>
+
+<p>The checkpoint is what a commit does not tell you on its own, and the lifecycle has three genuinely hard problems solved:</p>
+
+<p><strong>Linking.</strong> When you commit - from any tool - the commit is linked back to the session that produced it. Sessions and commits are kept together: what was asked, what tools ran, what changed, and why.</p>
+
+<p><strong>Surviving history rewrites.</strong> Amend and rebase re-point checkpoint links through <em>patch-id reconciliation</em>. And when a squash makes the link genuinely ambiguous, the link orphans rather than guessing - an honest failure mode, deliberately chosen over confidently wrong metadata.</p>
+
+<p><strong>Recovery, not just recording.</strong> You never have to read the raw transcript: select a checkpoint and chat with it directly, and it answers from what actually happened in that session. Existing Claude Code history can be backfilled via transcript import, so the record starts before you installed Atlas. A capture-health signal per workspace (OK, Degraded, Stopped, each with a reason and a next step) tells you when recording is quietly broken - because a silent gap in the record is worse than no record at all. A mission-control dashboard rounds it out with usage over time, consumption breakdowns, and a filterable activity log.</p>
+
+<h2 id="local-by-default-with-one-honest-caveat">Local by Default, With One Honest Caveat</h2>
+
+<p><img src="/assets/img/diagrams/atlas/atlas-privacy.svg" alt="Atlas privacy model" /></p>
+
+<h3 id="understanding-the-privacy-model">Understanding the Privacy Model</h3>
+
+<p>The privacy posture is unusually explicit. Code, notes, and sessions stay on your machine; capture is local-only by default; accounts exist solely for the opt-in organisation sync across teammates. Secret scrubbing happens on write, not on upload.</p>
+
+<p>The one caveat, stated by the project itself: anonymous usage analytics are on by default - coarse metadata, never code or prompts, documented in <a href="https://github.com/pacifio/atlas/blob/main/TELEMETRY.md">TELEMETRY.md</a> with an explicit off switch. It is the right way to handle a debatable default: document it, bound it, and let the user decide in one step.</p>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<p>Atlas is macOS-first: grab the latest <code class="language-plaintext highlighter-rouge">.dmg</code> from <a href="https://www.tryatlas.cc/">tryatlas.cc</a> or the <a href="https://github.com/pacifio/atlas/releases">releases page</a>. To use the Claude Code agent, install the <code class="language-plaintext highlighter-rouge">claude</code> CLI; the native Atlas agent needs no external CLI. Local mode works fully offline with no account.</p>
+
+<p>Building from source needs <a href="https://bun.sh/">Bun</a>, Rust via <a href="https://rustup.rs/">rustup</a>, and Xcode Command Line Tools:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/pacifio/atlas
+<span class="nb">cd </span>atlas
+bun <span class="nb">install
+</span>bun run dev:app      <span class="c"># first Rust compile takes a few minutes</span>
+bun run build:app:dmg   <span class="c"># .app + .dmg installer</span>
+</code></pre></div></div>
+
+<p>Linux builds from the same Tauri codebase (GTK 3, WebKit2GTK 4.1, and GLib headers required) but is untested upstream - Windows likewise. One contributing quirk worth knowing before you send a PR: feature work targets the current <em>version branch</em>, not <code class="language-plaintext highlighter-rouge">main</code>; a merge into <code class="language-plaintext highlighter-rouge">main</code> <em>is</em> the release. The <a href="https://github.com/pacifio/atlas/blob/main/ARCHITECTURE.md">architecture doc</a> covers how the whole thing fits together.</p>
+
+<h2 id="why-this-matters">Why This Matters</h2>
+
+<p>Every tool in the agent stack so far has optimized the <em>forward</em> path - better models, better routing, better parallelism. We have covered that ground here before: <a href="https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent/">Oh My Hermes</a> routes and evidences each run, <a href="https://pyshine.com/NVIDIA-SkillSpector-AI-Agent-Skills-Security-Scanner/">SkillSpector</a> secures the skills agents load. Atlas optimizes the <em>backward</em> path: the audit trail. It is the first tool we have covered that treats “why did the agent do this?” as a first-class queryable object - with links that survive rebases, capture health that admits when recording breaks, and a privacy model that keeps the record on your disk.</p>
+
+<p>If your repository’s history is increasingly written by models, the commit message is no longer the documentation. Atlas is what comes after it: git remembers what changed, and Atlas remembers why.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent/">Oh My Hermes: The Operating Layer for Hermes Agent</a></li>
+  <li><a href="https://pyshine.com/NVIDIA-SkillSpector-AI-Agent-Skills-Security-Scanner/">NVIDIA SkillSpector: AI Agent Skills Security Scanner</a></li>
+  <li><a href="https://pyshine.com/DSPy-Agent-Skills-Production-Grade-DSPy-3.2-Skills-for-Coding-Agents/">DSPy Agent Skills: Production-Grade DSPy 3.2 Skills for Coding Agents</a></li>
+</ul>]]></content><author><name>PyShine</name></author><category term="Atlas" /><category term="AI Agents" /><category term="Claude Code" /><category term="Codex" /><category term="Open Source" /><category term="Developer Tools" /><category term="Tauri" /><category term="Git" /><summary type="html"><![CDATA[Atlas is an MIT-licensed Tauri IDE built for the agent era: every commit is linked back to the agent session that produced it (prompts, tool calls, reasoning, patches), Claude Code and Codex run side by side over ACP with shared on-device memory, and context is assembled locally in Rust before every prompt. Local by default, secrets scrubbed before persistence, 4.6k stars and trending. Here is how it works.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/atlas/atlas-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/atlas/atlas-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Oh My Hermes: The Operating Layer That Makes Your AI Coding Agent Professional</title><link href="https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent/" rel="alternate" type="text/html" title="Oh My Hermes: The Operating Layer That Makes Your AI Coding Agent Professional" /><published>2026-09-15T00:00:00+00:00</published><updated>2026-09-15T00:00:00+00:00</updated><id>https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent</id><content type="html" xml:base="https://pyshine.com/Oh-My-Hermes-Operating-Layer-for-Hermes-Agent/"><![CDATA[<p>You have an AI coding agent. It is brilliant, tireless, and slightly chaotic. It bills like a law firm on tasks a junior could do. It says “done!” before anyone has checked. And it forgets everything you taught it the moment the session ends. We covered the agent itself before - <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a>, NousResearch’s self-improving agent with a quarter of a million GitHub stars. Today’s project is what sits on top of it.</p>
 
 <p><a href="https://github.com/rlaope/oh-my-hermes">Oh My Hermes</a> (OMH, MIT licensed, around 2,000 stars and on the trending charts right now) is an operating layer for Hermes Agent that fixes exactly those three failures. It routes every request to the right model at the right reasoning effort - the project’s own measurement claims the same coding tasks solved for <strong>$0.66 instead of $4.29, in 5 minutes instead of 23</strong>. It never says “done” unless it watched a gate pass. And it keeps a long-term project memory where nothing is remembered silently - every lesson goes through a review card, carries provenance, and expires without re-confirmation.</p>
 
@@ -1883,390 +1972,4 @@ npx hyperframes snapshot                     <span class="c"># generate frame pr
   <li><a href="/cowagent-open-source-super-ai-assistant/">CowAgent: Open Source Super AI Assistant</a></li>
   <li><a href="/TeamAI-Make-Every-Team-AI-Native/">TeamAI: Make Every Team AI Native</a></li>
   <li><a href="/ACE-Step-UI-Open-Source-AI-Music-Generation/">ACE Step UI: Open Source AI Music Generation</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="HyperFrames" /><category term="HeyGen" /><category term="Video Generation" /><category term="HTML" /><category term="Puppeteer" /><category term="FFmpeg" /><category term="Open Source" /><category term="AI Agents" /><summary type="html"><![CDATA[HyperFrames is an open-source framework from HeyGen that turns HTML, CSS, media, and seekable animations into deterministic MP4 videos. Write HTML compositions with data-* timing attributes, and the engine captures each frame via Puppeteer headless Chrome and muxes via FFmpeg. Same input produces byte-identical output across machines. Five npm packages: hyperframes (CLI), @hyperframes/core (types, parsers, linter, runtime, frame adapters), @hyperframes/engine (Puppeteer + FFmpeg capture), @hyperframes/producer (full rendering pipeline), @hyperframes/studio (browser editor). Twenty skills teach AI agents the production loop: router + 10 creation workflows (product-launch, faceless-explainer, pr-to-video, embedded-captions, talking-head-recut, motion-graphics, music-to-video, slideshow, general-video, remotion-to-hyperframes) + 9 domain skills (core, animation, keyframes, creative, media-use, cli, audio, registry, figma). Supports GSAP, Lottie, Three.js, Anime.js, CSS, WAAPI, TypeGPU animation runtimes. frame.md translates web design tokens for video. Apache 2.0, 45.8k stars, v0.8.22, 4107 commits, trending on GitHub. Works with Claude Code, Cursor, Gemini CLI, Codex.]]></summary></entry><entry><title type="html">LLM Wiki: A Personal Knowledge Base That Builds Itself with LLMs</title><link href="https://pyshine.com/LLM-Wiki-Personal-Knowledge-Base-That-Builds-Itself/" rel="alternate" type="text/html" title="LLM Wiki: A Personal Knowledge Base That Builds Itself with LLMs" /><published>2026-09-12T00:00:00+00:00</published><updated>2026-09-12T00:00:00+00:00</updated><id>https://pyshine.com/LLM-Wiki-Personal-Knowledge-Base-That-Builds-Itself</id><content type="html" xml:base="https://pyshine.com/LLM-Wiki-Personal-Knowledge-Base-That-Builds-Itself/"><![CDATA[<h2 id="what-is-llm-wiki">What is LLM Wiki</h2>
-
-<p>LLM Wiki is an open source cross-platform desktop application that turns your documents into an organized, interlinked knowledge base automatically. Instead of traditional RAG (retrieve-and-answer from scratch every time), the LLM incrementally builds and maintains a persistent wiki from your sources. Knowledge is compiled once and kept current, not re-derived on every query.</p>
-
-<p>The project is based on <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">Andrej Karpathy’s LLM Wiki pattern</a>, a methodology for building personal knowledge bases using LLMs. The original is an abstract design pattern designed to be copy-pasted to an LLM agent. LLM Wiki, created and maintained by <a href="https://x.com/nash_su">nash_su</a>, implements the core ideas as a full desktop application with substantial extensions.</p>
-
-<p>The code is on GitHub at <a href="https://github.com/nashsu/llm_wiki">nashsu/llm_wiki</a>, GPL v3 licensed, v0.6.11, with 856 commits and trending on GitHub. The tech stack includes Tauri v2 (Rust backend), React 19, TypeScript, Vite, shadcn/ui, Tailwind CSS v4, Milkdown editor, sigma.js + graphology + ForceAtlas2 for graph visualization, and LanceDB for optional vector search.</p>
-
-<h2 id="the-core-idea">The Core Idea</h2>
-
-<p>Most people’s experience with LLMs and documents looks like RAG: you upload a collection of files, the LLM retrieves relevant chunks at query time, and generates an answer. This works, but the LLM is rediscovering knowledge from scratch on every question. There is no accumulation. Ask a subtle question that requires synthesizing five documents, and the LLM has to find and piece together the relevant fragments every time. Nothing is built up.</p>
-
-<p>The LLM Wiki idea is different. Instead of just retrieving from raw documents at query time, the LLM incrementally builds and maintains a persistent wiki: a structured, interlinked collection of markdown files that sits between you and the raw sources. When you add a new source, the LLM does not just index it for later retrieval. It reads it, extracts the key information, and integrates it into the wiki, creating new pages, updating existing ones, and adding cross-references.</p>
-
-<h2 id="three-layer-architecture-and-two-step-ingest">Three-Layer Architecture and Two-Step Ingest</h2>
-
-<p>The core architecture follows Karpathy’s design faithfully: a three-layer structure with three core operations.</p>
-
-<p><img src="/assets/img/diagrams/llm-wiki/llm-wiki-architecture.svg" alt="LLM Wiki three-layer architecture and two-step CoT ingest" /></p>
-
-<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
-
-<p><strong>Layer 1: Raw Sources (Immutable)</strong></p>
-
-<p>The raw sources layer stores your original documents unchanged. Supported formats include PDF (via built-in pdf-extract in Rust or optional MinerU Cloud/Local for complex layouts), DOCX (via docx-rs with headings, bold/italic, lists, tables), PPTX (ZIP + XML slide-by-slide extraction), XLSX/XLS/ODS (via calamine with proper cell types and multi-sheet support), EPUB/MOBI, Org mode, images, media, web clips, and batches of URLs.</p>
-
-<p>Each source file is SHA256-hashed before ingest. Unchanged files are skipped automatically, saving LLM tokens and time. The raw sources directory is also auto-watched: files added, edited, or deleted outside the app are picked up automatically and reuse the same ingest/delete lifecycle.</p>
-
-<p><strong>Layer 2: Wiki (LLM-Generated)</strong></p>
-
-<p>The wiki layer is the LLM-generated, interlinked collection of markdown files. Key files include <code class="language-plaintext highlighter-rouge">index.md</code> (the content catalog and LLM navigation entry point), <code class="language-plaintext highlighter-rouge">log.md</code> (chronological operation record with parseable format), and <code class="language-plaintext highlighter-rouge">overview.md</code> (global summary regenerated on every ingest). Entity pages, concept pages, and source summaries fill out the wiki, all with YAML frontmatter and <code class="language-plaintext highlighter-rouge">[[wikilink]]</code> cross-references.</p>
-
-<p>Every generated wiki page includes a <code class="language-plaintext highlighter-rouge">sources: []</code> field in YAML frontmatter, linking back to the raw source files that contributed to it. This source traceability is critical for the knowledge graph and retrieval pipeline. The wiki directory is also Obsidian-compatible: it works as an Obsidian vault with auto-generated <code class="language-plaintext highlighter-rouge">.obsidian/</code> configuration.</p>
-
-<p><strong>Layer 3: Schema (Rules &amp; Config)</strong></p>
-
-<p>The schema layer defines how and why the wiki works. <code class="language-plaintext highlighter-rouge">schema.md</code> contains structural rules. <code class="language-plaintext highlighter-rouge">purpose.md</code> is the wiki’s soul: it defines goals, key questions, research scope, and an evolving thesis. The LLM reads <code class="language-plaintext highlighter-rouge">purpose.md</code> during every ingest and query for context. The LLM can also suggest updates to <code class="language-plaintext highlighter-rouge">purpose.md</code> based on usage patterns. This is different from <code class="language-plaintext highlighter-rouge">schema.md</code>: schema is structural rules, purpose is directional intent.</p>
-
-<p>Scenario templates (Research, Reading, Personal Growth, Business, General) pre-configure <code class="language-plaintext highlighter-rouge">purpose.md</code> and <code class="language-plaintext highlighter-rouge">schema.md</code> for different use cases.</p>
-
-<h3 id="two-step-chain-of-thought-ingest">Two-Step Chain-of-Thought Ingest</h3>
-
-<p>The original pattern describes a single-step ingest where the LLM reads and writes simultaneously. LLM Wiki splits it into two sequential LLM calls for significantly better quality:</p>
-
-<p><strong>Step 1: Analysis</strong> — The LLM reads the source and produces a structured analysis. This includes key entities, concepts, arguments, connections to existing wiki content, contradictions and tensions with existing knowledge, and recommendations for wiki structure.</p>
-
-<p><strong>Step 2: Generation</strong> — The LLM takes the analysis and generates wiki files. This includes source summary with frontmatter (type, title, sources[]), entity pages, concept pages with cross-references, updated <code class="language-plaintext highlighter-rouge">index.md</code>, <code class="language-plaintext highlighter-rouge">log.md</code>, <code class="language-plaintext highlighter-rouge">overview.md</code>, review items for human judgment, and search queries for Deep Research.</p>
-
-<p>A persistent ingest queue ensures serial processing, preventing concurrent LLM calls. The queue is persisted to disk, survives app restarts, and failed tasks auto-retry up to 3 times. The Activity Panel shows progress bar, pending/processing/failed tasks with cancel and retry buttons.</p>
-
-<h2 id="multi-phase-retrieval-pipeline">Multi-Phase Retrieval Pipeline</h2>
-
-<p>The original pattern describes a simple query where the LLM reads relevant pages. LLM Wiki builds a multi-phase retrieval pipeline with optional vector search and budget control.</p>
-
-<p><img src="/assets/img/diagrams/llm-wiki/llm-wiki-retrieval-pipeline.svg" alt="LLM Wiki multi-phase retrieval pipeline" /></p>
-
-<h3 id="understanding-the-retrieval-pipeline">Understanding the Retrieval Pipeline</h3>
-
-<p>The pipeline has four phases plus an optional vector search step:</p>
-
-<p><strong>Phase 1: Tokenized Search</strong></p>
-
-<p>The tokenized search handles both English and Chinese. For English, it uses word splitting and stop word removal. For Chinese, it uses CJK bigram tokenization (e.g., “每个” becomes [“每个”, “个…”]). Title matches get a +10 score bonus. The search covers both the <code class="language-plaintext highlighter-rouge">wiki/</code> directory and <code class="language-plaintext highlighter-rouge">raw/sources/</code>.</p>
-
-<p><strong>Phase 1.5: Vector Semantic Search (Optional)</strong></p>
-
-<p>Vector search is fully optional and disabled by default. When enabled, it uses any OpenAI-compatible <code class="language-plaintext highlighter-rouge">/v1/embeddings</code> endpoint to generate embeddings. These are stored in LanceDB, a Rust-embedded vector database, for fast approximate nearest neighbor (ANN) retrieval. Cosine similarity finds semantically related pages even without keyword overlap. Results are merged into the search: they boost existing matches and add new discoveries. When disabled, the pipeline falls back to tokenized search plus graph expansion.</p>
-
-<p><strong>Phase 2: Graph Expansion</strong></p>
-
-<p>Top search results serve as seed nodes for graph expansion. The 4-signal relevance model finds related pages through 2-hop traversal with decay for deeper connections. This means that even if a page does not match the search keywords, it can still be retrieved if it is structurally connected to matching pages.</p>
-
-<p><strong>Phase 3: Budget Control</strong></p>
-
-<p>The context window is configurable from 4K to 1M tokens. The proportional allocation is 60% for wiki pages, 20% for chat history, 5% for index, and 15% for system. Pages are prioritized by their combined search and graph relevance score, ensuring the most relevant content fits within the budget.</p>
-
-<p><strong>Phase 4: Context Assembly</strong></p>
-
-<p>Pages are assembled with full content (not just summaries), numbered for citation. The system prompt includes <code class="language-plaintext highlighter-rouge">purpose.md</code>, language rules, citation format, and <code class="language-plaintext highlighter-rouge">index.md</code>. The LLM is instructed to cite pages by number (e.g., [1], [2]) in its responses.</p>
-
-<p><strong>Benchmark</strong>: Overall recall improved from 58.2% (without vector search) to 71.4% (with vector search enabled).</p>
-
-<h2 id="4-signal-knowledge-graph-and-community-detection">4-Signal Knowledge Graph and Community Detection</h2>
-
-<p>The original pattern mentions <code class="language-plaintext highlighter-rouge">[[wikilinks]]</code> for cross-references but has no graph analysis. LLM Wiki builds a full knowledge graph visualization and relevance engine.</p>
-
-<p><img src="/assets/img/diagrams/llm-wiki/llm-wiki-knowledge-graph.svg" alt="LLM Wiki knowledge graph and community detection" /></p>
-
-<h3 id="understanding-the-knowledge-graph">Understanding the Knowledge Graph</h3>
-
-<p><strong>4-Signal Relevance Model</strong></p>
-
-<p>Every pair of wiki pages gets a combined relevance score based on four signals:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Signal</th>
-      <th>Weight</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Direct link</td>
-      <td>x3.0</td>
-      <td>Pages linked via <code class="language-plaintext highlighter-rouge">[[wikilinks]]</code></td>
-    </tr>
-    <tr>
-      <td>Source overlap</td>
-      <td>x4.0</td>
-      <td>Pages sharing the same raw source (via frontmatter <code class="language-plaintext highlighter-rouge">sources[]</code>)</td>
-    </tr>
-    <tr>
-      <td>Adamic-Adar</td>
-      <td>x1.5</td>
-      <td>Pages sharing common neighbors (weighted by neighbor degree)</td>
-    </tr>
-    <tr>
-      <td>Type affinity</td>
-      <td>x1.0</td>
-      <td>Bonus for same page type (entity to entity, concept to concept)</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Source overlap has the highest weight because pages derived from the same source document are likely to be semantically related, even if they do not directly link to each other.</p>
-
-<p><strong>Graph Visualization</strong></p>
-
-<p>The graph is rendered with sigma.js and graphology, using the ForceAtlas2 layout algorithm. Node colors indicate page type or community, with sizes scaled by link count using square root scaling. Edge thickness and color reflect relevance weight (green for strong, gray for weak). Hover interactions keep neighbors visible while dimming non-neighbors, and edge labels show relevance scores. Position caching prevents layout jumps when data updates.</p>
-
-<p><strong>Louvain Community Detection</strong></p>
-
-<p>Using the <code class="language-plaintext highlighter-rouge">graphology-communities-louvain</code> algorithm, the system automatically discovers knowledge clusters based on link topology, independent of predefined page types. Each community is scored by intra-edge density (actual edges divided by possible edges). Low-cohesion clusters (less than 0.15) are flagged with a warning. A 12-color palette provides distinct visual separation between clusters. The community legend shows the top node label, member count, and cohesion per cluster.</p>
-
-<p><strong>Graph Insights</strong></p>
-
-<p>The system automatically analyzes graph structure to surface actionable insights:</p>
-
-<ul>
-  <li><strong>Surprising Connections</strong>: Detects unexpected relationships including cross-community edges, cross-type links, and peripheral-to-hub couplings. A composite surprise score ranks the most noteworthy connections. These are dismissable.</li>
-  <li><strong>Knowledge Gaps</strong>: Identifies isolated pages (degree less than or equal to 1), sparse communities (cohesion less than 0.15 with at least 3 pages), and bridge nodes (connecting 3 or more clusters).</li>
-  <li><strong>Deep Research</strong>: Knowledge gaps and bridge nodes have a Deep Research button that triggers LLM-optimized research with domain-aware topics. The system reads <code class="language-plaintext highlighter-rouge">overview.md</code> and <code class="language-plaintext highlighter-rouge">purpose.md</code> for context, then generates search queries. Research is done via Tavily, SerpApi, or SearXNG, and results are auto-ingested into the wiki.</li>
-</ul>
-
-<h2 id="rust-backend-chat-agent-and-mcp-server">Rust Backend Chat Agent and MCP Server</h2>
-
-<p>Chat runs through a Rust backend Agent runtime rather than a browser-only TypeScript loop. The agent can use tools, manage skills, generate workspace files, and stream tool events.</p>
-
-<p><img src="/assets/img/diagrams/llm-wiki/llm-wiki-agent-mcp.svg" alt="LLM Wiki Rust backend chat agent and MCP server" /></p>
-
-<h3 id="understanding-the-agent-and-mcp-server">Understanding the Agent and MCP Server</h3>
-
-<p><strong>Rust Backend Chat Agent</strong></p>
-
-<p>The agent is a tool-using runtime built in Rust. It can choose from seven tool categories:</p>
-
-<ol>
-  <li><strong>Wiki Search</strong>: Tokenized search plus graph expansion retrieval</li>
-  <li><strong>Source Search</strong>: Search <code class="language-plaintext highlighter-rouge">raw/sources/</code> for original document content</li>
-  <li><strong>Graph Search</strong>: 4-signal relevance traversal across the knowledge graph</li>
-  <li><strong>Web Search</strong>: Tavily, SerpApi, or SearXNG JSON API</li>
-  <li><strong>Workspace Files</strong>: Generate Markdown, HTML, images, and other files under <code class="language-plaintext highlighter-rouge">agent-workspace/</code></li>
-  <li><strong>Shell Approval</strong>: Run approved shell commands with user consent</li>
-  <li><strong>Skill File Reads</strong>: Read local <code class="language-plaintext highlighter-rouge">SKILL.md</code> folders, select skills with <code class="language-plaintext highlighter-rouge">/skill</code> completion</li>
-</ol>
-
-<p>Generated workspace outputs (Markdown, HTML, images, other files) appear as preview cards in the chat with quick folder access. The agent supports streaming tool events and cancellation.</p>
-
-<p><strong>Skill Management</strong></p>
-
-<p>The agent can scan project and user skill folders, enable or disable skills, and pick a skill per conversation with <code class="language-plaintext highlighter-rouge">/skill</code> completion. Skills are local <code class="language-plaintext highlighter-rouge">SKILL.md</code> folders that the agent reads on demand for instructions.</p>
-
-<p><strong>MCP Server</strong></p>
-
-<p>A built-in MCP (Model Context Protocol) server runs at <code class="language-plaintext highlighter-rouge">127.0.0.1:19828</code> and provides:</p>
-<ul>
-  <li>Hybrid search (tokenized plus vector)</li>
-  <li>File read</li>
-  <li>Graph traversal</li>
-  <li>Source rescan</li>
-</ul>
-
-<p>The MCP server is bundled as a Tauri resource and built from the <code class="language-plaintext highlighter-rouge">mcp-server/</code> directory. This allows external AI agents to query the knowledge base programmatically.</p>
-
-<p><strong>Agent Skill Installation</strong></p>
-
-<p>A ready-made agent skill (<a href="https://github.com/nashsu/llm_wiki_skill">llm_wiki_skill</a>) installs into Claude Code or Codex with one command (<code class="language-plaintext highlighter-rouge">npx skills add ...</code>). This lets external coding agents use the wiki as a knowledge source.</p>
-
-<p><strong>Chrome Web Clipper</strong></p>
-
-<p>A Chrome extension provides one-click web page capture with auto-ingest into the knowledge base. A keyboard shortcut for web clipping was added in v0.6.x.</p>
-
-<p><strong>Multi-Provider LLM Support</strong></p>
-
-<p>The system supports OpenAI, Anthropic, Google, Ollama, and Custom providers, each with provider-specific streaming and headers. Models can be configured per project, with Chat and Ingest routed independently. Custom providers, headers, and streaming output are all configurable.</p>
-
-<h2 id="key-features">Key Features</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Feature</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Two-step CoT ingest</td>
-      <td>LLM analyzes first, then generates wiki pages with source traceability</td>
-    </tr>
-    <tr>
-      <td>SHA256 incremental cache</td>
-      <td>Unchanged sources skipped automatically, saving tokens</td>
-    </tr>
-    <tr>
-      <td>Persistent ingest queue</td>
-      <td>Serial processing, crash recovery, auto-retry (3x), cancel/retry</td>
-    </tr>
-    <tr>
-      <td>4-signal knowledge graph</td>
-      <td>Direct links, source overlap, Adamic-Adar, type affinity</td>
-    </tr>
-    <tr>
-      <td>Louvain communities</td>
-      <td>Auto-clustering with cohesion scoring, 12-color palette</td>
-    </tr>
-    <tr>
-      <td>Graph insights</td>
-      <td>Surprising connections, knowledge gaps, bridge nodes</td>
-    </tr>
-    <tr>
-      <td>Multi-phase retrieval</td>
-      <td>Tokenized + optional vector (LanceDB) + graph expansion + budget control</td>
-    </tr>
-    <tr>
-      <td>Rust backend agent</td>
-      <td>Tool-using chat runtime with 7 tool types, streaming events</td>
-    </tr>
-    <tr>
-      <td>MCP server</td>
-      <td>127.0.0.1:19828 API for hybrid search, file read, graph traversal</td>
-    </tr>
-    <tr>
-      <td>Chrome web clipper</td>
-      <td>One-click page capture with auto-ingest</td>
-    </tr>
-    <tr>
-      <td>Agent skill</td>
-      <td>npx skills add for Claude Code / Codex integration</td>
-    </tr>
-    <tr>
-      <td>Multi-format parsing</td>
-      <td>PDF, DOCX, PPTX, XLSX, EPUB, MOBI, images, web clips, URLs</td>
-    </tr>
-    <tr>
-      <td>Obsidian compatible</td>
-      <td>Wiki directory works as Obsidian vault</td>
-    </tr>
-    <tr>
-      <td>Multi-conversation chat</td>
-      <td>Independent sessions with persistence, cited references, save to wiki</td>
-    </tr>
-    <tr>
-      <td>Mermaid rendering</td>
-      <td>Mermaid code blocks rendered in chat and preview</td>
-    </tr>
-    <tr>
-      <td>i18n</td>
-      <td>English + Chinese interface (react-i18next)</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="installation">Installation</h2>
-
-<h3 id="prerequisites">Prerequisites</h3>
-
-<ul>
-  <li>Node.js 20+</li>
-  <li>Rust 1.88+</li>
-  <li>protoc (Protocol Buffers compiler)
-    <ul>
-      <li>macOS: <code class="language-plaintext highlighter-rouge">brew install protobuf</code></li>
-      <li>Linux: <code class="language-plaintext highlighter-rouge">sudo apt install protobuf-compiler</code></li>
-      <li>Windows: <code class="language-plaintext highlighter-rouge">choco install protoc</code></li>
-    </ul>
-  </li>
-</ul>
-
-<h3 id="build-from-source">Build from Source</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/nashsu/llm_wiki.git
-<span class="nb">cd </span>llm_wiki
-npm <span class="nb">install
-</span>npm <span class="nt">--prefix</span> mcp-server ci <span class="o">&amp;&amp;</span> npm run mcp:build   <span class="c"># mcp-server/dist bundled as Tauri resource</span>
-npm run tauri dev      <span class="c"># Development</span>
-npm run tauri build    <span class="c"># Production build</span>
-</code></pre></div></div>
-
-<h3 id="download-prebuilt">Download Prebuilt</h3>
-
-<p>Prebuilt binaries are available via GitHub Releases for macOS (ARM + Intel), Windows (.msi), and Linux (.deb / .AppImage). GitHub Actions CI/CD automates the builds.</p>
-
-<h3 id="chrome-extension">Chrome Extension</h3>
-
-<p>The Chrome extension is in the <code class="language-plaintext highlighter-rouge">extension/</code> directory. Load it as an unpacked extension in Chrome developer mode.</p>
-
-<h3 id="plug-your-ai-agent-in">Plug Your AI Agent In</h3>
-
-<p>Install the agent skill into Claude Code or Codex with one command:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx skills add nashsu/llm_wiki_skill
-</code></pre></div></div>
-
-<p>This gives your coding agent access to the wiki’s hybrid search, file read, graph traversal, and source rescan capabilities via the MCP server.</p>
-
-<h2 id="troubleshooting">Troubleshooting</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Issue</th>
-      <th>Cause</th>
-      <th>Solution</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Ingest fails on complex PDF</td>
-      <td>Built-in pdf-extract cannot handle layout</td>
-      <td>Enable MinerU Cloud or Local API in Settings</td>
-    </tr>
-    <tr>
-      <td>Vector search not working</td>
-      <td>LanceDB not initialized</td>
-      <td>Enable vector search in Settings, configure embedding endpoint</td>
-    </tr>
-    <tr>
-      <td>Recall is low without vector</td>
-      <td>Tokenized search misses semantic matches</td>
-      <td>Enable optional vector search (Phase 1.5) for 71.4% recall</td>
-    </tr>
-    <tr>
-      <td>Chinese search returns few results</td>
-      <td>CJK tokenization is bigram-based</td>
-      <td>Ensure Chinese is configured in language settings</td>
-    </tr>
-    <tr>
-      <td>Agent cannot use tools</td>
-      <td>MCP server not running</td>
-      <td>Check 127.0.0.1:19828 is accessible; rebuild mcp-server</td>
-    </tr>
-    <tr>
-      <td>Wiki not Obsidian-compatible</td>
-      <td>Missing .obsidian/ config</td>
-      <td>Re-export project or regenerate Obsidian config</td>
-    </tr>
-    <tr>
-      <td>Ollama models fail on ingest</td>
-      <td>Reasoning models produce thinking output</td>
-      <td>Fixed in v0.6.x: thinking disabled on Ollama path</td>
-    </tr>
-    <tr>
-      <td>Large source folders slow</td>
-      <td>Progressive rendering needed</td>
-      <td>Sources view renders progressively on scroll</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>LLM Wiki represents a fundamental shift from retrieve-and-answer to compile-and-maintain. Instead of the LLM rediscovering knowledge from scratch on every question, the wiki is built once and kept current. The two-step chain-of-thought ingest produces higher quality pages than single-step generation. The 4-signal knowledge graph with Louvain community detection surfaces surprising connections and knowledge gaps that traditional search cannot find. The multi-phase retrieval pipeline with optional vector search achieves 71.4% recall, a significant improvement over the 58.2% baseline.</p>
-
-<p>The Rust backend chat agent with 7 tool types and the MCP server at 127.0.0.1:19828 make the wiki accessible to external AI agents. The Chrome web clipper and agent skill installation provide multiple entry points for content. The Obsidian compatibility ensures the wiki remains portable and works with existing knowledge management workflows.</p>
-
-<p>The project is actively developed by nash_su, with v0.6.11 currently on GitHub, 856 commits, 171 open issues, and multilingual documentation (English, Chinese, Japanese, Korean). The GPL v3 license ensures the software remains free and open.</p>
-
-<h2 id="related-posts">Related Posts</h2>
-
-<ul>
-  <li><a href="/cowagent-open-source-super-ai-assistant/">CowAgent: Open Source Super AI Assistant</a></li>
-  <li><a href="/WeKnora-Tencent-Open-Source-Knowledge-Framework-RAG-Agents-Wiki/">WeKnora: Tencent Open Source Knowledge Framework</a></li>
-  <li><a href="/Open-Notebook-Open-Source-NotebookLM-Alternative/">Open-Notebook: Open Source NotebookLM Alternative</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="LLM Wiki" /><category term="Knowledge Base" /><category term="RAG" /><category term="Tauri" /><category term="Rust" /><category term="Knowledge Graph" /><category term="Open Source" /><category term="Karpathy" /><summary type="html"><![CDATA[LLM Wiki is an open source cross-platform desktop application that turns your documents into an organized, interlinked knowledge base automatically. Instead of traditional RAG (retrieve-and-answer from scratch every time), the LLM incrementally builds and maintains a persistent wiki from your sources. Knowledge is compiled once and kept current, not re-derived on every query. Built with Tauri v2 (Rust backend), React 19, TypeScript, Vite, sigma.js + graphology for graph visualization, and LanceDB for optional vector search. Based on Andrej Karpathy's LLM Wiki pattern. Features include two-step chain-of-thought ingest with SHA256 incremental cache, a 4-signal knowledge graph (direct links, source overlap, Adamic-Adar, type affinity), Louvain community detection, surprising connection discovery, a multi-phase retrieval pipeline (tokenized search, optional vector, graph expansion, budget control, context assembly), a Rust backend chat agent with 7 tool types, an MCP server, Chrome web clipper, multi-format document parsing (PDF, DOCX, PPTX, XLSX, EPUB, MOBI), and Obsidian compatibility. GPL v3, v0.6.11, 856 commits, trending on GitHub. This post covers the architecture, ingest pipeline, retrieval pipeline, knowledge graph, and agent tools.]]></summary></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="HyperFrames" /><category term="HeyGen" /><category term="Video Generation" /><category term="HTML" /><category term="Puppeteer" /><category term="FFmpeg" /><category term="Open Source" /><category term="AI Agents" /><summary type="html"><![CDATA[HyperFrames is an open-source framework from HeyGen that turns HTML, CSS, media, and seekable animations into deterministic MP4 videos. Write HTML compositions with data-* timing attributes, and the engine captures each frame via Puppeteer headless Chrome and muxes via FFmpeg. Same input produces byte-identical output across machines. Five npm packages: hyperframes (CLI), @hyperframes/core (types, parsers, linter, runtime, frame adapters), @hyperframes/engine (Puppeteer + FFmpeg capture), @hyperframes/producer (full rendering pipeline), @hyperframes/studio (browser editor). Twenty skills teach AI agents the production loop: router + 10 creation workflows (product-launch, faceless-explainer, pr-to-video, embedded-captions, talking-head-recut, motion-graphics, music-to-video, slideshow, general-video, remotion-to-hyperframes) + 9 domain skills (core, animation, keyframes, creative, media-use, cli, audio, registry, figma). Supports GSAP, Lottie, Three.js, Anime.js, CSS, WAAPI, TypeGPU animation runtimes. frame.md translates web design tokens for video. Apache 2.0, 45.8k stars, v0.8.22, 4107 commits, trending on GitHub. Works with Claude Code, Cursor, Gemini CLI, Codex.]]></summary></entry></feed>
