@@ -1,4 +1,4 @@
----
+﻿---
 layout: post
 title: "Cloudflare's Security Audit Skill: Turn Your Coding Agent Into a Security Auditor"
 description: "Cloudflare open-sourced the skill that seeded its own vulnerability discovery harness. Six phases, adversarial validation, and findings your team can actually trust."
@@ -17,7 +17,7 @@ author: "PyShine"
 
 Ask your coding agent to "find security vulnerabilities" and you will usually get back a confident list of guesses: a missing header here, a hardcoded secret there, half of it wrong, none of it reproducible. The problem is not that agents lack security knowledge. It is that a one-shot prompt has no structure, no coverage accounting, and no mechanism to catch its own mistakes. Cloudflare decided to fix that by open-sourcing the very skill they use internally. [security-audit-skill](https://github.com/cloudflare/security-audit-skill) is a coding-agent skill that turns any capable agent into a disciplined security auditor, and it has already collected more than 10,000 GitHub stars since landing in June 2026.
 
-![Security Audit Skill Pipeline](https://pyshine.com/assets/img/diagrams/security-audit-skill/security-audit-pipeline.svg)
+![Security Audit Skill Pipeline](/assets/img/diagrams/security-audit-skill/security-audit-pipeline.svg)
 
 ### Understanding the Six-Phase Pipeline
 
@@ -48,7 +48,7 @@ If your request is ambiguous, the agent asks one focused question before creatin
 
 ### The Sandbox Rules Are Not Optional
 
-![Write Isolation and Sandbox Model](https://pyshine.com/assets/img/diagrams/security-audit-skill/security-audit-isolation.svg)
+![Write Isolation and Sandbox Model](/assets/img/diagrams/security-audit-skill/security-audit-isolation.svg)
 
 ### Understanding Write Isolation
 
@@ -64,7 +64,7 @@ If the environment cannot enforce these controls, the skill does not execute tar
 
 ### Coverage Across Every Attack Surface
 
-![Attack-Class Companion Files](https://pyshine.com/assets/img/diagrams/security-audit-skill/security-audit-coverage.svg)
+![Attack-Class Companion Files](/assets/img/diagrams/security-audit-skill/security-audit-coverage.svg)
 
 ### Understanding the Attack-Class Library
 
@@ -88,7 +88,7 @@ Notice the `AI-AND-LLM.md` file. Auditing a codebase that itself calls LLMs rais
 
 ### Three Verdicts, No Wishful Thinking
 
-![Adversarial Validation and Verdicts](https://pyshine.com/assets/img/diagrams/security-audit-skill/security-audit-verdicts.svg)
+![Adversarial Validation and Verdicts](/assets/img/diagrams/security-audit-skill/security-audit-verdicts.svg)
 
 ### Understanding the Verdict System
 
