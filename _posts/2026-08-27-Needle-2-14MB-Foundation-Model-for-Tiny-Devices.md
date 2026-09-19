@@ -5,6 +5,8 @@ description: "Needle 2 is a 45M-parameter tool-calling model compressed to a sin
 date: 2026-08-27
 header-img: "img/post-bg.jpg"
 permalink: /Needle-2-14MB-Foundation-Model-Tiny-Devices/
+redirect_from:
+  - /Needle-2-14MB-Foundation-Model-for-Tiny-Devices/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags:
   - Open Source

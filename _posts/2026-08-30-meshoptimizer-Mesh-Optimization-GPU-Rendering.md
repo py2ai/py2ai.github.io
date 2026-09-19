@@ -5,6 +5,8 @@ description: "A deep dive into meshoptimizer, the C/C++ library that optimizes t
 date: 2026-08-30
 header-img: "img/post-bg.jpg"
 permalink: /meshoptimizer-Mesh-Optimization-GPU-Rendering/
+redirect_from:
+  - /meshoptimizer-Mesh-Optimization-Library/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags:
   - Open Source

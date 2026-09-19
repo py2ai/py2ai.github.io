@@ -5,6 +5,8 @@ description: "WeMM-Embedding is a family of universal multimodal embedding model
 date: 2026-09-04
 header-img: "ai-coding-frameworks/ai-coding-frameworks"
 permalink: /wemm-embedding-tencent-universal-multimodal-embedding/
+redirect_from:
+  - /WeMM-Embedding-Tencent-Universal-Multimodal-Embedding/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags: [WeMM-Embedding, Tencent, WeChat, Multimodal, Embedding, MRL, MMEB, RAG, vLLM, SGLang]
 author: PyShine

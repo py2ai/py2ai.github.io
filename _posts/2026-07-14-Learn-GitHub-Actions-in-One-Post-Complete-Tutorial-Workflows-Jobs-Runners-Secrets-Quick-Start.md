@@ -5,6 +5,8 @@ description: "A complete GitHub Actions tutorial in one blog post. Covers the wh
 date: 2026-07-14
 header-img: "img/post-bg.jpg"
 permalink: /Learn-GitHub-Actions-in-One-Post-Complete-Tutorial-Workflows-Jobs-Runners-Secrets-Quick-Start/
+redirect_from:
+  - /Learn-GitHub-Actions-in-One-Post-Complete-Tutorial-Workflows-Jobs-Runners-Matrix-Quick-Start/
 featured-img: ai-coding-frameworks/ai-coding-frameworks
 tags:
   - GitHub Actions
