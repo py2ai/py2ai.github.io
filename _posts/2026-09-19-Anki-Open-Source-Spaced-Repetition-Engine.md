@@ -18,13 +18,13 @@ author: "PyShine"
 
 Ask anyone who has learned a language, passed a medical exam, or memorized a thousand chess openings, and the same tool keeps coming up: [Anki](https://github.com/ankitects/anki). It is a spaced repetition flashcard program with decades of history, tens of thousands of GitHub stars, and a loyal following that borders on religious. What fewer people have seen is what sits under the hood: a serious piece of systems engineering, and this post takes you inside it.
 
-The project is licensed under AGPL-3.0 (with some contributed portions under BSD-3), which means every line that decides when you will next see a card is public, auditable, and yours to modify. Even better, the developers keep an unusually clean, layered architecture that is genuinely pleasant to study. We rendered it with our local GitDiagram pipeline (see our [GitDiagram introduction](/GitDiagram-Turn-Any-GitHub-Repo-Into-An-Interactive-Architecture-Diagram/) for how that works), and the overview below is the honest shape of the repository.
+The project is licensed under AGPL-3.0 (with some contributed portions under BSD-3), which means every line that decides when you will next see a card is public, auditable, and yours to modify. Even better, the developers keep an unusually clean, layered architecture that is genuinely pleasant to study, and the overview below is the honest shape of the repository.
 
 <div style="overflow-x:auto;">
 <img src="/assets/img/diagrams/anki/anki-overview-architecture.svg" alt="Anki high-level overview architecture" style="min-width:900px;width:100%;">
 </div>
 
-*Anki overview, generated from the real repository tree with the GitDiagram pipeline. Mobile clients are separate codebases that sync over HTTPS.*
+*Anki overview, drawn from the real repository tree. Mobile clients are separate codebases that sync over HTTPS.*
 
 ## Why You Need This
 
@@ -42,7 +42,7 @@ The remarkable thing about Anki's codebase is that it spans four languages and s
 <img src="/assets/img/diagrams/anki/anki-architecture.svg" alt="Anki detailed architecture" style="min-width:1100px;width:100%;">
 </div>
 
-*Detailed Anki architecture from the GitDiagram pipeline: the full request path from UI to SQLite, plus the sync system.*
+*Detailed Anki architecture: the full request path from UI to SQLite, plus the sync system.*
 
 Follow the request path. The desktop program you install is a PyQt shell in `qt/aqt`. Its windows embed web views, and a small local HTTP server (`mediasrv.py`) serves the Svelte and TypeScript frontend from `ts/` into those views. When you answer a card, the reviewer UI sends HTTP POST requests through that local server into the Python layer. `pylib/anki` is the public Python library; its `_backend.py` turns every call into a protobuf RPC, which crosses a PyO3 bridge (`pylib/rsbridge`) straight into Rust.
 

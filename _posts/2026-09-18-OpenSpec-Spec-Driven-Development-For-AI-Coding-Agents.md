@@ -19,7 +19,7 @@ The tool's answer is deceptively simple. Before any code gets written, the chang
 <img src="/assets/img/diagrams/openspec/openspec-architecture.svg" alt="OpenSpec architecture: CLI and delivery, planning workflow, agent tooling and state, documentation site" style="max-width:100%;height:auto;" />
 </div>
 
-*The architecture map above was generated with the open-source [GitDiagram](https://pyshine.com/GitDiagram-Turn-Any-GitHub-Repo-Into-An-Interactive-Architecture-Diagram/) pipeline, the same prompts and deterministic Mermaid compiler the service uses, so every path you see is a real file in the repository. Click through and you can trace each arrow to source.*
+*The architecture map above is drawn from the real repository tree, so every path you see is a real file. Click through and you can trace each arrow to source.*
 
 ## Why specifications beat vibes
 

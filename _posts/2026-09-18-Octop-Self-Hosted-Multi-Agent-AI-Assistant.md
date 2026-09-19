@@ -19,7 +19,7 @@ The pitch in the project's README is charmingly direct. Octop is not just a tool
 <img src="/assets/img/diagrams/octop/octop-architecture.svg" alt="Octop architecture: clients and surfaces, HTTP API layer, domain core, harness libraries, persistence and data" style="max-width:100%;height:auto;" />
 </div>
 
-*The architecture map above was generated with the same [GitDiagram](https://pyshine.com/GitDiagram-Turn-Any-GitHub-Repo-Into-An-Interactive-Architecture-Diagram/) pipeline we use for every post in this series, so every node you can click links to a real file in the repository. Notice how the whole right side of the diagram — the harness libraries — is imported rather than reimplemented.*
+*The architecture map above is drawn from the real repository tree, so every node you can click links to a real file. Notice how the whole right side of the diagram — the harness libraries — is imported rather than reimplemented.*
 
 ## One process, no queue, no ceremony
 

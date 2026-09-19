@@ -19,7 +19,7 @@ The name behind it carries weight. Hister comes from asciimoo, the developer who
 <img src="/assets/img/diagrams/hister/hister-architecture.svg" alt="Hister architecture: clients and surfaces, HTTP server layer, ingestion pipeline, search and storage, platform and config" style="max-width:100%;height:auto;" />
 </div>
 
-*The architecture map above was generated with the open-source [GitDiagram](https://pyshine.com/GitDiagram-Turn-Any-GitHub-Repo-Into-An-Interactive-Architecture-Diagram/) pipeline, so every box you see points at a real directory or file in the repository. Trace the arrows and you can follow a captured page from the browser extension all the way into the full-text index.*
+*The architecture map above is drawn from the real repository tree, so every box points at a real directory or file. Trace the arrows and you can follow a captured page from the browser extension all the way into the full-text index.*
 
 ## Capture everything, effortlessly
 
