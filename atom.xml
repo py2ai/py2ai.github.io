@@ -1,4 +1,83 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-20T00:43:49+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Home Assistant: Local Control and Privacy for Your Smart Home</title><link href="https://pyshine.com/Home-Assistant-Local-Control-Privacy-Smart-Home/" rel="alternate" type="text/html" title="Home Assistant: Local Control and Privacy for Your Smart Home" /><published>2026-09-20T00:00:00+00:00</published><updated>2026-09-20T00:00:00+00:00</updated><id>https://pyshine.com/Home-Assistant-Local-Control-Privacy-Smart-Home</id><content type="html" xml:base="https://pyshine.com/Home-Assistant-Local-Control-Privacy-Smart-Home/"><![CDATA[<h1 id="home-assistant-local-control-and-privacy-for-your-smart-home">Home Assistant: Local Control and Privacy for Your Smart Home</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-09-20T09:45:49+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">Higgsfield: Multi-Node LLM Training Without Crying</title><link href="https://pyshine.com/Higgsfield-Multi-Node-LLM-Training-Without-Crying/" rel="alternate" type="text/html" title="Higgsfield: Multi-Node LLM Training Without Crying" /><published>2026-09-20T00:00:00+00:00</published><updated>2026-09-20T00:00:00+00:00</updated><id>https://pyshine.com/Higgsfield-Multi-Node-LLM-Training-Without-Crying</id><content type="html" xml:base="https://pyshine.com/Higgsfield-Multi-Node-LLM-Training-Without-Crying/"><![CDATA[<h1 id="higgsfield-multi-node-llm-training-without-crying">Higgsfield: Multi-Node LLM Training Without Crying</h1>
+
+<p>Training a large language model across a cluster of GPUs is an exercise in frustration: environment conflicts, hundreds of configuration arguments, scheduler scripts, and fragile deployment steps that break the moment a node reboots. <a href="https://github.com/higgsfield-ai/higgsfield">Higgsfield</a> describes its mission in its own tagline, multi-node training without crying. It is an open-source, fault-tolerant GPU orchestration layer and machine learning framework designed for training models with billions to trillions of parameters, released under the Apache-2.0 license and installable from <a href="https://pypi.org/project/higgsfield/">PyPI</a>. With nearly five thousand stars, it takes a refreshingly unusual approach: your experiments are plain PyTorch code, and the deployment machinery is generated for you. This post looks at how it works.</p>
+
+<p><img src="/assets/img/diagrams/higgsfield/higgsfield-overview-architecture.svg" alt="High-level architecture overview of the Higgsfield repository" /></p>
+
+<h2 id="why-you-need-this">Why You Need This</h2>
+
+<p>The usual route to distributed LLM training involves three kinds of pain. First, environment hell: every node needs matching versions of PyTorch, NVIDIA drivers, CUDA libraries, and data processing dependencies, and a single mismatch silently corrupts a run. Second, config hell: mainstream training frameworks expose enormous argument surfaces, hundreds of knobs in the case of <a href="https://github.com/huggingface/transformers">Transformers’ training arguments</a>, plus templating systems like <a href="https://hydra.cc">Hydra</a> that add a configuration language on top of your configuration. Third, orchestration pain: scheduling experiments across exclusive and non-exclusive nodes, queuing them, and babysitting failures.</p>
+
+<p>Higgsfield attacks all three. Your training code stays ordinary PyTorch, so anything that works in a notebook works here, whether that is <a href="https://www.deepspeed.ai">DeepSpeed</a> ZeRO-3 sharding, PyTorch’s <a href="https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html">fully sharded data parallel</a> API, or your own sharding scheme. Environments are pinned in Docker images rather than hand-installed on each node. And the platform around your code, deployment, queueing, and monitoring, is generated from your repository instead of written by hand.</p>
+
+<p>The result reads almost like a joke of simplicity. The README’s training example for a 70-billion-parameter LLaMA fits on one screen: define a model, an optimizer, and a data loader inside an experiment decorator, and call the optimizer the way you always have.</p>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<p>The diagram below maps the main components of the repository and how they connect.</p>
+
+<p><img src="/assets/img/diagrams/higgsfield/higgsfield-architecture.svg" alt="Detailed architecture of the Higgsfield repository" /></p>
+
+<p><strong>The public API.</strong> Everything a researcher touches lives at the top of the package. The experiment decorator turns an ordinary function into a named, seed-controlled experiment, with optional parameter decorators that give your training function a typed, documented surface; parameters declared this way accumulate automatically and can be read through the function’s own argument, so one experiment file serves many runs without copy-pasting. Around it sits a small model zoo: Llama and Mistral model classes that wire sharding stage, attention mode, and precision into a single constructor call, paired with data loaders that feed batches from dataset utilities, including a helper for OpenAI-format chat data.</p>
+
+<p><strong>CLI, static analysis, and codegen.</strong> When you run the command-line interface, Higgsfield does something clever: it parses your experiment files with a Python AST parser rather than importing them, so defining experiments never executes your training code on the control machine. The parser extracts experiment names and parameters into a builder model that mirrors the decorator API, and the CI setup module renders <a href="https://docs.github.com/en/actions">GitHub Actions workflows</a> from Jinja templates, deploy actions, experiment actions, and kill actions, plus a Dockerfile that pins your runtime environment.</p>
+
+<p><strong>The execution plane.</strong> Setup installs Docker, your project’s deploy keys, and the Higgsfield binary on each Ubuntu node. When the generated workflows land on GitHub, pushes automatically deploy your code to the nodes over SSH, launch the experiment inside its container, and stream run status back to GitHub’s own interface, which doubles as your experiment dashboard. Node allocation is a first-class concern rather than an afterthought: the framework keeps a queue for experiments and hands out exclusive or non-exclusive access to machines, so one researcher’s job does not silently trample another’s. Inside the container, the training kernel provides gradient utilities and loss scaling on top of the sharded model, and a checkpoint module built around FSDP state saving persists progress, so runs survive preemption and restarts on spot instances.</p>
+
+<h2 id="advantages">Advantages</h2>
+
+<ul>
+  <li><strong>Plain PyTorch as the contract.</strong> No custom DSL; DeepSpeed, Accelerate, or hand-rolled sharding all work inside an experiment.</li>
+  <li><strong>No import-time surprises.</strong> The AST-based parser reads your experiments without running them, keeping control-plane tooling safe and fast.</li>
+  <li><strong>Reproducibility by construction.</strong> Environments are Docker images; dependency versions are documented with the experiment rather than memorized on nodes.</li>
+  <li><strong>GitHub as the operations console.</strong> Queueing, launching, and monitoring happen where your code already lives, with no extra dashboard to host.</li>
+  <li><strong>Real fault tolerance.</strong> Checkpoints are first-class, which is what makes spot and preemptible GPU capacity usable.</li>
+  <li><strong>Small, readable internals.</strong> The whole package is compact enough to read in a sitting, from decorators to template rendering.</li>
+</ul>
+
+<h2 id="benefits">Benefits</h2>
+
+<p>The immediate benefit is time back. Setting up a multi-node training run becomes a project initializer, a decorator, and a push to GitHub, instead of an afternoon of SSH-ing through nodes reconciling CUDA versions. The queue that Higgsfield keeps for experiments means one researcher’s job does not silently overwrite another’s node allocation. Fault tolerance also changes the psychology of long runs: when a preemption in hour nine of training costs minutes of restart instead of a day of lost work, you stop treating compute as something to tiptoe around.</p>
+
+<p>The second benefit is cost discipline. Because checkpoints are built in and restarts are routine, the cheapest GPU capacity, spot and preemptible instances on clouds like Azure and <a href="https://lambdalabs.com">Lambda Labs</a>, becomes practical for serious runs rather than a gamble.</p>
+
+<p>The third benefit is knowledge. The codebase is a compact masterclass in modern ML infrastructure: how to generate CI workflows from templates, how to analyze user code statically, and how to keep a thin, honest API over complex sharding runtimes. If you are exploring the wider LLM tooling landscape, our coverage of <a href="https://pyshine.com/ollama-run-llms-locally-with-ease/">Ollama for running LLMs locally</a> covers the inference side, and the <a href="https://pyshine.com/HuggingFace-OpenEnv-RL-Post-Training-Environment-Interface/">OpenEnv post-training environment interface</a> pairs naturally with the training side that Higgsfield handles.</p>
+
+<h2 id="usage">Usage</h2>
+
+<p>Requirements are modest: Ubuntu nodes with SSH access and a non-root user with sudo. Install the package, then initialize a project:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>higgsfield
+higgsfield init
+</code></pre></div></div>
+
+<p>Initialization scaffolds a project with a Dockerfile, writes your node list into the project configuration, and sets up the git plumbing. Then define an experiment the way the README does:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">higgsfield.llama</span> <span class="kn">import</span> <span class="n">Llama70b</span>
+<span class="kn">from</span> <span class="nn">higgsfield.loaders</span> <span class="kn">import</span> <span class="n">LlamaLoader</span>
+<span class="kn">from</span> <span class="nn">higgsfield.experiment</span> <span class="kn">import</span> <span class="n">experiment</span>
+
+<span class="o">@</span><span class="n">experiment</span><span class="p">(</span><span class="s">"alpaca"</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Llama70b</span><span class="p">(</span><span class="n">zero_stage</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">fast_attn</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="s">"bf16"</span><span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="p">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">get_alpaca_data</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="s">"train"</span><span class="p">)</span>
+    <span class="n">train_loader</span> <span class="o">=</span> <span class="n">LlamaLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">max_words</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
+        <span class="n">optimizer</span><span class="p">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">loss</span><span class="p">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="p">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="n">model</span><span class="p">.</span><span class="n">push_to_hub</span><span class="p">(</span><span class="s">'alpaca-70b'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Here the dataset is the <a href="https://github.com/tatsu-lab/stanford_alpaca">Stanford Alpaca</a> instruction set, the model is sharded with ZeRO stage 3, and training runs in bfloat16. Push the repository, and Higgsfield’s generated actions deploy the code to your nodes and launch the run. Behind the scenes the framework generates one workflow to deploy, one to run experiments, and one to kill them, so cancelling a runaway job is a single action from the run interface. The full walk-through, from node setup to a first experiment, is in the project’s <a href="https://higgsfield.ai">setup guide</a>, and the model behind it all is documented in the <a href="https://arxiv.org/abs/2302.13971">LLaMA paper</a>, with its sibling architecture at <a href="https://mistral.ai">Mistral AI</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Higgsfield proves that multi-node LLM training does not need a control plane the size of a small operating system. A decorator, a static parser, a set of Jinja templates, and GitHub’s own automation replace the usual mountain of scheduler scripts and config files, while ZeRO-3 sharding and FSDP checkpoints keep the actual training honest. If you have a few GPUs and a folder of PyTorch code, it is one of the shortest paths from there to a trained model, and one of the most readable codebases on the road.</p>]]></content><author><name>PyShine</name></author><category term="Open Source" /><category term="Python" /><category term="LLM" /><category term="Distributed Training" /><category term="GPU" /><category term="DeepSpeed" /><category term="PyTorch" /><category term="MLOps" /><summary type="html"><![CDATA[Higgsfield is an open-source, fault-tolerant GPU orchestration and machine learning framework for training billion-parameter models - this deep dive covers its experiment decorators, AST-based codegen, ZeRO-3 sharding, and GitHub Actions deployment.]]></summary></entry><entry><title type="html">Home Assistant: Local Control and Privacy for Your Smart Home</title><link href="https://pyshine.com/Home-Assistant-Local-Control-Privacy-Smart-Home/" rel="alternate" type="text/html" title="Home Assistant: Local Control and Privacy for Your Smart Home" /><published>2026-09-20T00:00:00+00:00</published><updated>2026-09-20T00:00:00+00:00</updated><id>https://pyshine.com/Home-Assistant-Local-Control-Privacy-Smart-Home</id><content type="html" xml:base="https://pyshine.com/Home-Assistant-Local-Control-Privacy-Smart-Home/"><![CDATA[<h1 id="home-assistant-local-control-and-privacy-for-your-smart-home">Home Assistant: Local Control and Privacy for Your Smart Home</h1>
 
 <p>Most smart home platforms quietly route your devices through someone else’s cloud. Your lights, locks, and sensors may sit in the same room as you, but their commands travel to a data center and back. <a href="https://github.com/home-assistant/core">Home Assistant</a> takes the opposite approach: it is open-source home automation that puts local control and privacy first, running on a Raspberry Pi or any local server and talking to your devices directly. With more than ninety thousand stars on GitHub, an Apache-2.0 license, and stewardship under the <a href="https://www.openhomefoundation.org">Open Home Foundation</a>, it has become the reference platform for people who want their homes to work without an internet connection, let alone a subscription. This post looks inside the codebase at how one of the world’s most popular open-source projects is actually built.</p>
 
@@ -621,77 +700,4 @@ docker compose up <span class="nt">-d</span> <span class="nt">--build</span>
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>OpenAI Plugins is a small repository with an outsized role: it is simultaneously a library, a specification, and a tutorial. The format it demonstrates — manifests, markdown playbooks, MCP wiring, marketplace indexes — is becoming the standard way capability gets attached to coding agents, and the sixty-plus examples here are the best study material available. Install a couple of bundles today, read the rest as blueprints, and steal the structure for your own integrations. The playbook era of agent extensions is here, and this repository wrote the book.</p>]]></content><author><name>PyShine</name></author><category term="OpenAI" /><category term="Codex" /><category term="AI Agents" /><category term="Plugins" /><category term="Open Source" /><summary type="html"><![CDATA[OpenAI Plugins is the official curated collection of Codex plugin examples - skills, MCP servers, and app surfaces - with a marketplace index and authoring tooling for building your own.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/openai-plugins/oaip-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/openai-plugins/oaip-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Supabase: The Open-Source Firebase Alternative You Can Self-Host on Your Own Postgres</title><link href="https://pyshine.com/Supabase-Open-Source-Firebase-Alternative/" rel="alternate" type="text/html" title="Supabase: The Open-Source Firebase Alternative You Can Self-Host on Your Own Postgres" /><published>2026-09-19T00:00:00+00:00</published><updated>2026-09-19T00:00:00+00:00</updated><id>https://pyshine.com/Supabase-Open-Source-Firebase-Alternative</id><content type="html" xml:base="https://pyshine.com/Supabase-Open-Source-Firebase-Alternative/"><![CDATA[<p>Ask a room of developers what killed the most side projects, and the answer is rarely ambition. It is the backend: auth screens, database schemas, file uploads, real-time updates, and the glue between them. Supabase set out to remove that whole category of work, and it made one decision that separates it from every hosted-backend vendor: everything is built on Postgres, and everything is open source under the Apache-2.0 license. With more than one hundred thousand GitHub stars, <a href="https://github.com/supabase/supabase">Supabase</a> is the de-facto open-source Firebase alternative, and its repository is one of the most instructive monorepos you can read.</p>
-
-<div style="overflow-x:auto;">
-<img src="/assets/img/diagrams/supabase/supabase-overview-architecture.svg" alt="Supabase high-level overview architecture" style="min-width:900px;width:100%;" />
-</div>
-
-<p><em>High-level overview: developer surfaces on the monorepo side, the self-hosting stack, and the Postgres data plane behind an API gateway.</em></p>
-
-<h2 id="why-you-need-this">Why You Need This</h2>
-
-<p>If you have ever postponed a product because the backend felt heavier than the idea, this is the tool for you. Supabase gives you a Postgres database, generated REST and GraphQL-style APIs, authentication with row-level security, file storage, realtime websocket streams, and Deno edge functions — provisioned in minutes instead of weeks. You write frontend code; the platform handles the plumbing.</p>
-
-<p>You specifically want Supabase rather than a closed hosted backend for three reasons. First, portability: your data lives in ordinary Postgres, so a plain <code class="language-plaintext highlighter-rouge">pg_dump</code> is your exit plan, not a migration project. Second, self-hosting: the entire platform runs from one docker-compose file on your own servers, which matters for compliance, latency, or cost — the same instinct behind self-hosting your search with our earlier Hister write-up (/Hister-Your-Own-Private-Search-Engine/). Third, composability: because auth, storage, and realtime are just Postgres schemas and helpers underneath, you can extend the platform with SQL, triggers, and extensions instead of waiting for a vendor feature.</p>
-
-<h2 id="how-it-works">How It Works</h2>
-
-<p>The repository is a pnpm and Turborepo monorepo, and its layout tells the real story of the product: web properties on one side, shared packages in the middle, and the self-hosting stack underneath.</p>
-
-<div style="overflow-x:auto;">
-<img src="/assets/img/diagrams/supabase/supabase-architecture.svg" alt="Supabase detailed architecture" style="min-width:1100px;width:100%;" />
-</div>
-
-<p><em>Detailed architecture: the apps, the shared packages they import, and the docker-compose data plane behind the gateway.</em></p>
-
-<p>The dashboard you know as Supabase Studio is <code class="language-plaintext highlighter-rouge">apps/studio</code>, a Next.js application that talks to the Management API to provision projects, browse tables, run SQL, and edit auth policies. It imports its component system from <code class="language-plaintext highlighter-rouge">packages/ui</code>, a shadcn-based library shared with the docs site (<code class="language-plaintext highlighter-rouge">apps/docs</code>), the marketing site (<code class="language-plaintext highlighter-rouge">apps/www</code>), and the Astro knowledge base (<code class="language-plaintext highlighter-rouge">apps/kb</code>). Two generated packages keep the whole workspace type-safe: <code class="language-plaintext highlighter-rouge">packages/api-types</code> holds the Management API types produced by code generation, and <code class="language-plaintext highlighter-rouge">packages/pg-meta</code> contains the SQL builders that power database introspection — the reason Studio can render your schema live.</p>
-
-<p>The self-hosting story lives in <code class="language-plaintext highlighter-rouge">docker/docker-compose.yml</code>, and reading it is a masterclass in how the platform really works. The stack boots an Envoy and Kong API gateway (<code class="language-plaintext highlighter-rouge">docker/volumes/api</code> holds the routing config), then the services every Supabase app touches: GoTrue for authentication, PostgREST for the auto-generated REST API, Realtime for websocket change streams and broadcast, Storage with an imgproxy sidecar for files, the Deno-based Edge Runtime for functions, and Supavisor for connection pooling. Every one of them is stateless against a single <code class="language-plaintext highlighter-rouge">supabase/postgres:17</code> container where your data, your row-level security policies, and the replication publication for realtime all live.</p>
-
-<p>Finally, <code class="language-plaintext highlighter-rouge">supabase/</code> at the repository root models the project workspace every user gets locally: migrations, edge functions, and the config file the CLI reads, while <code class="language-plaintext highlighter-rouge">examples/</code> ships runnable sample apps for auth, caching, edge functions, and enterprise patterns.</p>
-
-<h2 id="advantages">Advantages</h2>
-
-<p>Against Firebase and other proprietary backends, the advantage is architectural honesty: PostgREST derives your API from your schema, so there is no SDK-specific way for your data model to drift from your documentation. Row-level security policies are plain SQL, auditable in the dashboard and identical in development and production.</p>
-
-<p>Against DIY stacks — Express plus Passport plus Multer plus Socket.IO — the advantage is integration. Auth, storage, and realtime are designed against the same Postgres instance, so an authenticated user, a storage bucket policy, and a realtime subscription all reference the same identities and permissions without glue code.</p>
-
-<p>The engineering culture is itself an advantage. The monorepo enforces typecheck and lint on every pull request, keeps an ESLint warning ratchet for Studio, generates its API types rather than hand-writing them, and explicitly forbids editing generated files. That discipline is why a codebase this large still moves quickly.</p>
-
-<h2 id="benefits">Benefits</h2>
-
-<p>The most tangible benefit is time: the distance from “empty repo” to “working app with login, database, files, and realtime” shrinks from weeks to an afternoon. The second is cost control. Self-hosting the docker-compose stack on a single capable server covers most hobby and internal-tool workloads, and because idle CPU belongs to you rather than a metered vendor, scaling decisions become ordinary infrastructure choices.</p>
-
-<p>The third is leverage from SQL itself. Triggers, views, functions, and extensions — PostGIS for geospatial, pgvector for embeddings — work the day you enable them, no vendor roadmap required. Teams that outgrow the hosted tier can move the same schema and policies to their own machines, which makes the platform easy to adopt and safe to bet on.</p>
-
-<h2 id="usage">Usage</h2>
-
-<p>The fastest way to try the platform is the hosted dashboard at <a href="https://supabase.com">supabase.com</a>. For local development, install the CLI and start the same containers on your machine, following the <a href="https://supabase.com/docs/guides/local-development">local development guide</a>.</p>
-
-<p>To self-host the full stack on your own server:</p>
-
-<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone <span class="nt">--depth</span> 1 https://github.com/supabase/supabase
-<span class="nb">cd </span>supabase/docker
-<span class="nb">cp</span> .env.example .env
-</code></pre></div></div>
-
-<p>Edit the secrets in <code class="language-plaintext highlighter-rouge">.env</code>, then bring the stack up:</p>
-
-<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker compose up
-</code></pre></div></div>
-
-<p>The gateway listens on port 8000, the Studio dashboard is served alongside it, and your Postgres instance is ready for migrations. A practical tip from the repository itself: the stack runs on a pnpm and Turborepo workspace with Node 22 or newer if you want to hack on Studio or the docs site locally (<code class="language-plaintext highlighter-rouge">pnpm i</code>, then <code class="language-plaintext highlighter-rouge">pnpm dev:studio</code> on port 8082). The <a href="https://supabase.com/docs/guides/self-hosting/docker">docker self-hosting guide</a> covers upgrades, secrets, and running behind your own TLS proxy.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Supabase is proof that a hosted platform can also be an open-source project you can read, extend, and own. The monorepo separates the surfaces you see — Studio, docs, marketing — from the stateless services and the single Postgres truth underneath, and every layer is inspectable under the Apache-2.0 license. If your next project deserves a real backend on day one, clone the repository and stand up the stack; your database is waiting.</p>
-
-<p>Links:</p>
-
-<ul>
-  <li>Repository: <a href="https://github.com/supabase/supabase">github.com/supabase/supabase</a></li>
-  <li>Website: <a href="https://supabase.com">supabase.com</a></li>
-  <li>Documentation: <a href="https://supabase.com/docs">supabase.com/docs</a></li>
-  <li>Self-hosting with docker: <a href="https://supabase.com/docs/guides/self-hosting/docker">supabase.com/docs/guides/self-hosting/docker</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="Supabase" /><category term="Postgres" /><category term="Self-Hosting" /><category term="Open Source" /><category term="Backend" /><summary type="html"><![CDATA[Inside the Supabase monorepo: how the Studio dashboard, the shared packages, and the docker-compose stack of GoTrue, PostgREST, Realtime, Storage and Edge Functions fit together.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/supabase/supabase-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/supabase/supabase-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+<p>OpenAI Plugins is a small repository with an outsized role: it is simultaneously a library, a specification, and a tutorial. The format it demonstrates — manifests, markdown playbooks, MCP wiring, marketplace indexes — is becoming the standard way capability gets attached to coding agents, and the sixty-plus examples here are the best study material available. Install a couple of bundles today, read the rest as blueprints, and steal the structure for your own integrations. The playbook era of agent extensions is here, and this repository wrote the book.</p>]]></content><author><name>PyShine</name></author><category term="OpenAI" /><category term="Codex" /><category term="AI Agents" /><category term="Plugins" /><category term="Open Source" /><summary type="html"><![CDATA[OpenAI Plugins is the official curated collection of Codex plugin examples - skills, MCP servers, and app surfaces - with a marketplace index and authoring tooling for building your own.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/openai-plugins/oaip-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/openai-plugins/oaip-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
