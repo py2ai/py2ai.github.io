@@ -1,4 +1,333 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-10-01T00:47:37+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">The Best Mac Studio for Local AI in 2026: How Big an LLM It Can Run, at What Speed, With Sources</title><link href="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/" rel="alternate" type="text/html" title="The Best Mac Studio for Local AI in 2026: How Big an LLM It Can Run, at What Speed, With Sources" /><published>2026-10-01T00:00:00+00:00</published><updated>2026-10-01T00:00:00+00:00</updated><id>https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research</id><content type="html" xml:base="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/"><![CDATA[<p>If the Mac mini is the entry point to local AI, the Mac Studio is where the ceiling disappears. In August 2026 Apple refreshed the Studio with the <strong>Mac Studio M5 Max</strong> and the <strong>Mac Studio M5 Ultra</strong> — the first Mac built on a quad-die UltraFusion chip, with up to <strong>512 GB of unified memory</strong> and <strong>1.2 TB/s of memory bandwidth</strong> (<a href="https://www.apple.com/newsroom/2026/08/apple-introduces-new-mac-studio-with-m5-max-and-m5-ultra/">Apple newsroom</a>). This is the machine class that runs frontier-scale open-weight models — Llama 3.1 405B, Llama 4 Maverick 400B, DeepSeek V3 671B — entirely on a desk, with no cloud and no token meter. This post is a deep research pass over what reviewers and the community have actually measured: which Studio to buy, how big a model each memory tier holds, what tokens-per-second to expect at every size, what time-to-first-token feels like, and how clustering works when one Studio is not enough. Every number below links to its source so you can double-check it.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://pyshine.com/atom.xml" rel="self" type="application/atom+xml" /><link href="https://pyshine.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-10-01T01:06:08+00:00</updated><id>https://pyshine.com/atom.xml</id><title type="html">PyShine</title><subtitle>Learn Python with free tutorials, AI guides, and coding projects. Master machine learning, game development, and more with step-by-step lessons.</subtitle><author><name>PyShine Team</name></author><entry><title type="html">The Best DGX Spark for Local AI in 2026: LLM Speed, Model Sizes, and Clusters, With Sources</title><link href="https://pyshine.com/Best-DGX-Spark-For-Local-AI-2026-Deep-Research/" rel="alternate" type="text/html" title="The Best DGX Spark for Local AI in 2026: LLM Speed, Model Sizes, and Clusters, With Sources" /><published>2026-10-01T00:00:00+00:00</published><updated>2026-10-01T00:00:00+00:00</updated><id>https://pyshine.com/Best-DGX-Spark-For-Local-AI-2026-Deep-Research</id><content type="html" xml:base="https://pyshine.com/Best-DGX-Spark-For-Local-AI-2026-Deep-Research/"><![CDATA[<p>In our <a href="https://pyshine.com/Best-Mac-Mini-For-Local-AI-2026-Deep-Research/">Mac mini deep research</a> and the <a href="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/">Mac Studio follow-up</a> we followed Apple Silicon through the local-LLM stack. NVIDIA answers with a completely different machine: the <a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">DGX Spark</a>, a desk-sized box built around the GB10 Grace Blackwell Superchip with <strong>128 GB of coherent unified memory</strong>, <strong>up to 1 petaFLOP of FP4 AI compute</strong> and a datacenter-class <strong>ConnectX-7 200 GbE port</strong> for clustering. It shipped in October 2025, and a year later it is the reference CUDA machine for running 120B-700B-class open models at home.</p>
+
+<p>The honest headline from a year of published benchmarks: the Spark is <strong>a capacity machine and a prompt-processing monster, not a decode-speed demon</strong>. Its 273 GB/s memory bandwidth is roughly a quarter of the Mac Studio M5 Ultra’s 1.2 TB/s, and that single number decides decode speed. On Mixture-of-Experts models - where only a few billion parameters fire per token - it is genuinely fast. On dense 70B models it can drop below reading pace. Everything in this post is a measured figure with a link so you can double-check it.</p>
+
+<p>This guide covers the hardware and the 2026 lineup of GB10 clones, the bandwidth math that predicts decode, what NVIDIA and the community actually measured in tokens per second, how big a model one, two, four or eight Sparks can run, the clustering playbook, fine-tuning numbers, and where to buy without overpaying.</p>
+
+<p><img src="https://pyshine.com/assets/img/diagrams/dgx-spark-local-ai/pyshine-dgx-spark-local-ai-picks.svg" alt="DGX Spark cluster picks" /></p>
+
+<p><em>The four buying tiers: one Spark for the 35B-120B MoE class, two Sparks as the validated sweet spot for 235B-405B FP4, four for 700B-class, and community racks of six to eight for 750B-plus.</em></p>
+
+<p>Reading the ladder top to bottom: every tier multiplies pooled memory and the biggest runnable model - from gpt-oss-120b at 55-60 tok/s on a single box, to 235B FP4 and DeepSeek V4 Flash at up to 1M context on two boxes, to NVIDIA-validated 700B-class on four, to a 753B model at 7.4 tok/s on a six-node community rack.</p>
+
+<h2 id="what-the-dgx-spark-actually-is">What the DGX Spark Actually Is</h2>
+
+<p>The <a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">DGX Spark</a> is a 150 x 150 x 51 mm, 1.2-1.5 kg desktop appliance running DGX OS (Ubuntu-based). It was announced as Project DIGITS at CES on January 6, 2025, renamed and priced at GTC in March 2025, and started shipping the week of October 13, 2025 (<a href="https://nvidianews.nvidia.com/news/nvidia-dgx-spark-arrives-for-worlds-ai-developers">NVIDIA press release</a>). The official specification table (<a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA product page</a>):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Spec</th>
+      <th>DGX Spark (GB10)</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AI compute</td>
+      <td>Up to 1 PFLOP FP4 (with sparsity)</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a></td>
+    </tr>
+    <tr>
+      <td>Memory</td>
+      <td>128 GB LPDDR5x, coherent unified, 256-bit</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a></td>
+    </tr>
+    <tr>
+      <td>Memory bandwidth</td>
+      <td>273 GB/s</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a></td>
+    </tr>
+    <tr>
+      <td>CPU</td>
+      <td>20 Arm cores (10 Cortex-X925 + 10 Cortex-A725)</td>
+      <td><a href="https://eshop.asus.com/us/ascent-gx10.html">ASUS GX10 spec sheet</a></td>
+    </tr>
+    <tr>
+      <td>Fine-tuning</td>
+      <td>Up to 70B parameters</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a></td>
+    </tr>
+    <tr>
+      <td>Inference</td>
+      <td>Up to 200B parameters</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a></td>
+    </tr>
+    <tr>
+      <td>Clustering</td>
+      <td>ConnectX-7, up to four systems, models up to 700B</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a></td>
+    </tr>
+    <tr>
+      <td>Networking</td>
+      <td>ConnectX-7 SmartNIC (200 Gb), 10 GbE RJ-45, Wi-Fi 7</td>
+      <td><a href="https://eshop.asus.com/us/ascent-gx10.html">ASUS GX10 spec sheet</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Two practical numbers hide behind those marketing figures. First, the GPU does not see all 128 GB: llama.cpp reports about <strong>124.5 GB of “VRAM”</strong> (<a href="https://forums.developer.nvidia.com/t/fastest-llama-cpp-docker-image/376946">NVIDIA Developer Forums</a>), and an operator running a six-node rack budgets <strong>roughly 104 GB of GPU-visible memory per node after DGX OS takes its share</strong> (<a href="https://forums.developer.nvidia.com/t/6x-dgx-spark-200g-roce-fabric-my-learning-journey/377871">6-node build report</a>). Second, the ConnectX-7’s two QSFP56 cages top out at <strong>200 Gb of usable bandwidth</strong> because the NIC sits behind a pair of PCIe Gen5 x4 links - the second port is for topology flexibility, not more throughput (<a href="https://www.storagereview.com/review/nvidia-dgx-spark-cluster-review-distributed-inference-on-dell-gigabyte-and-hp">StorageReview cluster review</a>).</p>
+
+<p>The same GB10 chip ships in partner systems: ASUS Ascent GX10, Acer Veriton GN100, Gigabyte AI TOP ATOM, Dell Pro Max with GB10, HP ZGX Nano, Lenovo ThinkStation PGX and MSI EdgeXpert (<a href="https://nvidianews.nvidia.com/news/nvidia-dgx-spark-arrives-for-worlds-ai-developers">NVIDIA GTC announcement</a> names the OEM lineup). Software-wise it is the only desktop in this class with the full CUDA stack: TensorRT-LLM, SGLang, vLLM, PyTorch and NGC containers all run unmodified, which is exactly what Apple Silicon cannot offer.</p>
+
+<h2 id="the-273-gbs-rule-why-moe-wins-and-dense-loses">The 273 GB/s Rule: Why MoE Wins and Dense Loses</h2>
+
+<p>Token generation is memory-bandwidth-bound: every generated token must read the model’s active weights once, so decode speed is approximately bandwidth divided by gigabytes-per-token. A DGX Spark operator worked the formula explicitly: <strong>tok/s = 273 / (active weights + KV cache)</strong>, which puts the comfortable interactive sweet spot at roughly 27B active parameters at Q4 - fine for MoE models with 3B-17B active, painful for anything dense (<a href="https://forums.developer.nvidia.com/t/why-273-gb-s-less-is-more-until-it-isn-t/359555">NVIDIA Developer Forums</a>).</p>
+
+<p>The clearest measured proof of the MoE-versus-dense split on identical hardware:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Architecture</th>
+      <th>Quant</th>
+      <th>Decode</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Qwen3 30B (A3B active)</td>
+      <td>MoE</td>
+      <td>Q4_K_M</td>
+      <td>~89 tok/s</td>
+      <td><a href="https://runaihome.com/blog/nvidia-rtx-spark-local-ai-2026/">RunAIHome</a></td>
+    </tr>
+    <tr>
+      <td>Qwen3 32B dense</td>
+      <td>Dense</td>
+      <td>Q4_K_M</td>
+      <td>~10.7 tok/s</td>
+      <td><a href="https://runaihome.com/blog/nvidia-rtx-spark-local-ai-2026/">RunAIHome</a></td>
+    </tr>
+    <tr>
+      <td>Llama 3.1 70B dense</td>
+      <td>Dense</td>
+      <td>FP8</td>
+      <td>2.7 tok/s</td>
+      <td><a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster (LMSYS data)</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Same box, same class of model size, an 8x generation gap driven purely by active parameters. This is the single most important thing to understand before buying a Spark: <strong>it is a MoE machine</strong>.</p>
+
+<p>For bandwidth context against the Macs we covered earlier: the M5 Max MacBook Pro moves 614 GB/s and the DGX Spark 273 GB/s on the same 128 GB memory class (<a href="https://blog.sixeyed.com/mac-studio-llm-workstation/">Elton Stoneman’s comparison table</a>), and the <a href="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/">Mac Studio M5 Ultra</a> reaches 1.2 TB/s. Apple wins raw decode; NVIDIA wins software (CUDA, FP4 checkpoints, fine-tuning) and clustering (RDMA fabric instead of Thunderbolt).</p>
+
+<h2 id="decode-throughput-what-nvidia-and-the-community-measured">Decode Throughput: What NVIDIA and the Community Measured</h2>
+
+<p>NVIDIA’s own published inference table (<a href="https://developer.nvidia.com/blog/how-nvidia-dgx-sparks-performance-enables-intensive-ai-tasks/">Technical Blog, Oct 24, 2025</a>) - batch size 1, input/output context 2048/128:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Quant</th>
+      <th>Engine</th>
+      <th>Prefill (tok/s)</th>
+      <th>Decode (tok/s)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>gpt-oss-20b</td>
+      <td>MXFP4</td>
+      <td>llama.cpp</td>
+      <td>3,670</td>
+      <td>82.7</td>
+    </tr>
+    <tr>
+      <td>gpt-oss-120b</td>
+      <td>MXFP4</td>
+      <td>llama.cpp</td>
+      <td>1,725</td>
+      <td>55.4</td>
+    </tr>
+    <tr>
+      <td>Llama 3.1 8B</td>
+      <td>NVFP4</td>
+      <td>TensorRT-LLM</td>
+      <td>10,257</td>
+      <td>38.7</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Community numbers agree and extend the picture:</p>
+
+<ul>
+  <li><strong>gpt-oss-120b (117B MoE, MXFP4)</strong>: the llama.cpp maintainer measured 1,956 tok/s prefill and 60.6 tok/s generation (40.6 at 32K context depth), and Qwen3 Coder 30B-A3B at Q8_0 hit 44.3 tok/s (<a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster’s attributed table</a>). Level1Techs reproduced 59.5 tok/s at depth zero falling to 41.9 at 32K on the Gigabyte AI TOP ATOM (<a href="https://forum.level1techs.com/t/gigabyte-ai-tops-dgx-spark/243812">Level1Techs</a>), and The AI Bench’s July 2026 calibration archive logs 42 tok/s with cross-verified runner builds (<a href="https://theaibench.ai/methodology/calibration/">TheAIBench</a>).</li>
+  <li><strong>gpt-oss-20b</strong>: NVIDIA’s 82.7 tok/s was reproduced at 86 tok/s with llama.cpp build 7067 - and The AI Bench documents the same box jumping from 2,009 to 3,798 tok/s of prompt processing purely from a llama.cpp software bump (<a href="https://theaibench.ai/methodology/calibration/">TheAIBench</a>). Their verdict: an M4 Max MacBook out-decodes the Spark 118 to 86 on this identical model, but the Spark runs 120B models no consumer GPU can load.</li>
+  <li><strong>Qwen3.5-35B-A3B (MoE)</strong>: 72.3 tok/s tg128 in llama-bench with an NVFP4 checkpoint (<a href="https://forums.developer.nvidia.com/t/fastest-llama-cpp-docker-image/376946">NVIDIA Developer Forums</a>); a long-term Claude Code deployment averaged 51.0 tok/s with 85-246 ms TTFT at 128K context (<a href="https://forums.developer.nvidia.com/t/implementation-guide-dgx-spark-with-qwen3-5-35b-a3b-via-llama-cpp-for-claude-code/365382">NVIDIA Developer Forums</a>).</li>
+  <li><strong>Qwen3.8-27B dense</strong>: 34 tok/s under SGLang with NVFP4 weights (<a href="https://llamaperf.com/gpu/dgx-spark">llamaperf</a>).</li>
+  <li><strong>DeepSeek V4 Flash (IQ2 imatrix)</strong>: 28-31 tok/s sustained through a 131K-context agentic workflow using the ds4 server (<a href="https://forums.developer.nvidia.com/t/best-model-for-single-spark/374834">NVIDIA Developer Forums</a>).</li>
+  <li><strong>Llama 3.1 8B</strong>: 20.5 tok/s single-stream but 368 tok/s aggregate at batch 32 - the Spark serves small teams well on small models (<a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster (LMSYS data)</a>).</li>
+  <li><strong>Dense 70B caveat</strong>: LMSYS measured Llama 3.1 70B FP8 at 2.7 tok/s decode - slower than reading pace - and concluded dense 70B-120B models are for prototyping, not production, on this box (<a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster</a>).</li>
+</ul>
+
+<p>Early scattered reviews are worth a calibration note: ServeTheHome’s launch-day 14.5 tok/s gpt-oss-120b figure was later attributed to configuration issues, and model-load times dropped from 104 s to 22 s with a kernel fix (<a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster</a>). On this platform, always check the engine build before believing a number.</p>
+
+<h2 id="prompt-processing-is-the-hidden-superpower">Prompt Processing Is the Hidden Superpower</h2>
+
+<p>Decode is bandwidth-bound, but prefill is compute-bound - and the GB10’s Blackwell tensor cores crush it:</p>
+
+<ul>
+  <li>Up to <strong>10,257 tok/s</strong> of prompt processing on an 8B NVFP4 model in TensorRT-LLM, and 1,725-1,956 tok/s on a 117B MoE (<a href="https://developer.nvidia.com/blog/how-nvidia-dgx-sparks-performance-enables-intensive-ai-tasks/">NVIDIA Technical Blog</a>; <a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster</a>).</li>
+  <li><strong>2,637-3,798 tok/s pp512</strong> with current llama.cpp builds (<a href="https://forums.developer.nvidia.com/t/fastest-llama-cpp-docker-image/376946">NVIDIA Developer Forums</a>; <a href="https://theaibench.ai/methodology/calibration/">TheAIBench</a>).</li>
+  <li>On the two-box 235B FP4 setup, TensorRT-LLM pushed prefill to <strong>23,477 tok/s</strong> (<a href="https://supermicrovexpo.com">On-Prem Hardware Sizing Guide</a>).</li>
+  <li>TTFT in real agentic use: 85-246 ms across task types on the 35B-A3B deployment (<a href="https://forums.developer.nvidia.com/t/implementation-guide-dgx-spark-with-qwen3-5-35b-a3b-via-llama-cpp-for-claude-code/365382">NVIDIA Developer Forums</a>).</li>
+</ul>
+
+<p>This is why NVIDIA positions the Spark as an <strong>agent computer</strong>: workloads that read 30K-250K token contexts repeatedly benefit far more from fast prefill than from fast decode (<a href="https://developer.nvidia.com/blog/scaling-autonomous-ai-agents-and-workloads-with-nvidia-dgx-spark/">NVIDIA Technical Blog, Mar 16, 2026</a>).</p>
+
+<h2 id="how-big-an-llm-each-cluster-size-can-run">How Big an LLM Each Cluster Size Can Run</h2>
+
+<p><img src="https://pyshine.com/assets/img/diagrams/dgx-spark-local-ai/pyshine-dgx-spark-model-map.svg" alt="DGX Spark model map" /></p>
+
+<p><em>Memory tier, not chip tier, decides the model class - and FP4 checkpoints halve the footprint compared to 8-bit.</em></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cluster</th>
+      <th>Pooled memory</th>
+      <th>Biggest model class</th>
+      <th>Measured speed</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1 Spark (~120 GB GPU-visible)</td>
+      <td>128 GB</td>
+      <td>gpt-oss-120b MXFP4 (59 GiB); NVIDIA rates up to 200B FP4</td>
+      <td>55-60 tok/s on 120b; 2.7 tok/s dense 70B</td>
+      <td><a href="https://forum.level1techs.com/t/gigabyte-ai-tops-dgx-spark/243812">Level1Techs</a>; <a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a>; <a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster</a></td>
+    </tr>
+    <tr>
+      <td>2 Sparks (200 GbE RDMA)</td>
+      <td>~240 GB</td>
+      <td>Qwen3-235B-A22B FP4; 405B FP4 class</td>
+      <td>11.7 tok/s on 235B; ~60-67 tok/s DeepSeek V4 Flash at up to 1M ctx</td>
+      <td><a href="https://developer.nvidia.com/blog/how-nvidia-dgx-sparks-performance-enables-intensive-ai-tasks/">NVIDIA Technical Blog</a>; <a href="https://forums.developer.nvidia.com/t/deepseek-v4-flash-dspark-on-2x-dgx-spark-gb10-big-single-stream-speed-boost-60-67-tok-s-1m-context-now-with-concurrency/374846">NVIDIA Developer Forums</a></td>
+    </tr>
+    <tr>
+      <td>4 Sparks</td>
+      <td>~480 GB</td>
+      <td>700B-class (NVIDIA-validated)</td>
+      <td>~4x TP speedup on 70B; ~74,600 tok/s batched</td>
+      <td><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA</a>; <a href="https://developer.nvidia.com/blog/scaling-autonomous-ai-agents-and-workloads-with-nvidia-dgx-spark/">NVIDIA Technical Blog</a></td>
+    </tr>
+    <tr>
+      <td>6-8 Sparks</td>
+      <td>~630-840 GB</td>
+      <td>GLM-5.2 753B; Mimo 2.6 1020B-A42B</td>
+      <td>7.4 tok/s (753B); 68.3 tok/s (1020B MoE, speculative)</td>
+      <td><a href="https://forums.developer.nvidia.com/t/6x-dgx-spark-200g-roce-fabric-my-learning-journey/377871">NVIDIA Developer Forums</a>; <a href="https://llamaperf.com/gpu/dgx-spark">llamaperf</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The dense-versus-MoE split matters as much here as it does on Macs: a 405B dense model at FP4 still streams ~200 GB of weights per token, so it lands at the slow end even when it fits, while a 1020B MoE with 42B active decoded at 68.3 tok/s on eight Sparks with DFlash speculative decoding (<a href="https://llamaperf.com/gpu/dgx-spark">llamaperf</a>). Choose MoE checkpoints whenever the workload allows.</p>
+
+<h2 id="clustering-two-boxes-over-a-datacenter-fabric">Clustering: Two Boxes Over a Datacenter Fabric</h2>
+
+<p>The Spark’s party trick is the <a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">ConnectX-7 SmartNIC</a> - a real 200 Gb RDMA fabric on a desktop appliance. What is actually validated:</p>
+
+<ul>
+  <li><strong>Two Sparks, directly connected</strong>, is the configuration NVIDIA actively markets and StorageReview benchmarked end-to-end across Dell, Gigabyte and HP units. Key finding: for batched inference, <strong>pipeline parallelism beat tensor parallelism 554.7 to 252.0 tok/s</strong> on gpt-oss-120b at batch 128, because TP’s all-reduce traffic saturates the 200 Gb link; TP keeps a narrow lead for single-stream chat latency (<a href="https://www.storagereview.com/review/nvidia-dgx-spark-cluster-review-distributed-inference-on-dell-gigabyte-and-hp">StorageReview</a>).</li>
+  <li><strong>Tensor-parallel speedups scale</strong>: ~2x per-token speed at two nodes and ~4x at four nodes for Llama 3.3 70B, with batched throughput growing ~18,400 to ~35,900 to ~74,600 tok/s from one to four nodes (<a href="https://developer.nvidia.com/blog/scaling-autonomous-ai-agents-and-workloads-with-nvidia-dgx-spark/">NVIDIA Technical Blog</a>).</li>
+  <li><strong>But do not cluster what already fits</strong>: an operator measured Qwen3.6-35B-A3B at 99.0 tok/s with TP=2 dropping to 89.2 with TP=4 - sharing a model that fits one box costs throughput (<a href="https://forums.developer.nvidia.com/t/6x-dgx-spark-200g-roce-fabric-my-learning-journey/377871">NVIDIA Developer Forums</a>).</li>
+  <li><strong>Concurrency is the cluster’s real payoff</strong>: the same six-node rack sustained 128 simultaneous streams at 1,403 tok/s aggregate on 35B-A3B, and a single Spark served 765 tok/s across 32 lanes of a 14B model (<a href="https://forums.developer.nvidia.com/t/6x-dgx-spark-200g-roce-fabric-my-learning-journey/377871">NVIDIA Developer Forums</a>).</li>
+  <li><strong>Beyond eight</strong>: operators run 6-node rings on MikroTik 400G switches at ~196 Gbps per link; GLM-5.2 753B at TP=2 x PP=3 across 6 nodes yields 7.4 tok/s (<a href="https://forums.developer.nvidia.com/t/6x-dgx-spark-200g-roce-fabric-my-learning-journey/377871">NVIDIA Developer Forums</a>).</li>
+  <li><strong>Heterogeneous disaggregation exists too</strong>: EXO Labs demonstrated 2x Spark for prefill plus an M3 Ultra Mac Studio for decode at ~2.8x end-to-end improvement on Llama 3.1 8B with 8K prompts (<a href="https://forums.developer.nvidia.com/t/dgx-spark-rtx-6000-pro-blackwell-disaggregated-inference/368860">NVIDIA Developer Forums</a>).</li>
+</ul>
+
+<h2 id="fine-tuning-the-quiet-reason-to-pick-cuda">Fine-Tuning: the Quiet Reason to Pick CUDA</h2>
+
+<p>Apple Silicon cannot fine-tune 70B models on-device; the Spark can. NVIDIA’s published training numbers (<a href="https://developer.nvidia.com/blog/how-nvidia-dgx-sparks-performance-enables-intensive-ai-tasks/">Technical Blog</a>): Llama 3.2 3B full fine-tuning at 82,739 tok/s, Llama 3.1 8B LoRA at 53,658 tok/s, and Llama 3.3 70B QLoRA at 5,079 tok/s - none of which fit a 32 GB consumer GPU. NVIDIA explicitly rates the box for fine-tuning up to 70B parameters (<a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">product page</a>).</p>
+
+<p>A six-day independent stress test confirmed the training numbers are real but documented the production gotchas: FP16 precision traps, memory fragmentation requiring hard reboots, and CUDA version mismatches that cost 3.6x performance until fixed (<a href="https://ai.rundatarun.io/practical-applications/dgx-lab-benchmarks-vs-reality-day-4">RunDataRun</a>). Budget for the software stack, not just the box.</p>
+
+<h2 id="dgx-spark-vs-mac-studio-which-one-for-which-job">DGX Spark vs Mac Studio: Which One for Which Job</h2>
+
+<p>Having covered both families, here is the honest split:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Need</th>
+      <th>Buy</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fastest single-stream decode on 70B-120B class</td>
+      <td><a href="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/">Mac Studio</a></td>
+      <td>460-1,228 GB/s bandwidth vs 273; gpt-oss-20b decode 118 vs 86 (<a href="https://theaibench.ai/methodology/calibration/">TheAIBench</a>; <a href="https://blog.sixeyed.com/mac-studio-llm-workstation/">sixeyed</a>)</td>
+    </tr>
+    <tr>
+      <td>CUDA software, FP4 checkpoints, fine-tuning up to 70B</td>
+      <td>DGX Spark</td>
+      <td>Full TensorRT-LLM/SGLang/PyTorch stack; 5,079 tok/s QLoRA on 70B (<a href="https://developer.nvidia.com/blog/how-nvidia-dgx-sparks-performance-enables-intensive-ai-tasks/">NVIDIA</a>)</td>
+    </tr>
+    <tr>
+      <td>235B-700B models on a desk</td>
+      <td>DGX Spark (2-4 boxes)</td>
+      <td>RDMA fabric + NVIDIA-validated clustering (<a href="https://developer.nvidia.com/blog/scaling-autonomous-ai-agents-and-workloads-with-nvidia-dgx-spark/">NVIDIA</a>)</td>
+    </tr>
+    <tr>
+      <td>Always-on agents with huge prompts</td>
+      <td>Either, slight edge to Spark</td>
+      <td>Fast prefill; NVIDIA’s agent positioning (<a href="https://developer.nvidia.com/blog/scaling-autonomous-ai-agents-and-workloads-with-nvidia-dgx-spark/">NVIDIA Technical Blog</a>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A final wrinkle: NVIDIA is also bringing <strong>RTX Spark N1X</strong> - the same GB10-class silicon in Windows laptops and compact desktops - in late 2026 starting above $2,899, with ~300 GB/s bandwidth (<a href="https://runaihome.com/blog/nvidia-rtx-spark-local-ai-2026/">RunAIHome</a>). The desktop DGX Spark remains the capacity-and-cluster play.</p>
+
+<h2 id="where-to-buy-and-what-to-pay">Where to Buy and What to Pay</h2>
+
+<p>Prices moved a lot in year one. At launch in October 2025 the Founders Edition was <strong>$3,999</strong> (<a href="https://nvidianews.nvidia.com/news/nvidia-dgx-spark-arrives-for-worlds-ai-developers">NVIDIA press release</a>) and ASUS listed the Ascent GX10 at <strong>$2,999.99</strong> (<a href="https://marketplace.nvidia.com/en-us/enterprise/personal-ai-supercomputers/asus-ascent-gx10/">NVIDIA Marketplace</a>). By 2026, LPDDR5x supply constraints pushed the Founders Edition to <strong>$4,699</strong> (<a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster price history</a>; <a href="https://www.promptquorum.com/local-llms/70b-models-consumer-hardware">PromptQuorum</a>), and street prices for partner boxes now run higher - Newegg’s AI-system best-sellers show the ASUS GX10 sold around $5,999, Gigabyte AI TOP ATOM at $6,499, Acer Veriton GN100 at $6,499, MSI EdgeXpert at $6,442 and a 4 TB DGX Spark at $6,500 (<a href="https://www.newegg.com/d/Best-Sellers/Thin-Client-Systems/s/ID-3087">Newegg</a>).</p>
+
+<p>Practical buying advice: the cheapest entry is watching for restocks at launch-tier pricing; the same GB10 chip and 128 GB ship in every partner clone, so pay for storage and warranty, not brand (<a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster</a>). If you plan to cluster, confirm the box exposes the ConnectX-7 QSFP56 ports - every GB10 system does, but check the exact SKU’s I/O panel before ordering (<a href="https://eshop.asus.com/us/ascent-gx10.html">ASUS GX10</a>).</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The DGX Spark in 2026 is the desktop to buy when your bottleneck is <strong>model capacity and the CUDA software ecosystem</strong>, not raw decode speed. One box runs the 35B-120B MoE class at 34-86 tok/s with elite prompt processing and full fine-tuning up to 70B. Two boxes over the 200 GbE fabric are the validated sweet spot for 235B-405B FP4 models. Four reach NVIDIA-validated 700B-class, and community racks of six to eight have served a 753B model and a 1T-parameter MoE. The 273 GB/s decode wall is real - dense 70B at 2.7 tok/s is a prototype, not a product - but paired with the right MoE checkpoints and the machine’s unmatched prefill throughput, it is the most capable little CUDA box you can put on a desk. Check every number against the sources above, because on this platform the engine build and the checkpoint quant matter as much as the hardware.</p>
+
+<h2 id="links">Links</h2>
+
+<ul>
+  <li><a href="https://www.nvidia.com/en-us/products/workstations/dgx-spark/">NVIDIA DGX Spark product page</a> - official specs</li>
+  <li><a href="https://nvidianews.nvidia.com/news/nvidia-dgx-spark-arrives-for-worlds-ai-developers">NVIDIA press release: DGX Spark arrives</a> - launch and OEM lineup</li>
+  <li><a href="https://developer.nvidia.com/blog/how-nvidia-dgx-sparks-performance-enables-intensive-ai-tasks/">NVIDIA Technical Blog: how DGX Spark’s performance enables intensive AI tasks</a> - official inference and fine-tuning benchmarks</li>
+  <li><a href="https://developer.nvidia.com/blog/scaling-autonomous-ai-agents-and-workloads-with-nvidia-dgx-spark/">NVIDIA Technical Blog: scaling autonomous AI agents</a> - clustering and agent workloads</li>
+  <li><a href="https://www.localaimaster.com/blog/dgx-spark-local-ai-review">LocalAIMaster DGX Spark review</a> - llama.cpp maintainer and LMSYS tables, price history</li>
+  <li><a href="https://theaibench.ai/methodology/calibration/">The AI Bench July 2026 calibration archive</a> - cross-verified runs, Spark vs MacBook decode</li>
+  <li><a href="https://forum.level1techs.com/t/gigabyte-ai-tops-dgx-spark/243812">Level1Techs: Gigabyte AI TOP ATOM benchmarks</a> - llama-bench at multiple context depths</li>
+  <li><a href="https://forums.developer.nvidia.com/t/fastest-llama-cpp-docker-image/376946">NVIDIA Developer Forums: fastest llama.cpp docker image</a> - 35B-A3B NVFP4 runs</li>
+  <li><a href="https://forums.developer.nvidia.com/t/implementation-guide-dgx-spark-with-qwen3-5-35b-a3b-via-llama-cpp-for-claude-code/365382">NVIDIA Developer Forums: Qwen3.5-35B-A3B for Claude Code</a> - real agent deployment numbers</li>
+  <li><a href="https://forums.developer.nvidia.com/t/best-model-for-single-spark/374834">NVIDIA Developer Forums: best model for single Spark</a> - DeepSeek V4 Flash on one box</li>
+  <li><a href="https://forums.developer.nvidia.com/t/deepseek-v4-flash-dspark-on-2x-dgx-spark-gb10-big-single-stream-speed-boost-60-67-tok-s-1m-context-now-with-concurrency/374846">NVIDIA Developer Forums: DeepSeek-V4-Flash-DSpark on 2x Spark</a> - two-box 1M-context runs</li>
+  <li><a href="https://forums.developer.nvidia.com/t/6x-dgx-spark-200g-roce-fabric-my-learning-journey/377871">NVIDIA Developer Forums: 6x DGX Spark RoCE fabric</a> - six-node rack measurements</li>
+  <li><a href="https://forums.developer.nvidia.com/t/why-273-gb-s-less-is-more-until-it-isn-t/359555">NVIDIA Developer Forums: why 273 GB/s</a> - the bandwidth sweet-spot math</li>
+  <li><a href="https://forums.developer.nvidia.com/t/dgx-spark-rtx-6000-pro-blackwell-disaggregated-inference/368860">NVIDIA Developer Forums: Spark + RTX 6000 Pro disaggregation</a> - EXO prefill/decode split</li>
+  <li><a href="https://www.storagereview.com/review/nvidia-dgx-spark-cluster-review-distributed-inference-on-dell-gigabyte-and-hp">StorageReview: DGX Spark cluster review</a> - two-node PP vs TP benchmarks</li>
+  <li><a href="https://llamaperf.com/gpu/dgx-spark">llamaperf: DGX Spark reports</a> - community-reported speeds incl. 8-box 1020B run</li>
+  <li><a href="https://runaihome.com/blog/nvidia-rtx-spark-local-ai-2026/">RunAIHome: RTX Spark for local AI</a> - MoE vs dense, N1X outlook</li>
+  <li><a href="https://ai.rundatarun.io/practical-applications/dgx-lab-benchmarks-vs-reality-day-4">RunDataRun: DGX Spark benchmarks vs reality</a> - fine-tuning stress test</li>
+  <li><a href="https://blog.sixeyed.com/mac-studio-llm-workstation/">Elton Stoneman: Mac Studio LLM workstation</a> - bandwidth comparison table</li>
+  <li><a href="https://www.promptquorum.com/local-llms/70b-models-consumer-hardware">PromptQuorum: 70B on consumer hardware</a> - Spark 70B specs and price</li>
+  <li><a href="https://supermicrovexpo.com">On-Prem AI Hardware Sizing Guide</a> - 235B FP4 prefill numbers</li>
+  <li><a href="https://marketplace.nvidia.com/en-us/enterprise/personal-ai-supercomputers/asus-ascent-gx10/">NVIDIA Marketplace: ASUS Ascent GX10</a> - launch-tier pricing</li>
+  <li><a href="https://eshop.asus.com/us/ascent-gx10.html">ASUS eShop: Ascent GX10</a> - current spec sheet and pricing</li>
+  <li><a href="https://www.newegg.com/d/Best-Sellers/Thin-Client-Systems/s/ID-3087">Newegg AI systems best-sellers</a> - 2026 street prices</li>
+  <li><a href="https://pyshine.com/Best-Mac-Mini-For-Local-AI-2026-Deep-Research/">PyShine: Best Mac mini for local AI</a> - the entry-point comparison</li>
+  <li><a href="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/">PyShine: Best Mac Studio for local AI</a> - the bandwidth-king comparison</li>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Open Source" /><category term="DGX Spark" /><category term="NVIDIA" /><category term="Local AI" /><category term="LLM" /><category term="GB10" /><category term="CUDA" /><category term="Benchmarks" /><summary type="html"><![CDATA[A deep research guide to NVIDIA DGX Spark local LLM performance: what the GB10 box really delivers in tokens per second, the biggest models one, two, four and eight Sparks can run, the 273 GB/s decode wall, two-box clustering over 200 GbE, fine-tuning numbers, and 2026 prices - every figure linked to its source.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/dgx-spark-local-ai/pyshine-dgx-spark-model-map.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/dgx-spark-local-ai/pyshine-dgx-spark-model-map.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">The Best Mac Studio for Local AI in 2026: How Big an LLM It Can Run, at What Speed, With Sources</title><link href="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/" rel="alternate" type="text/html" title="The Best Mac Studio for Local AI in 2026: How Big an LLM It Can Run, at What Speed, With Sources" /><published>2026-10-01T00:00:00+00:00</published><updated>2026-10-01T00:00:00+00:00</updated><id>https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research</id><content type="html" xml:base="https://pyshine.com/Best-Mac-Studio-For-Local-AI-2026-Deep-Research/"><![CDATA[<p>If the Mac mini is the entry point to local AI, the Mac Studio is where the ceiling disappears. In August 2026 Apple refreshed the Studio with the <strong>Mac Studio M5 Max</strong> and the <strong>Mac Studio M5 Ultra</strong> — the first Mac built on a quad-die UltraFusion chip, with up to <strong>512 GB of unified memory</strong> and <strong>1.2 TB/s of memory bandwidth</strong> (<a href="https://www.apple.com/newsroom/2026/08/apple-introduces-new-mac-studio-with-m5-max-and-m5-ultra/">Apple newsroom</a>). This is the machine class that runs frontier-scale open-weight models — Llama 3.1 405B, Llama 4 Maverick 400B, DeepSeek V3 671B — entirely on a desk, with no cloud and no token meter. This post is a deep research pass over what reviewers and the community have actually measured: which Studio to buy, how big a model each memory tier holds, what tokens-per-second to expect at every size, what time-to-first-token feels like, and how clustering works when one Studio is not enough. Every number below links to its source so you can double-check it.</p>
 
 <p>Two numbers decide everything here, same as on the mini. <strong>Memory capacity</strong> sets how big a model you can load at all; <strong>memory bandwidth</strong> sets how fast it decodes, because autoregressive generation streams every active weight through memory once per token. The Studio’s whole reason to exist is that it pushes both numbers to the limit of what a silent desktop can dissipate.</p>
 
@@ -1369,105 +1698,4 @@ wrangler d1 migrations apply DB <span class="nt">--local</span>
   <li>User guide: https://github.com/supermemoryai/company-brain/blob/main/docs/guide/README.md</li>
   <li>Architecture notes: https://github.com/supermemoryai/company-brain/blob/main/docs/architecture.md</li>
   <li>supermemory: https://supermemory.ai</li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Open Source" /><category term="Slack" /><category term="AI Agents" /><category term="Memory" /><category term="Open Source" /><summary type="html"><![CDATA[A source tour of supermemoryai/company-brain, the open-source Slack teammate from the supermemory team that ingests channel conversations, extracts durable memories, and answers questions with retrieval over your team's own knowledge. We walk the Cloudflare Workers architecture, the memory containers, and the retrieval-augmented answering loop.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/company-brain/supermemoryai-company-brain-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/company-brain/supermemoryai-company-brain-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Concat: The Truly Free, Open-Source CapCut Replacement - Inside jub0t/Concat</title><link href="https://pyshine.com/Concat-Open-Source-Capcut-Replacement-Source-Tour/" rel="alternate" type="text/html" title="Concat: The Truly Free, Open-Source CapCut Replacement - Inside jub0t/Concat" /><published>2026-09-30T00:00:00+00:00</published><updated>2026-09-30T00:00:00+00:00</updated><id>https://pyshine.com/Concat-Open-Source-Capcut-Replacement-Source-Tour</id><content type="html" xml:base="https://pyshine.com/Concat-Open-Source-Capcut-Replacement-Source-Tour/"><![CDATA[<p>Everyone who cuts short-form video knows the deal: the editor is free until you export, and then the watermark appears, or the 4K button asks for a subscription, or your footage quietly travels to somebody else’s cloud. Concat, at roughly 3,900 GitHub stars at the time of writing, is the loudest “no” to that deal we have seen in a while. It bills itself as the truly free, open-source cross-platform CapCut replacement, and unlike most projects that wave at that ambition, it ships a full editor: multi-track cutting, auto-captions, text-to-speech, background removal, keyframes, 4K export.</p>
-
-<p>Its README states the terms plainly: no watermark, no account, no subscription, no upload. Everything runs locally on a native Rust engine with a GPU compositor. The AI models for captions, voices and cutout download once from Settings and work offline after that. Your footage never leaves your disk.</p>
-
-<p>Why is the source worth a tour? Because Concat is one of the rare video editors laid out as an honest, dependency-ordered Rust workspace you can actually read. The repository documents its own architecture in ARCHITECTURE.md, each of the sixteen crates under src/crates opens with a doc comment saying what it is for, and the dependency arrows point one way: nothing lower knows the window exists, and the engine’s core knows nothing about FFmpeg. For anyone studying how a real editor works, or looking for an AI-controllable video backend, this codebase is a gift.</p>
-
-<div style="overflow-x:auto;">
-<img src="https://pyshine.com/assets/img/diagrams/concat/jub0t-concat-overview-architecture.svg" alt="Architecture overview of the jub0t/Concat repository" style="max-width:100%;height:auto;" />
-</div>
-
-<p><em>Overview of the Concat architecture: the document model on the left, the engine core in the middle, the Slint window and host services, the automation doors for scripts and agents, and the local AI crates on the right.</em></p>
-
-<p>Reading the overview from left to right: the document group holds the edit itself, where every change is a validated command (<code class="language-plaintext highlighter-rouge">src/crates/concat-project/src/commands</code>) applied to the project model (<code class="language-plaintext highlighter-rouge">src/crates/concat-project/src/model.rs</code>) and kept undoable by snapshot in <code class="language-plaintext highlighter-rouge">editor.rs</code>. The engine core turns that document into pixels: the document flattens into a <code class="language-plaintext highlighter-rouge">core::Timeline</code> built on exact rational time (<code class="language-plaintext highlighter-rouge">src/crates/concat-core/src/timeline.rs</code>), the frame planner decides what is on screen at any instant (<code class="language-plaintext highlighter-rouge">src/crates/concat-render/src/plan.rs</code>), and the wgpu compositor draws it (<code class="language-plaintext highlighter-rouge">src/crates/concat-render/src/gpu.rs</code>) with frames decoded and cached by the FFmpeg layer (<code class="language-plaintext highlighter-rouge">src/crates/concat-media/src/decode.rs</code>). The app group is what you click: the Slint window’s Studio controller (<code class="language-plaintext highlighter-rouge">src/crates/concat/src/studio.rs</code>) edits through host sessions (<code class="language-plaintext highlighter-rouge">src/crates/concat-host/src/session.rs</code>). The automation doors expose the same verbs over JSON-RPC and gRPC (<code class="language-plaintext highlighter-rouge">src/crates/concat-api/src/lib.rs</code>, <code class="language-plaintext highlighter-rouge">src/crates/concat-server/src/lib.rs</code>) — exactly where scripts, plugins, MCP servers and AI agents plug in. Finally, the local AI crates do captions, voices and cutouts entirely on your machine (<code class="language-plaintext highlighter-rouge">src/crates/concat-speech/src/lib.rs</code>, <code class="language-plaintext highlighter-rouge">src/crates/concat-vision/src/lib.rs</code>).</p>
-
-<h2 id="why-you-need-this">Why You Need This</h2>
-
-<p>If you have ever opened CapCut for a TikTok, a Reel or a YouTube tutorial, you already know the feature set people actually need: auto-captions, quick text-to-speech, background removal, keyframe animation, effects and titles, multi-track cutting, and a clean 4K export. Concat covers precisely that list. Captions land on the timeline already styled, voices can be cloned from a few seconds of a recording, background removal handles people and objects (or you can paint the mask yourself), and exports go out as H.264, HEVC or AV1, up to 4K at 60 fps in 10-bit colour.</p>
-
-<p>The second problem is trust and longevity. A subscription editor owns your workflow; when the pricing changes or the service shuts down, your muscle memory and your project files are hostage. Concat is AGPL-3.0-or-later (with a plugin exception in LICENSE-EXCEPTIONS.md), the project file is a documented JSON document, and the engine compiles from source on macOS, Windows, Linux and Android, with iOS sideloaded. Version 0.2.5 is beta and the README says so plainly, but the code behind it is not a toy: there is an end-to-end export test suite (<code class="language-plaintext highlighter-rouge">src/crates/concat-host/tests/export.rs</code>) and a GPU-vs-CPU parity suite holding rendered frames to a structural similarity above 0.99 (<code class="language-plaintext highlighter-rouge">src/crates/concat-render/src/gpu/tests.rs</code>).</p>
-
-<p>The third reason is the one our readers care most about: it is built for machines as well as people. The README says it directly, “Also for machines: a JSON-RPC, gRPC and MCP API, so scripts and AI agents can cut video with it too.” We verified in the source that this is not marketing: <code class="language-plaintext highlighter-rouge">src/crates/concat-api/src/lib.rs</code> opens with “The command line, a daemon on a socket, an MCP server, a plugin: each is a transport,” and every edit the window can make is one an API caller can make, with the same clamps and refusals. If you are building automated video pipelines, agent-driven editing or batch captioning, this is a rare editor where that door is a first-class citizen.</p>
-
-<h2 id="how-it-works">How It Works</h2>
-
-<p>The best one-sentence summary comes from the repository’s own src/README.md: the engine is a set of crates with no window in them, the window is a Slint application over that engine, and a command-line tool and a socket server drive the same engine through the same API the window uses — one document format, one command set, one renderer, three ways in.</p>
-
-<div style="overflow-x:auto;">
-<img src="https://pyshine.com/assets/img/diagrams/concat/jub0t-concat-architecture.svg" alt="Detailed architecture of the jub0t/Concat repository" style="max-width:100%;height:auto;" />
-</div>
-
-<p><em>Detailed architecture of Concat: the document and undo loop, the core vocabulary of exact time and arena handles, the render and effects stack, the media and export machinery, host services, local AI, and the transports that carry the API.</em></p>
-
-<h3 id="understanding-the-architecture">Understanding the Architecture</h3>
-
-<p><strong>The document and its command loop.</strong> The edit lives in <code class="language-plaintext highlighter-rouge">src/crates/concat-project/src/model.rs</code> as a project of timelines, tracks and clips, with times stored as seconds and every keyframe expressed as a fraction of its clip’s length, so splits and trims never orphan keys. Every change goes through a typed <code class="language-plaintext highlighter-rouge">Command</code> from <code class="language-plaintext highlighter-rouge">src/crates/concat-project/src/commands/</code> (grouped by clip, keys, audio, tracks, timelines and media), and each command funnels through <code class="language-plaintext highlighter-rouge">Clip::tidy</code>, the single place clamps live. The <code class="language-plaintext highlighter-rouge">Editor</code> (<code class="language-plaintext highlighter-rouge">src/crates/concat-project/src/editor.rs</code>) keeps undo as snapshots that share whatever a command did not touch, and the file format (<code class="language-plaintext highlighter-rouge">src/crates/concat-project/src/doc.rs</code>) is a versioned <code class="language-plaintext highlighter-rouge">concat.json</code> that migrates one step at a time and keeps unknown fields.</p>
-
-<p><strong>Exact time and handle-based graphs.</strong> Two conventions from <code class="language-plaintext highlighter-rouge">src/crates/concat-core</code> make the rest of the engine tractable. First, all timestamps are <code class="language-plaintext highlighter-rouge">concat_core::time::Rational</code> seconds, never <code class="language-plaintext highlighter-rouge">f64</code> — frame-accurate editing and floating point do not mix, as the code’s own conventions note. Second, tracks and clips live in generational arenas (<code class="language-plaintext highlighter-rouge">src/crates/concat-core/src/arena.rs</code>) and are addressed by copyable <code class="language-plaintext highlighter-rouge">TrackId</code> and <code class="language-plaintext highlighter-rouge">ClipId</code> handles (<code class="language-plaintext highlighter-rouge">src/crates/concat-core/src/timeline.rs</code>), with track order explicit and bottom-first: track zero composites first and everything after draws on top. A clip’s <code class="language-plaintext highlighter-rouge">speed</code> is a Rational and the only definition of retiming, so the frame plan, the export decoder rate and the audio graph cannot disagree about what a sped-up clip means.</p>
-
-<p><strong>The three shapes of a clip on its way to a pixel.</strong> <code class="language-plaintext highlighter-rouge">src/crates/concat-export/src/flatten.rs</code> turns the document into one flat list of export clips, <code class="language-plaintext highlighter-rouge">resolve.rs</code> builds the engine’s <code class="language-plaintext highlighter-rouge">core::Timeline</code> quantised to the frame grid with per-clip facts the model has no field for, and <code class="language-plaintext highlighter-rouge">src/crates/concat-render/src/plan.rs</code> produces a <code class="language-plaintext highlighter-rouge">FramePlan</code>: a pure description of what is visible at instant t — media, exact source time, placement, opacity, blend — with no IO and no pixels. Because geometry (crop, fit, scale) and weighing (fades, wipes, masks) are computed once in the plan, the export renderer and the on-screen monitor cannot drift apart.</p>
-
-<p><strong>One compositor in linear light.</strong> <code class="language-plaintext highlighter-rouge">src/crates/concat-render/src/gpu.rs</code> implements the wgpu compositor that draws every frame, the monitor’s and the export’s alike, falling back to a software adapter on machines without a GPU. The working space is linear light on extended Rec. 709 primaries in half floats (what Windows calls scRGB), so blending, opacity and fades happen in light the way professional colour tools do them; HDR sources in HLG or PQ are decoded deep and conformed with BT.2390 roll-off. Effects are GPU packages: 123 folders under <code class="language-plaintext highlighter-rouge">src/crates/concat-effects/packages/</code>, each a <code class="language-plaintext highlighter-rouge">effect.toml</code> manifest plus a WGSL shader, parsed and validated at load by <code class="language-plaintext highlighter-rouge">src/crates/concat-effects/src/shader.rs</code> — the README counts 170+ effects, filters, transitions and text animations in total. A shader that binds something the host did not declare, or loops without a break, is simply refused.</p>
-
-<p><strong>Decoding, caching and scheduling.</strong> <code class="language-plaintext highlighter-rouge">src/crates/concat-media</code> is the only crate that knows FFmpeg exists. <code class="language-plaintext highlighter-rouge">decode.rs</code> prefers platform hardware decode (<code class="language-plaintext highlighter-rouge">hardware.rs</code>: VideoToolbox on macOS, D3D11VA on Windows, MediaCodec on Android) and falls back to software once, <code class="language-plaintext highlighter-rouge">pool.rs</code> caches decoded frames keyed by file, decode level and frame index, and <code class="language-plaintext highlighter-rouge">prefetch.rs</code> schedules monitor frames first, then filmstrips, artwork and proxies, on a few threads with one always kept clear of background work. Large footage gets a quarter-size H.264 proxy (<code class="language-plaintext highlighter-rouge">src/crates/concat-host/src/proxy.rs</code>), and playback audio is decoded to memory-mapped WAVs in the project cache (<code class="language-plaintext highlighter-rouge">src/crates/concat-host/src/playback.rs</code>).</p>
-
-<p><strong>Local AI, and the doors for machines.</strong> Captions and voices are two crates: <code class="language-plaintext highlighter-rouge">src/crates/concat-speech/src/transcribe.rs</code> runs whisper.cpp in-process, <code class="language-plaintext highlighter-rouge">tts.rs</code> drives Kokoro through sherpa-onnx, both one-at-a-time and both downloading models on demand rather than bundling them. Cutouts and enhancement come from <code class="language-plaintext highlighter-rouge">src/crates/concat-vision</code> (segmentation masks and an ONNX restoration model). Then there are the doors: <code class="language-plaintext highlighter-rouge">src/crates/concat-api/src/lib.rs</code> is the one dispatcher whose verbs are JSON in and responses and events out, and <code class="language-plaintext highlighter-rouge">src/crates/concat-server/src/lib.rs</code> carries the same API over JSON-RPC lines on TCP or a Unix socket, or gRPC behind a feature flag from <code class="language-plaintext highlighter-rouge">src/crates/concat-server/proto/concat.proto</code>. Every connection presents a token first, compared in constant time (<code class="language-plaintext highlighter-rouge">src/crates/concat-server/src/token.rs</code>), the server binds loopback by default, and an MCP server is just another transport over the same dispatcher — so an agent that speaks JSON-RPC gets the full editing vocabulary, including exports that arrive as jobs with progress events.</p>
-
-<p>Follow one export end to end and the whole design clicks: the window (or a script) sends a command; the document validates and snapshots it; the export crate flattens and resolves the document into a core timeline; for each frame the planner emits a FramePlan; the decoder fills it; the compositor blends it in linear light; and the encoder writes H.264, HEVC or AV1 to disk — locally, the entire way.</p>
-
-<h2 id="advantages">Advantages</h2>
-
-<ul>
-  <li><strong>Genuinely free and open.</strong> AGPL-3.0-or-later, no watermark, no account, no paid tier, and the licensing terms including the plugin exception are spelled out in LICENSE-EXCEPTIONS.md.</li>
-  <li><strong>Fully local by design.</strong> FFmpeg is linked, whisper.cpp and sherpa-onnx are compiled in, and nothing uploads; the AI models download once and then work offline.</li>
-  <li><strong>A real engine, not a wrapper.</strong> A GPU compositor on wgpu in linear light, hardware decode on every platform, frame caching and a scheduler — 4K scrubs stay smooth.</li>
-  <li><strong>Frame-accurate fundamentals.</strong> Rational-number time and arena-handle timelines mean the timeline model, the renderer and the audio graph all agree on what a frame is.</li>
-  <li><strong>Machine-friendly API.</strong> The same JSON-RPC dispatcher serves the CLI, sockets, gRPC and MCP transports, with token authentication, capability discovery via a <code class="language-plaintext highlighter-rouge">version</code> call, and exports as jobs with progress events.</li>
-  <li><strong>Cross-platform for real.</strong> One Rust codebase builds the editor for macOS, Windows, Linux and Android (iOS sideloaded), with a dedicated phone shell in the UI and wasm builds kept green for the pure-Rust engine crates.</li>
-</ul>
-
-<h2 id="benefits">Benefits</h2>
-
-<ul>
-  <li><strong>For short-form creators:</strong> auto-captions, text-to-speech, voice cloning, background removal and a magnetic multi-track timeline cover the whole CapCut muscle memory without the watermark tax.</li>
-  <li><strong>For privacy-conscious editors:</strong> footage, models and exports all stay on disk; there is no account to create and no telemetry funnel in the design.</li>
-  <li><strong>For teams and long-term projects:</strong> the human-readable <code class="language-plaintext highlighter-rouge">concat.json</code> project format with versioned migration means your edit is data, not a black box.</li>
-  <li><strong>For automation engineers:</strong> batch caption a folder, render a nightly cut, or drive exports from CI with the same commands the window uses.</li>
-  <li><strong>For AI agent builders:</strong> an MCP-able, JSON-RPC-first editing backend with typed commands, predictable error codes and job-based exports is exactly the primitive most “AI video” stacks are missing.</li>
-  <li><strong>For Rust learners and researchers:</strong> strict crate boundaries, a documented architecture, and parity-tested rendering make this one of the best real-world codebases to study engine design in.</li>
-</ul>
-
-<h2 id="usage">Usage</h2>
-
-<p>Concat is a native application: grab the right build from the website or GitHub Releases for Windows (<code class="language-plaintext highlighter-rouge">.msi</code>), macOS, Linux (<code class="language-plaintext highlighter-rouge">.deb</code>, <code class="language-plaintext highlighter-rouge">.rpm</code>, <code class="language-plaintext highlighter-rouge">.AppImage</code>) or Android. To build and drive it from source, the repository’s src/README.md is the guide; a build needs the FFmpeg 7+ development libraries, plus cmake and a C++ toolchain for whisper.cpp:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cargo build
-cargo run <span class="nt">-p</span> concat                    <span class="c"># the editor window</span>
-cargo run <span class="nt">-p</span> concat-cli <span class="nt">--</span> probe some-video.mp4
-cargo run <span class="nt">-p</span> concat-cli <span class="nt">--</span> render some-video.mp4 out.mp4 <span class="nt">--frames</span> 120
-cargo run <span class="nt">-p</span> concat-cli <span class="nt">--</span> serve       <span class="c"># the API on 127.0.0.1:7420</span>
-cargo run <span class="nt">-p</span> concat-cli <span class="nt">--features</span> grpc <span class="nt">--</span> serve <span class="nt">--grpc</span> 127.0.0.1:7421
-</code></pre></div></div>
-
-<p>Once a server is running, every call is a JSON-RPC 2.0 line, one object per line, authenticated with a token:</p>
-
-<pre><code class="language-jsonl">{"jsonrpc":"2.0","id":1,"method":"project.open","params":{"path":"/edits/Reel"}}
-{"jsonrpc":"2.0","id":2,"method":"edit.apply","params":{"path":"/edits/Reel","command":{"op":"addTextClip","start":1.5}}}
-{"jsonrpc":"2.0","id":3,"method":"export.run","params":{"path":"/edits/Reel","output":"/edits/reel.mp4"}}
-</code></pre>
-
-<p>An <code class="language-plaintext highlighter-rouge">edit.apply</code> carries a <code class="language-plaintext highlighter-rouge">concat-project</code> command exactly as the window would send it, so anything the editor can do — captions, cutouts, keyframes, effects — is available to your script. The full method reference, including a page per transport, lives in the developer docs on the project’s website.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Concat is what it claims to be: a complete, cross-platform, no-strings video editor whose source you can actually read. Its architecture is unusually disciplined — exact rational time, handle-based timelines, a pure frame plan, one GPU compositor in linear light, and a single API dispatcher behind every way of driving it. If you want a CapCut replacement that respects your footage, or a scriptable, agent-ready video engine to build on, clone it and start at <code class="language-plaintext highlighter-rouge">src/README.md</code>; the map is already drawn for you.</p>
-
-<p>Links:</p>
-
-<ul>
-  <li>GitHub repository: <a href="https://github.com/jub0t/Concat">github.com/jub0t/Concat</a></li>
-  <li>Website and downloads: <a href="https://concatenate.pages.dev/">concatenate.pages.dev</a></li>
-  <li>Developer docs (Concat API): <a href="https://concatenate.pages.dev/docs">concatenate.pages.dev/docs</a></li>
-</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Open Source" /><category term="Rust" /><category term="Video Editing" /><category term="Open Source" /><category term="AI Agents" /><summary type="html"><![CDATA[A source tour of jub0t/Concat, the free and open-source cross-platform CapCut replacement written in Rust. We walk its actual code: the arena-based timeline model, the wgpu GPU rendering pipeline, the FFmpeg media layer, and the JSON-RPC, gRPC and MCP API that lets scripts and AI agents edit video.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/concat/jub0t-concat-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/concat/jub0t-concat-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+</ul>]]></content><author><name>PyShine</name></author><category term="AI" /><category term="Open Source" /><category term="Slack" /><category term="AI Agents" /><category term="Memory" /><category term="Open Source" /><summary type="html"><![CDATA[A source tour of supermemoryai/company-brain, the open-source Slack teammate from the supermemory team that ingests channel conversations, extracts durable memories, and answers questions with retrieval over your team's own knowledge. We walk the Cloudflare Workers architecture, the memory containers, and the retrieval-augmented answering loop.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://pyshine.com/assets/img/diagrams/company-brain/supermemoryai-company-brain-architecture.svg" /><media:content medium="image" url="https://pyshine.com/assets/img/diagrams/company-brain/supermemoryai-company-brain-architecture.svg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
