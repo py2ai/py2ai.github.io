@@ -2,6 +2,7 @@
 layout: post
 title: "Seiso: A Convention And Linter For AI-Written Docs"
 permalink: /Seiso-A-Convention-And-Linter-For-AI-Written-Docs/
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/seiso/scarletkc-seiso-architecture.svg
 tags: [Rust, Markdown, Documentation, Linter, AI]
 ---
@@ -10,6 +11,13 @@ Agent-written documentation has a peculiar failure mode: the text is fluent, tid
 
 [seiso](https://github.com/scarletkc/seiso) by scarletkc attacks exactly this problem. It is a Markdown convention and linter for project documentation written by AI and read by humans and agents, released under MIT. Version 0.3.0 ships as a Rust crate on crates.io, a Python package on PyPI, and an npm package `@scarletkc/seiso` with prebuilt binaries for macOS on Apple silicon and Intel, Linux x64 and arm64 with glibc or musl, and Windows x64 and arm64. The pitch is the one rustfmt made a decade ago: stop negotiating documentation style per project, share one convention instead, and let tools check it.
 
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/seiso/scarletkc-seiso-overview-architecture.svg" alt="Architecture overview of the scarletkc/seiso repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Overview of the repository: one Rust CLI fronting a loading stage that resolves policy and reads a content-addressed parse cache, a byte-range Markdown document model feeding the workspace index, a rule registry that cross-file rules consume, and diagnostics rendered into five output formats - all under a separately versioned convention specification.*
+
+Reading the overview from left to right: `src/main.rs` dispatches to the command layer in `src/commands.rs`, which loads a workspace snapshot through `src/workspace.rs` - resolving policy from `src/config/mod.rs`, parsing the selected files through `src/md/parser.rs`, and reusing parse data keyed by content hash from `src/cache/mod.rs`. The parsed facts in `src/md/mod.rs` feed the index in `src/index/mod.rs`, the registry in `src/rules/mod.rs` runs the checks, and findings flow into `src/diagnostics/` for rendering. The convention spec at `spec/convention.md` sits deliberately apart, supplying the stable requirement identifiers the rules implement.
 
 ## The convention comes first
 
@@ -35,6 +43,12 @@ The binary is a clap-driven Rust CLI whose subcommands are `check`, `policy`, `i
 ## How the checker is built
 
 The crate splits into five load-bearing layers, and the architecture document in `docs/reference/architecture.md` describes them honestly. `src/workspace.rs` owns discovery, policy resolution, scoped reads, and parsing, producing a snapshot whose loading scope is independent of rule execution - `parse` reads only selected documents, while a `check` widens to workspace documents whenever an enabled rule needs the index. That subtlety matters: cross-file diagnostics can attach a related location to a file you selected, so the tool cannot infer its dependency scope from your command line alone.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/seiso/scarletkc-seiso-architecture.svg" alt="Detailed architecture of the scarletkc/seiso repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Detailed view of the same repository: the CLI group with its check-execution orchestrator, the loading stage with `seiso.toml` and path resolution, the document model with source mapping and prose splitting, the rule stack from kind resolution through suppression and safe fixes, the diagnostics renderers, and the specification documents that anchor the rule catalog and promotion policy.*
 
 The document model in `src/md/` is where precision lives. `src/md/parser.rs` builds a model of frontmatter, sections, blocks, sentences, and fragment kinds; every fragment retains a byte range into the original source, and `src/md/mapping.rs` keeps display columns counting Unicode characters, marking ambiguous synthesized mappings as inexact. `src/sections.rs` adds heuristic section roles with evidence, computed separately from the cached parse facts. `src/index/mod.rs` combines those parsed facts with current kind, language, domain, and path policy into the workspace index that cross-file rules consume.
 

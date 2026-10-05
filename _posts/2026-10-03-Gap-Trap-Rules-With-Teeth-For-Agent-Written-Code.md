@@ -2,6 +2,7 @@
 layout: post
 title: "Gap-Trap: Rules With Teeth For Agent-Written Code"
 permalink: /Gap-Trap-Rules-With-Teeth-For-Agent-Written-Code/
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/gap-trap/pliablepixels-gap-trap-architecture.svg
 tags: [AI, Developer Tools, CI, Code Quality, Testing]
 ---
@@ -9,6 +10,14 @@ tags: [AI, Developer Tools, CI, Code Quality, Testing]
 Every team running coding agents has the same quiet problem: the rules exist, but nothing enforces them. The agent writes a helper that already exists, crosses a layer boundary because the shortcut compiled, and follows a rule in your instructions file for a week before forgetting it. The rules are text, and the only thing that reads them is the agent that breaks them. [gap-trap](https://github.com/pliablepixels/gap-trap) by pliablepixels closes that loop. It is an MIT-licensed agent skill that, run once in a repository, reads the code, writes the rules that fit that codebase, and attaches a gate to each rule - a check that fails the commit or the CI run when the rule breaks. The agent cannot skip a gate, because gates are just tests.
 
 The origin story in `gap-trap/reference/framework.md` is concrete: one maintainer landed 2,313 commits in eight months - fourteen reverts - with agents writing the code and no one reading diffs. The framework is the distillation of what stopped the drift.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/gap-trap/pliablepixels-gap-trap-overview-architecture.svg" alt="Architecture overview of the pliablepixels/gap-trap repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Overview of the repository: the skill entry point, its reference documents for the framework model, discovery, gate specs and refine mode, the instruction files those docs generate - rules, contracts and domain facts - and the executable gates they feed, from the instruction-gate test through proven-red and the ratchet to the PR body check.*
+
+Reading the overview from left to right: `gap-trap/SKILL.md` reads `gap-trap/reference/framework.md` first, dispatches `gap-trap/reference/discovery.md` for setup and `gap-trap/reference/gates.md` for the gate specifications, and turns to `gap-trap/reference/refine.md` for the audit mode. The framework model fills the instruction templates - `gap-trap/templates/AGENTS.md` for rules, `gap-trap/templates/AGENTS.project.md` for contracts, `gap-trap/templates/agents/project/domain-context.md` for facts - and each contract's `Gate:` line points at the executable checks, starting with `gap-trap/templates/gates/instruction-gate.test.ts`.
 
 ## Four kinds of instruction
 
@@ -27,6 +36,12 @@ An agent reads that and learns, without opening source, who owns the concern, th
 ## The gates, cheapest first
 
 `gap-trap/reference/gates.md` specs six kinds. A **grep gate** scans source for a forbidden pattern in milliseconds. The **instruction gate** is the clever one - a test over the instruction files themselves: every backticked token on a `Path:` or `Gate:` line must exist in the tree (a token with a slash is a file path, any other is a symbol resolved against the paths its own line names, and a symbol that survives only in tests does not count), the always-loaded files must stay under a word budget, every 8-hex commit hash cited in the knowledge files must exist (`git cat-file -e`), and no email or IP address may appear there. A contract with a guessed symbol name fails this gate immediately - the failure names the contract and the token.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/gap-trap/pliablepixels-gap-trap-architecture.svg" alt="Detailed architecture of the pliablepixels/gap-trap repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Detailed view of the same repository: the skill dispatching its four reference documents, the full set of instruction templates from playbooks and glossary to out-of-scope notes, the per-stack gate implementations - the instruction gate in TypeScript, shell and Python, proven-red and the ratchet in two runtimes each, the PR body check and the CI workflow that runs them - the Node test suite covering each gate, and the repository metadata including the release script.*
 
 The **ratchet** stores a count - lint backlog, files over 400 lines, existence-only assertions - that may fall or hold but never grow; raising it by hand needs a reason in the commit message. **Proven red** is the check most test suites lack: CI runs the tests a changed range touched against the code from before that range, in a worktree at the fork point, and fails when they pass there. A test that cannot fail proves nothing, and the gate distinguishes a real assertion failure from a mere missing symbol. The **mutation smoke** flips one branch in each risky module (auth, a parser, the API client) and requires that module's tests to fail - the one check proving existing tests can fail at all. And the **PR body check** requires the body to quote the issue's acceptance lines.
 

@@ -2,6 +2,7 @@
 layout: post
 title: "Procoder: A Commit Gate Your AI Coder Cannot Talk Past"
 permalink: /Procoder-A-Commit-Gate-Your-AI-Coder-Cannot-Talk-Past/
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/procoder/azrtydxb-procoder-architecture.svg
 tags: [Go, AI, Code Quality, Developer Tools, CI]
 ---
@@ -9,6 +10,14 @@ tags: [Go, AI, Code Quality, Developer Tools, CI]
 The weakest link in AI-assisted development is the moment the agent says "done". Nobody is standing behind it. The tests may not have run, the formatting may be off, a merge conflict marker may be sitting in a staged file, and the sentence "all checks pass" costs the agent nothing to say. [Procoder](https://github.com/azrtydxb/procoder) by azrtydxb is a Go binary that makes that sentence expensive. Version 3.7.0, Apache-2.0, is a harness for 20+ coding agents - Claude Code, Cursor, Windsurf, Cline, Kilo Code, Roo, Kiro, Codex CLI, Copilot CLI, Gemini, OpenCode, and anything that reads `AGENTS.md` - built on one principle the codebase calls P-CONTROL: the binary computes and reports, the agent acts, and nothing ever touches your code behind its back.
 
 The engine is a single Go program - `cmd/procoder/main.go` wires up roughly fifty packages under `internal/` - and the hooks and skills that each agent adapter installs are thin callers into it. That matters for consistency: `check`, the git hook, and CI all run the same gate code, so they cannot disagree about what is clean.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/procoder/azrtydxb-procoder-overview-architecture.svg" alt="Architecture overview of the azrtydxb/procoder repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Overview of the repository: one Go binary fanning out from the gate to concurrent check legs, the workflow chain of specs, plans, backlogs, todos and releases that can refuse, the hook layer that fires on every agent file write, and the self-learning loop of lessons and adaptations.*
+
+Reading the overview from left to right: `cmd/procoder/main.go` boots the command surface, which dispatches to `internal/gate/gate.go` for the commit gate - its legs (secrets, lint, the test suite, complexity, debt) run concurrently but report in a fixed order. The workflow chain in `internal/spec`, `internal/plan`, `internal/backlog` and `internal/todo` hands work to `internal/release` at the end, each stage able to refuse until its own acceptance criteria are met. `internal/hook/hook.go` plugs the same gate into every agent's PostToolUse event, and `internal/lessons` with `internal/learn` close the loop when a bug escapes anyway.
 
 The commit gate, `procoder check`, covers formatting across the popular languages (Go, Python, JS/TS/HTML/CSS, PHP, Rust, C/C++, Java, Kotlin, Swift, Ruby, Dart, C#, shell - one canonical formatter each, with the project's own config always winning), git hygiene (conflict markers, junk files, oversized files, AI-attribution lines), secrets, lint, CI and infra hygiene, and documentation health. The implementation in `internal/gate/gate.go` runs its legs concurrently - the source comments measure it on this repository's 787 tracked files: gitleaks 41.2s, the suite 35.0s, semgrep 25.3s, lint 2.8s, osv 2.6s, complexity 1.1s, debt 0.2s - 108 seconds in a row, about 41 with the longest leg setting the pace. Crucially, the order of results is fixed regardless of which leg finishes first, because a report that reorders itself between runs would make "did my change cause this?" unanswerable.
 
@@ -33,6 +42,12 @@ What happens to bugs that escape anyway? They become entries in a lessons ledger
 ## The index, and the honesty details
 
 `internal/codeindex/` is the agent's fast map - ctags plus SCIP under the hood, with find, refs, callers, impact, unused, and entrypoints (`graph.go`, `query.go`), plus a rename command that computes the diff and hands it to the agent rather than writing files. `internal/store/state.go` and `internal/store/atomic.go` persist all of this with atomic writes and locking. Onboarding an existing codebase is `procoder audit` (`internal/audit/audit.go`), a triaged scorecard.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/procoder/azrtydxb-procoder-architecture.svg" alt="Detailed architecture of the azrtydxb/procoder repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Detailed view of the same repository: the command binary with its config, principles and audit entry points, the commit gate split into adoption scoping and the secrets, formatting and hygiene legs, the test runner parsing go test JSON alongside the other ecosystems, the workflow chain from spec interview through plans, sprints, todos and closes to the release refusal, the lessons ledger with Copilot-leak harvesting feeding the adaptation loop, the ctags-plus-SCIP code index with graph, query and rename services over an atomic state store, and the portability layer that generates and drift-checks each agent's hooks and manifest.*
 
 The portability layer is what makes one binary serve twenty agents: `internal/portability/portability.go` generates the per-agent adapters (hooks JSON, manifest, one instruction file), and `internal/portability/drift.go` checks that the generated files have not drifted from what the current version would produce. Config lives in `.procoder/` as plain editable files - `config.toml`, `PRINCIPLES.md`, the review rubric, the lessons ledger - where the repository's version always wins over the built-in default.
 

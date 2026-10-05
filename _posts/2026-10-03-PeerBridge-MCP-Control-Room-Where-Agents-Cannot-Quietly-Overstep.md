@@ -2,11 +2,20 @@
 layout: post
 title: "PeerBridge MCP: A Control Room Where Agents Cannot Quietly Overstep"
 permalink: /PeerBridge-MCP-Control-Room-Where-Agents-Cannot-Quietly-Overstep/
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/peerbridge-mcp/hoylon-peerbridge-mcp-architecture.svg
 tags: [Python, MCP, Multi-Agent, AI, Security]
 ---
 
 Running several coding agents at once is easy. Knowing what they are allowed to do, what they actually did, and whether the record of it is true - that is the hard part, and it is where most multi-agent setups quietly fall apart. [PeerBridge MCP](https://github.com/Hoylon/peerbridge-mcp) by Hoylon is a local-first, auditable multi-agent control room for coding, review, evidence, and private remote work. Alpha 6 (v0.1.0a6), Apache-2.0, Python 3.11+, and remarkably its runtime dependency list is empty - the core ships on the standard library alone, with cryptography as an optional extra. Codex, Claude Code, Grok, Kimi, provider APIs, OpenAI-compatible endpoints, and local models join as one governed engineering team across desktop and phone, without flattening their native capabilities.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/peerbridge-mcp/hoylon-peerbridge-mcp-overview-architecture.svg" alt="Architecture overview of the Hoylon/peerbridge-mcp repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Overview of the repository: the MCP layer of stdio entries and the tool server, the coordination core around the bridge database and the round supervisor, governance with the approval broker, execution policy, operation queue and credential vault, a provider runner, SHA-linked evidence, and the operator surfaces reading the same store.*
+
+Reading the overview from left to right: `src/peerbridge_mcp/cli.py` starts one stdio process into `src/peerbridge_mcp/server.py`, which dispatches tool calls into the bridge core in `src/peerbridge_mcp/bridge.py`. Write requests pass through the writer leases of `src/peerbridge_mcp/operation_queue.py` to the approval broker, gated by the policy in `src/peerbridge_mcp/execution_governance.py`, while `src/peerbridge_mcp/credentials.py` holds raw keys away from every caller. The round supervisor advances discussions and places provider calls through the OpenAI-compatible runner, and the monitor plus remote pages read the same store with scoped reads while the bridge links evidence into the proof bundle.
 
 ## Ten layers, one SQLite file
 
@@ -21,6 +30,12 @@ The security posture is the standout. When the operator onboards a provider, the
 ## The claim-to-proof loop
 
 The coordination model is where the design gets serious. `claim_task(paths, policy)` runs under `BEGIN IMMEDIATE` with a conflict check - a task declares read and write path prefixes, read/read overlap is fine, any overlap with a live write lease conflicts - and returns a random capability token once, storing only its SHA-256. The writer then records proof (changed paths, before and after hashes, tests, evidence paths), peers request and submit reviews whose verdicts count distinct approved identities, and `complete_task` rehashes the files and fails if they drifted, then closes the lease atomically. Every state transition appends an audit event whose chain hash includes its payload hash, the previous chain hash, scope, actor, task, type, ID, and timestamp - the verification engine recalculates the whole chain.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/peerbridge-mcp/hoylon-peerbridge-mcp-architecture.svg" alt="Detailed architecture of the Hoylon/peerbridge-mcp repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Detailed view of the same repository: the MCP layer with protocol formatting and session contracts, the coordination core's agent identities, authorized sessions, discussion tracking and continuity snapshots, governance adding secret scanning to the lease-and-broker chain, five provider runners replying into the bridge, the evidence stack of proof bundles, the verification engine, provider and collaboration receipts and the trust timeline, the four operator surfaces, and the project documents and tests that cover it.*
 
 The demo proves the pattern without any provider at all: `python examples/demo_workflow.py --workspace demo-workspace --scope demo` produces a public receipt showing an overlapping second writer was rejected, two independent reviewers satisfied quorum, completion rehashed the synthetic artifact, and the audit chain verified with zero writes.
 

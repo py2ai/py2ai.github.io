@@ -2,6 +2,7 @@
 layout: post
 title: "MemoryBridge: A Memory That Follows You Across Devices"
 permalink: /MemoryBridge-A-Memory-That-Follows-You-Across-Devices/
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/memory-bridge/jiabaobei-memory-bridge-architecture.svg
 tags: [Python, MCP, AI Memory, Privacy, Sync]
 ---
@@ -9,6 +10,14 @@ tags: [Python, MCP, AI Memory, Privacy, Sync]
 You work through a hard problem with your AI on the phone during the commute; back at your desk you want to continue on the PC - and today that means scrolling history, copy-pasting, and re-explaining everything. Cloud full-sync is heavy and often unacceptable for privacy; RAG is passive retrieval that only kicks in after you switch; mainstream memory systems are effectively device-locked. [MemoryBridge](https://github.com/jiabaobei/memory-bridge) (jiabaobei, MIT) takes a different position: a cross-device, cross-platform shared semantic memory layer - the official engineering implementation of what it calls CDSMP, Cross-Device Semantic Memory Persistence. Version 0.30 is a pure-stdlib Python package distributed also as a portable `membridge.exe`.
 
 Three architectural commitments separate it from the memory-tool crowd. Memory follows the person, not the app: devices share one semantic memory graph synchronized with incremental delta packets, never full dumps. Edge preloading pushes hot memories to a device before you even open it, so switching is continuous instead of switch-then-wait. And content freezing is an architectural constraint, not a policy: MemoryBridge only extracts associations and tunes structural parameters, it never rewrites your raw memory content - because letting an LLM auto-abstract memory inevitably injects hallucinated distortion. Writes are explicit (`memory_add`), so there is no path by which a hallucination becomes a memory.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/memory-bridge/jiabaobei-memory-bridge-overview-architecture.svg" alt="Architecture overview of the jiabaobei/memory-bridge repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Overview of the repository: the membridge CLI and MCP server over one SQLite store, the memory core with hybrid retrieval fusing vector, keyword and a one-hop SAN walk into a budgeted injection block, delta sync turning fingerprints into packets over a cloud-folder channel, an HTTP gateway for phone clients, handover cards, and the doctor watching store health.*
+
+Reading the overview from left to right: `src/membridge/cli.py` runs the commands and serves `src/membridge/mcp_server.py`, both against `src/membridge/store.py`. Retrieval pulls nodes and edges, walks the association graph in `src/membridge/san.py` one hop, and hands a budgeted block to `src/membridge/injection.py`. On the sync side, `src/membridge/dss.py` builds delta packets that travel through `src/membridge/channel.py` to the cloud-folder transport, `src/membridge/gateway.py` serves phone clients against the same store, and `src/membridge/handoff.py` keeps the workbench card injected every turn.
 
 ## Three recall routes, one fusion
 
@@ -31,5 +40,11 @@ The v0.15 handover mechanism is the sleeper feature. A third memory kind, `hando
 ## The rest of the discipline
 
 `membridge init` walks a wizard (`src/membridge/wizard.py`) that auto-configures ZCode, Claude Code, Claude Desktop, Cursor, Cline, Windsurf, VS Code Copilot, Gemini CLI, and Qwen Code, installs a WorkBuddy skill, auto-generates and vaults the sync passphrase (Windows DPAPI, or a permission-600 file bound to the local user), and schedules auto-sync every fifteen minutes. The sync agent uploads important memories immediately and batches routine ones, while `local`-tagged memories never leave the device - part of the PAMS privacy gates (L1 migration tags, L2 scene domains, L3 deferred). `membridge doctor` warns about split stores, temp-directory databases, and logs zero-hit queries as gap discovery; `membridge export` renders the whole store as a read-only, git-friendly Markdown view; and the MCP surface stays deliberately tiny - three tools with one-line descriptions, because descriptions live in every client session and that is where token savings start.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/memory-bridge/jiabaobei-memory-bridge-architecture.svg" alt="Detailed architecture of the jiabaobei/memory-bridge repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Detailed view of the same repository: the CLI with its init wizard, doctor and node identity, the MCP layer with capability declarations and client auto-configuration, the memory core's schema card, embeddings, heat ranking and handover cards, the sync stack with drive wiring, the scheduled sync agent, the passphrase vault and the PAMS privacy gates, access surfaces from the gateway through Markdown export and memory lint, and the packaging, RFC and test files that hold it together.*
 
 Against alternatives the positioning is candid: OpenMemory and MemGPT/Letta are device-locked or cloud-hosted; memU gets explicit credit for its zero-LLM backend but is called out for letting the LLM generate memory content. MemoryBridge's bet is that a memory you can audit, freeze, export, and carry - with the cloud drive seeing only ciphertext - is the version you will actually trust with your work.

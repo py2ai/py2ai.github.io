@@ -2,17 +2,32 @@
 layout: post
 title: "Cortico: An Event-Stream Harness For Agents That Never Sleep"
 permalink: /Cortico-An-Event-Stream-Harness-For-Agents-That-Never-Sleep/
+featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/cortico/pal-ai-lab-cortico-architecture.svg
 tags: [TypeScript, AI Agents, Node.js, Streaming, Minecraft]
 ---
 
 Most agent frameworks are built around a conversation: a request comes in, the model answers, the session ends. [Cortico](https://github.com/Pal-AI-Lab/Cortico) by Pal AI Lab - v0.1.5 pre-release, MIT, TypeScript on Node 22+ - is built around a different primitive: the event stream. It is a harness for autonomous, continuously running agents that juggle mixed real-time input - persona bots, AI streamers, roleplay companions - where a gift donation, a chat message, a game event, and a timer can all arrive at once and the agent has to stay coherent through all of it.
 
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/cortico/pal-ai-lab-cortico-overview-architecture.svg" alt="Architecture overview of the Pal-AI-Lab/Cortico repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Overview of the repository: the launcher and boot sequence assembling a bot definition, the semantics-free core with its event bus, durable event store and agent loop, the persona that carries meaning, the world registry feeding events and tools into the bus, the provider registry behind the chat transport, and the web console where the operator watches.*
+
+Reading the overview from left to right: `src/launcher.ts` picks a deployment and `src/boot.ts` assembles the bot from `src/bot.ts`, coupling one persona with a designated set of worlds. The core runtime publishes to `src/core/bus.ts`, whose durable log lives in `src/core/event-store.ts`, and `src/core/loop.ts` consumes events and drives model calls through `src/providers/transport/chat.ts` to the resolved provider in `src/providers/registry.ts`. Worlds load through `src/extensions.ts` into `src/worlds/index.ts` and feed events and tool declarations back into the bus, while `src/web/server.ts` gives the operator the live view.
+
 ## Four layers, strictly separated
 
 The architecture holds five concerns apart (core, persona, memory, world, bot assembly), and the split is enforced by the directory layout. `src/core/` is deliberately semantics-free: it manages session lifecycles, the event stream, and model invocations, and knows nothing about what the agent is for. The persona - defined per bot under `bots/<name>/persona/` - carries the actual meaning: context synthesis, the cognitive loop, and memory protocols. Memory is the authoritative persistence store under `<deployment>/memory/`, with layout and lifecycle chosen by the persona rather than imposed by the framework - a refreshing inversion, since most frameworks hard-code their memory philosophy. A World (`src/worlds/<id>/`) is the isolated boundary to an external environment with event ingestion, tool declarations, and environment prompts; and a Bot (`bots/<name>/index.ts`) simply couples one persona with a designated set of worlds.
 
 The event plumbing lives in `src/core/bus.ts` with a durable log in `src/core/event-store.ts`, and the agent loop in `src/core/loop.ts` - a substantial 80 KB module - consumes from it and drives model calls through the provider transport. `src/core/instance-lock.ts` keeps a single owner per deployment, `src/core/cost.ts` meters token spend, and `src/core/types.ts` (45 KB) declares the CoreApi contract that personas program against. The headline: one bot can simultaneously observe and act across chat platforms, a live game, and a physical environment, because worlds are just event sources and tool sinks.
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/cortico/pal-ai-lab-cortico-architecture.svg" alt="Detailed architecture of the Pal-AI-Lab/Cortico repository" style="max-width:100%;height:auto;" />
+</div>
+
+*Detailed view of the same repository: the entry binary with deployment and launcher, the core's session lifecycles, CoreApi types, instance lock and cost meter, the persona holding the world contract, the four built-in worlds plus the manifest-declared extension system, the providers group from chat transport through response assembly and the Responses stream to the managed llama.cpp runtime, the authenticated console with its client, live timeline and shared protocol, and the project documents that anchor the design.*
 
 ## Worlds: Minecraft, Bilibili, QQ, terminal, web search
 
