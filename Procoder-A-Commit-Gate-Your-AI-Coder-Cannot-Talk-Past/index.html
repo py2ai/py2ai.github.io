@@ -1220,7 +1220,10 @@ body{
 
 
     
-      <div class="hero dark-bg" role="img" aria-label="Procoder: A Commit Gate Your AI Coder Cannot Talk Past">
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="Procoder: A Commit Gate Your AI Coder Cannot Talk Past">
     
         <div class="hero__wrap">
 
@@ -1240,7 +1243,7 @@ body{
             
             <span itemprop="timeRequired">
               
-                6 mins read
+                8 mins read
               
             </span>
           </p>
@@ -1266,6 +1269,14 @@ body{
 
 <p>The engine is a single Go program - <code class="language-plaintext highlighter-rouge">cmd/procoder/main.go</code> wires up roughly fifty packages under <code class="language-plaintext highlighter-rouge">internal/</code> - and the hooks and skills that each agent adapter installs are thin callers into it. That matters for consistency: <code class="language-plaintext highlighter-rouge">check</code>, the git hook, and CI all run the same gate code, so they cannot disagree about what is clean.</p>
 
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/procoder/azrtydxb-procoder-overview-architecture.svg" alt="Architecture overview of the azrtydxb/procoder repository" style="max-width:100%;height:auto;" />
+</div>
+
+<p><em>Overview of the repository: one Go binary fanning out from the gate to concurrent check legs, the workflow chain of specs, plans, backlogs, todos and releases that can refuse, the hook layer that fires on every agent file write, and the self-learning loop of lessons and adaptations.</em></p>
+
+<p>Reading the overview from left to right: <code class="language-plaintext highlighter-rouge">cmd/procoder/main.go</code> boots the command surface, which dispatches to <code class="language-plaintext highlighter-rouge">internal/gate/gate.go</code> for the commit gate - its legs (secrets, lint, the test suite, complexity, debt) run concurrently but report in a fixed order. The workflow chain in <code class="language-plaintext highlighter-rouge">internal/spec</code>, <code class="language-plaintext highlighter-rouge">internal/plan</code>, <code class="language-plaintext highlighter-rouge">internal/backlog</code> and <code class="language-plaintext highlighter-rouge">internal/todo</code> hands work to <code class="language-plaintext highlighter-rouge">internal/release</code> at the end, each stage able to refuse until its own acceptance criteria are met. <code class="language-plaintext highlighter-rouge">internal/hook/hook.go</code> plugs the same gate into every agent’s PostToolUse event, and <code class="language-plaintext highlighter-rouge">internal/lessons</code> with <code class="language-plaintext highlighter-rouge">internal/learn</code> close the loop when a bug escapes anyway.</p>
+
 <p>The commit gate, <code class="language-plaintext highlighter-rouge">procoder check</code>, covers formatting across the popular languages (Go, Python, JS/TS/HTML/CSS, PHP, Rust, C/C++, Java, Kotlin, Swift, Ruby, Dart, C#, shell - one canonical formatter each, with the project’s own config always winning), git hygiene (conflict markers, junk files, oversized files, AI-attribution lines), secrets, lint, CI and infra hygiene, and documentation health. The implementation in <code class="language-plaintext highlighter-rouge">internal/gate/gate.go</code> runs its legs concurrently - the source comments measure it on this repository’s 787 tracked files: gitleaks 41.2s, the suite 35.0s, semgrep 25.3s, lint 2.8s, osv 2.6s, complexity 1.1s, debt 0.2s - 108 seconds in a row, about 41 with the longest leg setting the pace. Crucially, the order of results is fixed regardless of which leg finishes first, because a report that reorders itself between runs would make “did my change cause this?” unanswerable.</p>
 
 <p>The most interesting piece of the gate is <code class="language-plaintext highlighter-rouge">internal/gate/adoption.go</code>, which decides how much of procoder a repository is subject to. An <strong>adopted</strong> repo (one with a <code class="language-plaintext highlighter-rouge">.procoder/</code> directory, or an <code class="language-plaintext highlighter-rouge">AGENTS.md</code> naming procoder) gets the full set of house rules. Somebody else’s repository only gets the checks that are true anywhere - secrets, oversized files, conflict markers, junk - and content-reading checks see only the lines your commit wrote. The decision is made from the repository itself, never the environment, with one escape hatch: <code class="language-plaintext highlighter-rouge">PROCODER_GATE_SCOPE</code> for a fork you are about to submit upstream where adding config would itself be a change you do not want. The comment explains the failure direction precisely: absence of evidence is not adoption, and it is better to say less about somebody else’s code than more.</p>
@@ -1289,6 +1300,12 @@ body{
 <h2 id="the-index-and-the-honesty-details">The index, and the honesty details</h2>
 
 <p><code class="language-plaintext highlighter-rouge">internal/codeindex/</code> is the agent’s fast map - ctags plus SCIP under the hood, with find, refs, callers, impact, unused, and entrypoints (<code class="language-plaintext highlighter-rouge">graph.go</code>, <code class="language-plaintext highlighter-rouge">query.go</code>), plus a rename command that computes the diff and hands it to the agent rather than writing files. <code class="language-plaintext highlighter-rouge">internal/store/state.go</code> and <code class="language-plaintext highlighter-rouge">internal/store/atomic.go</code> persist all of this with atomic writes and locking. Onboarding an existing codebase is <code class="language-plaintext highlighter-rouge">procoder audit</code> (<code class="language-plaintext highlighter-rouge">internal/audit/audit.go</code>), a triaged scorecard.</p>
+
+<div style="overflow-x:auto;">
+<img src="https://pyshine.com/assets/img/diagrams/procoder/azrtydxb-procoder-architecture.svg" alt="Detailed architecture of the azrtydxb/procoder repository" style="max-width:100%;height:auto;" />
+</div>
+
+<p><em>Detailed view of the same repository: the command binary with its config, principles and audit entry points, the commit gate split into adoption scoping and the secrets, formatting and hygiene legs, the test runner parsing go test JSON alongside the other ecosystems, the workflow chain from spec interview through plans, sprints, todos and closes to the release refusal, the lessons ledger with Copilot-leak harvesting feeding the adaptation loop, the ctags-plus-SCIP code index with graph, query and rename services over an atomic state store, and the portability layer that generates and drift-checks each agent’s hooks and manifest.</em></p>
 
 <p>The portability layer is what makes one binary serve twenty agents: <code class="language-plaintext highlighter-rouge">internal/portability/portability.go</code> generates the per-agent adapters (hooks JSON, manifest, one instruction file), and <code class="language-plaintext highlighter-rouge">internal/portability/drift.go</code> checks that the generated files have not drifted from what the current version would produce. Config lives in <code class="language-plaintext highlighter-rouge">.procoder/</code> as plain editable files - <code class="language-plaintext highlighter-rouge">config.toml</code>, <code class="language-plaintext highlighter-rouge">PRINCIPLES.md</code>, the review rubric, the lessons ledger - where the repository’s version always wins over the built-in default.</p>
 
@@ -1489,7 +1506,13 @@ body{
                   
                   
                   
-                    <div class="related-post-card__image dark-bg"></div>
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/gap-trap/pliablepixels-gap-trap-overview-architecture.svg"
+                           alt="Gap-Trap: Rules With Teeth For Agent-Written Code"
+                           loading="lazy" />
+                    </div>
                   
                   <div class="related-post-card__content">
                     <h3 class="related-post-card__title">Gap-Trap: Rules With Teeth For Agent-Written Code</h3>
@@ -1510,7 +1533,13 @@ body{
                   
                   
                   
-                    <div class="related-post-card__image dark-bg"></div>
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/peerbridge-mcp/hoylon-peerbridge-mcp-overview-architecture.svg"
+                           alt="PeerBridge MCP: A Control Room Where Agents Cannot Quietly Overstep"
+                           loading="lazy" />
+                    </div>
                   
                   <div class="related-post-card__content">
                     <h3 class="related-post-card__title">PeerBridge MCP: A Control Room Where Agents Cannot Quietl...</h3>
@@ -1531,7 +1560,13 @@ body{
                   
                   
                   
-                    <div class="related-post-card__image dark-bg"></div>
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/seiso/scarletkc-seiso-overview-architecture.svg"
+                           alt="Seiso: A Convention And Linter For AI-Written Docs"
+                           loading="lazy" />
+                    </div>
                   
                   <div class="related-post-card__content">
                     <h3 class="related-post-card__title">Seiso: A Convention And Linter For AI-Written Docs</h3>
