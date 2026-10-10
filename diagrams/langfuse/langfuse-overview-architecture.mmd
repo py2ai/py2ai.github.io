@@ -1,0 +1,61 @@
+flowchart TD
+
+subgraph group_clients["SDKs &amp; API Surface"]
+  node_fern["Fern API spec &#40;SDKs&#41;"]
+  node_api["Public API routes"]
+  node_otel_api["OTel ingestion endpoint<br/>api"]
+end
+
+subgraph group_ingest["Ingestion"]
+  node_ingestion_q["ingestionQueue<br/>[ingestionQueue.ts]"]
+  node_otel_q["otelIngestionQueue"]
+  node_processor["OtelIngestionProcessor"]
+end
+
+subgraph group_store["Storage"]
+  node_clickhouse[("ClickHouse &#40;traces/observations&#41;<br/>storage")]
+  node_prisma[("Postgres via Prisma<br/>storage")]
+end
+
+subgraph group_jobs["Worker &amp; Queues"]
+  node_worker{{"BullMQ worker<br/>runtime"}}
+  node_evalq["evalQueue<br/>[evalQueue.ts]"]
+end
+
+subgraph group_app["Web Application"]
+  node_ui["Next.js web app<br/>ui"]
+  node_features["Feature modules &#40;traces, evals, ...&#41;"]
+end
+
+node_fern -.->|"specifies endpoints"| node_api
+node_api -->|"enqueue events"| node_ingestion_q
+node_otel_api -->|"enqueue spans"| node_otel_q
+node_worker -->|"consumes"| node_ingestion_q
+node_worker -->|"consumes"| node_otel_q
+node_worker -->|"consumes"| node_evalq
+node_otel_q -->|"map spans"| node_processor
+node_processor -->|"writes rows"| node_clickhouse
+node_evalq -.->|"writes scores"| node_clickhouse
+node_worker -.->|"project metadata"| node_prisma
+node_ui -->|"queries data"| node_api
+node_ui -->|"composes pages"| node_features
+node_clickhouse -.->|"serves dashboards"| node_ui
+
+click node_ingestion_q "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/ingestionQueue.ts"
+click node_otel_q "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/otelIngestionQueue.ts"
+click node_evalq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/evalQueue.ts"
+click node_processor "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/otel/OtelIngestionProcessor.ts"
+click node_clickhouse "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/clickhouse/client.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_fern,node_api,node_otel_api toneBlue
+class node_ingestion_q,node_otel_q,node_processor toneAmber
+class node_clickhouse,node_prisma toneMint
+class node_worker,node_evalq toneRose
+class node_ui,node_features toneIndigo
