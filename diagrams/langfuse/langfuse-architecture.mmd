@@ -1,0 +1,118 @@
+flowchart TD
+
+subgraph group_surface["API Surface"]
+  node_fern["Fern API spec"]
+  node_api["public API routes"]
+  node_otel_api["OTel endpoint<br/>api"]
+  node_auth["API key &amp; SSO auth"]
+  node_media["media &amp; blob storage"]
+end
+
+subgraph group_ingest["Ingestion Path"]
+  node_ingestion_q["ingestionQueue<br/>[ingestionQueue.ts]"]
+  node_otel_q["otelIngestionQueue"]
+  node_processor["OtelIngestionProcessor"]
+  node_traces_iface["traces processing"]
+  node_tokenisation["tokenisation"]
+  node_trace_batching["traceBatching"]
+end
+
+subgraph group_queues["Worker Queues"]
+  node_worker{{"BullMQ worker core<br/>runtime"}}
+  node_evalq["evalQueue<br/>[evalQueue.ts]"]
+  node_experimentq["experimentQueue<br/>[experimentQueue.ts]"]
+  node_batchq["batchActionQueue"]
+  node_exportq["batchExportQueue"]
+  node_topicsq["topicsQueue<br/>[topicsQueue.ts]"]
+  node_retentionq["dataRetentionQueue"]
+  node_monitorq["monitorQueue<br/>[monitorQueue.ts]"]
+end
+
+subgraph group_storage["Storage Layer"]
+  node_clickhouse[("ClickHouse client &amp; schema<br/>storage")]
+  node_tablemaps["table mappings<br/>[mapTracesTable.ts]"]
+  node_prisma[("Postgres &#40;Prisma&#41;<br/>storage")]
+  node_promptsvc["PromptService<br/>[index.ts]"]
+  node_storage_svc["StorageService &#40;S3&#41;<br/>[StorageService.ts]"]
+end
+
+subgraph group_app["Web Application"]
+  node_ui{{"Next.js app router<br/>ui"}}
+  node_traces_ui["traces feature"]
+  node_evals_ui["evals feature"]
+  node_playground["playground feature"]
+  node_datasets_ui["datasets feature"]
+  node_prompts_ui["prompts feature"]
+  node_mcp_ui["MCP &amp; in-app agent"]
+  node_rbac["RBAC &amp; entitlements"]
+  node_aigateway["ai-gateway package"]
+  node_ee["ee enterprise folder"]
+end
+
+node_fern -.->|"specifies"| node_api
+node_api -->|"verifies keys"| node_auth
+node_otel_api -->|"verifies keys"| node_auth
+node_api -->|"enqueue"| node_ingestion_q
+node_otel_api -->|"enqueue"| node_otel_q
+node_otel_q -->|"map spans"| node_processor
+node_processor -.->|"extract media"| node_media
+node_worker -->|"consumes"| node_ingestion_q
+node_worker -->|"consumes"| node_otel_q
+node_worker -->|"consumes"| node_evalq
+node_worker -->|"consumes"| node_experimentq
+node_worker -->|"consumes"| node_batchq
+node_worker -->|"consumes"| node_exportq
+node_worker -->|"consumes"| node_topicsq
+node_worker -->|"consumes"| node_retentionq
+node_worker -->|"consumes"| node_monitorq
+node_ingestion_q -->|"writes events"| node_traces_iface
+node_traces_iface -.->|"count tokens"| node_tokenisation
+node_traces_iface -.->|"batches rows"| node_trace_batching
+node_processor -->|"writes rows"| node_clickhouse
+node_traces_iface -->|"writes traces"| node_clickhouse
+node_trace_batching -.->|"bulk insert"| node_clickhouse
+node_clickhouse -->|"maps rows"| node_tablemaps
+node_worker -.->|"metadata &amp; auth"| node_prisma
+node_promptsvc -->|"versioned prompts"| node_prisma
+node_media -->|"upload blobs"| node_storage_svc
+node_ui -->|"fetches"| node_api
+node_ui -->|"composes"| node_traces_ui
+node_ui -->|"composes"| node_evals_ui
+node_ui -->|"composes"| node_playground
+node_ui -->|"composes"| node_datasets_ui
+node_ui -->|"composes"| node_prompts_ui
+node_playground -.->|"model calls"| node_aigateway
+node_mcp_ui -.->|"agent access"| node_ui
+node_rbac -.->|"gates access"| node_ui
+node_clickhouse -.->|"serves rows"| node_traces_ui
+node_evals_ui -.->|"triggers runs"| node_evalq
+node_ee -.->|"enterprise gating"| node_rbac
+
+click node_media "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/otel/OtelMediaProcessor.ts"
+click node_ingestion_q "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/ingestionQueue.ts"
+click node_otel_q "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/otelIngestionQueue.ts"
+click node_processor "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/otel/OtelIngestionProcessor.ts"
+click node_evalq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/evalQueue.ts"
+click node_experimentq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/experimentQueue.ts"
+click node_batchq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/batchActionQueue.ts"
+click node_exportq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/batchExportQueue.ts"
+click node_topicsq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/topicsQueue.ts"
+click node_retentionq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/dataRetentionQueue.ts"
+click node_monitorq "https://github.com/langfuse/langfuse/blob/main/worker/src/queues/monitorQueue.ts"
+click node_clickhouse "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/clickhouse/client.ts"
+click node_tablemaps "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/tableMappings/mapTracesTable.ts"
+click node_promptsvc "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/services/PromptService/index.ts"
+click node_storage_svc "https://github.com/langfuse/langfuse/blob/main/packages/shared/src/server/services/StorageService.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_fern,node_api,node_otel_api,node_auth,node_media toneBlue
+class node_ingestion_q,node_otel_q,node_processor,node_traces_iface,node_tokenisation,node_trace_batching toneAmber
+class node_worker,node_evalq,node_experimentq,node_batchq,node_exportq,node_topicsq,node_retentionq,node_monitorq toneMint
+class node_clickhouse,node_tablemaps,node_prisma,node_promptsvc,node_storage_svc toneRose
+class node_ui,node_traces_ui,node_evals_ui,node_playground,node_datasets_ui,node_prompts_ui,node_mcp_ui,node_rbac,node_aigateway,node_ee toneIndigo
