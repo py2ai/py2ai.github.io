@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_frontends["Frontends"]
+  node_app_main{{"main.rs<br/>orchestrator"}}
+  node_control_server["control_server<br/>[control_server.rs]"]
+  node_ui_canvas["canvas.rs<br/>ui"]
+  node_cli_lib["cli lib<br/>ui"]
+  node_web_app["photocraft-web<br/>runtime"]
+end
+
+subgraph group_engine["Engine commands"]
+  node_engine_lib{{"engine lib<br/>orchestrator"}}
+  node_engine_commands["commands<br/>[commands.rs]"]
+  node_engine_file_cmds["file_cmds<br/>[file_cmds.rs]"]
+  node_engine_layer_cmds["layer_menu_cmds<br/>[layer_menu_cmds.rs]"]
+  node_engine_adjust_cmds["adjust_cmds<br/>[adjust_cmds.rs]"]
+  node_engine_history["history_cmds<br/>[history_cmds.rs]"]
+end
+
+subgraph group_model["Document model"]
+  node_doc_lib[("doc lib<br/>database")]
+  node_doc_adjust[("adjust<br/>database")]
+  node_doc_effects[("effects<br/>database")]
+  node_doc_text[("text<br/>database")]
+  node_doc_vector[("vector<br/>database")]
+end
+
+subgraph group_pixels["Pixels"]
+  node_compose_lib{{"compose lib<br/>[lib.rs]"}}
+  node_compose_masks["compose masks<br/>[masks.rs]"]
+  node_compose_adjust["compose adjust<br/>[adjust.rs]"]
+  node_gpu_lib{{"gpu lib<br/>runtime"}}
+  node_gpu_plan["plan<br/>[plan.rs]"]
+  node_gpu_fx["fx<br/>[fx.rs]"]
+  node_raster_lib[("raster lib<br/>database")]
+  node_paint_lib{{"paint lib<br/>[lib.rs]"}}
+  node_paint_dynamics["dynamics<br/>[dynamics.rs]"]
+end
+
+subgraph group_io["File I/O"]
+  node_psd_lib["psd lib<br/>abstraction"]
+  node_codecs_lib["codecs<br/>abstraction"]
+  node_io_lib["io<br/>[lib.rs]"]
+  node_raw_lib["raw<br/>abstraction"]
+end
+
+subgraph group_agents["Automation"]
+  node_automation_lib{{"automation lib<br/>[lib.rs]"}}
+  node_automation_server{{"server &#40;MCP&#41;<br/>[server.rs]"}}
+  node_automation_rpc["rpc<br/>[rpc.rs]"]
+  node_automation_headless["headless<br/>[headless.rs]"]
+  node_automation_bridge["bridge<br/>[bridge.rs]"]
+end
+
+node_app_main -->|"starts loopback server"| node_control_server
+node_app_main -->|"hosts egui shell"| node_ui_canvas
+node_control_server -.->|"shared protocol and auth"| node_automation_lib
+node_ui_canvas -->|"Session::execute"| node_engine_lib
+node_cli_lib -->|"drives session"| node_automation_headless
+node_web_app -->|"wasm facade calls"| node_engine_lib
+node_engine_lib -->|"registers"| node_engine_commands
+node_engine_commands -->|"dispatch by id"| node_engine_file_cmds
+node_engine_commands -->|"dispatch by id"| node_engine_layer_cmds
+node_engine_commands -->|"dispatch by id"| node_engine_adjust_cmds
+node_engine_lib -->|"undo stack"| node_engine_history
+node_engine_history -.->|"COW snapshots"| node_doc_lib
+node_engine_lib -->|"owns Document"| node_doc_lib
+node_engine_layer_cmds -->|"edit layer tree"| node_doc_lib
+node_engine_adjust_cmds -->|"params in model"| node_doc_adjust
+node_doc_adjust -.->|"layer kinds"| node_doc_lib
+node_doc_text -.->|"layer kinds"| node_doc_lib
+node_doc_vector -.->|"layer kinds"| node_doc_lib
+node_doc_effects -.->|"layer styles"| node_doc_lib
+node_engine_adjust_cmds -->|"apply adjustment"| node_compose_adjust
+node_compose_lib -->|"masks and clipping"| node_compose_masks
+node_compose_lib -->|"adjustments"| node_compose_adjust
+node_compose_lib -->|"reads tiles"| node_raster_lib
+node_gpu_lib -->|"plan passes"| node_gpu_plan
+node_gpu_lib -->|"effect maps"| node_gpu_fx
+node_gpu_lib -->|"uploads pages"| node_raster_lib
+node_gpu_lib -.->|"match within 1/255"| node_compose_lib
+node_engine_lib -->|"brush commands"| node_paint_lib
+node_paint_lib -->|"points to dabs"| node_paint_dynamics
+node_paint_lib -->|"writes dabs"| node_raster_lib
+node_engine_file_cmds -->|"layered open/save"| node_psd_lib
+node_engine_file_cmds -->|"export formats"| node_io_lib
+node_io_lib -->|"standard codecs"| node_codecs_lib
+node_io_lib -->|"camera RAW"| node_raw_lib
+node_psd_lib -.->|"maps to model"| node_doc_lib
+node_automation_lib -->|"exposes MCP tools"| node_automation_server
+node_automation_lib -->|"envelope"| node_automation_rpc
+node_automation_server -->|"tools call session"| node_automation_headless
+node_automation_rpc -->|"requests"| node_automation_headless
+node_automation_headless -->|"Session::execute"| node_engine_lib
+node_automation_bridge -.->|"control protocol"| node_control_server
+
+click node_app_main "https://github.com/storytold/photocraft/blob/main/apps/photocraft/src/main.rs"
+click node_control_server "https://github.com/storytold/photocraft/blob/main/apps/photocraft/src/control_server.rs"
+click node_ui_canvas "https://github.com/storytold/photocraft/blob/main/crates/ui-egui/src/canvas.rs"
+click node_cli_lib "https://github.com/storytold/photocraft/blob/main/apps/photocraft-cli/src/lib.rs"
+click node_engine_lib "https://github.com/storytold/photocraft/blob/main/crates/engine/src/lib.rs"
+click node_engine_commands "https://github.com/storytold/photocraft/blob/main/crates/engine/src/commands.rs"
+click node_engine_file_cmds "https://github.com/storytold/photocraft/blob/main/crates/engine/src/file_cmds.rs"
+click node_engine_layer_cmds "https://github.com/storytold/photocraft/blob/main/crates/engine/src/layer_menu_cmds.rs"
+click node_engine_adjust_cmds "https://github.com/storytold/photocraft/blob/main/crates/engine/src/adjust_cmds.rs"
+click node_engine_history "https://github.com/storytold/photocraft/blob/main/crates/engine/src/history_cmds.rs"
+click node_doc_lib "https://github.com/storytold/photocraft/blob/main/crates/doc/src/lib.rs"
+click node_doc_adjust "https://github.com/storytold/photocraft/blob/main/crates/doc/src/adjust.rs"
+click node_doc_effects "https://github.com/storytold/photocraft/blob/main/crates/doc/src/effects.rs"
+click node_doc_text "https://github.com/storytold/photocraft/blob/main/crates/doc/src/text.rs"
+click node_doc_vector "https://github.com/storytold/photocraft/blob/main/crates/doc/src/vector.rs"
+click node_compose_lib "https://github.com/storytold/photocraft/blob/main/crates/compose/src/lib.rs"
+click node_compose_masks "https://github.com/storytold/photocraft/blob/main/crates/compose/src/masks.rs"
+click node_compose_adjust "https://github.com/storytold/photocraft/blob/main/crates/compose/src/adjust.rs"
+click node_gpu_lib "https://github.com/storytold/photocraft/blob/main/crates/gpu/src/lib.rs"
+click node_gpu_plan "https://github.com/storytold/photocraft/blob/main/crates/gpu/src/plan.rs"
+click node_gpu_fx "https://github.com/storytold/photocraft/blob/main/crates/gpu/src/fx.rs"
+click node_raster_lib "https://github.com/storytold/photocraft/blob/main/crates/raster/src/lib.rs"
+click node_paint_lib "https://github.com/storytold/photocraft/blob/main/crates/paint/src/lib.rs"
+click node_paint_dynamics "https://github.com/storytold/photocraft/blob/main/crates/paint/src/dynamics.rs"
+click node_psd_lib "https://github.com/storytold/photocraft/blob/main/crates/psd/src/lib.rs"
+click node_codecs_lib "https://github.com/storytold/photocraft/blob/main/crates/codecs/src/lib.rs"
+click node_io_lib "https://github.com/storytold/photocraft/blob/main/crates/io/src/lib.rs"
+click node_raw_lib "https://github.com/storytold/photocraft/blob/main/crates/raw/src/lib.rs"
+click node_automation_lib "https://github.com/storytold/photocraft/blob/main/crates/automation/src/lib.rs"
+click node_automation_server "https://github.com/storytold/photocraft/blob/main/crates/automation/src/server.rs"
+click node_automation_rpc "https://github.com/storytold/photocraft/blob/main/crates/automation/src/rpc.rs"
+click node_automation_headless "https://github.com/storytold/photocraft/blob/main/crates/automation/src/headless.rs"
+click node_automation_bridge "https://github.com/storytold/photocraft/blob/main/crates/automation/src/bridge.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app_main,node_control_server,node_ui_canvas,node_cli_lib,node_web_app toneBlue
+class node_engine_lib,node_engine_commands,node_engine_file_cmds,node_engine_layer_cmds,node_engine_adjust_cmds,node_engine_history toneAmber
+class node_doc_lib,node_doc_adjust,node_doc_effects,node_doc_text,node_doc_vector toneMint
+class node_compose_lib,node_compose_masks,node_compose_adjust,node_gpu_lib,node_gpu_plan,node_gpu_fx,node_raster_lib,node_paint_lib,node_paint_dynamics toneRose
+class node_psd_lib,node_codecs_lib,node_io_lib,node_raw_lib toneIndigo
+class node_automation_lib,node_automation_server,node_automation_rpc,node_automation_headless,node_automation_bridge toneTeal
