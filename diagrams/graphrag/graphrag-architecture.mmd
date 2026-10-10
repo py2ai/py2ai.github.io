@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_cli_config["CLI &amp; Config"]
+  node_cli{{"cli/main.py — init/index/query<br/>entry"}}
+  node_config["config package"]
+  node_api["api — build_index entry"]
+end
+
+subgraph group_infra["Infrastructure Packages"]
+  node_llm["graphrag_llm completion/embedding<br/>connector"]
+  node_middleware["middleware: cache/retry/rate-limit<br/>[with_cache.py]"]
+  node_cache[("graphrag_cache &#40;json/sqlite&#41;<br/>database")]
+  node_storage[("graphrag_storage &#40;parquet/csv/cosmos&#41;<br/>database")]
+  node_vectors[("graphrag_vectors &#40;lancedb/ai search&#41;<br/>database")]
+  node_tokenizer["tiktoken/litellm tokenizers"]
+  node_callbacks["callbacks listeners"]
+end
+
+subgraph group_indexing["Indexing Workflows"]
+  node_runner{{"run_pipeline workflow runner<br/>orchestrator"}}
+  node_input["input readers &#40;text/csv/markitdown&#41;"]
+  node_chunking["token/sentence chunkers<br/>[token_chunker.py]"]
+  node_extract_graph["extract_graph workflow<br/>[extract_graph.py]"]
+  node_graph_extractor["graph_extractor prompt loop<br/>[graph_extractor.py]"]
+  node_extract_nlp["extract_graph_nlp workflow"]
+  node_noun_graph["build_noun_graph np extractors"]
+  node_claims["extract_covariates claims"]
+  node_summarize_desc["summarize_descriptions"]
+  node_cluster["cluster_graph + hierarchical Leiden"]
+  node_communities["create_communities workflow"]
+  node_reports["create_community_reports workflow"]
+  node_report_extractor["community_reports_extractor"]
+  node_text_units["create_final_text_units"]
+  node_embed["generate_text_embeddings"]
+  node_finalize["finalize + snapshot GraphML"]
+  node_update["incremental index update"]
+end
+
+subgraph group_query["Query Engines"]
+  node_search_base{{"structured_search base/factory<br/>abstraction"}}
+  node_local["local_search<br/>[search.py]"]
+  node_global["global_search map-reduce<br/>[search.py]"]
+  node_drift["drift_search primer/actions<br/>[search.py]"]
+  node_basic["basic_search<br/>[search.py]"]
+  node_context["context builders<br/>[builders.py]"]
+  node_loaders["query parquet loaders<br/>[dfs.py]"]
+end
+
+node_cli -->|"load settings"| node_config
+node_cli -->|"invoke"| node_api
+node_api -->|"build_index"| node_runner
+node_runner -->|"write artifacts"| node_storage
+node_runner -.->|"progress events"| node_callbacks
+node_llm -.->|"wraps calls"| node_middleware
+node_middleware -.->|"hit/miss"| node_cache
+node_llm -.->|"count tokens"| node_tokenizer
+node_runner -->|"read documents"| node_input
+node_input -->|"documents"| node_chunking
+node_chunking -->|"text chunks"| node_extract_graph
+node_extract_graph -->|"glean loop"| node_graph_extractor
+node_graph_extractor -->|"LLM calls"| node_llm
+node_extract_graph -->|"merge descriptions"| node_summarize_desc
+node_summarize_desc -->|"LLM calls"| node_llm
+node_extract_nlp -->|"noun phrases"| node_noun_graph
+node_extract_graph -->|"graph"| node_cluster
+node_extract_nlp -->|"graph"| node_cluster
+node_cluster -->|"levels"| node_communities
+node_communities -->|"community data"| node_report_extractor
+node_report_extractor -->|"report generation"| node_llm
+node_report_extractor -->|"reports workflow"| node_reports
+node_extract_graph -.->|"optional claims"| node_claims
+node_claims -->|"LLM calls"| node_llm
+node_communities -->|"community ids"| node_text_units
+node_chunking -->|"chunks"| node_text_units
+node_text_units -->|"embeddable units"| node_embed
+node_embed -.->|"embedding calls"| node_llm
+node_embed -->|"vector indexes"| node_vectors
+node_runner -->|"final workflow"| node_finalize
+node_finalize -->|"GraphML/parquet"| node_storage
+node_update -.->|"incremental re-run"| node_runner
+node_api -->|"run query"| node_search_base
+node_search_base -->|"load tables"| node_loaders
+node_loaders -->|"read"| node_storage
+node_loaders -.->|"semantic lookup"| node_vectors
+node_search_base -->|"build context"| node_context
+node_context -.->|"local sources"| node_local
+node_context -.->|"community reports"| node_global
+node_local -->|"answer"| node_llm
+node_global -->|"map-reduce"| node_llm
+node_drift -.->|"elementary results"| node_local
+node_drift -->|"expansion"| node_vectors
+node_basic -.->|"text units"| node_context
+
+click node_cli "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/cli/main.py"
+click node_llm "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-llm/graphrag_llm/completion/completion_factory.py"
+click node_middleware "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-llm/graphrag_llm/middleware/with_cache.py"
+click node_cache "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-cache/graphrag_cache/cache_factory.py"
+click node_storage "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-storage/graphrag_storage/storage_factory.py"
+click node_vectors "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-vectors/graphrag_vectors/vector_store_factory.py"
+click node_tokenizer "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-llm/graphrag_llm/tokenizer/tiktoken_tokenizer.py"
+click node_runner "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/run/run_pipeline.py"
+click node_input "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-input/graphrag_input/input_reader_factory.py"
+click node_chunking "https://github.com/microsoft/graphrag/blob/main/packages/graphrag-chunking/graphrag_chunking/token_chunker.py"
+click node_extract_graph "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/workflows/extract_graph.py"
+click node_graph_extractor "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/operations/extract_graph/graph_extractor.py"
+click node_extract_nlp "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/workflows/extract_graph_nlp.py"
+click node_noun_graph "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/operations/build_noun_graph/build_noun_graph.py"
+click node_claims "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/operations/extract_covariates/extract_covariates.py"
+click node_summarize_desc "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/operations/summarize_descriptions/summarize_descriptions.py"
+click node_cluster "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/graphs/hierarchical_leiden.py"
+click node_communities "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/workflows/create_communities.py"
+click node_reports "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/workflows/create_community_reports.py"
+click node_report_extractor "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/operations/summarize_communities/community_reports_extractor.py"
+click node_text_units "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/workflows/create_final_text_units.py"
+click node_embed "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/workflows/generate_text_embeddings.py"
+click node_finalize "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/operations/snapshot_graphml.py"
+click node_update "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/index/update/incremental_index.py"
+click node_search_base "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/structured_search/base.py"
+click node_local "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/structured_search/local_search/search.py"
+click node_global "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/structured_search/global_search/search.py"
+click node_drift "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/structured_search/drift_search/search.py"
+click node_basic "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/structured_search/basic_search/search.py"
+click node_context "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/context_builder/builders.py"
+click node_loaders "https://github.com/microsoft/graphrag/blob/main/packages/graphrag/graphrag/query/input/loaders/dfs.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli,node_config,node_api toneBlue
+class node_llm,node_middleware,node_cache,node_storage,node_vectors,node_tokenizer,node_callbacks toneAmber
+class node_runner,node_input,node_chunking,node_extract_graph,node_graph_extractor,node_extract_nlp,node_noun_graph,node_claims,node_summarize_desc,node_cluster,node_communities,node_reports,node_report_extractor,node_text_units,node_embed,node_finalize,node_update toneMint
+class node_search_base,node_local,node_global,node_drift,node_basic,node_context,node_loaders toneRose
