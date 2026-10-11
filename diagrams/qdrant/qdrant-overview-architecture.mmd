@@ -1,0 +1,56 @@
+flowchart TD
+
+subgraph group_api["API Layer"]
+  node_rest{{"REST API<br/>Actix web"}}
+  node_grpc["gRPC API<br/>Tonic services"]
+end
+
+subgraph group_coord["Coordination"]
+  node_startup["Server startup<br/>bootstrap"]
+  node_consensus["Raft consensus<br/>cluster metadata"]
+  node_dispatcher["API dispatcher<br/>request routing"]
+  node_content_manager{{"Content manager<br/>collections table"}}
+end
+
+subgraph group_core["Data Path Crates"]
+  node_collection{{"Collection crate<br/>logical collections"}}
+  node_shard{{"Shard crate<br/>query and update"}}
+  node_segment{{"Segment crate<br/>physical storage"}}
+end
+
+subgraph group_store["Durability &amp; Indexing"]
+  node_wal[("Write-ahead log<br/>crash safety")]
+  node_quantization["Quantization<br/>RAM reduction"]
+  node_sparse["Sparse vectors<br/>keyword search"]
+end
+
+node_startup -->|"mount"| node_rest
+node_startup -->|"mount"| node_grpc
+node_startup -->|"join cluster"| node_consensus
+node_rest -->|"route requests"| node_dispatcher
+node_grpc -->|"route requests"| node_dispatcher
+node_dispatcher -->|"resolve collection"| node_content_manager
+node_consensus -->|"replicate ops"| node_content_manager
+node_content_manager -->|"apply operations"| node_collection
+node_collection -->|"fan out shards"| node_shard
+node_shard -->|"read / write"| node_segment
+node_shard -->|"append first"| node_wal
+node_segment -.->|"recover state"| node_wal
+node_segment -.->|"compress vectors"| node_quantization
+node_segment -.->|"sparse indexes"| node_sparse
+
+click node_startup "https://github.com/qdrant/qdrant/blob/master/src/startup.rs"
+click node_consensus "https://github.com/qdrant/qdrant/blob/master/src/consensus.rs"
+click node_dispatcher "https://github.com/qdrant/qdrant/blob/master/lib/storage/src/dispatcher.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_rest,node_grpc toneBlue
+class node_startup,node_consensus,node_dispatcher,node_content_manager toneAmber
+class node_collection,node_shard,node_segment toneMint
+class node_wal,node_quantization,node_sparse toneRose
