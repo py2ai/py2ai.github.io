@@ -1,0 +1,106 @@
+flowchart TD
+
+subgraph group_api["API &amp; Entry"]
+  node_startup["Startup<br/>bootstrap"]
+  node_settings["Settings<br/>yaml config"]
+  node_rest{{"REST handlers<br/>Actix api module"}}
+  node_web_ui["Web UI<br/>built-in console"]
+  node_auth["Auth<br/>API keys / RBAC"]
+  node_grpc{{"gRPC handlers<br/>Tonic api module"}}
+  node_consensus["Consensus<br/>Raft member"]
+end
+
+subgraph group_control["Control Plane"]
+  node_dispatcher["Dispatcher<br/>unified routing"]
+  node_content_manager{{"Content manager<br/>cluster state"}}
+  node_rbac["RBAC<br/>role enforcement"]
+  node_operations["Operations<br/>typed updates"]
+end
+
+subgraph group_core["Sharding Core"]
+  node_collection{{"Collection<br/>logical container"}}
+  node_collection_manager["Collection manager<br/>shard mapping"]
+  node_shards["Shard registry<br/>local + remote"]
+  node_update_workers["Update workers<br/>parallel writes"]
+  node_shard_query["Shard query<br/>query DSL"]
+  node_shard_retrieve["Shard retrieve<br/>search fan-in"]
+  node_shard_update["Shard update<br/>point writes"]
+  node_optimizers["Optimizers<br/>background rebuilds"]
+  node_proxy_segment["Proxy segment<br/>write forwarding"]
+  node_segment_holder["Segment holder<br/>live segments"]
+end
+
+subgraph group_seg["Segment Internals"]
+  node_segment{{"Segment<br/>appendable unit"}}
+  node_segment_constructor["Segment builder<br/>open / migrate"]
+  node_vector_storage[("Vector storage<br/>dense vectors")]
+  node_index["HNSW index<br/>graph search"]
+  node_payload_storage[("Payload storage<br/>JSON payloads")]
+  node_id_tracker["ID tracker<br/>point mapping"]
+  node_spaces["Distance spaces<br/>SIMD kernels"]
+  node_entry["Segment entry<br/>trait facade"]
+end
+
+subgraph group_aux["Durability &amp; Accelerators"]
+  node_wal[("WAL<br/>write-ahead log")]
+  node_quantization["Quantization"]
+  node_sparse["Sparse vectors<br/>inverted index"]
+  node_bm25["BM25<br/>full-text scoring"]
+  node_gpu["GPU indexing<br/>NVIDIA / AMD"]
+end
+
+node_startup -->|"serve HTTP"| node_rest
+node_startup -->|"serve gRPC"| node_grpc
+node_startup -->|"load config"| node_settings
+node_rest -->|"verify callers"| node_auth
+node_web_ui -.->|"reuse handlers"| node_rest
+node_rest -->|"submit ops"| node_dispatcher
+node_grpc -->|"submit ops"| node_dispatcher
+node_consensus -->|"committed changes"| node_content_manager
+node_dispatcher -->|"route by collection"| node_content_manager
+node_auth -->|"enforce roles"| node_rbac
+node_content_manager -->|"typed commands"| node_operations
+node_content_manager -->|"drive collection"| node_collection
+node_collection -->|"locate shards"| node_collection_manager
+node_collection_manager -->|"shard mapping"| node_shards
+node_collection -->|"queue writes"| node_update_workers
+node_update_workers -->|"apply updates"| node_shard_update
+node_shard_update -->|"log before apply"| node_wal
+node_shard_update -.->|"forward during rebuild"| node_proxy_segment
+node_optimizers -->|"reroute writes"| node_proxy_segment
+node_shards -->|"list segments"| node_segment_holder
+node_shard_query -->|"plan across segments"| node_segment_holder
+node_shard_retrieve -->|"merge results"| node_segment_holder
+node_segment_holder -->|"locked handles"| node_entry
+node_entry -->|"concrete segment"| node_segment
+node_segment_constructor -->|"open / build"| node_segment
+node_segment -->|"vector I/O"| node_vector_storage
+node_segment -->|"graph links"| node_index
+node_segment -->|"payload I/O"| node_payload_storage
+node_segment -->|"map ids"| node_id_tracker
+node_index -->|"SIMD distance"| node_spaces
+node_index -.->|"compressed vectors"| node_quantization
+node_vector_storage -.->|"sparse backend"| node_sparse
+node_sparse -.->|"full-text queries"| node_bm25
+node_optimizers -.->|"GPU build option"| node_gpu
+node_wal -.->|"replay on boot"| node_segment
+
+click node_startup "https://github.com/qdrant/qdrant/blob/master/src/startup.rs"
+click node_settings "https://github.com/qdrant/qdrant/blob/master/src/settings.rs"
+click node_web_ui "https://github.com/qdrant/qdrant/blob/master/src/actix/web_ui.rs"
+click node_auth "https://github.com/qdrant/qdrant/blob/master/src/actix/auth.rs"
+click node_consensus "https://github.com/qdrant/qdrant/blob/master/src/consensus.rs"
+click node_dispatcher "https://github.com/qdrant/qdrant/blob/master/lib/storage/src/dispatcher.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_startup,node_settings,node_rest,node_web_ui,node_auth,node_grpc,node_consensus toneBlue
+class node_dispatcher,node_content_manager,node_rbac,node_operations toneAmber
+class node_collection,node_collection_manager,node_shards,node_update_workers,node_shard_query,node_shard_retrieve,node_shard_update,node_optimizers,node_proxy_segment,node_segment_holder toneMint
+class node_segment,node_segment_constructor,node_vector_storage,node_index,node_payload_storage,node_id_tracker,node_spaces,node_entry toneRose
+class node_wal,node_quantization,node_sparse,node_bm25,node_gpu toneIndigo
