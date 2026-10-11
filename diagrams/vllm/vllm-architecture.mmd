@@ -1,0 +1,122 @@
+flowchart TD
+
+subgraph group_api["API Layer"]
+  node_entry["Server launcher<br/>build and serve"]
+  node_openai_routes["OpenAI-compatible routes<br/>chat and completions"]
+  node_anthropic_api["Anthropic Messages API<br/>protocol adapter"]
+  node_grpc["gRPC server<br/>RPC surface"]
+  node_mcp["MCP tool integration<br/>tool serving"]
+  node_cli["vllm CLI<br/>argparse entry"]
+end
+
+subgraph group_engine["Engine Front-End"]
+  node_llm_offline["LLM offline API<br/>batch class"]
+  node_async_llm["AsyncLLM<br/>asyncio engine"]
+  node_input_proc["Input processor<br/>prompt normalization"]
+  node_output_proc["Output processor<br/>delta assembly"]
+  node_detok["Incremental detokenizer<br/>text decode"]
+  node_admission["Admission control<br/>queue limits"]
+  node_core_client["EngineCore client<br/>ZMQ messaging"]
+end
+
+subgraph group_core["Scheduling &amp; KV"]
+  node_core{{"EngineCore loop<br/>step driver"}}
+  node_scheduler["Scheduler<br/>continuous batching"]
+  node_req_queue["Priority request queues<br/>scheduling policies"]
+  node_kv_cache[("KVCacheManager<br/>block allocation")]
+  node_block_pool[("Block pool<br/>free list")]
+  node_kv_utils["Prefix caching and eviction<br/>block hashing"]
+  node_struct_out["Structured output<br/>xgrammar / guidance"]
+  node_spec_decode["Speculative decoding<br/>EAGLE / n-gram"]
+end
+
+subgraph group_exec["Execution Layer"]
+  node_executor{{"Uniproc executor<br/>in-process path"}}
+  node_multiproc["Multiproc executor<br/>spawn per GPU"]
+  node_ray_exec["Ray executor<br/>multi-node"]
+  node_gpu_worker["GPU worker<br/>device process"]
+  node_model_runner{{"GPUModelRunner<br/>batched forward"}}
+  node_cudagraph["CUDA graph capture<br/>graph replay"]
+  node_model_loader["Weight loader<br/>checkpoint to device"]
+  node_models_reg["Model registry<br/>architecture map"]
+  node_layers["Quantized and fused layers<br/>linear / moe"]
+  node_kernels[("Attention and GEMM kernels<br/>CUDA C++ sources")]
+  node_platforms["Platform backends"]
+end
+
+subgraph group_feat["Feature Packs"]
+  node_lora["Multi-LoRA serving<br/>adapter swapping"]
+  node_multimodal["Multimodal pipeline<br/>image / audio inputs"]
+end
+
+node_entry -->|"mounts"| node_openai_routes
+node_entry -->|"mounts"| node_anthropic_api
+node_entry -.->|"alternative"| node_grpc
+node_cli -->|"vllm serve"| node_entry
+node_openai_routes -.->|"tool listing"| node_mcp
+node_llm_offline -.->|"sync wrapper"| node_core_client
+node_openai_routes -->|"generate"| node_async_llm
+node_async_llm -->|"gate adds"| node_admission
+node_async_llm -->|"process"| node_input_proc
+node_input_proc -->|"EngineCoreRequest"| node_core_client
+node_core_client -->|"ZMQ"| node_core
+node_core -->|"step"| node_scheduler
+node_scheduler -->|"pop requests"| node_req_queue
+node_scheduler -->|"allocate"| node_kv_cache
+node_kv_cache -->|"blocks"| node_block_pool
+node_kv_utils -.->|"prefix reuse"| node_kv_cache
+node_scheduler -.->|"grammar bitmask"| node_struct_out
+node_scheduler -.->|"draft tokens"| node_spec_decode
+node_core -->|"execute"| node_executor
+node_executor -.->|"variant"| node_multiproc
+node_executor -.->|"variant"| node_ray_exec
+node_multiproc -->|"spawn"| node_gpu_worker
+node_gpu_worker -->|"owns"| node_model_runner
+node_model_runner -->|"capture / replay"| node_cudagraph
+node_model_runner -->|"instantiate"| node_models_reg
+node_model_loader -->|"weights"| node_models_reg
+node_models_reg -->|"build model"| node_layers
+node_layers -->|"device kernels"| node_kernels
+node_platforms -.->|"device config"| node_model_runner
+node_model_runner -.->|"results"| node_gpu_worker
+node_core -->|"EngineCoreOutputs"| node_output_proc
+node_output_proc -->|"token ids"| node_detok
+node_output_proc -->|"RequestOutput"| node_async_llm
+node_lora -.->|"adapter mapping"| node_model_runner
+node_multimodal -.->|"mm features"| node_input_proc
+
+click node_entry "https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/launchers/api_server/entry.py"
+click node_grpc "https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/grpc_server.py"
+click node_llm_offline "https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/llm.py"
+click node_async_llm "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/async_llm.py"
+click node_input_proc "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/input_processor.py"
+click node_output_proc "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/output_processor.py"
+click node_detok "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/detokenizer.py"
+click node_admission "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/admission_control.py"
+click node_core_client "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/core_client.py"
+click node_core "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/core.py"
+click node_scheduler "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/sched/scheduler.py"
+click node_req_queue "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/sched/request_queue.py"
+click node_kv_cache "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/kv_cache_manager.py"
+click node_block_pool "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/block_pool.py"
+click node_kv_utils "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/kv_cache_utils.py"
+click node_executor "https://github.com/vllm-project/vllm/blob/main/vllm/v1/executor/uniproc_executor.py"
+click node_multiproc "https://github.com/vllm-project/vllm/blob/main/vllm/v1/executor/multiproc_executor.py"
+click node_ray_exec "https://github.com/vllm-project/vllm/blob/main/vllm/v1/executor/ray_executor.py"
+click node_gpu_worker "https://github.com/vllm-project/vllm/blob/main/vllm/v1/worker/gpu_worker.py"
+click node_model_runner "https://github.com/vllm-project/vllm/blob/main/vllm/v1/worker/gpu_model_runner.py"
+click node_cudagraph "https://github.com/vllm-project/vllm/blob/main/vllm/compilation/cuda_graph.py"
+click node_models_reg "https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/models/registry.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry,node_openai_routes,node_anthropic_api,node_grpc,node_mcp,node_cli toneBlue
+class node_llm_offline,node_async_llm,node_input_proc,node_output_proc,node_detok,node_admission,node_core_client toneAmber
+class node_core,node_scheduler,node_req_queue,node_kv_cache,node_block_pool,node_kv_utils,node_struct_out,node_spec_decode toneMint
+class node_executor,node_multiproc,node_ray_exec,node_gpu_worker,node_model_runner,node_cudagraph,node_model_loader,node_models_reg,node_layers,node_kernels,node_platforms toneRose
+class node_lora,node_multimodal toneIndigo

@@ -1,0 +1,61 @@
+flowchart TD
+
+subgraph group_api["API Layer"]
+  node_entry["Server launcher<br/>uvicorn app bootstrap"]
+  node_routes["OpenAI-compatible routes<br/>REST routers"]
+end
+
+subgraph group_engine["Async Engine"]
+  node_async_llm["AsyncLLM engine front-end<br/>asyncio entry class"]
+  node_output_proc["Output processor<br/>detokenize and stream"]
+end
+
+subgraph group_core["Engine Core &amp; Scheduling"]
+  node_engine_core{{"EngineCore process<br/>stepping loop"}}
+  node_scheduler["Continuous batching scheduler<br/>request scheduling"]
+  node_kv_cache[("PagedAttention KV cache<br/>block manager")]
+end
+
+subgraph group_exec["Execution"]
+  node_executor{{"Worker executor<br/>process spawn"}}
+  node_worker["GPU worker + model runner<br/>device loop"]
+  node_models["200+ model architectures<br/>model registry"]
+  node_kernels[("Attention and GEMM kernels<br/>CUDA and Triton code")]
+  node_dist["TP / PP / DP / EP collectives<br/>distributed groups"]
+end
+
+node_entry -->|"mounts"| node_routes
+node_routes -->|"submit prompt"| node_async_llm
+node_async_llm -->|"EngineCoreRequest"| node_engine_core
+node_engine_core -->|"schedule step"| node_scheduler
+node_scheduler -->|"allocate blocks"| node_kv_cache
+node_engine_core -->|"broadcast batch"| node_executor
+node_executor -->|"execute step"| node_worker
+node_worker -->|"forward pass"| node_models
+node_models -->|"invoke kernels"| node_kernels
+node_worker -->|"collective ops"| node_dist
+node_engine_core -.->|"EngineCoreOutputs"| node_output_proc
+node_output_proc -.->|"streamed deltas"| node_async_llm
+
+click node_entry "https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/launchers/api_server/entry.py"
+click node_async_llm "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/async_llm.py"
+click node_output_proc "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/output_processor.py"
+click node_engine_core "https://github.com/vllm-project/vllm/blob/main/vllm/v1/engine/core.py"
+click node_scheduler "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/sched/scheduler.py"
+click node_kv_cache "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/kv_cache_manager.py"
+click node_executor "https://github.com/vllm-project/vllm/blob/main/vllm/v1/executor/multiproc_executor.py"
+click node_worker "https://github.com/vllm-project/vllm/blob/main/vllm/v1/worker/gpu_model_runner.py"
+click node_models "https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/models/registry.py"
+click node_dist "https://github.com/vllm-project/vllm/blob/main/vllm/distributed/parallel_state.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry,node_routes toneBlue
+class node_async_llm,node_output_proc toneAmber
+class node_engine_core,node_scheduler,node_kv_cache toneMint
+class node_executor,node_worker,node_models,node_kernels,node_dist toneRose
