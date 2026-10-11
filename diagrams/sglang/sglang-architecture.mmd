@@ -1,0 +1,118 @@
+flowchart TD
+
+subgraph group_api["Serving Front-End"]
+  node_launch["launch_server entry<br/>CLI bootstrap"]
+  node_http_server["FastAPI HTTP server<br/>uvicorn app"]
+  node_openai_api["OpenAI-compatible API<br/>chat / completions"]
+  node_anthropic_api["Anthropic and Ollama APIs<br/>protocol adapters"]
+  node_grpc_server["gRPC server<br/>RPC surface"]
+  node_engine_cls["Engine offline API<br/>in-process"]
+  node_server_args["ServerArgs config<br/>flag validation"]
+  node_gateway{{"Rust model gateway<br/>router"}}
+end
+
+subgraph group_engine["Manager Processes"]
+  node_tok_mgr{{"TokenizerManager<br/>async front-end"}}
+  node_multi_tok["Multi-tokenizer mixin<br/>many tokenizers"]
+  node_io_struct["ZMQ message structs<br/>IPC vocabulary"]
+  node_detok["DetokenizerManager<br/>incremental decode"]
+  node_dp_ctl["DataParallel controller<br/>replica fan-out"]
+end
+
+subgraph group_sched["Scheduling &amp; Cache"]
+  node_scheduler["Scheduler<br/>continuous batching"]
+  node_schedule_batch["Req / ScheduleBatch<br/>batch records"]
+  node_schedule_policy["Cache-aware policies<br/>LRU / weight"]
+  node_radix[("RadixAttention cache<br/>prefix tree")]
+  node_allocator[("Token allocator<br/>paged token slots")]
+  node_evict["Eviction policies<br/>LRU / priority"]
+  node_overlap["Batch overlap<br/>CPU/GPU overlap"]
+  node_disaggregation["PD disaggregation<br/>prefill / decode split"]
+end
+
+subgraph group_exec["Execution"]
+  node_tp_worker{{"TP worker<br/>replica driver"}}
+  node_model_runner{{"ModelRunner<br/>device loop"}}
+  node_forward_batch["ForwardBatch<br/>batch metadata"]
+  node_cuda_graph["Decode CUDA graph runner<br/>graph replay"]
+  node_models["Model architectures<br/>model zoo"]
+  node_layers["Attention / MoE layers<br/>fused ops"]
+  node_quantization["Quantization methods"]
+  node_moe["MoE kernels<br/>expert dispatch"]
+  node_distributed["TP / PP collectives<br/>device groups"]
+end
+
+subgraph group_feat["Feature Modules"]
+  node_speculative["Speculative decoding"]
+  node_constrained["Constrained decoding<br/>grammar compile"]
+  node_function_call["Function call parsers<br/>tool output parse"]
+  node_lora["LoRA serving<br/>adapter load"]
+end
+
+node_launch -->|"parses"| node_server_args
+node_launch -->|"starts"| node_http_server
+node_http_server -->|"mounts"| node_openai_api
+node_http_server -.->|"mounts"| node_anthropic_api
+node_grpc_server -.->|"alternative"| node_tok_mgr
+node_engine_cls -.->|"in-process"| node_tok_mgr
+node_gateway -.->|"routes traffic"| node_http_server
+node_openai_api -->|"generate"| node_tok_mgr
+node_tok_mgr -->|"tokenizer choice"| node_multi_tok
+node_tok_mgr -->|"TokenizedGenerateReqInput"| node_io_struct
+node_tok_mgr -->|"dispatch"| node_dp_ctl
+node_dp_ctl -->|"ZMQ to replica"| node_scheduler
+node_scheduler -->|"batches"| node_schedule_batch
+node_scheduler -->|"ordering"| node_schedule_policy
+node_schedule_policy -->|"prefix match"| node_radix
+node_radix -->|"token slots"| node_allocator
+node_evict -.->|"evict leaves"| node_radix
+node_scheduler -.->|"hide CPU cost"| node_overlap
+node_disaggregation -.->|"KV handoff"| node_scheduler
+node_scheduler -->|"run batch"| node_tp_worker
+node_tp_worker -->|"forward"| node_model_runner
+node_model_runner -->|"build"| node_forward_batch
+node_model_runner -->|"capture / replay"| node_cuda_graph
+node_model_runner -->|"instantiate"| node_models
+node_models -->|"compose"| node_layers
+node_layers -.->|"quant weights"| node_quantization
+node_layers -.->|"expert routing"| node_moe
+node_distributed -.->|"collectives"| node_model_runner
+node_speculative -.->|"draft + verify"| node_scheduler
+node_constrained -.->|"grammar masks"| node_scheduler
+node_scheduler -->|"token ids"| node_detok
+node_detok -->|"text output"| node_tok_mgr
+node_function_call -.->|"parsed tools"| node_openai_api
+node_lora -.->|"adapter swap"| node_model_runner
+
+click node_launch "https://github.com/sgl-project/sglang/blob/main/python/sglang/launch_server.py"
+click node_http_server "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/entrypoints/http_server.py"
+click node_grpc_server "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/entrypoints/grpc_server.py"
+click node_engine_cls "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/entrypoints/engine.py"
+click node_server_args "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/server_args.py"
+click node_tok_mgr "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/tokenizer_manager.py"
+click node_multi_tok "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/multi_tokenizer_mixin.py"
+click node_io_struct "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/io_struct.py"
+click node_detok "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/detokenizer_manager.py"
+click node_dp_ctl "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/data_parallel_controller.py"
+click node_scheduler "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/scheduler.py"
+click node_schedule_batch "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/schedule_batch.py"
+click node_schedule_policy "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/schedule_policy.py"
+click node_radix "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/mem_cache/radix_cache.py"
+click node_evict "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/mem_cache/evict_policy.py"
+click node_tp_worker "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/tp_worker.py"
+click node_model_runner "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/model_executor/model_runner.py"
+click node_forward_batch "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/model_executor/forward_batch_info.py"
+click node_cuda_graph "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/model_executor/runner/decode_cuda_graph_runner.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_launch,node_http_server,node_openai_api,node_anthropic_api,node_grpc_server,node_engine_cls,node_server_args,node_gateway toneBlue
+class node_tok_mgr,node_multi_tok,node_io_struct,node_detok,node_dp_ctl toneAmber
+class node_scheduler,node_schedule_batch,node_schedule_policy,node_radix,node_allocator,node_evict,node_overlap,node_disaggregation toneMint
+class node_tp_worker,node_model_runner,node_forward_batch,node_cuda_graph,node_models,node_layers,node_quantization,node_moe,node_distributed toneRose
+class node_speculative,node_constrained,node_function_call,node_lora toneIndigo

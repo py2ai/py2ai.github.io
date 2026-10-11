@@ -1,0 +1,61 @@
+flowchart TD
+
+subgraph group_api["Serving Front-End"]
+  node_http["FastAPI HTTP server<br/>uvicorn app"]
+  node_openai_api["OpenAI-compatible API<br/>REST adapters"]
+  node_engine["Engine offline API<br/>programmatic entry"]
+end
+
+subgraph group_engine["Manager Processes"]
+  node_tok_mgr{{"TokenizerManager<br/>async front-end"}}
+  node_dp_ctl["DataParallel controller<br/>replica routing"]
+end
+
+subgraph group_sched["Scheduling &amp; Cache"]
+  node_scheduler["Scheduler loop<br/>continuous batching"]
+  node_radix[("RadixAttention cache<br/>prefix tree")]
+  node_policy["Cache-aware policies<br/>LRU / FCFS"]
+end
+
+subgraph group_exec["Execution"]
+  node_tp_worker{{"TP worker<br/>per-replica driver"}}
+  node_model_runner["ModelRunner<br/>batched forward"]
+  node_models["Model architectures<br/>model zoo"]
+  node_layers[("Attention / MoE layers<br/>kernels + quant")]
+end
+
+node_http -->|"mounts"| node_openai_api
+node_openai_api -->|"submit request"| node_tok_mgr
+node_engine -.->|"submit request"| node_tok_mgr
+node_tok_mgr -->|"dispatch"| node_dp_ctl
+node_dp_ctl -->|"route to replica"| node_scheduler
+node_scheduler -->|"pick next batch"| node_policy
+node_policy -->|"match prefixes"| node_radix
+node_scheduler -->|"launch batch"| node_tp_worker
+node_tp_worker -->|"forward"| node_model_runner
+node_model_runner -->|"instantiate"| node_models
+node_models -->|"compose layers"| node_layers
+node_tp_worker -.->|"step results"| node_scheduler
+node_scheduler -.->|"outputs via detokenizer"| node_tok_mgr
+
+click node_http "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/entrypoints/http_server.py"
+click node_engine "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/entrypoints/engine.py"
+click node_tok_mgr "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/tokenizer_manager.py"
+click node_dp_ctl "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/data_parallel_controller.py"
+click node_scheduler "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/scheduler.py"
+click node_radix "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/mem_cache/radix_cache.py"
+click node_policy "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/schedule_policy.py"
+click node_tp_worker "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/managers/tp_worker.py"
+click node_model_runner "https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/model_executor/model_runner.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_http,node_openai_api,node_engine toneBlue
+class node_tok_mgr,node_dp_ctl toneAmber
+class node_scheduler,node_radix,node_policy toneMint
+class node_tp_worker,node_model_runner,node_models,node_layers toneRose
