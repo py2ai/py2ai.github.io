@@ -1,0 +1,117 @@
+flowchart TD
+
+subgraph group_sdk["Clients &amp; Server"]
+  node_py_client{{"Python client<br/>sync API"}}
+  node_async_client["Async client<br/>asyncio API"]
+  node_js_client["JS client<br/>TypeScript SDK"]
+  node_fastapi_server{{"FastAPI server<br/>REST app"}}
+  node_fastapi_api["FastAPI adapter<br/>client-side transport"]
+end
+
+subgraph group_python["Python Engine"]
+  node_app["System app<br/>component wiring"]
+  node_config["Config system<br/>typed settings"]
+  node_segment_api{{"SegmentAPI<br/>embedded engine"}}
+  node_system_db["System DB<br/>metadata interface"]
+  node_sysdb[("SQLite sysdb<br/>durable metadata")]
+  node_local_manager["Local segment manager<br/>segment lifecycle"]
+  node_distributed_manager["Distributed manager<br/>remote segments"]
+  node_hnsw[("Local HNSW<br/>in-process index")]
+  node_persistent_hnsw[("Persistent HNSW<br/>mmap index")]
+  node_metadata_seg["Metadata segment<br/>sqlite records"]
+  node_executor["Query executor<br/>plan traversal"]
+  node_expression["Expressions<br/>filter AST"]
+  node_quota["Quota enforcer<br/>limits"]
+  node_posthog["Product telemetry<br/>PostHog events"]
+end
+
+subgraph group_rustcore["Rust Services"]
+  node_rust_lib{{"Rust library<br/>system assembly"}}
+  node_frontend["Frontend<br/>query planning"]
+  node_worker_bins{{"Worker services"}}
+  node_compactor["Compactor<br/>log to segment"]
+  node_log_service[("Log service<br/>write queue")]
+  node_sysdb_rs["Rust sysdb<br/>topology metadata"]
+end
+
+subgraph group_rustdata["Rust Data Path"]
+  node_wal3[("WAL3<br/>replicated log")]
+  node_segment["Rust segments<br/>columnar data"]
+  node_index["Rust index<br/>vector indexes"]
+  node_storage[("Object storage<br/>cloud files")]
+  node_blockstore["Blockstore<br/>chunked IO"]
+  node_distance["Distance kernels<br/>SIMD math"]
+  node_system["Rust system<br/>component registry"]
+end
+
+subgraph group_contracts["Shared Contracts"]
+  node_rust_bindings["Python bindings<br/>PyO3 bridge"]
+  node_idl["Protobuf IDL<br/>shared schemas"]
+end
+
+node_py_client -->|"HTTP transport"| node_fastapi_api
+node_async_client -->|"async transport"| node_fastapi_api
+node_js_client -->|"REST calls"| node_fastapi_server
+node_fastapi_server -->|"serve routes"| node_fastapi_api
+node_fastapi_server -->|"build System"| node_app
+node_app -->|"load settings"| node_config
+node_fastapi_api -->|"in-process ops"| node_segment_api
+node_segment_api -->|"metadata calls"| node_system_db
+node_system_db -->|"SQLite impl"| node_sysdb
+node_segment_api -->|"segment routing"| node_local_manager
+node_segment_api -.->|"distributed mode"| node_distributed_manager
+node_local_manager -->|"create / load"| node_hnsw
+node_hnsw -->|"persist index"| node_persistent_hnsw
+node_local_manager -->|"record storage"| node_metadata_seg
+node_segment_api -->|"run queries"| node_executor
+node_executor -->|"evaluate filters"| node_expression
+node_app -.->|"enforce limits"| node_quota
+node_app -.->|"emit events"| node_posthog
+node_py_client -.->|"embedded engine"| node_rust_bindings
+node_rust_bindings -->|"PyO3 calls"| node_rust_lib
+node_rust_lib -->|"query path"| node_frontend
+node_rust_lib -->|"launch services"| node_worker_bins
+node_worker_bins -.->|"compaction tasks"| node_compactor
+node_compactor -->|"read records"| node_wal3
+node_compactor -->|"write segments"| node_segment
+node_compactor -->|"build indexes"| node_index
+node_frontend -->|"resolve topology"| node_sysdb_rs
+node_frontend -->|"tail writes"| node_log_service
+node_frontend -.->|"read files"| node_blockstore
+node_log_service -->|"durable append"| node_wal3
+node_segment -->|"flush data"| node_storage
+node_storage -->|"chunk IO"| node_blockstore
+node_segment -->|"score vectors"| node_distance
+node_rust_lib -->|"wire components"| node_system
+node_idl -.->|"generated types"| node_frontend
+node_idl -.->|"generated types"| node_fastapi_server
+
+click node_py_client "https://github.com/chroma-core/chroma/blob/main/chromadb/api/client.py"
+click node_async_client "https://github.com/chroma-core/chroma/blob/main/chromadb/api/async_client.py"
+click node_fastapi_server "https://github.com/chroma-core/chroma/blob/main/chromadb/server/fastapi/__init__.py"
+click node_fastapi_api "https://github.com/chroma-core/chroma/blob/main/chromadb/api/fastapi.py"
+click node_app "https://github.com/chroma-core/chroma/blob/main/chromadb/app.py"
+click node_config "https://github.com/chroma-core/chroma/blob/main/chromadb/config.py"
+click node_segment_api "https://github.com/chroma-core/chroma/blob/main/chromadb/api/segment.py"
+click node_system_db "https://github.com/chroma-core/chroma/blob/main/chromadb/db/system.py"
+click node_sysdb "https://github.com/chroma-core/chroma/blob/main/chromadb/db/impl/sqlite.py"
+click node_local_manager "https://github.com/chroma-core/chroma/blob/main/chromadb/segment/impl/manager/local.py"
+click node_distributed_manager "https://github.com/chroma-core/chroma/blob/main/chromadb/segment/impl/manager/distributed.py"
+click node_hnsw "https://github.com/chroma-core/chroma/blob/main/chromadb/segment/impl/vector/local_hnsw.py"
+click node_persistent_hnsw "https://github.com/chroma-core/chroma/blob/main/chromadb/segment/impl/vector/local_persistent_hnsw.py"
+click node_posthog "https://github.com/chroma-core/chroma/blob/main/chromadb/telemetry/product/posthog.py"
+click node_rust_bindings "https://github.com/chroma-core/chroma/blob/main/chromadb/api/rust.py"
+click node_idl "https://github.com/chroma-core/chroma/blob/main/idl/chromadb/proto/chroma.proto"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_client,node_async_client,node_js_client,node_fastapi_server,node_fastapi_api toneBlue
+class node_app,node_config,node_segment_api,node_system_db,node_sysdb,node_local_manager,node_distributed_manager,node_hnsw,node_persistent_hnsw,node_metadata_seg,node_executor,node_expression,node_quota,node_posthog toneAmber
+class node_rust_lib,node_frontend,node_worker_bins,node_compactor,node_log_service,node_sysdb_rs toneMint
+class node_wal3,node_segment,node_index,node_storage,node_blockstore,node_distance,node_system toneRose
+class node_rust_bindings,node_idl toneIndigo

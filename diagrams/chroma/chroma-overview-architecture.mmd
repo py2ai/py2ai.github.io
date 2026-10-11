@@ -1,0 +1,58 @@
+flowchart TD
+
+subgraph group_sdk["Client SDKs"]
+  node_python_client{{"Python client<br/>pip chromadb"}}
+  node_js_client["JS / TS client<br/>npm chromadb"]
+end
+
+subgraph group_pycore["Python Core"]
+  node_server_fastapi{{"FastAPI server<br/>chroma run"}}
+  node_segment_api["SegmentAPI<br/>single-node engine"]
+  node_sysdb[("SQLite metadata<br/>sysdb")]
+  node_local_manager["Segment manager<br/>local routing"]
+  node_hnsw[("HNSW segment<br/>vector index")]
+end
+
+subgraph group_rust["Rust Core"]
+  node_rust_core{{"Rust system<br/>distributed core"}}
+  node_frontend["Query frontend<br/>request planner"]
+  node_services{{"Worker services<br/>query / compaction"}}
+  node_log_service[("Log service<br/>durable queue")]
+end
+
+subgraph group_data["Durability"]
+  node_blockstore[("Block storage<br/>S3-style files")]
+end
+
+node_python_client -->|"HTTP calls"| node_server_fastapi
+node_js_client -->|"HTTP calls"| node_server_fastapi
+node_server_fastapi -->|"single-node impl"| node_segment_api
+node_segment_api -->|"metadata"| node_sysdb
+node_segment_api -->|"route segments"| node_local_manager
+node_local_manager -->|"create / load"| node_hnsw
+node_python_client -.->|"native bindings"| node_rust_core
+node_rust_core -->|"serve queries"| node_frontend
+node_rust_core -->|"run services"| node_services
+node_frontend -->|"consume log"| node_log_service
+node_services -->|"compact reads"| node_log_service
+node_services -->|"persist files"| node_blockstore
+node_frontend -.->|"fetch data"| node_blockstore
+node_log_service -.->|"snapshot"| node_blockstore
+
+click node_python_client "https://github.com/chroma-core/chroma/blob/main/chromadb/api/client.py"
+click node_segment_api "https://github.com/chroma-core/chroma/blob/main/chromadb/api/segment.py"
+click node_sysdb "https://github.com/chroma-core/chroma/blob/main/chromadb/db/impl/sqlite.py"
+click node_local_manager "https://github.com/chroma-core/chroma/blob/main/chromadb/segment/impl/manager/local.py"
+click node_hnsw "https://github.com/chroma-core/chroma/blob/main/chromadb/segment/impl/vector/local_hnsw.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_python_client,node_js_client toneBlue
+class node_server_fastapi,node_segment_api,node_sysdb,node_local_manager,node_hnsw toneAmber
+class node_rust_core,node_frontend,node_services,node_log_service toneMint
+class node_blockstore toneRose
