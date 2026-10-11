@@ -1,0 +1,59 @@
+flowchart TD
+
+subgraph group_api["Gateway Surface"]
+  node_proxy_server{{"FastAPI gateway<br/>proxy app"}}
+  node_openai_ep["OpenAI Responses routes<br/>/v1/responses"]
+  node_anthropic_ep["Anthropic Messages routes<br/>/v1/messages"]
+end
+
+subgraph group_trust["Auth &amp; Guardrails"]
+  node_auth["API key and JWT auth<br/>per-request gate"]
+  node_hooks["Rate limit and guardrail hooks<br/>proxy callbacks"]
+end
+
+subgraph group_route["Routing &amp; SDK"]
+  node_router{{"Router load balancer<br/>deployment picker"}}
+  node_strategy["Routing strategies<br/>lowest latency etc"]
+  node_main["acompletion entry<br/>SDK dispatch"]
+  node_http_handler["HTTP transport handler<br/>async httpx calls"]
+  node_provider["Provider transformations<br/>100+ adapters"]
+end
+
+subgraph group_data["State &amp; Cost"]
+  node_cache[("DualCache<br/>in-memory + Redis")]
+  node_spend[("Spend writer and logs<br/>batched DB writes")]
+end
+
+node_proxy_server -->|"mounts"| node_openai_ep
+node_proxy_server -->|"mounts"| node_anthropic_ep
+node_openai_ep -->|"verify key"| node_auth
+node_anthropic_ep -->|"verify key"| node_auth
+node_auth -->|"enforce limits"| node_hooks
+node_auth -.->|"key lookup"| node_cache
+node_auth -->|"route_llm_request"| node_router
+node_router -->|"pick deployment"| node_strategy
+node_router -.->|"cooldowns / TPM"| node_cache
+node_router -->|"litellm.acompletion"| node_main
+node_main -->|"dispatch"| node_http_handler
+node_http_handler -->|"transform and call"| node_provider
+node_main -.->|"cost attribution"| node_spend
+
+click node_proxy_server "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/proxy_server.py"
+click node_auth "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/auth/user_api_key_auth.py"
+click node_router "https://github.com/BerriAI/litellm/blob/main/litellm/router.py"
+click node_main "https://github.com/BerriAI/litellm/blob/main/litellm/main.py"
+click node_http_handler "https://github.com/BerriAI/litellm/blob/main/litellm/llms/custom_httpx/llm_http_handler.py"
+click node_cache "https://github.com/BerriAI/litellm/blob/main/litellm/caching/dual_cache.py"
+click node_spend "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/db/db_spend_update_writer.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_proxy_server,node_openai_ep,node_anthropic_ep toneBlue
+class node_auth,node_hooks toneAmber
+class node_router,node_strategy,node_main,node_http_handler,node_provider toneMint
+class node_cache,node_spend toneRose

@@ -1,0 +1,121 @@
+flowchart TD
+
+subgraph group_api["Gateway Surface"]
+  node_proxy_server{{"FastAPI gateway app<br/>endpoint registry"}}
+  node_openai_ep["Responses API routes<br/>/v1/responses"]
+  node_anthropic_ep["Anthropic Messages routes<br/>/v1/messages"]
+  node_passthrough["Provider passthrough<br/>raw proxying"]
+  node_a2a["A2A agent protocol<br/>agent calls"]
+  node_mcp_client["MCP client<br/>tool servers"]
+  node_realtime["Realtime websocket API<br/>audio sessions"]
+  node_mgmt["Key and team management<br/>admin CRUD"]
+end
+
+subgraph group_trust["Auth &amp; Hooks"]
+  node_auth{{"user_api_key_auth"}}
+  node_pre_call["Pre-call metadata<br/>user / team injection"]
+  node_hooks["Proxy hooks<br/>CustomLogger plugins"]
+  node_limiter["Parallel request limiter<br/>TPM / RPM counters"]
+end
+
+subgraph group_route["Router &amp; SDK"]
+  node_route_req["route_llm_request<br/>wildcard matching"]
+  node_router{{"Router<br/>fallbacks + retries"}}
+  node_strategy["Lowest-latency strategy<br/>deployment scoring"]
+  node_main["acompletion entry<br/>SDK dispatch"]
+  node_batch_completion["Batch completion<br/>many-model fan-out"]
+  node_caching_handler["LLM caching handler<br/>response caching"]
+  node_logging["Logging object<br/>callback fan-out"]
+end
+
+subgraph group_prov["Provider Layer"]
+  node_llms["100+ provider packages<br/>per-vendor dirs"]
+  node_http_handler{{"BaseLLMHTTPHandler<br/>shared transport"}}
+  node_anthropic_chat["Anthropic transformation<br/>request / response map"]
+  node_bedrock["Bedrock adapter<br/>AWS auth + formats"]
+  node_anthropic_interface["Anthropic interface layer<br/>messages conversion"]
+  node_types["Pydantic types<br/>shared vocabulary"]
+end
+
+subgraph group_data["State, Cost &amp; UI"]
+  node_dual_cache[("DualCache<br/>memory + Redis")]
+  node_redis_cache[("RedisCache<br/>counters and queues")]
+  node_models_ent["Entity models"]
+  node_repositories["Repository layer<br/>generic CRUD"]
+  node_spend_writer["DBSpendUpdateWriter<br/>batched flush"]
+  node_schema[("Prisma schema<br/>PostgreSQL tables")]
+  node_cost_cb["Proxy cost callback<br/>spend logging"]
+  node_pricing[("Model price map<br/>context windows")]
+  node_ui["Admin dashboard<br/>React UI"]
+end
+
+node_proxy_server -->|"mounts"| node_openai_ep
+node_proxy_server -->|"mounts"| node_anthropic_ep
+node_proxy_server -.->|"mounts"| node_passthrough
+node_proxy_server -.->|"mounts"| node_a2a
+node_proxy_server -.->|"mounts"| node_realtime
+node_proxy_server -->|"mounts"| node_mgmt
+node_proxy_server -.->|"tool bridge"| node_mcp_client
+node_openai_ep -->|"verify"| node_auth
+node_anthropic_ep -.->|"convert format"| node_anthropic_interface
+node_mgmt -.->|"token rules"| node_auth
+node_auth -->|"key cache"| node_dual_cache
+node_auth -->|"enforce"| node_limiter
+node_hooks -.->|"registers"| node_limiter
+node_auth -->|"augment request"| node_pre_call
+node_pre_call -->|"metadata"| node_route_req
+node_route_req -->|"resolve model"| node_router
+node_router -->|"score deployments"| node_strategy
+node_router -.->|"cooldowns / TPM"| node_dual_cache
+node_router -->|"acompletion"| node_main
+node_main -.->|"fan-out helper"| node_batch_completion
+node_main -->|"check cache"| node_caching_handler
+node_caching_handler -->|"read / write"| node_dual_cache
+node_dual_cache -.->|"miss to Redis"| node_redis_cache
+node_main -->|"dispatch"| node_http_handler
+node_http_handler -->|"resolve adapter"| node_llms
+node_llms -.->|"includes"| node_anthropic_chat
+node_llms -.->|"includes"| node_bedrock
+node_http_handler -->|"transform request"| node_anthropic_chat
+node_types -.->|"typed payloads"| node_main
+node_pricing -.->|"cost per token"| node_main
+node_main -->|"attach metadata"| node_logging
+node_logging -->|"success event"| node_cost_cb
+node_cost_cb -->|"queue spend"| node_spend_writer
+node_spend_writer -.->|"spend queue"| node_redis_cache
+node_spend_writer -->|"batch upsert"| node_schema
+node_models_ent -.->|"typed rows"| node_repositories
+node_repositories -->|"prisma queries"| node_schema
+node_ui -.->|"admin calls"| node_mgmt
+
+click node_proxy_server "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/proxy_server.py"
+click node_auth "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/auth/user_api_key_auth.py"
+click node_pre_call "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/litellm_pre_call_utils.py"
+click node_limiter "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/hooks/parallel_request_limiter_v3.py"
+click node_route_req "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/route_llm_request.py"
+click node_router "https://github.com/BerriAI/litellm/blob/main/litellm/router.py"
+click node_strategy "https://github.com/BerriAI/litellm/blob/main/litellm/router_strategy/lowest_latency.py"
+click node_main "https://github.com/BerriAI/litellm/blob/main/litellm/main.py"
+click node_caching_handler "https://github.com/BerriAI/litellm/blob/main/litellm/caching/caching_handler.py"
+click node_logging "https://github.com/BerriAI/litellm/blob/main/litellm/litellm_core_utils/litellm_logging.py"
+click node_http_handler "https://github.com/BerriAI/litellm/blob/main/litellm/llms/custom_httpx/llm_http_handler.py"
+click node_anthropic_chat "https://github.com/BerriAI/litellm/blob/main/litellm/llms/anthropic/chat/transformation.py"
+click node_dual_cache "https://github.com/BerriAI/litellm/blob/main/litellm/caching/dual_cache.py"
+click node_redis_cache "https://github.com/BerriAI/litellm/blob/main/litellm/caching/redis_cache.py"
+click node_spend_writer "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/db/db_spend_update_writer.py"
+click node_schema "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/schema.prisma"
+click node_cost_cb "https://github.com/BerriAI/litellm/blob/main/litellm/proxy/hooks/proxy_track_cost_callback.py"
+click node_pricing "https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_proxy_server,node_openai_ep,node_anthropic_ep,node_passthrough,node_a2a,node_mcp_client,node_realtime,node_mgmt toneBlue
+class node_auth,node_pre_call,node_hooks,node_limiter toneAmber
+class node_route_req,node_router,node_strategy,node_main,node_batch_completion,node_caching_handler,node_logging toneMint
+class node_llms,node_http_handler,node_anthropic_chat,node_bedrock,node_anthropic_interface,node_types toneRose
+class node_dual_cache,node_redis_cache,node_models_ent,node_repositories,node_spend_writer,node_schema,node_cost_cb,node_pricing,node_ui toneIndigo
