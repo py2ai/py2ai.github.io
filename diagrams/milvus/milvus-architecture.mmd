@@ -1,0 +1,115 @@
+flowchart TD
+
+subgraph group_access["Access tier"]
+  node_sdk["MilvusClient<br/>core"]
+  node_proxy["Proxy<br/>core"]
+  node_proxy_tasks{{"Task machinery<br/>core"}}
+end
+
+subgraph group_coordinators["Coordinators"]
+  node_rootcoord["RootCoord<br/>core"]
+  node_datacoord["DataCoord<br/>core"]
+  node_querycoord_meta["QueryCoord meta<br/>core"]
+  node_querycoord_scheduler["Task scheduler<br/>core"]
+  node_querycoord_checker["Checkers<br/>core"]
+  node_tso["TSO<br/>core"]
+end
+
+subgraph group_datapath["Data path"]
+  node_mq_msgstream[("MsgStream<br/>data")]
+  node_wal["WAL<br/>core"]
+  node_datanode["DataNode<br/>core"]
+  node_datanode_services["DataNode services<br/>core"]
+  node_data_codec["DataCodec<br/>[data_codec.go]"]
+  node_binlog_writer[("BinlogWriter<br/>data")]
+end
+
+subgraph group_querypath["Query path"]
+  node_querynode_pipeline["QueryNode pipeline<br/>core"]
+  node_delegator{{"Delegator<br/>core"}}
+  node_segments["Segment manager<br/>core"]
+  node_local_worker["Local worker<br/>core"]
+end
+
+subgraph group_cppcore["C++ engine"]
+  node_segcore_sealed{{"Sealed segment<br/>core"}}
+  node_segcore_growing["Growing segment<br/>core"]
+  node_plan["Plan builder<br/>core"]
+  node_exec_driver["Exec driver<br/>core"]
+end
+
+subgraph group_foundation["Foundation"]
+  node_etcd_kv[("etcd KV<br/>data")]
+  node_object_storage[("Azure object storage<br/>data")]
+end
+
+node_sdk -->|"gRPC"| node_proxy
+node_proxy -->|"wraps requests as"| node_proxy_tasks
+node_proxy_tasks -->|"DDL flows to"| node_rootcoord
+node_proxy_tasks -->|"DML publishes"| node_mq_msgstream
+node_rootcoord -->|"persists metadata"| node_etcd_kv
+node_datacoord -->|"persists segment states"| node_etcd_kv
+node_rootcoord -.->|"time ticks"| node_tso
+node_proxy_tasks -.->|"write timestamps"| node_tso
+node_mq_msgstream -->|"log shards"| node_wal
+node_wal -->|"consumed by"| node_datanode_services
+node_datanode_services -->|"drive"| node_datanode
+node_datanode -->|"serializes through"| node_data_codec
+node_data_codec -->|"written as"| node_binlog_writer
+node_binlog_writer -->|"lands on"| node_object_storage
+node_datacoord -.->|"compaction directives"| node_datanode
+node_querycoord_meta -->|"informs"| node_querycoord_scheduler
+node_querycoord_checker -->|"proposes tasks"| node_querycoord_scheduler
+node_querycoord_scheduler -.->|"load and release"| node_querynode_pipeline
+node_querynode_pipeline -->|"fills growing"| node_segments
+node_wal -->|"streams into"| node_querynode_pipeline
+node_delegator -->|"dispatches"| node_local_worker
+node_delegator -->|"routes by segment"| node_segments
+node_local_worker -->|"executes on"| node_segments
+node_segments -->|"sealed data"| node_segcore_sealed
+node_segments -->|"growing data"| node_segcore_growing
+node_segcore_sealed -->|"compiled by"| node_plan
+node_segcore_growing -->|"compiled by"| node_plan
+node_plan -->|"runs on"| node_exec_driver
+node_querynode_pipeline -.->|"reads sealed files"| node_object_storage
+node_delegator -.->|"merged results"| node_proxy
+
+click node_sdk "https://github.com/milvus-io/milvus/blob/master/client/milvusclient/client.go"
+click node_proxy "https://github.com/milvus-io/milvus/blob/master/internal/proxy/proxy.go"
+click node_proxy_tasks "https://github.com/milvus-io/milvus/blob/master/internal/proxy/task.go"
+click node_rootcoord "https://github.com/milvus-io/milvus/blob/master/internal/rootcoord/root_coord.go"
+click node_datacoord "https://github.com/milvus-io/milvus/blob/master/internal/datacoord/server.go"
+click node_querycoord_meta "https://github.com/milvus-io/milvus/blob/master/internal/querycoordv2/meta/meta.go"
+click node_querycoord_scheduler "https://github.com/milvus-io/milvus/blob/master/internal/querycoordv2/task/scheduler.go"
+click node_querycoord_checker "https://github.com/milvus-io/milvus/blob/master/internal/querycoordv2/checkers/checker.go"
+click node_tso "https://github.com/milvus-io/milvus/blob/master/internal/tso/tso.go"
+click node_mq_msgstream "https://github.com/milvus-io/milvus/blob/master/pkg/mq/msgstream/mq_msgstream.go"
+click node_wal "https://github.com/milvus-io/milvus/blob/master/internal/streamingnode/server/wal/wal.go"
+click node_datanode "https://github.com/milvus-io/milvus/blob/master/internal/datanode/data_node.go"
+click node_datanode_services "https://github.com/milvus-io/milvus/blob/master/internal/datanode/services.go"
+click node_data_codec "https://github.com/milvus-io/milvus/blob/master/internal/storage/data_codec.go"
+click node_binlog_writer "https://github.com/milvus-io/milvus/blob/master/internal/storage/binlog_writer.go"
+click node_querynode_pipeline "https://github.com/milvus-io/milvus/blob/master/internal/querynodev2/pipeline/pipeline.go"
+click node_delegator "https://github.com/milvus-io/milvus/blob/master/internal/querynodev2/delegator/delegator.go"
+click node_segments "https://github.com/milvus-io/milvus/blob/master/internal/querynodev2/segments/segment.go"
+click node_local_worker "https://github.com/milvus-io/milvus/blob/master/internal/querynodev2/local_worker.go"
+click node_segcore_sealed "https://github.com/milvus-io/milvus/blob/master/internal/core/src/segcore/ChunkedSegmentSealedImpl.cpp"
+click node_segcore_growing "https://github.com/milvus-io/milvus/blob/master/internal/core/src/segcore/SegmentGrowingImpl.cpp"
+click node_plan "https://github.com/milvus-io/milvus/blob/master/internal/core/src/query/Plan.cpp"
+click node_exec_driver "https://github.com/milvus-io/milvus/blob/master/internal/core/src/exec/Driver.cpp"
+click node_etcd_kv "https://github.com/milvus-io/milvus/blob/master/internal/kv/etcd/etcd_kv.go"
+click node_object_storage "https://github.com/milvus-io/milvus/blob/master/internal/storage/azure_object_storage.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_sdk,node_proxy,node_proxy_tasks toneBlue
+class node_rootcoord,node_datacoord,node_querycoord_meta,node_querycoord_scheduler,node_querycoord_checker,node_tso toneAmber
+class node_mq_msgstream,node_wal,node_datanode,node_datanode_services,node_data_codec,node_binlog_writer toneMint
+class node_querynode_pipeline,node_delegator,node_segments,node_local_worker toneRose
+class node_segcore_sealed,node_segcore_growing,node_plan,node_exec_driver toneIndigo
+class node_etcd_kv,node_object_storage toneTeal
