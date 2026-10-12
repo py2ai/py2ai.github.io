@@ -1,0 +1,115 @@
+flowchart TD
+
+subgraph group_api["Public API"]
+  node_whisper_model{{"WhisperModel<br/>core"}}
+  node_batched["BatchedInferencePipeline<br/>core"]
+  node_transcribe_options["TranscriptionOptions<br/>config"]
+end
+
+subgraph group_loop["Transcription loop"]
+  node_transcribe_fn["transcribe&#40;&#41;<br/>core"]
+  node_generate_segments["generate_segments&#40;&#41;<br/>core"]
+  node_split_by_timestamps["_split_segments_by_timestamps<br/>core"]
+  node_restore_speech["restore_speech_timestamps<br/>core"]
+  node_segment["Segment<br/>data"]
+  node_word["Word<br/>data"]
+end
+
+subgraph group_runtime["Runtime"]
+  node_encode["encode&#40;&#41;<br/>core"]
+  node_generate_with_fallback{{"generate_with_fallback&#40;&#41;<br/>core"}}
+  node_get_prompt["get_prompt&#40;&#41;<br/>core"]
+  node_add_word_timestamps["add_word_timestamps&#40;&#41;<br/>core"]
+  node_find_alignment["find_alignment&#40;&#41;<br/>core"]
+  node_tokenizer["Tokenizer<br/>data"]
+  node_ctranslate2_dep[("CTranslate2<br/>config")]
+end
+
+subgraph group_audio["Audio and features"]
+  node_decode_audio["decode_audio&#40;&#41;<br/>data"]
+  node_pad_or_trim["pad_or_trim&#40;&#41;<br/>data"]
+  node_feature_extractor["FeatureExtractor<br/>data"]
+end
+
+subgraph group_vad["Voice activity detection"]
+  node_vad{{"vad module<br/>core"}}
+  node_vad_options["VadOptions<br/>config"]
+  node_speech_timestamps["get_speech_timestamps&#40;&#41;<br/>core"]
+  node_collect_chunks["collect_chunks&#40;&#41;<br/>core"]
+  node_vad_model["SileroVADModel<br/>core"]
+end
+
+subgraph group_support["Support"]
+  node_download_model["download_model&#40;&#41;<br/>support"]
+  node_format_timestamp["format_timestamp&#40;&#41;<br/>support"]
+end
+
+node_whisper_model -->|"exposes"| node_transcribe_fn
+node_transcribe_options -->|"parameterizes"| node_transcribe_fn
+node_batched -->|"wraps"| node_whisper_model
+node_transcribe_fn -->|"decodes file"| node_decode_audio
+node_decode_audio -->|"then"| node_pad_or_trim
+node_pad_or_trim -->|"features from"| node_feature_extractor
+node_transcribe_fn -->|"window loop"| node_generate_segments
+node_generate_segments -->|"per window"| node_generate_with_fallback
+node_generate_with_fallback -->|"features to storage"| node_encode
+node_generate_with_fallback -->|"prepares context"| node_get_prompt
+node_encode -.->|"runs on"| node_ctranslate2_dep
+node_tokenizer -->|"special tokens"| node_get_prompt
+node_generate_segments -->|"cuts output"| node_split_by_timestamps
+node_split_by_timestamps -->|"produces"| node_segment
+node_generate_with_fallback -.->|"word_timestamps option"| node_add_word_timestamps
+node_add_word_timestamps -->|"aligns via"| node_find_alignment
+node_add_word_timestamps -->|"produces"| node_word
+node_transcribe_fn -.->|"vad_filter=True"| node_vad
+node_vad -->|"tuned by"| node_vad_options
+node_vad_options -->|"thresholds for"| node_speech_timestamps
+node_speech_timestamps -->|"probabilities from"| node_vad_model
+node_speech_timestamps -->|"feeds"| node_collect_chunks
+node_collect_chunks -.->|"times mapped back by"| node_restore_speech
+node_restore_speech -.->|"fixes timestamps of"| node_segment
+node_whisper_model -->|"loads with model"| node_tokenizer
+node_batched -.->|"always on"| node_vad
+node_whisper_model -.->|"size to checkpoint"| node_download_model
+node_segment -.->|"rendered with"| node_format_timestamp
+
+click node_whisper_model "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_batched "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_transcribe_options "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_transcribe_fn "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_generate_segments "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_split_by_timestamps "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_restore_speech "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_segment "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_word "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_encode "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_generate_with_fallback "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_get_prompt "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_add_word_timestamps "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_find_alignment "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py"
+click node_decode_audio "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/audio.py"
+click node_pad_or_trim "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/audio.py"
+click node_feature_extractor "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/feature_extractor.py"
+click node_tokenizer "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/tokenizer.py"
+click node_ctranslate2_dep "https://github.com/SYSTRAN/faster-whisper/blob/master/requirements.txt"
+click node_vad "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py"
+click node_vad_options "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py"
+click node_speech_timestamps "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py"
+click node_collect_chunks "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py"
+click node_vad_model "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py"
+click node_download_model "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/utils.py"
+click node_format_timestamp "https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/utils.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_whisper_model,node_batched,node_transcribe_options toneBlue
+class node_transcribe_fn,node_generate_segments,node_split_by_timestamps,node_restore_speech,node_segment,node_word toneAmber
+class node_encode,node_generate_with_fallback,node_get_prompt,node_add_word_timestamps,node_find_alignment,node_tokenizer,node_ctranslate2_dep toneMint
+class node_decode_audio,node_pad_or_trim,node_feature_extractor toneRose
+class node_vad,node_vad_options,node_speech_timestamps,node_collect_chunks,node_vad_model toneIndigo
+class node_download_model,node_format_timestamp toneTeal
