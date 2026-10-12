@@ -1,0 +1,126 @@
+flowchart TD
+
+subgraph group_entry["Entry points"]
+  node_cli["cli&#40;&#41;<br/>core"]
+  node_transcribe_fn{{"transcribe&#40;&#41;<br/>core"}}
+  node_load_model["load_model&#40;&#41;<br/>core"]
+end
+
+subgraph group_audio["Audio front end"]
+  node_audio["audio module<br/>data"]
+  node_mel_filters[("mel_filters.npz<br/>data")]
+end
+
+subgraph group_network["Network"]
+  node_model_dims["ModelDimensions<br/>config"]
+  node_whisper_cls{{"Whisper<br/>core"}}
+  node_encoder["AudioEncoder<br/>core"]
+  node_decoder["TextDecoder<br/>core"]
+  node_rab["ResidualAttentionBlock<br/>core"]
+  node_mha["MultiHeadAttention<br/>core"]
+end
+
+subgraph group_decoding["Decoding machinery"]
+  node_decoding{{"decoding module<br/>core"}}
+  node_decoding_task["DecodingTask<br/>core"]
+  node_inference["PyTorchInference<br/>core"]
+  node_ranker["MaximumLikelihoodRanker<br/>core"]
+  node_greedy["GreedyDecoder<br/>core"]
+  node_beam["BeamSearchDecoder<br/>core"]
+  node_logit_filters["LogitFilter family<br/>core"]
+  node_apply_timestamp_rules["ApplyTimestampRules<br/>core"]
+  node_detect_language["detect_language&#40;&#41;<br/>core"]
+end
+
+subgraph group_timing["Timing"]
+  node_timing{{"timing module<br/>core"}}
+  node_dtw["dtw&#40;&#41;<br/>core"]
+  node_triton["triton_ops<br/>core"]
+  node_word_timing["WordTiming<br/>data"]
+  node_find_alignment["find_alignment&#40;&#41;<br/>core"]
+end
+
+subgraph group_output["Output"]
+  node_tokenizer["Tokenizer<br/>data"]
+  node_encodings[("tiktoken encodings<br/>data")]
+  node_utils["utils module<br/>data"]
+  node_normalizers["Text normalizers<br/>data"]
+end
+
+node_cli -->|"invokes"| node_transcribe_fn
+node_transcribe_fn -->|"asks for weights"| node_load_model
+node_load_model -->|"instantiates with dims"| node_whisper_cls
+node_model_dims -->|"sizes every layer"| node_whisper_cls
+node_transcribe_fn -->|"loads and windows"| node_audio
+node_mel_filters -.->|"supplies filterbank"| node_audio
+node_audio -->|"mel spectrograms in"| node_encoder
+node_encoder -->|"stacks"| node_rab
+node_decoder -->|"stacks"| node_rab
+node_rab -->|"uses"| node_mha
+node_whisper_cls -->|"owns"| node_encoder
+node_whisper_cls -->|"owns"| node_decoder
+node_transcribe_fn -->|"decode per window"| node_decoding
+node_decoding -->|"orchestrated by"| node_decoding_task
+node_decoding_task -->|"queries logits"| node_inference
+node_inference -->|"forward pass"| node_whisper_cls
+node_decoding_task -->|"or"| node_greedy
+node_decoding_task -->|"or"| node_beam
+node_ranker -->|"picks final text"| node_decoding_task
+node_logit_filters -->|"constrains steps"| node_decoding_task
+node_apply_timestamp_rules -->|"member"| node_logit_filters
+node_tokenizer -->|"wraps"| node_encodings
+node_tokenizer -->|"special tokens"| node_decoding
+node_detect_language -.->|"exported from"| node_decoding
+node_transcribe_fn -->|"word_timestamps option"| node_timing
+node_timing -->|"aligns via"| node_dtw
+node_dtw -.->|"GPU kernels"| node_triton
+node_find_alignment -->|"calls"| node_dtw
+node_find_alignment -->|"produces"| node_word_timing
+node_transcribe_fn -->|"task and language tokens"| node_tokenizer
+node_transcribe_fn -.->|"output_format switch"| node_utils
+node_cli -.->|"writes files"| node_utils
+node_normalizers -.->|"available for scoring"| node_cli
+
+click node_cli "https://github.com/openai/whisper/blob/main/whisper/transcribe.py"
+click node_transcribe_fn "https://github.com/openai/whisper/blob/main/whisper/transcribe.py"
+click node_load_model "https://github.com/openai/whisper/blob/main/whisper/__init__.py"
+click node_audio "https://github.com/openai/whisper/blob/main/whisper/audio.py"
+click node_mel_filters "https://github.com/openai/whisper/blob/main/whisper/assets/mel_filters.npz"
+click node_model_dims "https://github.com/openai/whisper/blob/main/whisper/model.py"
+click node_whisper_cls "https://github.com/openai/whisper/blob/main/whisper/model.py"
+click node_encoder "https://github.com/openai/whisper/blob/main/whisper/model.py"
+click node_decoder "https://github.com/openai/whisper/blob/main/whisper/model.py"
+click node_rab "https://github.com/openai/whisper/blob/main/whisper/model.py"
+click node_mha "https://github.com/openai/whisper/blob/main/whisper/model.py"
+click node_tokenizer "https://github.com/openai/whisper/blob/main/whisper/tokenizer.py"
+click node_encodings "https://github.com/openai/whisper/blob/main/whisper/tokenizer.py"
+click node_decoding "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_decoding_task "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_inference "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_ranker "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_greedy "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_beam "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_logit_filters "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_apply_timestamp_rules "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_detect_language "https://github.com/openai/whisper/blob/main/whisper/decoding.py"
+click node_timing "https://github.com/openai/whisper/blob/main/whisper/timing.py"
+click node_dtw "https://github.com/openai/whisper/blob/main/whisper/timing.py"
+click node_triton "https://github.com/openai/whisper/blob/main/whisper/triton_ops.py"
+click node_word_timing "https://github.com/openai/whisper/blob/main/whisper/timing.py"
+click node_find_alignment "https://github.com/openai/whisper/blob/main/whisper/timing.py"
+click node_utils "https://github.com/openai/whisper/blob/main/whisper/utils.py"
+click node_normalizers "https://github.com/openai/whisper/blob/main/whisper/normalizers/english.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli,node_transcribe_fn,node_load_model toneBlue
+class node_audio,node_mel_filters toneAmber
+class node_model_dims,node_whisper_cls,node_encoder,node_decoder,node_rab,node_mha toneMint
+class node_decoding,node_decoding_task,node_inference,node_ranker,node_greedy,node_beam,node_logit_filters,node_apply_timestamp_rules,node_detect_language toneRose
+class node_timing,node_dtw,node_triton,node_word_timing,node_find_alignment toneIndigo
+class node_tokenizer,node_encodings,node_utils,node_normalizers toneTeal
