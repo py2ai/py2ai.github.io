@@ -1,0 +1,133 @@
+flowchart TD
+
+subgraph group_api["API Tier"]
+  node_configure_api["configure_api.go<br/>Gateway"]
+  node_graphql_schema["GraphQL Schema<br/>Query surface"]
+  node_grpc_conn["gRPC Manager<br/>Gateway"]
+  node_proto_v1["Protocol v1<br/>Contract"]
+end
+
+subgraph group_cluster["Cluster Layer"]
+  node_schema_manager["Schema Manager<br/>Coordinator"]
+  node_shard_state{{"Sharding State<br/>Map"}}
+  node_replica_coord["Replica Coordinator<br/>Consistency"]
+  node_replica_finder["Replica Finder<br/>Consistency"]
+  node_raft_log["Raft Log<br/>Consensus"]
+end
+
+subgraph group_query["Query Execution"]
+  node_explorer["Explorer<br/>Query engine"]
+  node_hybrid["Hybrid Search<br/>Query engine"]
+  node_boost_scorer{{"Boost Scorer<br/>Ranking"}}
+  node_module_cap["Module Capabilities<br/>Plugin API"]
+  node_text2vec_mod["text2vec-transformers<br/>[module.go]"]
+  node_reranker_mod["reranker-transformers<br/>[module.go]"]
+end
+
+subgraph group_engine["Shard Engine"]
+  node_db_index["Collection Index<br/>Engine"]
+  node_shard["Shard<br/>Engine"]
+end
+
+subgraph group_vector["Vector Indexes"]
+  node_hnsw["HNSW Index<br/>ANN graph"]
+  node_hnsw_search["HNSW Search<br/>ANN graph"]
+  node_hnsw_insert["HNSW Insert<br/>ANN graph"]
+  node_hnsw_delete["HNSW Delete<br/>ANN graph"]
+  node_hnsw_neighbors["Neighbor Connections<br/>ANN graph"]
+  node_commit_log["HNSW Commit Log<br/>Durability"]
+  node_dynamic_idx{{"Dynamic Index<br/>Switch"}}
+  node_compression["Compression Helpers<br/>Kernels"]
+  node_vec_cache[("Vector Cache<br/>[cache.go]")]
+end
+
+subgraph group_kv["LSM Storage"]
+  node_lsmkv_bucket["LSM Bucket<br/>Storage"]
+  node_lsmkv_segment["LSM Segment<br/>Storage"]
+  node_kv_compactor{{"Segment Compactor<br/>Maintenance"}}
+  node_roaring_set["Roaring Sets<br/>Data structure"]
+  node_inverted["Inverted Analyzer<br/>Text layer"]
+  node_sorter["Sorter<br/>Query support"]
+  node_backup_s3["Backup S3 Module<br/>[client.go]"]
+end
+
+node_configure_api -->|"mounts"| node_graphql_schema
+node_configure_api -->|"starts gRPC"| node_grpc_conn
+node_grpc_conn -->|"serves protocol"| node_proto_v1
+node_configure_api -->|"schema service"| node_schema_manager
+node_schema_manager -->|"replicated changes"| node_raft_log
+node_schema_manager -->|"computes plan"| node_shard_state
+node_shard_state -.->|"shard placement"| node_db_index
+node_replica_coord -->|"resolves hosts"| node_replica_finder
+node_replica_coord -->|"two-phase batches"| node_db_index
+node_explorer -->|"fusion queries"| node_hybrid
+node_explorer -->|"re-weights"| node_boost_scorer
+node_explorer -->|"near params"| node_module_cap
+node_module_cap -.->|"implemented by"| node_text2vec_mod
+node_module_cap -.->|"implemented by"| node_reranker_mod
+node_explorer -->|"per-shard search"| node_db_index
+node_db_index -->|"manages"| node_shard
+node_shard -->|"vector index"| node_dynamic_idx
+node_dynamic_idx -->|"promotes to"| node_hnsw
+node_hnsw -->|"greedy walk"| node_hnsw_search
+node_hnsw -->|"adds nodes"| node_hnsw_insert
+node_hnsw -->|"tombstones"| node_hnsw_delete
+node_hnsw_insert -->|"links peers"| node_hnsw_neighbors
+node_hnsw_insert -->|"logs mutation"| node_commit_log
+node_hnsw_search -->|"fetches vectors"| node_vec_cache
+node_compression -.->|"compressed distances"| node_hnsw_search
+node_shard -->|"objects and inverted"| node_lsmkv_bucket
+node_lsmkv_bucket -->|"flushes"| node_lsmkv_segment
+node_kv_compactor -->|"merges"| node_lsmkv_segment
+node_inverted -->|"token streams"| node_lsmkv_bucket
+node_roaring_set -.->|"bitmap buckets"| node_lsmkv_bucket
+node_shard -.->|"sorted results"| node_sorter
+node_backup_s3 -.->|"snapshots"| node_lsmkv_bucket
+
+click node_configure_api "https://github.com/weaviate/weaviate/blob/main/adapters/handlers/rest/configure_api.go"
+click node_graphql_schema "https://github.com/weaviate/weaviate/blob/main/adapters/handlers/graphql/schema.go"
+click node_grpc_conn "https://github.com/weaviate/weaviate/blob/main/grpc/conn/manager.go"
+click node_proto_v1 "https://github.com/weaviate/weaviate/blob/main/grpc/generated/protocol/v1/weaviate.pb.go"
+click node_schema_manager "https://github.com/weaviate/weaviate/blob/main/usecases/schema/manager.go"
+click node_shard_state "https://github.com/weaviate/weaviate/blob/main/usecases/sharding/state.go"
+click node_replica_coord "https://github.com/weaviate/weaviate/blob/main/usecases/replica/coordinator.go"
+click node_replica_finder "https://github.com/weaviate/weaviate/blob/main/usecases/replica/finder.go"
+click node_raft_log "https://github.com/weaviate/weaviate/blob/main/cluster/log/logger.go"
+click node_explorer "https://github.com/weaviate/weaviate/blob/main/usecases/traverser/explorer.go"
+click node_hybrid "https://github.com/weaviate/weaviate/blob/main/usecases/traverser/explorer_hybrid.go"
+click node_boost_scorer "https://github.com/weaviate/weaviate/blob/main/usecases/traverser/boost_scorer.go"
+click node_module_cap "https://github.com/weaviate/weaviate/blob/main/entities/modulecapabilities/module.go"
+click node_text2vec_mod "https://github.com/weaviate/weaviate/blob/main/modules/text2vec-transformers/module.go"
+click node_reranker_mod "https://github.com/weaviate/weaviate/blob/main/modules/reranker-transformers/module.go"
+click node_db_index "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/index.go"
+click node_shard "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/shard.go"
+click node_hnsw "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/hnsw/index.go"
+click node_hnsw_search "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/hnsw/search.go"
+click node_hnsw_insert "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/hnsw/insert.go"
+click node_hnsw_delete "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/hnsw/delete.go"
+click node_hnsw_neighbors "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/hnsw/neighbor_connections.go"
+click node_commit_log "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/hnsw/commit_logger.go"
+click node_dynamic_idx "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/dynamic/index.go"
+click node_compression "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/compressionhelpers/compression.go"
+click node_vec_cache "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/vector/cache/cache.go"
+click node_lsmkv_bucket "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/lsmkv/bucket.go"
+click node_lsmkv_segment "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/lsmkv/segment.go"
+click node_kv_compactor "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/compactor/compactor.go"
+click node_roaring_set "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/roaringset/binary_search_tree.go"
+click node_inverted "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/inverted/analyzer.go"
+click node_sorter "https://github.com/weaviate/weaviate/blob/main/adapters/repos/db/sorter/comparable_sorter.go"
+click node_backup_s3 "https://github.com/weaviate/weaviate/blob/main/modules/backup-s3/client.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_configure_api,node_graphql_schema,node_grpc_conn,node_proto_v1 toneBlue
+class node_schema_manager,node_shard_state,node_replica_coord,node_replica_finder,node_raft_log toneAmber
+class node_explorer,node_hybrid,node_boost_scorer,node_module_cap,node_text2vec_mod,node_reranker_mod toneMint
+class node_db_index,node_shard toneRose
+class node_hnsw,node_hnsw_search,node_hnsw_insert,node_hnsw_delete,node_hnsw_neighbors,node_commit_log,node_dynamic_idx,node_compression,node_vec_cache toneIndigo
+class node_lsmkv_bucket,node_lsmkv_segment,node_kv_compactor,node_roaring_set,node_inverted,node_sorter,node_backup_s3 toneTeal
