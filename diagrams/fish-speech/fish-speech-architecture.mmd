@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_engine["Engine"]
+  node_inference_engine["Inference Engine<br/>public API"]
+  node_reference_loader["Reference Loader<br/>prompt builder"]
+  node_vq_manager["VQ Manager<br/>codec loader"]
+  node_api_client["API Client<br/>client lib"]
+  node_api_server["API Server Entry<br/>CLI entry"]
+end
+
+subgraph group_semantic["Semantic Model"]
+  node_llama{{"Dual-AR Transformer<br/>semantic model"}}
+  node_generate["Generation<br/>token loop"]
+  node_lit_module["Lightning Module<br/>training module"]
+  node_lora["LoRA<br/>adapter"]
+  node_quantize["Quantize Tool<br/>weight tool"]
+  node_merge_lora["Merge LoRA<br/>weight tool"]
+  node_eval_in_context["In-Context Eval<br/>eval tool"]
+end
+
+subgraph group_codec["Codec"]
+  node_modded_dac{{"Modded DAC<br/>audio codec"}}
+  node_rvq[("RVQ Quantizer<br/>[rvq.py]")]
+  node_dac_inference["Codec Inference<br/>codec wrapper"]
+end
+
+subgraph group_data["Data"]
+  node_semantic_ds[("Semantic Dataset<br/>[semantic.py]")]
+  node_vqgan_ds[("Codec Dataset<br/>[vqgan.py]")]
+  node_concat_repeat["Concat Repeat<br/>dataset util"]
+  node_protos["Text Data Protos<br/>wire format"]
+  node_build_dataset["Dataset Builder<br/>preprocess tool"]
+  node_extract_vq["VQ Extraction<br/>preprocess tool"]
+  node_create_train_split["Train Split<br/>preprocess tool"]
+end
+
+subgraph group_serving["Serving"]
+  node_views["API Views<br/>HTTP endpoints"]
+  node_api_utils["API Utils<br/>HTTP helpers"]
+  node_model_manager[("Model Manager<br/>server registry")]
+  node_model_utils["Model Utils<br/>server helpers"]
+  node_webui["WebUI<br/>Gradio app"]
+  node_webui_inference["WebUI Inference<br/>UI backend"]
+  node_run_webui["Run WebUI<br/>CLI entry"]
+end
+
+subgraph group_training["Configs &amp; Utils"]
+  node_base_config[("Base Config<br/>YAML config")]
+  node_finetune_config[("Finetune Config<br/>YAML config")]
+  node_dac_config[("Codec Config<br/>YAML config")]
+  node_spectrogram["Spectrogram Utils<br/>signal utils"]
+  node_clean["Text Cleaner<br/>text utils"]
+end
+
+node_inference_engine -->|"drives the"| node_llama
+node_inference_engine -->|"builds prompts via"| node_reference_loader
+node_inference_engine -.->|"loads codecs via"| node_vq_manager
+node_api_client -->|"calls the"| node_views
+node_api_server -->|"boots the"| node_views
+node_generate -->|"token loop over the"| node_llama
+node_lit_module -->|"trains the"| node_llama
+node_lora -.->|"adapts the"| node_llama
+node_quantize -.->|"shrinks the"| node_llama
+node_merge_lora -.->|"folds the"| node_lora
+node_eval_in_context -.->|"evaluates through"| node_generate
+node_modded_dac -->|"quantizes through the"| node_rvq
+node_dac_inference -->|"wraps the"| node_modded_dac
+node_generate -.->|"tokens decoded by"| node_dac_inference
+node_build_dataset -->|"writes"| node_semantic_ds
+node_build_dataset -.->|"packs into"| node_protos
+node_semantic_ds -.->|"feeds"| node_lit_module
+node_extract_vq -->|"runs the"| node_modded_dac
+node_extract_vq -->|"populates the"| node_vqgan_ds
+node_create_train_split -.->|"splits into"| node_vqgan_ds
+node_concat_repeat -.->|"augments the"| node_semantic_ds
+node_clean -.->|"sanitizes text for"| node_build_dataset
+node_views -->|"resolves through the"| node_model_manager
+node_views -.->|"encodes with"| node_api_utils
+node_views -.->|"wires devices via"| node_model_utils
+node_model_manager -.->|"loads the"| node_inference_engine
+node_webui -.->|"calls the"| node_views
+node_webui_inference -.->|"calls the"| node_inference_engine
+node_run_webui -->|"launches the"| node_webui
+node_base_config -.->|"extends into"| node_finetune_config
+node_base_config -.->|"sibling of"| node_dac_config
+node_spectrogram -.->|"renders mels for"| node_vqgan_ds
+
+click node_inference_engine "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/inference_engine/__init__.py"
+click node_reference_loader "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/inference_engine/reference_loader.py"
+click node_vq_manager "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/inference_engine/vq_manager.py"
+click node_api_client "https://github.com/fishaudio/fish-speech/blob/main/tools/api_client.py"
+click node_api_server "https://github.com/fishaudio/fish-speech/blob/main/tools/api_server.py"
+click node_llama "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/text2semantic/llama.py"
+click node_generate "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/text2semantic/inference.py"
+click node_lit_module "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/text2semantic/lit_module.py"
+click node_lora "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/text2semantic/lora.py"
+click node_quantize "https://github.com/fishaudio/fish-speech/blob/main/tools/llama/quantize.py"
+click node_merge_lora "https://github.com/fishaudio/fish-speech/blob/main/tools/llama/merge_lora.py"
+click node_eval_in_context "https://github.com/fishaudio/fish-speech/blob/main/tools/llama/eval_in_context.py"
+click node_modded_dac "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/dac/modded_dac.py"
+click node_rvq "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/dac/rvq.py"
+click node_dac_inference "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/models/dac/inference.py"
+click node_semantic_ds "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/datasets/semantic.py"
+click node_vqgan_ds "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/datasets/vqgan.py"
+click node_concat_repeat "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/datasets/concat_repeat.py"
+click node_protos "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/datasets/protos/text_data_stream.py"
+click node_build_dataset "https://github.com/fishaudio/fish-speech/blob/main/tools/llama/build_dataset.py"
+click node_extract_vq "https://github.com/fishaudio/fish-speech/blob/main/tools/vqgan/extract_vq.py"
+click node_create_train_split "https://github.com/fishaudio/fish-speech/blob/main/tools/vqgan/create_train_split.py"
+click node_views "https://github.com/fishaudio/fish-speech/blob/main/tools/server/views.py"
+click node_api_utils "https://github.com/fishaudio/fish-speech/blob/main/tools/server/api_utils.py"
+click node_model_manager "https://github.com/fishaudio/fish-speech/blob/main/tools/server/model_manager.py"
+click node_model_utils "https://github.com/fishaudio/fish-speech/blob/main/tools/server/model_utils.py"
+click node_webui "https://github.com/fishaudio/fish-speech/blob/main/tools/webui/__init__.py"
+click node_webui_inference "https://github.com/fishaudio/fish-speech/blob/main/tools/webui/inference.py"
+click node_run_webui "https://github.com/fishaudio/fish-speech/blob/main/tools/run_webui.py"
+click node_base_config "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/configs/base.yaml"
+click node_finetune_config "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/configs/text2semantic_finetune.yaml"
+click node_dac_config "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/configs/modded_dac_vq.yaml"
+click node_spectrogram "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/utils/spectrogram.py"
+click node_clean "https://github.com/fishaudio/fish-speech/blob/main/fish_speech/text/clean.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_inference_engine,node_reference_loader,node_vq_manager,node_api_client,node_api_server toneBlue
+class node_llama,node_generate,node_lit_module,node_lora,node_quantize,node_merge_lora,node_eval_in_context toneAmber
+class node_modded_dac,node_rvq,node_dac_inference toneMint
+class node_semantic_ds,node_vqgan_ds,node_concat_repeat,node_protos,node_build_dataset,node_extract_vq,node_create_train_split toneRose
+class node_views,node_api_utils,node_model_manager,node_model_utils,node_webui,node_webui_inference,node_run_webui toneIndigo
+class node_base_config,node_finetune_config,node_dac_config,node_spectrogram,node_clean toneTeal
