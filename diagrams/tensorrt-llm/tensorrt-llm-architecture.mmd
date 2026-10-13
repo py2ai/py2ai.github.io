@@ -1,0 +1,120 @@
+flowchart TD
+
+subgraph group_api["Python API Layer"]
+  node_llm["LLM<br/>Python API class"]
+  node_llm_args[("LlmArgs<br/>config dataclass")]
+  node_tokenizer["Tokenizer<br/>wrapper"]
+  node_reasoning_parser["Reasoning Parser<br/>output parser"]
+  node_mpi_session["MPI Session<br/>process launcher"]
+  node_executor_py["Executor<br/>Python bindings"]
+  node_scaffolding_controller{{"Scaffolding Controller<br/>agent loop"}}
+end
+
+subgraph group_torch["Torch-Native Execution"]
+  node_model_engine["Torch Model Engine<br/>step loop"]
+  node_model_loader["Model Loader<br/>weight loader"]
+  node_scheduler{{"Request Scheduler<br/>scheduling policy"}}
+  node_cuda_graph["CUDA Graph Runner<br/>graph capture"]
+  node_guided_decoder["Guided Decoder<br/>constrained decoding"]
+  node_kv_cache_py[("Torch KV Cache<br/>pooled memory")]
+  node_attention_backend{{"Attention Backends<br/>kernel registry"}}
+  node_speculative{{"Speculative Decoding<br/>acceleration"}}
+  node_moe{{"MoE Kernels<br/>expert routing"}}
+  node_disaggregation{{"Disaggregation<br/>multi-node path"}}
+  node_automodel["AutoModel<br/>factory"]
+  node_modeling_utils["Modeling Utils<br/>shared base"]
+  node_quant_functional{{"Quantization Functional<br/>kernel layer"}}
+end
+
+subgraph group_cpp["C++ Engine Core"]
+  node_cpp_executor["C++ Executor<br/>engine directory"]
+  node_request_cpp["Request<br/>C++ class"]
+  node_response_cpp["Response<br/>C++ class"]
+  node_micro_batch["Micro Batch Scheduler<br/>C++ scheduler"]
+  node_capacity_scheduler["Capacity Scheduler<br/>C++ policy"]
+  node_kv_cache_cpp[("KV Cache Manager<br/>pooled memory")]
+  node_data_transceiver["Data Transceiver<br/>KV transport"]
+  node_runtime[("Buffer Runtime<br/>memory runtime")]
+end
+
+subgraph group_serve["Serving &amp; Disaggregation"]
+  node_openai_server["OpenAI Server<br/>HTTP server"]
+  node_openai_protocol["OpenAI Protocol<br/>request schemas"]
+  node_coordinator["Coordinator Server<br/>cluster service"]
+  node_disagg_coordinator["Disagg Coordinator<br/>cluster service"]
+  node_commands_serve["trtllm-serve CLI<br/>CLI entry"]
+  node_grpc_server["gRPC Server<br/>[server.py]"]
+end
+
+node_llm -->|"builds config"| node_llm_args
+node_llm -->|"wraps"| node_tokenizer
+node_llm -.->|"parses reasoning with"| node_reasoning_parser
+node_llm -->|"spawns workers via"| node_mpi_session
+node_llm -->|"submits requests to"| node_executor_py
+node_scaffolding_controller -.->|"orchestrates"| node_executor_py
+node_executor_py -->|"binds into"| node_cpp_executor
+node_executor_py -.->|"drives Torch backend"| node_model_engine
+node_cpp_executor -->|"accepts"| node_request_cpp
+node_cpp_executor -->|"returns"| node_response_cpp
+node_cpp_executor -->|"feeds"| node_micro_batch
+node_cpp_executor -.->|"allocates buffers from"| node_runtime
+node_micro_batch -->|"admits via"| node_capacity_scheduler
+node_micro_batch -->|"reserves pages in"| node_kv_cache_cpp
+node_micro_batch -.->|"ships KV with"| node_data_transceiver
+node_model_engine -->|"loads weights through"| node_model_loader
+node_model_engine -->|"steps scheduling with"| node_scheduler
+node_model_engine -.->|"replays graphs via"| node_cuda_graph
+node_model_engine -.->|"enforces grammar via"| node_guided_decoder
+node_model_engine -->|"manages pages in"| node_kv_cache_py
+node_model_engine -->|"runs kernels from"| node_attention_backend
+node_model_engine -.->|"expands drafts with"| node_speculative
+node_model_engine -.->|"routes experts via"| node_moe
+node_model_engine -.->|"offloads to"| node_disaggregation
+node_model_loader -->|"instantiates"| node_automodel
+node_automodel -->|"inherits hooks from"| node_modeling_utils
+node_model_loader -.->|"applies"| node_quant_functional
+node_openai_server -->|"drives"| node_llm
+node_openai_server -->|"validates with"| node_openai_protocol
+node_openai_server -.->|"coordinates disaggregation"| node_coordinator
+node_disagg_coordinator -.->|"registers workers with"| node_coordinator
+node_commands_serve -->|"launches"| node_openai_server
+node_grpc_server -.->|"forwards requests to"| node_executor_py
+
+click node_llm "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/llmapi/llm.py"
+click node_llm_args "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/llmapi/llm_args.py"
+click node_tokenizer "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/llmapi/tokenizer.py"
+click node_reasoning_parser "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/llmapi/reasoning_parser.py"
+click node_mpi_session "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/llmapi/mpi_session.py"
+click node_executor_py "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/executor/executor.py"
+click node_scaffolding_controller "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/scaffolding/controller.py"
+click node_model_engine "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/_torch/pyexecutor/model_engine.py"
+click node_model_loader "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/_torch/pyexecutor/model_loader.py"
+click node_cuda_graph "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/_torch/pyexecutor/cuda_graph_runner.py"
+click node_guided_decoder "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/_torch/pyexecutor/guided_decoder.py"
+click node_automodel "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/models/automodel.py"
+click node_modeling_utils "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/models/modeling_utils.py"
+click node_quant_functional "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/quantization/functional.py"
+click node_request_cpp "https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/executor/request.cpp"
+click node_response_cpp "https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/executor/response.cpp"
+click node_micro_batch "https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/batch_manager/microBatchScheduler.cpp"
+click node_capacity_scheduler "https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/batch_manager/capacityScheduler.cpp"
+click node_kv_cache_cpp "https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/batch_manager/kvCacheManager.cpp"
+click node_data_transceiver "https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/batch_manager/dataTransceiver.cpp"
+click node_openai_server "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/serve/openai_server.py"
+click node_openai_protocol "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/serve/openai_protocol.py"
+click node_coordinator "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/serve/coordinator_server.py"
+click node_disagg_coordinator "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/serve/disagg_coordinator.py"
+click node_commands_serve "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/commands/serve.py"
+click node_grpc_server "https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/grpc/openengine/server.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_llm,node_llm_args,node_tokenizer,node_reasoning_parser,node_mpi_session,node_executor_py,node_scaffolding_controller toneBlue
+class node_model_engine,node_model_loader,node_scheduler,node_cuda_graph,node_guided_decoder,node_kv_cache_py,node_attention_backend,node_speculative,node_moe,node_disaggregation,node_automodel,node_modeling_utils,node_quant_functional toneAmber
+class node_cpp_executor,node_request_cpp,node_response_cpp,node_micro_batch,node_capacity_scheduler,node_kv_cache_cpp,node_data_transceiver,node_runtime toneMint
+class node_openai_server,node_openai_protocol,node_coordinator,node_disagg_coordinator,node_commands_serve,node_grpc_server toneRose
