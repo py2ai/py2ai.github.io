@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_g_api["API Layer"]
+  node_api_server["API Server<br/>http-server"]
+  node_chat_completions["Chat Completions Adapter<br/>api-adapter"]
+  node_claude_adapter["Claude Adapter<br/>api-adapter"]
+  node_ollama_adapter["Ollama Adapter<br/>api-adapter"]
+  node_responses_adapter["Responses Adapter<br/>api-adapter"]
+end
+
+subgraph group_g_master["Master"]
+  node_master_main["Master Controller<br/>orchestration"]
+  node_placement{{"Placement Engine<br/>scheduler"}}
+  node_placement_utils["Cycle Solver<br/>algorithm"]
+  node_image_store[("Image Store<br/>storage")]
+end
+
+subgraph group_g_shared["Shared Kernel"]
+  node_election{{"Election<br/>consensus"}}
+  node_topology[("Topology Graph<br/>data-model")]
+  node_events_types[("Event Types<br/>type-definitions")]
+  node_tasks_types[("Task Types<br/>type-definitions")]
+  node_model_cards["Model Cards<br/>metadata-catalog"]
+  node_apply["State Folder<br/>reducer"]
+end
+
+subgraph group_g_routing["Routing and Utilities"]
+  node_event_router["Event Router<br/>message-bus"]
+  node_router["Topic Router<br/>message-bus"]
+  node_channels["Typed Channels<br/>concurrency"]
+  node_info_gatherer["Resource Profiler<br/>monitoring"]
+  node_net_profile["Link Profiler<br/>monitoring"]
+end
+
+subgraph group_g_worker["Worker Engines"]
+  node_worker_main["Worker Node<br/>orchestration"]
+  node_plan["Local Planner<br/>orchestration"]
+  node_supervisor["Runner Supervisor<br/>process-manager"]
+  node_runner{{"Runner<br/>execution-agent"}}
+  node_auto_parallel{{"Tensor Parallel Engine<br/>inference-engine"}}
+  node_generator["Token Generator<br/>inference-engine"]
+  node_mlx_cache[("KV Prefix Cache<br/>[cache.py]")]
+  node_image_pipeline["Diffusion Runner<br/>inference-engine"]
+  node_disaggregated["Disaggregated Protocol<br/>[protocol.py]"]
+end
+
+subgraph group_g_infra["Assets and Networking"]
+  node_shard_downloader["Shard Downloader<br/>download-manager"]
+  node_impl_shard_downloader["HuggingFace Fetcher<br/>download-manager"]
+  node_coordinator["Download Coordinator<br/>orchestration"]
+  node_discovery{{"LAN Discovery<br/>protocol-client"}}
+end
+
+node_api_server -->|"translates via"| node_chat_completions
+node_api_server -->|"translates via"| node_claude_adapter
+node_api_server -->|"translates via"| node_ollama_adapter
+node_api_server -->|"translates via"| node_responses_adapter
+node_claude_adapter -->|"emit"| node_tasks_types
+node_responses_adapter -->|"emit"| node_tasks_types
+node_api_server -->|"publishes tasks"| node_event_router
+node_event_router -->|"feeds"| node_master_main
+node_master_main -->|"folds state with"| node_apply
+node_master_main -->|"consults"| node_placement
+node_placement -->|"solves with"| node_placement_utils
+node_placement -->|"sizes from"| node_model_cards
+node_placement -->|"reads"| node_topology
+node_master_main -.->|"saves outputs"| node_image_store
+node_master_main -->|"issues commands"| node_event_router
+node_event_router -->|"drives"| node_worker_main
+node_worker_main -->|"builds"| node_plan
+node_plan -->|"queues downloads"| node_coordinator
+node_coordinator -->|"requests shards"| node_shard_downloader
+node_shard_downloader -->|"delegates to"| node_impl_shard_downloader
+node_plan -->|"launches"| node_supervisor
+node_supervisor -->|"spawns"| node_runner
+node_runner -->|"loads through"| node_auto_parallel
+node_auto_parallel -->|"shards into"| node_generator
+node_generator -->|"reuses"| node_mlx_cache
+node_runner -->|"runs"| node_image_pipeline
+node_worker_main -.->|"supports"| node_disaggregated
+node_election -->|"elects"| node_master_main
+node_discovery -->|"announces peers"| node_topology
+node_info_gatherer -->|"profiles into"| node_topology
+node_net_profile -->|"measures links"| node_topology
+node_event_router -->|"filters topics via"| node_router
+node_event_router -.->|"built on"| node_channels
+node_events_types -->|"consumed by"| node_apply
+node_tasks_types -->|"executed as"| node_runner
+
+click node_api_server "https://github.com/exo-explore/exo/blob/main/src/exo/api/main.py"
+click node_chat_completions "https://github.com/exo-explore/exo/blob/main/src/exo/api/adapters/chat_completions.py"
+click node_claude_adapter "https://github.com/exo-explore/exo/blob/main/src/exo/api/adapters/claude.py"
+click node_ollama_adapter "https://github.com/exo-explore/exo/blob/main/src/exo/api/adapters/ollama.py"
+click node_responses_adapter "https://github.com/exo-explore/exo/blob/main/src/exo/api/adapters/responses.py"
+click node_master_main "https://github.com/exo-explore/exo/blob/main/src/exo/master/main.py"
+click node_placement "https://github.com/exo-explore/exo/blob/main/src/exo/master/placement.py"
+click node_placement_utils "https://github.com/exo-explore/exo/blob/main/src/exo/master/placement_utils.py"
+click node_image_store "https://github.com/exo-explore/exo/blob/main/src/exo/master/image_store.py"
+click node_election "https://github.com/exo-explore/exo/blob/main/src/exo/shared/election.py"
+click node_topology "https://github.com/exo-explore/exo/blob/main/src/exo/shared/topology.py"
+click node_events_types "https://github.com/exo-explore/exo/blob/main/src/exo/shared/types/events.py"
+click node_tasks_types "https://github.com/exo-explore/exo/blob/main/src/exo/shared/types/tasks.py"
+click node_model_cards "https://github.com/exo-explore/exo/blob/main/src/exo/shared/models/model_cards.py"
+click node_apply "https://github.com/exo-explore/exo/blob/main/src/exo/shared/apply.py"
+click node_event_router "https://github.com/exo-explore/exo/blob/main/src/exo/routing/event_router.py"
+click node_router "https://github.com/exo-explore/exo/blob/main/src/exo/routing/router.py"
+click node_channels "https://github.com/exo-explore/exo/blob/main/src/exo/utils/channels.py"
+click node_info_gatherer "https://github.com/exo-explore/exo/blob/main/src/exo/utils/info_gatherer/info_gatherer.py"
+click node_net_profile "https://github.com/exo-explore/exo/blob/main/src/exo/utils/info_gatherer/net_profile.py"
+click node_worker_main "https://github.com/exo-explore/exo/blob/main/src/exo/worker/main.py"
+click node_plan "https://github.com/exo-explore/exo/blob/main/src/exo/worker/plan.py"
+click node_supervisor "https://github.com/exo-explore/exo/blob/main/src/exo/worker/runner/supervisor.py"
+click node_runner "https://github.com/exo-explore/exo/blob/main/src/exo/worker/runner/runner.py"
+click node_auto_parallel "https://github.com/exo-explore/exo/blob/main/src/exo/worker/engines/mlx/auto_parallel.py"
+click node_generator "https://github.com/exo-explore/exo/blob/main/src/exo/worker/engines/mlx/generator/generate.py"
+click node_mlx_cache "https://github.com/exo-explore/exo/blob/main/src/exo/worker/engines/mlx/cache.py"
+click node_image_pipeline "https://github.com/exo-explore/exo/blob/main/src/exo/worker/engines/image/pipeline/runner.py"
+click node_disaggregated "https://github.com/exo-explore/exo/blob/main/src/exo/worker/disaggregated/protocol.py"
+click node_shard_downloader "https://github.com/exo-explore/exo/blob/main/src/exo/download/shard_downloader.py"
+click node_impl_shard_downloader "https://github.com/exo-explore/exo/blob/main/src/exo/download/impl_shard_downloader.py"
+click node_coordinator "https://github.com/exo-explore/exo/blob/main/src/exo/download/coordinator.py"
+click node_discovery "https://github.com/exo-explore/exo/blob/main/rust/networking/src/discovery.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_server,node_chat_completions,node_claude_adapter,node_ollama_adapter,node_responses_adapter toneBlue
+class node_master_main,node_placement,node_placement_utils,node_image_store toneAmber
+class node_election,node_topology,node_events_types,node_tasks_types,node_model_cards,node_apply toneMint
+class node_event_router,node_router,node_channels,node_info_gatherer,node_net_profile toneRose
+class node_worker_main,node_plan,node_supervisor,node_runner,node_auto_parallel,node_generator,node_mlx_cache,node_image_pipeline,node_disaggregated toneIndigo
+class node_shard_downloader,node_impl_shard_downloader,node_coordinator,node_discovery toneTeal
