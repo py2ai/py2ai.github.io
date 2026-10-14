@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_g_entry["CLI &amp; Scripts"]
+  node_cli_main["CLI Main<br/>entry"]
+  node_script_sft["SFT Script<br/>runner"]
+  node_script_dpo["DPO Script<br/>runner"]
+  node_script_kto["KTO Script<br/>runner"]
+  node_script_grpo["GRPO Script<br/>runner"]
+end
+
+subgraph group_g_data["Data &amp; Chat Layer"]
+  node_data_utils[("Data Utils<br/>[data_utils.py]")]
+  node_chat_utils["Chat Template Utils<br/>transform"]
+  node_templates[("Template Files<br/>asset")]
+  node_trainer_utils["Trainer Utils<br/>support"]
+end
+
+subgraph group_g_trainers["Trainer Family"]
+  node_base_trainer["Base Trainer<br/>core"]
+  node_sft_trainer["SFT Trainer<br/>[sft_trainer.py]"]
+  node_sft_config[("SFT Config<br/>[sft_config.py]")]
+  node_dpo_trainer["DPO Trainer<br/>[dpo_trainer.py]"]
+  node_dpo_config[("DPO Config<br/>[dpo_config.py]")]
+  node_kto_trainer["KTO Trainer<br/>[kto_trainer.py]"]
+  node_rloo_trainer["RLOO Trainer<br/>[rloo_trainer.py]"]
+  node_grpo_trainer["GRPO Trainer<br/>[grpo_trainer.py]"]
+  node_grpo_config[("GRPO Config<br/>[grpo_config.py]")]
+  node_reward_trainer["Reward Trainer<br/>[reward_trainer.py]"]
+  node_distillation_trainer["Distillation Trainer"]
+  node_callbacks["Trainer Callbacks<br/>hook"]
+end
+
+subgraph group_g_scale["Memory &amp; Scaling"]
+  node_distributed["Distributed Helpers<br/>support"]
+  node_import_utils["Import Utils<br/>support"]
+  node_k_chunked_logprob{{"Chunked Logprob<br/>kernel"}}
+  node_k_logprob_entropy{{"Logprob + Entropy<br/>kernel"}}
+  node_k_chunked_divergence{{"Chunked Divergence<br/>kernel"}}
+  node_act_offload["Activation Offload<br/>memory"]
+  node_sac["Selective AC<br/>memory"]
+  node_accelerate_configs[("Accelerate Profiles<br/>asset")]
+end
+
+subgraph group_g_gen["Generation &amp; Rewards"]
+  node_vllm_client{{"vLLM Client<br/>engine"}}
+  node_vllm_gen{{"vLLM Generation<br/>engine"}}
+  node_rew_accuracy["Accuracy Rewards<br/>scorer"]
+  node_rew_format["Format Rewards<br/>scorer"]
+end
+
+node_cli_main -->|"dispatch"| node_script_sft
+node_cli_main -->|"dispatch"| node_script_dpo
+node_cli_main -->|"dispatch"| node_script_kto
+node_cli_main -->|"dispatch"| node_script_grpo
+node_accelerate_configs -.->|"launch profiles"| node_cli_main
+node_script_sft -->|"instantiates"| node_sft_trainer
+node_script_dpo -->|"instantiates"| node_dpo_trainer
+node_script_kto -->|"instantiates"| node_kto_trainer
+node_script_grpo -->|"instantiates"| node_grpo_trainer
+node_templates -.->|"jinja files"| node_chat_utils
+node_chat_utils -->|"template pass"| node_data_utils
+node_data_utils -->|"tokenized batches"| node_sft_trainer
+node_data_utils -->|"paired dataset"| node_dpo_trainer
+node_trainer_utils -.->|"shared helpers"| node_grpo_trainer
+node_trainer_utils -.->|"dataloaders"| node_sft_trainer
+node_base_trainer -.->|"extends"| node_sft_trainer
+node_base_trainer -.->|"extends"| node_dpo_trainer
+node_base_trainer -.->|"extends"| node_kto_trainer
+node_base_trainer -.->|"extends"| node_rloo_trainer
+node_base_trainer -.->|"extends"| node_grpo_trainer
+node_base_trainer -.->|"extends"| node_reward_trainer
+node_base_trainer -.->|"extends"| node_distillation_trainer
+node_sft_config -->|"configures"| node_sft_trainer
+node_dpo_config -->|"configures"| node_dpo_trainer
+node_grpo_config -->|"configures"| node_grpo_trainer
+node_callbacks -.->|"lifecycle hooks"| node_base_trainer
+node_import_utils -.->|"optional deps"| node_base_trainer
+node_distributed -->|"gather rewards"| node_grpo_trainer
+node_k_chunked_logprob -->|"fused scoring"| node_sft_trainer
+node_k_logprob_entropy -->|"logprobs + entropy"| node_grpo_trainer
+node_k_chunked_divergence -->|"divergence loss"| node_distillation_trainer
+node_act_offload -.->|"offload activations"| node_sft_trainer
+node_sac -.->|"selective checkpointing"| node_sft_trainer
+node_grpo_trainer -->|"rollout requests"| node_vllm_gen
+node_vllm_client -->|"weight sync"| node_vllm_gen
+node_rew_accuracy -->|"scores completions"| node_grpo_trainer
+node_rew_format -->|"scores format"| node_grpo_trainer
+
+click node_cli_main "https://github.com/huggingface/trl/blob/main/trl/cli/main.py"
+click node_script_sft "https://github.com/huggingface/trl/blob/main/trl/scripts/sft.py"
+click node_script_dpo "https://github.com/huggingface/trl/blob/main/trl/scripts/dpo.py"
+click node_script_kto "https://github.com/huggingface/trl/blob/main/trl/scripts/kto.py"
+click node_script_grpo "https://github.com/huggingface/trl/blob/main/trl/scripts/grpo.py"
+click node_data_utils "https://github.com/huggingface/trl/blob/main/trl/data_utils.py"
+click node_chat_utils "https://github.com/huggingface/trl/blob/main/trl/chat_template_utils.py"
+click node_trainer_utils "https://github.com/huggingface/trl/blob/main/trl/trainer/utils.py"
+click node_base_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/base_trainer.py"
+click node_sft_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/sft_trainer.py"
+click node_sft_config "https://github.com/huggingface/trl/blob/main/trl/trainer/sft_config.py"
+click node_dpo_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/dpo_trainer.py"
+click node_dpo_config "https://github.com/huggingface/trl/blob/main/trl/trainer/dpo_config.py"
+click node_kto_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/kto_trainer.py"
+click node_rloo_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/rloo_trainer.py"
+click node_grpo_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/grpo_trainer.py"
+click node_grpo_config "https://github.com/huggingface/trl/blob/main/trl/trainer/grpo_config.py"
+click node_reward_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/reward_trainer.py"
+click node_distillation_trainer "https://github.com/huggingface/trl/blob/main/trl/trainer/distillation_trainer.py"
+click node_callbacks "https://github.com/huggingface/trl/blob/main/trl/trainer/callbacks.py"
+click node_distributed "https://github.com/huggingface/trl/blob/main/trl/distributed.py"
+click node_import_utils "https://github.com/huggingface/trl/blob/main/trl/import_utils.py"
+click node_k_chunked_logprob "https://github.com/huggingface/trl/blob/main/trl/kernels/chunked_logprob.py"
+click node_k_logprob_entropy "https://github.com/huggingface/trl/blob/main/trl/kernels/logprob_entropy.py"
+click node_k_chunked_divergence "https://github.com/huggingface/trl/blob/main/trl/kernels/chunked_divergence.py"
+click node_act_offload "https://github.com/huggingface/trl/blob/main/trl/models/activation_offloading.py"
+click node_sac "https://github.com/huggingface/trl/blob/main/trl/models/selective_activation_checkpointing.py"
+click node_vllm_client "https://github.com/huggingface/trl/blob/main/trl/generation/vllm_client.py"
+click node_vllm_gen "https://github.com/huggingface/trl/blob/main/trl/generation/vllm_generation.py"
+click node_rew_accuracy "https://github.com/huggingface/trl/blob/main/trl/rewards/accuracy_rewards.py"
+click node_rew_format "https://github.com/huggingface/trl/blob/main/trl/rewards/format_rewards.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_main,node_script_sft,node_script_dpo,node_script_kto,node_script_grpo toneBlue
+class node_data_utils,node_chat_utils,node_templates,node_trainer_utils toneAmber
+class node_base_trainer,node_sft_trainer,node_sft_config,node_dpo_trainer,node_dpo_config,node_kto_trainer,node_rloo_trainer,node_grpo_trainer,node_grpo_config,node_reward_trainer,node_distillation_trainer,node_callbacks toneMint
+class node_distributed,node_import_utils,node_k_chunked_logprob,node_k_logprob_entropy,node_k_chunked_divergence,node_act_offload,node_sac,node_accelerate_configs toneRose
+class node_vllm_client,node_vllm_gen,node_rew_accuracy,node_rew_format toneIndigo
