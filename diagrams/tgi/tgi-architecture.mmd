@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_launcher["Launcher Internals"]
+  node_launcher_main["Launcher Main<br/>CLI and orchestration"]
+  node_env_runtime["Env Runtime<br/>Runtime detection"]
+end
+
+subgraph group_router["Router Internals"]
+  node_router_server["Router Server<br/>Axum app"]
+  node_chat["Chat Handler<br/>OpenAI-compatible routes"]
+  node_chat_template["Chat Template<br/>Jinja rendering"]
+  node_validation["Validation<br/>Request gatekeeper"]
+  node_infer_mod["Batcher<br/>Infer and queue"]
+  node_tool_grammar{{"Tool Grammar<br/>Grammar builder"}}
+  node_logging["Logging<br/>Structured logs"]
+  node_config["Config<br/>[config.rs]"]
+end
+
+subgraph group_wire["Wire and Shards"]
+  node_proto{{"Proto Contract<br/>generate.proto"}}
+  node_shard_server["Shard Server<br/>gRPC service impl"]
+  node_backend_client["Backend Client<br/>gRPC client shim"]
+end
+
+subgraph group_models["Model Zoo"]
+  node_flash_causal_lm["Flash Causal LM<br/>Core wrapper"]
+  node_causal_lm["Causal LM<br/>Vanilla wrapper"]
+  node_model_base["Model ABC<br/>Model base class"]
+  node_seq2seq["Seq2Seq LM<br/>Encoder-decoder wrapper"]
+  node_mamba["Mamba LM<br/>State-space wrapper"]
+  node_vlm["VLM Causal LM<br/>Vision-language wrapper"]
+  node_types["Request Types<br/>_pb2 conversions"]
+end
+
+subgraph group_layers["GPU Layers"]
+  node_kv_cache[("KV Cache<br/>Paged allocator")]
+  node_attn_cuda{{"CUDA Attention<br/>Kernel dispatch"}}
+  node_flashinfer{{"FlashInfer<br/>Alternative kernels"}}
+  node_tensor_parallel["Tensor Parallel<br/>Collective primitives"]
+  node_linear["Linear Layer<br/>Quant-aware matmul"]
+  node_fp8["FP8 Layer<br/>8-bit float linear"]
+  node_lora["LoRA Layer<br/>Adapter arithmetic"]
+  node_medusa{{"Medusa Head<br/>Speculative heads"}}
+end
+
+subgraph group_utils["Weights and Logic"]
+  node_weights["Weights Loader<br/>Safetensors reader"]
+  node_logits_process["Logits Process<br/>Warper stack"]
+  node_adapter["Adapter Utils<br/>LoRA config handling"]
+  node_watermark["Watermark<br/>Green-list logits bias"]
+  node_hub["Hub Utils<br/>Model metadata"]
+end
+
+node_launcher_main -->|"detect runtime flags"| node_env_runtime
+node_launcher_main -->|"spawn router process"| node_router_server
+node_launcher_main -->|"spawn one shard per GPU"| node_shard_server
+node_router_server -.->|"read runtime settings"| node_config
+node_router_server -->|"route chat traffic"| node_chat
+node_chat -->|"render templates"| node_chat_template
+node_chat -.->|"build tool grammars"| node_tool_grammar
+node_router_server -->|"gate every request"| node_validation
+node_validation -->|"hand off validated work"| node_infer_mod
+node_router_server -->|"generate and stream routes"| node_infer_mod
+node_router_server -.->|"structured logs"| node_logging
+node_infer_mod -->|"batched RPC calls"| node_proto
+node_proto -.->|"same contract for alt engines"| node_backend_client
+node_proto -->|"serve Shard service"| node_shard_server
+node_shard_server -->|"decode protobuf to dataclasses"| node_types
+node_shard_server -->|"dispatch to model kind"| node_model_base
+node_model_base -.->|"vanilla attention path"| node_causal_lm
+node_model_base -.->|"encoder-decoder path"| node_seq2seq
+node_model_base -.->|"state-space path"| node_mamba
+node_model_base -.->|"vision-language path"| node_vlm
+node_flash_causal_lm -->|"implements the ABC"| node_model_base
+node_flash_causal_lm -->|"allocate and free pages"| node_kv_cache
+node_flash_causal_lm -->|"prefill and decode kernels"| node_attn_cuda
+node_flash_causal_lm -.->|"selectable backend"| node_flashinfer
+node_flash_causal_lm -.->|"speculative heads"| node_medusa
+node_shard_server -->|"materialize checkpoints"| node_weights
+node_shard_server -.->|"resolve files and revisions"| node_hub
+node_weights -->|"fill quant-aware layers"| node_linear
+node_weights -.->|"FP8 requantization"| node_fp8
+node_linear -->|"split across GPUs"| node_tensor_parallel
+node_linear -.->|"attach adapter deltas"| node_lora
+node_adapter -.->|"resolve adapter weights"| node_lora
+node_flash_causal_lm -->|"warp logits before sampling"| node_logits_process
+node_logits_process -.->|"optional watermark bias"| node_watermark
+
+click node_launcher_main "https://github.com/huggingface/text-generation-inference/blob/main/launcher/src/main.rs"
+click node_env_runtime "https://github.com/huggingface/text-generation-inference/blob/main/launcher/src/env_runtime.rs"
+click node_router_server "https://github.com/huggingface/text-generation-inference/blob/main/router/src/server.rs"
+click node_chat "https://github.com/huggingface/text-generation-inference/blob/main/router/src/chat.rs"
+click node_chat_template "https://github.com/huggingface/text-generation-inference/blob/main/router/src/infer/chat_template.rs"
+click node_validation "https://github.com/huggingface/text-generation-inference/blob/main/router/src/validation.rs"
+click node_infer_mod "https://github.com/huggingface/text-generation-inference/blob/main/router/src/infer/mod.rs"
+click node_tool_grammar "https://github.com/huggingface/text-generation-inference/blob/main/router/src/infer/tool_grammar.rs"
+click node_logging "https://github.com/huggingface/text-generation-inference/blob/main/router/src/logging.rs"
+click node_config "https://github.com/huggingface/text-generation-inference/blob/main/router/src/config.rs"
+click node_proto "https://github.com/huggingface/text-generation-inference/blob/main/proto/generate.proto"
+click node_shard_server "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/server.py"
+click node_backend_client "https://github.com/huggingface/text-generation-inference/blob/main/backends/client/src/lib.rs"
+click node_flash_causal_lm "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/flash_causal_lm.py"
+click node_causal_lm "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/causal_lm.py"
+click node_model_base "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/model.py"
+click node_seq2seq "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/seq2seq_lm.py"
+click node_mamba "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/mamba.py"
+click node_vlm "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/vlm_causal_lm.py"
+click node_types "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/types.py"
+click node_kv_cache "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/attention/kv_cache.py"
+click node_attn_cuda "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/attention/cuda.py"
+click node_flashinfer "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/attention/flashinfer.py"
+click node_tensor_parallel "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/tensor_parallel.py"
+click node_linear "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/linear.py"
+click node_fp8 "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/fp8.py"
+click node_lora "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/lora.py"
+click node_medusa "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/medusa.py"
+click node_weights "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/utils/weights.py"
+click node_logits_process "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/utils/logits_process.py"
+click node_adapter "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/utils/adapter.py"
+click node_watermark "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/utils/watermark.py"
+click node_hub "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/utils/hub.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_launcher_main,node_env_runtime toneBlue
+class node_router_server,node_chat,node_chat_template,node_validation,node_infer_mod,node_tool_grammar,node_logging,node_config toneAmber
+class node_proto,node_shard_server,node_backend_client toneMint
+class node_flash_causal_lm,node_causal_lm,node_model_base,node_seq2seq,node_mamba,node_vlm,node_types toneRose
+class node_kv_cache,node_attn_cuda,node_flashinfer,node_tensor_parallel,node_linear,node_fp8,node_lora,node_medusa toneIndigo
+class node_weights,node_logits_process,node_adapter,node_watermark,node_hub toneTeal

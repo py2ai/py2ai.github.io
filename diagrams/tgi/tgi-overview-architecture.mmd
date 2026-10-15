@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_supervisor["Rust Launcher"]
+  node_launcher["Launcher<br/>Process supervisor &#40;Rust&#41;"]
+end
+
+subgraph group_router["HTTP Router"]
+  node_router["Router Server<br/>Axum HTTP server"]
+  node_chat_completions["Chat Completions<br/>OpenAI-compatible handler"]
+  node_validation["Validation<br/>Request gatekeeper"]
+  node_infer["Batcher<br/>Infer queue and batching"]
+end
+
+subgraph group_wire["gRPC Wire"]
+  node_grpc_proto{{"Proto Contract<br/>generate.proto"}}
+end
+
+subgraph group_shard["Python Shard"]
+  node_shard["Shard Server<br/>Python gRPC server"]
+  node_flash_causal_lm["Flash Causal LM<br/>Core model wrapper"]
+  node_kv_cache[("KV Cache<br/>Paged cache allocator")]
+  node_attn_kernels{{"Attention Kernels<br/>CUDA and FlashInfer backends"}}
+  node_weights["Weights Loader<br/>Safetensors reader"]
+end
+
+subgraph group_pluggable["Pluggable Backends"]
+  node_backends["Alt Backends<br/>llama.cpp, TRT-LLM, Gaudi, Neuron"]
+end
+
+node_launcher -->|"spawn and supervise"| node_router
+node_launcher -->|"one Python shard per GPU"| node_shard
+node_router -->|"mount chat routes"| node_chat_completions
+node_router -->|"admission checks"| node_validation
+node_router -->|"enqueue requests"| node_infer
+node_infer -->|"batched token streams"| node_grpc_proto
+node_grpc_proto -->|"dispatch to GPU process"| node_shard
+node_shard -->|"route per model kind"| node_flash_causal_lm
+node_flash_causal_lm -->|"allocate cache pages"| node_kv_cache
+node_flash_causal_lm -->|"prefill and decode calls"| node_attn_kernels
+node_shard -->|"load checkpoint shards"| node_weights
+node_router -.->|"alternative engines opt-in"| node_backends
+
+click node_launcher "https://github.com/huggingface/text-generation-inference/blob/main/launcher/src/main.rs"
+click node_router "https://github.com/huggingface/text-generation-inference/blob/main/router/src/server.rs"
+click node_chat_completions "https://github.com/huggingface/text-generation-inference/blob/main/router/src/chat.rs"
+click node_validation "https://github.com/huggingface/text-generation-inference/blob/main/router/src/validation.rs"
+click node_infer "https://github.com/huggingface/text-generation-inference/blob/main/router/src/infer/mod.rs"
+click node_grpc_proto "https://github.com/huggingface/text-generation-inference/blob/main/proto/generate.proto"
+click node_shard "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/server.py"
+click node_flash_causal_lm "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/models/flash_causal_lm.py"
+click node_kv_cache "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/attention/kv_cache.py"
+click node_attn_kernels "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/layers/attention/cuda.py"
+click node_weights "https://github.com/huggingface/text-generation-inference/blob/main/server/text_generation_server/utils/weights.py"
+click node_backends "https://github.com/huggingface/text-generation-inference/blob/main/backends/v3/src/lib.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_launcher toneBlue
+class node_router,node_chat_completions,node_validation,node_infer toneAmber
+class node_grpc_proto toneMint
+class node_shard,node_flash_causal_lm,node_kv_cache,node_attn_kernels,node_weights toneRose
+class node_backends toneIndigo
