@@ -1,0 +1,87 @@
+flowchart TD
+
+subgraph group_serve["Unnamed"]
+  node_controller{{"controller.py &#40;238&#41;<br/>API server"}}
+  node_model_worker["model_worker.py &#40;241&#41;<br/>GPU worker"]
+  node_gradio_web["gradio_web_server.py &#40;404&#41;<br/>web UI"]
+  node_sglang_worker["sglang_worker.py &#40;200&#41;<br/>bridge worker"]
+  node_cli["cli.py &#40;105&#41;<br/>chat CLI"]
+  node_conversation[("conversation.py &#40;362&#41;<br/>templates")]
+end
+
+subgraph group_bridge["Unnamed"]
+  node_constants["constants.py &#40;11&#41;<br/>tokens"]
+  node_builder{{"builder.py &#40;150&#41;<br/>loader"}}
+  node_llava_llama["llava_llama.py &#40;134&#41;<br/>LLM class"]
+  node_llava_mistral["llava_mistral.py &#40;133&#41;<br/>LLM class"]
+  node_llava_mpt["llava_mpt.py &#40;76&#41;<br/>LLM class"]
+  node_llava_arch{{"llava_arch.py &#40;308&#41;<br/>multimodal glue"}}
+  node_unpad_image["unpad_image &#40;in llava_arch.py&#41;<br/>geometry"]
+  node_mm_utils["mm_utils.py &#40;199&#41;<br/>preprocessing"]
+end
+
+subgraph group_vision["Unnamed"]
+  node_clip_encoder[("clip_encoder.py &#40;114&#41;<br/>vision tower")]
+  node_clip_s2["CLIPVisionTowerS2 &#40;same file&#41;<br/>multiscale tower"]
+  node_projector["projector builder &#40;38&#41;<br/>connector"]
+end
+
+subgraph group_train["Unnamed"]
+  node_train_2{{"train.py &#40;840&#41;<br/>training script"}}
+  node_lazy_dataset[("LazySupervisedDataset &#40;train.py&#41;")]
+  node_llava_trainer["llava_trainer.py &#40;209&#41;<br/>Trainer subclass"]
+  node_train_mem["train_mem.py &#40;3&#41;<br/>entry"]
+  node_flash_patch["flash_attn monkey patch &#40;96&#41;<br/>attention"]
+  node_zero3[("scripts/zero3.json<br/>deepspeed config")]
+end
+
+subgraph group_eval["Unnamed"]
+  node_run_llava["run_llava.py &#40;122&#41;<br/>eval entry"]
+  node_model_vqa["model_vqa.py &#40;84&#41;<br/>batch QA"]
+  node_review_visual["eval_gpt_review_visual.py &#40;102&#41;<br/>GPT judge"]
+end
+
+node_cli -->|"renders prompt"| node_conversation
+node_gradio_web -->|"polls workers"| node_controller
+node_sglang_worker -->|"registers"| node_controller
+node_model_worker -->|"heartbeat every 15s"| node_controller
+node_controller -->|"forwards chat"| node_model_worker
+node_model_worker -->|"conv templates"| node_conversation
+node_model_worker -->|"boots model"| node_builder
+node_builder -->|"llama weights"| node_llava_llama
+node_builder -->|"mistral weights"| node_llava_mistral
+node_builder -->|"mpt weights"| node_llava_mpt
+node_builder -->|"loads tower"| node_clip_encoder
+node_llava_llama -->|"inherits mixin"| node_llava_arch
+node_llava_mistral -->|"inherits mixin"| node_llava_arch
+node_llava_mpt -->|"inherits mixin"| node_llava_arch
+node_llava_arch -->|"token contract"| node_constants
+node_llava_arch -->|"encode_images"| node_clip_encoder
+node_llava_arch -->|"feature mapping"| node_projector
+node_clip_encoder -->|"multiscale variant"| node_clip_s2
+node_clip_encoder -->|"patch features"| node_projector
+node_mm_utils -->|"anyres grid shape"| node_llava_arch
+node_mm_utils -->|"process_images"| node_model_worker
+node_llava_arch -->|"spatial unpad merge"| node_unpad_image
+node_train_2 -->|"wraps data"| node_lazy_dataset
+node_train_2 -->|"custom Trainer"| node_llava_trainer
+node_train_2 -->|"initializes vision modules"| node_llava_arch
+node_train_mem -->|"checkpointing on"| node_train_2
+node_flash_patch -->|"patches attention"| node_train_2
+node_zero3 -->|"deepspeed recipe"| node_train_2
+node_run_llava -->|"loads weights"| node_builder
+node_model_vqa -->|"loads weights"| node_builder
+node_review_visual -->|"judges answers"| node_model_vqa
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_controller,node_model_worker,node_gradio_web,node_sglang_worker,node_cli,node_conversation toneBlue
+class node_constants,node_builder,node_llava_llama,node_llava_mistral,node_llava_mpt,node_llava_arch,node_unpad_image,node_mm_utils toneAmber
+class node_clip_encoder,node_clip_s2,node_projector toneMint
+class node_train_2,node_lazy_dataset,node_llava_trainer,node_train_mem,node_flash_patch,node_zero3 toneRose
+class node_run_llava,node_model_vqa,node_review_visual toneIndigo
