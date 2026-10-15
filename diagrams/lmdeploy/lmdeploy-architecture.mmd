@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_cli["CLI Layer"]
+  node_cli_cli["cli.py<br/>entry"]
+  node_cli_serve["serve command<br/>entry"]
+  node_cli_chat["chat command<br/>entry"]
+  node_cli_lite["lite command<br/>entry"]
+end
+
+subgraph group_serve_api["Serving &amp; API Layer"]
+  node_async_engine{{"async engine<br/>core"}}
+  node_vl_engine["VL async engine<br/>[vl_async_engine.py]"]
+  node_api_server["api_server.py<br/>entry"]
+  node_protocol["openai protocol<br/>[protocol.py]"]
+  node_anthropic_router["anthropic adapter<br/>[adapter.py]"]
+  node_proxy["proxy<br/>[proxy.py]"]
+  node_session_mgr["session manager<br/>[session_manager.py]"]
+end
+
+subgraph group_pytorch_engine["PyTorch Engine"]
+  node_pt_engine{{"engine.py<br/>core"}}
+  node_engine_loop["engine loop<br/>[engine_loop.py]"]
+  node_engine_instance["engine instance<br/>[engine_instance.py]"]
+  node_agent{{"model agent<br/>core"}}
+  node_inputs_maker["inputs maker<br/>[inputs_maker.py]"]
+  node_request["request state<br/>[request.py]"]
+  node_prefill_sched["prefill scheduler"]
+  node_paged["paged attention<br/>[pagedattention.py]"]
+  node_fill_kv["fill kv cache<br/>[fill_kv_cache.py]"]
+  node_fused_moe["fused MoE<br/>[fused_moe.py]"]
+  node_mla["MLA backend<br/>[mla.py]"]
+  node_dsv2_model["deepseek v2 model<br/>[deepseek_v2.py]"]
+end
+
+subgraph group_turbomind_native["TurboMind Native"]
+  node_tm_wrapper{{"turbomind.py<br/>core"}}
+  node_converter["checkpoint converter<br/>[converter.py]"]
+  node_bind["pybind bridge<br/>[bind.cpp]"]
+  node_scheduler{{"scheduler.cc<br/>core"}}
+  node_engine_cc{{"engine.cc<br/>core"}}
+  node_prefix_trie["prefix trie<br/>[prefix_trie.h]"]
+  node_moe_cu["moe utils kernel<br/>[moe_utils_v2.cu]"]
+  node_linear_attn["linear attention kernel<br/>[recurrent.cu]"]
+end
+
+subgraph group_quant["Quantization Toolkit"]
+  node_lite_calibrate["calibrate<br/>[calibrate.py]"]
+  node_lite_awq["auto_awq<br/>[auto_awq.py]"]
+end
+
+subgraph group_multimodal["Vision &amp; Multimodal"]
+  node_vl_dir["vision engine<br/>[engine.py]"]
+end
+
+node_cli_cli -->|"dispatches"| node_cli_serve
+node_cli_cli -->|"dispatches"| node_cli_chat
+node_cli_cli -->|"dispatches"| node_cli_lite
+node_cli_serve -->|"launches"| node_api_server
+node_cli_chat -->|"streams from"| node_async_engine
+node_api_server -->|"validates with"| node_protocol
+node_api_server -->|"feeds"| node_async_engine
+node_anthropic_router -->|"adapts to"| node_async_engine
+node_proxy -.->|"targets"| node_api_server
+node_session_mgr -.->|"tracks history for"| node_async_engine
+node_vl_engine -.->|"extends"| node_async_engine
+node_async_engine -->|"engine=pytorch"| node_pt_engine
+node_async_engine -->|"engine=turbomind"| node_tm_wrapper
+node_pt_engine -->|"runs"| node_engine_loop
+node_engine_loop -->|"serves"| node_engine_instance
+node_engine_loop -->|"steps via"| node_agent
+node_agent -->|"builds tensors with"| node_inputs_maker
+node_agent -->|"attends via"| node_paged
+node_agent -->|"updates cache with"| node_fill_kv
+node_agent -.->|"routes MLA to"| node_mla
+node_dsv2_model -->|"experts via"| node_fused_moe
+node_dsv2_model -->|"attention via"| node_mla
+node_prefill_sched -->|"admits batches to"| node_agent
+node_request -.->|"scheduled by"| node_prefill_sched
+node_inputs_maker -.->|"reads state of"| node_request
+node_tm_wrapper -->|"converts via"| node_converter
+node_tm_wrapper -->|"imported through"| node_bind
+node_bind -->|"exposes"| node_engine_cc
+node_engine_cc -->|"schedules with"| node_scheduler
+node_scheduler -->|"reuses prompts via"| node_prefix_trie
+node_scheduler -->|"runs experts with"| node_moe_cu
+node_engine_cc -->|"runs recurrent attn"| node_linear_attn
+node_cli_lite -->|"runs"| node_lite_calibrate
+node_lite_calibrate -->|"statistics feed"| node_lite_awq
+node_lite_awq -.->|"quantized checkpoint for"| node_tm_wrapper
+node_lite_awq -.->|"quantized checkpoint for"| node_pt_engine
+
+click node_cli_cli "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/cli/cli.py"
+click node_cli_serve "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/cli/serve.py"
+click node_cli_chat "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/cli/chat.py"
+click node_cli_lite "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/cli/lite.py"
+click node_async_engine "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/core/async_engine.py"
+click node_vl_engine "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/core/vl_async_engine.py"
+click node_api_server "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/openai/api_server.py"
+click node_protocol "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/openai/protocol.py"
+click node_anthropic_router "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/anthropic/adapter.py"
+click node_proxy "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/proxy/proxy.py"
+click node_session_mgr "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/serve/managers/session_manager.py"
+click node_pt_engine "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/engine/engine.py"
+click node_engine_loop "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/engine/engine_loop.py"
+click node_engine_instance "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/engine/engine_instance.py"
+click node_agent "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/engine/model_agent/agent.py"
+click node_inputs_maker "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/engine/inputs_maker.py"
+click node_request "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/engine/request.py"
+click node_prefill_sched "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/paging/prefill_scheduler.py"
+click node_paged "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/kernels/cuda/pagedattention.py"
+click node_fill_kv "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/kernels/cuda/fill_kv_cache.py"
+click node_fused_moe "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/kernels/cuda/moe/fused_moe.py"
+click node_mla "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/backends/cuda/attention/mla.py"
+click node_dsv2_model "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/pytorch/models/deepseek_v2.py"
+click node_tm_wrapper "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/turbomind/turbomind.py"
+click node_converter "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/turbomind/converter.py"
+click node_bind "https://github.com/InternLM/lmdeploy/blob/main/src/turbomind/python/bind.cpp"
+click node_scheduler "https://github.com/InternLM/lmdeploy/blob/main/src/turbomind/engine/scheduler.cc"
+click node_engine_cc "https://github.com/InternLM/lmdeploy/blob/main/src/turbomind/engine/engine.cc"
+click node_prefix_trie "https://github.com/InternLM/lmdeploy/blob/main/src/turbomind/engine/prefix_trie.h"
+click node_moe_cu "https://github.com/InternLM/lmdeploy/blob/main/src/turbomind/kernels/gemm/moe_utils_v2.cu"
+click node_linear_attn "https://github.com/InternLM/lmdeploy/blob/main/src/turbomind/kernels/linear_attn/kernel/sm_90/recurrent.cu"
+click node_lite_calibrate "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/lite/apis/calibrate.py"
+click node_lite_awq "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/lite/apis/auto_awq.py"
+click node_vl_dir "https://github.com/InternLM/lmdeploy/blob/main/lmdeploy/vl/engine.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_cli,node_cli_serve,node_cli_chat,node_cli_lite toneBlue
+class node_async_engine,node_vl_engine,node_api_server,node_protocol,node_anthropic_router,node_proxy,node_session_mgr toneAmber
+class node_pt_engine,node_engine_loop,node_engine_instance,node_agent,node_inputs_maker,node_request,node_prefill_sched,node_paged,node_fill_kv,node_fused_moe,node_mla,node_dsv2_model toneMint
+class node_tm_wrapper,node_converter,node_bind,node_scheduler,node_engine_cc,node_prefix_trie,node_moe_cu,node_linear_attn toneRose
+class node_lite_calibrate,node_lite_awq toneIndigo
+class node_vl_dir toneTeal
