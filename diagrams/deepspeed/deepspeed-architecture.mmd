@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+  node_init_api{{"initialize&#40;&#41;<br/>public API"}}
+  node_ds_engine{{"DeepSpeedEngine<br/>training engine"}}
+  node_launch["launch.py &#40;250 lines&#41;<br/>CLI entry"]
+  node_launcher["runner.py &#40;523 lines&#41;<br/>process launcher"]
+  node_comm["comm.py &#40;818 lines&#41;<br/>collectives"]
+  node_ccl["ccl.py &#40;148 lines&#41;<br/>CPU collectives"]
+end
+
+subgraph group_zero["Unnamed"]
+  node_zero12[("stage_1_and_2.py<br/>ZeRO 1+2")]
+  node_zero3[("stage3.py<br/>ZeRO 3")]
+  node_part_params["partition_parameters.py<br/>zero.Init"]
+  node_param_offload["parameter_offload.py &#40;552 lines&#41;"]
+  node_param_coord["partitioned_param_coordinator.py<br/>prefetch"]
+  node_tiling["tiling.py &#40;230 lines&#41;<br/>huge layer support"]
+  node_contig_alloc["contiguous_memory_allocator.py<br/>flat buffers"]
+  node_zero_config["zero/config.py &#40;353 lines&#41;<br/>config dataclass"]
+  node_offload_config["offload_config.py &#40;93 lines&#41;<br/>offload config"]
+  node_swap_tensor["partitioned_optimizer_swapper.py<br/>state swapping"]
+  node_offload_states["offload_states.py &#40;87 lines&#41;<br/>context manager"]
+  node_fused_opt["fused_optimizer.py &#40;456 lines&#41;<br/>fp16 optimizer"]
+end
+
+subgraph group_pipe["Unnamed"]
+  node_pipe_engine{{"pipe/engine.py &#40;1,153 lines&#41;<br/>pipeline engine"}}
+  node_pipe_module["pipe/module.py &#40;580 lines&#41;<br/>pipe module"]
+  node_pipe_schedule["schedule.py &#40;486 lines&#41;<br/>schedules"]
+  node_pipe_topology["topology.py &#40;378 lines&#41;<br/>process mesh"]
+  node_pipe_p2p["p2p.py &#40;136 lines&#41;<br/>send and recv"]
+  node_dualpipev["dualpipev.py<br/>dual pipe"]
+end
+
+subgraph group_support["Unnamed"]
+  node_act_ckpt["checkpointing.py &#40;1,006 lines&#41;<br/>activation checkpoint"]
+  node_moe["sharded_moe.py &#40;635 lines&#41;<br/>MoE layer"]
+  node_module_inject["replace_module.py &#40;632 lines&#41;<br/>kernel injection"]
+  node_inject_policy["replace_policy.py &#40;26 lines&#41;<br/>policy base"]
+  node_timer["timer.py &#40;261 lines&#41;<br/>profiling"]
+  node_monitor["monitor.py &#40;46 lines&#41;<br/>metrics"]
+end
+
+subgraph group_platform["Unnamed"]
+  node_accelerator["abstract_accelerator.py &#40;326 lines&#41;<br/>device API"]
+  node_cpu_accel["cpu_accelerator.py &#40;297 lines&#41;<br/>CPU backend"]
+  node_op_builder{{"builder.py &#40;839 lines&#41;<br/>JIT ops"}}
+  node_autotuner["autotuner.py &#40;957 lines&#41;<br/>config search"]
+end
+
+node_launch -->|"delegates"| node_launcher
+node_launcher -->|"spawns ranks"| node_ds_engine
+node_init_api -->|"constructs"| node_ds_engine
+node_ds_engine -->|"stage 1 or 2"| node_zero12
+node_ds_engine -->|"stage 3"| node_zero3
+node_ds_engine -->|"pipeline subclass"| node_pipe_engine
+node_ds_engine -->|"reads config"| node_zero_config
+node_zero_config -->|"offload targets"| node_offload_config
+node_zero3 -->|"zero.Init"| node_part_params
+node_zero3 -->|"delegates hooks"| node_param_offload
+node_param_offload -->|"prefetch planning"| node_param_coord
+node_zero12 -->|"wraps update"| node_fused_opt
+node_zero12 -->|"state swap"| node_swap_tensor
+node_zero12 -->|"flat gradients"| node_contig_alloc
+node_zero3 -->|"flat params"| node_contig_alloc
+node_zero3 -->|"huge layers"| node_tiling
+node_zero3 -->|"scoped offload"| node_offload_states
+node_pipe_engine -->|"wraps layers"| node_pipe_module
+node_pipe_engine -->|"drives cycles"| node_pipe_schedule
+node_pipe_engine -->|"builds mesh"| node_pipe_topology
+node_pipe_engine -->|"send and recv"| node_pipe_p2p
+node_dualpipev -->|"dual schedule"| node_pipe_schedule
+node_ds_engine -->|"checkpoint calls"| node_act_ckpt
+node_ds_engine -->|"expert routing"| node_moe
+node_ds_engine -->|"kernel swap"| node_module_inject
+node_module_inject -->|"policy registry"| node_inject_policy
+node_ds_engine -->|"phase timing"| node_timer
+node_ds_engine -->|"metrics"| node_monitor
+node_ds_engine -->|"fused kernels"| node_op_builder
+node_zero12 -->|"adam kernels"| node_op_builder
+node_op_builder -->|"toolchain query"| node_accelerator
+node_comm -->|"CPU backend"| node_ccl
+node_comm -->|"device calls"| node_accelerator
+node_accelerator -->|"CPU selection"| node_cpu_accel
+node_autotuner -->|"trial launches"| node_launcher
+node_autotuner -->|"search space"| node_zero_config
+
+click node_init_api "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/engine.py"
+click node_ds_engine "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/engine.py"
+click node_launch "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/launcher/launch.py"
+click node_launcher "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/launcher/runner.py"
+click node_comm "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/comm/comm.py"
+click node_ccl "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/comm/ccl.py"
+click node_zero12 "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/stage_1_and_2.py"
+click node_zero3 "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/stage3.py"
+click node_part_params "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/partition_parameters.py"
+click node_param_offload "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/parameter_offload.py"
+click node_param_coord "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/partitioned_param_coordinator.py"
+click node_tiling "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/tiling.py"
+click node_contig_alloc "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/contiguous_memory_allocator.py"
+click node_zero_config "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/config.py"
+click node_offload_config "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/offload_config.py"
+click node_swap_tensor "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/swap_tensor/partitioned_optimizer_swapper.py"
+click node_offload_states "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/zero/offload_states.py"
+click node_fused_opt "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/fp16/fused_optimizer.py"
+click node_pipe_engine "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/pipe/engine.py"
+click node_pipe_module "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/pipe/module.py"
+click node_pipe_schedule "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/pipe/schedule.py"
+click node_pipe_topology "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/pipe/topology.py"
+click node_pipe_p2p "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/pipe/p2p.py"
+click node_dualpipev "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/pipe/dualpipev.py"
+click node_act_ckpt "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/runtime/activation_checkpointing/checkpointing.py"
+click node_moe "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/moe/sharded_moe.py"
+click node_module_inject "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/module_inject/replace_module.py"
+click node_inject_policy "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/module_inject/replace_policy.py"
+click node_timer "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/utils/timer.py"
+click node_monitor "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/monitor/monitor.py"
+click node_accelerator "https://github.com/microsoft/DeepSpeed/blob/master/accelerator/abstract_accelerator.py"
+click node_cpu_accel "https://github.com/microsoft/DeepSpeed/blob/master/accelerator/cpu_accelerator.py"
+click node_op_builder "https://github.com/microsoft/DeepSpeed/blob/master/op_builder/builder.py"
+click node_autotuner "https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/autotuning/autotuner.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init_api,node_ds_engine,node_launch,node_launcher,node_comm,node_ccl toneBlue
+class node_zero12,node_zero3,node_part_params,node_param_offload,node_param_coord,node_tiling,node_contig_alloc,node_zero_config,node_offload_config,node_swap_tensor,node_offload_states,node_fused_opt toneAmber
+class node_pipe_engine,node_pipe_module,node_pipe_schedule,node_pipe_topology,node_pipe_p2p,node_dualpipev toneMint
+class node_act_ckpt,node_moe,node_module_inject,node_inject_policy,node_timer,node_monitor toneRose
+class node_accelerator,node_cpu_accel,node_op_builder,node_autotuner toneIndigo
