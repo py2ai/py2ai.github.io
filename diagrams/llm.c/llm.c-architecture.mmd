@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_entry["Root Programs"]
+  node_makefile["Makefile<br/>entry"]
+  node_train_cu{{"train_gpt2.cu<br/>core"}}
+  node_train_c["train_gpt2.c<br/>[train_gpt2.c]"]
+  node_train_fp32cu["train_gpt2_fp32.cu<br/>[train_gpt2_fp32.cu]"]
+  node_test_cu["test_gpt2.cu<br/>[test_gpt2.cu]"]
+end
+
+subgraph group_reference["PyTorch Reference"]
+  node_train_py["train_gpt2.py<br/>[train_gpt2.py]"]
+  node_llama3_py["train_llama3.py<br/>[train_llama3.py]"]
+  node_profile_py["profile script<br/>[profile_gpt2cu.py]"]
+end
+
+subgraph group_components["llmc Components"]
+  node_dataloader["dataloader<br/>[dataloader.h]"]
+  node_tokenizer["tokenizer<br/>[tokenizer.h]"]
+  node_schedulers["LR schedulers<br/>[schedulers.h]"]
+  node_sampler["sampler<br/>[sampler.h]"]
+  node_mfu["MFU meter<br/>[mfu.h]"]
+  node_matmul{{"matmul<br/>core"}}
+  node_attention["attention<br/>[attention.cuh]"]
+  node_layernorm["layernorm<br/>[layernorm.cuh]"]
+  node_adamw["AdamW<br/>[adamw.cuh]"]
+  node_zero["ZeRO stage<br/>[zero.cuh]"]
+  node_global_norm["global norm<br/>[global_norm.cuh]"]
+end
+
+subgraph group_kernels["Kernel Library"]
+  node_att_fwd["attention fwd"]
+  node_att_bwd["attention bwd"]
+  node_ln_fwd["layernorm fwd"]
+  node_ln_bwd["layernorm bwd"]
+  node_mm_fwd["matmul fwd<br/>[matmul_forward.cu]"]
+  node_mm_bwd["matmul bwd<br/>[matmul_backward.cu]"]
+  node_softmax["softmax fwd<br/>[softmax_forward.cu]"]
+  node_encoder["encoder fwd<br/>[encoder_forward.cu]"]
+  node_fused_res["fused residual"]
+  node_classifier["fused classifier"]
+end
+
+subgraph group_data["Data Prep"]
+  node_tinyshakespeare[("tinyshakespeare<br/>database")]
+  node_starter_pack["starter pack"]
+end
+
+subgraph group_ops["Docs &amp; Launch Scripts"]
+  node_run_124m["124M run script<br/>[run_gpt2_124M.sh]"]
+  node_run_mpi["multi-node MPI"]
+  node_ln_doc["layernorm doc<br/>[layernorm.md]"]
+end
+
+node_makefile -->|"builds"| node_train_cu
+node_makefile -->|"builds"| node_train_c
+node_makefile -->|"builds"| node_train_fp32cu
+node_makefile -->|"builds"| node_test_cu
+node_test_cu -.->|"compares against"| node_train_py
+node_train_cu -->|"feeds on"| node_dataloader
+node_train_cu -->|"loads"| node_tokenizer
+node_train_cu -->|"follows"| node_schedulers
+node_train_cu -->|"generates via"| node_sampler
+node_train_cu -->|"measured by"| node_mfu
+node_train_cu -->|"calls"| node_matmul
+node_train_cu -->|"calls"| node_attention
+node_train_cu -->|"calls"| node_layernorm
+node_train_cu -->|"updates via"| node_adamw
+node_train_cu -->|"shards state via"| node_zero
+node_train_cu -->|"clips via"| node_global_norm
+node_train_c -->|"feeds on"| node_dataloader
+node_train_c -->|"loads"| node_tokenizer
+node_train_fp32cu -.->|"feeds on"| node_dataloader
+node_train_cu -.->|"validated against"| node_train_py
+node_train_py -.->|"pattern extended in"| node_llama3_py
+node_profile_py -.->|"profiles"| node_train_cu
+node_attention -.->|"manual path mirrors"| node_att_fwd
+node_att_bwd -.->|"pairs with"| node_att_fwd
+node_ln_bwd -.->|"pairs with"| node_ln_fwd
+node_mm_bwd -.->|"pairs with"| node_mm_fwd
+node_softmax -.->|"used inside"| node_att_fwd
+node_classifier -.->|"fuses"| node_mm_fwd
+node_encoder -.->|"mirrors"| node_dataloader
+node_fused_res -.->|"extends"| node_ln_fwd
+node_tinyshakespeare -->|"writes bins for"| node_dataloader
+node_starter_pack -.->|"fetches"| node_tinyshakespeare
+node_run_124m -->|"launches"| node_train_cu
+node_run_mpi -->|"launches"| node_train_cu
+node_ln_doc -.->|"walks through"| node_ln_fwd
+
+click node_train_cu "https://github.com/karpathy/llm.c/blob/master/train_gpt2.cu"
+click node_train_c "https://github.com/karpathy/llm.c/blob/master/train_gpt2.c"
+click node_train_fp32cu "https://github.com/karpathy/llm.c/blob/master/train_gpt2_fp32.cu"
+click node_test_cu "https://github.com/karpathy/llm.c/blob/master/test_gpt2.cu"
+click node_train_py "https://github.com/karpathy/llm.c/blob/master/train_gpt2.py"
+click node_llama3_py "https://github.com/karpathy/llm.c/blob/master/train_llama3.py"
+click node_profile_py "https://github.com/karpathy/llm.c/blob/master/profile_gpt2cu.py"
+click node_dataloader "https://github.com/karpathy/llm.c/blob/master/llmc/dataloader.h"
+click node_tokenizer "https://github.com/karpathy/llm.c/blob/master/llmc/tokenizer.h"
+click node_schedulers "https://github.com/karpathy/llm.c/blob/master/llmc/schedulers.h"
+click node_sampler "https://github.com/karpathy/llm.c/blob/master/llmc/sampler.h"
+click node_mfu "https://github.com/karpathy/llm.c/blob/master/llmc/mfu.h"
+click node_matmul "https://github.com/karpathy/llm.c/blob/master/llmc/matmul.cuh"
+click node_attention "https://github.com/karpathy/llm.c/blob/master/llmc/attention.cuh"
+click node_layernorm "https://github.com/karpathy/llm.c/blob/master/llmc/layernorm.cuh"
+click node_adamw "https://github.com/karpathy/llm.c/blob/master/llmc/adamw.cuh"
+click node_zero "https://github.com/karpathy/llm.c/blob/master/llmc/zero.cuh"
+click node_global_norm "https://github.com/karpathy/llm.c/blob/master/llmc/global_norm.cuh"
+click node_att_fwd "https://github.com/karpathy/llm.c/blob/master/dev/cuda/attention_forward.cu"
+click node_att_bwd "https://github.com/karpathy/llm.c/blob/master/dev/cuda/attention_backward.cu"
+click node_ln_fwd "https://github.com/karpathy/llm.c/blob/master/dev/cuda/layernorm_forward.cu"
+click node_ln_bwd "https://github.com/karpathy/llm.c/blob/master/dev/cuda/layernorm_backward.cu"
+click node_mm_fwd "https://github.com/karpathy/llm.c/blob/master/dev/cuda/matmul_forward.cu"
+click node_mm_bwd "https://github.com/karpathy/llm.c/blob/master/dev/cuda/matmul_backward.cu"
+click node_softmax "https://github.com/karpathy/llm.c/blob/master/dev/cuda/softmax_forward.cu"
+click node_encoder "https://github.com/karpathy/llm.c/blob/master/dev/cuda/encoder_forward.cu"
+click node_fused_res "https://github.com/karpathy/llm.c/blob/master/dev/cuda/fused_residual_forward.cu"
+click node_classifier "https://github.com/karpathy/llm.c/blob/master/dev/cuda/classifier_fused.cu"
+click node_tinyshakespeare "https://github.com/karpathy/llm.c/blob/master/dev/data/tinyshakespeare.py"
+click node_starter_pack "https://github.com/karpathy/llm.c/blob/master/dev/download_starter_pack.sh"
+click node_run_124m "https://github.com/karpathy/llm.c/blob/master/scripts/run_gpt2_124M.sh"
+click node_run_mpi "https://github.com/karpathy/llm.c/blob/master/scripts/multi_node/run_gpt2_124M_mpi.sh"
+click node_ln_doc "https://github.com/karpathy/llm.c/blob/master/doc/layernorm/layernorm.md"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_makefile,node_train_cu,node_train_c,node_train_fp32cu,node_test_cu toneBlue
+class node_train_py,node_llama3_py,node_profile_py toneAmber
+class node_dataloader,node_tokenizer,node_schedulers,node_sampler,node_mfu,node_matmul,node_attention,node_layernorm,node_adamw,node_zero,node_global_norm toneMint
+class node_att_fwd,node_att_bwd,node_ln_fwd,node_ln_bwd,node_mm_fwd,node_mm_bwd,node_softmax,node_encoder,node_fused_res,node_classifier toneRose
+class node_tinyshakespeare,node_starter_pack toneIndigo
+class node_run_124m,node_run_mpi,node_ln_doc toneTeal
