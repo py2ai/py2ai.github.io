@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+  node_deepy{{"deepy.py<br/>launcher wrapper"}}
+  node_train_entry["train.py<br/>training entry"]
+  node_gen_entry["generate.py<br/>generation entry"]
+end
+
+subgraph group_config["Unnamed"]
+  node_neox_args[("arguments.py &#40;1,353 lines&#41;<br/>arg merger")]
+  node_neox_args_def["neox_args.py &#40;1,325 lines&#41;<br/>arg definitions"]
+  node_ds_args["deepspeed_args.py &#40;264 lines&#41;<br/>ZeRO args"]
+  node_tokenizer["tokenizer.py &#40;313 lines&#41;<br/>[tokenizer.py]"]
+end
+
+subgraph group_train["Unnamed"]
+  node_meg_init["initialize.py &#40;194 lines&#41;<br/>distributed init"]
+  node_training{{"training.py &#40;1,679 lines&#41;<br/>train loop"}}
+  node_logging_["logging.py &#40;537 lines&#41;<br/>metrics"]
+  node_ckpt["checkpointing.py &#40;423 lines&#41;<br/>checkpoints"]
+  node_optim["optimizers.py &#40;401 lines&#41;<br/>[optimizers.py]"]
+  node_lr_sched["learning_rates.py &#40;133 lines&#41;<br/>lr schedules"]
+  node_utils["utils.py &#40;453 lines&#41;<br/>shared helpers"]
+  node_gns["gradient_noise_scale.py &#40;181 lines&#41;<br/>diagnostics"]
+end
+
+subgraph group_model["Unnamed"]
+  node_transformer{{"transformer.py &#40;1,084 lines&#41;<br/>GPT stack"}}
+  node_gpt2_model["gpt2_model.py &#40;370 lines&#41;<br/>pipe module"]
+  node_word_emb["word_embeddings.py &#40;221 lines&#41;<br/>[word_embeddings.py]"]
+  node_pos_emb["positional_embeddings.py &#40;217 lines&#41;<br/>positions"]
+  node_fused_ln["fused_layer_norm.py &#40;226 lines&#41;<br/>norm layers"]
+  node_moe_mlp["moe_mlp.py &#40;370 lines&#41;<br/>dropless MoE"]
+  node_router["router.py &#40;232 lines&#41;<br/>expert routing"]
+  node_mamba["mamba.py &#40;355 lines&#41;<br/>SSM block"]
+  node_rwkv["rwkv.py &#40;312 lines&#41;<br/>RWKV block"]
+  node_te["transformer_engine.py &#40;594 lines&#41;<br/>TE backend"]
+end
+
+subgraph group_mpu["Unnamed"]
+  node_mpu_layers{{"mpu/layers.py &#40;720 lines&#41;<br/>sharded layers"}}
+  node_mpu_mappings["mpu/mappings.py &#40;364 lines&#41;<br/>collective glue"]
+  node_mpu_init["mpu/initialize.py &#40;289 lines&#41;<br/>process groups"]
+end
+
+subgraph group_data["Unnamed"]
+  node_data_utils["data_utils.py &#40;838 lines&#41;<br/>data loaders"]
+  node_indexed_ds[("indexed_dataset.py &#40;483 lines&#41;<br/>mmap dataset")]
+  node_gpt2_ds["gpt2_dataset.py &#40;447 lines&#41;<br/>document dataset"]
+  node_helpers_cpp["helpers.cpp &#40;671 lines&#41;<br/>C++ extension"]
+  node_fused_kernels{{"fused_kernels &#40;169 lines init&#41;<br/>JIT kernels"}}
+  node_text_gen["text_generation_utils.py &#40;871 lines&#41;<br/>sampling engine"]
+end
+
+node_deepy -->|"launches"| node_train_entry
+node_deepy -->|"consume_deepy_args"| node_neox_args
+node_train_entry -->|"consume_neox_args"| node_neox_args
+node_neox_args -->|"field catalog"| node_neox_args_def
+node_neox_args -->|"ZeRO mapping"| node_ds_args
+node_neox_args -->|"build_tokenizer"| node_tokenizer
+node_training -->|"distributed setup"| node_meg_init
+node_training -->|"get_model"| node_gpt2_model
+node_gpt2_model -->|"stacks layers"| node_transformer
+node_transformer -->|"token ids in"| node_word_emb
+node_transformer -->|"rope or alibi"| node_pos_emb
+node_transformer -->|"fast norms"| node_fused_ln
+node_transformer -->|"sharded linears"| node_mpu_layers
+node_transformer -->|"gather and scatter"| node_mpu_mappings
+node_transformer -->|"expert layers"| node_moe_mlp
+node_router -->|"token dispatch"| node_moe_mlp
+node_transformer -->|"SSM variant"| node_mamba
+node_transformer -->|"RWKV variant"| node_rwkv
+node_transformer -->|"TE swap-in"| node_te
+node_training -->|"builds iterators"| node_data_utils
+node_data_utils -->|"wraps"| node_gpt2_ds
+node_data_utils -->|"mmap shards"| node_indexed_ds
+node_gpt2_ds -->|"random access"| node_indexed_ds
+node_indexed_ds -->|"C++ index"| node_helpers_cpp
+node_training -->|"get_optimizer"| node_optim
+node_training -->|"lr policy"| node_lr_sched
+node_training -->|"save and load"| node_ckpt
+node_training -->|"reports metrics"| node_logging_
+node_training -->|"timers"| node_utils
+node_training -->|"noise tracking"| node_gns
+node_training -->|"loads kernels"| node_fused_kernels
+node_meg_init -->|"build check"| node_fused_kernels
+node_training -->|"group setup"| node_mpu_init
+node_mpu_init -->|"provides groups"| node_mpu_layers
+node_gen_entry -->|"sampling"| node_text_gen
+node_text_gen -->|"reads config"| node_neox_args
+node_text_gen -->|"detokenize"| node_tokenizer
+
+click node_deepy "https://github.com/eleutherai/gpt-neox/blob/main/deepy.py"
+click node_train_entry "https://github.com/eleutherai/gpt-neox/blob/main/train.py"
+click node_gen_entry "https://github.com/eleutherai/gpt-neox/blob/main/generate.py"
+click node_neox_args "https://github.com/eleutherai/gpt-neox/blob/main/megatron/neox_arguments/arguments.py"
+click node_neox_args_def "https://github.com/eleutherai/gpt-neox/blob/main/megatron/neox_arguments/neox_args.py"
+click node_ds_args "https://github.com/eleutherai/gpt-neox/blob/main/megatron/neox_arguments/deepspeed_args.py"
+click node_tokenizer "https://github.com/eleutherai/gpt-neox/blob/main/megatron/tokenizer/tokenizer.py"
+click node_meg_init "https://github.com/eleutherai/gpt-neox/blob/main/megatron/initialize.py"
+click node_training "https://github.com/eleutherai/gpt-neox/blob/main/megatron/training.py"
+click node_logging_ "https://github.com/eleutherai/gpt-neox/blob/main/megatron/logging.py"
+click node_ckpt "https://github.com/eleutherai/gpt-neox/blob/main/megatron/checkpointing.py"
+click node_optim "https://github.com/eleutherai/gpt-neox/blob/main/megatron/optimizers.py"
+click node_lr_sched "https://github.com/eleutherai/gpt-neox/blob/main/megatron/learning_rates.py"
+click node_utils "https://github.com/eleutherai/gpt-neox/blob/main/megatron/utils.py"
+click node_gns "https://github.com/eleutherai/gpt-neox/blob/main/megatron/gradient_noise_scale/gradient_noise_scale.py"
+click node_transformer "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/transformer.py"
+click node_gpt2_model "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/gpt2_model.py"
+click node_word_emb "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/word_embeddings.py"
+click node_pos_emb "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/positional_embeddings.py"
+click node_fused_ln "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/fused_layer_norm.py"
+click node_moe_mlp "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/moe_mlp.py"
+click node_router "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/router.py"
+click node_mamba "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/mamba/mamba.py"
+click node_rwkv "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/rwkv/v6/rwkv.py"
+click node_te "https://github.com/eleutherai/gpt-neox/blob/main/megatron/model/transformer_engine.py"
+click node_mpu_layers "https://github.com/eleutherai/gpt-neox/blob/main/megatron/mpu/layers.py"
+click node_mpu_mappings "https://github.com/eleutherai/gpt-neox/blob/main/megatron/mpu/mappings.py"
+click node_mpu_init "https://github.com/eleutherai/gpt-neox/blob/main/megatron/mpu/initialize.py"
+click node_data_utils "https://github.com/eleutherai/gpt-neox/blob/main/megatron/data/data_utils.py"
+click node_indexed_ds "https://github.com/eleutherai/gpt-neox/blob/main/megatron/data/indexed_dataset.py"
+click node_gpt2_ds "https://github.com/eleutherai/gpt-neox/blob/main/megatron/data/gpt2_dataset.py"
+click node_helpers_cpp "https://github.com/eleutherai/gpt-neox/blob/main/megatron/data/helpers.cpp"
+click node_fused_kernels "https://github.com/eleutherai/gpt-neox/blob/main/megatron/fused_kernels/__init__.py"
+click node_text_gen "https://github.com/eleutherai/gpt-neox/blob/main/megatron/text_generation_utils.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_deepy,node_train_entry,node_gen_entry toneBlue
+class node_neox_args,node_neox_args_def,node_ds_args,node_tokenizer toneAmber
+class node_meg_init,node_training,node_logging_,node_ckpt,node_optim,node_lr_sched,node_utils,node_gns toneMint
+class node_transformer,node_gpt2_model,node_word_emb,node_pos_emb,node_fused_ln,node_moe_mlp,node_router,node_mamba,node_rwkv,node_te toneRose
+class node_mpu_layers,node_mpu_mappings,node_mpu_init toneIndigo
+class node_data_utils,node_indexed_ds,node_gpt2_ds,node_helpers_cpp,node_fused_kernels,node_text_gen toneTeal
