@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_cli["CLI Layer"]
+  node_chat_cli["chat<br/>entry"]
+  node_serve_cli["serve<br/>entry"]
+  node_compile_cli["compile<br/>entry"]
+  node_genconfig_cli["gen_config<br/>entry"]
+  node_jit_cli["jit<br/>entry"]
+  node_convert_cli["convert_weight<br/>entry"]
+end
+
+subgraph group_compile["Compilation Stack"]
+  node_passes["pass flow<br/>[pipeline.py]"]
+  node_fuse_pass["dequant fusion"]
+  node_kv_dispatch["KV cache dispatch"]
+  node_mem_est["memory estimation"]
+  node_pparallel["parallelism rewrite"]
+  node_lowbatch["low-batch spec"]
+  node_groupq["group quant"]
+  node_blockq["block-scale quant"]
+end
+
+subgraph group_modelzoo["Model Zoo"]
+  node_model_def[("model registry<br/>core")]
+  node_preset[("model presets<br/>[model_preset.py]")]
+  node_llama_model["llama def<br/>[llama_model.py]"]
+  node_qwen_model["qwen3 def<br/>[qwen3_model.py]"]
+  node_dsv2["deepseek v2 def"]
+  node_hf_loader["HF loader"]
+  node_std_loader["standard loader<br/>[standard_loader.py]"]
+end
+
+subgraph group_serve_py["Python Serving Layer"]
+  node_engine{{"MLCEngine<br/>core"}}
+  node_engine_base["engine base<br/>[engine_base.py]"]
+  node_radix["radix tree<br/>[radix_tree.py]"]
+  node_protocol["openai protocol"]
+end
+
+subgraph group_native["C++ Engine Core"]
+  node_cpp_engine{{"engine.cc<br/>core"}}
+  node_cpp_model{{"model.cc<br/>core"}}
+  node_gpu_sampler["gpu sampler<br/>[gpu_sampler.cc]"]
+  node_prefill["batch prefill"]
+  node_eagle_verify["eagle verify"]
+  node_radix_cc["C++ radix tree<br/>[radix_tree.cc]"]
+  node_tokenizers_cc["tokenizer bridge<br/>[tokenizers.cc]"]
+end
+
+subgraph group_platform["Platform Runtimes"]
+  node_android["android app"]
+  node_ios["ios app"]
+end
+
+node_chat_cli -->|"streams from"| node_engine
+node_serve_cli -->|"mounts"| node_protocol
+node_compile_cli -->|"executes"| node_passes
+node_genconfig_cli -->|"reads"| node_model_def
+node_jit_cli -.->|"wraps"| node_compile_cli
+node_convert_cli -->|"applies"| node_groupq
+node_convert_cli -->|"applies"| node_blockq
+node_passes -->|"includes"| node_fuse_pass
+node_passes -->|"includes"| node_kv_dispatch
+node_passes -->|"includes"| node_mem_est
+node_passes -->|"includes"| node_pparallel
+node_passes -->|"includes"| node_lowbatch
+node_fuse_pass -.->|"matches scheme of"| node_groupq
+node_model_def -->|"consults"| node_preset
+node_model_def -->|"registers"| node_llama_model
+node_model_def -->|"registers"| node_qwen_model
+node_model_def -->|"registers"| node_dsv2
+node_hf_loader -->|"loads into"| node_model_def
+node_std_loader -->|"loads into"| node_model_def
+node_hf_loader -.->|"input for"| node_convert_cli
+node_engine -.->|"extends"| node_engine_base
+node_engine -->|"caches prefixes in"| node_radix
+node_protocol -->|"feeds requests"| node_engine
+node_engine -->|"FFI calls"| node_cpp_engine
+node_hf_loader -.->|"weights to"| node_cpp_model
+node_cpp_engine -->|"steps"| node_cpp_model
+node_cpp_engine -->|"dispatches"| node_prefill
+node_cpp_engine -->|"dispatches"| node_eagle_verify
+node_cpp_engine -->|"samples via"| node_gpu_sampler
+node_cpp_engine -->|"reuses prefixes in"| node_radix_cc
+node_cpp_model -->|"detokenizes with"| node_tokenizers_cc
+node_prefill -.->|"runs forward in"| node_cpp_model
+node_radix_cc -.->|"mirrors"| node_radix
+node_cpp_engine -->|"packaged into"| node_android
+node_cpp_engine -->|"packaged into"| node_ios
+node_kv_dispatch -.->|"annotates"| node_model_def
+node_mem_est -.->|"sizes pools for"| node_engine
+
+click node_chat_cli "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/interface/chat.py"
+click node_serve_cli "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/interface/serve.py"
+click node_compile_cli "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/interface/compile.py"
+click node_genconfig_cli "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/interface/gen_config.py"
+click node_jit_cli "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/interface/jit.py"
+click node_convert_cli "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/interface/convert_weight.py"
+click node_passes "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/compiler_pass/pipeline.py"
+click node_fuse_pass "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/compiler_pass/fuse_dequantize_matmul_ewise.py"
+click node_kv_dispatch "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/compiler_pass/dispatch_kv_cache_creation.py"
+click node_mem_est "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/compiler_pass/estimate_memory_usage.py"
+click node_pparallel "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/compiler_pass/pipeline_parallel_rewrite.py"
+click node_lowbatch "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/compiler_pass/low_batch_specialization.py"
+click node_groupq "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/quantization/group_quantization.py"
+click node_blockq "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/quantization/block_scale_quantization.py"
+click node_model_def "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/model/model.py"
+click node_preset "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/model/model_preset.py"
+click node_llama_model "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/model/llama/llama_model.py"
+click node_qwen_model "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/model/qwen3/qwen3_model.py"
+click node_dsv2 "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/model/deepseek_v2/deepseek_v2_model.py"
+click node_hf_loader "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/loader/huggingface_loader.py"
+click node_std_loader "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/loader/standard_loader.py"
+click node_engine "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/serve/engine.py"
+click node_engine_base "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/serve/engine_base.py"
+click node_radix "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/serve/radix_tree.py"
+click node_protocol "https://github.com/mlc-ai/mlc-llm/blob/main/python/mlc_llm/protocol/openai_api_protocol.py"
+click node_cpp_engine "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/serve/engine.cc"
+click node_cpp_model "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/serve/model.cc"
+click node_gpu_sampler "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/serve/sampler/gpu_sampler.cc"
+click node_prefill "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/serve/engine_actions/batch_prefill_base.cc"
+click node_eagle_verify "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/serve/engine_actions/eagle_batch_verify.cc"
+click node_radix_cc "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/serve/radix_tree.cc"
+click node_tokenizers_cc "https://github.com/mlc-ai/mlc-llm/blob/main/cpp/tokenizers/tokenizers.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_chat_cli,node_serve_cli,node_compile_cli,node_genconfig_cli,node_jit_cli,node_convert_cli toneBlue
+class node_passes,node_fuse_pass,node_kv_dispatch,node_mem_est,node_pparallel,node_lowbatch,node_groupq,node_blockq toneAmber
+class node_model_def,node_preset,node_llama_model,node_qwen_model,node_dsv2,node_hf_loader,node_std_loader toneMint
+class node_engine,node_engine_base,node_radix,node_protocol toneRose
+class node_cpp_engine,node_cpp_model,node_gpu_sampler,node_prefill,node_eagle_verify,node_radix_cc,node_tokenizers_cc toneIndigo
+class node_android,node_ios toneTeal
