@@ -1,0 +1,134 @@
+flowchart TD
+
+subgraph group_core["Unnamed"]
+  node_gpt_class{{"GPT<br/>model class"}}
+  node_gpt_config["GPTConfig<br/>dataclass"]
+  node_tying["weight tying<br/>weight sharing"]
+  node_init_scaled["scaled init<br/>initializer"]
+  node_param_count["get_num_params<br/>helper"]
+  node_forward_fn["forward<br/>[model.py]"]
+  node_from_pretrained["from_pretrained<br/>loader"]
+  node_crop_fn["crop_block_size<br/>model surgery"]
+  node_optim_fn["configure_optimizers<br/>optimizer factory"]
+  node_mfu_fn["estimate_mfu<br/>metric"]
+  node_generate_fn["generate<br/>decoder"]
+end
+
+subgraph group_blocks["Unnamed"]
+  node_block_class["Block<br/>[model.py]"]
+  node_attn_class["CausalSelfAttention<br/>[model.py]"]
+  node_flash_path["flash attention<br/>fast path"]
+  node_manual_path["manual attention<br/>fallback"]
+  node_mlp_class["MLP<br/>feed-forward"]
+  node_norm_class["LayerNorm<br/>normalization"]
+end
+
+subgraph group_train["Unnamed"]
+  node_train_loop{{"training loop<br/>while True"}}
+  node_ddp_setup["DDP setup<br/>distributed"]
+  node_get_batch["get_batch<br/>loader"]
+  node_meta_vocab["meta.pkl vocab<br/>detection"]
+  node_amp_ctx["autocast + scaler<br/>mixed precision"]
+  node_compile_wrap["torch.compile<br/>compilation"]
+  node_lr_sched["get_lr<br/>schedule"]
+  node_eval_loss["estimate_loss<br/>eval"]
+  node_ckpt_save[("checkpoint<br/>persistence")]
+end
+
+subgraph group_data["Unnamed"]
+  node_configurator["configurator.py<br/>config loader"]
+  node_char_prep[("char prepare.py<br/>data prep")]
+  node_owt_prep[("owt prepare.py<br/>data prep")]
+  node_char_cfg["shakespeare char config"]
+  node_gpt2_cfg["train_gpt2 config<br/>[train_gpt2.py]"]
+  node_ft_cfg["finetune config"]
+end
+
+subgraph group_gen["Unnamed"]
+  node_sample_script["sample.py<br/>generation script"]
+  node_bench_script["bench.py<br/>benchmark script"]
+end
+
+node_gpt_config -->|"dataclass defaults"| node_gpt_class
+node_gpt_class -->|"n_layer copies"| node_block_class
+node_gpt_class -->|"shares embedding"| node_tying
+node_gpt_class -->|"residual projections"| node_init_scaled
+node_gpt_class -->|"prints size"| node_param_count
+node_gpt_class -->|"main path"| node_forward_fn
+node_gpt_class -->|"gpt2-* loaders"| node_from_pretrained
+node_gpt_class -->|"decay groups"| node_optim_fn
+node_gpt_class -->|"reports efficiency"| node_mfu_fn
+node_gpt_class -->|"autoregressive"| node_generate_fn
+node_block_class -->|"ln_1, ln_2"| node_norm_class
+node_block_class -->|"self-attention"| node_attn_class
+node_block_class -->|"feed-forward"| node_mlp_class
+node_attn_class -->|"if SDPA exists"| node_flash_path
+node_attn_class -->|"else"| node_manual_path
+node_from_pretrained -->|"shrink context"| node_crop_fn
+node_train_loop -->|"builds model"| node_gpt_class
+node_train_loop -->|"torchrun ranks"| node_ddp_setup
+node_train_loop -->|"fetches batches"| node_get_batch
+node_train_loop -->|"vocab detection"| node_meta_vocab
+node_train_loop -->|"mixed precision"| node_amp_ctx
+node_train_loop -->|"fused graph"| node_compile_wrap
+node_train_loop -->|"per-iter LR"| node_lr_sched
+node_train_loop -->|"periodic eval"| node_eval_loss
+node_eval_loss -->|"on best val"| node_ckpt_save
+node_get_batch -->|"uint16 bins"| node_char_prep
+node_get_batch -->|"uint16 bins"| node_owt_prep
+node_train_loop -->|"exec overrides"| node_configurator
+node_char_cfg -->|"baby GPT recipe"| node_train_loop
+node_gpt2_cfg -->|"124M recipe"| node_train_loop
+node_ft_cfg -->|"gpt2-xl finetune"| node_train_loop
+node_sample_script -->|"resumes ckpt"| node_gpt_class
+node_sample_script -->|"samples tokens"| node_generate_fn
+node_bench_script -->|"fixed 124M"| node_gpt_class
+node_bench_script -->|"prints MFU"| node_mfu_fn
+
+click node_gpt_class "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_gpt_config "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_tying "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_init_scaled "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_param_count "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_forward_fn "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_from_pretrained "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_crop_fn "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_optim_fn "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_mfu_fn "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_generate_fn "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_block_class "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_attn_class "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_flash_path "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_manual_path "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_mlp_class "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_norm_class "https://github.com/karpathy/nanoGPT/blob/master/model.py"
+click node_train_loop "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_ddp_setup "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_get_batch "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_meta_vocab "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_amp_ctx "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_compile_wrap "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_lr_sched "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_eval_loss "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_ckpt_save "https://github.com/karpathy/nanoGPT/blob/master/train.py"
+click node_configurator "https://github.com/karpathy/nanoGPT/blob/master/configurator.py"
+click node_char_prep "https://github.com/karpathy/nanoGPT/blob/master/data/shakespeare_char/prepare.py"
+click node_owt_prep "https://github.com/karpathy/nanoGPT/blob/master/data/openwebtext/prepare.py"
+click node_char_cfg "https://github.com/karpathy/nanoGPT/blob/master/config/train_shakespeare_char.py"
+click node_gpt2_cfg "https://github.com/karpathy/nanoGPT/blob/master/config/train_gpt2.py"
+click node_ft_cfg "https://github.com/karpathy/nanoGPT/blob/master/config/finetune_shakespeare.py"
+click node_sample_script "https://github.com/karpathy/nanoGPT/blob/master/sample.py"
+click node_bench_script "https://github.com/karpathy/nanoGPT/blob/master/bench.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_gpt_class,node_gpt_config,node_tying,node_init_scaled,node_param_count,node_forward_fn,node_from_pretrained,node_crop_fn,node_optim_fn,node_mfu_fn,node_generate_fn toneBlue
+class node_block_class,node_attn_class,node_flash_path,node_manual_path,node_mlp_class,node_norm_class toneAmber
+class node_train_loop,node_ddp_setup,node_get_batch,node_meta_vocab,node_amp_ctx,node_compile_wrap,node_lr_sched,node_eval_loss,node_ckpt_save toneMint
+class node_configurator,node_char_prep,node_owt_prep,node_char_cfg,node_gpt2_cfg,node_ft_cfg toneRose
+class node_sample_script,node_bench_script toneIndigo
