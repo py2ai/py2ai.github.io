@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "The Engine That Sharded BLOOM - Inside microsoft/DeepSpeed"
-description: A guided tour of the DeepSpeed training engine: ZeRO stages one through three, the DeepSpeedEngine forward-backward-step loop, pipe parallelism, the multi-node launcher, and the accelerator layer that spans six hardware vendors.
+description: "A guided tour of the DeepSpeed training engine: ZeRO stages one through three, the DeepSpeedEngine forward-backward-step loop, pipe parallelism, the multi-node launcher, and the accelerator layer that spans six hardware vendors."
 date: 2026-10-15
 header-img: "img/post-bg.jpg"
 permalink: /deepspeed/
