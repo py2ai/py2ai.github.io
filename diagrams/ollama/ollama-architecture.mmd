@@ -1,0 +1,104 @@
+flowchart TD
+
+subgraph group_cli["CLI Internals"]
+  node_cmd_go["cmd.go<br/>CLI wiring"]
+  node_launch_go["launch.go<br/>Agent launcher"]
+  node_tui_selector["TUI Selector<br/>Terminal UI"]
+  node_interactive["Interactive REPL<br/>Chat session"]
+  node_bench["Bench"]
+  node_create_st["Safetensors Import<br/>Converter"]
+end
+
+subgraph group_api["API Internals"]
+  node_routes{{"routes.go<br/>Gin router"}}
+  node_openai_compat["openai.go<br/>Translation package"]
+  node_api_types["api/types.go<br/>Contract types"]
+  node_mw_openai["OpenAI Middleware<br/>Request shaping"]
+  node_mw_anthropic["Anthropic Middleware<br/>Wire translation"]
+  node_envconfig["envconfig<br/>Settings registry"]
+end
+
+subgraph group_sched["Scheduling and Cloud"]
+  node_sched_2{{"Scheduler<br/>Load manager"}}
+  node_decision["Cloud Decision<br/>Router policy"]
+  node_progress_bar["Progress<br/>Shared bars"]
+  node_auth["Auth<br/>Request signing"]
+end
+
+subgraph group_runtime["Runtime and Devices"]
+  node_llm_server{{"LlamaServer<br/>Subprocess host"}}
+  node_discover_runner["Discovery Runner<br/>Device bootstrap"]
+  node_discover_amd["AMD Discovery<br/>ROCm scanner"]
+  node_native_probe["Native Probe<br/>Helper binary"]
+  node_ml_device["ml.Device<br/>Device abstraction"]
+  node_llama_cpp_compat["llama-ollama-compat<br/>C++ glue"]
+  node_mlx_client["MLX Runner<br/>Apple engine"]
+end
+
+subgraph group_compat["Output Parsing"]
+  node_template_go["template.go<br/>Renderer"]
+  node_parsers_root["Parser Registry<br/>Dispatch table"]
+  node_qwen3["Qwen3 Parser<br/>Family parser"]
+  node_thinking["Thinking Parser<br/>Generic parser"]
+  node_harmony["Harmony Parser<br/>Channel format"]
+end
+
+subgraph group_storage["Storage and Packaging"]
+  node_gguf[("gguf.go<br/>Weight metadata")]
+  node_manifest_go[("manifest.go<br/>Content store")]
+  node_modelfile["Modelfile Parser<br/>Grammar"]
+  node_transfer["Blob Transfer<br/>Downloader"]
+  node_format_h["Byte Formatting<br/>Presenter"]
+end
+
+node_cmd_go -->|"launch delegates"| node_launch_go
+node_cmd_go -->|"model picker"| node_tui_selector
+node_cmd_go -->|"run enters REPL"| node_interactive
+node_cmd_go -.->|"bench verb"| node_bench
+node_create_st -->|"writes GGUF layers"| node_gguf
+node_cmd_go -->|"HTTP to localhost:11434"| node_routes
+node_routes -->|"OpenAI translation"| node_openai_compat
+node_routes -->|"Anthropic translation"| node_mw_anthropic
+node_routes -->|"mounts middleware"| node_mw_openai
+node_openai_compat -->|"converts into"| node_api_types
+node_mw_anthropic -->|"converts into"| node_api_types
+node_routes -.->|"handlers speak"| node_api_types
+node_envconfig -.->|"caps and flags"| node_sched_2
+node_routes -->|"load request"| node_sched_2
+node_sched_2 -.->|"cloud or local"| node_decision
+node_decision -.->|"sign cloud calls"| node_auth
+node_sched_2 -.->|"load progress"| node_progress_bar
+node_sched_2 -->|"spawn runner"| node_llm_server
+node_sched_2 -.->|"metadata sizing"| node_gguf
+node_llm_server -->|"device list"| node_discover_runner
+node_discover_runner -->|"ROCm details"| node_discover_amd
+node_discover_runner -->|"runs probe binary"| node_native_probe
+node_discover_runner -->|"fills DeviceInfo"| node_ml_device
+node_llm_server -->|"engine surface"| node_llama_cpp_compat
+node_llm_server -.->|"alternative engine"| node_mlx_client
+node_llm_server -.->|"runner env vars"| node_envconfig
+node_routes -->|"render prompt"| node_template_go
+node_routes -->|"select parser"| node_parsers_root
+node_parsers_root -->|"family lookup"| node_qwen3
+node_parsers_root -.->|"fallback tags"| node_thinking
+node_parsers_root -.->|"gpt-oss channels"| node_harmony
+node_routes -->|"resolve blobs"| node_manifest_go
+node_manifest_go -->|"layer metadata"| node_gguf
+node_routes -.->|"create models"| node_modelfile
+node_modelfile -.->|"TEMPLATE clause"| node_template_go
+node_transfer -.->|"digest-addressed"| node_manifest_go
+node_progress_bar -.->|"sizes"| node_format_h
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cmd_go,node_launch_go,node_tui_selector,node_interactive,node_bench,node_create_st toneBlue
+class node_routes,node_openai_compat,node_api_types,node_mw_openai,node_mw_anthropic,node_envconfig toneAmber
+class node_sched_2,node_decision,node_progress_bar,node_auth toneMint
+class node_llm_server,node_discover_runner,node_discover_amd,node_native_probe,node_ml_device,node_llama_cpp_compat,node_mlx_client toneRose
+class node_template_go,node_parsers_root,node_qwen3,node_thinking,node_harmony toneIndigo
+class node_gguf,node_manifest_go,node_modelfile,node_transfer,node_format_h toneTeal
