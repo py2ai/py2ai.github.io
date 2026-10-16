@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_trainer_api["Unnamed"]
+  node_trainer{{"Trainer<br/>facade"}}
+  node_fit["fit validate test predict<br/>entries"]
+  node_run["_run<br/>setup"]
+  node_run_stage["_run_stage<br/>dispatch"]
+  node_sanity["sanity check<br/>preflight"]
+  node_save_ckpt["save_checkpoint<br/>persistence"]
+  node_accel_connector["AcceleratorConnector<br/>resolver"]
+  node_trainer_state["TrainerState<br/>[states.py]"]
+end
+
+subgraph group_module_contract["Unnamed"]
+  node_lightning_module{{"LightningModule<br/>contract"}}
+  node_steps["step hooks<br/>methods"]
+  node_configure_opt["configure_optimizers<br/>method"]
+  node_log_api["log and log_dict<br/>logging"]
+  node_backward_hook["backward and optimizer_step<br/>overrides"]
+  node_shim["_TrainerFabricShim<br/>bridge"]
+end
+
+subgraph group_loops["Unnamed"]
+  node_fit_loop["FitLoop<br/>outer loop"]
+  node_epoch_loop["training epoch loop<br/>batch loop"]
+  node_eval_loop["evaluation loop<br/>shared loop"]
+  node_predict_loop["prediction loop<br/>inference loop"]
+  node_auto_opt["automatic optimization<br/>optimizer driver"]
+  node_loop_base["Loop base<br/>state machine"]
+  node_fetchers["dataloader fetchers<br/>prefetch"]
+end
+
+subgraph group_strategies["Unnamed"]
+  node_strategy{{"Strategy<br/>base class"}}
+  node_ddp["DDPStrategy<br/>[ddp.py]"]
+  node_deepspeed["DeepSpeedStrategy<br/>[deepspeed.py]"]
+  node_fsdp["FSDPStrategy<br/>[fsdp.py]"]
+  node_model_parallel["ModelParallelStrategy<br/>[model_parallel.py]"]
+  node_single["SingleDeviceStrategy<br/>[single_device.py]"]
+  node_xla["XLA strategies<br/>strategy"]
+end
+
+subgraph group_fabric["Unnamed"]
+  node_fabric{{"Fabric<br/>expert API"}}
+  node_fabric_connector["fabric connector<br/>shared plumbing"]
+  node_wrappers["wrappers<br/>shells"]
+  node_tuner["Tuner<br/>hyperparameter tools"]
+  node_model_checkpoint["ModelCheckpoint<br/>callback"]
+  node_early_stopping["EarlyStopping<br/>callback"]
+end
+
+node_trainer -->|"public API"| node_fit
+node_fit -->|"one path"| node_run
+node_run -->|"after setup"| node_run_stage
+node_run -->|"eval first"| node_sanity
+node_run_stage -->|"on end"| node_save_ckpt
+node_trainer -->|"flag parsing"| node_accel_connector
+node_trainer -->|"status tracking"| node_trainer_state
+node_trainer -->|"user system"| node_lightning_module
+node_lightning_module -->|"overrides"| node_steps
+node_lightning_module -->|"optimizers"| node_configure_opt
+node_lightning_module -->|"metrics"| node_log_api
+node_lightning_module -->|"manual mode"| node_backward_hook
+node_shim -->|"fabric bridge"| node_lightning_module
+node_run_stage -->|"training"| node_fit_loop
+node_run_stage -->|"validation"| node_eval_loop
+node_fit_loop -->|"epochs"| node_epoch_loop
+node_fit_loop -->|"warm loaders"| node_fetchers
+node_epoch_loop -->|"per batch"| node_auto_opt
+node_epoch_loop -->|"epoch end"| node_eval_loop
+node_epoch_loop -->|"same base"| node_predict_loop
+node_auto_opt -->|"calls hooks"| node_backward_hook
+node_loop_base -->|"inherits"| node_fit_loop
+node_loop_base -->|"inherits"| node_epoch_loop
+node_loop_base -->|"inherits"| node_predict_loop
+node_accel_connector -->|"instantiates"| node_strategy
+node_strategy -->|"subclass"| node_ddp
+node_strategy -->|"subclass"| node_deepspeed
+node_strategy -->|"subclass"| node_fsdp
+node_strategy -->|"subclass"| node_model_parallel
+node_strategy -->|"subclass"| node_single
+node_strategy -->|"subclass"| node_xla
+node_auto_opt -->|"backward and step"| node_strategy
+node_save_ckpt -->|"distributed save"| node_strategy
+node_fabric -->|"shared core"| node_fabric_connector
+node_fabric_connector -->|"same strategies"| node_strategy
+node_fabric -->|"shells modules"| node_wrappers
+node_shim -->|"reuses engine"| node_fabric
+node_trainer -->|"tune entry"| node_tuner
+node_tuner -->|"shares callbacks"| node_model_checkpoint
+node_model_checkpoint -->|"writes files"| node_save_ckpt
+node_early_stopping -->|"halts loop"| node_fit_loop
+
+click node_trainer "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/trainer.py"
+click node_fit "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/trainer.py"
+click node_run "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/trainer.py"
+click node_run_stage "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/trainer.py"
+click node_sanity "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/trainer.py"
+click node_save_ckpt "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/trainer.py"
+click node_accel_connector "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/connectors/accelerator_connector.py"
+click node_trainer_state "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/trainer/states.py"
+click node_lightning_module "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/core/module.py"
+click node_steps "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/core/module.py"
+click node_configure_opt "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/core/module.py"
+click node_log_api "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/core/module.py"
+click node_backward_hook "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/core/module.py"
+click node_shim "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/core/module.py"
+click node_fit_loop "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/fit_loop.py"
+click node_epoch_loop "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/training_epoch_loop.py"
+click node_eval_loop "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/evaluation_loop.py"
+click node_predict_loop "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/prediction_loop.py"
+click node_auto_opt "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/optimization/automatic.py"
+click node_loop_base "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/loop.py"
+click node_fetchers "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/loops/fetchers.py"
+click node_strategy "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/strategy.py"
+click node_ddp "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/ddp.py"
+click node_deepspeed "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/deepspeed.py"
+click node_fsdp "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/fsdp.py"
+click node_model_parallel "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/model_parallel.py"
+click node_single "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/single_device.py"
+click node_xla "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/strategies/xla.py"
+click node_fabric "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/fabric/fabric.py"
+click node_fabric_connector "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/fabric/connector.py"
+click node_wrappers "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/fabric/wrappers.py"
+click node_tuner "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/tuner/tuning.py"
+click node_model_checkpoint "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/callbacks/model_checkpoint.py"
+click node_early_stopping "https://github.com/Lightning-AI/pytorch-lightning/blob/master/src/lightning/pytorch/callbacks/early_stopping.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_trainer,node_fit,node_run,node_run_stage,node_sanity,node_save_ckpt,node_accel_connector,node_trainer_state toneBlue
+class node_lightning_module,node_steps,node_configure_opt,node_log_api,node_backward_hook,node_shim toneAmber
+class node_fit_loop,node_epoch_loop,node_eval_loop,node_predict_loop,node_auto_opt,node_loop_base,node_fetchers toneMint
+class node_strategy,node_ddp,node_deepspeed,node_fsdp,node_model_parallel,node_single,node_xla toneRose
+class node_fabric,node_fabric_connector,node_wrappers,node_tuner,node_model_checkpoint,node_early_stopping toneIndigo
