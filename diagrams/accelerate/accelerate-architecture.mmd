@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_cli["Unnamed"]
+  node_cli_launch{{"accelerate launch<br/>CLI entry"}}
+  node_env_args["multi GPU env<br/>env writer"]
+  node_cli_config["config command<br/>CLI questionnaire"]
+  node_launchers["launchers.py<br/>fallback"]
+end
+
+subgraph group_core["Unnamed"]
+  node_accelerator{{"Accelerator<br/>orchestrator"}}
+  node_prepare["prepare<br/>entry method"]
+  node_prepare_model["prepare_model<br/>method"]
+  node_prepare_dl["prepare_data_loader<br/>method"]
+  node_prepare_opt["optimizer and scheduler<br/>methods"]
+  node_backward["backward<br/>method"]
+  node_clip["clip_grad_norm_<br/>method"]
+  node_gather["gather_for_metrics<br/>method"]
+  node_unwrap["unwrap_model<br/>method"]
+  node_save_state["save_state<br/>method"]
+  node_load_state["load_state<br/>method"]
+  node_get_state_dict["get_state_dict<br/>method"]
+  node_log["log<br/>method"]
+end
+
+subgraph group_state["Unnamed"]
+  node_partial_state["PartialState<br/>singleton"]
+  node_accel_state["AcceleratorState<br/>singleton"]
+  node_gradient_state["GradientState<br/>singleton"]
+  node_dist_types["device zoo<br/>backend enum"]
+end
+
+subgraph group_hooks["Unnamed"]
+  node_model_hook["ModelHook<br/>base hook"]
+  node_align["AlignDevicesHook<br/>[hooks.py]"]
+  node_cpu_offload_hook["CpuOffload<br/>hook"]
+  node_add_hook["add_hook_to_module<br/>installer"]
+end
+
+subgraph group_utils["Unnamed"]
+  node_big_modeling{{"big_modeling<br/>toolkit"}}
+  node_empty_weights["init_empty_weights<br/>context"]
+  node_load_ckpt["load_checkpoint_and_dispatch<br/>loader"]
+  node_layerwise["layerwise casting<br/>hooks"]
+  node_data_loader["DataLoaderShard<br/>[data_loader.py]"]
+  node_accelerated_opt["AcceleratedOptimizer<br/>wrapper"]
+  node_ops["operations<br/>tensor ops"]
+  node_modeling_utils["modeling utils<br/>weight tools"]
+  node_tracking["tracking<br/>reporters"]
+end
+
+node_cli_config -->|"config file"| node_cli_launch
+node_cli_launch -->|"per worker"| node_env_args
+node_cli_launch -->|"no torchrun path"| node_launchers
+node_env_args -->|"env vars"| node_partial_state
+node_launchers -->|"same env contract"| node_env_args
+node_accelerator -->|"user calls"| node_prepare
+node_prepare -->|"nn.Module"| node_prepare_model
+node_prepare -->|"DataLoader"| node_prepare_dl
+node_prepare -->|"optimizer, scheduler"| node_prepare_opt
+node_prepare_model -->|"attaches hooks"| node_align
+node_prepare_model -->|"huge models"| node_empty_weights
+node_prepare_dl -->|"shard wrapper"| node_data_loader
+node_prepare_opt -->|"wraps both"| node_accelerated_opt
+node_accelerated_opt -->|"checks sync"| node_gradient_state
+node_accelerator -->|"loss"| node_backward
+node_backward -->|"sync window"| node_gradient_state
+node_accelerator -->|"grad norms"| node_clip
+node_accelerator -->|"metrics"| node_gather
+node_gather -->|"padded gather"| node_ops
+node_accelerator -->|"save time"| node_unwrap
+node_accelerator -->|"resumability"| node_save_state
+node_accelerator -->|"resume"| node_load_state
+node_accelerator -->|"unified export"| node_get_state_dict
+node_accelerator -->|"tracking"| node_log
+node_log -->|"reporters"| node_tracking
+node_partial_state -->|"wraps"| node_accel_state
+node_accel_state -->|"shared state"| node_accelerator
+node_partial_state -->|"detects backend"| node_dist_types
+node_gradient_state -->|"boundary checks"| node_accelerator
+node_add_hook -->|"chains"| node_model_hook
+node_align -->|"subclass"| node_model_hook
+node_cpu_offload_hook -->|"subclass"| node_model_hook
+node_big_modeling -->|"installs"| node_cpu_offload_hook
+node_big_modeling -->|"dispatch_model"| node_align
+node_big_modeling -->|"sharded load"| node_load_ckpt
+node_big_modeling -->|"precision plan"| node_layerwise
+node_empty_weights -->|"meta tensors"| node_modeling_utils
+node_load_ckpt -->|"shard files"| node_modeling_utils
+node_ops -->|"pad and send"| node_prepare_dl
+node_modeling_utils -->|"clean weights"| node_unwrap
+
+click node_cli_launch "https://github.com/huggingface/accelerate/blob/main/src/accelerate/commands/launch.py"
+click node_env_args "https://github.com/huggingface/accelerate/blob/main/src/accelerate/commands/launch.py"
+click node_cli_config "https://github.com/huggingface/accelerate/blob/main/src/accelerate/commands/config/config.py"
+click node_launchers "https://github.com/huggingface/accelerate/blob/main/src/accelerate/launchers.py"
+click node_accelerator "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_prepare "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_prepare_model "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_prepare_dl "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_prepare_opt "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_backward "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_clip "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_gather "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_unwrap "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_save_state "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_load_state "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_get_state_dict "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_log "https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py"
+click node_partial_state "https://github.com/huggingface/accelerate/blob/main/src/accelerate/state.py"
+click node_accel_state "https://github.com/huggingface/accelerate/blob/main/src/accelerate/state.py"
+click node_gradient_state "https://github.com/huggingface/accelerate/blob/main/src/accelerate/state.py"
+click node_dist_types "https://github.com/huggingface/accelerate/blob/main/src/accelerate/state.py"
+click node_model_hook "https://github.com/huggingface/accelerate/blob/main/src/accelerate/hooks.py"
+click node_align "https://github.com/huggingface/accelerate/blob/main/src/accelerate/hooks.py"
+click node_cpu_offload_hook "https://github.com/huggingface/accelerate/blob/main/src/accelerate/hooks.py"
+click node_add_hook "https://github.com/huggingface/accelerate/blob/main/src/accelerate/hooks.py"
+click node_big_modeling "https://github.com/huggingface/accelerate/blob/main/src/accelerate/big_modeling.py"
+click node_empty_weights "https://github.com/huggingface/accelerate/blob/main/src/accelerate/big_modeling.py"
+click node_load_ckpt "https://github.com/huggingface/accelerate/blob/main/src/accelerate/big_modeling.py"
+click node_layerwise "https://github.com/huggingface/accelerate/blob/main/src/accelerate/big_modeling.py"
+click node_data_loader "https://github.com/huggingface/accelerate/blob/main/src/accelerate/data_loader.py"
+click node_accelerated_opt "https://github.com/huggingface/accelerate/blob/main/src/accelerate/optimizer.py"
+click node_ops "https://github.com/huggingface/accelerate/blob/main/src/accelerate/utils/operations.py"
+click node_modeling_utils "https://github.com/huggingface/accelerate/blob/main/src/accelerate/utils/modeling.py"
+click node_tracking "https://github.com/huggingface/accelerate/blob/main/src/accelerate/tracking.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_launch,node_env_args,node_cli_config,node_launchers toneBlue
+class node_accelerator,node_prepare,node_prepare_model,node_prepare_dl,node_prepare_opt,node_backward,node_clip,node_gather,node_unwrap,node_save_state,node_load_state,node_get_state_dict,node_log toneAmber
+class node_partial_state,node_accel_state,node_gradient_state,node_dist_types toneMint
+class node_model_hook,node_align,node_cpu_offload_hook,node_add_hook toneRose
+class node_big_modeling,node_empty_weights,node_load_ckpt,node_layerwise,node_data_loader,node_accelerated_opt,node_ops,node_modeling_utils,node_tracking toneIndigo
