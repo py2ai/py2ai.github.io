@@ -1,0 +1,134 @@
+flowchart TD
+
+subgraph group_api["Unnamed"]
+  node_booster{{"Booster<br/>facade"}}
+  node_boost_fn["boost&#40;&#41;<br/>entry method"]
+  node_execute["execute_pipeline<br/>stage driver"]
+  node_lora_api["enable_lora<br/>adapter hook"]
+  node_initialize["colossalai.initialize<br/>boot"]
+  node_accelerator["Booster Accelerator<br/>hardware shim"]
+end
+
+subgraph group_plugins["Unnamed"]
+  node_plugin_base["Plugin<br/>interface"]
+  node_hybrid_plugin{{"HybridParallelPlugin<br/>flagship"}}
+  node_hp_module["HybridParallelModule<br/>wrapper"]
+  node_naive_opt["HybridParallelNaiveOptimizer"]
+  node_hp_amp["HybridParallelAMPOptimizer"]
+  node_hp_zero["HybridParallelZeroOptimizer"]
+  node_gemini_plugin["GeminiPlugin<br/>[gemini_plugin.py]"]
+  node_zero_plugin["LowLevelZeroPlugin"]
+  node_fsdp_plugin["TorchFSDPPlugin<br/>bridge"]
+  node_ddp_plugin["TorchDDPPlugin<br/>bridge"]
+end
+
+subgraph group_gemini["Unnamed"]
+  node_gemini_ddp{{"GeminiDDP<br/>model wrapper"}}
+  node_gemini_mgr["GeminiManager<br/>coordinator"]
+  node_chunk_manager["ChunkManager<br/>allocator"]
+  node_chunk["Chunk<br/>memory unit"]
+  node_gemini_opt["GeminiOptimizer"]
+  node_gemini_hook["GeminiHook<br/>migration hooks"]
+  node_placement["PlacementPolicy"]
+  node_low_level_optim["LowLevelZeroOptimizer<br/>[low_level_optim.py]"]
+  node_zero_hook["ZeroHook<br/>async reduce"]
+  node_grad_store["GradientStore<br/>bookkeeping"]
+end
+
+subgraph group_parallel["Unnamed"]
+  node_shardformer["Shardformer<br/>engine"]
+  node_shard_config["ShardConfig<br/>[shard_config.py]"]
+  node_llama_policy["LlamaPolicy<br/>[llama.py]"]
+  node_d_tensor["DTensor<br/>layout engine"]
+end
+
+subgraph group_support["Unnamed"]
+  node_moe["MoE operation<br/>experts"]
+  node_fp8["FP8 quantization<br/>precision"]
+  node_triton_kernels["Triton kernels<br/>GPU code"]
+  node_inference[("Colossal-Inference<br/>serving")]
+end
+
+node_booster -->|"main call"| node_boost_fn
+node_booster -->|"stage runs"| node_execute
+node_booster -->|"adapter helpers"| node_lora_api
+node_booster -->|"hardware and IO"| node_accelerator
+node_initialize -->|"context ready"| node_booster
+node_boost_fn -->|"selects strategy"| node_plugin_base
+node_plugin_base -->|"3D path"| node_hybrid_plugin
+node_plugin_base -->|"chunk path"| node_gemini_plugin
+node_plugin_base -->|"zero path"| node_zero_plugin
+node_plugin_base -->|"native path"| node_fsdp_plugin
+node_plugin_base -->|"baseline path"| node_ddp_plugin
+node_hybrid_plugin -->|"wraps model"| node_hp_module
+node_hybrid_plugin -->|"dp option"| node_naive_opt
+node_hybrid_plugin -->|"amp option"| node_hp_amp
+node_hybrid_plugin -->|"zero option"| node_hp_zero
+node_hp_zero -->|"inherits"| node_low_level_optim
+node_zero_plugin -->|"installs"| node_low_level_optim
+node_low_level_optim -->|"async grads"| node_zero_hook
+node_low_level_optim -->|"buckets"| node_grad_store
+node_gemini_plugin -->|"model shell"| node_gemini_ddp
+node_gemini_plugin -->|"optimizer shell"| node_gemini_opt
+node_gemini_ddp -->|"manager"| node_gemini_mgr
+node_gemini_mgr -->|"allocations"| node_chunk_manager
+node_gemini_mgr -->|"residency plan"| node_placement
+node_chunk_manager -->|"creates"| node_chunk
+node_gemini_opt -->|"state chunks"| node_chunk_manager
+node_gemini_ddp -->|"attaches"| node_gemini_hook
+node_gemini_hook -->|"migrates"| node_chunk
+node_hybrid_plugin -->|"tp surgery"| node_shardformer
+node_shardformer -->|"reads flags"| node_shard_config
+node_llama_policy -->|"per model recipe"| node_shardformer
+node_shardformer -->|"layout conversion"| node_d_tensor
+node_moe -->|"expert layers"| node_hp_module
+node_fp8 -->|"casts modules"| node_hp_module
+node_triton_kernels -->|"fast ops"| node_inference
+node_execute -->|"schedule hooks"| node_hybrid_plugin
+
+click node_booster "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/booster.py"
+click node_boost_fn "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/booster.py"
+click node_execute "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/booster.py"
+click node_lora_api "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/booster.py"
+click node_initialize "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/initialize.py"
+click node_accelerator "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/accelerator.py"
+click node_plugin_base "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/plugin_base.py"
+click node_hybrid_plugin "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/hybrid_parallel_plugin.py"
+click node_hp_module "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/hybrid_parallel_plugin.py"
+click node_naive_opt "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/hybrid_parallel_plugin.py"
+click node_hp_amp "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/hybrid_parallel_plugin.py"
+click node_hp_zero "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/hybrid_parallel_plugin.py"
+click node_gemini_plugin "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/gemini_plugin.py"
+click node_zero_plugin "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/low_level_zero_plugin.py"
+click node_fsdp_plugin "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/torch_fsdp_plugin.py"
+click node_ddp_plugin "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/booster/plugin/torch_ddp_plugin.py"
+click node_gemini_ddp "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/gemini_ddp.py"
+click node_gemini_mgr "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/gemini_mgr.py"
+click node_chunk_manager "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/chunk/manager.py"
+click node_chunk "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/chunk/chunk.py"
+click node_gemini_opt "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/gemini_optimizer.py"
+click node_gemini_hook "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/gemini_hook.py"
+click node_placement "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/gemini/placement_policy.py"
+click node_low_level_optim "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/low_level/low_level_optim.py"
+click node_zero_hook "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/low_level/zero_hook.py"
+click node_grad_store "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/zero/low_level/bookkeeping/gradient_store.py"
+click node_shardformer "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/shardformer/shard/shardformer.py"
+click node_shard_config "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/shardformer/shard/shard_config.py"
+click node_llama_policy "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/shardformer/policies/llama.py"
+click node_d_tensor "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/tensor/d_tensor/api.py"
+click node_moe "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/moe/_operation.py"
+click node_fp8 "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/quantization/fp8.py"
+click node_triton_kernels "https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/kernel/triton/rms_layernorm.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_booster,node_boost_fn,node_execute,node_lora_api,node_initialize,node_accelerator toneBlue
+class node_plugin_base,node_hybrid_plugin,node_hp_module,node_naive_opt,node_hp_amp,node_hp_zero,node_gemini_plugin,node_zero_plugin,node_fsdp_plugin,node_ddp_plugin toneAmber
+class node_gemini_ddp,node_gemini_mgr,node_chunk_manager,node_chunk,node_gemini_opt,node_gemini_hook,node_placement,node_low_level_optim,node_zero_hook,node_grad_store toneMint
+class node_shardformer,node_shard_config,node_llama_policy,node_d_tensor toneRose
+class node_moe,node_fp8,node_triton_kernels,node_inference toneIndigo
