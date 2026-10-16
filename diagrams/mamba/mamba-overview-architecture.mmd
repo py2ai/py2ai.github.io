@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_interface["Unnamed"]
+  node_pkg{{"mamba_ssm<br/>package facade"}}
+end
+
+subgraph group_blocks["Unnamed"]
+  node_mamba{{"Mamba block<br/>selective ssm"}}
+  node_mamba2{{"Mamba2 block<br/>ssd block"}}
+  node_mamba3{{"Mamba3 block<br/>inference-first ssm"}}
+  node_block["Block wrapper<br/>residual norm"]
+  node_mixer{{"MixerModel + LM head<br/>full model"}}
+end
+
+subgraph group_scan["Unnamed"]
+  node_sscan["selective_scan_fn<br/>autograd op"]
+  node_ssd["chunked SSD op<br/>triton scan"]
+  node_triton[("Triton kernels<br/>kernel family")]
+end
+
+subgraph group_cuda["Unnamed"]
+  node_csrc[("selective_scan CUDA<br/>custom extension")]
+end
+
+subgraph group_serving["Unnamed"]
+  node_gen["generation utils<br/>inference engine"]
+  node_tp["tensor parallel<br/>distributed layer"]
+end
+
+node_pkg -->|"exports"| node_mamba
+node_pkg -->|"exports"| node_mamba2
+node_pkg -->|"exports"| node_mamba3
+node_pkg -->|"exports"| node_mixer
+node_pkg -->|"exports utilities"| node_tp
+node_mixer -->|"create_block"| node_block
+node_block -->|"mixer slot"| node_mamba2
+node_mamba -->|"fast path"| node_sscan
+node_mamba2 -->|"chunked scan"| node_ssd
+node_mamba3 -->|"siso and mimo kernels"| node_triton
+node_sscan -->|"custom CUDA"| node_csrc
+node_ssd -->|"composes kernels"| node_triton
+node_mixer -->|"generate loop"| node_gen
+node_gen -->|"single-token step"| node_mamba
+node_tp -->|"sharded projections"| node_mamba2
+
+click node_mamba "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/modules/mamba_simple.py"
+click node_mamba2 "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/modules/mamba2.py"
+click node_mamba3 "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/modules/mamba3.py"
+click node_block "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/modules/block.py"
+click node_mixer "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/models/mixer_seq_simple.py"
+click node_sscan "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/ops/selective_scan_interface.py"
+click node_ssd "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/ops/triton/ssd_combined.py"
+click node_gen "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/utils/generation.py"
+click node_tp "https://github.com/state-spaces/mamba/blob/main/mamba_ssm/distributed/tensor_parallel.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_pkg toneBlue
+class node_mamba,node_mamba2,node_mamba3,node_block,node_mixer toneAmber
+class node_sscan,node_ssd,node_triton toneMint
+class node_csrc toneRose
+class node_gen,node_tp toneIndigo
