@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_recipe_layer["Unnamed"]
+  node_recipes{{"Recipe<br/>[__init__.py]"}}
+  node_delayed["DelayedScaling<br/>recipe"]
+  node_current["Float8CurrentScaling<br/>recipe"]
+  node_mxfp8r["MXFP8BlockScaling<br/>recipe"]
+  node_nvfp4r["NVFP4BlockScaling<br/>recipe"]
+  node_autocast["fp8_autocast<br/>region manager"]
+end
+
+subgraph group_modules["Unnamed"]
+  node_base_mod{{"TransformerEngineBaseModule<br/>module contract"}}
+  node_linear["Linear<br/>fused GEMM"]
+  node_lnlinear["LayerNormLinear<br/>fused GEMM"]
+  node_lnmlp["LayerNormMLP<br/>fused block"]
+  node_layernorm["LayerNorm<br/>norm module"]
+  node_rmsnorm["RMSNorm<br/>norm module"]
+  node_grouped["GroupedLinear<br/>fused GEMM"]
+  node_attn{{"DotProductAttention<br/>fused attention"}}
+  node_mha["MultiheadAttention<br/>compat wrapper"]
+  node_tlayer["TransformerLayer<br/>full block"]
+end
+
+subgraph group_low_precision["Unnamed"]
+  node_quantizer{{"Quantizer<br/>abstract base"}}
+  node_f8tensor["Float8Tensor<br/>quantized tensor"]
+  node_blockwise["Float8BlockwiseQTensor<br/>quantized tensor"]
+  node_mxfp8["MXFP8Tensor<br/>quantized tensor"]
+  node_nvfp4["NVFP4Tensor<br/>quantized tensor"]
+end
+
+subgraph group_moe["Unnamed"]
+  node_router["MoE router<br/>routing"]
+  node_ep["expert parallel<br/>distributed MoE"]
+  node_perm["permutation<br/>token motion"]
+  node_moeops[("MoE ops<br/>operation graph")]
+end
+
+subgraph group_infra["Unnamed"]
+  node_dist[("distributed ops<br/>collectives and recompute")]
+  node_graph["CUDA graphs<br/>capture"]
+  node_offload["CPU offload<br/>memory"]
+  node_jit["JIT fusion<br/>compilation"]
+  node_optim["fused optimizers<br/>optimization"]
+  node_kernels["C++ core<br/>kernel bindings"]
+end
+
+subgraph group_frameworks["Unnamed"]
+  node_jax{{"JAX quantize<br/>second framework"}}
+  node_jax_moe["JAX MoE<br/>second framework"]
+  node_debug[("debug suite<br/>numerics tools")]
+end
+
+node_recipes -->|"subclass"| node_delayed
+node_recipes -->|"subclass"| node_current
+node_recipes -->|"subclass"| node_mxfp8r
+node_recipes -->|"subclass"| node_nvfp4r
+node_autocast -->|"applies"| node_recipes
+node_autocast -->|"requests quantizers"| node_quantizer
+node_f8tensor -->|"implements"| node_quantizer
+node_blockwise -->|"implements"| node_quantizer
+node_mxfp8 -->|"implements"| node_quantizer
+node_nvfp4 -->|"implements"| node_quantizer
+node_base_mod -->|"subclass"| node_linear
+node_base_mod -->|"subclass"| node_lnlinear
+node_base_mod -->|"subclass"| node_grouped
+node_base_mod -->|"subclass"| node_attn
+node_tlayer -->|"contains"| node_lnmlp
+node_tlayer -->|"contains"| node_attn
+node_lnmlp -->|"sibling fusion"| node_lnlinear
+node_lnlinear -->|"fuses norm"| node_layernorm
+node_linear -->|"casts under"| node_autocast
+node_linear -->|"calls kernels"| node_kernels
+node_layernorm -->|"sibling norm"| node_rmsnorm
+node_mha -->|"wraps"| node_attn
+node_dist -->|"recompute wraps"| node_tlayer
+node_graph -->|"captures"| node_tlayer
+node_offload -->|"offloads weights"| node_base_mod
+node_jit -->|"fuses ops"| node_base_mod
+node_optim -->|"steps weights"| node_base_mod
+node_grouped -->|"feeds experts"| node_router
+node_router -->|"produces maps"| node_moeops
+node_moeops -->|"communicates"| node_ep
+node_perm -->|"moves tokens"| node_moeops
+node_ep -->|"uses collectives"| node_dist
+node_jax -->|"shares"| node_recipes
+node_jax_moe -->|"mirrors"| node_ep
+node_debug -->|"inspects"| node_quantizer
+
+click node_recipes "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/common/recipe/__init__.py"
+click node_delayed "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/common/recipe/__init__.py"
+click node_current "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/common/recipe/__init__.py"
+click node_mxfp8r "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/common/recipe/__init__.py"
+click node_nvfp4r "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/common/recipe/__init__.py"
+click node_autocast "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/quantization.py"
+click node_base_mod "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/base.py"
+click node_linear "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/linear.py"
+click node_lnlinear "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/layernorm_linear.py"
+click node_lnmlp "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/layernorm_mlp.py"
+click node_layernorm "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/layernorm.py"
+click node_rmsnorm "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/rmsnorm.py"
+click node_grouped "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/module/grouped_linear.py"
+click node_attn "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/attention/dot_product_attention/dot_product_attention.py"
+click node_mha "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/attention/multi_head_attention.py"
+click node_tlayer "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/transformer.py"
+click node_quantizer "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/quantized_tensor.py"
+click node_f8tensor "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/tensor/float8_tensor.py"
+click node_blockwise "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/tensor/float8_blockwise_tensor.py"
+click node_mxfp8 "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/tensor/mxfp8_tensor.py"
+click node_nvfp4 "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/tensor/nvfp4_tensor.py"
+click node_router "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/router.py"
+click node_ep "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/ep.py"
+click node_perm "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/permutation.py"
+click node_moeops "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/ops/basic/dispatch.py"
+click node_dist "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/distributed.py"
+click node_graph "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/graph.py"
+click node_offload "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/cpu_offload.py"
+click node_jit "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/jit.py"
+click node_optim "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/pytorch/optimizers/fused_adam.py"
+click node_kernels "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/common/init_python.cpp"
+click node_jax "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/jax/quantize/helper.py"
+click node_jax_moe "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/jax/moe.py"
+click node_debug "https://github.com/NVIDIA/TransformerEngine/blob/main/transformer_engine/debug/__init__.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_recipes,node_delayed,node_current,node_mxfp8r,node_nvfp4r,node_autocast toneBlue
+class node_base_mod,node_linear,node_lnlinear,node_lnmlp,node_layernorm,node_rmsnorm,node_grouped,node_attn,node_mha,node_tlayer toneAmber
+class node_quantizer,node_f8tensor,node_blockwise,node_mxfp8,node_nvfp4 toneMint
+class node_router,node_ep,node_perm,node_moeops toneRose
+class node_dist,node_graph,node_offload,node_jit,node_optim,node_kernels toneIndigo
+class node_jax,node_jax_moe,node_debug toneTeal
