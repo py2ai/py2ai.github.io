@@ -1,0 +1,130 @@
+flowchart TD
+
+subgraph group_recipes["Unnamed"]
+  node_tune_cli{{"tune.py<br/>cli root"}}
+  node_config["config layer<br/>yaml plumbing"]
+  node_sft_single{{"full finetune<br/>sft recipe"}}
+  node_sft_dist{{"distributed finetune<br/>fsdp recipe"}}
+  node_lora_single["lora finetune<br/>adapter recipe"]
+  node_qat_recipes["QAT recipes<br/>quant aware"]
+  node_kd_recipes["KD recipes<br/>distillation"]
+  node_eval_scripts["eval and gen scripts<br/>post scripts"]
+end
+
+subgraph group_modules["Unnamed"]
+  node_transformer{{"TransformerDecoder<br/>model core"}}
+  node_attention["MultiHeadAttention<br/>[attention.py]"]
+  node_kv_cache["KVCache<br/>decode cache"]
+  node_rope["position embeddings<br/>rope"]
+  node_feedforward["FeedForward<br/>mlp"]
+  node_loss["chunked CE<br/>memory loss"]
+  node_kd_losses["KD losses<br/>forward kl"]
+  node_lora{{"LoRALinear<br/>adapter"}}
+  node_qat_linear["QATLoRALinear<br/>adapter"]
+  node_nf4["NF4Linear<br/>qlora dtype"]
+end
+
+subgraph group_models["Unnamed"]
+  node_model_zoo[("models package<br/>20 families")]
+  node_llama3{{"llama3 builders<br/>family impl"}}
+  node_llama4["llama4<br/>moe family"]
+end
+
+subgraph group_data["Unnamed"]
+  node_instruct["instruct datasets<br/>sft data"]
+  node_preference["preference datasets<br/>rlhf data"]
+  node_packed["packed datasets<br/>throughput data"]
+end
+
+subgraph group_infra["Unnamed"]
+  node_checkpointer{{"checkpointers<br/>io layer"}}
+  node_distributed{{"_distributed.py<br/>fsdp2 utils"}}
+  node_memory["memory.py<br/>optimization knobs"]
+  node_metric_logging["metric logging<br/>loggers"]
+  node_generation["generation<br/>inference engine"]
+end
+
+subgraph group_rl["Unnamed"]
+  node_dpo_loss["DPOLoss<br/>preference loss"]
+  node_ppo_loss["PPOLoss<br/>rl loss"]
+  node_rewards["rlhf rewards<br/>reward helpers"]
+  node_grpo["dev GRPO<br/>rl experiments"]
+  node_rl_workers[("dev RL workers<br/>vllm stack")]
+end
+
+node_tune_cli -->|"loads yaml"| node_config
+node_tune_cli -->|"tune run"| node_sft_single
+node_config -->|"instantiate"| node_sft_single
+node_config -->|"instantiate"| node_lora_single
+node_sft_single -->|"builds model"| node_transformer
+node_sft_dist -->|"FSDP2"| node_distributed
+node_sft_dist -->|"sharded saves"| node_checkpointer
+node_sft_single -->|"full saves"| node_checkpointer
+node_sft_single -->|"activation knobs"| node_memory
+node_sft_single -->|"packing"| node_packed
+node_sft_single -->|"chunked CE"| node_loss
+node_sft_single -->|"logs"| node_metric_logging
+node_lora_single -->|"adapters"| node_lora
+node_lora_single -->|"adapter saves"| node_checkpointer
+node_qat_recipes -->|"fake quant"| node_qat_linear
+node_kd_recipes -->|"KL losses"| node_kd_losses
+node_eval_scripts -->|"inference"| node_generation
+node_transformer -->|"layer stack"| node_attention
+node_transformer -->|"mlp"| node_feedforward
+node_transformer -->|"positions"| node_rope
+node_attention -->|"cache update"| node_kv_cache
+node_llama3 -->|"instantiates"| node_transformer
+node_model_zoo -->|"family"| node_llama3
+node_model_zoo -->|"moe family"| node_llama4
+node_sft_single -->|"chat data"| node_instruct
+node_nf4 -->|"QLoRA base"| node_lora
+node_grpo -->|"scoring"| node_rewards
+node_grpo -->|"vllm rollout"| node_rl_workers
+node_rl_workers -->|"rollout"| node_generation
+node_ppo_loss -->|"advantages"| node_rewards
+node_generation -->|"decode cache"| node_kv_cache
+
+click node_tune_cli "https://github.com/pytorch/torchtune/blob/main/torchtune/_cli/tune.py"
+click node_config "https://github.com/pytorch/torchtune/blob/main/torchtune/config/_parse.py"
+click node_sft_single "https://github.com/pytorch/torchtune/blob/main/recipes/full_finetune_single_device.py"
+click node_sft_dist "https://github.com/pytorch/torchtune/blob/main/recipes/full_finetune_distributed.py"
+click node_lora_single "https://github.com/pytorch/torchtune/blob/main/recipes/lora_finetune_single_device.py"
+click node_qat_recipes "https://github.com/pytorch/torchtune/blob/main/recipes/qat_distributed.py"
+click node_kd_recipes "https://github.com/pytorch/torchtune/blob/main/recipes/knowledge_distillation_single_device.py"
+click node_eval_scripts "https://github.com/pytorch/torchtune/blob/main/recipes/eleuther_eval.py"
+click node_transformer "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/transformer.py"
+click node_attention "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/attention.py"
+click node_kv_cache "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/kv_cache.py"
+click node_rope "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/position_embeddings.py"
+click node_feedforward "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/feed_forward.py"
+click node_loss "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/loss/ce_chunked_output_loss.py"
+click node_kd_losses "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/loss/kd_losses.py"
+click node_lora "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/peft/lora.py"
+click node_qat_linear "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/peft/lora.py"
+click node_nf4 "https://github.com/pytorch/torchtune/blob/main/torchtune/modules/low_precision/nf4_linear.py"
+click node_llama3 "https://github.com/pytorch/torchtune/blob/main/torchtune/models/llama3/_model_builders.py"
+click node_instruct "https://github.com/pytorch/torchtune/blob/main/torchtune/datasets/_instruct.py"
+click node_preference "https://github.com/pytorch/torchtune/blob/main/torchtune/datasets/_preference.py"
+click node_packed "https://github.com/pytorch/torchtune/blob/main/torchtune/datasets/_packed.py"
+click node_checkpointer "https://github.com/pytorch/torchtune/blob/main/torchtune/training/checkpointing/_checkpointer.py"
+click node_distributed "https://github.com/pytorch/torchtune/blob/main/torchtune/training/_distributed.py"
+click node_memory "https://github.com/pytorch/torchtune/blob/main/torchtune/training/memory.py"
+click node_metric_logging "https://github.com/pytorch/torchtune/blob/main/torchtune/training/metric_logging.py"
+click node_generation "https://github.com/pytorch/torchtune/blob/main/torchtune/generation/_generation.py"
+click node_dpo_loss "https://github.com/pytorch/torchtune/blob/main/torchtune/rlhf/loss/dpo.py"
+click node_ppo_loss "https://github.com/pytorch/torchtune/blob/main/torchtune/rlhf/loss/ppo.py"
+click node_rewards "https://github.com/pytorch/torchtune/blob/main/torchtune/rlhf/rewards.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_tune_cli,node_config,node_sft_single,node_sft_dist,node_lora_single,node_qat_recipes,node_kd_recipes,node_eval_scripts toneBlue
+class node_transformer,node_attention,node_kv_cache,node_rope,node_feedforward,node_loss,node_kd_losses,node_lora,node_qat_linear,node_nf4 toneAmber
+class node_model_zoo,node_llama3,node_llama4 toneMint
+class node_instruct,node_preference,node_packed toneRose
+class node_checkpointer,node_distributed,node_memory,node_metric_logging,node_generation toneIndigo
+class node_dpo_loss,node_ppo_loss,node_rewards,node_grpo,node_rl_workers toneTeal
