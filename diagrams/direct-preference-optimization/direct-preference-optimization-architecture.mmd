@@ -1,0 +1,97 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+end
+
+subgraph group_data["Unnamed"]
+end
+
+subgraph group_batching["Unnamed"]
+end
+
+subgraph group_losses["Unnamed"]
+end
+
+subgraph group_trainer["Unnamed"]
+end
+
+subgraph group_distribution["Unnamed"]
+end
+
+node_main["train.py main"]
+node_worker["worker_main"]
+node_cfg["config.yaml"]
+node_dpo_yaml["loss/dpo.yaml"]
+node_model_yaml["model/pythia69.yaml"]
+node_archive["archive loading"]
+node_extract_prompt["extract_anthropic_prompt"]
+node_hh["get_hh"]
+node_shp["get_shp"]
+node_se["get_se"]
+node_get_dataset["get_dataset"]
+node_tokenize["tokenize_batch_element"]
+node_labels["label masking"]
+node_collate["get_collate_fn"]
+node_iterator["get_batch_iterator"]
+node_preference_loss["preference_loss"]
+node_ipo["IPO branch"]
+node_cdpo["conservative DPO"]
+node_rewards["implicit rewards"]
+node_get_logps["_get_batch_logps"]
+node_basic["BasicTrainer"]
+node_concat_in["concatenated_inputs"]
+node_concat_fwd["concatenated_forward"]
+node_metrics["get_batch_metrics"]
+node_trainloop["train loop"]
+node_save["save"]
+node_fsdp["FSDPTrainer"]
+node_actckpt["activation checkpointing"]
+node_tpt["TensorParallelTrainer"]
+node_distutils["utils.py sharding"]
+node_seedctx["TemporarilySeededRandom"]
+node_dropout["disable_dropout"]
+node_blockclass["get_block_class_from_model"]
+
+node_main -->|"mp.spawn 111"| node_worker
+node_main -->|"hydra compose"| node_cfg
+node_cfg -->|"loss group"| node_dpo_yaml
+node_cfg -->|"model group"| node_model_yaml
+node_worker -->|"getattr 40"| node_basic
+node_archive -->|"SFT init weights"| node_worker
+node_get_dataset -->|"dispatch"| node_hh
+node_get_dataset -->|"dispatch"| node_shp
+node_get_dataset -->|"dispatch"| node_se
+node_hh -->|"prompt split"| node_extract_prompt
+node_iterator -->|"per name"| node_get_dataset
+node_iterator -->|"per pair"| node_tokenize
+node_tokenize -->|"prompt mask"| node_labels
+node_collate -->|"yields batches"| node_iterator
+node_tokenize -->|"elements"| node_collate
+node_basic -->|"train and eval"| node_iterator
+node_basic -->|"metrics path"| node_concat_fwd
+node_concat_fwd -->|"build tensors"| node_concat_in
+node_concat_fwd -->|"logits to logps"| node_get_logps
+node_metrics -->|"dpo branch"| node_preference_loss
+node_preference_loss -->|"loss=ipo"| node_ipo
+node_preference_loss -->|"smoothing &gt; 0"| node_cdpo
+node_preference_loss -->|"metrics"| node_rewards
+node_preference_loss -->|"four vectors"| node_get_logps
+node_trainloop -->|"per microbatch"| node_metrics
+node_trainloop -->|"every eval"| node_save
+node_fsdp -->|"subclass"| node_basic
+node_fsdp -->|"optional wrap"| node_actckpt
+node_fsdp -->|"wrap class"| node_blockclass
+node_fsdp -->|"gather on save"| node_distutils
+node_tpt -->|"subclass"| node_basic
+node_worker -->|"policy and reference"| node_dropout
+node_iterator -->|"stable shuffles"| node_seedctx
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_cfg,node_dpo_yaml,node_model_yaml,node_archive,node_extract_prompt,node_hh,node_shp,node_se,node_get_dataset,node_tokenize,node_labels,node_collate,node_iterator,node_preference_loss,node_ipo,node_cdpo,node_rewards,node_get_logps,node_basic,node_concat_in,node_concat_fwd,node_metrics,node_trainloop,node_save,node_fsdp,node_actckpt,node_tpt,node_distutils,node_seedctx,node_dropout,node_blockclass toneIndigo
+class node_worker toneRose
