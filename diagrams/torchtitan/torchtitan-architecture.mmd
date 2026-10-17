@@ -1,0 +1,131 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+  node_train_entry["train.py main&#40;&#41;<br/>entry"]
+  node_config_loader["ConfigLoader<br/>[loader.py]"]
+  node_parallelism_cfg["ParallelismConfig<br/>[parallelism.py]"]
+  node_recipes["llama3 recipes<br/>config"]
+  node_override["Override system<br/>config"]
+end
+
+subgraph group_engine["Unnamed"]
+  node_trainer{{"Trainer<br/>orchestrator"}}
+  node_engine{{"TrainingEngine<br/>core"}}
+end
+
+subgraph group_parallelism["Unnamed"]
+  node_par_ctx{{"ParallelismContext<br/>mesh"}}
+  node_fsdp["FSDP2 application<br/>sharding"]
+  node_decoder_sharding["decoder sharding"]
+  node_remat["Activation remat<br/>memory"]
+  node_cuda_graph["CUDA graphs<br/>memory"]
+  node_batch_inv["Batch-invariant mode<br/>memory"]
+end
+
+subgraph group_models["Unnamed"]
+  node_decoder{{"Decoder &#40;common&#41;<br/>model"}}
+  node_attention["Attention zoo<br/>model"]
+  node_rope["RoPE<br/>model"]
+  node_moe["MoE<br/>model"]
+  node_dist_moe{{"Dist-MoE runtime<br/>model"}}
+  node_llama3["Llama3 model<br/>[model.py]"]
+  node_sd_adapter["State dict adapter<br/>model"]
+end
+
+subgraph group_components["Unnamed"]
+  node_loss["Loss<br/>compute"]
+  node_optim["Optim<br/>compute"]
+  node_packing["Data packing<br/>compute"]
+  node_tokenizer["Tokenizer<br/>compute"]
+  node_checkpointer[("DCP CheckpointManager<br/>storage")]
+  node_base_ckpt[("BaseCheckpointManager<br/>storage")]
+  node_metrics["MetricsProcessor<br/>observability"]
+end
+
+subgraph group_quant_rl["Unnamed"]
+  node_quant_convert["Quantization converters<br/>[quantization.py]"]
+  node_mxfp8["MXFP8Linear<br/>quant"]
+  node_nvfp4["NVFP4Linear<br/>quant"]
+  node_rl_train{{"TitanRL trainer<br/>[train.py]"}}
+  node_rl_generate["TitanRL generate<br/>[generate.py]"]
+end
+
+node_train_entry -->|"load&#40;&#41;"| node_config_loader
+node_config_loader -->|"parallelism tree"| node_parallelism_cfg
+node_config_loader -->|"apply overrides"| node_override
+node_recipes -->|"set degrees"| node_parallelism_cfg
+node_config_loader -->|"config.build&#40;&#41;"| node_trainer
+node_trainer -->|"forward_backward"| node_engine
+node_engine -->|"mesh resolution"| node_par_ctx
+node_par_ctx -->|"dp_shard placements"| node_fsdp
+node_fsdp -->|"placement configs"| node_decoder_sharding
+node_engine -->|"activation policy"| node_remat
+node_engine -->|"wrap fwd/bwd"| node_cuda_graph
+node_engine -->|"optional numerics"| node_batch_inv
+node_engine -->|"model_parts"| node_decoder
+node_decoder -->|"block forward"| node_attention
+node_decoder -->|"positions"| node_rope
+node_decoder -->|"expert blocks"| node_moe
+node_moe -->|"fused dispatch"| node_dist_moe
+node_llama3 -->|"subclass"| node_decoder
+node_llama3 -->|"HF conversion"| node_sd_adapter
+node_engine -->|"loss_fn"| node_loss
+node_engine -->|"optim_step"| node_optim
+node_engine -->|"microbatches"| node_packing
+node_trainer -->|"build"| node_tokenizer
+node_engine -->|"save/load"| node_checkpointer
+node_checkpointer -->|"extends"| node_base_ckpt
+node_trainer -->|"log window"| node_metrics
+node_parallelism_cfg -->|"transform hooks"| node_quant_convert
+node_quant_convert -->|"rewrite Linear"| node_mxfp8
+node_quant_convert -->|"rewrite Linear"| node_nvfp4
+node_rl_train -->|"world sizes"| node_parallelism_cfg
+node_rl_train -->|"generator proc mesh"| node_rl_generate
+node_recipes -->|"build_model_config"| node_llama3
+
+click node_train_entry "https://github.com/pytorch/torchtitan/blob/main/torchtitan/train.py"
+click node_config_loader "https://github.com/pytorch/torchtitan/blob/main/torchtitan/config/loader.py"
+click node_parallelism_cfg "https://github.com/pytorch/torchtitan/blob/main/torchtitan/config/parallelism.py"
+click node_recipes "https://github.com/pytorch/torchtitan/blob/main/torchtitan_recipes/models/llama3.py"
+click node_override "https://github.com/pytorch/torchtitan/blob/main/torchtitan/config/override.py"
+click node_trainer "https://github.com/pytorch/torchtitan/blob/main/torchtitan/trainer.py"
+click node_engine "https://github.com/pytorch/torchtitan/blob/main/torchtitan/training_engine.py"
+click node_par_ctx "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/parallelism_context.py"
+click node_fsdp "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/fsdp.py"
+click node_decoder_sharding "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/decoder_sharding.py"
+click node_remat "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/activation_remat.py"
+click node_cuda_graph "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/cuda_graph.py"
+click node_batch_inv "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/batch_invariant.py"
+click node_decoder "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/decoder.py"
+click node_attention "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/attention/attention.py"
+click node_rope "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/rope.py"
+click node_moe "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/moe/moe.py"
+click node_dist_moe "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/dist_moe/runtime.py"
+click node_llama3 "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/llama3/model.py"
+click node_sd_adapter "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/llama3/state_dict_adapter.py"
+click node_loss "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/loss.py"
+click node_optim "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/optim/optimizer.py"
+click node_packing "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/data/packing.py"
+click node_tokenizer "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/tokenizer.py"
+click node_checkpointer "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/checkpointer/dcp.py"
+click node_base_ckpt "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/checkpointer/base.py"
+click node_metrics "https://github.com/pytorch/torchtitan/blob/main/torchtitan/observability/metrics.py"
+click node_quant_convert "https://github.com/pytorch/torchtitan/blob/main/torchtitan/config/transform/quantization.py"
+click node_mxfp8 "https://github.com/pytorch/torchtitan/blob/main/torchtitan/quantization/mxfp8/linear.py"
+click node_nvfp4 "https://github.com/pytorch/torchtitan/blob/main/torchtitan/quantization/nvfp4/linear.py"
+click node_rl_train "https://github.com/pytorch/torchtitan/blob/main/torchtitan/rl/train.py"
+click node_rl_generate "https://github.com/pytorch/torchtitan/blob/main/torchtitan/rl/generate.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_train_entry,node_config_loader,node_parallelism_cfg,node_recipes,node_override toneBlue
+class node_trainer,node_engine toneAmber
+class node_par_ctx,node_fsdp,node_decoder_sharding,node_remat,node_cuda_graph,node_batch_inv toneMint
+class node_decoder,node_attention,node_rope,node_moe,node_dist_moe,node_llama3,node_sd_adapter toneRose
+class node_loss,node_optim,node_packing,node_tokenizer,node_checkpointer,node_base_ckpt,node_metrics toneIndigo
+class node_quant_convert,node_mxfp8,node_nvfp4,node_rl_train,node_rl_generate toneTeal

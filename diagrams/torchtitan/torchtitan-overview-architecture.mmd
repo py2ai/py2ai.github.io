@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+  node_train_entry["train.py main&#40;&#41;<br/>entry"]
+  node_config["ConfigLoader / ParallelismConfig<br/>[parallelism.py]"]
+end
+
+subgraph group_orchestration["Unnamed"]
+  node_trainer["Trainer<br/>orchestrator"]
+  node_engine{{"TrainingEngine<br/>core"}}
+end
+
+subgraph group_parallelism["Unnamed"]
+  node_par_ctx{{"ParallelismContext<br/>mesh"}}
+  node_fsdp["FSDP2 application<br/>sharding"]
+  node_cp["Context Parallel<br/>sharding"]
+end
+
+subgraph group_models["Unnamed"]
+  node_decoder["Decoder &#40;common&#41;<br/>model"]
+  node_moe["MoE<br/>model"]
+end
+
+subgraph group_components["Unnamed"]
+  node_loss["Loss components<br/>compute"]
+  node_optim["Optim components<br/>compute"]
+  node_checkpointer[("DCP CheckpointManager<br/>storage")]
+end
+
+node_train_entry -->|"ConfigLoader&#40;&#41;.load&#40;&#41;"| node_config
+node_train_entry -->|"config.build&#40;&#41;"| node_trainer
+node_config -->|"Trainer.Config"| node_trainer
+node_trainer -->|"engine_cls&#40;config&#41;"| node_engine
+node_trainer -->|"load/save per step"| node_checkpointer
+node_engine -->|"build mesh"| node_par_ctx
+node_par_ctx -->|"dp_shard axis"| node_fsdp
+node_par_ctx -->|"cp axis"| node_cp
+node_engine -->|"model_parts forward"| node_decoder
+node_decoder -->|"_apply_fsdp"| node_fsdp
+node_decoder -->|"expert layers"| node_moe
+node_engine -->|"loss_fn"| node_loss
+node_engine -->|"optim_step&#40;&#41;"| node_optim
+node_engine -->|"Stateful states"| node_checkpointer
+
+click node_train_entry "https://github.com/pytorch/torchtitan/blob/main/torchtitan/train.py"
+click node_config "https://github.com/pytorch/torchtitan/blob/main/torchtitan/config/parallelism.py"
+click node_trainer "https://github.com/pytorch/torchtitan/blob/main/torchtitan/trainer.py"
+click node_engine "https://github.com/pytorch/torchtitan/blob/main/torchtitan/training_engine.py"
+click node_par_ctx "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/parallelism_context.py"
+click node_fsdp "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/fsdp.py"
+click node_cp "https://github.com/pytorch/torchtitan/blob/main/torchtitan/distributed/context_parallel.py"
+click node_decoder "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/decoder.py"
+click node_moe "https://github.com/pytorch/torchtitan/blob/main/torchtitan/models/common/moe/moe.py"
+click node_loss "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/loss.py"
+click node_optim "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/optim/optimizer.py"
+click node_checkpointer "https://github.com/pytorch/torchtitan/blob/main/torchtitan/components/checkpointer/dcp.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_train_entry,node_config toneBlue
+class node_trainer,node_engine toneAmber
+class node_par_ctx,node_fsdp,node_cp toneMint
+class node_decoder,node_moe toneRose
+class node_loss,node_optim,node_checkpointer toneIndigo
