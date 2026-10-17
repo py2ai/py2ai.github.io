@@ -1,0 +1,121 @@
+flowchart TD
+
+subgraph group_api["Unnamed"]
+  node_py_api["flash_attn_interface<br/>entry"]
+  node_autograd["Autograd Wrappers"]
+  node_bert_padding["bert_padding<br/>[bert_padding.py]"]
+  node_cpp_api["flash_api.cpp<br/>binding"]
+end
+
+subgraph group_cuda2["Unnamed"]
+  node_sm80_kernels{{"src/ Kernel Grid<br/>kernels"}}
+  node_kernel_traits["kernel_traits.h<br/>[kernel_traits.h]"]
+  node_fwd_kernel["flash_fwd_kernel.h<br/>[flash_fwd_kernel.h]"]
+  node_bwd_kernel["flash_bwd_kernel.h<br/>[flash_bwd_kernel.h]"]
+  node_softmax_h["softmax.h<br/>math"]
+  node_generate_kernels["generate_kernels.py<br/>codegen"]
+end
+
+subgraph group_fa3["Unnamed"]
+  node_fa3_api["FA3 interface<br/>entry"]
+  node_fa3_mainloop["sm90 mainloop<br/>kernel"]
+  node_fa3_epilogue["epilogue_fwd.hpp<br/>[epilogue_fwd.hpp]"]
+  node_fa3_tile_sched["tile_scheduler.hpp<br/>[tile_scheduler.hpp]"]
+  node_fa3_instantiations{{"instantiations<br/>codegen"}}
+  node_fa3_gen["FA3 generate_kernels.py<br/>codegen"]
+end
+
+subgraph group_fa4["Unnamed"]
+  node_fa4_interface["FA4 interface.py<br/>entry"]
+  node_fa4_fwd["flash_fwd.py<br/>kernel"]
+  node_fa4_bwd["flash_bwd.py<br/>kernel"]
+  node_fa4_sm100["Blackwell sm100<br/>kernel"]
+  node_fa4_mla["MLA kernels"]
+  node_fa4_softmax["softmax.py<br/>math"]
+end
+
+subgraph group_models["Unnamed"]
+  node_mha["mha.py<br/>[mha.py]"]
+  node_block["block.py<br/>[block.py]"]
+  node_gpt["models/gpt.py<br/>[gpt.py]"]
+  node_rotary["layers/rotary.py<br/>ops"]
+  node_fused_dense["ops/fused_dense.py<br/>[fused_dense.py]"]
+  node_layer_norm["ops/layer_norm.py<br/>[layer_norm.py]"]
+end
+
+subgraph group_extras["Unnamed"]
+  node_triton_exp["Triton variant<br/>experimental"]
+  node_ck_backend{{"CK backend"}}
+  node_training["training/"]
+end
+
+node_py_api -->|"torch.ops"| node_cpp_api
+node_py_api -->|"wraps"| node_autograd
+node_bert_padding -->|"varlen prep"| node_py_api
+node_cpp_api -->|"launches"| node_sm80_kernels
+node_sm80_kernels -->|"configured by"| node_kernel_traits
+node_sm80_kernels -->|"instantiates"| node_fwd_kernel
+node_sm80_kernels -->|"instantiates"| node_bwd_kernel
+node_sm80_kernels -->|"shares"| node_softmax_h
+node_generate_kernels -->|"emits"| node_sm80_kernels
+node_fa3_api -->|"drives"| node_fa3_mainloop
+node_fa3_api -->|"drives"| node_fa3_epilogue
+node_fa3_api -->|"uses"| node_fa3_tile_sched
+node_fa3_gen -->|"emits"| node_fa3_instantiations
+node_fa3_instantiations -->|"templates"| node_fa3_mainloop
+node_fa4_interface -->|"dispatches"| node_fa4_fwd
+node_fa4_interface -->|"dispatches"| node_fa4_bwd
+node_fa4_fwd -->|"arch path"| node_fa4_sm100
+node_fa4_fwd -->|"uses"| node_fa4_softmax
+node_fa4_interface -->|"dispatches"| node_fa4_mla
+node_mha -->|"calls"| node_py_api
+node_block -->|"contains"| node_mha
+node_gpt -->|"stacks"| node_block
+node_gpt -->|"applies"| node_rotary
+node_gpt -->|"mlp"| node_fused_dense
+node_gpt -->|"norms"| node_layer_norm
+node_training -->|"trains"| node_gpt
+node_ck_backend -->|"same surface"| node_py_api
+node_triton_exp -->|"variant"| node_py_api
+
+click node_py_api "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_interface.py"
+click node_autograd "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_interface.py"
+click node_bert_padding "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/bert_padding.py"
+click node_cpp_api "https://github.com/Dao-AILab/flash-attention/blob/main/csrc/flash_attn/flash_api.cpp"
+click node_kernel_traits "https://github.com/Dao-AILab/flash-attention/blob/main/csrc/flash_attn/src/kernel_traits.h"
+click node_fwd_kernel "https://github.com/Dao-AILab/flash-attention/blob/main/csrc/flash_attn/src/flash_fwd_kernel.h"
+click node_bwd_kernel "https://github.com/Dao-AILab/flash-attention/blob/main/csrc/flash_attn/src/flash_bwd_kernel.h"
+click node_softmax_h "https://github.com/Dao-AILab/flash-attention/blob/main/csrc/flash_attn/src/softmax.h"
+click node_generate_kernels "https://github.com/Dao-AILab/flash-attention/blob/main/csrc/flash_attn/src/generate_kernels.py"
+click node_fa3_api "https://github.com/Dao-AILab/flash-attention/blob/main/hopper/flash_attn_interface.py"
+click node_fa3_mainloop "https://github.com/Dao-AILab/flash-attention/blob/main/hopper/mainloop_fwd_sm90_tma_gmma_ws.hpp"
+click node_fa3_epilogue "https://github.com/Dao-AILab/flash-attention/blob/main/hopper/epilogue_fwd.hpp"
+click node_fa3_tile_sched "https://github.com/Dao-AILab/flash-attention/blob/main/hopper/tile_scheduler.hpp"
+click node_fa3_gen "https://github.com/Dao-AILab/flash-attention/blob/main/hopper/generate_kernels.py"
+click node_fa4_interface "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/cute/interface.py"
+click node_fa4_fwd "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/cute/flash_fwd.py"
+click node_fa4_bwd "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/cute/flash_bwd.py"
+click node_fa4_sm100 "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/cute/flash_fwd_sm100.py"
+click node_fa4_mla "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/cute/flash_fwd_mla_sm100.py"
+click node_fa4_softmax "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/cute/softmax.py"
+click node_mha "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/modules/mha.py"
+click node_block "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/modules/block.py"
+click node_gpt "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/models/gpt.py"
+click node_rotary "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/layers/rotary.py"
+click node_fused_dense "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/ops/fused_dense.py"
+click node_layer_norm "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/ops/layer_norm.py"
+click node_triton_exp "https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_triton.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_api,node_autograd,node_bert_padding,node_cpp_api toneBlue
+class node_sm80_kernels,node_kernel_traits,node_fwd_kernel,node_bwd_kernel,node_softmax_h,node_generate_kernels toneAmber
+class node_fa3_api,node_fa3_mainloop,node_fa3_epilogue,node_fa3_tile_sched,node_fa3_instantiations,node_fa3_gen toneMint
+class node_fa4_interface,node_fa4_fwd,node_fa4_bwd,node_fa4_sm100,node_fa4_mla,node_fa4_softmax toneRose
+class node_mha,node_block,node_gpt,node_rotary,node_fused_dense,node_layer_norm toneIndigo
+class node_triton_exp,node_ck_backend,node_training toneTeal
