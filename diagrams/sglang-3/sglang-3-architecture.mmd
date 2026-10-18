@@ -1,0 +1,100 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+end
+
+subgraph group_frontend["Unnamed"]
+end
+
+subgraph group_scheduler["Unnamed"]
+end
+
+subgraph group_policy["Unnamed"]
+end
+
+subgraph group_cache["Unnamed"]
+end
+
+subgraph group_memory["Unnamed"]
+end
+
+subgraph group_executor["Unnamed"]
+end
+
+node_http_server["launch_server"]
+node_engine["Engine entry"]
+node_tokenizer_manager["TokenizerManager"]
+node_batch_tokenizer["batch tokenizer"]
+node_detokenizer["DetokenizerManager"]
+node_run_scheduler_process["run_scheduler_process"]
+node_scheduler_init["Scheduler init"]
+node_event_loop["event_loop_normal / overlap"]
+node_get_next_batch["get_next_batch_to_run"]
+node_new_batch_prefill["get_new_batch_prefill"]
+node_update_running["update_running_batch"]
+node_run_batch["run_batch"]
+node_schedule_policy["SchedulePolicy"]
+node_lpm["LPM / DFS / HRRN"]
+node_policy_downgrade["queue-size downgrade"]
+node_prefill_adder["PrefillAdder"]
+node_add_one_req["add_one_req"]
+node_budget_state["budget_state"]
+node_radix_cache["RadixCache"]
+node_match_prefix["match_prefix"]
+node_insert["insert / _insert_cache"]
+node_evict["evict + lock refs"]
+node_tree_registry["tree core registry"]
+node_rust_core["RustUnifiedTreeCore"]
+node_cache_controller["HiCacheController"]
+node_paged_alloc["PagedTokenToKVPoolAllocator"]
+node_memory_pool["MHATokenToKVPool"]
+node_req_to_token["ReqToTokenPool"]
+node_tp_worker["TpModelWorker"]
+node_forward_gen["forward_batch_generation"]
+
+node_engine -->|"programmatic entry"| node_tokenizer_manager
+node_http_server -->|"FastAPI"| node_tokenizer_manager
+node_tokenizer_manager -->|"tokenize"| node_batch_tokenizer
+node_run_scheduler_process -->|"enter loop"| node_event_loop
+node_scheduler_init -->|"resolve backend"| node_tree_registry
+node_tree_registry -->|"rust factory"| node_rust_core
+node_scheduler_init -->|"tree_cache"| node_radix_cache
+node_event_loop -->|"every tick"| node_get_next_batch
+node_get_next_batch -->|"new work"| node_new_batch_prefill
+node_get_next_batch -->|"decode"| node_update_running
+node_new_batch_prefill -->|"calc_priority"| node_schedule_policy
+node_schedule_policy -->|"sort"| node_lpm
+node_schedule_policy -->|"big queue"| node_policy_downgrade
+node_new_batch_prefill -->|"budgeted adder"| node_prefill_adder
+node_prefill_adder --> node_add_one_req
+node_prefill_adder --> node_budget_state
+node_add_one_req -->|"match + pin node"| node_radix_cache
+node_prefill_adder -->|"lock_node"| node_radix_cache
+node_add_one_req -->|"reserve check"| node_paged_alloc
+node_event_loop --> node_run_batch
+node_run_batch -->|"forward"| node_tp_worker
+node_tp_worker --> node_forward_gen
+node_forward_gen -->|"write KV"| node_memory_pool
+node_run_batch -->|"alloc_extend"| node_paged_alloc
+node_paged_alloc -->|"free slots"| node_memory_pool
+node_radix_cache --> node_match_prefix
+node_radix_cache --> node_insert
+node_radix_cache --> node_evict
+node_insert -->|"kv rows"| node_req_to_token
+node_req_to_token -->|"indices"| node_memory_pool
+node_radix_cache -->|"hierarchical"| node_cache_controller
+node_cache_controller -->|"offload"| node_memory_pool
+node_tp_worker -->|"token ids"| node_detokenizer
+node_detokenizer -->|"deltas"| node_tokenizer_manager
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_http_server toneMint
+class node_engine,node_tokenizer_manager,node_batch_tokenizer,node_detokenizer,node_event_loop,node_get_next_batch,node_new_batch_prefill,node_update_running,node_run_batch,node_schedule_policy,node_lpm,node_prefill_adder,node_add_one_req,node_budget_state,node_match_prefix,node_evict,node_tree_registry,node_rust_core,node_paged_alloc,node_memory_pool,node_req_to_token,node_forward_gen toneIndigo
+class node_run_scheduler_process,node_scheduler_init,node_policy_downgrade,node_tp_worker toneRose
+class node_radix_cache,node_insert,node_cache_controller toneAmber
