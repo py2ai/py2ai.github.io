@@ -1,0 +1,107 @@
+flowchart TD
+
+subgraph group_orchestration["Unnamed"]
+end
+
+subgraph group_api["Unnamed"]
+end
+
+subgraph group_infer["Unnamed"]
+end
+
+subgraph group_batching["Unnamed"]
+end
+
+subgraph group_alloc["Unnamed"]
+end
+
+subgraph group_transport["Unnamed"]
+end
+
+subgraph group_serving["Unnamed"]
+end
+
+subgraph group_model["Unnamed"]
+end
+
+node_launcher_main["launcher main&#40;&#41;"]
+node_find_num_shards["find_num_shards"]
+node_spawn_shards["spawn_shards"]
+node_shard_manager["shard_manager"]
+node_spawn_webserver["spawn_webserver"]
+node_routes["Axum routes"]
+node_run_wiring["server::run wiring"]
+node_infer_struct["Infer facade"]
+node_semaphore["concurrency semaphore"]
+node_cont_stream["continuation stream"]
+node_validation_pool["Validation pool"]
+node_valid_request["ValidGenerateRequest"]
+node_tool_grammar["tool + grammar layer"]
+node_backend_v3["BackendV3"]
+node_batching_task["batching_task"]
+node_prefill_fn["prefill&#40;&#41;"]
+node_decode_fn["decode&#40;&#41;"]
+node_filter_batch["filter_batch"]
+node_queue_state["Queue state task"]
+node_next_batch["budgeted next_batch"]
+node_chunking["prefill chunking"]
+node_radix_alloc["RadixAllocator"]
+node_radix_trie["RadixTrie"]
+node_connect_backend["connect_backend"]
+node_sharded_client["ShardedClient"]
+node_master_discovery["service_discovery"]
+node_tgs["TextGenerationService"]
+node_py_decode["Decode + concat"]
+node_cache["Cache"]
+node_flash_lm["FlashCausalLM"]
+
+node_launcher_main -->|"picks shard count"| node_find_num_shards
+node_launcher_main -->|"ranks 0..N"| node_spawn_shards
+node_spawn_shards -->|"thread per rank"| node_shard_manager
+node_shard_manager -->|"RANK / WORLD_SIZE"| node_tgs
+node_spawn_shards -->|"after all Ready"| node_spawn_webserver
+node_spawn_webserver -->|"router binary"| node_run_wiring
+node_run_wiring -->|"builds"| node_routes
+node_run_wiring -->|"Infer::new"| node_infer_struct
+node_routes -->|"handlers"| node_infer_struct
+node_infer_struct -->|"try_acquire"| node_semaphore
+node_infer_struct -->|"validate&#40;&#41;"| node_validation_pool
+node_validation_pool -->|"checked output"| node_valid_request
+node_infer_struct -->|"tools"| node_tool_grammar
+node_infer_struct -->|"schedule&#40;&#41;"| node_backend_v3
+node_infer_struct -->|"wraps stream"| node_cont_stream
+node_cont_stream -->|"re-schedules"| node_backend_v3
+node_backend_v3 -->|"notify_one"| node_batching_task
+node_batching_task -->|"next_batch"| node_queue_state
+node_queue_state -->|"budgets"| node_next_batch
+node_next_batch -->|"allocate&#40;&#41;"| node_radix_alloc
+node_next_batch -->|"split prompt"| node_chunking
+node_radix_alloc -->|"find / insert / evict"| node_radix_trie
+node_connect_backend -->|"warmup"| node_sharded_client
+node_connect_backend -->|"BackendV3::new"| node_backend_v3
+node_batching_task --> node_prefill_fn
+node_batching_task --> node_decode_fn
+node_prefill_fn -->|"client.prefill"| node_sharded_client
+node_decode_fn -->|"client.decode"| node_sharded_client
+node_prefill_fn -->|"prune finished"| node_filter_batch
+node_decode_fn -->|"prune finished"| node_filter_batch
+node_filter_batch -->|"filter_batch"| node_sharded_client
+node_sharded_client -->|"connect_uds"| node_master_discovery
+node_master_discovery -->|"UDS per rank"| node_tgs
+node_tgs -->|"pop / set"| node_cache
+node_tgs -->|"Decode"| node_py_decode
+node_py_decode -->|"pop batches"| node_cache
+node_py_decode -->|"generate_token"| node_flash_lm
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_launcher_main,node_find_num_shards,node_spawn_shards,node_shard_manager,node_infer_struct,node_semaphore,node_cont_stream,node_validation_pool,node_tool_grammar,node_backend_v3,node_prefill_fn,node_decode_fn,node_filter_batch,node_next_batch,node_chunking,node_radix_alloc,node_radix_trie,node_connect_backend,node_master_discovery,node_tgs,node_py_decode,node_flash_lm toneIndigo
+class node_spawn_webserver,node_routes,node_run_wiring,node_valid_request toneMint
+class node_batching_task,node_queue_state toneRose
+class node_sharded_client toneBlue
+class node_cache toneAmber
