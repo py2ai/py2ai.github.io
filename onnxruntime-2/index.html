@@ -1,0 +1,2142 @@
+
+
+  <!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Theme initialization to prevent flash -->
+  <script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
+
+  <!-- Pinterest & Google verification -->
+  <meta name="p:domain_verify" content="fb68a8459fe32b8b072bcd5cc620d125"/>
+  <meta name="google-site-verification" content="WAkFPi5cvufClnQetgIl0STmvvwHhVf8jfyENFWhsxU" />
+  <meta name="google-site-verification" content="g2pFZlv-92XQD67BPgiVHsvZ4TZH13Ucvmmvvv36kU4" />
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>From Run() to Buffers - The ONNX Runtime Execution Machinery | PyShine</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="From Run() to Buffers - The ONNX Runtime Execution Machinery" />
+<meta name="author" content="PyShine" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="A second source tour of microsoft/onnxruntime focused on what happens after you call Run: ExecuteThePlan’s stream-based walk, the StreamExecutionContext that sequence-checks node launches, DeviceStreamCollection and the CUDA stream handles behind it, the planners that pre-compute every allocation, the BFCArena that recycles buffers across runs, and the Eigen-derived thread pools inside the kernels." />
+<meta property="og:description" content="A second source tour of microsoft/onnxruntime focused on what happens after you call Run: ExecuteThePlan’s stream-based walk, the StreamExecutionContext that sequence-checks node launches, DeviceStreamCollection and the CUDA stream handles behind it, the planners that pre-compute every allocation, the BFCArena that recycles buffers across runs, and the Eigen-derived thread pools inside the kernels." />
+<link rel="canonical" href="https://pyshine.com/onnxruntime-2/" />
+<meta property="og:url" content="https://pyshine.com/onnxruntime-2/" />
+<meta property="og:site_name" content="PyShine" />
+<meta property="og:image" content="https://pyshine.com/assets/img/diagrams/onnxruntime-2/microsoft-onnxruntime-2-overview-architecture.svg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-10-19T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://pyshine.com/assets/img/diagrams/onnxruntime-2/microsoft-onnxruntime-2-overview-architecture.svg" />
+<meta property="twitter:title" content="From Run() to Buffers - The ONNX Runtime Execution Machinery" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"PyShine"},"dateModified":"2026-10-19T00:00:00+00:00","datePublished":"2026-10-19T00:00:00+00:00","description":"A second source tour of microsoft/onnxruntime focused on what happens after you call Run: ExecuteThePlan’s stream-based walk, the StreamExecutionContext that sequence-checks node launches, DeviceStreamCollection and the CUDA stream handles behind it, the planners that pre-compute every allocation, the BFCArena that recycles buffers across runs, and the Eigen-derived thread pools inside the kernels.","headline":"From Run() to Buffers - The ONNX Runtime Execution Machinery","image":"https://pyshine.com/assets/img/diagrams/onnxruntime-2/microsoft-onnxruntime-2-overview-architecture.svg","mainEntityOfPage":{"@type":"WebPage","@id":"https://pyshine.com/onnxruntime-2/"},"name":"{{ page.title escape }}","url":"https://pyshine.com/onnxruntime-2/"}</script>
+<!-- End Jekyll SEO tag -->
+  <!-- This will generate canonical link automatically -->
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="post">
+  <meta property="og:url" content="https://pyshine.com/onnxruntime-2/">
+  <meta property="og:title" content="From Run() to Buffers - The ONNX Runtime Execution Machinery">
+  <meta property="og:description" content="A second source tour of microsoft/onnxruntime focused on what happens after you call Run: ExecuteThePlan&#39;s stream-based walk, the StreamExecutionContext that...">
+  <meta property="og:image" content="https://pyshine.com/assets/img/diagrams/onnxruntime-2/microsoft-onnxruntime-2-overview-architecture.svg">
+  <meta property="og:site_name" content="PyShine">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://pyshine.com/onnxruntime-2/">
+  <meta name="twitter:title" content="From Run() to Buffers - The ONNX Runtime Execution Machinery">
+  <meta name="twitter:description" content="A second source tour of microsoft/onnxruntime focused on what happens after you call Run: ExecuteThePlan&#39;s stream-based walk, the StreamExecutionContext that...">
+  <meta name="twitter:image" content="https://pyshine.com/assets/img/diagrams/onnxruntime-2/microsoft-onnxruntime-2-overview-architecture.svg">
+
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="Im0K82YsmEDy08+6wyUIZA" async></script>
+
+  <!-- Favicon & App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icons/apple-touch-icon.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png?v=qA3OXqyw77">
+  <link rel="manifest" href="/assets/img/icons/manifest.json?v=qA3OXqyw77">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+
+  <!-- App & Theme Info -->
+  <meta name="apple-mobile-web-app-title" content="Sleek">
+  <meta name="application-name" content="Sleek">
+  <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77">
+  <meta name="theme-color" content="#ffffff">
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-TCVFBKF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-TCVFBKF');
+</script>
+
+  
+
+  <!-- Critical CSS Inline -->
+  <style class="inlineCSS">
+    /* Critical CSS - inlined by Jekyll at build time */
+    :root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --text-color: #343851;
+  --text-secondary: #5a5f7a;
+  --heading-color: #313237;
+  --link-color: #277cea;
+  --link-hover: #68a4f1;
+  --border-color: #dce6f0;
+  --card-bg: #ffffff;
+  --card-border: #ededed;
+  --code-bg: #f6f8fa;
+  --code-text: #25292e;
+  --header-bg: #ffffff;
+  --header-text: #000000;
+  --header-shadow: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #dbdbdb;
+  --input-text: #343851;
+  --button-bg: #222325;
+  --button-text: #ffffff;
+  --success-color: #8fd896;
+  --error-color: #ff6161;
+  --table-header-bg: #f5f5f5;
+  --table-row-hover: #f9f9f9;
+  --blockquote-bg: #f5f5f5;
+  --blockquote-border: #277cea;
+  --pre-bg: #f6f8fa;
+  --hr-color: #dce6f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --hero-bg: #dde5ea;
+  --hero-overlay: rgba(52, 56, 81, 0.8);
+  /* Syntax highlighting colors - VSCode Light+ theme */
+  --syntax-bg: #ffffff;
+  --syntax-text: #383a42;
+  --syntax-comment: #a0a1a7;
+  --syntax-keyword: #e45649;
+  --syntax-string: #50a14f;
+  --syntax-function: #4078f2;
+  --syntax-number: #986801;
+  --syntax-type: #c18401;
+  --syntax-operator: #0184bc;
+  --syntax-punctuation: #383a42;
+  --syntax-variable: #e06c75;
+  --syntax-constant: #986801;
+  --syntax-class: #c18401;
+  --syntax-regex: #50a14f;
+  --syntax-error: #e45649;
+  --syntax-warning: #c18401;
+  --syntax-diff-add: #50a14f;
+  --syntax-diff-del: #e45649;
+  --syntax-diff-add-bg: #e6ffed;
+  --syntax-diff-del-bg: #ffebe9;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.1);
+  /* Copy button colors - light theme */
+  --copy-btn-bg-start: #4facfe;
+  --copy-btn-bg-end: #00f2fe;
+  --copy-btn-border: #4facfe;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --copy-btn-hover-bg-start: #00f2fe;
+  --copy-btn-hover-bg-end: #4facfe;
+  --copy-btn-hover-border: #00f2fe;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --text-color: #ffffff;
+  --text-secondary: #8b949e;
+  --heading-color: #ffffff;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --border-color: #30363d;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --code-bg: #161b22;
+  --code-text: #ffffff;
+  --header-bg: #0d1117;
+  --header-text: #e6e6e6;
+  --header-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #0d1117;
+  --input-border: #30363d;
+  --input-text: #ffffff;
+  --button-bg: #21262d;
+  --button-text: #ffffff;
+  --success-color: #3fb950;
+  --error-color: #f85149;
+  --table-header-bg: #161b22;
+  --table-row-hover: #21262d;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #58a6ff;
+  --pre-bg: #161b22;
+  --hr-color: #30363d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hero-bg: #161b22;
+  --hero-overlay: rgba(13, 17, 23, 0.85);
+  /* Syntax highlighting colors - Night Owl theme */
+  --syntax-bg: #011627;
+  --syntax-text: #d6deeb;
+  --syntax-comment: #637777;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-function: #82aaff;
+  --syntax-number: #f78c6c;
+  --syntax-type: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-punctuation: #89ddff;
+  --syntax-variable: #f78c6c;
+  --syntax-constant: #f78c6c;
+  --syntax-class: #ffcb6b;
+  --syntax-regex: #c3e88d;
+  --syntax-error: #c792ea;
+  --syntax-warning: #ffcb6b;
+  --syntax-diff-add: #c3e88d;
+  --syntax-diff-del: #c792ea;
+  --syntax-diff-add-bg: #1e3a1e;
+  --syntax-diff-del-bg: #3a1e1e;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.05);
+  /* Copy button colors - dark theme */
+  --copy-btn-bg-start: #1f6feb;
+  --copy-btn-bg-end: #388bfd;
+  --copy-btn-border: #1f6feb;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --copy-btn-hover-bg-start: #388bfd;
+  --copy-btn-hover-bg-end: #1f6feb;
+  --copy-btn-hover-border: #58a6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] body {
+  background-color: #0d1117;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] a {
+  color: #58a6ff;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .post-content p,
+[data-theme="dark"] .post-content li,
+[data-theme="dark"] .post-content td,
+[data-theme="dark"] .post-content th,
+[data-theme="dark"] .post-content figure {
+  color: #ffffff !important;
+}
+
+/* Dark theme table styles */
+[data-theme="dark"] .post-content table {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table thead,
+[data-theme="dark"] .post-content table th {
+  background-color: #21262d;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table td {
+  background-color: #0d1117;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table tr:hover td {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .post-content code:not(.highlight code) {
+  color: #ffffff !important;
+  background-color: #30363d;
+}
+
+/* Ensure syntax tokens inside code blocks have no individual background */
+[data-theme="dark"] .highlight code,
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight span {
+  background-color: transparent;
+}
+
+/* Ensure syntax text color is applied in dark theme */
+[data-theme="dark"] .highlight {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight code {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .site {
+  background-color: #0d1117;
+}
+
+[data-theme="dark"] .blog {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-card {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .footer {
+  background-color: #161b22;
+  color: #8b949e;
+}
+
+/* Header dark theme */
+[data-theme="dark"] .header {
+  background: #0d1117 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__logo {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__logo:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__link,
+[data-theme="dark"] .header__dropdown-toggle {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__toggle span {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .header__links {
+  background: #0d1117;
+}
+
+[data-theme="dark"] .header__dropdown-menu {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__dropdown-item {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__dropdown-item:hover {
+  background: #21262d;
+}
+
+/* YouTube section dark theme */
+[data-theme="dark"] #youtube-video {
+  background: #161b22 !important;
+}
+
+/* Back to top button dark theme */
+[data-theme="dark"] .back-to-top {
+  background: #21262d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .back-to-top:hover {
+  background: #30363d;
+}
+
+/* Related posts dark theme */
+[data-theme="dark"] .related-posts {
+  border-top-color: #30363d;
+}
+
+[data-theme="dark"] .related-post-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .related-posts__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__excerpt {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .related-post-card__date {
+  color: #8b949e;
+}
+
+/* Link preview dark theme */
+[data-theme="dark"] .link-preview-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .link-preview-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .link-preview-description {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .link-preview-domain {
+  color: #8b949e;
+}
+
+/* Code header container for copy button positioning */
+.code-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.code-header .copy-btn {
+  position: relative;
+  z-index: 10;
+}
+
+  </style>
+
+  <!-- Main CSS -->
+  <link rel="preload" href="/assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/css/main.css"></noscript>
+
+  <script type="text/javascript">
+    /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+(function(w){"use strict";if(!w.loadCSS){w.loadCSS=function(){}}
+var rp=loadCSS.relpreload={};rp.support=(function(){var ret;try{ret=w.document.createElement("link").relList.supports("preload")}catch(e){ret=!1}
+return function(){return ret}})();rp.bindMediaToggle=function(link){var finalMedia=link.media||"all";function enableStylesheet(){link.media=finalMedia}
+if(link.addEventListener){link.addEventListener("load",enableStylesheet)}else if(link.attachEvent){link.attachEvent("onload",enableStylesheet)}
+setTimeout(function(){link.rel="stylesheet";link.media="only x"});setTimeout(enableStylesheet,3000)};rp.poly=function(){if(rp.support()){return}
+var links=w.document.getElementsByTagName("link");for(var i=0;i<links.length;i++){var link=links[i];if(link.rel==="preload"&&link.getAttribute("as")==="style"&&!link.getAttribute("data-loadcss")){link.setAttribute("data-loadcss",!0);rp.bindMediaToggle(link)}}};if(!rp.support()){rp.poly();var run=w.setInterval(rp.poly,500);if(w.addEventListener){w.addEventListener("load",function(){rp.poly();w.clearInterval(run)})}else if(w.attachEvent){w.attachEvent("onload",function(){rp.poly();w.clearInterval(run)})}}
+if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}
+else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this))
+
+  </script>
+
+  
+</head>
+
+
+  <!-- Zoomable SVG Viewer CSS -->
+  <link rel="stylesheet" href="/assets/css/svg-viewer.css">
+
+  <body class="site" itemscope itemtype="https://schema.org/WebPage">
+
+    
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCVFBKF"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager -->
+    
+
+    <header class="header"
+  itemscope
+  itemtype="http://schema.org/SiteNavigationElement"
+  aria-label="Main navigation">
+
+  <div class="container">
+    <div class="header__inner">
+
+      <!-- Logo -->
+      <a class="header__logo" href="/">
+        <div class="header__logo--container">
+          <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve">
+<g>
+	<path d="M18.121,9.88l-7.832-7.836c-0.155-0.158-0.428-0.155-0.584,0L1.842,9.913c-0.262,0.263-0.073,0.705,0.292,0.705h2.069v7.042c0,0.227,0.187,0.414,0.414,0.414h3.725c0.228,0,0.414-0.188,0.414-0.414v-3.313h2.483v3.313c0,0.227,0.187,0.414,0.413,0.414h3.726c0.229,0,0.414-0.188,0.414-0.414v-7.042h2.068h0.004C18.331,10.617,18.389,10.146,18.121,9.88 M14.963,17.245h-2.896v-3.313c0-0.229-0.186-0.415-0.414-0.415H8.342c-0.228,0-0.414,0.187-0.414,0.415v3.313H5.032v-6.628h9.931V17.245z M3.133,9.79l6.864-6.868l6.867,6.868H3.133z"></path>
+
+	
+	
+</g>
+</svg>
+
+        </div>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header__links">
+        <div class="header__links-wrapper">
+
+          
+            
+              <a class="header__link" href="/">
+                Home
+              </a>
+            
+          
+            
+              <a class="header__link" href="/categories">
+                Posts
+              </a>
+            
+          
+            
+              <a class="header__link" href="/all-posts/">
+                All Posts
+              </a>
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Tutorials
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/tutorials/">
+                    🔍 View All Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Rust-in-One-Post-Complete-Tutorial-Ownership-Borrow-Async-Quick-Start/">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-JavaScript-TypeScript-in-One-Post-Complete-Tutorial-Async-Types-Quick-Start/">
+                    JavaScript / TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Java-in-One-Post-Complete-Tutorial-OOP-Streams-Virtual-Threads-JVM-Quick-Start/">
+                    Java
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-CPP-in-One-Post-Complete-Tutorial-Modern-Cpp-Quick-Start/">
+                    C++
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-SQL-in-One-Post-Complete-Tutorial-Joins-Window-Functions-Transactions-Quick-Start/">
+                    SQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">
+                    Docker
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">
+                    Kubernetes
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Git-in-One-Post-Complete-Tutorial-Branches-Rebase-Workflows-Quick-Start/">
+                    Git
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/">
+                    Linux CLI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">
+                    REST API
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-GraphQL-in-One-Post-Complete-Tutorial-Schema-Queries-Mutations-Resolvers-Apollo-Quick-Start/">
+                    GraphQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-React-Next-js-in-One-Post-Complete-Tutorial-Components-Hooks-Server-Components-Quick-Start/">
+                    React / Next.js
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">
+                    FastAPI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">
+                    Deep Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">
+                    System Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Bash-in-One-Post-Complete-Tutorial-Pipelines-Functions-Scripts-Quick-Start/">
+                    Bash
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Regex-in-One-Post-Complete-Tutorial-Anchors-Quantifiers-Lookarounds-Quick-Start/">
+                    Regex
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Terraform-in-One-Post-Complete-Tutorial-HCL-State-Modules-Providers-Quick-Start/">
+                    Terraform
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Redis-in-One-Post-Complete-Tutorial-Data-Structures-Caching-Persistence-Quick-Start/">
+                    Redis
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-PostgreSQL-in-One-Post-Complete-Tutorial-Indexes-MVCC-Performance-Quick-Start/">
+                    PostgreSQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-gRPC-Protobuf-in-One-Post-Complete-Tutorial-Proto-Streaming-Interceptors-Quick-Start/">
+                    gRPC / Protobuf
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-WebSocket-in-One-Post-Complete-Tutorial-Handshake-Frames-Scaling-Quick-Start/">
+                    WebSocket
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Categories
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/">
+                    All Categories
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-developertools">
+                    Developer Tools
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-opensource">
+                    Open Source
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aiagents">
+                    AI Agents
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-python">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-machinelearning">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-typescript">
+                    TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-tutorial">
+                    Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-rust">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aidesign">
+                    AI Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-security">
+                    Security
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-devops">
+                    DevOps
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-go">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-webdevelopment">
+                    Web Development
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Applications
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/m3u8-player.html">
+                    Online M3U8 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/dash-player.html">
+                    Online DASH (MPD) Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/mp4-player.html">
+                    Online MP4 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/solar-map/">
+                    Solar Helper
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Clipboard-App-for-Two-PCs/">
+                    Clipboard App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo_correction">
+                    Online Photo Correction
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo">
+                    Online Passport Photo 20KB
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/finger.html">
+                    Online Fingers Scanner
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/avatars">
+                    Online Make Avatars
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/kanban/debounce.html">
+                    Online Reminder App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/converter.html">
+                    Online Image Resize
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/translator.html">
+                    Online Live Translator
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-sv.html">
+                    Procreate Swatch Viewer
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-bv.html">
+                    Procreate Brush Viewer
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Games
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/games/snake/">
+                    Snake Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/flappy-bird/">
+                    Flappy Bird
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/tetris/">
+                    Tetris
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/memory-match/">
+                    Memory Match
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/pong/">
+                    Pong
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/2048/">
+                    2048
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/battleship/">
+                    Battleship
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/go/">
+                    GO Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/chess/">
+                    Chess Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/copter/">
+                    Copter Game
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+              <a class="header__link" href="/about">
+                About
+              </a>
+            
+          
+            
+              <a class="header__link" href="/contact">
+                Contact
+              </a>
+            
+          
+            
+              <a class="header__link" href="/privacy">
+                Privacy Policy
+              </a>
+            
+          
+            
+              <a class="header__link" href="/disclaimer">
+                Disclaimer
+              </a>
+            
+          
+
+        </div>
+      </nav>
+
+      <!-- Language Switcher -->
+      
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <div class="header__toggle">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </div>
+
+<style>
+/* ==================================================
+   🔒 HEADER — ALWAYS VISIBLE, FULL WIDTH COLOR
+================================================== */
+.header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 10000;
+  background: var(--header-bg, #ffffff) !important;
+  box-shadow: 0 1px 3px var(--header-shadow, rgba(0, 0, 0, 0.1));
+  transform: none !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header__inner{
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body{
+  padding-top: 56px;
+}
+
+/* ===============================
+   NAV BASE
+=============================== */
+.header__links-wrapper{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  flex-wrap:nowrap;
+}
+
+.header__link,
+.header__dropdown-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color: var(--header-text);
+  white-space:nowrap;
+  padding:3px 6px;
+}
+
+/* ===============================
+   DROPDOWN
+=============================== */
+.header__dropdown{
+  position:relative;
+}
+
+.dropdown-arrow{
+  font-size:1em;
+  transition:transform .2s ease;
+}
+
+.header__dropdown:hover .dropdown-arrow{
+  transform:rotate(180deg);
+}
+
+.header__dropdown-menu{
+  position:absolute;
+  top:100%;
+  left:0;
+  min-width:200px;
+  background:var(--card-bg, #ffffff);
+  border:1px solid var(--border-color, #dce6f0);
+  border-radius:8px;
+  padding:4px 0;
+  display:none;
+  z-index:9999;
+  box-shadow:0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.header__dropdown:hover .header__dropdown-menu{
+  display:block;
+}
+
+.header__dropdown-item{
+  display:block;
+  padding:8px 14px;
+  color:var(--text-color, #343851);
+  text-decoration:none;
+  font-size:13px;
+  transition:background-color 0.2s ease;
+}
+
+.header__dropdown-item:hover{
+  background:var(--bg-secondary, #f9f9f9);
+}
+
+/* ===============================
+   MOBILE
+=============================== */
+@media (max-width:768px){
+
+  body{
+    padding-top: 56px;
+  }
+
+  .header__inner{
+    min-height: 56px;
+  }
+
+  .header__links-wrapper{
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+  }
+
+  .header__dropdown-toggle{
+    justify-content:space-between;
+    padding:12px 14px;
+  }
+
+  .header__dropdown-menu{
+    position:static;
+    display:none;
+    background:var(--card-bg, #ffffff);
+    border:none;
+  }
+
+  .header__dropdown:hover .header__dropdown-menu{
+    display:block;
+  }
+
+  .header__dropdown-item{
+    padding:12px 18px;
+    background:var(--card-bg, #ffffff);
+    border-top:1px solid var(--border-color, #dce6f0);
+    font-size:14px;
+  }
+}
+
+/* ===============================
+   LANGUAGE SWITCHER
+=============================== */
+.header__lang-switcher{
+  display:inline-flex;
+  gap:.4rem;
+  align-items:center;
+  font-size:1.1rem;
+  margin-left:0.5rem;
+}
+.lang-flag.active{ text-decoration:underline }
+.lang-flag.disabled{ opacity:.5; filter:grayscale(100%) }
+
+/* ===============================
+   THEME TOGGLE BUTTON
+=============================== */
+.theme-toggle {
+  background: rgba(79, 172, 254, 0.15);
+  border: 2px solid #4facfe;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-left: 0.5rem;
+  color: #4facfe;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.3);
+  border-color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(79, 172, 254, 0.2);
+  border: 2px solid #6fc3ff;
+  color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.35);
+  border-color: #8fd4ff;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+</style>
+
+<script>
+(function() {
+  /* Theme toggle - use addEventListener only, no onclick */
+  var themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+  
+  /* Dropdown functionality for mobile */
+  var dropdowns = document.querySelectorAll('.header__dropdown');
+  
+  dropdowns.forEach(function(dropdown) {
+    var toggle = dropdown.querySelector('.header__dropdown-toggle');
+    var menu = dropdown.querySelector('.header__dropdown-menu');
+    
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          var isOpen = menu.style.display === 'block';
+          document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+          menu.style.display = isOpen ? 'none' : 'block';
+          var arrow = toggle.querySelector('.dropdown-arrow');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && !e.target.closest('.header__dropdown')) {
+      document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.querySelectorAll('.dropdown-arrow').forEach(function(a) { a.style.transform = ''; });
+    }
+  });
+})();
+</script>
+</header>
+
+
+    
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="From Run() to Buffers - The ONNX Runtime Execution Machinery">
+    
+        <div class="hero__wrap">
+
+          
+            <div class="hero__categories">
+              
+                <a class="label"
+                   href="/categories/#AI Inference"
+                   aria-label="Category: AI Inference">
+                   AI Inference
+                </a>
+                
+              
+            </div>
+          
+
+          <h1 class="hero__title" itemprop="headline">From Run() to Buffers - The ONNX Runtime Execution Machinery</h1>
+
+          <p class="hero__meta">
+            <time datetime="2026-10-19T00:00:00+00:00" itemprop="datePublished">
+              19 Oct 2026
+            </time>
+            &nbsp;·&nbsp;
+            
+            <span itemprop="timeRequired">
+              
+                10 mins read
+              
+            </span>
+          </p>
+        </div>
+      </div>
+
+    <main class="site__content" role="main">
+
+      <div class="container post-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="post-toc" id="post-toc">
+          <h3 class="no-toc">Contents</h3>
+          <nav id="toc-list"></nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <article class="post-content"
+                 itemprop="articleBody"
+                 itemscope itemtype="https://schema.org/Article">
+
+          <p>Our first walk of <a href="/onnxruntime/">microsoft/onnxruntime</a> stayed at the architectural level: the versioned C API, the fusion transformers, MLAS, the CUDA provider, and the training stack. That post ends where every session ends up on a hot path — a call to <code class="language-plaintext highlighter-rouge">Run()</code> with a dictionary of feeds — and leaves the most performance-critical half of the codebase unexplored: what actually happens between that call and the last kernel’s write. This tour follows exactly that half. It is a story with three distinct layers. At the top, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/session/inference_session.cc#L3713">InferenceSession::RunImpl</a> validates options and hands the plan to an executor. In the middle, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/sequential_executor.cc#L686">ExecuteThePlan</a> walks the graph across a small set of device streams, checking barriers before each node fires. At the bottom, an ExecutionFrame and a best-fit-coalescing arena have already pre-computed — at session initialization time — where every byte of every intermediate tensor will live, so that a steady-state inference run performs almost no allocator decision-making at all. As always in this series, this is an educational read of published MIT-licensed source on the main branch; the first post at /onnxruntime/ covers the API surface and provider layer that this machinery serves.</p>
+
+<p>The headline is that ONNX Runtime treats allocation as a compile-time problem, not a runtime one. Two planners run during Initialize, not during inference: one assigns nodes and weights to devices, the other traces every buffer’s lifetime and folds the resulting sizes into reusable memory patterns. By the time Run() is called, the expensive questions have yes-or-no answers cached in the session state, and the per-run work reduces to bookkeeping — which is why the code can afford a comparatively elegant stream walk in the middle.</p>
+
+<div style="overflow-x:auto;"><img src="https://pyshine.com/assets/img/diagrams/onnxruntime-2/microsoft-onnxruntime-2-overview-architecture.svg" alt="ONNX Runtime execution machinery overview" style="max-width:100%;" /></div>
+
+<p><em>Overview of the execution machinery: RunImpl enters the executor, ExecuteThePlan walks nodes through the StreamExecutionContext and DeviceStreamCollection down to device handles like CudaStream, the planners and ExecutionFrame pre-compute every allocation into the BFCArena, and KernelRegistryManager plus the Memcpy kernel and the ThreadPool round out the launch path.</em></p>
+
+<p>Reading the overview from left to right:</p>
+
+<ul>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/session/inference_session.cc">inference_session.cc</a> is the public face: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/session/inference_session.cc#L1287">Load</a> for file paths, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/session/inference_session.cc#L3713">RunImpl</a> for the hot path, and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/session/inference_session.cc#L4141">RunAsync</a> at 4141 for the callback variant.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/sequential_executor.cc">sequential_executor.cc</a> holds <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/sequential_executor.cc#L686">ExecuteThePlan</a> and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/sequential_executor.cc#L527">ExecuteKernel</a> — the modern stream-based execution loop that replaced the old class-based executors.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/stream_execution_context.cc">stream_execution_context.cc</a> defines the per-run context whose constructor starts at <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/stream_execution_context.cc#L12">line 12</a>, with <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/stream_execution_context.cc#L73">DecCountDownBarrier</a> enforcing launch order.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/device_stream_collection.cc">device_stream_collection.cc</a> builds one stream per EP stream id: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/device_stream_collection.cc#L154">SetDeviceStream</a> fills the set, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/device_stream_collection.cc#L178">GetStreamForDevice</a> looks it back up.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc">cuda_stream_handle.cc</a> is the concrete NVIDIA handle: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L125">EnqueDeferredCPUBuffer</a> and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L163">CleanUpOnRunEnd</a> manage host-side work on device time.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/allocation_planner.cc">allocation_planner.cc</a> at 2600+ lines contains <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/allocation_planner.cc#L2393">PlannerImpl::CreatePlan</a> and the <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/allocation_planner.cc#L2532">DeviceBasedPartitioner</a>.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc">ort_value_pattern_planner.cc</a> traces lifetimes through <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc#L33">TraceAllocation</a> and emits <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc#L55">GeneratePatterns</a>.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc">execution_frame.cc</a> materializes buffers per run: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc#L761">AllocateAsPerAllocationPlan</a> follows the precomputed recipe.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc">bfc_arena.cc</a> is the best-fit-coalescing allocator — <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L271">Alloc</a>, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L436">SplitChunk</a>, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L568">Merge</a>, and a stream-aware variant at <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L850">line 850</a>.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/kernel_registry_manager.cc">kernel_registry_manager.cc</a> resolves ops to kernels: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/kernel_registry_manager.cc#L60">SearchKernelRegistry</a> and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/kernel_registry_manager.cc#L18">CreateKernel</a>.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/memcpy.cc">memcpy.cc</a> is the tiny <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/memcpy.cc#L13">Memcpy::Compute</a> kernel that bridges devices.</li>
+  <li><a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/common/threadpool.cc">threadpool.cc</a> implements <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/common/threadpool.cc#L413">ParallelForFixedBlockSizeScheduling</a> over the Eigen-derived work-stealing pool.</li>
+</ul>
+
+<h2 id="before-anything-runs-kernels-plans-and-the-fallback">Before anything runs: kernels, plans, and the fallback</h2>
+
+<p>Initialization is where the engine earns its steady state. After the graph transforms have fused and rewritten the model — the subject of the first tour — <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/session_state.cc#L1636">SessionState::FinalizeSessionState</a> locks in three artifacts. First, kernels: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/session_state.cc#L292">SessionState::CreateKernels</a> asks the <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/kernel_registry_manager.cc#L18">KernelRegistryManager</a> to construct a kernel instance per node, and that manager’s <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/kernel_registry_manager.cc#L60">SearchKernelRegistry</a> walks every registered registry comparing op, version, type constraints, and execution-provider capability until one matches. This is why a session cannot gain provider support mid-run: the kernel objects were built for one specific partition, with attributes and constant initializers already attached. Second, plans. <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/allocation_planner.cc#L2393">PlannerImpl::CreatePlan</a> runs the topological walk twice, essentially — once to assign every node to a device via the <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/allocation_planner.cc#L2532">DeviceBasedPartitioner</a>, deciding where weights and activations will live, and once to build the per-node allocation recipe. Where a provider cannot claim a node, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/fallback_cpu_capability.cc#L44">GetCpuPreferredNodes</a> keeps the CPU EP from over-reaching by preferring nodes whose weights are small enough to matter and whose placement would not trigger a cascade of copies.</p>
+
+<p>Third, memory patterns. The <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc#L33">OrtValuePatternPlanner</a> replays the plan in miniature: every <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc#L33">TraceAllocation</a> and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc#L44">TraceFree</a> records a buffer’s lifetime, and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/ort_value_pattern_planner.cc#L55">GeneratePatterns</a> folds them into a MemoryPatternGroup — a block layout in which activations that never overlap can share one arena region. The session state caches these groups keyed on the shapes of the input tensors: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/session_state.cc#L1241">UpdateMemoryPatternGroupCache</a> stores the first match it computes, and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/session_state.cc#L1195">ResolveMemoryPatternFlag</a> decides whether patterns are even legal, which depends on whether the model has run-to-run shape variability. Fixed-batch deployments — the common inference server case — hit the cached pattern on run two and reuse it forever. This is the same weight-reuse philosophy we saw in the TurboMind block manager of <a href="/lmdeploy-2/">lmdeploy-2</a>, just expressed in C++ allocator terms instead of token-block terms.</p>
+
+<h2 id="one-run-many-streams">One run, many streams</h2>
+
+<p>The executor itself is refreshingly small once the precomputation is done. <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/sequential_executor.cc#L686">ExecuteThePlan</a> builds a fresh ExecutionFrame, feeds the inputs, and drives the node loop; <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/sequential_executor.cc#L527">ExecuteKernel</a> is the per-node body that resolves OrtValues, wraps them in a kernel context, and calls Compute. What makes this loop modern is that it is stream-first: the engine no longer pretends there is one global execution thread. Instead, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/device_stream_collection.cc#L145">DeviceStreamCollection</a> holds one stream per logical execution lane — typically one per device, plus extra ones a model may have declared with a loop or an if — and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/device_stream_collection.cc#L154">SetDeviceStream</a> wires concrete handles into those lanes at run start. A run that touches two devices gets two lanes; a node on lane A that consumes a tensor produced on lane B must wait for a notification, and that is exactly what the <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/stream_execution_context.cc#L12">StreamExecutionContext</a> tracks with its notification table and countdown barriers.</p>
+
+<p>The abstraction that keeps this device-neutral lives in <a href="https://github.com/microsoft/onnxruntime/blob/main/include/onnxruntime/core/framework/stream_handles.h">stream_handles.h</a>: a Stream with CreateNotification and Flush, and a Notification the consumer can wait on. The framework ships a default implementation in <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/plugin_ep_stream.cc#L37">plugin_ep_stream.cc</a> — its <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/plugin_ep_stream.cc#L24">WaitNotificationOnDevice</a> is an honest placeholder that busy-waits on host — and providers override it. The CUDA override is the instructive one: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L64">CudaStream</a> wraps a cudaStream_t, and its <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L114">CreateNotification</a> produces a real event-based cross-lane wait. The subtle piece is host-side work: when a kernel needs to write a value that only becomes known mid-run (a shape, a dynamic dimension), the CUDA path cannot block the device, so <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L125">EnqueDeferredCPUBuffer</a> parks the host buffer in a queue that <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L163">CleanUpOnRunEnd</a> drains after the stream has actually finished — the DeferredCpuAllocator at <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cuda/cuda_stream_handle.cc#L11">line 11</a> exists to make that buffering transparent to the caller. Cross-lane data movement itself is just a node: the <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/memcpy.cc#L13">Memcpy</a> kernel gets inserted by the planner wherever a consumer’s device differs from its producer’s, and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/device_stream_collection.cc#L178">GetStreamForDevice</a> decides which lane executes it.</p>
+
+<h2 id="the-frame-and-the-arena-where-every-byte-comes-from">The frame and the arena: where every byte comes from</h2>
+
+<p>On the first run with a new input signature, the ExecutionFrame earns its keep. <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc#L258">IExecutionFrame::Init</a> binds feeds to OrtValue slots; <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc#L535">AllocateMLValueTensorSelfOwnBuffer</a> handles the naive case where a tensor owns its own buffer; and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc#L761">AllocateAsPerAllocationPlan</a> handles the fast case — it consults the precomputed plan, and when a memory pattern exists, every activation in the group is carved out of a single arena reservation at fixed offsets. <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc#L883">CreateNodeOutputMLValueImpl</a> then hands those regions to the kernels as writable tensors, and <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/execution_frame.cc#L982">ExecutionFrame::GeneratePatterns</a> is the bridge that turns a planner’s group into real buffer geometry. Underneath all of it sits the arena. <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L271">BFCArena</a> — best-fit with coalescing, the same design PyTorch’s caching allocator made famous — takes big chunks from the device allocator via <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L98">Extend</a>, splits them through <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L436">SplitChunk</a> into size-ordered bins, and rejoins freed neighbors through <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L568">Merge</a>. The payoff shows up on the second run: <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L475">Free</a> returns blocks to bins instead of the device, so steady-state inference does zero device allocator calls for activations. The stream-aware variant at <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L850">AllocOnStream</a> sharpens this per lane, and when memory pressure bites, <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/framework/bfc_arena.cc#L721">DumpMemoryLog</a> prints the bin-by-bin accounting that turns “why is my GPU OOM” into an answer.</p>
+
+<p>The last layer is concurrency inside kernels themselves. Most heavy kernels do not monoprocess their input; they chop it into blocks and call <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/common/threadpool.cc#L413">ParallelForFixedBlockSizeScheduling</a> on the intra-op pool, which schedules fixed-size chunks across worker threads with the deterministic block ordering the profiler-facing <a href="https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/core/common/threadpool.cc#L50">ThreadPoolProfiler</a> machinery records. The pool is a vendored, heavily modified Eigen work-stealing pool: <a href="https://github.com/microsoft/onnxruntime/blob/main/include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h#L795">ThreadPoolTempl</a> drives lock-free queues implemented as the spsc RunQueue at <a href="https://github.com/microsoft/onnxruntime/blob/main/include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h#L495">line 495</a>, with the ThreadPoolLoop shim at <a href="https://github.com/microsoft/onnxruntime/blob/main/include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h#L403">line 403</a> bridging to Eigen’s own primitives. So a GEMM on CPU is three systems deep — the MLAS kernel from the first tour, the pool feeding its blocks, and the arena holding its operands — and all three were shaped by the same decision: do the expensive thinking once, at Initialize, so Run() only executes.</p>
+
+<h2 id="from-install-to-your-first-model">From Install to Your First Model</h2>
+
+<p>Everything above is on by default after <code class="language-plaintext highlighter-rouge">pip install onnxruntime</code> or <code class="language-plaintext highlighter-rouge">onnxruntime-gpu</code>. The knobs that expose the machinery: session options control intra-op and inter-op thread counts, arena settings like <code class="language-plaintext highlighter-rouge">arena_extend_strategy</code> choose between growing the arena in kArenaAllocation steps and reusing device allocator memory, and <code class="language-plaintext highlighter-rouge">enable_mem_pattern</code> toggles the whole pattern system for debugging. When a run behaves oddly, <code class="language-plaintext highlighter-rouge">ORT_DEBUG_NODE_IO</code> and the memory-pattern dump give the two most direct windows into this layer — the arena’s DumpMemoryLog output is genuinely one of the most readable allocator reports in the ecosystem.</p>
+
+<p>Honest limits: this walk focused on the CPU-plus-CUDA path because that is where the code is complete; the WebGPU, NNAPI, and Core ML providers implement the same Stream/Notification contracts with their own quirks that we did not read. We read code, not benchmarks — the “allocation is pre-computed” claim is structural, but real-world wins depend on shape stability, and a model with dynamic batch sizes will spend its runs in the slower self-owned-buffer branch. And the executor is mid-migration: the old class-based executors are gone, the stream-based loop above is the present, and the training stack shares it with extensions we deliberately skipped. For context: <a href="/vllm-2/">vLLM</a> and <a href="/sglang-3/">SGLang</a> solve the same memory-recycling problem at the request level with paged KV blocks, <a href="/tensorrt-llm-2/">TensorRT-LLM</a> precomputes allocation inside an engine build step, and <a href="/openvino/">OpenVINO</a> answers on CPU with its own plugin allocator scheme. ONNX Runtime’s answer — plan once, pattern-cache, arena-recycle, stream-barrier — is the most explicit and most inspectable of the lot, which is exactly why it rewards this second reading.</p>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "From Run() to Buffers - The ONNX Runtime Execution Machinery",
+  "description": "A second source tour of microsoft/onnxruntime: ExecuteThePlan and the StreamExecutionContext, DeviceStreamCollection and CudaStream handles, allocation planners and memory patterns, the BFCArena, and the Eigen-derived thread pools inside kernels.",
+  "author": {"@type": "Person", "name": "PyShine"},
+  "datePublished": "2026-10-19",
+  "keywords": "onnxruntime, inference session, execute the plan, stream execution context, device stream collection, cuda stream, bfc arena, memory pattern, execution frame, kernel registry, thread pool, eigen, open source",
+  "url": "https://pyshine.com/onnxruntime-2/"
+}
+</script>
+
+
+
+          <!-- Follow.it CTA -->
+          <section class="follow-cta" aria-label="Follow for updates">
+  <div class="follow-cta-content">
+    <img src="/assets/img/formit.png" alt="Follow.it" class="follow-cta-icon">
+    <p class="follow-cta-text">
+      Enjoyed this post? <a href="https://follow.it/pyshine?leanpub" target="_blank" rel="noopener noreferrer">Never miss out on future posts by following us</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .follow-cta {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--bg-color, #f8f9fa);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .follow-cta:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .follow-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .follow-cta-icon {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  
+  .follow-cta-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
+  
+  .follow-cta-text a {
+    color: var(--link-color, #0066cc);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .follow-cta-text a:hover {
+    color: var(--link-hover-color, #004499);
+    text-decoration: none;
+  }
+  
+  @media (max-width: 480px) {
+    .follow-cta {
+      padding: 1.25rem;
+    }
+    
+    .follow-cta-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .follow-cta-icon {
+      width: 100px;
+      height: auto;
+    }
+    
+    .follow-cta-text {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Dark theme support */
+  [data-theme="dark"] .follow-cta,
+  body.dark-theme .follow-cta {
+    background: var(--bg-color, #1e1e1e);
+    border-color: var(--border-color, #333);
+  }
+  
+  [data-theme="dark"] .follow-cta-text,
+  body.dark-theme .follow-cta-text {
+    color: var(--text-color, #e0e0e0);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a,
+  body.dark-theme .follow-cta-text a {
+    color: var(--link-color, #66b3ff);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a:hover,
+  body.dark-theme .follow-cta-text a:hover {
+    color: var(--link-hover-color, #99ccff);
+  }
+</style>
+
+          <!-- Syntax Highlighting -->
+          <link href="/assets/css/syntax.css" rel="stylesheet">
+          <script src="/assets/scripts/copyCode.js" async></script>
+
+          <!-- Ads -->
+          <section aria-label="Advertisements" class="ads mt-4">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+                    crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2976211678184829"
+                 data-ad-slot="7658460605"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </section>
+
+        </article>
+
+      </div>
+
+      <!-- Post Navigation -->
+      <nav class="post-navigation controls__inner mt-5" aria-label="Post navigation">
+        <div class="controls__item prev">
+          
+            <span>Previous</span>
+            <a href="/lmdeploy-2/" rel="prev">
+              Inside TurboMind: The C++ Engine Core...
+            </a>
+          
+        </div>
+
+        <div class="controls__item next">
+          
+            <span>Next</span>
+            <a href="/triton-2/" rel="next">
+              From Python Call to cuLaunchKernelEx ...
+            </a>
+          
+        </div>
+      </nav>
+
+      <!-- Related Posts -->
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        <section class="related-posts mt-5" aria-label="Related Posts">
+          <div class="container">
+            <h2 class="related-posts__title">Related Posts</h2>
+            <div class="related-posts__grid">
+              
+                <a class="related-post-card" href="/lmdeploy-2/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/lmdeploy-2/internlm-lmdeploy-2-overview-architecture.svg"
+                           alt="Inside TurboMind: The C++ Engine Core of InternLM/lmdeploy"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside TurboMind: The C++ Engine Core of InternLM/lmdeploy</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Our first visit to InternLM/lmdeploy stayed above the waterline: the CLI, the lite quantization toolkit,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 19, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/triton-2/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/triton-2/openai-triton-2-overview-architecture.svg"
+                           alt="From Python Call to cuLaunchKernelEx - The Triton Launch Path"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">From Python Call to cuLaunchKernelEx - The Triton Launch ...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Our first walk of [openai/triton](/triton/) followed the compiler's front door: how a decorated Python function...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 19, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/inference/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/inference/xorbitsai-inference-overview-architecture.svg"
+                           alt="Xinference: Where Models Live - A Second Tour of xorbitsai/inference"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Xinference: Where Models Live - A Second Tour of xorbitsa...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Our first visit to Xinference at /xinference/ walked the wide road: actors, the REST surface,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/litellm-2/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/litellm-2/berriai-litellm-2-overview-architecture.svg"
+                           alt="The Traffic Cop of the AI Gateway - The Router Inside BerriAI/litellm"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">The Traffic Cop of the AI Gateway - The Router Inside Ber...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every company that ships LLM features eventually writes the same program: an HTTP front door,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/llama.cpp-2/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/llama.cpp-2/ggml-org-llama.cpp-2-overview-architecture.svg"
+                           alt="The Memory Core - Inside ggml-org/llama.cpp's KV Cache Redesign"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">The Memory Core - Inside ggml-org/llama.cpp's KV Cache Re...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        The most consequential project in local inference has quietly moved house - the repository now...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/localai/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/localai/mudler-localai-overview-architecture.svg"
+                           alt="LocalAI: One Binary, Many Engines - A Source Tour of mudler/LocalAI"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">LocalAI: One Binary, Many Engines - A Source Tour of mudl...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Most serving engines we have toured on this blog are monoliths by conviction: vLLM, SGLang,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+            </div>
+          </div>
+        </section>
+      
+
+    </main>
+
+    <!-- YouTube Video Section -->
+    <section id="youtube-video" style="text-align:center; padding:30px 20px; background:var(--bg-secondary, #f8f8f8);">
+      <div class="container">
+        <div style="margin-top:10px;">
+          <a href="https://www.youtube.com/@pyshine_official/shorts"
+            target="_blank"
+            style="background:#ff0000; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 24 24">
+              <path fill="#FFF" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8z"/>
+              <path fill="#FF0000" d="M9.75 15.02v-6l6 3z"/>
+            </svg>
+            Watch PyShine on YouTube
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+  <div class="container">
+    <div class="footer__links" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+      <a href="/" style="color: #00A8E8; text-decoration: none;">Home</a>
+      <a href="/about/" style="color: #00A8E8; text-decoration: none;">About</a>
+      <a href="/contact/" style="color: #00A8E8; text-decoration: none;">Contact</a>
+      <a href="/games/" style="color: #00A8E8; text-decoration: none;">Games</a>
+      <a href="/solar-map/" style="color: #00A8E8; text-decoration: none;">Solar Map</a>
+      <a href="/Clipboard-App-for-Two-PCs/" style="color: #00A8E8; text-decoration: none;">Clipboard App</a>
+      <a href="/privacy/" style="color: #00A8E8; text-decoration: none;">Privacy</a>
+      <a href="/disclaimer/" style="color: #00A8E8; text-decoration: none;">Disclaimer</a>
+    </div>
+    <nav class="social">
+      
+        <a class="social__link" target="_blank" rel="noopener noreferrer" href="https://github.com/pyshine-labs">
+          <svg class="social__icon" viewBox="0 0 20 20" width="20px" height="20px"><path d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+        </a>
+      
+      
+      
+    </nav>
+    <span>&copy; 2026 PyShine. All rights reserved.</span>
+  </div>
+</footer>
+<script async src="/assets/js/bundle.js"></script>
+
+<script async>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function( registration ) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  }
+</script>
+
+
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Button -->
+    <button id="mobile-toc-btn" class="mobile-toc-btn" aria-label="Table of Contents">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Modal -->
+    <div id="mobile-toc-modal" class="mobile-toc-modal">
+      <div class="mobile-toc-content">
+        <div class="mobile-toc-header">
+          <h3>Contents</h3>
+          <button class="mobile-toc-close" aria-label="Close">&times;</button>
+        </div>
+        <ul id="mobile-toc-list" class="mobile-toc-list"></ul>
+      </div>
+    </div>
+
+    <!-- MathJax -->
+    
+
+
+    <!-- Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+            crossorigin="anonymous"></script>
+
+    <!-- SIDEBAR TOC SCRIPT -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toc = document.getElementById("toc-list");
+      const mobileTocList = document.getElementById("mobile-toc-list");
+      const headings = document.querySelectorAll(
+        ".post-content h2:not(.no-toc), .post-content h3:not(.no-toc)"
+      );
+      if ((!toc && !mobileTocList) || headings.length === 0) return;
+
+      const ul = document.createElement("ul");
+      const mobileUl = document.createElement("ul");
+      mobileUl.className = "mobile-toc-list";
+
+      headings.forEach(h => {
+        const id = h.id || h.textContent.trim().toLowerCase().replace(/\s+/g, "-");
+        h.id = id;
+
+        const li = document.createElement("li");
+        const mobileLi = document.createElement("li");
+        
+        if (h.tagName === "H3") {
+          li.style.marginLeft = "1rem";
+          mobileLi.setAttribute("data-level", "3");
+        }
+
+        li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        mobileLi.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        
+        ul.appendChild(li);
+        mobileUl.appendChild(mobileLi);
+      });
+      
+      if (toc) toc.appendChild(ul);
+      if (mobileTocList) mobileTocList.appendChild(mobileUl);
+
+      /* Scroll-spy: highlight active TOC link as user scrolls */
+      const tocLinks = toc ? toc.querySelectorAll("a") : [];
+      const mobileTocLinks = mobileTocList ? mobileTocList.querySelectorAll("a") : [];
+      /* The scrollable container is the aside (#post-toc), not the nav (#toc-list) */
+      const tocScrollContainer = document.getElementById("post-toc");
+
+      function setActiveLink(headingEl) {
+        const id = headingEl.id;
+        let activeDesktopLink = null;
+        tocLinks.forEach(function(link) {
+          const isActive = link.getAttribute("href") === "#" + id;
+          link.classList.toggle("active", isActive);
+          if (isActive) activeDesktopLink = link;
+        });
+        mobileTocLinks.forEach(function(link) {
+          link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+        });
+        /* Auto-scroll the TOC sidebar to keep the active link visible */
+        if (activeDesktopLink && tocScrollContainer) {
+          const linkRect = activeDesktopLink.getBoundingClientRect();
+          const containerRect = tocScrollContainer.getBoundingClientRect();
+          const margin = 40;
+          if (linkRect.top < containerRect.top + margin) {
+            /* Active link is above the visible area — scroll container up */
+            tocScrollContainer.scrollTop -= (containerRect.top + margin - linkRect.top);
+          } else if (linkRect.bottom > containerRect.bottom - margin) {
+            /* Active link is below the visible area — scroll container down */
+            tocScrollContainer.scrollTop += (linkRect.bottom - (containerRect.bottom - margin));
+          }
+        }
+      }
+
+      if (tocLinks.length > 0 && "IntersectionObserver" in window) {
+        const observerOptions = {
+          rootMargin: "-100px 0px -70% 0px",
+          threshold: 0
+        };
+        const headingObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              setActiveLink(entry.target);
+            }
+          });
+        }, observerOptions);
+        headings.forEach(function(h) {
+          headingObserver.observe(h);
+        });
+      }
+
+      /* Mobile TOC Modal */
+      const mobileTocBtn = document.getElementById("mobile-toc-btn");
+      const mobileTocModal = document.getElementById("mobile-toc-modal");
+      const mobileTocClose = mobileTocModal ? mobileTocModal.querySelector(".mobile-toc-close") : null;
+
+      if (mobileTocBtn && mobileTocModal) {
+        mobileTocBtn.addEventListener("click", function() {
+          mobileTocModal.classList.add("active");
+        });
+
+        if (mobileTocClose) {
+          mobileTocClose.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        }
+
+        mobileTocModal.addEventListener("click", function(e) {
+          if (e.target === mobileTocModal) {
+            mobileTocModal.classList.remove("active");
+          }
+        });
+
+        mobileUl.querySelectorAll("a").forEach(function(link) {
+          link.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        });
+      }
+    });
+    </script>
+
+    <!-- Back to Top Button Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const backToTopButton = document.getElementById("back-to-top");
+      if (!backToTopButton) return;
+
+      /* Show button when scrolled down 300px */
+      window.addEventListener("scroll", function() {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("visible");
+        } else {
+          backToTopButton.classList.remove("visible");
+        }
+      });
+
+      /* Smooth scroll to top when clicked */
+      backToTopButton.addEventListener("click", function() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+    </script>
+
+    <style>
+      /* Center post navigation */
+      .post-navigation.controls__inner {
+        justify-content: center !important;
+        gap: 4rem;
+      }
+      /* Related Posts Styles */
+      .related-posts {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+      }
+      .related-posts .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      .related-posts__title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading-color, #000000);
+        text-align: center;
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .related-post-card {
+        display: block;
+        text-decoration: none;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .related-post-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-4px);
+      }
+      .related-post-card__image {
+        width: 100%;
+        height: 100px;
+        background: var(--bg-secondary, #f5f5f5);
+      }
+      .related-post-card__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .related-post-card__content {
+        padding: 0.75rem;
+      }
+      .related-post-card__title {
+        font-size: 0.95rem;
+        margin: 0 0 0.4rem 0;
+        color: var(--heading-color, #000000);
+        line-height: 1.3;
+        font-weight: 600;
+      }
+      .related-post-card__excerpt {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+      }
+      .related-post-card__date {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #999);
+      }
+      @media (max-width: 992px) {
+        .related-posts__grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .related-posts__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Back to Top Button Styles */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg, #000000);
+        color: var(--button-text, #ffffff);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 9999;
+      }
+      .back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .back-to-top:hover {
+        background: var(--text-color, #333333);
+        box-shadow: 0 6px 16px var(--shadow-color, rgba(0, 0, 0, 0.4));
+        transform: translateY(-2px);
+      }
+      .back-to-top:active {
+        transform: translateY(0);
+      }
+      @media (max-width: 768px) {
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
+      }
+      /* Link Preview Styles */
+      .link-preview-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .link-preview-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
+      }
+      .link-preview-link {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        text-decoration: none;
+        width: 100%;
+      }
+      .link-preview-image {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary, #f5f5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .link-preview-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .link-preview-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--heading-color, #000000);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-domain {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #999999);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .link-preview-domain::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--border-color, #e0e0e0);
+        border-radius: 50%;
+      }
+      @media (max-width: 600px) {
+        .link-preview-card {
+          flex-direction: column;
+        }
+        .link-preview-image {
+          width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <!-- Zoomable SVG Viewer JS -->
+    <script src="/assets/js/svg-viewer.js" defer></script>
+  </body>
+</html>
+
+
