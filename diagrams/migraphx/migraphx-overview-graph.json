@@ -1,0 +1,40 @@
+{
+  "owner": "ROCm",
+  "repo": "AMDMIGraphX",
+  "branch": "develop",
+  "groups": [
+    { "id": "frontend", "name": "Model Frontend" },
+    { "id": "ir", "name": "Graph IR & Compiler" },
+    { "id": "targets", "name": "Execution Targets" },
+    { "id": "tooling", "name": "API & Tooling" }
+  ],
+  "nodes": [
+    { "id": "onnx_parser", "label": "onnx_parser", "file": "src/onnx/onnx_parser.cpp", "group": "frontend", "desc": "Reads an ONNX ModelProto, walks the graph node by node, and emits MIGraphX instructions; handles opsets, initializers, and subgraphs." },
+    { "id": "op_parsers", "label": "op_parser registry", "file": "src/onnx/op_parser.cpp", "group": "frontend", "desc": "Registry that maps each ONNX op name to its parse_* handler from the parse_attention.cpp / parse_convolution.cpp family." },
+    { "id": "module", "label": "module", "file": "src/module.cpp", "group": "ir", "desc": "The graph unit: a list of instructions with named parameters; sub-modules represent loops, branches, and fused regions." },
+    { "id": "program", "label": "program", "file": "src/program.cpp", "group": "ir", "desc": "Owns the module tree, drives compile() through target passes, and eval() executes the result on device memory." },
+    { "id": "pass_manager", "label": "pass_manager", "file": "src/pass_manager.cpp", "group": "ir", "desc": "run_passes iterates passes over every module, tracing each stage and running dead-code elimination between steps." },
+    { "id": "register_target", "label": "target registry", "file": "src/register_target.cpp", "group": "ir", "desc": "Global name-to-target map; lookup_target resolves 'gpu', 'cpu', or 'ref' for program::compile." },
+    { "id": "gpu_target", "label": "gpu target", "file": "src/targets/gpu/target.cpp", "group": "targets", "desc": "Assembles the five-stage AMD GPU pass list (dynamic shapes, required, optimize/rewrite, fusion, backend) conditioned on the gfx generation." },
+    { "id": "compile_ops", "label": "compile_ops", "file": "src/targets/gpu/compile_ops.cpp", "group": "targets", "desc": "Codegen stage: picks HipRTC, code-object, or precompiled routes per op, manages tuning plans and the compile cache." },
+    { "id": "cpu_lowering", "label": "cpu lowering", "file": "src/targets/cpu/lowering.cpp", "group": "targets", "desc": "CPU target pass that maps generic ops onto native C++ implementations or oneDNN primitives." },
+    { "id": "ref_target", "label": "ref target", "file": "src/targets/ref/target.cpp", "group": "targets", "desc": "Slow but portable reference implementation used by the driver's verify command to check other targets." },
+    { "id": "load_save", "label": "load_save", "file": "src/load_save.cpp", "group": "ir", "desc": "Serializes a compiled program into the MXR container format and reads it back without recompiling." },
+    { "id": "driver", "label": "migraphx-driver", "file": "src/driver/main.cpp", "group": "tooling", "desc": "CLI with run/perf/verify/trim subcommands; perf benchmarks compiled programs and verify diffs against the ref target." }
+  ],
+  "edges": [
+    { "from": "onnx_parser", "to": "op_parsers", "label": "dispatch by op type" },
+    { "from": "onnx_parser", "to": "module", "label": "add instructions" },
+    { "from": "module", "to": "program", "label": "program owns modules" },
+    { "from": "program", "to": "pass_manager", "label": "run passes" },
+    { "from": "gpu_target", "to": "pass_manager", "label": "GPU pass list" },
+    { "from": "ref_target", "to": "pass_manager", "label": "reference passes" },
+    { "from": "program", "to": "gpu_target", "label": "compile for gpu" },
+    { "from": "program", "to": "ref_target", "label": "compile for ref" },
+    { "from": "register_target", "to": "program", "label": "resolve target name" },
+    { "from": "program", "to": "load_save", "label": "MXR save/load" },
+    { "from": "driver", "to": "program", "label": "run / perf / verify" },
+    { "from": "driver", "to": "onnx_parser", "label": "reads ONNX files" },
+    { "from": "gpu_target", "to": "compile_ops", "label": "codegen stage" }
+  ]
+}
