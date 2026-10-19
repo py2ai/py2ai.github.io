@@ -1,0 +1,43 @@
+{
+  "owner": "kvcache-ai",
+  "repo": "ktransformers",
+  "branch": "main",
+  "groups": [
+    { "id": "python", "name": "Python Frontend" },
+    { "id": "bridge", "name": "Native Bridge" },
+    { "id": "cpu_moe", "name": "CPU MoE Experts" },
+    { "id": "kv", "name": "Sparse Attention" },
+    { "id": "backend", "name": "NUMA Backend" },
+    { "id": "gpu", "name": "CUDA Ops" }
+  ],
+  "nodes": [
+    { "id": "kt_run", "label": "kt run CLI", "file": "kt-kernel/python/cli/commands/run.py", "group": "python", "desc": "Entry point that resolves model config, checks environment, and launches kt-kernel serving or a SGLang command." },
+    { "id": "gguf_loader", "label": "GGUF / SafeTensor Loader", "file": "kt-kernel/python/utils/loader.py", "group": "python", "desc": "Loader family (GGUF, FP8/BF16/Compressed/GPTQ/MXFP4 safetensors) that translates checkpoint tensor names into kt-kernel expectations." },
+    { "id": "ext_bind", "label": "kt_kernel_ext bindings", "file": "kt-kernel/ext_bindings.cpp", "group": "bridge", "desc": "pybind11 module exposing CPU operator interfaces and advertising the CPU variant (amx, avx512, avx2) detected at runtime." },
+    { "id": "cuda_bind", "label": "KTransformersOps CUDA", "file": "kt-kernel/cuda/binding.cpp", "group": "gpu", "desc": "Separate torch extension registering GPU helpers: custom GGUF dequant, GPTQ Marlin GEMM, and MoE top-k softmax." },
+    { "id": "op_iface", "label": "Operator Interfaces", "file": "kt-kernel/operators/common.hpp", "group": "bridge", "desc": "Config structs plus MLA_Interface and MoE_Interface that every CPU backend implementation plugs into." },
+    { "id": "amx_moe", "label": "AMX_MOE_TP", "file": "kt-kernel/operators/amx/moe.hpp", "group": "cpu_moe", "desc": "Tensor-parallel AMX expert kernel: loads INT4 expert tiles, runs gate/up and down GEMMs across NUMA partitions." },
+    { "id": "avx2_moe", "label": "AVX2_MOE_BASE", "file": "kt-kernel/operators/avx2/moe_base.hpp", "group": "cpu_moe", "desc": "Fallback MoE base for AVX2-only x86 CPUs (including AMD) sharing the same operator contract as the AMX path." },
+    { "id": "amx_la", "label": "AMX tile compute", "file": "kt-kernel/operators/amx/la/amx.hpp", "group": "cpu_moe", "desc": "Low-level linear algebra: TMUL tile config, SwiGLU activation, and buffer helpers that feed the AMX dot-product units." },
+    { "id": "kv_cache", "label": "KVCache", "file": "kt-kernel/operators/kvcache/kvcache.h", "group": "kv", "desc": "Paged KV cache manager with thread/batch/block resize and per-block importance tracking for sparse retrieval." },
+    { "id": "kv_attn", "label": "Sparse attention kernels", "file": "kt-kernel/operators/kvcache/kvcache_attn.cpp", "group": "kv", "desc": "Quest-style block attention: quantize queries, score block similarity, select top blocks, then run attention over the retrieved pages." },
+    { "id": "task_q", "label": "TaskQueue", "file": "kt-kernel/cpu_backend/task_queue.h", "group": "backend", "desc": "Lock-light queue that fans expert and attention jobs out to workers and lets callers sync on completion." },
+    { "id": "worker_pool", "label": "WorkerPool", "file": "kt-kernel/cpu_backend/worker_pool.h", "group": "backend", "desc": "NUMA-aware thread pool with per-thread state, job distribution, and work stealing across sockets." }
+  ],
+  "edges": [
+    { "from": "kt_run", "to": "gguf_loader", "label": "loads model weights" },
+    { "from": "kt_run", "to": "ext_bind", "label": "imports kt_kernel_ext" },
+    { "from": "kt_run", "to": "cuda_bind", "label": "uses GPU ops" },
+    { "from": "gguf_loader", "to": "ext_bind", "label": "fills CPU expert weights" },
+    { "from": "ext_bind", "to": "op_iface", "label": "exposes interfaces" },
+    { "from": "op_iface", "to": "amx_moe", "label": "AMX path" },
+    { "from": "op_iface", "to": "avx2_moe", "label": "AVX2 path" },
+    { "from": "op_iface", "to": "kv_cache", "label": "MLA attention" },
+    { "from": "amx_moe", "to": "amx_la", "label": "tile GEMMs" },
+    { "from": "amx_moe", "to": "task_q", "label": "expert jobs" },
+    { "from": "avx2_moe", "to": "task_q", "label": "expert jobs" },
+    { "from": "task_q", "to": "worker_pool", "label": "dispatch" },
+    { "from": "kv_cache", "to": "kv_attn", "label": "block retrieval" },
+    { "from": "kv_attn", "to": "task_q", "label": "block jobs" }
+  ]
+}

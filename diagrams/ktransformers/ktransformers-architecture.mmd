@@ -1,0 +1,101 @@
+flowchart TD
+
+subgraph group_python["Unnamed"]
+end
+
+subgraph group_bridge["Unnamed"]
+end
+
+subgraph group_cpu_moe["Unnamed"]
+end
+
+subgraph group_kv["Unnamed"]
+end
+
+subgraph group_backend["Unnamed"]
+end
+
+subgraph group_cuda["Unnamed"]
+end
+
+node_kt_run["run.py"]
+node_gguf_loader["loader.py"]
+node_moe_wrap["GeneralMoEWrapper"]
+node_ext_bind["ext_bindings.cpp"]
+node_op_iface["common.hpp"]
+node_amx_moe_tp["AMX_MOE_TP"]
+node_amx_moe_base["AMX_MOE_BASE"]
+node_amx_gate_up["do_gate_up_gemm"]
+node_amx_down["do_down_gemm"]
+node_amx_load["load_weights"]
+node_avx2_base["AVX2_MOE_BASE"]
+node_avx2_load["AVX2 load_weights"]
+node_amx_la["amx.hpp tiles"]
+node_amx_buf["amx_buffers.hpp"]
+node_kv_cls["KVCache"]
+node_kv_cfg["KVCacheConfig"]
+node_kv_attn["attn_with_kvcache"]
+node_quant_q["quantize_q_"]
+node_blk_sim["calculate_block_similarity_"]
+node_sel_blk["select_block_"]
+node_retrieval["retrieval_kvcache_"]
+node_sparsity["calculate_sparsity_"]
+node_get_sparse["get_attn_sparsity"]
+node_task_q["TaskQueue"]
+node_worker_pool["WorkerPool"]
+node_numa_dist["NumaJobDistributor"]
+node_work_steal["do_work_stealing_job"]
+node_thread_state["ThreadState"]
+node_cuda_bind["binding.cpp"]
+node_marlin_gemm["gptq_marlin_gemm"]
+node_marlin_kernel["Marlin kernel"]
+node_topk_softmax["topk_softmax"]
+node_topk_gating["topkGatingSoftmax"]
+
+node_kt_run -->|"resolve + load weights"| node_gguf_loader
+node_kt_run -->|"builds MoE layer"| node_moe_wrap
+node_kt_run -->|"imports kt_kernel_ext"| node_ext_bind
+node_moe_wrap -->|"CPU expert calls"| node_ext_bind
+node_moe_wrap -->|"GPU expert calls"| node_cuda_bind
+node_ext_bind -->|"exports contracts"| node_op_iface
+node_op_iface -->|"AMX implementation"| node_amx_moe_tp
+node_op_iface -->|"AVX2 implementation"| node_avx2_base
+node_op_iface -->|"MLA attention"| node_kv_cls
+node_amx_moe_tp -->|"inherits base"| node_amx_moe_base
+node_amx_moe_tp -->|"expert FFN fwd"| node_amx_gate_up
+node_amx_moe_tp -->|"down proj"| node_amx_down
+node_amx_moe_tp -->|"stage weights"| node_amx_load
+node_amx_load -->|"fills B tiles"| node_amx_buf
+node_amx_gate_up -->|"TMUL tiles"| node_amx_la
+node_amx_gate_up -->|"A/B staging"| node_amx_buf
+node_amx_down -->|"A/B staging"| node_amx_buf
+node_avx2_base -->|"stage weights"| node_avx2_load
+node_amx_moe_tp -->|"enqueue expert jobs"| node_task_q
+node_avx2_base -->|"enqueue expert jobs"| node_task_q
+node_task_q -->|"dispatch"| node_worker_pool
+node_worker_pool -->|"split by node"| node_numa_dist
+node_numa_dist -->|"rebalance"| node_work_steal
+node_worker_pool -->|"per-thread scratch"| node_thread_state
+node_kv_cls -->|"sizing knobs"| node_kv_cfg
+node_kv_cls -->|"runs attention"| node_kv_attn
+node_kv_attn -->|"quantize queries"| node_quant_q
+node_quant_q -->|"score blocks"| node_blk_sim
+node_blk_sim -->|"top-k blocks"| node_sel_blk
+node_sel_blk -->|"gather pages"| node_retrieval
+node_retrieval -->|"record usage"| node_sparsity
+node_kv_cls -->|"expose sparsity"| node_get_sparse
+node_cuda_bind -->|"GPTQ GEMM"| node_marlin_gemm
+node_marlin_gemm -->|"launch"| node_marlin_kernel
+node_cuda_bind -->|"MoE gating"| node_topk_softmax
+node_topk_softmax -->|"warp kernel"| node_topk_gating
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_kt_run,node_gguf_loader,node_moe_wrap,node_ext_bind,node_op_iface,node_amx_moe_tp,node_amx_moe_base,node_amx_gate_up,node_amx_down,node_amx_load,node_avx2_base,node_avx2_load,node_amx_la,node_amx_buf,node_quant_q,node_blk_sim,node_sel_blk,node_sparsity,node_get_sparse,node_numa_dist,node_work_steal,node_thread_state,node_cuda_bind,node_marlin_gemm,node_marlin_kernel,node_topk_softmax,node_topk_gating toneIndigo
+class node_kv_cls,node_kv_cfg,node_kv_attn,node_retrieval toneAmber
+class node_task_q,node_worker_pool toneRose
