@@ -1,0 +1,40 @@
+{
+  "owner": "flashinfer-ai",
+  "repo": "flashinfer",
+  "branch": "main",
+  "groups": [
+    { "id": "api", "name": "Serving Wrappers" },
+    { "id": "plan", "name": "Planning & KV" },
+    { "id": "kernel", "name": "CUDA Kernels" },
+    { "id": "tune", "name": "Autotuner" }
+  ],
+  "nodes": [
+    { "id": "plan_decode", "label": "BatchDecodeWrapper", "file": "flashinfer/decode.py", "group": "api", "desc": "BatchDecodeWithPagedKVCacheWrapper L1194: plan/run lifecycle over paged KV cache" },
+    { "id": "plan_prefill", "label": "BatchPrefillWrapper", "file": "flashinfer/prefill.py", "group": "api", "desc": "BatchPrefillWithPagedKVCacheWrapper L2719: ragged or paged prefill with causal masks" },
+    { "id": "single", "label": "single_prefill", "file": "flashinfer/prefill.py", "group": "api", "desc": "single_prefill_with_kv_cache L1271 for one query against one KV cache" },
+    { "id": "core", "label": "BatchAttention", "file": "flashinfer/attention/_core.py", "group": "api", "desc": "new-style BatchAttention L65 with plan L116 and run L266" },
+    { "id": "cascade_w", "label": "MultiLevelCascade", "file": "flashinfer/cascade.py", "group": "api", "desc": "MultiLevelCascadeAttentionWrapper L226 shares long prefixes across requests" },
+    { "id": "decode_mod", "label": "decode JIT module", "file": "flashinfer/decode.py", "group": "plan", "desc": "get_batch_decode_module L537 loads the compiled decode kernel module" },
+    { "id": "prefill_mod", "label": "prefill JIT module", "file": "flashinfer/prefill.py", "group": "plan", "desc": "get_batch_prefill_module L571 resolves backend-specific prefill modules" },
+    { "id": "sched", "label": "DecodePlan", "file": "include/flashinfer/attention/scheduler.cuh", "group": "plan", "desc": "DecodePlan L512 splits KV into chunks and writes the plan info vector" },
+    { "id": "page", "label": "page append", "file": "flashinfer/page.py", "group": "plan", "desc": "append_paged_kv_cache L580 writes new tokens into the paged cache" },
+    { "id": "decode_k", "label": "decode kernel", "file": "include/flashinfer/attention/decode.cuh", "group": "kernel", "desc": "BatchDecodeWithPagedKVCacheKernel L624: split-KV decode kernel" },
+    { "id": "prefill_k", "label": "prefill dispatch", "file": "include/flashinfer/attention/prefill.cuh", "group": "kernel", "desc": "BatchPrefillWithPagedKVCacheDispatched L5040 grid setup for prefill" },
+    { "id": "autot", "label": "AutoTuner", "file": "flashinfer/autotuner/autotuner.py", "group": "tune", "desc": "AutoTuner L1535 profiles tactics per shape and caches the winners" }
+  ],
+  "edges": [
+    { "from": "plan_decode", "to": "decode_mod", "label": "plan loads module" },
+    { "from": "plan_prefill", "to": "prefill_mod", "label": "plan loads module" },
+    { "from": "plan_decode", "to": "sched", "label": "host-side planning" },
+    { "from": "plan_prefill", "to": "sched", "label": "host-side planning" },
+    { "from": "decode_mod", "to": "decode_k", "label": "launches" },
+    { "from": "prefill_mod", "to": "prefill_k", "label": "launches" },
+    { "from": "plan_decode", "to": "page", "label": "append new tokens" },
+    { "from": "plan_prefill", "to": "page", "label": "append new tokens" },
+    { "from": "core", "to": "prefill_mod", "label": "uses prefill path" },
+    { "from": "cascade_w", "to": "core", "label": "per-level attention" },
+    { "from": "single", "to": "prefill_mod", "label": "single-request path" },
+    { "from": "autot", "to": "plan_decode", "label": "picks tactic" },
+    { "from": "autot", "to": "plan_prefill", "label": "picks tactic" }
+  ]
+}
