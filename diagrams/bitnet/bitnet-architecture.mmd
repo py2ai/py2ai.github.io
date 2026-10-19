@@ -1,0 +1,92 @@
+flowchart TD
+
+subgraph group_entry["Unnamed"]
+end
+
+subgraph group_convert["Unnamed"]
+end
+
+subgraph group_codegen["Unnamed"]
+end
+
+subgraph group_kernels["Unnamed"]
+end
+
+subgraph group_gpu["Unnamed"]
+end
+
+subgraph group_tune["Unnamed"]
+end
+
+node_setup_main["setup_env main"]
+node_setup_prepare["prepare_model"]
+node_setup_compile["compile"]
+node_run_main["run_inference"]
+node_run_args["inference args"]
+node_server_run["run_server"]
+node_conv_main["convert main"]
+node_conv_model["BitnetModel"]
+node_conv_i2s["quantize_to_i2_s"]
+node_conv_tl1["TL1 transform"]
+node_conv_tl2["TL2 transform"]
+node_cg2_ctor["gen_ctor_code"]
+node_cg2_tbl["gen_tbl_impl"]
+node_cg2_gemm["qgemm emitters"]
+node_cg2_api["gen_top_api"]
+node_cg1["codegen_tl1"]
+node_preset_hdr["preset tl2 header"]
+node_gemm_hdr["gemm-config.h"]
+node_lut_hdr["bitnet-lut-kernels.h"]
+node_lut_init["ggml_bitnet_init"]
+node_lut_wsize["scratch sizing"]
+node_lut_mulmat["LUT mul_mat"]
+node_gpu_linear["bitnet_int8xint2_linear"]
+node_gpu_bl["BitLinearKernel"]
+node_gpu_attn["Attention + Block"]
+node_gpu_gen["FastGen"]
+node_gpu_cu["CUDA dispatch"]
+node_gpu_setup["kernel build"]
+node_bench["run_benchmark"]
+node_tuner["GemmTuner"]
+node_ppl["PerplexityTester"]
+
+node_setup_main -->|"run_command"| node_setup_prepare
+node_setup_main -->|"after codegen"| node_setup_compile
+node_setup_prepare -->|"consumes repacked gguf"| node_conv_i2s
+node_setup_compile -->|"builds llama.cpp with BitNet src"| node_lut_mulmat
+node_conv_main -->|"instantiate model"| node_conv_model
+node_conv_model -->|"pack ternary"| node_conv_i2s
+node_conv_model -->|"ARM layout"| node_conv_tl1
+node_conv_model -->|"x86 layout"| node_conv_tl2
+node_conv_i2s -->|"I2_S gguf input"| node_run_args
+node_run_args -->|"argv"| node_run_main
+node_server_run -->|"same model flags"| node_run_args
+node_cg2_ctor -->|"written headers"| node_preset_hdr
+node_cg2_tbl -->|"LUT tables"| node_preset_hdr
+node_cg2_gemm -->|"qgemm bodies"| node_preset_hdr
+node_cg2_api -->|"preprocessor glue"| node_preset_hdr
+node_cg1 -->|"TL1 twin"| node_preset_hdr
+node_preset_hdr -->|"&#35;include X86_TL2"| node_lut_mulmat
+node_gemm_hdr -->|"tile constants"| node_lut_mulmat
+node_lut_hdr -->|"declarations"| node_lut_init
+node_lut_init -->|"extra tensor state"| node_lut_wsize
+node_lut_wsize -->|"sized scratch"| node_lut_mulmat
+node_tuner -->|"kernel_config.ini"| node_gemm_hdr
+node_ppl -->|"llama-cli perplexity"| node_run_main
+node_bench -->|"timed CLI runs"| node_run_main
+node_conv_tl2 -->|"ternary ckpt via gpu/convert_checkpoint.py"| node_gpu_gen
+node_gpu_gen -->|"prefill + decode replay"| node_gpu_attn
+node_gpu_attn -->|"BitLinear layers"| node_gpu_bl
+node_gpu_bl -->|"forward"| node_gpu_linear
+node_gpu_linear -->|"ctypes ABI call"| node_gpu_cu
+node_gpu_setup -->|"builds libbitnet.so"| node_gpu_cu
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_setup_main,node_setup_prepare,node_setup_compile,node_run_main,node_run_args,node_conv_main,node_conv_model,node_conv_i2s,node_conv_tl1,node_conv_tl2,node_cg2_ctor,node_cg2_tbl,node_cg2_gemm,node_cg1,node_preset_hdr,node_gemm_hdr,node_lut_hdr,node_lut_init,node_lut_wsize,node_lut_mulmat,node_gpu_linear,node_gpu_bl,node_gpu_attn,node_gpu_gen,node_gpu_cu,node_gpu_setup,node_bench,node_tuner,node_ppl toneIndigo
+class node_server_run,node_cg2_api toneMint

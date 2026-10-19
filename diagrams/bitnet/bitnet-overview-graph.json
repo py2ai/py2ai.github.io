@@ -1,0 +1,42 @@
+{
+  "owner": "microsoft",
+  "repo": "BitNet",
+  "branch": "main",
+  "groups": [
+    { "id": "entry", "name": "Entry Points" },
+    { "id": "codegen", "name": "Codegen & Convert" },
+    { "id": "kernels", "name": "CPU LUT Kernels" },
+    { "id": "gpu", "name": "GPU Path" },
+    { "id": "tune", "name": "Bench & Tuning" }
+  ],
+  "nodes": [
+    { "id": "setup_env", "label": "setup_env.py", "file": "setup_env.py", "group": "entry", "desc": "prepare_model + gen_code + compile: builds a patched llama.cpp binary for I2_S/TL1/TL2" },
+    { "id": "run_inference", "label": "run_inference.py", "file": "run_inference.py", "group": "entry", "desc": "thin CLI wrapper that drives llama-cli against a ternary GGUF model" },
+    { "id": "run_server", "label": "run_inference_server.py", "file": "run_inference_server.py", "group": "entry", "desc": "starts llama-server with the BitNet model for OpenAI-style serving" },
+    { "id": "convert", "label": "convert-hf-to-gguf", "file": "utils/convert-hf-to-gguf-bitnet.py", "group": "codegen", "desc": "packs HuggingFace ternary weights into I2_S, TL1 and TL2 representations" },
+    { "id": "codegen_tl2", "label": "codegen_tl2.py", "file": "utils/codegen_tl2.py", "group": "codegen", "desc": "generates AVX2 lookup-table GEMM tables and qgemm kernels per model" },
+    { "id": "codegen_tl1", "label": "codegen_tl1.py", "file": "utils/codegen_tl1.py", "group": "codegen", "desc": "generates the ARM NEON lookup-table kernel variant" },
+    { "id": "preset", "label": "preset kernel headers", "file": "preset_kernels/bitnet_b1_58-3B/bitnet-lut-kernels-tl2.h", "group": "kernels", "desc": "checked-in generated headers: LUT tables + qgemm specializations per shape" },
+    { "id": "lut_cpp", "label": "ggml-bitnet-lut.cpp", "file": "src/ggml-bitnet-lut.cpp", "group": "kernels", "desc": "ggml mul_mat override: permutation, scratch sizing and LUT GEMM dispatch" },
+    { "id": "gemm_config", "label": "gemm-config.h", "file": "include/gemm-config.h", "group": "kernels", "desc": "compile-time tiling knobs per ISA: AVX2, NEON-DOTPROD and fallback" },
+    { "id": "gpu_model", "label": "gpu/model.py", "file": "gpu/model.py", "group": "gpu", "desc": "pure PyTorch transformer with BitLinearKernel int8xint2 CUDA calls" },
+    { "id": "gpu_kernel", "label": "bitnet_kernels.cu", "file": "gpu/bitnet_kernels/bitnet_kernels.cu", "group": "gpu", "desc": "shape-dispatched ladder int8xint2 CUDA kernels behind a C ABI" },
+    { "id": "bench", "label": "e2e_benchmark.py", "file": "utils/e2e_benchmark.py", "group": "tune", "desc": "end-to-end speed benchmark wrapping the compiled inference binary" }
+  ],
+  "edges": [
+    { "from": "setup_env", "to": "convert", "label": "quantize + repack checkpoint" },
+    { "from": "setup_env", "to": "codegen_tl2", "label": "gen_code" },
+    { "from": "setup_env", "to": "codegen_tl1", "label": "gen_code" },
+    { "from": "codegen_tl2", "to": "preset", "label": "emits generated headers" },
+    { "from": "codegen_tl1", "to": "preset", "label": "emits generated headers" },
+    { "from": "preset", "to": "lut_cpp", "label": "#include under X86_TL2" },
+    { "from": "gemm_config", "to": "codegen_tl2", "label": "tiling macros" },
+    { "from": "gemm_config", "to": "lut_cpp", "label": "tile sizes" },
+    { "from": "lut_cpp", "to": "run_inference", "label": "patched llama-cli" },
+    { "from": "lut_cpp", "to": "run_server", "label": "patched llama-server" },
+    { "from": "run_inference", "to": "run_server", "label": "same model dir" },
+    { "from": "convert", "to": "gpu_model", "label": "ternary ckpt via gpu/convert_checkpoint.py" },
+    { "from": "gpu_model", "to": "gpu_kernel", "label": "ctypes libbitnet.so" },
+    { "from": "bench", "to": "run_inference", "label": "times CLI runs" }
+  ]
+}
