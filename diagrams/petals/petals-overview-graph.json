@@ -1,0 +1,42 @@
+{
+  "owner": "bigscience-workshop",
+  "repo": "petals",
+  "branch": "main",
+  "groups": [
+    { "id": "client", "name": "Client Library" },
+    { "id": "routing", "name": "Client Routing" },
+    { "id": "dht", "name": "DHT Directory" },
+    { "id": "server", "name": "Volunteer Server" },
+    { "id": "exec", "name": "Block Execution" }
+  ],
+  "nodes": [
+    { "id": "client_init", "label": "from_pretrained.py", "file": "src/petals/client/from_pretrained.py", "group": "client", "desc": "FromPretrainedMixin: loads a HF model but only metadata; layers stay remote" },
+    { "id": "client_seq", "label": "remote_sequential.py", "file": "src/petals/client/remote_sequential.py", "group": "client", "desc": "RemoteSequential: the model's transformer blocks exposed as one nn.Module over the network" },
+    { "id": "routing_sm", "label": "sequence_manager.py", "file": "src/petals/client/routing/sequence_manager.py", "group": "routing", "desc": "RemoteSequenceManager: maintains a route of live servers covering every block" },
+    { "id": "dht_utils", "label": "utils/dht.py", "file": "src/petals/utils/dht.py", "group": "dht", "desc": "declare_active_modules and compute_spans over the hivemind DHT" },
+    { "id": "data_struct", "label": "data_structures.py", "file": "src/petals/data_structures.py", "group": "dht", "desc": "ModelInfo, RemoteModuleInfo, ServerState: what the DHT actually stores" },
+    { "id": "server_main", "label": "server.py", "file": "src/petals/server/server.py", "group": "server", "desc": "Server: joins the DHT, announces served blocks, runs the runtime" },
+    { "id": "block_sel", "label": "block_selection.py", "file": "src/petals/server/block_selection.py", "group": "server", "desc": "choose_best_blocks: picks a consecutive span of layers balancing swarm throughput" },
+    { "id": "server_fp", "label": "from_pretrained.py", "file": "src/petals/server/from_pretrained.py", "group": "server", "desc": "load_pretrained_block: downloads only this server's slice of the weights" },
+    { "id": "backend", "label": "backend.py", "file": "src/petals/server/backend.py", "group": "exec", "desc": "TransformerBackend: wraps one block for forward, backward, and cache steps" },
+    { "id": "handler", "label": "handler.py", "file": "src/petals/server/handler.py", "group": "exec", "desc": "TransformerConnectionHandler: rpc_inference, rpc_forward, rpc_backward endpoints" },
+    { "id": "cache", "label": "memory_cache.py", "file": "src/petals/server/memory_cache.py", "group": "exec", "desc": "MemoryCache: allocates and recycles attention KV memory per session" },
+    { "id": "sess", "label": "inference_session.py", "file": "src/petals/client/inference_session.py", "group": "client", "desc": "InferenceSession: a live stepper pinned to one chain of servers" }
+  ],
+  "edges": [
+    { "from": "client_init", "to": "client_seq", "label": "assembles distributed model" },
+    { "from": "client_seq", "to": "routing_sm", "label": "asks for a route" },
+    { "from": "routing_sm", "to": "dht_utils", "label": "queries swarm state" },
+    { "from": "dht_utils", "to": "data_struct", "label": "reads records" },
+    { "from": "data_struct", "to": "routing_sm", "label": "spans per block range" },
+    { "from": "client_seq", "to": "sess", "label": "opens per-request session" },
+    { "from": "sess", "to": "handler", "label": "RPC inference stream" },
+    { "from": "handler", "to": "backend", "label": "steps the block" },
+    { "from": "backend", "to": "cache", "label": "allocates KV memory" },
+    { "from": "server_main", "to": "dht_utils", "label": "announces blocks" },
+    { "from": "server_main", "to": "block_sel", "label": "chooses layers to serve" },
+    { "from": "block_sel", "to": "server_fp", "label": "download only that slice" },
+    { "from": "block_sel", "to": "backend", "label": "spawns one backend per block" },
+    { "from": "sess", "to": "routing_sm", "label": "reports latency and failures" }
+  ]
+}
