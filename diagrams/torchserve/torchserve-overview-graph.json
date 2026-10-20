@@ -1,0 +1,42 @@
+{
+  "owner": "pytorch",
+  "repo": "serve",
+  "branch": "master",
+  "groups": [
+    { "id": "entry", "name": "Server Entry" },
+    { "id": "http", "name": "HTTP API" },
+    { "id": "model_mgmt", "name": "Model Management" },
+    { "id": "workload", "name": "Workload & Workers" },
+    { "id": "python_side", "name": "Python Backend" }
+  ],
+  "nodes": [
+    { "id": "model_server", "label": "ModelServer.java", "file": "frontend/server/src/main/java/org/pytorch/serve/ModelServer.java", "group": "entry", "desc": "main(): boots Netty REST servers and gRPC servers, restores snapshot" },
+    { "id": "http_handler", "label": "HttpRequestHandler.java", "file": "frontend/server/src/main/java/org/pytorch/serve/http/HttpRequestHandler.java", "group": "http", "desc": "Netty inbound handler; dispatches into the API handler chain" },
+    { "id": "inf_handler", "label": "InferenceRequestHandler.java", "file": "frontend/server/src/main/java/org/pytorch/serve/http/api/rest/InferenceRequestHandler.java", "group": "http", "desc": "REST /predictions: turns requests into jobs" },
+    { "id": "mgmt_handler", "label": "ManagementRequestHandler.java", "file": "frontend/server/src/main/java/org/pytorch/serve/http/api/rest/ManagementRequestHandler.java", "group": "http", "desc": "REST /models: register, describe, scale, unregister" },
+    { "id": "model_manager", "label": "ModelManager.java", "file": "frontend/server/src/main/java/org/pytorch/serve/wlm/ModelManager.java", "group": "model_mgmt", "desc": "Singleton registry: registerModel, updateModel, addJob" },
+    { "id": "model_archive", "label": "ModelArchive.java", "file": "frontend/archive/src/main/java/org/pytorch/serve/archive/model/ModelArchive.java", "group": "model_mgmt", "desc": ".mar archive: download, unzip, validate manifest and model" },
+    { "id": "wlm", "label": "WorkLoadManager.java", "file": "frontend/server/src/main/java/org/pytorch/serve/wlm/WorkLoadManager.java", "group": "workload", "desc": "modelChanged(): reconciles desired worker count with reality" },
+    { "id": "worker", "label": "WorkerThread.java", "file": "frontend/server/src/main/java/org/pytorch/serve/wlm/WorkerThread.java", "group": "workload", "desc": "run(): polls batches, writes OTF frames to the worker process" },
+    { "id": "batch_agg", "label": "BatchAggregator.java", "file": "frontend/server/src/main/java/org/pytorch/serve/wlm/BatchAggregator.java", "group": "workload", "desc": "getRequest/sendResponse: batch formation and reply routing" },
+    { "id": "worker_lc", "label": "WorkerLifeCycle.java", "file": "frontend/server/src/main/java/org/pytorch/serve/wlm/WorkerLifeCycle.java", "group": "workload", "desc": "startWorkerPython(): spawns ts/model_service_worker.py as a subprocess" },
+    { "id": "ts_worker", "label": "model_service_worker.py", "file": "ts/model_service_worker.py", "group": "python_side", "desc": "handle_connection(): command loop over the OTF socket" },
+    { "id": "base_handler", "label": "base_handler.py", "file": "ts/torch_handler/base_handler.py", "group": "python_side", "desc": "BaseHandler.handle(): preprocess, inference, postprocess for user models" }
+  ],
+  "edges": [
+    { "from": "model_server", "to": "http_handler", "label": "installs Netty chains" },
+    { "from": "model_server", "to": "model_manager", "label": "wires registry" },
+    { "from": "http_handler", "to": "inf_handler", "label": "chain hop" },
+    { "from": "http_handler", "to": "mgmt_handler", "label": "chain hop" },
+    { "from": "inf_handler", "to": "model_manager", "label": "predict" },
+    { "from": "mgmt_handler", "to": "model_manager", "label": "register/scale" },
+    { "from": "model_manager", "to": "model_archive", "label": "download and parse .mar" },
+    { "from": "model_manager", "to": "wlm", "label": "updateModel" },
+    { "from": "wlm", "to": "worker", "label": "spawns worker threads" },
+    { "from": "worker", "to": "batch_agg", "label": "poll and admit" },
+    { "from": "worker", "to": "worker_lc", "label": "watches process" },
+    { "from": "worker_lc", "to": "ts_worker", "label": "python subprocess" },
+    { "from": "ts_worker", "to": "base_handler", "label": "service.predict" },
+    { "from": "ts_worker", "to": "batch_agg", "label": "OTF responses" }
+  ]
+}
