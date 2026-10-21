@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_g_python["Unnamed"]
+  node_py_ops["ttnn.matmul &#40;Python&#41;<br/>[matmul.py]"]
+  node_py_decorators["REGISTERED_OPERATIONS<br/>[decorators.py]"]
+  node_py_device["open_device &#40;Python&#41;<br/>[device.py]"]
+  node_py_core["from_torch / to_torch<br/>[core.py]"]
+end
+
+subgraph group_g_bindings["Unnamed"]
+  node_nb_init["NB_MODULE&#40;_ttnn&#41;<br/>[__init__.cpp]"]
+  node_nb_device["device bindings<br/>[device.cpp]"]
+  node_nb_matmul["bind_function matmul"]
+end
+
+subgraph group_g_ttnn["Unnamed"]
+  node_cpp_matmul["Tensor matmul&#40;&#41;<br/>[matmul.cpp]"]
+  node_dev_op_framework["device_operation launch"]
+  node_matmul_op["MatmulDeviceOperation"]
+  node_mm_factory["Program factory &#40;mcast 1D&#41;"]
+  node_tensor_api["class Tensor<br/>[tensor.hpp]"]
+end
+
+subgraph group_g_kernels["Unnamed"]
+  node_bmm_compute["bmm compute kernel<br/>[bmm.cpp]"]
+  node_bmm_reader["bmm reader kernel"]
+  node_tilize_kernel["tilize kernel<br/>[tilize.cpp]"]
+end
+
+subgraph group_g_api["Unnamed"]
+  node_idevice["IDevice<br/>[device.hpp]"]
+  node_buffer_api["Buffer<br/>[buffer.hpp]"]
+  node_program_api["Program<br/>[program.hpp]"]
+  node_host_api["CreateKernel<br/>[host_api.hpp]"]
+  node_kernel_types["DataMovementProcessor<br/>[kernel_types.hpp]"]
+end
+
+subgraph group_g_impl["Unnamed"]
+  node_device_impl["Device::initialize<br/>[device.cpp]"]
+  node_buffer_impl["BufferImpl::create<br/>[buffer.cpp]"]
+  node_allocator["BankManager allocator<br/>[allocator.cpp]"]
+  node_kernel_impl["Kernel<br/>[kernel.cpp]"]
+  node_program_cpp["Program::Program<br/>[program.cpp]"]
+  node_program_hdr["ProgramImpl::add_kernel<br/>[program_impl.hpp]"]
+  node_context["MetalContext::initialize<br/>[metal_context.cpp]"]
+end
+
+subgraph group_g_dispatch["Unnamed"]
+  node_fd_mesh_cq["FDMeshCommandQueue"]
+  node_dispatch_cores["dispatch_core_manager"]
+  node_assemble["assemble_device_commands<br/>[dispatch.cpp]"]
+  node_sysmem["SystemMemoryManager"]
+  node_cq_prefetch["cq_prefetch kernel_main<br/>[cq_prefetch.cpp]"]
+  node_cq_dispatch["cq_dispatch kernel_main<br/>[cq_dispatch.cpp]"]
+  node_hal["class Hal<br/>[hal.hpp]"]
+end
+
+node_py_decorators -->|"REGISTERED_OPERATIONS"| node_py_ops
+node_py_core -->|"builds Tensor"| node_tensor_api
+node_py_ops -->|"re-export"| node_nb_matmul
+node_py_device -->|"open_device"| node_nb_device
+node_nb_init -->|"device submodule"| node_nb_device
+node_nb_init -->|"operations.matmul"| node_nb_matmul
+node_nb_device -->|"wraps device handle"| node_idevice
+node_nb_matmul -->|"bind_function"| node_cpp_matmul
+node_cpp_matmul -->|"prim::matmul"| node_matmul_op
+node_matmul_op -->|"select_program_factory"| node_mm_factory
+node_matmul_op -->|"generic launch"| node_dev_op_framework
+node_dev_op_framework -->|"EnqueueMeshWorkload"| node_fd_mesh_cq
+node_mm_factory -->|"tt_metal::CreateKernel"| node_host_api
+node_mm_factory -->|"fills Program"| node_program_api
+node_mm_factory -->|"CreateCircularBuffer"| node_buffer_api
+node_host_api -->|"constructs Kernel"| node_kernel_impl
+node_host_api -->|"add_kernel"| node_program_hdr
+node_program_api -->|"pimpl"| node_program_cpp
+node_program_cpp -->|"detail::ProgramImpl"| node_program_hdr
+node_kernel_types -->|"BRISC/NCRISC"| node_bmm_reader
+node_kernel_types -->|"TRISC"| node_bmm_compute
+node_buffer_api -->|"BufferImpl::create"| node_buffer_impl
+node_buffer_impl -->|"bank-backed addresses"| node_allocator
+node_idevice -->|"Device : IDevice"| node_device_impl
+node_device_impl -->|"MetalContext"| node_context
+node_device_impl -->|"owns allocators"| node_allocator
+node_tensor_api -->|"tile layout on device"| node_tilize_kernel
+node_fd_mesh_cq -->|"programs to commands"| node_assemble
+node_fd_mesh_cq -->|"core placement"| node_dispatch_cores
+node_dispatch_cores -->|"runs on reserved cores"| node_cq_prefetch
+node_assemble -->|"commands to ring buffer"| node_sysmem
+node_sysmem -->|"fetch queue"| node_cq_prefetch
+node_cq_prefetch -->|"command pages"| node_cq_dispatch
+node_cq_dispatch -->|"HAL addresses"| node_hal
+node_cq_dispatch -->|"launch message"| node_bmm_compute
+node_cq_dispatch -->|"launch message"| node_bmm_reader
+
+click node_py_ops "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/ttnn/operations/matmul.py"
+click node_py_decorators "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/ttnn/decorators.py"
+click node_py_device "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/ttnn/device.py"
+click node_py_core "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/ttnn/operations/core.py"
+click node_nb_init "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn-nanobind/__init__.cpp"
+click node_nb_device "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn-nanobind/device.cpp"
+click node_nb_matmul "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/matmul_nanobind.cpp"
+click node_cpp_matmul "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/matmul.cpp"
+click node_dev_op_framework "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/api/ttnn/device_operation.hpp"
+click node_matmul_op "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/device/matmul_device_operation.cpp"
+click node_mm_factory "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/device/factory/matmul_multicore_reuse_mcast_1d_program_factory.cpp"
+click node_tensor_api "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/api/ttnn/tensor/tensor.hpp"
+click node_bmm_compute "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/device/kernels/compute/bmm.cpp"
+click node_bmm_reader "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/device/kernels/dataflow/reader_bmm_tile_layout_in0.cpp"
+click node_tilize_kernel "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/kernel/compute/tilize.cpp"
+click node_idevice "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/device.hpp"
+click node_buffer_api "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/buffer.hpp"
+click node_program_api "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/program.hpp"
+click node_host_api "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/host_api.hpp"
+click node_kernel_types "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/kernel_types.hpp"
+click node_device_impl "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/device/device.cpp"
+click node_buffer_impl "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/buffers/buffer.cpp"
+click node_allocator "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/allocator/allocator.cpp"
+click node_kernel_impl "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/kernels/kernel.cpp"
+click node_program_cpp "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/program/program.cpp"
+click node_program_hdr "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/program/program_impl.hpp"
+click node_context "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/context/metal_context.cpp"
+click node_fd_mesh_cq "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/distributed/fd_mesh_command_queue.cpp"
+click node_dispatch_cores "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/dispatch_core_manager.cpp"
+click node_assemble "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/program/dispatch.cpp"
+click node_sysmem "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/system_memory_manager.cpp"
+click node_cq_prefetch "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/kernels/cq_prefetch.cpp"
+click node_cq_dispatch "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/kernels/cq_dispatch.cpp"
+click node_hal "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/llrt/hal.hpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_ops,node_py_decorators,node_py_device,node_py_core,node_fd_mesh_cq,node_dispatch_cores,node_assemble,node_sysmem,node_cq_prefetch,node_cq_dispatch,node_hal toneBlue
+class node_nb_init,node_nb_device,node_nb_matmul toneAmber
+class node_cpp_matmul,node_dev_op_framework,node_matmul_op,node_mm_factory,node_tensor_api toneMint
+class node_bmm_compute,node_bmm_reader,node_tilize_kernel toneRose
+class node_idevice,node_buffer_api,node_program_api,node_host_api,node_kernel_types toneIndigo
+class node_device_impl,node_buffer_impl,node_allocator,node_kernel_impl,node_program_cpp,node_program_hdr,node_context toneTeal
