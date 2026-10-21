@@ -1,0 +1,44 @@
+{
+  "owner": "Tencent",
+  "repo": "ncnn",
+  "branch": "master",
+  "groups": [
+    {"id": "core", "name": "Public API"},
+    {"id": "tensor", "name": "Tensors"},
+    {"id": "layers", "name": "Layer System"},
+    {"id": "runtime", "name": "Runtime Options"},
+    {"id": "cpu", "name": "CPU Backends"},
+    {"id": "gpu", "name": "Vulkan Backend"},
+    {"id": "tools", "name": "Tooling"}
+  ],
+  "nodes": [
+    {"id": "net", "label": "Net / Extractor", "file": "src/net.h", "group": "core", "desc": "Net::load_param/load_model plus Extractor input/extract by blob name (L63, L134, L214)"},
+    {"id": "blob", "label": "Blob", "file": "src/blob.h", "group": "core", "desc": "Links each tensor to its producer and consumer layer index (L24)"},
+    {"id": "mat", "label": "Mat", "file": "src/mat.h", "group": "tensor", "desc": "Refcounted tensor: w/h/d/c, elempack, cstep; VkMat sibling for GPU (L50, L347, L360, L389)"},
+    {"id": "layer", "label": "Layer base", "file": "src/layer.h", "group": "layers", "desc": "load_param/load_model plus forward and forward_inplace virtuals and capability flags (L30, L95, L100)"},
+    {"id": "layerfactory", "label": "Layer factory", "file": "src/layer.cpp", "group": "layers", "desc": "create_layer pairs a CPU implementation with the Vulkan one (L408, L442, L518)"},
+    {"id": "registry", "label": "Registry tables", "file": "src/layer_registry.h.in", "group": "layers", "desc": "CMake-generated creator tables per CPU ISA plus a vulkan table (L5)"},
+    {"id": "option", "label": "Option", "file": "src/option.h", "group": "runtime", "desc": "num_threads, fp16/int8 toggles, local pool allocator (L38, L136)"},
+    {"id": "cpu", "label": "CPU topology", "file": "src/cpu.cpp", "group": "runtime", "desc": "big.LITTLE affinity masks and set_cpu_powersave (L3037, L3086)"},
+    {"id": "convarm", "label": "ARM Convolution", "file": "src/layer/arm/convolution_arm.cpp", "group": "cpu", "desc": "NEON kernels: winograd and im2col-gemm, fp16s/int8 paths (L117, L491, L562)"},
+    {"id": "convx86", "label": "x86 Convolution", "file": "src/layer/x86/convolution_x86.cpp", "group": "cpu", "desc": "AVX/AVX512 packed kernels selected in create_pipeline (L279, L751)"},
+    {"id": "convvk", "label": "Vulkan Convolution", "file": "src/layer/vulkan/convolution_vulkan.cpp", "group": "gpu", "desc": "Pre-transforms weights, records compute shaders into VkCompute (L71, L1759)"},
+    {"id": "pnnx", "label": "pnnx converter", "file": "tools/pnnx/src/main.cpp", "group": "tools", "desc": "Converts PyTorch TorchScript into ncnn .param/.bin (L287)"}
+  ],
+  "edges": [
+    {"from": "net", "to": "blob", "label": "vector<Blob> DAG"},
+    {"from": "net", "to": "mat", "label": "blob_mats storage"},
+    {"from": "net", "to": "layer", "label": "vector<Layer*>"},
+    {"from": "net", "to": "option", "label": "opt drives inference"},
+    {"from": "layer", "to": "mat", "label": "forward(bottom, top)"},
+    {"from": "layerfactory", "to": "layer", "label": "instantiates"},
+    {"from": "layerfactory", "to": "registry", "label": "looks up creator"},
+    {"from": "layerfactory", "to": "convarm", "label": "ARM creator"},
+    {"from": "layerfactory", "to": "convx86", "label": "x86 creator"},
+    {"from": "layerfactory", "to": "convvk", "label": "vulkan creator"},
+    {"from": "option", "to": "cpu", "label": "num_threads + affinity"},
+    {"from": "option", "to": "convvk", "label": "use_vulkan_compute gate"},
+    {"from": "convarm", "to": "cpu", "label": "spawns _nT workers"},
+    {"from": "pnnx", "to": "net", "label": "emits .param/.bin"}
+  ]
+}
