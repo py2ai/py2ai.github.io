@@ -1,0 +1,138 @@
+{
+  "owner": "tenstorrent",
+  "repo": "tt-metal",
+  "branch": "main",
+  "groups": [
+    {"id": "g_python", "name": "Python surface"},
+    {"id": "g_bindings", "name": "nanobind seam"},
+    {"id": "g_ttnn", "name": "ttnn C++ ops"},
+    {"id": "g_metalium", "name": "tt-metalium host API"},
+    {"id": "g_dispatch", "name": "dispatch and on-device"}
+  ],
+  "nodes": [
+    {
+      "id": "py_ops",
+      "label": "ttnn.matmul (Python)",
+      "file": "ttnn/ttnn/operations/matmul.py",
+      "path": "ttnn/ttnn/operations/matmul.py",
+      "group": "g_python",
+      "groupId": "g_python",
+      "desc": "Python wrapper: re-exports the nanobind-bound MatmulDeviceOperation and attaches torch golden functions."
+    },
+    {
+      "id": "nb_init",
+      "label": "NB_MODULE(_ttnn)",
+      "file": "ttnn/cpp/ttnn-nanobind/__init__.cpp",
+      "path": "ttnn/cpp/ttnn-nanobind/__init__.cpp",
+      "group": "g_bindings",
+      "groupId": "g_bindings",
+      "desc": "Root of the nanobind extension: def_submodule for tensor, device and operations, then binds classes and functions."
+    },
+    {
+      "id": "nb_matmul",
+      "label": "bind_function matmul",
+      "file": "ttnn/cpp/ttnn/operations/matmul/matmul_nanobind.cpp",
+      "path": "ttnn/cpp/ttnn/operations/matmul/matmul_nanobind.cpp",
+      "group": "g_bindings",
+      "groupId": "g_bindings",
+      "desc": "Exports ttnn.matmul from C++ with docstrings, program configs and argument casters."
+    },
+    {
+      "id": "cpp_matmul",
+      "label": "Tensor matmul()",
+      "file": "ttnn/cpp/ttnn/operations/matmul/matmul.cpp",
+      "path": "ttnn/cpp/ttnn/operations/matmul/matmul.cpp",
+      "group": "g_ttnn",
+      "groupId": "g_ttnn",
+      "desc": "C++ entry point: validates inputs and forwards to ttnn::prim::matmul."
+    },
+    {
+      "id": "matmul_op",
+      "label": "MatmulDeviceOperation",
+      "file": "ttnn/cpp/ttnn/operations/matmul/device/matmul_device_operation.cpp",
+      "path": "ttnn/cpp/ttnn/operations/matmul/device/matmul_device_operation.cpp",
+      "group": "g_ttnn",
+      "groupId": "g_ttnn",
+      "desc": "Generic device operation: validates, creates output tensors and selects a program factory."
+    },
+    {
+      "id": "mm_factory",
+      "label": "Program factory (mcast 1D)",
+      "file": "ttnn/cpp/ttnn/operations/matmul/device/factory/matmul_multicore_reuse_mcast_1d_program_factory.cpp",
+      "path": "ttnn/cpp/ttnn/operations/matmul/device/factory/matmul_multicore_reuse_mcast_1d_program_factory.cpp",
+      "group": "g_ttnn",
+      "groupId": "g_ttnn",
+      "desc": "Builds the per-launch program: reader, mcast sender, writer and compute kernels via tt_metal::CreateKernel."
+    },
+    {
+      "id": "program",
+      "label": "Program",
+      "file": "tt_metal/api/tt-metalium/program.hpp",
+      "path": "tt_metal/api/tt-metalium/program.hpp",
+      "group": "g_metalium",
+      "groupId": "g_metalium",
+      "desc": "tt-metalium container of kernels, circular buffers and semaphores for one device launch."
+    },
+    {
+      "id": "buffer",
+      "label": "Buffer",
+      "file": "tt_metal/api/tt-metalium/buffer.hpp",
+      "path": "tt_metal/api/tt-metalium/buffer.hpp",
+      "group": "g_metalium",
+      "groupId": "g_metalium",
+      "desc": "Device allocation handle: DRAM or L1, interleaved or sharded."
+    },
+    {
+      "id": "idevice",
+      "label": "IDevice",
+      "file": "tt_metal/api/tt-metalium/device.hpp",
+      "path": "tt_metal/api/tt-metalium/device.hpp",
+      "group": "g_metalium",
+      "groupId": "g_metalium",
+      "desc": "Device interface: worker cores, sub-devices and command queues."
+    },
+    {
+      "id": "assemble",
+      "label": "assemble_device_commands",
+      "file": "tt_metal/impl/program/dispatch.cpp",
+      "path": "tt_metal/impl/program/dispatch.cpp",
+      "group": "g_dispatch",
+      "groupId": "g_dispatch",
+      "desc": "Serializes a ProgramImpl into CQ commands: kernel binaries, runtime args and launch messages."
+    },
+    {
+      "id": "hw_cq",
+      "label": "HWCommandQueue",
+      "file": "tt_metal/impl/dispatch/hardware_command_queue.hpp",
+      "path": "tt_metal/impl/dispatch/hardware_command_queue.hpp",
+      "group": "g_dispatch",
+      "groupId": "g_dispatch",
+      "desc": "Host-side queue state that writes command pages into the system-memory ring buffer."
+    },
+    {
+      "id": "cq_kernels",
+      "label": "cq_dispatch kernel_main",
+      "file": "tt_metal/impl/dispatch/kernels/cq_dispatch.cpp",
+      "path": "tt_metal/impl/dispatch/kernels/cq_dispatch.cpp",
+      "group": "g_dispatch",
+      "groupId": "g_dispatch",
+      "desc": "Dispatcher RISC firmware: pops command pages and launches user kernels on worker cores."
+    }
+  ],
+  "edges": [
+    {"from": "py_ops", "to": "nb_init", "label": "re-exports ttnn._ttnn"},
+    {"from": "nb_init", "to": "nb_matmul", "label": "operations submodule"},
+    {"from": "nb_matmul", "to": "cpp_matmul", "label": "C++ call"},
+    {"from": "cpp_matmul", "to": "matmul_op", "label": "prim::matmul"},
+    {"from": "matmul_op", "to": "mm_factory", "label": "select_program_factory"},
+    {"from": "mm_factory", "to": "program", "label": "CreateKernel + CBs"},
+    {"from": "mm_factory", "to": "buffer", "label": "output tiles"},
+    {"from": "matmul_op", "to": "buffer", "label": "create_output_tensors"},
+    {"from": "program", "to": "assemble", "label": "serialize"},
+    {"from": "buffer", "to": "assemble", "label": "resolve addresses"},
+    {"from": "idevice", "to": "hw_cq", "label": "per-CQ state"},
+    {"from": "assemble", "to": "hw_cq", "label": "push commands"},
+    {"from": "hw_cq", "to": "cq_kernels", "label": "PCIe ring buffer"},
+    {"from": "idevice", "to": "buffer", "label": "owns allocator"}
+  ]
+}

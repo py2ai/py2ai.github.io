@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_g_python["Unnamed"]
+  node_py_ops["ttnn.matmul &#40;Python&#41;<br/>[matmul.py]"]
+end
+
+subgraph group_g_bindings["Unnamed"]
+  node_nb_init["NB_MODULE&#40;_ttnn&#41;<br/>[__init__.cpp]"]
+  node_nb_matmul["bind_function matmul"]
+end
+
+subgraph group_g_ttnn["Unnamed"]
+  node_cpp_matmul["Tensor matmul&#40;&#41;<br/>[matmul.cpp]"]
+  node_matmul_op["MatmulDeviceOperation"]
+  node_mm_factory["Program factory &#40;mcast 1D&#41;"]
+end
+
+subgraph group_g_metalium["Unnamed"]
+  node_program["Program<br/>[program.hpp]"]
+  node_buffer["Buffer<br/>[buffer.hpp]"]
+  node_idevice["IDevice<br/>[device.hpp]"]
+end
+
+subgraph group_g_dispatch["Unnamed"]
+  node_assemble["assemble_device_commands<br/>[dispatch.cpp]"]
+  node_hw_cq["HWCommandQueue"]
+  node_cq_kernels["cq_dispatch kernel_main<br/>[cq_dispatch.cpp]"]
+end
+
+node_py_ops -->|"re-exports ttnn._ttnn"| node_nb_init
+node_nb_init -->|"operations submodule"| node_nb_matmul
+node_nb_matmul -->|"C++ call"| node_cpp_matmul
+node_cpp_matmul -->|"prim::matmul"| node_matmul_op
+node_matmul_op -->|"select_program_factory"| node_mm_factory
+node_mm_factory -->|"CreateKernel + CBs"| node_program
+node_mm_factory -->|"output tiles"| node_buffer
+node_matmul_op -->|"create_output_tensors"| node_buffer
+node_program -->|"serialize"| node_assemble
+node_buffer -->|"resolve addresses"| node_assemble
+node_idevice -->|"per-CQ state"| node_hw_cq
+node_assemble -->|"push commands"| node_hw_cq
+node_hw_cq -->|"PCIe ring buffer"| node_cq_kernels
+node_idevice -->|"owns allocator"| node_buffer
+
+click node_py_ops "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/ttnn/operations/matmul.py"
+click node_nb_init "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn-nanobind/__init__.cpp"
+click node_nb_matmul "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/matmul_nanobind.cpp"
+click node_cpp_matmul "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/matmul.cpp"
+click node_matmul_op "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/device/matmul_device_operation.cpp"
+click node_mm_factory "https://github.com/tenstorrent/tt-metal/blob/main/ttnn/cpp/ttnn/operations/matmul/device/factory/matmul_multicore_reuse_mcast_1d_program_factory.cpp"
+click node_program "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/program.hpp"
+click node_buffer "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/buffer.hpp"
+click node_idevice "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/api/tt-metalium/device.hpp"
+click node_assemble "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/program/dispatch.cpp"
+click node_hw_cq "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/hardware_command_queue.hpp"
+click node_cq_kernels "https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/dispatch/kernels/cq_dispatch.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_ops toneBlue
+class node_nb_init,node_nb_matmul toneAmber
+class node_cpp_matmul,node_matmul_op,node_mm_factory toneMint
+class node_program,node_buffer,node_idevice toneRose
+class node_assemble,node_hw_cq,node_cq_kernels toneIndigo
