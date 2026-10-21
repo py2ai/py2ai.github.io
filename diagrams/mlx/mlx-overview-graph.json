@@ -1,0 +1,43 @@
+{
+  "owner": "apple",
+  "repo": "mlx",
+  "branch": "main",
+  "groups": [
+    { "id": "core", "name": "Core Types" },
+    { "id": "graph", "name": "Graph Building" },
+    { "id": "eval", "name": "Lazy Eval & Scheduling" },
+    { "id": "memory", "name": "Memory" },
+    { "id": "metal", "name": "Metal Backend" },
+    { "id": "cpu", "name": "CPU Backend" }
+  ],
+  "nodes": [
+    { "id": "mx_array", "label": "array", "file": "mlx/array.h", "group": "core", "desc": "NumPy-shaped tensor that doubles as a node in the computation graph" },
+    { "id": "device", "label": "Device", "file": "mlx/device.h", "group": "core", "desc": "Minimal cpu/gpu device handle" },
+    { "id": "stream", "label": "Stream", "file": "mlx/stream.h", "group": "core", "desc": "Ordered execution lane on a device" },
+    { "id": "allocator", "label": "Allocator", "file": "mlx/allocator.h", "group": "memory", "desc": "Abstract buffer allocator; one live instance swapped per backend" },
+    { "id": "primitive", "label": "Primitive", "file": "mlx/primitives.h", "group": "graph", "desc": "One operation: must implement eval_cpu and eval_gpu" },
+    { "id": "ops_add", "label": "add()", "file": "mlx/ops.cpp", "group": "graph", "desc": "Op constructor: broadcast inputs, return array carrying an Add primitive" },
+    { "id": "eval_impl", "label": "eval_impl", "file": "mlx/transforms.cpp", "group": "eval", "desc": "DFS builds the tape, inserts fences, dispatches each node to a backend" },
+    { "id": "scheduler", "label": "Scheduler", "file": "mlx/scheduler.h", "group": "eval", "desc": "Worker thread per stream plus throttling via wait_for_one" },
+    { "id": "gpu_eval", "label": "gpu::eval", "file": "mlx/backend/gpu/eval.h", "group": "metal", "desc": "Backend hook implemented by Metal (and CUDA)" },
+    { "id": "cpu_eval", "label": "cpu::eval", "file": "mlx/backend/cpu/eval.h", "group": "cpu", "desc": "Backend hook that runs the primitive in place" },
+    { "id": "metal_device", "label": "metal::Device", "file": "mlx/backend/metal/device.h", "group": "metal", "desc": "Wraps MTL::Device with Metal library and kernel pipeline caches" },
+    { "id": "metal_allocator", "label": "MetalAllocator", "file": "mlx/backend/metal/allocator.h", "group": "memory", "desc": "Metal buffer cache with active/peak memory tracking" }
+  ],
+  "edges": [
+    { "from": "ops_add", "to": "mx_array", "label": "returns output node" },
+    { "from": "ops_add", "to": "primitive", "label": "attaches Add" },
+    { "from": "mx_array", "to": "primitive", "label": "holds its op" },
+    { "from": "mx_array", "to": "allocator", "label": "requests buffer" },
+    { "from": "primitive", "to": "stream", "label": "bound to" },
+    { "from": "stream", "to": "device", "label": "belongs to" },
+    { "from": "eval_impl", "to": "mx_array", "label": "DFS over inputs" },
+    { "from": "eval_impl", "to": "gpu_eval", "label": "gpu branch" },
+    { "from": "eval_impl", "to": "cpu_eval", "label": "cpu branch" },
+    { "from": "eval_impl", "to": "scheduler", "label": "throttles in-flight tasks" },
+    { "from": "scheduler", "to": "stream", "label": "worker thread per stream" },
+    { "from": "gpu_eval", "to": "metal_device", "label": "encodes on" },
+    { "from": "metal_device", "to": "metal_allocator", "label": "owns buffer cache" },
+    { "from": "metal_allocator", "to": "allocator", "label": "implements" }
+  ]
+}
