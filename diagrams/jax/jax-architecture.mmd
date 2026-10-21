@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_g_user["User API &amp; Stages"]
+  node_u_api["api.py: jit / grad / vmap<br/>[api.py]"]
+  node_u_apiutil["api_util: arg flattening<br/>[api_util.py]"]
+  node_u_stages["stages: Lowered / Compiled<br/>[stages.py]"]
+  node_u_custom["custom_derivatives"]
+end
+
+subgraph group_g_trace["Tracing &amp; Jaxpr IR"]
+  node_t_core{{"core: Jaxpr + Primitive<br/>[core.py]"}}
+  node_t_lu["linear_util: WrappedFun<br/>[linear_util.py]"]
+  node_t_pe["partial_eval: JaxprTrace<br/>[partial_eval.py]"]
+  node_t_srcinfo["source_info_util"]
+  node_t_tree["tree_util: pytrees<br/>[tree_util.py]"]
+end
+
+subgraph group_g_transforms["Program Transformations"]
+  node_x_ad["ad: JVP / transpose<br/>[ad.py]"]
+  node_x_batch["batching: vmap<br/>[batching.py]"]
+  node_x_remat["ad_checkpoint: remat<br/>[ad_checkpoint.py]"]
+  node_x_cb["custom_batching<br/>[custom_batching.py]"]
+end
+
+subgraph group_g_lower["Lowering &amp; Compilation"]
+  node_l_mlir["mlir: jaxpr lowering<br/>[mlir.py]"]
+  node_l_lax["lax: primitive zoo<br/>[lax.py]"]
+  node_l_compiler["compiler: XLA compile<br/>[compiler.py]"]
+  node_l_bridge["xla_bridge: clients<br/>[xla_bridge.py]"]
+  node_l_cache[("compilation_cache")]
+  node_l_ck[("cache_key<br/>[cache_key.py]")]
+end
+
+subgraph group_g_runtime["Dispatch &amp; Sharding Runtime"]
+  node_r_pjit["pjit: make_jit<br/>[pjit.py]"]
+  node_r_dispatch["dispatch: eager path<br/>[dispatch.py]"]
+  node_r_pxla["pxla: sharded exec<br/>[pxla.py]"]
+  node_r_array["array: ArrayImpl<br/>[array.py]"]
+  node_r_mesh["mesh: Mesh<br/>[mesh.py]"]
+  node_r_simpl["sharding_impls<br/>[sharding_impls.py]"]
+  node_r_named["named_sharding<br/>[named_sharding.py]"]
+  node_r_smap["shard_map<br/>[shard_map.py]"]
+end
+
+subgraph group_g_prng["Random Numbers"]
+  node_p_prng["prng: PRNGKeyArray<br/>[prng.py]"]
+  node_p_3fry["threefry2x32<br/>[threefry2x32.py]"]
+end
+
+node_u_api -->|"flatten args"| node_u_apiutil
+node_u_api -->|"wrap_init&#40;f&#41;"| node_t_lu
+node_u_api -->|"jit delegates to make_jit"| node_r_pjit
+node_u_api -->|"grad / vjp"| node_x_ad
+node_u_api -->|"vmap tracer"| node_x_batch
+node_u_api -->|"make_jaxpr"| node_t_pe
+node_u_api -->|"device_put + eager"| node_r_dispatch
+node_u_api -->|"results as ArrayImpl"| node_r_array
+node_u_apiutil -->|"flatten_fun fills lu.Store"| node_t_lu
+node_u_apiutil -->|"pytree flatten / unflatten"| node_t_tree
+node_t_lu -->|"WrappedFun traced to jaxpr"| node_t_pe
+node_t_pe -->|"emits Jaxpr / JaxprEqn"| node_t_core
+node_t_pe -->|"attaches SourceInfo"| node_t_srcinfo
+node_l_lax -->|"add_p and friends bind Primitives"| node_t_core
+node_x_ad -->|"linearize re-traces"| node_t_pe
+node_x_ad -->|"JVP / transpose tables"| node_t_core
+node_x_ad -->|"linearize wraps WrappedFun"| node_t_lu
+node_x_batch -->|"BatchTracer over Tracer"| node_t_core
+node_x_remat -->|"remat_partial_eval hook"| node_t_pe
+node_x_remat -->|"remat_transpose"| node_x_ad
+node_x_cb -->|"custom_vmap_p rule"| node_x_batch
+node_u_custom -->|"custom JVP / VJP plug-in"| node_x_ad
+node_t_pe -->|"ClosedJaxpr into lowering"| node_l_mlir
+node_l_lax -->|"register_lowering"| node_l_mlir
+node_l_lax -->|"primitive_jvps / transposes"| node_x_ad
+node_l_mlir -->|"MLIR module to XLA"| node_l_compiler
+node_l_compiler -->|"xb.get_backend&#40;platform&#41;"| node_l_bridge
+node_l_compiler -->|"persistent cache"| node_l_cache
+node_l_cache -->|"cache_key.get&#40;&#41;"| node_l_ck
+node_r_pjit -->|"traces with shardings"| node_t_pe
+node_r_pjit -->|"lowers sharded jaxpr"| node_l_mlir
+node_r_pjit -->|"routes executable"| node_r_dispatch
+node_r_pjit -->|"Mesh handling"| node_r_mesh
+node_r_pjit -->|"in / out shardings"| node_r_simpl
+node_r_pjit -->|"Lowered / Compiled"| node_u_stages
+node_r_dispatch -->|"sharded transfers"| node_r_pxla
+node_r_dispatch -->|"prim.bind eager ops"| node_t_core
+node_r_dispatch -->|"buffer in / out"| node_r_array
+node_r_pxla -->|"builds ArrayImpl shards"| node_r_array
+node_r_array -->|"per-buffer sharding"| node_r_simpl
+node_r_smap -->|"shard_map over Mesh"| node_r_mesh
+node_r_smap -->|"in_specs / out_specs"| node_r_simpl
+node_r_smap -->|"collectives via lax.parallel"| node_l_lax
+node_r_named -->|"NamedSharding binds Mesh"| node_r_mesh
+node_p_prng -->|"PRNGKeyArray machinery"| node_t_core
+node_p_3fry -->|"threefry2x32_p primitive"| node_t_core
+
+click node_u_api "https://github.com/google/jax/blob/main/jax/_src/api.py"
+click node_u_apiutil "https://github.com/google/jax/blob/main/jax/_src/api_util.py"
+click node_u_stages "https://github.com/google/jax/blob/main/jax/_src/stages.py"
+click node_u_custom "https://github.com/google/jax/blob/main/jax/_src/custom_derivatives.py"
+click node_t_core "https://github.com/google/jax/blob/main/jax/_src/core.py"
+click node_t_lu "https://github.com/google/jax/blob/main/jax/_src/linear_util.py"
+click node_t_pe "https://github.com/google/jax/blob/main/jax/_src/interpreters/partial_eval.py"
+click node_t_srcinfo "https://github.com/google/jax/blob/main/jax/_src/source_info_util.py"
+click node_t_tree "https://github.com/google/jax/blob/main/jax/_src/tree_util.py"
+click node_x_ad "https://github.com/google/jax/blob/main/jax/_src/interpreters/ad.py"
+click node_x_batch "https://github.com/google/jax/blob/main/jax/_src/interpreters/batching.py"
+click node_x_remat "https://github.com/google/jax/blob/main/jax/_src/ad_checkpoint.py"
+click node_x_cb "https://github.com/google/jax/blob/main/jax/_src/custom_batching.py"
+click node_l_mlir "https://github.com/google/jax/blob/main/jax/_src/interpreters/mlir.py"
+click node_l_lax "https://github.com/google/jax/blob/main/jax/_src/lax/lax.py"
+click node_l_compiler "https://github.com/google/jax/blob/main/jax/_src/compiler.py"
+click node_l_bridge "https://github.com/google/jax/blob/main/jax/_src/xla_bridge.py"
+click node_l_cache "https://github.com/google/jax/blob/main/jax/_src/compilation_cache.py"
+click node_l_ck "https://github.com/google/jax/blob/main/jax/_src/cache_key.py"
+click node_r_pjit "https://github.com/google/jax/blob/main/jax/_src/pjit.py"
+click node_r_dispatch "https://github.com/google/jax/blob/main/jax/_src/dispatch.py"
+click node_r_pxla "https://github.com/google/jax/blob/main/jax/_src/interpreters/pxla.py"
+click node_r_array "https://github.com/google/jax/blob/main/jax/_src/array.py"
+click node_r_mesh "https://github.com/google/jax/blob/main/jax/_src/mesh.py"
+click node_r_simpl "https://github.com/google/jax/blob/main/jax/_src/sharding_impls.py"
+click node_r_named "https://github.com/google/jax/blob/main/jax/_src/named_sharding.py"
+click node_r_smap "https://github.com/google/jax/blob/main/jax/_src/shard_map.py"
+click node_p_prng "https://github.com/google/jax/blob/main/jax/_src/random/prng.py"
+click node_p_3fry "https://github.com/google/jax/blob/main/jax/_src/random/threefry2x32.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_u_api,node_u_apiutil,node_u_stages,node_u_custom toneBlue
+class node_t_core,node_t_lu,node_t_pe,node_t_srcinfo,node_t_tree toneAmber
+class node_x_ad,node_x_batch,node_x_remat,node_x_cb toneMint
+class node_l_mlir,node_l_lax,node_l_compiler,node_l_bridge,node_l_cache,node_l_ck toneRose
+class node_r_pjit,node_r_dispatch,node_r_pxla,node_r_array,node_r_mesh,node_r_simpl,node_r_named,node_r_smap toneIndigo
+class node_p_prng,node_p_3fry toneTeal

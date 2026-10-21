@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_g_api["User-facing API"]
+  node_api["Public API: jit / grad / vmap<br/>[api.py]"]
+end
+
+subgraph group_g_ir["Tracing to Jaxpr"]
+  node_lu["WrappedFun transform stack<br/>[linear_util.py]"]
+  node_pe["JaxprTrace / partial evaluation<br/>[partial_eval.py]"]
+  node_core{{"Jaxpr IR + Primitive<br/>[core.py]"}}
+  node_ad["Autodiff: JVP / transpose<br/>[ad.py]"]
+end
+
+subgraph group_g_cc["Lowering &amp; Compilation"]
+  node_mlir["Jaxpr to MLIR lowering<br/>[mlir.py]"]
+  node_compiler["XLA compile + cache<br/>[compiler.py]"]
+  node_bridge["Backend registry<br/>[xla_bridge.py]"]
+end
+
+subgraph group_g_rt["Execution &amp; Sharding"]
+  node_pjit["pjit / make_jit dispatch<br/>[pjit.py]"]
+  node_dispatch["Eager dispatch + transfers<br/>[dispatch.py]"]
+  node_pxla["Sharded execution<br/>[pxla.py]"]
+  node_array["ArrayImpl device buffers<br/>[array.py]"]
+end
+
+node_api -->|"wrap_init&#40;f&#41;"| node_lu
+node_api -->|"jit delegates to make_jit"| node_pjit
+node_api -->|"grad / vjp"| node_ad
+node_lu -->|"traced under JaxprTrace"| node_pe
+node_pe -->|"emits JaxprEqns"| node_core
+node_ad -->|"linearize re-traces"| node_pe
+node_ad -->|"JVP / transpose rules"| node_core
+node_core -->|"primitives lowered via rules"| node_mlir
+node_pe -->|"ClosedJaxpr handed to lowering"| node_mlir
+node_mlir -->|"MLIR module to XLA"| node_compiler
+node_compiler -->|"xb.get_backend&#40;platform&#41;"| node_bridge
+node_compiler -->|"executable returned"| node_dispatch
+node_dispatch -->|"eager ops re-trace via jit"| node_pe
+node_pjit -->|"traces with shardings"| node_pe
+node_pjit -->|"routes executable"| node_dispatch
+node_dispatch -->|"sharded transfers"| node_pxla
+node_dispatch -->|"outputs as ArrayImpl"| node_array
+node_pxla -->|"shards into ArrayImpl"| node_array
+
+click node_api "https://github.com/google/jax/blob/main/jax/_src/api.py"
+click node_lu "https://github.com/google/jax/blob/main/jax/_src/linear_util.py"
+click node_pe "https://github.com/google/jax/blob/main/jax/_src/interpreters/partial_eval.py"
+click node_core "https://github.com/google/jax/blob/main/jax/_src/core.py"
+click node_ad "https://github.com/google/jax/blob/main/jax/_src/interpreters/ad.py"
+click node_mlir "https://github.com/google/jax/blob/main/jax/_src/interpreters/mlir.py"
+click node_compiler "https://github.com/google/jax/blob/main/jax/_src/compiler.py"
+click node_bridge "https://github.com/google/jax/blob/main/jax/_src/xla_bridge.py"
+click node_pjit "https://github.com/google/jax/blob/main/jax/_src/pjit.py"
+click node_dispatch "https://github.com/google/jax/blob/main/jax/_src/dispatch.py"
+click node_pxla "https://github.com/google/jax/blob/main/jax/_src/interpreters/pxla.py"
+click node_array "https://github.com/google/jax/blob/main/jax/_src/array.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api toneBlue
+class node_lu,node_pe,node_core,node_ad toneAmber
+class node_mlir,node_compiler,node_bridge toneMint
+class node_pjit,node_dispatch,node_pxla,node_array toneRose
