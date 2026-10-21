@@ -1,0 +1,111 @@
+flowchart TD
+
+subgraph group_pyapi["Python Layer"]
+  node_pygraph["ops.Graph<br/>[ops.py]"]
+  node_pyctx["Context<br/>[context.py]"]
+end
+
+subgraph group_tftrace["tf.function Internals"]
+  node_pyfunc{{"Function.__call__"}}
+  node_eager_run["run_functions_eagerly"]
+  node_tracing["_maybe_define_function"]
+  node_concrete[("ConcreteFunction")]
+  node_atomic["AtomicFunction<br/>[atomic_function.py]"]
+  node_fgraph["FuncGraph<br/>[func_graph.py]"]
+end
+
+subgraph group_bridge["C Boundary"]
+  node_quick_exec["quick_execute<br/>[execute.py]"]
+  node_capi["TFE_Execute<br/>[c_api.cc]"]
+end
+
+subgraph group_cpprun["Eager Runtime C++"]
+  node_ectx["EagerContext<br/>[context.cc]"]
+  node_eop["EagerOperation<br/>[eager_operation.cc]"]
+  node_exec{{"EagerExecute<br/>[execute.cc]"}}
+  node_executor["EagerExecutor<br/>[eager_executor.cc]"]
+  node_nodeargs["ExecuteNodeArgs<br/>[execute_node.cc]"]
+  node_kaf["KernelAndDeviceFunc.Run"]
+end
+
+subgraph group_grappler["Grappler Passes"]
+  node_itembuild["GrapplerItemFromMetaGraphDef"]
+  node_metaopt{{"MetaOptimizer.OptimizeGraph<br/>[meta_optimizer.cc]"}}
+  node_gprops["GraphProperties"]
+  node_singlemach["SingleMachine.Initialize<br/>[single_machine.cc]"]
+  node_constfold["ConstantFolding"]
+  node_arithopt["ArithmeticOptimizer"]
+  node_remap["Remapper<br/>[remapper.cc]"]
+  node_funcopt["FunctionOptimizer"]
+end
+
+node_pyctx -->|"policy and eager checks"| node_pyfunc
+node_pygraph -->|"FuncGraph extends ops.Graph"| node_fgraph
+node_eager_run -->|"forces eager execution"| node_pyfunc
+node_pyfunc -->|"cache miss"| node_tracing
+node_tracing -->|"trace_function records ops"| node_fgraph
+node_fgraph -->|"from_func_graph: FunctionDef"| node_atomic
+node_tracing -->|"creates per-signature callable"| node_concrete
+node_concrete -->|"binds executable"| node_atomic
+node_atomic -->|"partitioned_call executes"| node_quick_exec
+node_quick_exec -->|"cross into C++"| node_capi
+node_capi -->|"context handle"| node_ectx
+node_capi -->|"reset op"| node_eop
+node_eop -->|"submit operation"| node_exec
+node_exec -->|"rewrite registry passes"| node_eop
+node_exec -->|"sync or AddOrExecute"| node_executor
+node_executor -->|"async payload"| node_nodeargs
+node_nodeargs -->|"run function node"| node_kaf
+node_executor -->|"sync path"| node_kaf
+node_ectx -->|"owns default executor"| node_executor
+node_atomic -->|"FunctionLibraryRuntime call"| node_kaf
+node_kaf -->|"returns TensorHandles"| node_capi
+node_fgraph -->|"export GraphDef"| node_itembuild
+node_itembuild -->|"GrapplerItem"| node_metaopt
+node_metaopt -->|"initialize cluster"| node_singlemach
+node_metaopt -->|"shape inference"| node_gprops
+node_gprops -->|"shapes guide folding"| node_constfold
+node_metaopt -->|"pass"| node_constfold
+node_metaopt -->|"pass"| node_arithopt
+node_metaopt -->|"pass"| node_remap
+node_metaopt -->|"pass"| node_funcopt
+node_funcopt -->|"rewrites FunctionDefs"| node_atomic
+node_singlemach -->|"kernels provisioned"| node_kaf
+
+click node_pygraph "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/framework/ops.py"
+click node_pyctx "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/context.py"
+click node_pyfunc "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/polymorphic_function/polymorphic_function.py"
+click node_eager_run "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/polymorphic_function/eager_function_run.py"
+click node_tracing "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/polymorphic_function/tracing_compilation.py"
+click node_concrete "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/polymorphic_function/concrete_function.py"
+click node_atomic "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/polymorphic_function/atomic_function.py"
+click node_fgraph "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/framework/func_graph.py"
+click node_quick_exec "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/eager/execute.py"
+click node_capi "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/c/eager/c_api.cc"
+click node_ectx "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/eager/context.cc"
+click node_eop "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/eager/eager_operation.cc"
+click node_exec "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/eager/execute.cc"
+click node_executor "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/eager/eager_executor.cc"
+click node_nodeargs "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/eager/execute_node.cc"
+click node_kaf "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/eager/kernel_and_device.cc"
+click node_itembuild "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/grappler_item_builder.cc"
+click node_metaopt "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/meta_optimizer.cc"
+click node_gprops "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/costs/graph_properties.cc"
+click node_singlemach "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/clusters/single_machine.cc"
+click node_constfold "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/constant_folding.cc"
+click node_arithopt "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/arithmetic_optimizer.cc"
+click node_remap "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/remapper.cc"
+click node_funcopt "https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/function_optimizer.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_pygraph,node_pyctx toneBlue
+class node_pyfunc,node_eager_run,node_tracing,node_concrete,node_atomic,node_fgraph toneAmber
+class node_quick_exec,node_capi toneMint
+class node_ectx,node_eop,node_exec,node_executor,node_nodeargs,node_kaf toneRose
+class node_itembuild,node_metaopt,node_gprops,node_singlemach,node_constfold,node_arithopt,node_remap,node_funcopt toneIndigo
