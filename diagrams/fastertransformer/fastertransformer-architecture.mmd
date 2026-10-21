@@ -1,0 +1,110 @@
+flowchart TD
+
+subgraph group_serving["Unnamed"]
+end
+
+subgraph group_bindings["Unnamed"]
+end
+
+subgraph group_model["Unnamed"]
+end
+
+subgraph group_layers["Unnamed"]
+end
+
+subgraph group_kernels["Unnamed"]
+end
+
+subgraph group_parallel["Unnamed"]
+end
+
+subgraph group_utils["Unnamed"]
+end
+
+node_triton_model["ParallelGptTritonModel"]
+node_triton_instance["ParallelGptTritonModelInstance::forward"]
+node_pytorch_op["GptOp::forward"]
+node_parallel_gpt["ParallelGpt::forward"]
+node_context_decoder["ParallelGptContextDecoder"]
+node_gpt_decoder["ParallelGptDecoder"]
+node_parallel_gpt_weight["ParallelGptWeight::loadModel"]
+node_decoder_layer_weight["ParallelGptDecoderLayerWeight::loadModel"]
+node_tp_gpt_attention["TensorParallelGptContextAttentionLayer"]
+node_gpt_context_attention["GptContextAttentionLayer::forward"]
+node_tp_self_attention["TensorParallelDecoderSelfAttentionLayer"]
+node_self_attention["DecoderSelfAttentionLayer::forward"]
+node_tp_ffn["TensorParallelGeluFfnLayer"]
+node_ffn_layer["FfnLayer::forward"]
+node_base_layer["BaseLayer::allocateBuffer"]
+node_masked_mha["masked_multihead_attention"]
+node_mha_template["masked_multihead_attention_kernel"]
+node_unfused_attn_kernels["invokeAddFusedQKVBiasTranspose"]
+node_gpt_kernels["invokeInputIdsEmbeddingLookupPosEncoding"]
+node_layernorm_kernels["invokeGeneralLayerNorm"]
+node_activation_kernels["invokeGenericActivation"]
+node_add_residual_kernels["invokeAddBiasResidual"]
+node_sampling_topk["invokeTopKSampling"]
+node_sampling_topp["invokeTopPSampling"]
+node_online_beamsearch["beam_online_softmax_topk_kernel"]
+node_decoding_kernels["invokeGatherTree"]
+node_stop_criteria["invokeLengthCriterion"]
+node_custom_ar_kernel["oneShotAllReduceKernel"]
+node_custom_ar_comm["CustomAllReduceComm::customAllReduce"]
+node_nccl_utils["ftNcclAllReduceSum"]
+node_cublas_wrapper["cublasMMWrapper::Gemm"]
+node_gpt_gemm_func["generate_gpt_gemm_config"]
+node_tensor_cls["ft::Tensor"]
+node_allocator["IAllocator"]
+
+node_triton_model -->|"createModelInstance"| node_triton_instance
+node_triton_model -->|"builds engine"| node_parallel_gpt
+node_triton_instance -->|"runs one request"| node_parallel_gpt
+node_pytorch_op -->|"PyTorch entry"| node_parallel_gpt
+node_parallel_gpt -->|"prefill"| node_context_decoder
+node_parallel_gpt -->|"per-token step"| node_gpt_decoder
+node_parallel_gpt -->|"embedding lookup"| node_gpt_kernels
+node_parallel_gpt -->|"top-k path"| node_sampling_topk
+node_parallel_gpt -->|"top-p path"| node_sampling_topp
+node_parallel_gpt -->|"beam path"| node_online_beamsearch
+node_parallel_gpt -->|"finalize beams"| node_decoding_kernels
+node_parallel_gpt -->|"finish check"| node_stop_criteria
+node_parallel_gpt -->|"owns weights"| node_parallel_gpt_weight
+node_parallel_gpt -->|"workspace reMalloc"| node_allocator
+node_parallel_gpt -->|"TensorMap I/O"| node_tensor_cls
+node_parallel_gpt_weight -->|"per-layer weights"| node_decoder_layer_weight
+node_context_decoder -->|"block stack"| node_tp_gpt_attention
+node_context_decoder -->|"block stack"| node_tp_ffn
+node_gpt_decoder -->|"block stack"| node_tp_self_attention
+node_gpt_decoder -->|"block stack"| node_tp_ffn
+node_gpt_decoder -->|"pre/post LN"| node_layernorm_kernels
+node_gpt_decoder -->|"residual adds"| node_add_residual_kernels
+node_tp_gpt_attention -->|"wraps"| node_gpt_context_attention
+node_tp_self_attention -->|"wraps"| node_self_attention
+node_tp_ffn -->|"wraps"| node_ffn_layer
+node_gpt_context_attention -->|"QKV bias+transpose"| node_unfused_attn_kernels
+node_gpt_context_attention -->|"QKV GEMM"| node_cublas_wrapper
+node_gpt_context_attention -->|"activation buffers"| node_allocator
+node_self_attention -->|"launch decode MHA"| node_masked_mha
+node_self_attention -->|"QKV GEMM"| node_cublas_wrapper
+node_masked_mha -->|"head-dim instantiation"| node_mha_template
+node_ffn_layer -->|"fused activation"| node_activation_kernels
+node_ffn_layer -->|"FFN GEMMs"| node_cublas_wrapper
+node_tp_gpt_attention -->|"allreduce"| node_custom_ar_comm
+node_tp_self_attention -->|"allreduce"| node_custom_ar_comm
+node_tp_ffn -->|"allreduce"| node_custom_ar_comm
+node_custom_ar_comm -->|"launch one/two-shot"| node_custom_ar_kernel
+node_tp_ffn -->|"NCCL fallback"| node_nccl_utils
+node_tp_self_attention -->|"NCCL fallback"| node_nccl_utils
+node_ffn_layer -->|"extends"| node_base_layer
+node_gpt_context_attention -->|"extends"| node_base_layer
+node_self_attention -->|"extends"| node_base_layer
+node_gpt_gemm_func -->|"tuned algo config"| node_cublas_wrapper
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_triton_model,node_triton_instance,node_pytorch_op,node_parallel_gpt,node_context_decoder,node_gpt_decoder,node_parallel_gpt_weight,node_decoder_layer_weight,node_tp_gpt_attention,node_gpt_context_attention,node_tp_self_attention,node_self_attention,node_tp_ffn,node_ffn_layer,node_base_layer,node_masked_mha,node_mha_template,node_unfused_attn_kernels,node_gpt_kernels,node_layernorm_kernels,node_activation_kernels,node_add_residual_kernels,node_sampling_topk,node_sampling_topp,node_online_beamsearch,node_decoding_kernels,node_stop_criteria,node_custom_ar_kernel,node_custom_ar_comm,node_nccl_utils,node_cublas_wrapper,node_gpt_gemm_func,node_tensor_cls,node_allocator toneIndigo

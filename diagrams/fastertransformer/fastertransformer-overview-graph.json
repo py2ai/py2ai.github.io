@@ -1,0 +1,42 @@
+{
+  "owner": "NVIDIA",
+  "repo": "FasterTransformer",
+  "branch": "main",
+  "groups": [
+    { "id": "serving", "name": "Serving" },
+    { "id": "model", "name": "GPT Engine" },
+    { "id": "layers", "name": "Tensor-Parallel Layers" },
+    { "id": "kernels", "name": "CUDA Kernels" },
+    { "id": "parallel", "name": "Tensor Parallelism" },
+    { "id": "utils", "name": "GEMM Utilities" }
+  ],
+  "nodes": [
+    { "id": "triton_model", "label": "ParallelGptTritonModel", "file": "src/fastertransformer/triton_backend/multi_gpu_gpt/ParallelGptTritonModel.cc", "group": "serving", "desc": "Reads a Triton model config and builds one ParallelGpt engine per GPU" },
+    { "id": "parallel_gpt", "label": "ParallelGpt::forward", "file": "src/fastertransformer/models/multi_gpu_gpt/ParallelGpt.cc", "group": "model", "desc": "Top-level GPT engine: prefill, token loop, sampling, and TP collectives" },
+    { "id": "context_decoder", "label": "ParallelGptContextDecoder", "file": "src/fastertransformer/models/multi_gpu_gpt/ParallelGptContextDecoder.cc", "group": "model", "desc": "Prefill pass that runs the whole prompt through the block stack at once" },
+    { "id": "gpt_decoder", "label": "ParallelGptDecoder", "file": "src/fastertransformer/models/multi_gpu_gpt/ParallelGptDecoder.cc", "group": "model", "desc": "One incremental transformer-block pass per generated token" },
+    { "id": "tp_gpt_attention", "label": "TensorParallelGptContextAttentionLayer", "file": "src/fastertransformer/layers/attention_layers/TensorParallelGptContextAttentionLayer.cc", "group": "layers", "desc": "Shards context-attention GEMMs across ranks, then allreduces partial outputs" },
+    { "id": "tp_self_attention", "label": "TensorParallelDecoderSelfAttentionLayer", "file": "src/fastertransformer/layers/attention_layers/TensorParallelDecoderSelfAttentionLayer.cc", "group": "layers", "desc": "Sharded decode-time self-attention wrapper" },
+    { "id": "tp_ffn", "label": "TensorParallelGeluFfnLayer", "file": "src/fastertransformer/layers/TensorParallelGeluFfnLayer.cc", "group": "layers", "desc": "Column/row-parallel FFN wrapper around FfnLayer" },
+    { "id": "masked_mha", "label": "masked_multihead_attention", "file": "src/fastertransformer/kernels/decoder_masked_multihead_attention.cu", "group": "kernels", "desc": "Single-kernel incremental MHA that reads the KV cache in registers" },
+    { "id": "sampling_topk", "label": "invokeTopKSampling", "file": "src/fastertransformer/kernels/sampling_topk_kernels.cu", "group": "kernels", "desc": "Curand-seeded top-k / top-p token sampling" },
+    { "id": "custom_ar", "label": "oneShotAllReduceKernel", "file": "src/fastertransformer/kernels/custom_ar_kernels.cu", "group": "parallel", "desc": "One-shot/two-shot allreduce over P2P-mapped peer buffers" },
+    { "id": "nccl_utils", "label": "ftNcclAllReduceSum", "file": "src/fastertransformer/utils/nccl_utils.cc", "group": "parallel", "desc": "NCCL allreduce/allgather fallback when P2P allreduce is unavailable" },
+    { "id": "cublas_wrapper", "label": "cublasMMWrapper::Gemm", "file": "src/fastertransformer/utils/cublasMMWrapper.cc", "group": "utils", "desc": "cuBLAS dispatch with per-shape algo cache from tuned config files" }
+  ],
+  "edges": [
+    { "from": "triton_model", "to": "parallel_gpt", "label": "instantiates per-GPU engine" },
+    { "from": "parallel_gpt", "to": "context_decoder", "label": "prefill forward" },
+    { "from": "parallel_gpt", "to": "gpt_decoder", "label": "step forward per token" },
+    { "from": "parallel_gpt", "to": "sampling_topk", "label": "pick next token" },
+    { "from": "context_decoder", "to": "tp_gpt_attention", "label": "block stack" },
+    { "from": "context_decoder", "to": "tp_ffn", "label": "block stack" },
+    { "from": "gpt_decoder", "to": "tp_self_attention", "label": "block stack" },
+    { "from": "gpt_decoder", "to": "tp_ffn", "label": "block stack" },
+    { "from": "tp_self_attention", "to": "masked_mha", "label": "fused decode MHA" },
+    { "from": "tp_gpt_attention", "to": "cublas_wrapper", "label": "QKV GEMMs" },
+    { "from": "tp_ffn", "to": "cublas_wrapper", "label": "FFN GEMMs" },
+    { "from": "tp_ffn", "to": "custom_ar", "label": "partial-sum allreduce" },
+    { "from": "tp_self_attention", "to": "nccl_utils", "label": "NCCL fallback" }
+  ]
+}
