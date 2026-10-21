@@ -1,0 +1,55 @@
+flowchart TD
+
+subgraph group_serving["Unnamed"]
+end
+
+subgraph group_model["Unnamed"]
+end
+
+subgraph group_layers["Unnamed"]
+end
+
+subgraph group_kernels["Unnamed"]
+end
+
+subgraph group_parallel["Unnamed"]
+end
+
+subgraph group_utils["Unnamed"]
+end
+
+node_triton_model["ParallelGptTritonModel"]
+node_parallel_gpt["ParallelGpt::forward"]
+node_context_decoder["ParallelGptContextDecoder"]
+node_gpt_decoder["ParallelGptDecoder"]
+node_tp_gpt_attention["TensorParallelGptContextAttentionLayer"]
+node_tp_self_attention["TensorParallelDecoderSelfAttentionLayer"]
+node_tp_ffn["TensorParallelGeluFfnLayer"]
+node_masked_mha["masked_multihead_attention"]
+node_sampling_topk["invokeTopKSampling"]
+node_custom_ar["oneShotAllReduceKernel"]
+node_nccl_utils["ftNcclAllReduceSum"]
+node_cublas_wrapper["cublasMMWrapper::Gemm"]
+
+node_triton_model -->|"instantiates per-GPU engine"| node_parallel_gpt
+node_parallel_gpt -->|"prefill forward"| node_context_decoder
+node_parallel_gpt -->|"step forward per token"| node_gpt_decoder
+node_parallel_gpt -->|"pick next token"| node_sampling_topk
+node_context_decoder -->|"block stack"| node_tp_gpt_attention
+node_context_decoder -->|"block stack"| node_tp_ffn
+node_gpt_decoder -->|"block stack"| node_tp_self_attention
+node_gpt_decoder -->|"block stack"| node_tp_ffn
+node_tp_self_attention -->|"fused decode MHA"| node_masked_mha
+node_tp_gpt_attention -->|"QKV GEMMs"| node_cublas_wrapper
+node_tp_ffn -->|"FFN GEMMs"| node_cublas_wrapper
+node_tp_ffn -->|"partial-sum allreduce"| node_custom_ar
+node_tp_self_attention -->|"NCCL fallback"| node_nccl_utils
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_triton_model,node_parallel_gpt,node_context_decoder,node_gpt_decoder,node_tp_gpt_attention,node_tp_self_attention,node_tp_ffn,node_masked_mha,node_sampling_topk,node_custom_ar,node_nccl_utils,node_cublas_wrapper toneIndigo
