@@ -1,0 +1,70 @@
+flowchart TD
+
+subgraph group_interface["CLI &amp; Serving"]
+  node_cli{{"gemma CLI<br/>[run.cc]"}}
+end
+
+subgraph group_engine["Gemma Engine"]
+  node_gemma{{"Gemma facade<br/>[gemma.h]"}}
+  node_forward["Forward pass<br/>[gemma.cc]"]
+  node_attention["Attention<br/>[attention.cc]"]
+  node_kv_cache[("KV cache<br/>[kv_cache.h]")]
+end
+
+subgraph group_model["Model &amp; Weights"]
+  node_tokenizer["Tokenizer<br/>[tokenizer.h]"]
+  node_configs["Model configs<br/>[configs.h]"]
+  node_weights{{"Weights<br/>[weights.h]"}}
+  node_model_store[("Model store<br/>[model_store.h]")]
+end
+
+subgraph group_ops["SIMD Ops"]
+  node_matmul{{"MatMul API<br/>[matmul.h]"}}
+  node_dot["SIMD dot<br/>[dot-inl.h]"]
+end
+
+subgraph group_io["Storage &amp; IO"]
+  node_blob_store[("Blob store<br/>[blob_store.h]")]
+end
+
+node_cli -->|"Generate&#40;&#41;"| node_gemma
+node_gemma -->|"HWY dispatch"| node_forward
+node_gemma -->|"load tensors"| node_weights
+node_gemma -->|"WrapAndTokenize"| node_tokenizer
+node_gemma -->|"allocate"| node_kv_cache
+node_gemma -->|"MatMulEnv"| node_matmul
+node_forward -->|"per layer"| node_attention
+node_attention -->|"read/write K,V"| node_kv_cache
+node_attention -->|"QKV GEMMs"| node_matmul
+node_attention -->|"score dots"| node_dot
+node_weights -->|"shapes"| node_configs
+node_weights -->|"named tensors"| node_model_store
+node_model_store -->|"BlobReader"| node_blob_store
+node_matmul -->|"kernels"| node_dot
+node_tokenizer -->|"tokenizer blob"| node_blob_store
+
+click node_cli "https://github.com/google/gemma.cpp/blob/main/gemma/run.cc"
+click node_gemma "https://github.com/google/gemma.cpp/blob/main/gemma/gemma.h"
+click node_forward "https://github.com/google/gemma.cpp/blob/main/gemma/gemma.cc"
+click node_attention "https://github.com/google/gemma.cpp/blob/main/gemma/attention.cc"
+click node_kv_cache "https://github.com/google/gemma.cpp/blob/main/gemma/kv_cache.h"
+click node_tokenizer "https://github.com/google/gemma.cpp/blob/main/gemma/tokenizer.h"
+click node_configs "https://github.com/google/gemma.cpp/blob/main/gemma/configs.h"
+click node_weights "https://github.com/google/gemma.cpp/blob/main/gemma/weights.h"
+click node_model_store "https://github.com/google/gemma.cpp/blob/main/gemma/model_store.h"
+click node_matmul "https://github.com/google/gemma.cpp/blob/main/ops/matmul.h"
+click node_dot "https://github.com/google/gemma.cpp/blob/main/ops/dot-inl.h"
+click node_blob_store "https://github.com/google/gemma.cpp/blob/main/io/blob_store.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli toneBlue
+class node_gemma,node_forward,node_attention,node_kv_cache toneAmber
+class node_tokenizer,node_configs,node_weights,node_model_store toneMint
+class node_matmul,node_dot toneRose
+class node_blob_store toneIndigo

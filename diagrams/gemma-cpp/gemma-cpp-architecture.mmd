@@ -1,0 +1,118 @@
+flowchart TD
+
+subgraph group_interface["Interface"]
+  node_run_main{{"gemma CLI<br/>[run.cc]"}}
+  node_args["Args &amp; runtime cfg<br/>[gemma_args.h]"]
+end
+
+subgraph group_engine["Gemma Engine"]
+  node_gemma_api{{"Gemma facade<br/>[gemma.h]"}}
+  node_forward{{"Forward pass<br/>[gemma.cc]"}}
+  node_attention["Attention<br/>[attention.cc]"]
+  node_activations[("Activations<br/>[activations.h]")]
+  node_kv_cache[("KV cache<br/>[kv_cache.h]")]
+end
+
+subgraph group_model["Model &amp; Weights"]
+  node_configs["Model configs<br/>[configs.h]"]
+  node_weights{{"Weights<br/>[weights.h]"}}
+  node_model_store[("Model store<br/>[model_store.h]")]
+  node_tensor_info["Tensor info<br/>[tensor_info.h]"]
+  node_tokenizer["Tokenizer<br/>[tokenizer.h]"]
+end
+
+subgraph group_ops["SIMD Ops"]
+  node_matmul_api{{"MatMul API<br/>[matmul.h]"}}
+  node_matmul_kernels{{"MatMul kernels<br/>[matmul-inl.h]"}}
+  node_matmul_static["Static matmul"]
+  node_dot["SIMD dot<br/>[dot-inl.h]"]
+  node_ops_kernels["Op kernels<br/>[ops-inl.h]"]
+  node_ops_utils["RoPE tables<br/>[ops.h]"]
+end
+
+subgraph group_compression["Compression"]
+  node_types["Weight formats<br/>[types.h]"]
+  node_compress["Decompress<br/>[compress-inl.h]"]
+end
+
+subgraph group_io["IO"]
+  node_blob_store[("Blob store<br/>[blob_store.h]")]
+end
+
+subgraph group_util["Util"]
+  node_threading["Threading"]
+  node_mat["Mat types<br/>[mat.h]"]
+end
+
+node_run_main -->|"parses flags"| node_args
+node_run_main -->|"constructs Gemma"| node_gemma_api
+node_run_main -->|"wrap + encode"| node_tokenizer
+node_run_main -->|"allocates"| node_kv_cache
+node_args -->|"RuntimeConfig"| node_forward
+node_gemma_api -->|"Generate dispatch"| node_forward
+node_gemma_api -->|"WeightsPtrs"| node_weights
+node_gemma_api -->|"ModelStore"| node_model_store
+node_gemma_api -->|"ThreadingContext&amp;"| node_threading
+node_gemma_api -->|"Tokenizer&#40;&#41;"| node_tokenizer
+node_gemma_api -->|"ModelConfig"| node_configs
+node_forward -->|"per layer"| node_attention
+node_forward -->|"scratch"| node_activations
+node_forward -->|"Rope + sampling"| node_ops_kernels
+node_forward -->|"MatMulEnv"| node_matmul_api
+node_attention -->|"AttentionActivations"| node_activations
+node_attention -->|"K/V rows"| node_kv_cache
+node_attention -->|"QKV GEMMs"| node_matmul_api
+node_attention -->|"score dots"| node_dot
+node_matmul_api -->|"dispatch"| node_matmul_kernels
+node_matmul_api -->|"parallel-for"| node_threading
+node_matmul_static -->|"instantiates MatMul"| node_matmul_kernels
+node_matmul_kernels -->|"MMArgs/config"| node_matmul_api
+node_matmul_kernels -->|"decompress + dot"| node_dot
+node_dot -->|"Decompress2"| node_compress
+node_dot -->|"packed streams"| node_types
+node_weights -->|"decompress on load"| node_compress
+node_weights -->|"shapes"| node_configs
+node_weights -->|"name to shape"| node_tensor_info
+node_weights -->|"ReadFromBlobs"| node_model_store
+node_weights -->|"MatPtr metadata"| node_mat
+node_model_store -->|"BlobReader"| node_blob_store
+node_kv_cache -->|"MatStorageT"| node_mat
+node_ops_kernels -->|"inv_timescale"| node_ops_utils
+
+click node_run_main "https://github.com/google/gemma.cpp/blob/main/gemma/run.cc"
+click node_args "https://github.com/google/gemma.cpp/blob/main/gemma/gemma_args.h"
+click node_gemma_api "https://github.com/google/gemma.cpp/blob/main/gemma/gemma.h"
+click node_forward "https://github.com/google/gemma.cpp/blob/main/gemma/gemma.cc"
+click node_attention "https://github.com/google/gemma.cpp/blob/main/gemma/attention.cc"
+click node_activations "https://github.com/google/gemma.cpp/blob/main/gemma/activations.h"
+click node_kv_cache "https://github.com/google/gemma.cpp/blob/main/gemma/kv_cache.h"
+click node_configs "https://github.com/google/gemma.cpp/blob/main/gemma/configs.h"
+click node_weights "https://github.com/google/gemma.cpp/blob/main/gemma/weights.h"
+click node_model_store "https://github.com/google/gemma.cpp/blob/main/gemma/model_store.h"
+click node_tensor_info "https://github.com/google/gemma.cpp/blob/main/gemma/tensor_info.h"
+click node_tokenizer "https://github.com/google/gemma.cpp/blob/main/gemma/tokenizer.h"
+click node_matmul_api "https://github.com/google/gemma.cpp/blob/main/ops/matmul.h"
+click node_matmul_kernels "https://github.com/google/gemma.cpp/blob/main/ops/matmul-inl.h"
+click node_matmul_static "https://github.com/google/gemma.cpp/blob/main/ops/matmul_static-inl.h"
+click node_dot "https://github.com/google/gemma.cpp/blob/main/ops/dot-inl.h"
+click node_ops_kernels "https://github.com/google/gemma.cpp/blob/main/ops/ops-inl.h"
+click node_ops_utils "https://github.com/google/gemma.cpp/blob/main/ops/ops.h"
+click node_types "https://github.com/google/gemma.cpp/blob/main/compression/types.h"
+click node_compress "https://github.com/google/gemma.cpp/blob/main/compression/compress-inl.h"
+click node_blob_store "https://github.com/google/gemma.cpp/blob/main/io/blob_store.h"
+click node_threading "https://github.com/google/gemma.cpp/blob/main/util/threading_context.h"
+click node_mat "https://github.com/google/gemma.cpp/blob/main/util/mat.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_run_main,node_args,node_threading,node_mat toneBlue
+class node_gemma_api,node_forward,node_attention,node_activations,node_kv_cache toneAmber
+class node_configs,node_weights,node_model_store,node_tensor_info,node_tokenizer toneMint
+class node_matmul_api,node_matmul_kernels,node_matmul_static,node_dot,node_ops_kernels,node_ops_utils toneRose
+class node_types,node_compress toneIndigo
+class node_blob_store toneTeal
