@@ -1,0 +1,43 @@
+{
+  "owner": "google",
+  "repo": "gemma.cpp",
+  "branch": "main",
+  "groups": [
+    {"id": "interface", "name": "CLI & Serving", "label": "CLI & Serving"},
+    {"id": "engine", "name": "Gemma Engine", "label": "Gemma Engine"},
+    {"id": "model", "name": "Model & Weights", "label": "Model & Weights"},
+    {"id": "ops", "name": "SIMD Ops", "label": "SIMD Ops"},
+    {"id": "io", "name": "Storage & IO", "label": "Storage & IO"}
+  ],
+  "nodes": [
+    {"id": "cli", "label": "gemma CLI", "file": "gemma/run.cc", "path": "gemma/run.cc", "groupId": "interface", "group": "interface", "shape": "hexagon", "desc": "main() parses args; ReplGemma wraps prompts and prints streamed tokens"},
+    {"id": "gemma", "label": "Gemma facade", "file": "gemma/gemma.h", "path": "gemma/gemma.h", "groupId": "engine", "group": "engine", "shape": "hexagon", "desc": "Gemma class: loads blobs in ctor, Generate/GenerateBatch entry points"},
+    {"id": "forward", "label": "Forward pass", "file": "gemma/gemma.cc", "path": "gemma/gemma.cc", "groupId": "engine", "group": "engine", "shape": "box", "desc": "Prefill plus token-by-token decode loop over TransformerLayer"},
+    {"id": "attention", "label": "Attention", "file": "gemma/attention.cc", "path": "gemma/attention.cc", "groupId": "engine", "group": "engine", "shape": "box", "desc": "QKV attention: RoPE, dot-softmax, weighted V sum"},
+    {"id": "kv_cache", "label": "KV cache", "file": "gemma/kv_cache.h", "path": "gemma/kv_cache.h", "groupId": "engine", "group": "engine", "shape": "database", "desc": "KVCache matrix [seq_len x layers*kv_heads*qkv_dim*2]"},
+    {"id": "tokenizer", "label": "Tokenizer", "file": "gemma/tokenizer.h", "path": "gemma/tokenizer.h", "groupId": "model", "group": "model", "shape": "box", "desc": "SentencePiece encode/decode plus start/end-of-turn chat template"},
+    {"id": "configs", "label": "Model configs", "file": "gemma/configs.h", "path": "gemma/configs.h", "groupId": "model", "group": "model", "shape": "document", "desc": "Model enum and ModelConfig/LayerConfig dimensions"},
+    {"id": "weights", "label": "Weights", "file": "gemma/weights.h", "path": "gemma/weights.h", "groupId": "model", "group": "model", "shape": "hexagon", "desc": "WeightsPtrs: per-tensor metadata, ReadFromBlobs, Fixup"},
+    {"id": "model_store", "label": "Model store", "file": "gemma/model_store.h", "path": "gemma/model_store.h", "groupId": "model", "group": "model", "shape": "database", "desc": "ModelStore: named tensors inside a .sbs blob"},
+    {"id": "matmul", "label": "MatMul API", "file": "ops/matmul.h", "path": "ops/matmul.h", "groupId": "ops", "group": "ops", "shape": "hexagon", "desc": "MatMulEnv, per-shape autotuning, cluster-aware parallelism"},
+    {"id": "dot", "label": "SIMD dot", "file": "ops/dot-inl.h", "path": "ops/dot-inl.h", "groupId": "ops", "group": "ops", "shape": "box", "desc": "Dot over compressed weights (SFP, I8, NUQ, BF16, F32)"},
+    {"id": "blob_store", "label": "Blob store", "file": "io/blob_store.h", "path": "io/blob_store.h", "groupId": "io", "group": "io", "shape": "database", "desc": "BlobReader/BlobWriter key-value container format"}
+  ],
+  "edges": [
+    {"from": "cli", "to": "gemma", "label": "Generate()", "style": "solid"},
+    {"from": "gemma", "to": "forward", "label": "HWY dispatch", "style": "solid"},
+    {"from": "gemma", "to": "weights", "label": "load tensors", "style": "solid"},
+    {"from": "gemma", "to": "tokenizer", "label": "WrapAndTokenize", "style": "solid"},
+    {"from": "gemma", "to": "kv_cache", "label": "allocate", "style": "solid"},
+    {"from": "gemma", "to": "matmul", "label": "MatMulEnv", "style": "solid"},
+    {"from": "forward", "to": "attention", "label": "per layer", "style": "solid"},
+    {"from": "attention", "to": "kv_cache", "label": "read/write K,V", "style": "solid"},
+    {"from": "attention", "to": "matmul", "label": "QKV GEMMs", "style": "solid"},
+    {"from": "attention", "to": "dot", "label": "score dots", "style": "solid"},
+    {"from": "weights", "to": "configs", "label": "shapes", "style": "solid"},
+    {"from": "weights", "to": "model_store", "label": "named tensors", "style": "solid"},
+    {"from": "model_store", "to": "blob_store", "label": "BlobReader", "style": "solid"},
+    {"from": "matmul", "to": "dot", "label": "kernels", "style": "solid"},
+    {"from": "tokenizer", "to": "blob_store", "label": "tokenizer blob", "style": "solid"}
+  ]
+}
