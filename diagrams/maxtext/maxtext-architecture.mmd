@@ -1,0 +1,117 @@
+flowchart TD
+
+subgraph group_config["Config System"]
+  node_base_yml["base.yml<br/>[base.yml]"]
+  node_pyconfig["pyconfig.initialize<br/>[pyconfig.py]"]
+  node_types["MaxTextConfig<br/>[types.py]"]
+end
+
+subgraph group_training["Training Loop"]
+  node_train["train_step<br/>[train.py]"]
+  node_train_utils["setup_train_loop<br/>[train_utils.py]"]
+  node_train_state["TrainStateNNX<br/>[train_state_nnx.py]"]
+  node_checkpointing["save_checkpoint<br/>[checkpointing.py]"]
+end
+
+subgraph group_sharding["Meshes &amp; Sharding"]
+  node_mesh["create_device_mesh<br/>[maxtext_utils.py]"]
+  node_sharding["logical_to_mesh_axes<br/>[sharding.py]"]
+end
+
+subgraph group_model["Model &amp; Layers"]
+  node_transformer["Transformer<br/>[models.py]"]
+  node_llama2["LlamaDecoderLayer<br/>[llama2.py]"]
+  node_decoder["NNXDecoder<br/>[nnx_decoders.py]"]
+  node_attention["Attention<br/>[attentions.py]"]
+  node_embeddings["Embed<br/>[embeddings.py]"]
+  node_linears["MlpBlock<br/>[linears.py]"]
+  node_normalizations["RMSNorm<br/>[normalizations.py]"]
+  node_quantizations["AqtQuantization<br/>[quantizations.py]"]
+  node_moe["RoutedMoE<br/>[moe.py]"]
+end
+
+subgraph group_serving["Serving &amp; Decode"]
+  node_maxengine["MaxEngine<br/>[maxengine.py]"]
+  node_maxengine_config["create_maxengine"]
+  node_maxengine_server["maxengine_server"]
+  node_kvcache["KVCache<br/>[kvcache.py]"]
+  node_decode["decode.main<br/>[decode.py]"]
+  node_offline_engine["OfflineEngine<br/>[offline_engine.py]"]
+end
+
+subgraph group_data["Data Loading"]
+  node_data_loader["create_dataloader<br/>[data_loader.py]"]
+end
+
+node_base_yml -->|"defaults"| node_pyconfig
+node_types -->|"pydantic schema"| node_pyconfig
+node_pyconfig -->|"HyperParameters"| node_train
+node_pyconfig -->|"HyperParameters"| node_maxengine
+node_pyconfig -->|"logical_axis_rules"| node_sharding
+node_train -->|"train_loop calls"| node_train_utils
+node_train_utils -->|"jit wrappers"| node_train
+node_train_utils -->|"get_mesh_from_config"| node_mesh
+node_train_utils -->|"setup_training_state"| node_train_state
+node_train_utils -->|"create_checkpoint_manager"| node_checkpointing
+node_train_utils -->|"create_dataloader"| node_data_loader
+node_train -->|"maybe_save_checkpoint"| node_checkpointing
+node_train -->|"nnx.merge / update"| node_train_state
+node_mesh -->|"physical axes"| node_sharding
+node_sharding -->|"param shardings"| node_train_state
+node_train -->|"loss_fn forward"| node_transformer
+node_transformer -->|"token_embedder"| node_embeddings
+node_transformer -->|"decoder stack"| node_decoder
+node_decoder -->|"layer blueprint"| node_llama2
+node_decoder -->|"MoE layers"| node_moe
+node_llama2 -->|"self_attention"| node_attention
+node_llama2 -->|"mlp"| node_linears
+node_llama2 -->|"pre/post norms"| node_normalizations
+node_attention -->|"kv quant"| node_quantizations
+node_linears -->|"weight quant"| node_quantizations
+node_maxengine -->|"create_device_mesh"| node_mesh
+node_maxengine -->|"model forward"| node_transformer
+node_maxengine -->|"paged cache"| node_kvcache
+node_maxengine_config -->|"factory"| node_maxengine
+node_maxengine_server -->|"create_maxengine"| node_maxengine_config
+node_decode -->|"prefill / insert / generate"| node_maxengine
+node_offline_engine -->|"MaxEngine worker"| node_maxengine
+
+click node_base_yml "https://github.com/google/maxtext/blob/main/src/maxtext/configs/base.yml"
+click node_pyconfig "https://github.com/google/maxtext/blob/main/src/maxtext/configs/pyconfig.py"
+click node_types "https://github.com/google/maxtext/blob/main/src/maxtext/configs/types.py"
+click node_train "https://github.com/google/maxtext/blob/main/src/maxtext/trainers/pre_train/train.py"
+click node_train_utils "https://github.com/google/maxtext/blob/main/src/maxtext/utils/train_utils.py"
+click node_train_state "https://github.com/google/maxtext/blob/main/src/maxtext/common/train_state_nnx.py"
+click node_checkpointing "https://github.com/google/maxtext/blob/main/src/maxtext/common/checkpointing.py"
+click node_data_loader "https://github.com/google/maxtext/blob/main/src/maxtext/common/data_loader.py"
+click node_mesh "https://github.com/google/maxtext/blob/main/src/maxtext/utils/maxtext_utils.py"
+click node_sharding "https://github.com/google/maxtext/blob/main/src/maxtext/utils/sharding.py"
+click node_transformer "https://github.com/google/maxtext/blob/main/src/maxtext/models/models.py"
+click node_llama2 "https://github.com/google/maxtext/blob/main/src/maxtext/models/llama2.py"
+click node_decoder "https://github.com/google/maxtext/blob/main/src/maxtext/layers/nnx_decoders.py"
+click node_attention "https://github.com/google/maxtext/blob/main/src/maxtext/layers/attentions.py"
+click node_embeddings "https://github.com/google/maxtext/blob/main/src/maxtext/layers/embeddings.py"
+click node_linears "https://github.com/google/maxtext/blob/main/src/maxtext/layers/linears.py"
+click node_normalizations "https://github.com/google/maxtext/blob/main/src/maxtext/layers/normalizations.py"
+click node_quantizations "https://github.com/google/maxtext/blob/main/src/maxtext/layers/quantizations.py"
+click node_moe "https://github.com/google/maxtext/blob/main/src/maxtext/layers/moe.py"
+click node_maxengine "https://github.com/google/maxtext/blob/main/src/maxtext/inference/maxengine/maxengine.py"
+click node_maxengine_config "https://github.com/google/maxtext/blob/main/src/maxtext/inference/maxengine/maxengine_config.py"
+click node_maxengine_server "https://github.com/google/maxtext/blob/main/src/maxtext/inference/maxengine/maxengine_server.py"
+click node_kvcache "https://github.com/google/maxtext/blob/main/src/maxtext/inference/kvcache.py"
+click node_decode "https://github.com/google/maxtext/blob/main/src/maxtext/inference/decode.py"
+click node_offline_engine "https://github.com/google/maxtext/blob/main/src/maxtext/inference/offline_engine.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_base_yml,node_pyconfig,node_types toneBlue
+class node_train,node_train_utils,node_train_state,node_checkpointing toneAmber
+class node_mesh,node_sharding toneMint
+class node_transformer,node_llama2,node_decoder,node_attention,node_embeddings,node_linears,node_normalizations,node_quantizations,node_moe toneRose
+class node_maxengine,node_maxengine_config,node_maxengine_server,node_kvcache,node_decode,node_offline_engine toneIndigo
+class node_data_loader toneTeal

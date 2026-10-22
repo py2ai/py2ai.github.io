@@ -1,0 +1,42 @@
+{
+  "owner": "google",
+  "repo": "maxtext",
+  "branch": "main",
+  "groups": [
+    { "id": "config", "name": "Config System", "label": "Config System" },
+    { "id": "training", "name": "Training", "label": "Training" },
+    { "id": "sharding", "name": "Meshes & Sharding", "label": "Meshes & Sharding" },
+    { "id": "model", "name": "Model Layers", "label": "Model Layers" },
+    { "id": "serving", "name": "Serving", "label": "Serving" }
+  ],
+  "nodes": [
+    { "id": "pyconfig", "label": "pyconfig.initialize", "file": "src/maxtext/configs/pyconfig.py", "path": "src/maxtext/configs/pyconfig.py", "group": "config", "groupId": "config", "desc": "Merges base.yml, model YAML and CLI flags into HyperParameters" },
+    { "id": "train", "label": "train_step", "file": "src/maxtext/trainers/pre_train/train.py", "path": "src/maxtext/trainers/pre_train/train.py", "group": "training", "groupId": "training", "desc": "JIT-compiled forward, backward and optimizer update" },
+    { "id": "train_utils", "label": "setup_train_loop", "file": "src/maxtext/utils/train_utils.py", "path": "src/maxtext/utils/train_utils.py", "group": "training", "groupId": "training", "desc": "Builds mesh, optimizer, sharded state and jit wrappers" },
+    { "id": "mesh", "label": "create_device_mesh", "file": "src/maxtext/utils/maxtext_utils.py", "path": "src/maxtext/utils/maxtext_utils.py", "group": "sharding", "groupId": "sharding", "desc": "Physical device mesh from ici/dcn parallelism" },
+    { "id": "sharding", "label": "create_sharding", "file": "src/maxtext/utils/sharding.py", "path": "src/maxtext/utils/sharding.py", "group": "sharding", "groupId": "sharding", "desc": "Logical axis names resolved to NamedSharding on the mesh" },
+    { "id": "transformer", "label": "Transformer", "file": "src/maxtext/models/models.py", "path": "src/maxtext/models/models.py", "group": "model", "groupId": "model", "desc": "Embedder plus decoder stack returning logits" },
+    { "id": "decoder", "label": "NNXDecoder", "file": "src/maxtext/layers/nnx_decoders.py", "path": "src/maxtext/layers/nnx_decoders.py", "group": "model", "groupId": "model", "desc": "Stacks scanned or staged decoder layers" },
+    { "id": "attention", "label": "Attention", "file": "src/maxtext/layers/attentions.py", "path": "src/maxtext/layers/attentions.py", "group": "model", "groupId": "model", "desc": "Query/key/value projection and fused attention kernels" },
+    { "id": "embeddings", "label": "Embed", "file": "src/maxtext/layers/embeddings.py", "path": "src/maxtext/layers/embeddings.py", "group": "model", "groupId": "model", "desc": "Vocab embedding lookup and rotary position embeddings" },
+    { "id": "linears", "label": "MlpBlock", "file": "src/maxtext/layers/linears.py", "path": "src/maxtext/layers/linears.py", "group": "model", "groupId": "model", "desc": "Sharded DenseGeneral matmuls and feed-forward block" },
+    { "id": "maxengine", "label": "MaxEngine", "file": "src/maxtext/inference/maxengine/maxengine.py", "path": "src/maxtext/inference/maxengine/maxengine.py", "group": "serving", "groupId": "serving", "desc": "JetStream-style engine: prefill, insert, generate" },
+    { "id": "decode", "label": "decode.main", "file": "src/maxtext/inference/decode.py", "path": "src/maxtext/inference/decode.py", "group": "serving", "groupId": "serving", "desc": "CLI decode loop from prompt to generated text" }
+  ],
+  "edges": [
+    { "from": "pyconfig", "to": "train", "label": "HyperParameters" },
+    { "from": "pyconfig", "to": "maxengine", "label": "HyperParameters" },
+    { "from": "train", "to": "train_utils", "label": "train_loop calls" },
+    { "from": "train_utils", "to": "mesh", "label": "mesh from config" },
+    { "from": "mesh", "to": "sharding", "label": "physical axes" },
+    { "from": "sharding", "to": "transformer", "label": "logical activation sharding" },
+    { "from": "train", "to": "transformer", "label": "loss_fn forward" },
+    { "from": "transformer", "to": "embeddings", "label": "token_embedder" },
+    { "from": "transformer", "to": "decoder", "label": "decoder stack" },
+    { "from": "decoder", "to": "attention", "label": "per layer" },
+    { "from": "decoder", "to": "linears", "label": "per layer" },
+    { "from": "decode", "to": "maxengine", "label": "prefill / generate" },
+    { "from": "maxengine", "to": "mesh", "label": "devices" },
+    { "from": "maxengine", "to": "transformer", "label": "model forward" }
+  ]
+}
