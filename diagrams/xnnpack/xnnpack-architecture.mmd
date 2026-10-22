@@ -1,0 +1,120 @@
+flowchart TD
+
+subgraph group_lifecycle["Lifecycle API"]
+  node_init["xnn_initialize<br/>[init.c]"]
+  node_runtime_create["xnn_create_runtime_v4<br/>[runtime.c]"]
+  node_delete_op["xnn_delete_operator<br/>[operator-delete.c]"]
+end
+
+subgraph group_builders["Node Builders"]
+  node_conv_def["xnn_define_convolution_2d<br/>[convolution-2d.c]"]
+  node_deconv_def["xnn_define_deconvolution_2d<br/>[deconvolution-2d.c]"]
+  node_fc_def["xnn_define_fully_connected<br/>[fully-connected.c]"]
+  node_bmm_def["xnn_define_batch_matrix_multiply"]
+  node_binary_def["xnn_define_binary<br/>[binary.c]"]
+  node_unary_def["xnn_define_unary<br/>[unary.c]"]
+  node_softmax_def["xnn_define_softmax<br/>[softmax.c]"]
+end
+
+subgraph group_optimizer["Optimization"]
+  node_optimize["xnn_subgraph_optimize<br/>[subgraph.c]"]
+  node_pack_lh["xnn_define_pack_lh<br/>[pack-lh.c]"]
+end
+
+subgraph group_planning["Memory Planning"]
+  node_mem_planner["xnn_plan_value_allocation_tracker<br/>[memory-planner.c]"]
+  node_allocator["xnn_allocate &#40;default hooks&#41;<br/>[allocator.c]"]
+  node_weights_mem["xnn_allocate_weights_memory<br/>[memory.c]"]
+end
+
+subgraph group_packing["Weight Packing"]
+  node_weights_cache["xnn_finalize_weights_cache<br/>[cache.c]"]
+  node_packw_run["xnn_compute_packw_gemm_gio<br/>[operator-run.c]"]
+  node_pack_lh_f32["xnn_pack_lh_f32_qdint8<br/>[pack-lh.cc]"]
+  node_packw_ukernel["xnn_x32_packw_gemm_goi_ukernel_x12"]
+end
+
+subgraph group_dispatch["Dispatch &amp; Indirection"]
+  node_indirection["xnn_indirection_init_conv2d<br/>[indirection.c]"]
+  node_gemm_config["xnn_init_f32_gemm_config<br/>[gemm-config.c]"]
+  node_hw_config["init_hardware_config<br/>[hardware-config.c]"]
+end
+
+subgraph group_ukernels["Microkernels"]
+  node_gemm_ukernel["xnn_f32_gemm_minmax_ukernel_1x8"]
+  node_conv_ukernel["xnn_f32_conv_hwc_ukernel_3x3s2p1c3x8"]
+end
+
+subgraph group_shared["Operator Utilities"]
+  node_op_utils["xnn_compute_convolution_output_dimension<br/>[operator-utils.c]"]
+  node_mk_utils["xnn_gemm_best_tile_size"]
+end
+
+node_init -->|"allocator hooks"| node_runtime_create
+node_conv_def -->|"append node"| node_optimize
+node_deconv_def -->|"append node"| node_optimize
+node_fc_def -->|"append node"| node_optimize
+node_bmm_def -->|"append node"| node_optimize
+node_binary_def -->|"append node"| node_optimize
+node_unary_def -->|"append node"| node_optimize
+node_softmax_def -->|"append node"| node_optimize
+node_pack_lh -->|"packed-LHS path"| node_optimize
+node_optimize -->|"xnn_create_runtime_v3"| node_runtime_create
+node_runtime_create -->|"value lifecycles"| node_mem_planner
+node_mem_planner -->|"arena allocate"| node_allocator
+node_mem_planner -->|"weights buffer"| node_weights_mem
+node_runtime_create -->|"cache init"| node_weights_cache
+node_weights_cache -->|"finalize pages"| node_weights_mem
+node_runtime_create -->|"build indirection"| node_indirection
+node_runtime_create -->|"teardown"| node_delete_op
+node_conv_def -->|"pick GEMM tile"| node_gemm_config
+node_fc_def -->|"pick GEMM tile"| node_gemm_config
+node_hw_config -->|"arch features"| node_gemm_config
+node_gemm_config -->|"ukernel pointer"| node_gemm_ukernel
+node_gemm_config -->|"ukernel pointer"| node_conv_ukernel
+node_indirection -->|"gather inputs"| node_conv_ukernel
+node_fc_def -->|"pack weights"| node_packw_run
+node_packw_run -->|"pack ukernel"| node_packw_ukernel
+node_conv_def -->|"output dims"| node_op_utils
+node_fc_def -->|"best tile size"| node_mk_utils
+
+click node_init "https://github.com/google/XNNPACK/blob/master/src/init.c"
+click node_runtime_create "https://github.com/google/XNNPACK/blob/master/src/runtime.c"
+click node_delete_op "https://github.com/google/XNNPACK/blob/master/src/operator-delete.c"
+click node_conv_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/convolution-2d.c"
+click node_deconv_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/deconvolution-2d.c"
+click node_fc_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/fully-connected.c"
+click node_bmm_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/batch-matrix-multiply.c"
+click node_binary_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/binary.c"
+click node_unary_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/unary.c"
+click node_softmax_def "https://github.com/google/XNNPACK/blob/master/src/subgraph/softmax.c"
+click node_optimize "https://github.com/google/XNNPACK/blob/master/src/subgraph.c"
+click node_pack_lh "https://github.com/google/XNNPACK/blob/master/src/subgraph/pack-lh.c"
+click node_mem_planner "https://github.com/google/XNNPACK/blob/master/src/memory-planner.c"
+click node_allocator "https://github.com/google/XNNPACK/blob/master/src/allocator.c"
+click node_weights_mem "https://github.com/google/XNNPACK/blob/master/src/memory.c"
+click node_weights_cache "https://github.com/google/XNNPACK/blob/master/src/cache.c"
+click node_packw_run "https://github.com/google/XNNPACK/blob/master/src/operator-run.c"
+click node_pack_lh_f32 "https://github.com/google/XNNPACK/blob/master/src/pack-lh.cc"
+click node_packw_ukernel "https://github.com/google/XNNPACK/blob/master/src/x32-packw/gen/x32-packw-x12-gemm-goi-neon-ld4lane-u4.c"
+click node_indirection "https://github.com/google/XNNPACK/blob/master/src/indirection.c"
+click node_gemm_config "https://github.com/google/XNNPACK/blob/master/src/configs/gemm-config.c"
+click node_hw_config "https://github.com/google/XNNPACK/blob/master/src/configs/hardware-config.c"
+click node_op_utils "https://github.com/google/XNNPACK/blob/master/src/operator-utils.c"
+click node_mk_utils "https://github.com/google/XNNPACK/blob/master/src/microkernel-utils.c"
+click node_gemm_ukernel "https://github.com/google/XNNPACK/blob/master/src/f32-gemm/gen/f32-gemm-1x8-minmax-neon-dup-ld64.c"
+click node_conv_ukernel "https://github.com/google/XNNPACK/blob/master/src/f32-conv-hwc/gen/f32-conv-hwc-3x3s2p1c3x8-aarch64-neonfma-2x2.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init,node_runtime_create,node_delete_op,node_gemm_ukernel,node_conv_ukernel toneBlue
+class node_conv_def,node_deconv_def,node_fc_def,node_bmm_def,node_binary_def,node_unary_def,node_softmax_def,node_op_utils,node_mk_utils toneAmber
+class node_optimize,node_pack_lh toneMint
+class node_mem_planner,node_allocator,node_weights_mem toneRose
+class node_weights_cache,node_packw_run,node_pack_lh_f32,node_packw_ukernel toneIndigo
+class node_indirection,node_gemm_config,node_hw_config toneTeal
