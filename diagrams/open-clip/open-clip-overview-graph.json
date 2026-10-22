@@ -1,0 +1,42 @@
+{
+  "owner": "mlfoundations",
+  "repo": "open_clip",
+  "branch": "main",
+  "groups": [
+    {"id": "entry", "name": "Training entry", "label": "Training entry"},
+    {"id": "factory", "name": "Factory & Registry", "label": "Factory & Registry"},
+    {"id": "models", "name": "Model Classes", "label": "Model Classes"},
+    {"id": "text", "name": "Tokenization", "label": "Tokenization"},
+    {"id": "train", "name": "Train & Eval", "label": "Train & Eval"}
+  ],
+  "nodes": [
+    {"id": "main", "label": "main(args)", "file": "src/open_clip_train/main.py", "path": "src/open_clip_train/main.py", "group": "entry", "groupId": "entry", "desc": "CLI orchestration: parse args, init distributed device, create model/transforms/tokenizer, run epochs and eval."},
+    {"id": "factory", "label": "create_model_and_transforms", "file": "src/open_clip/factory.py", "path": "src/open_clip/factory.py", "group": "factory", "groupId": "factory", "desc": "Resolves model config + pretrained tag, instantiates the model, builds train/val preprocessing."},
+    {"id": "registry", "label": "_PRETRAINED registry", "file": "src/open_clip/pretrained.py", "path": "src/open_clip/pretrained.py", "group": "factory", "groupId": "factory", "desc": "Curated per-model weight configs (URL / HF hub, mean/std, quick_gelu) plus download and caching helpers."},
+    {"id": "clip", "label": "CLIP", "file": "src/open_clip/model.py", "path": "src/open_clip/model.py", "group": "models", "groupId": "models", "desc": "Canonical dual-tower model: visual tower + text tower, learnable logit_scale, encode_image/encode_text."},
+    {"id": "towers", "label": "Vision / Text Transformers", "file": "src/open_clip/transformer.py", "path": "src/open_clip/transformer.py", "group": "models", "groupId": "models", "desc": "Native ViT image tower and causal-masked text tower blocks."},
+    {"id": "timm", "label": "TimmModel", "file": "src/open_clip/timm_model.py", "path": "src/open_clip/timm_model.py", "group": "models", "groupId": "models", "desc": "Wraps any timm backbone as a CLIP vision tower."},
+    {"id": "hfenc", "label": "HFTextEncoder", "file": "src/open_clip/hf_model.py", "path": "src/open_clip/hf_model.py", "group": "models", "groupId": "models", "desc": "Borrows HuggingFace transformer encoders as the text tower with a projection head."},
+    {"id": "tokenizer", "label": "HFTokenizer", "file": "src/open_clip/tokenizer.py", "path": "src/open_clip/tokenizer.py", "group": "text", "groupId": "text", "desc": "AutoTokenizer bridge plus SimpleTokenizer (original CLIP BPE) and SigLip variants."},
+    {"id": "loss", "label": "ClipLoss", "file": "src/open_clip/loss.py", "path": "src/open_clip/loss.py", "group": "train", "groupId": "train", "desc": "Symmetric info-NCE over the logit scale; SigLIP, distillation and CoCa variants."},
+    {"id": "train", "label": "train_one_epoch", "file": "src/open_clip_train/train.py", "path": "src/open_clip_train/train.py", "group": "train", "groupId": "train", "desc": "Autocast step loop: prepare batch, forward task, backward, logit-scale clamp, metric logging."},
+    {"id": "dist", "label": "init_distributed_device", "file": "src/open_clip_train/distributed.py", "path": "src/open_clip_train/distributed.py", "group": "train", "groupId": "train", "desc": "torch.distributed setup from torchrun/SLURM env, backend pick (nccl/gloo/...), local rank."},
+    {"id": "zs", "label": "build_zero_shot_classifier", "file": "src/open_clip/zero_shot_classifier.py", "path": "src/open_clip/zero_shot_classifier.py", "group": "train", "groupId": "train", "desc": "Builds class embeddings from prompt templates; powers end-of-epoch zero-shot eval."}
+  ],
+  "edges": [
+    {"from": "main", "to": "dist", "label": "init DDP"},
+    {"from": "main", "to": "factory", "label": "model + transforms"},
+    {"from": "main", "to": "tokenizer", "label": "get_tokenizer"},
+    {"from": "factory", "to": "registry", "label": "tag lookup + download"},
+    {"from": "factory", "to": "clip", "label": "instantiate"},
+    {"from": "factory", "to": "towers", "label": "build towers"},
+    {"from": "factory", "to": "timm", "label": "timm vision option"},
+    {"from": "factory", "to": "hfenc", "label": "HF text option"},
+    {"from": "clip", "to": "towers", "label": "visual / transformer"},
+    {"from": "main", "to": "train", "label": "epoch loop"},
+    {"from": "train", "to": "loss", "label": "info-NCE step"},
+    {"from": "train", "to": "zs", "label": "end-of-epoch eval"},
+    {"from": "zs", "to": "clip", "label": "image features"},
+    {"from": "dist", "to": "train", "label": "collectives ready"}
+  ]
+}
