@@ -1,0 +1,43 @@
+{
+  "owner": "tensorflow",
+  "repo": "tflite-micro",
+  "branch": "main",
+  "groups": [
+    { "id": "model", "name": "Flatbuffer Model", "label": "Flatbuffer Model" },
+    { "id": "runtime", "name": "Interpreter Core", "label": "Interpreter Core" },
+    { "id": "memory", "name": "Memory Arena", "label": "Memory Arena" },
+    { "id": "planning", "name": "Memory Planning", "label": "Memory Planning" },
+    { "id": "ops", "name": "Operator Layer", "label": "Operator Layer" }
+  ],
+  "nodes": [
+    { "id": "model", "label": "tflite::GetModel", "file": "tensorflow/lite/micro/schema/schema_generated.h", "path": "tensorflow/lite/micro/schema/schema_generated.h", "group": "model", "groupId": "model", "desc": "Zero-copy cast of the .tflite buffer onto the generated flatbuffer accessors" },
+    { "id": "interpreter", "label": "MicroInterpreter", "file": "tensorflow/lite/micro/micro_interpreter.h", "path": "tensorflow/lite/micro/micro_interpreter.h", "group": "runtime", "groupId": "runtime", "desc": "Top-level API: model + op resolver + arena, then AllocateTensors/Invoke" },
+    { "id": "allocate", "label": "AllocateTensors", "file": "tensorflow/lite/micro/micro_interpreter.cc", "path": "tensorflow/lite/micro/micro_interpreter.cc", "group": "runtime", "groupId": "runtime", "desc": "One-time setup: subgraph allocations, kernel Init/Prepare, memory plan" },
+    { "id": "graph", "label": "InvokeSubgraph", "file": "tensorflow/lite/micro/micro_interpreter_graph.cc", "path": "tensorflow/lite/micro/micro_interpreter_graph.cc", "group": "runtime", "groupId": "runtime", "desc": "The node loop: for every operator, call registration->invoke" },
+    { "id": "context", "label": "MicroInterpreterContext", "file": "tensorflow/lite/micro/micro_interpreter_context.h", "path": "tensorflow/lite/micro/micro_interpreter_context.h", "group": "runtime", "groupId": "runtime", "desc": "The TfLiteContext facade kernels use for tensors and scratch buffers" },
+    { "id": "allocator", "label": "MicroAllocator", "file": "tensorflow/lite/micro/micro_allocator.h", "path": "tensorflow/lite/micro/micro_allocator.h", "group": "memory", "groupId": "memory", "desc": "Turns one raw arena into persistent tail + non-persistent head regions" },
+    { "id": "arena", "label": "SingleArenaBufferAllocator", "file": "tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.h", "path": "tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.h", "group": "memory", "groupId": "memory", "desc": "Bump allocator growing head (temp) down and tail (persistent) up" },
+    { "id": "planner", "label": "GreedyMemoryPlanner", "file": "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h", "path": "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h", "group": "planning", "groupId": "planning", "desc": "Interval-scheduling planner that overlays activation buffers by lifetime" },
+    { "id": "resolver", "label": "MicroMutableOpResolver", "file": "tensorflow/lite/micro/micro_mutable_op_resolver.h", "path": "tensorflow/lite/micro/micro_mutable_op_resolver.h", "group": "ops", "groupId": "ops", "desc": "Compile-time sized array of the ops your model actually needs" },
+    { "id": "opreg", "label": "TFLMRegistration", "file": "tensorflow/lite/micro/micro_common.h", "path": "tensorflow/lite/micro/micro_common.h", "group": "ops", "groupId": "ops", "desc": "The init/prepare/invoke function-pointer contract every kernel implements" },
+    { "id": "conv2d", "label": "Register_CONV_2D", "file": "tensorflow/lite/micro/kernels/conv.h", "path": "tensorflow/lite/micro/kernels/conv.h", "group": "ops", "groupId": "ops", "desc": "Registration entry for the most-used micro kernel" },
+    { "id": "cmsis", "label": "CMSIS-NN EvalInt8", "file": "tensorflow/lite/micro/kernels/cmsis_nn/conv.cc", "path": "tensorflow/lite/micro/kernels/cmsis_nn/conv.cc", "group": "ops", "groupId": "ops", "desc": "Optimized Arm backend swapped in via OPTIMIZED_KERNEL_DIR=cmsis_nn" }
+  ],
+  "edges": [
+    { "from": "model", "to": "interpreter", "label": "const Model* passed in" },
+    { "from": "interpreter", "to": "allocate", "label": "AllocateTensors()" },
+    { "from": "interpreter", "to": "graph", "label": "Invoke() delegates" },
+    { "from": "interpreter", "to": "resolver", "label": "FindOp during prepare" },
+    { "from": "allocate", "to": "allocator", "label": "StartModelAllocation" },
+    { "from": "allocate", "to": "graph", "label": "init + prepare subgraphs" },
+    { "from": "allocator", "to": "arena", "label": "carves head/tail" },
+    { "from": "allocator", "to": "planner", "label": "plans activations" },
+    { "from": "context", "to": "allocator", "label": "temp/scratch requests" },
+    { "from": "graph", "to": "context", "label": "kernel-facing context" },
+    { "from": "graph", "to": "opreg", "label": "registration->invoke" },
+    { "from": "resolver", "to": "opreg", "label": "stores by builtin code" },
+    { "from": "resolver", "to": "conv2d", "label": "AddConv2D()" },
+    { "from": "conv2d", "to": "opreg", "label": "returns filled struct" },
+    { "from": "conv2d", "to": "cmsis", "label": "optimized variant" }
+  ]
+}

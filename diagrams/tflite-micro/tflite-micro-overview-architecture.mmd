@@ -1,0 +1,70 @@
+flowchart TD
+
+subgraph group_model["Flatbuffer Model"]
+  node_model["tflite::GetModel<br/>[schema_generated.h]"]
+end
+
+subgraph group_runtime["Interpreter Core"]
+  node_interpreter["MicroInterpreter"]
+  node_allocate["AllocateTensors"]
+  node_graph["InvokeSubgraph"]
+  node_context["MicroInterpreterContext"]
+end
+
+subgraph group_memory["Memory Arena"]
+  node_allocator["MicroAllocator<br/>[micro_allocator.h]"]
+  node_arena["SingleArenaBufferAllocator"]
+end
+
+subgraph group_planning["Memory Planning"]
+  node_planner["GreedyMemoryPlanner"]
+end
+
+subgraph group_ops["Operator Layer"]
+  node_resolver["MicroMutableOpResolver"]
+  node_opreg["TFLMRegistration<br/>[micro_common.h]"]
+  node_conv2d["Register_CONV_2D<br/>[conv.h]"]
+  node_cmsis["CMSIS-NN EvalInt8<br/>[conv.cc]"]
+end
+
+node_model -->|"const Model* passed in"| node_interpreter
+node_interpreter -->|"AllocateTensors&#40;&#41;"| node_allocate
+node_interpreter -->|"Invoke&#40;&#41; delegates"| node_graph
+node_interpreter -->|"FindOp during prepare"| node_resolver
+node_allocate -->|"StartModelAllocation"| node_allocator
+node_allocate -->|"init + prepare subgraphs"| node_graph
+node_allocator -->|"carves head/tail"| node_arena
+node_allocator -->|"plans activations"| node_planner
+node_context -->|"temp/scratch requests"| node_allocator
+node_graph -->|"kernel-facing context"| node_context
+node_graph -->|"registration-&gt;invoke"| node_opreg
+node_resolver -->|"stores by builtin code"| node_opreg
+node_resolver -->|"AddConv2D&#40;&#41;"| node_conv2d
+node_conv2d -->|"returns filled struct"| node_opreg
+node_conv2d -->|"optimized variant"| node_cmsis
+
+click node_model "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/schema/schema_generated.h"
+click node_interpreter "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter.h"
+click node_allocate "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter.cc"
+click node_graph "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter_graph.cc"
+click node_context "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter_context.h"
+click node_allocator "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_allocator.h"
+click node_arena "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.h"
+click node_planner "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+click node_resolver "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_mutable_op_resolver.h"
+click node_opreg "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_common.h"
+click node_conv2d "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/conv.h"
+click node_cmsis "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_model toneBlue
+class node_interpreter,node_allocate,node_graph,node_context toneAmber
+class node_allocator,node_arena toneMint
+class node_planner toneRose
+class node_resolver,node_opreg,node_conv2d,node_cmsis toneIndigo
