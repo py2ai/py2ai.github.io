@@ -1,0 +1,152 @@
+flowchart TD
+
+subgraph group_g0["Public API"]
+  node_mii_init["package exports<br/>[__init__.py]"]
+  node_mii_api_serve["mii.serve&#40;&#41;<br/>[api.py]"]
+  node_mii_api_client["mii.client&#40;&#41;<br/>[api.py]"]
+  node_mii_api_load["non-persistent loader<br/>[api.py]"]
+end
+
+subgraph group_g1["Configuration"]
+  node_model_config["ModelConfig<br/>[config.py]"]
+  node_mii_config["MIIConfig<br/>[config.py]"]
+  node_replica_alloc["generate_replica_configs<br/>[config.py]"]
+  node_mii_constants["DeploymentType<br/>[constants.py]"]
+end
+
+subgraph group_g2["Server Backend"]
+  node_mii_server["MIIServer<br/>[server.py]"]
+  node_launch_proc["_launch_server_process<br/>[server.py]"]
+  node_multi_gpu_server["multi_gpu_server.main&#40;&#41;"]
+  node_score_gen["create_score_file<br/>[generate.py]"]
+  node_mii_utils["import_score_file / init_distributed<br/>[utils.py]"]
+end
+
+subgraph group_g3["Ragged Batching Engine"]
+  node_ragged_base["RaggedBatchBase<br/>[ragged_batching.py]"]
+  node_async_batching["MIIAsyncPipeline<br/>[ragged_batching.py]"]
+  node_batch_data["Request / Response<br/>[data_classes.py]"]
+  node_postprocess["run_batch_* helpers<br/>[postprocess.py]"]
+  node_samplers["LogitsSampler / GreedySampler<br/>[samplers.py]"]
+  node_logit_processors["TopP / TopK / Temperature processors"]
+  node_stop_criterion["Eos / Token stop criteria<br/>[stop_criterion.py]"]
+end
+
+subgraph group_g4["Model Loading"]
+  node_load_model["load_model<br/>[models.py]"]
+  node_load_tokenizer["load_tokenizer<br/>[tokenizers.py]"]
+end
+
+subgraph group_g5["gRPC Transport"]
+  node_grpc_client["MIIClient<br/>[client.py]"]
+  node_grpc_server["ModelResponse servicer"]
+  node_lb_interceptor["LoadBalancingInterceptor"]
+  node_task_methods["TASK_METHODS_DICT<br/>[task_methods.py]"]
+  node_rest_gateway["RestfulGatewayThread<br/>[restful_gateway.py]"]
+  node_proto_stub["ModelResponseStub"]
+end
+
+subgraph group_g6["REST Frontends"]
+  node_restful_api_server["/generate FastAPI server<br/>[api_server.py]"]
+  node_openai_api_server["OpenAI-compatible server"]
+  node_data_models["pydantic request models<br/>[data_models.py]"]
+end
+
+subgraph group_g7["Legacy Kernel Path"]
+  node_legacy_load["legacy load_models<br/>[load_models.py]"]
+  node_legacy_config["replace_with_kernel_inject<br/>[config.py]"]
+end
+
+node_mii_init -->|"exports"| node_mii_api_serve
+node_mii_api_serve -->|"parses kwargs into"| node_model_config
+node_mii_api_serve -->|"writes score file"| node_score_gen
+node_mii_api_serve -->|"re-imports score"| node_mii_utils
+node_mii_api_serve -->|"boots deployment"| node_mii_server
+node_mii_api_serve -->|"returns"| node_grpc_client
+node_mii_api_serve -->|"branches LOCAL/AML"| node_mii_constants
+node_mii_api_client -->|"builds"| node_grpc_client
+node_mii_api_load -->|"builds engine"| node_load_model
+node_mii_api_load -->|"wraps tokenizer"| node_load_tokenizer
+node_model_config -->|"embedded in"| node_mii_config
+node_mii_config -->|"drives"| node_replica_alloc
+node_mii_server -->|"calls"| node_replica_alloc
+node_mii_server -->|"spawns via"| node_launch_proc
+node_launch_proc -->|"python -m"| node_multi_gpu_server
+node_mii_utils -->|"locates score.py"| node_score_gen
+node_multi_gpu_server -->|"builds engine"| node_load_model
+node_multi_gpu_server -->|"instantiates"| node_async_batching
+node_multi_gpu_server -->|"serve_inference"| node_grpc_server
+node_multi_gpu_server -->|"gateway role"| node_rest_gateway
+node_load_model -->|"reads"| node_model_config
+node_load_model -->|"init_distributed"| node_mii_utils
+node_load_tokenizer -->|"tokenizer field"| node_model_config
+node_async_batching -->|"extends"| node_ragged_base
+node_async_batching -->|"queues"| node_batch_data
+node_grpc_server -->|"put_request / get_response"| node_async_batching
+node_ragged_base -->|"schedules"| node_batch_data
+node_ragged_base -->|"runs"| node_postprocess
+node_ragged_base -->|"max_length / zmq port"| node_model_config
+node_postprocess -->|"samples via"| node_samplers
+node_postprocess -->|"transforms logits"| node_logit_processors
+node_postprocess -->|"checks finish"| node_stop_criterion
+node_grpc_client -->|"uses"| node_proto_stub
+node_grpc_server -->|"implements servicer"| node_proto_stub
+node_grpc_server -->|"pack / unpack"| node_task_methods
+node_grpc_client -->|"pack / unpack"| node_task_methods
+node_grpc_client -->|"RPC"| node_grpc_server
+node_lb_interceptor -->|"reuses channels"| node_grpc_client
+node_lb_interceptor -->|"intercepts"| node_grpc_server
+node_rest_gateway -->|"forwards HTTP"| node_grpc_client
+node_restful_api_server -->|"calls"| node_proto_stub
+node_openai_api_server -->|"calls"| node_proto_stub
+node_restful_api_server -->|"validates"| node_data_models
+node_openai_api_server -->|"validates"| node_data_models
+node_legacy_load -->|"kernel inject flag"| node_legacy_config
+
+click node_mii_init "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/__init__.py"
+click node_mii_api_serve "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/api.py"
+click node_mii_api_client "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/api.py"
+click node_mii_api_load "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/api.py"
+click node_model_config "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/config.py"
+click node_mii_config "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/config.py"
+click node_replica_alloc "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/config.py"
+click node_mii_constants "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/constants.py"
+click node_mii_server "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/backend/server.py"
+click node_launch_proc "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/backend/server.py"
+click node_multi_gpu_server "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/launch/multi_gpu_server.py"
+click node_score_gen "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/score/generate.py"
+click node_mii_utils "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/utils.py"
+click node_load_model "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/modeling/models.py"
+click node_load_tokenizer "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/modeling/tokenizers.py"
+click node_ragged_base "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/ragged_batching.py"
+click node_async_batching "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/ragged_batching.py"
+click node_batch_data "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/data_classes.py"
+click node_postprocess "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/postprocess.py"
+click node_samplers "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/generation/samplers.py"
+click node_logit_processors "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/generation/logit_processors.py"
+click node_stop_criterion "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/batching/generation/stop_criterion.py"
+click node_grpc_client "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/backend/client.py"
+click node_grpc_server "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/grpc_related/modelresponse_server.py"
+click node_lb_interceptor "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/grpc_related/modelresponse_server.py"
+click node_task_methods "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/grpc_related/task_methods.py"
+click node_rest_gateway "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/grpc_related/restful_gateway.py"
+click node_proto_stub "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/grpc_related/proto/modelresponse_pb2_grpc.py"
+click node_restful_api_server "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/entrypoints/api_server.py"
+click node_openai_api_server "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/entrypoints/openai_api_server.py"
+click node_data_models "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/entrypoints/data_models.py"
+click node_legacy_load "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/legacy/models/load_models.py"
+click node_legacy_config "https://github.com/microsoft/DeepSpeed-MII/blob/main/mii/legacy/config.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_mii_init,node_mii_api_serve,node_mii_api_client,node_mii_api_load,node_restful_api_server,node_openai_api_server,node_data_models toneBlue
+class node_model_config,node_mii_config,node_replica_alloc,node_mii_constants,node_legacy_load,node_legacy_config toneAmber
+class node_mii_server,node_launch_proc,node_multi_gpu_server,node_score_gen,node_mii_utils toneMint
+class node_ragged_base,node_async_batching,node_batch_data,node_postprocess,node_samplers,node_logit_processors,node_stop_criterion toneRose
+class node_load_model,node_load_tokenizer toneIndigo
+class node_grpc_client,node_grpc_server,node_lb_interceptor,node_task_methods,node_rest_gateway,node_proto_stub toneTeal
