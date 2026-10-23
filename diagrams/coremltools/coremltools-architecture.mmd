@@ -1,0 +1,105 @@
+flowchart TD
+
+subgraph group_entry["User API"]
+  node_convert["ct.convert"]
+  node_mil_convert["mil_convert<br/>[converter.py]"]
+end
+
+subgraph group_frontends["Frontends"]
+  node_torch_load["torch load<br/>[load.py]"]
+  node_torch_ops["convert_single_node<br/>[ops.py]"]
+  node_torch_registry["register_torch_op"]
+  node_tf2_load["TF2Loader<br/>[load.py]"]
+end
+
+subgraph group_mil["MIL IR"]
+  node_mil_builder["Builder<br/>[builder.py]"]
+  node_op_registry["SSAOpRegistry<br/>[registry.py]"]
+  node_mil_program["Program<br/>[program.py]"]
+  node_op_conv["conv op &#40;iOS17&#41;<br/>[conv.py]"]
+  node_op_sdpa["scaled_dot_product_attention<br/>[transformers.py]"]
+end
+
+subgraph group_passes["Graph Passes"]
+  node_graph_pass["AbstractGraphPass<br/>[graph_pass.py]"]
+  node_silu_fuse["fuse_activation_silu"]
+  node_adjust_io["adjust_io_to_supported_types"]
+  node_insert_preproc["insert_image_preprocessing_ops"]
+end
+
+subgraph group_backend["Backends"]
+  node_backend_load["MILProtoExporter<br/>[load.py]"]
+  node_nn_backend["MIL to NNv1 mapping"]
+end
+
+subgraph group_runtime["Runtime"]
+  node_mlmodel["MLModel<br/>[model.py]"]
+end
+
+subgraph group_optimize["Optimization"]
+  node_opt_config["OpLinearQuantizerConfig<br/>[_config.py]"]
+  node_opt_api["linear_quantize_weights"]
+  node_opt_passes["linear_quantize_weights pass"]
+end
+
+node_convert -->|"validate args, dispatch"| node_mil_convert
+node_mil_convert -->|"convert_from=pytorch"| node_torch_load
+node_mil_convert -->|"convert_from=tensorflow2"| node_tf2_load
+node_mil_convert -->|"convert_to=mlprogram"| node_backend_load
+node_mil_convert -->|"convert_to=neuralnetwork"| node_nn_backend
+node_torch_load -->|"hand over internal graph"| node_torch_ops
+node_torch_ops -->|"get_func&#40;node.kind&#41;"| node_torch_registry
+node_torch_ops -->|"emit via mb.*"| node_mil_builder
+node_torch_registry -->|"handlers + aliases"| node_torch_ops
+node_mil_builder -->|"resolve versioned class"| node_op_registry
+node_op_registry -->|"register_op&#40;ios17&#41;"| node_op_conv
+node_op_registry -->|"register_op&#40;ios18&#41;"| node_op_sdpa
+node_mil_builder -->|"append ops to blocks"| node_mil_program
+node_mil_program -->|"run optimization passes"| node_graph_pass
+node_graph_pass -->|"fuse activations"| node_silu_fuse
+node_graph_pass -->|"fp16-capable IO"| node_adjust_io
+node_graph_pass -->|"bake image transforms"| node_insert_preproc
+node_graph_pass -->|"finalized program"| node_backend_load
+node_backend_load -->|"proto + weights to .mlpackage"| node_mlmodel
+node_nn_backend -->|"legacy spec model"| node_mlmodel
+node_convert -->|"returns MLModel"| node_mlmodel
+node_mlmodel -->|"post-training input"| node_opt_api
+node_opt_api -->|"reads configs"| node_opt_config
+node_opt_api -->|"runs compression passes"| node_opt_passes
+node_opt_passes -->|"insert constexpr_* ops"| node_op_registry
+
+click node_convert "https://github.com/apple/coremltools/blob/main/coremltools/converters/_converters_entry.py"
+click node_mil_convert "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/converter.py"
+click node_torch_load "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/frontend/torch/load.py"
+click node_torch_ops "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/frontend/torch/ops.py"
+click node_torch_registry "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/frontend/torch/torch_op_registry.py"
+click node_tf2_load "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/frontend/tensorflow2/load.py"
+click node_mil_builder "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/mil/builder.py"
+click node_op_registry "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/mil/ops/registry.py"
+click node_mil_program "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/mil/program.py"
+click node_op_conv "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/mil/ops/defs/iOS17/conv.py"
+click node_op_sdpa "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/mil/ops/defs/iOS18/transformers.py"
+click node_graph_pass "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/mil/passes/graph_pass.py"
+click node_silu_fuse "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/backend/mil/passes/fuse_activation_silu.py"
+click node_adjust_io "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/backend/mil/passes/adjust_io_to_supported_types.py"
+click node_insert_preproc "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/backend/mil/passes/insert_image_preprocessing_op.py"
+click node_backend_load "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/backend/mil/load.py"
+click node_nn_backend "https://github.com/apple/coremltools/blob/main/coremltools/converters/mil/backend/nn/mil_to_nn_mapping_registry.py"
+click node_mlmodel "https://github.com/apple/coremltools/blob/main/coremltools/models/model.py"
+click node_opt_config "https://github.com/apple/coremltools/blob/main/coremltools/optimize/coreml/_config.py"
+click node_opt_api "https://github.com/apple/coremltools/blob/main/coremltools/optimize/coreml/_post_training_quantization.py"
+click node_opt_passes "https://github.com/apple/coremltools/blob/main/coremltools/optimize/coreml/_quantization_passes.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_convert,node_mil_convert,node_opt_config,node_opt_api,node_opt_passes toneBlue
+class node_torch_load,node_torch_ops,node_torch_registry,node_tf2_load toneAmber
+class node_mil_builder,node_op_registry,node_mil_program,node_op_conv,node_op_sdpa toneMint
+class node_graph_pass,node_silu_fuse,node_adjust_io,node_insert_preproc toneRose
+class node_backend_load,node_nn_backend toneIndigo
+class node_mlmodel toneTeal
