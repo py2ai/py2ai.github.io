@@ -1,0 +1,111 @@
+flowchart TD
+
+subgraph group_python_api["Python API"]
+  node_torch_xla["torch_xla entry<br/>[torch_xla.py]"]
+  node_xm["xm<br/>[xla_model.py]"]
+  node_runtime["xr runtime<br/>[runtime.py]"]
+  node_xla_builder["xla builder<br/>[xla_builder.py]"]
+end
+
+subgraph group_pt2["Dynamo / PT2"]
+  node_dynamo_bridge["dynamo bridge<br/>[dynamo_bridge.py]"]
+  node_dynamo_backend["torchax backend<br/>[dynamo_backend2.py]"]
+end
+
+subgraph group_cpp_lowering["C++ Lowering"]
+  node_graph_executor["graph executor"]
+  node_lowering_context["lowering context"]
+  node_xla_ops["op kinds<br/>[xla_ops.cpp]"]
+  node_backend_impl["backend impl"]
+  node_tensor["XLATensor<br/>[tensor.cpp]"]
+  node_tensor_methods["tensor methods<br/>[tensor_methods.cpp]"]
+  node_ir["XlaNode IR<br/>[ir.cpp]"]
+  node_device_data["DeviceData<br/>[device_data.cpp]"]
+  node_dot_general["DotGeneral<br/>[dot_general.cpp]"]
+  node_all_reduce_op["AllReduce op<br/>[all_reduce.cpp]"]
+  node_sharding_util["ShardingUtil"]
+end
+
+subgraph group_pjrt["PJRT Runtime"]
+  node_runtime_cpp["runtime core<br/>[runtime.cpp]"]
+  node_pjrt_client["PJRT client"]
+  node_pjrt_py["pjrt launcher<br/>[pjrt.py]"]
+end
+
+subgraph group_spmd["Distributed &amp; SPMD"]
+  node_xla_sharding["mesh &amp; sharding<br/>[xla_sharding.py]"]
+  node_spmd_api["spmd api<br/>[api.py]"]
+  node_xla_sharded_tensor["XLAShardedTensor"]
+  node_parallel_loader["parallel loader<br/>[parallel_loader.py]"]
+  node_xmp["xmp spawn"]
+end
+
+node_torch_xla -->|"core xm surface"| node_xm
+node_torch_xla -->|"device&#40;&#41;/sync&#40;&#41;"| node_runtime
+node_torch_xla -->|"torch_xla.compile&#40;&#41;"| node_dynamo_bridge
+node_xm -->|"topology queries"| node_runtime
+node_xm -->|"mark_step / sync"| node_graph_executor
+node_xm -->|"collective entry"| node_tensor_methods
+node_xm -->|"spmd helpers use xm"| node_spmd_api
+node_runtime -->|"select process model"| node_pjrt_py
+node_xmp -->|"spawn on pjrt"| node_pjrt_py
+node_parallel_loader -->|"step per batch"| node_xm
+node_spmd_api -->|"mesh + PartitionSpec"| node_xla_sharding
+node_spmd_api -->|"returns shards"| node_xla_sharded_tensor
+node_xla_sharding -->|"OpSharding via _XLAC"| node_sharding_util
+node_dynamo_bridge -->|"FX subgraph to IR"| node_graph_executor
+node_dynamo_backend -->|"JaxCallable"| node_xla_builder
+node_xm -->|"call_jax interop"| node_xla_builder
+node_tensor -->|"live tensor registry"| node_graph_executor
+node_tensor -->|"lazy op methods"| node_tensor_methods
+node_tensor_methods -->|"emit AllReduce"| node_all_reduce_op
+node_tensor_methods -->|"matmul lowering"| node_dot_general
+node_graph_executor -->|"build HLO"| node_lowering_context
+node_graph_executor -->|"bind parameters"| node_device_data
+node_graph_executor -->|"auto-sharding hash"| node_sharding_util
+node_graph_executor -->|"get client"| node_runtime_cpp
+node_backend_impl -->|"register backend"| node_graph_executor
+node_lowering_context -->|"OpKind lookup"| node_xla_ops
+node_lowering_context -->|"walk XlaNodes"| node_ir
+node_device_data -->|"device buffers"| node_pjrt_client
+node_runtime_cpp -->|"PJRT singleton"| node_pjrt_client
+node_pjrt_py -->|"workers use client"| node_pjrt_client
+
+click node_torch_xla "https://github.com/pytorch/xla/blob/master/torch_xla/torch_xla.py"
+click node_xm "https://github.com/pytorch/xla/blob/master/torch_xla/core/xla_model.py"
+click node_runtime "https://github.com/pytorch/xla/blob/master/torch_xla/runtime.py"
+click node_xla_builder "https://github.com/pytorch/xla/blob/master/torch_xla/core/xla_builder.py"
+click node_dynamo_bridge "https://github.com/pytorch/xla/blob/master/torch_xla/_dynamo/dynamo_bridge.py"
+click node_dynamo_backend "https://github.com/pytorch/xla/blob/master/torch_xla/_dynamo/dynamo_backend2.py"
+click node_graph_executor "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/xla_graph_executor.cpp"
+click node_lowering_context "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/lowering_context.cpp"
+click node_xla_ops "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/ops/xla_ops.cpp"
+click node_backend_impl "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/xla_backend_impl.cpp"
+click node_tensor "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/tensor.cpp"
+click node_tensor_methods "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/tensor_methods.cpp"
+click node_ir "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/ir.cpp"
+click node_device_data "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/ops/device_data.cpp"
+click node_dot_general "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/ops/dot_general.cpp"
+click node_all_reduce_op "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/ops/all_reduce.cpp"
+click node_sharding_util "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/xla_sharding_util.cpp"
+click node_runtime_cpp "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/runtime/runtime.cpp"
+click node_pjrt_client "https://github.com/pytorch/xla/blob/master/torch_xla/csrc/runtime/pjrt_computation_client.cpp"
+click node_pjrt_py "https://github.com/pytorch/xla/blob/master/torch_xla/_internal/pjrt.py"
+click node_xla_sharding "https://github.com/pytorch/xla/blob/master/torch_xla/distributed/spmd/xla_sharding.py"
+click node_spmd_api "https://github.com/pytorch/xla/blob/master/torch_xla/distributed/spmd/api.py"
+click node_xla_sharded_tensor "https://github.com/pytorch/xla/blob/master/torch_xla/distributed/spmd/xla_sharded_tensor.py"
+click node_parallel_loader "https://github.com/pytorch/xla/blob/master/torch_xla/distributed/parallel_loader.py"
+click node_xmp "https://github.com/pytorch/xla/blob/master/torch_xla/distributed/xla_multiprocessing.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_torch_xla,node_xm,node_runtime,node_xla_builder toneBlue
+class node_dynamo_bridge,node_dynamo_backend toneAmber
+class node_graph_executor,node_lowering_context,node_xla_ops,node_backend_impl,node_tensor,node_tensor_methods,node_ir,node_device_data,node_dot_general,node_all_reduce_op,node_sharding_util toneMint
+class node_runtime_cpp,node_pjrt_client,node_pjrt_py toneRose
+class node_xla_sharding,node_spmd_api,node_xla_sharded_tensor,node_parallel_loader,node_xmp toneIndigo
