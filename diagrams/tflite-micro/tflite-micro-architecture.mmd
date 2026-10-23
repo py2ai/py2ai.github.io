@@ -1,0 +1,147 @@
+flowchart TD
+
+subgraph group_entry["Application Entry"]
+  node_app_main["main&#40;&#41;"]
+  node_system_setup["InitializeTarget<br/>[system_setup.h]"]
+end
+
+subgraph group_interpret["Interpreter Flow"]
+  node_interpreter["MicroInterpreter"]
+  node_allocate_tensors["AllocateTensors"]
+  node_graph_cls["MicroInterpreterGraph"]
+  node_invoke_subgraph["InvokeSubgraph"]
+  node_context["MicroInterpreterContext"]
+  node_get_eval["GetEvalTensor"]
+  node_profiler["MicroProfiler<br/>[micro_profiler.h]"]
+  node_recording["RecordingMicroInterpreter"]
+end
+
+subgraph group_memory["Arena &amp; Allocation"]
+  node_allocator["MicroAllocator<br/>[micro_allocator.h]"]
+  node_allocator_create["MicroAllocator::Create<br/>[micro_allocator.cc]"]
+  node_single_arena["SingleArenaBufferAllocator"]
+  node_persistent["PersistentArenaBufferAllocator"]
+  node_nonpersistent["NonPersistentArenaBufferAllocator"]
+end
+
+subgraph group_planning["Memory Planning"]
+  node_planner_iface["MicroMemoryPlanner"]
+  node_greedy["GreedyMemoryPlanner"]
+  node_greedy_add["GreedyMemoryPlanner::AddBuffer"]
+  node_linear["LinearMemoryPlanner"]
+  node_alloc_info["AllocationInfoBuilder"]
+end
+
+subgraph group_dispatch["Op Resolution"]
+  node_resolver["MicroMutableOpResolver"]
+  node_op_resolver_iface["MicroOpResolver"]
+  node_opreg["TFLMRegistration<br/>[micro_common.h]"]
+  node_parse_conv["ParseConv2D"]
+  node_fb_utils["NumSubgraphOperators"]
+end
+
+subgraph group_kernels["Kernel Implementations"]
+  node_conv2d["Register_CONV_2D<br/>[conv.h]"]
+  node_conv_eval["ConvEval<br/>[conv.cc]"]
+  node_ref_conv["reference Conv<br/>[conv.h]"]
+  node_cmsis_conv["CMSIS-NN EvalInt8<br/>[conv.cc]"]
+  node_depthwise["Register_DEPTHWISE_CONV_2D<br/>[depthwise_conv.cc]"]
+  node_fully_connected["Register_FULLY_CONNECTED<br/>[fully_connected.cc]"]
+  node_softmax["Register_SOFTMAX<br/>[softmax.cc]"]
+end
+
+subgraph group_model["Flatbuffer Layer"]
+  node_getmodel["tflite::GetModel<br/>[schema_generated.h]"]
+end
+
+node_app_main -->|"InitializeTarget&#40;&#41; first"| node_system_setup
+node_app_main -->|"maps model bytes"| node_getmodel
+node_app_main -->|"AddFullyConnected&#40;&#41;"| node_resolver
+node_app_main -->|"constructs with arena"| node_interpreter
+node_getmodel -->|"const Model*"| node_interpreter
+node_interpreter -->|"AllocateTensors&#40;&#41;"| node_allocate_tensors
+node_interpreter -->|"owns"| node_graph_cls
+node_interpreter -->|"optional hooks"| node_profiler
+node_recording -->|"subclass for sizing"| node_interpreter
+node_interpreter -->|"constructor"| node_allocator
+node_allocate_tensors -->|"StartModelAllocation"| node_allocator
+node_allocate_tensors -->|"Init + Prepare subgraphs"| node_graph_cls
+node_allocate_tensors -->|"FindOp per node"| node_resolver
+node_graph_cls -->|"InvokeSubgraph&#40;0&#41;"| node_invoke_subgraph
+node_invoke_subgraph -->|"registration-&gt;invoke"| node_opreg
+node_invoke_subgraph -->|"passes context"| node_context
+node_invoke_subgraph -->|"operator count"| node_fb_utils
+node_invoke_subgraph -->|"ScopedMicroProfiler"| node_profiler
+node_context -->|"tensor access"| node_get_eval
+node_context -->|"temp/scratch requests"| node_allocator
+node_allocator -->|"Create&#40;arena, size&#41;"| node_allocator_create
+node_allocator_create -->|"wraps raw arena"| node_single_arena
+node_single_arena -->|"tail allocations"| node_persistent
+node_single_arena -->|"head allocations"| node_nonpersistent
+node_allocator -->|"kGreedy default"| node_planner_iface
+node_planner_iface -->|"swap-in planner"| node_greedy
+node_planner_iface -->|"kLinear alternative"| node_linear
+node_greedy -->|"interval insertion"| node_greedy_add
+node_alloc_info -->|"lifetimes feed planner"| node_greedy_add
+node_allocator -->|"CommitStaticMemoryPlan"| node_alloc_info
+node_resolver -->|"implements"| node_op_resolver_iface
+node_resolver -->|"fixed-size array"| node_opreg
+node_getmodel -->|"Operator options"| node_parse_conv
+node_parse_conv -->|"params for prepare"| node_conv2d
+node_opreg -->|"Conv2D fills"| node_conv2d
+node_conv2d -->|"portable path"| node_conv_eval
+node_conv_eval -->|"reference math"| node_ref_conv
+node_conv2d -->|"OPTIMIZED_KERNEL_DIR"| node_cmsis_conv
+node_opreg -->|"fills registration"| node_depthwise
+node_opreg -->|"fills registration"| node_fully_connected
+node_opreg -->|"fills registration"| node_softmax
+node_app_main -->|"only op needed"| node_fully_connected
+node_resolver -->|"AddConv2D&#40;&#41;"| node_conv2d
+
+click node_app_main "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/examples/hello_world/hello_world_test.cc"
+click node_system_setup "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/system_setup.h"
+click node_getmodel "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/schema/schema_generated.h"
+click node_interpreter "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter.h"
+click node_allocate_tensors "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter.cc"
+click node_graph_cls "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter_graph.h"
+click node_invoke_subgraph "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter_graph.cc"
+click node_context "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter_context.h"
+click node_get_eval "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_interpreter_context.cc"
+click node_profiler "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_profiler.h"
+click node_recording "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/recording_micro_interpreter.h"
+click node_allocator "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_allocator.h"
+click node_allocator_create "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_allocator.cc"
+click node_single_arena "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/arena_allocator/single_arena_buffer_allocator.h"
+click node_persistent "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/arena_allocator/persistent_arena_buffer_allocator.h"
+click node_nonpersistent "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/arena_allocator/non_persistent_arena_buffer_allocator.h"
+click node_planner_iface "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/memory_planner/micro_memory_planner.h"
+click node_greedy "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
+click node_greedy_add "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/memory_planner/greedy_memory_planner.cc"
+click node_linear "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/memory_planner/linear_memory_planner.h"
+click node_alloc_info "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_allocation_info.cc"
+click node_resolver "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_mutable_op_resolver.h"
+click node_op_resolver_iface "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_op_resolver.h"
+click node_opreg "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/micro_common.h"
+click node_parse_conv "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/flatbuffer_conversions.cc"
+click node_fb_utils "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/flatbuffer_utils.cc"
+click node_conv2d "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/conv.h"
+click node_conv_eval "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/conv.cc"
+click node_ref_conv "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/internal/reference/conv.h"
+click node_cmsis_conv "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/cmsis_nn/conv.cc"
+click node_depthwise "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/depthwise_conv.cc"
+click node_fully_connected "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/fully_connected.cc"
+click node_softmax "https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/kernels/softmax.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app_main,node_system_setup,node_getmodel toneBlue
+class node_interpreter,node_allocate_tensors,node_graph_cls,node_invoke_subgraph,node_context,node_get_eval,node_profiler,node_recording toneAmber
+class node_allocator,node_allocator_create,node_single_arena,node_persistent,node_nonpersistent toneMint
+class node_planner_iface,node_greedy,node_greedy_add,node_linear,node_alloc_info toneRose
+class node_resolver,node_op_resolver_iface,node_opreg,node_parse_conv,node_fb_utils toneIndigo
+class node_conv2d,node_conv_eval,node_ref_conv,node_cmsis_conv,node_depthwise,node_fully_connected,node_softmax toneTeal
