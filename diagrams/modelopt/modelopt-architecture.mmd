@@ -1,0 +1,147 @@
+flowchart TD
+
+subgraph group_g0["Public API"]
+  node_mtq_entry["mtq entry<br/>[__init__.py]"]
+  node_mts_entry["mts entry<br/>[__init__.py]"]
+  node_mtp_entry["mtp entry<br/>[__init__.py]"]
+end
+
+subgraph group_g1["Quantization Core"]
+  node_model_quant["model_quant<br/>[model_quant.py]"]
+  node_quant_config["quant_config<br/>[config.py]"]
+  node_quant_mode["quant_mode<br/>[mode.py]"]
+  node_quant_module["QuantModuleRegistry<br/>[quant_module.py]"]
+  node_tensor_quantizer["TensorQuantizer"]
+  node_tensor_quant["tensor_quant<br/>[tensor_quant.py]"]
+  node_convert_real["convert_to_quantized<br/>[conversion.py]"]
+  node_export_onnx_q["export_onnx<br/>[export_onnx.py]"]
+end
+
+subgraph group_g2["Calibration"]
+  node_calib_base["Calibrator base<br/>[calibrator.py]"]
+  node_calib_max["MaxCalibrator<br/>[max.py]"]
+  node_calib_hist["HistogramCalibrator<br/>[histogram.py]"]
+end
+
+subgraph group_g3["Low-Precision Tensors"]
+  node_base_qtensor["BaseQuantizedTensor<br/>[base_qtensor.py]"]
+  node_fp8_qtensor["FP8QTensor<br/>[fp8_tensor.py]"]
+  node_nvfp4_qtensor["NVFP4QTensor<br/>[nvfp4_tensor.py]"]
+end
+
+subgraph group_g4["Sparsity"]
+  node_weight_sparsify["sparsify<br/>[sparsification.py]"]
+  node_sparsegpt["SparseGPTSearcher<br/>[sparsegpt.py]"]
+  node_attn_sparse["SparseAttentionModule"]
+  node_vllm_plugin["vLLM sparse backend<br/>[vllm.py]"]
+end
+
+subgraph group_g5["Pruning"]
+  node_prune_core["prune<br/>[pruning.py]"]
+  node_fastnas["FastNAS<br/>[fastnas.py]"]
+end
+
+subgraph group_g6["Distill &amp; Speculative"]
+  node_distill_core["distill<br/>[distillation.py]"]
+  node_spec_dec["speculative"]
+end
+
+subgraph group_g7["Export &amp; Deploy"]
+  node_mode_core["ModeDescriptor<br/>[mode.py]"]
+  node_state_mgr["ModeloptStateManager<br/>[conversion.py]"]
+  node_export_entry["export package<br/>[__init__.py]"]
+  node_hf_export["export_hf_checkpoint"]
+  node_qw_export["quantized weight export"]
+  node_export_registry["ExportContext<br/>[registry.py]"]
+  node_onnx_int8["ONNX int8 PTQ<br/>[int8.py]"]
+  node_onnx_fp8["ONNX fp8 PTQ<br/>[fp8.py]"]
+  node_graph_surgery["graph surgery CLI<br/>[__main__.py]"]
+end
+
+node_mtq_entry -->|"exposes quantize"| node_model_quant
+node_mtq_entry -->|"registers modes"| node_quant_mode
+node_mtq_entry -->|"ships presets"| node_quant_config
+node_mtq_entry -->|"save/load via"| node_state_mgr
+node_mts_entry -->|"exposes sparsify"| node_weight_sparsify
+node_mts_entry -->|"exposes attention sparsity"| node_attn_sparse
+node_mtp_entry -->|"exposes prune"| node_prune_core
+node_model_quant -->|"reads presets"| node_quant_config
+node_model_quant -->|"activates mode"| node_quant_mode
+node_model_quant -->|"rewrites layers"| node_quant_module
+node_model_quant -->|"runs calibrators"| node_calib_base
+node_model_quant -->|"real-quantize step"| node_convert_real
+node_model_quant -->|"fake-quant export"| node_export_onnx_q
+node_quant_mode -->|"extends"| node_mode_core
+node_fastnas -->|"extends"| node_mode_core
+node_distill_core -->|"extends"| node_mode_core
+node_spec_dec -->|"extends"| node_mode_core
+node_quant_module -->|"attaches quantizers"| node_tensor_quantizer
+node_tensor_quantizer -->|"fake-quant kernels"| node_tensor_quant
+node_tensor_quantizer -->|"collects amax"| node_calib_base
+node_calib_base -->|"max method"| node_calib_max
+node_calib_base -->|"histogram methods"| node_calib_hist
+node_convert_real -->|"packs tensors"| node_base_qtensor
+node_base_qtensor -->|"FP8 variant"| node_fp8_qtensor
+node_base_qtensor -->|"NVFP4 variant"| node_nvfp4_qtensor
+node_weight_sparsify -->|"SparseGPT search"| node_sparsegpt
+node_sparsegpt -->|"rebuilds linears"| node_quant_module
+node_attn_sparse -->|"installs backend"| node_vllm_plugin
+node_prune_core -->|"search space"| node_fastnas
+node_prune_core -->|"prune then distill"| node_distill_core
+node_export_onnx_q -->|"alternative path"| node_onnx_int8
+node_export_entry -->|"re-exports"| node_hf_export
+node_export_entry -->|"re-exports"| node_qw_export
+node_export_entry -->|"handler registry"| node_export_registry
+node_hf_export -->|"captures weights"| node_qw_export
+node_onnx_fp8 -->|"upgrades int8 graphs"| node_onnx_int8
+node_onnx_int8 -->|"patches graphs"| node_graph_surgery
+node_qw_export -->|"reads quantizers"| node_quant_module
+
+click node_mtq_entry "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/__init__.py"
+click node_mts_entry "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/sparsity/__init__.py"
+click node_mtp_entry "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/prune/__init__.py"
+click node_model_quant "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/model_quant.py"
+click node_quant_config "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/config.py"
+click node_quant_mode "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/mode.py"
+click node_quant_module "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/nn/modules/quant_module.py"
+click node_tensor_quantizer "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/nn/modules/tensor_quantizer.py"
+click node_tensor_quant "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/tensor_quant.py"
+click node_convert_real "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/conversion.py"
+click node_export_onnx_q "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/export_onnx.py"
+click node_calib_base "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/calib/calibrator.py"
+click node_calib_max "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/calib/max.py"
+click node_calib_hist "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/calib/histogram.py"
+click node_base_qtensor "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/qtensor/base_qtensor.py"
+click node_fp8_qtensor "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/qtensor/fp8_tensor.py"
+click node_nvfp4_qtensor "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/quantization/qtensor/nvfp4_tensor.py"
+click node_weight_sparsify "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/sparsity/weight_sparsity/sparsification.py"
+click node_sparsegpt "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/sparsity/weight_sparsity/sparsegpt.py"
+click node_attn_sparse "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/sparsity/attention_sparsity/sparse_attention.py"
+click node_vllm_plugin "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/sparsity/attention_sparsity/plugins/vllm.py"
+click node_prune_core "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/prune/pruning.py"
+click node_fastnas "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/prune/fastnas.py"
+click node_distill_core "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/distill/distillation.py"
+click node_spec_dec "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/speculative/speculative_decoding.py"
+click node_mode_core "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/opt/mode.py"
+click node_state_mgr "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/opt/conversion.py"
+click node_export_entry "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/export/__init__.py"
+click node_hf_export "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/export/unified_export_hf.py"
+click node_qw_export "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/export/quantized_weight_export.py"
+click node_export_registry "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/torch/export/registry.py"
+click node_onnx_int8 "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/onnx/quantization/int8.py"
+click node_onnx_fp8 "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/onnx/quantization/fp8.py"
+click node_graph_surgery "https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt/onnx/graph_surgery/__main__.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_mtq_entry,node_mts_entry,node_mtp_entry,node_distill_core,node_spec_dec toneBlue
+class node_model_quant,node_quant_config,node_quant_mode,node_quant_module,node_tensor_quantizer,node_tensor_quant,node_convert_real,node_export_onnx_q,node_mode_core,node_state_mgr,node_export_entry,node_hf_export,node_qw_export,node_export_registry,node_onnx_int8,node_onnx_fp8,node_graph_surgery toneAmber
+class node_calib_base,node_calib_max,node_calib_hist toneMint
+class node_base_qtensor,node_fp8_qtensor,node_nvfp4_qtensor toneRose
+class node_weight_sparsify,node_sparsegpt,node_attn_sparse,node_vllm_plugin toneIndigo
+class node_prune_core,node_fastnas toneTeal
