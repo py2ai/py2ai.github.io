@@ -1,0 +1,45 @@
+{
+  "owner": "microsoft",
+  "repo": "DeepSpeed-MII",
+  "branch": "main",
+  "groups": [
+    {"id": "g0", "name": "entrypoints", "label": "Public Entry Points"},
+    {"id": "g1", "name": "config", "label": "Configuration"},
+    {"id": "g2", "name": "server", "label": "Server Backend"},
+    {"id": "g3", "name": "batching", "label": "Ragged Batching"},
+    {"id": "g4", "name": "modeling", "label": "Model Loading"},
+    {"id": "g5", "name": "grpc", "label": "gRPC / REST Frontends"}
+  ],
+  "nodes": [
+    {"id": "mii_api", "label": "mii.serve / mii.client", "file": "mii/api.py", "path": "mii/api.py", "group": "entrypoints", "groupId": "g0", "desc": "Public API: serve() stands up a persistent deployment, client() reconnects to one, and a non-persistent loader builds an engine in-process."},
+    {"id": "model_config", "label": "ModelConfig", "file": "mii/config.py", "path": "mii/config.py", "group": "config", "groupId": "g1", "desc": "Pydantic model settings: tensor_parallel, quantization_mode, replica_num, device_map."},
+    {"id": "mii_config", "label": "MIIConfig", "file": "mii/config.py", "path": "mii/config.py", "group": "config", "groupId": "g1", "desc": "Deployment-level settings: ports, RESTful API switches, replica allocation."},
+    {"id": "mii_server", "label": "MIIServer", "file": "mii/backend/server.py", "path": "mii/backend/server.py", "group": "server", "groupId": "g2", "desc": "Spawns load balancer, replica, and REST gateway processes as subprocesses."},
+    {"id": "multi_gpu_server", "label": "multi_gpu_server", "file": "mii/launch/multi_gpu_server.py", "path": "mii/launch/multi_gpu_server.py", "group": "server", "groupId": "g2", "desc": "Entry module each spawned process runs; picks load balancer, gateway, or inference role."},
+    {"id": "load_model", "label": "load_model", "file": "mii/modeling/models.py", "path": "mii/modeling/models.py", "group": "modeling", "groupId": "g4", "desc": "Builds a DeepSpeed inference engine from HuggingFace weights."},
+    {"id": "load_tokenizer", "label": "load_tokenizer", "file": "mii/modeling/tokenizers.py", "path": "mii/modeling/tokenizers.py", "group": "modeling", "groupId": "g4", "desc": "Wraps the HuggingFace tokenizer with MII's tokenizer interface."},
+    {"id": "mii_async_batching", "label": "MIIAsyncPipeline", "file": "mii/batching/ragged_batching.py", "path": "mii/batching/ragged_batching.py", "group": "batching", "groupId": "g3", "desc": "Ragged batching engine implementing continuous batching and Dynamic SplitFuse over ZMQ."},
+    {"id": "grpc_server", "label": "ModelResponse servicer", "file": "mii/grpc_related/modelresponse_server.py", "path": "mii/grpc_related/modelresponse_server.py", "group": "grpc", "groupId": "g5", "desc": "gRPC servicer plus load-balancing interceptor that fans requests out to replicas."},
+    {"id": "grpc_client_stub", "label": "MIIClient stub", "file": "mii/backend/client.py", "path": "mii/backend/client.py", "group": "grpc", "groupId": "g5", "desc": "Async gRPC client used by scripts, gateways, and load balancer alike."},
+    {"id": "rest_gateway", "label": "RestfulGatewayThread", "file": "mii/grpc_related/restful_gateway.py", "path": "mii/grpc_related/restful_gateway.py", "group": "grpc", "groupId": "g5", "desc": "Flask gateway exposing POST /mii/{deployment_name} backed by the gRPC client."},
+    {"id": "openai_api", "label": "OpenAI-compatible API", "file": "mii/entrypoints/openai_api_server.py", "path": "mii/entrypoints/openai_api_server.py", "group": "grpc", "groupId": "g5", "desc": "FastAPI server implementing /v1/chat/completions and /v1/completions."}
+  ],
+  "edges": [
+    {"from": "mii_api", "to": "model_config", "label": "parses kwargs into"},
+    {"from": "model_config", "to": "mii_config", "label": "embedded in"},
+    {"from": "mii_api", "to": "mii_server", "label": "starts"},
+    {"from": "mii_api", "to": "grpc_client_stub", "label": "returns"},
+    {"from": "mii_server", "to": "multi_gpu_server", "label": "spawns"},
+    {"from": "mii_server", "to": "mii_config", "label": "allocates replicas from"},
+    {"from": "multi_gpu_server", "to": "load_model", "label": "loads engine via"},
+    {"from": "multi_gpu_server", "to": "mii_async_batching", "label": "drives generation loop"},
+    {"from": "multi_gpu_server", "to": "grpc_server", "label": "hosts"},
+    {"from": "multi_gpu_server", "to": "rest_gateway", "label": "hosts"},
+    {"from": "load_model", "to": "model_config", "label": "reads"},
+    {"from": "load_model", "to": "load_tokenizer", "label": "pairs with"},
+    {"from": "grpc_server", "to": "mii_async_batching", "label": "queues requests into"},
+    {"from": "grpc_client_stub", "to": "grpc_server", "label": "gRPC calls"},
+    {"from": "rest_gateway", "to": "grpc_client_stub", "label": "forwards HTTP as"},
+    {"from": "openai_api", "to": "grpc_client_stub", "label": "forwards chat traffic"}
+  ]
+}
