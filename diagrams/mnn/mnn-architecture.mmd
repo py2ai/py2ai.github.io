@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_g0["Format &amp; Converter"]
+  node_schema["Net.fbs<br/>[MNN.fbs]"]
+  node_converter_main["MNNConvert main<br/>[MNNConverter.cpp]"]
+  node_cli["Cli::convertModel<br/>[cli.cpp]"]
+  node_conv_common["ConvolutionCommon"]
+end
+
+subgraph group_g1["Core Engine"]
+  node_interpreter["Interpreter<br/>[Interpreter.cpp]"]
+  node_file_loader["FileLoader<br/>[FileLoader.cpp]"]
+  node_session["Session<br/>[Session.cpp]"]
+  node_geometry["GeometryConvUtils"]
+end
+
+subgraph group_g2["Runtime Planning"]
+  node_schedule["Schedule<br/>[Schedule.cpp]"]
+  node_runtime_factory["RuntimeFactory<br/>[RuntimeFactory.cpp]"]
+  node_backend_api["Backend<br/>[Backend.hpp]"]
+  node_kvcache["KVCacheManager<br/>[KVCacheManager.cpp]"]
+end
+
+subgraph group_g3["CPU Backend"]
+  node_cpu_backend["CPURuntime<br/>[CPUBackend.cpp]"]
+  node_cpu_info["CPUInfo<br/>[CPURuntime.cpp]"]
+  node_cpu_conv["CPUConvolution<br/>[CPUConvolution.cpp]"]
+  node_opencl["OpenCLBackend<br/>[OpenCLBackend.hpp]"]
+  node_metal["MetalBackend<br/>[MetalBackend.hpp]"]
+end
+
+subgraph group_g4["Conv Kernels"]
+  node_conv_tiled["ConvTiled"]
+  node_conv_int8["ConvInt8Tiled"]
+  node_winograd["Winograd"]
+end
+
+subgraph group_g5["Expr / Module"]
+  node_module["Module.hpp<br/>[Module.hpp]"]
+  node_module_impl["Module.cpp<br/>[Module.cpp]"]
+  node_executor["Executor<br/>[Executor.cpp]"]
+  node_nnops["NN Ops"]
+  node_optimizer["Optimizer<br/>[Optimizer.cpp]"]
+end
+
+subgraph group_g6["MNN-LLM Engine"]
+  node_llm["Llm<br/>[llm.cpp]"]
+  node_llm_config["LlmConfig<br/>[llmconfig.hpp]"]
+  node_sampler["Sampler<br/>[sampler.cpp]"]
+  node_tokenizer["Tokenizer<br/>[tokenizer.cpp]"]
+  node_embedding["DiskEmbedding<br/>[diskembedding.cpp]"]
+end
+
+subgraph group_g7["Python Bindings"]
+  node_pymnn["MNN.cc<br/>[MNN.cc]"]
+  node_pymnn_llm["py llm<br/>[llm.h]"]
+end
+
+node_converter_main -->|"delegates to"| node_cli
+node_cli -->|"writes models against"| node_schema
+node_conv_common -->|"reads conv params from"| node_schema
+node_schema -->|"deserialized by"| node_interpreter
+node_schema -->|"re-parsed by"| node_module_impl
+node_interpreter -->|"streams model with"| node_file_loader
+node_interpreter -->|"spawns"| node_session
+node_interpreter -->|"plans a session via"| node_schedule
+node_schedule -->|"hands ScheduleInfo to"| node_session
+node_session -->|"materializes ops via"| node_geometry
+node_conv_common -->|"supplies unpacked weights to"| node_cpu_conv
+node_schedule -->|"selects backends via"| node_runtime_factory
+node_runtime_factory -->|"builds runtimes against"| node_backend_api
+node_backend_api -->|"implemented by"| node_cpu_backend
+node_backend_api -->|"implemented by"| node_opencl
+node_backend_api -->|"implemented by"| node_metal
+node_cpu_backend -->|"probes SIMD features via"| node_cpu_info
+node_cpu_backend -->|"creates executions in"| node_cpu_conv
+node_cpu_conv -->|"specializes into"| node_conv_tiled
+node_cpu_conv -->|"opts into when usable"| node_winograd
+node_cpu_conv -->|"routes quantized conv to"| node_conv_int8
+node_conv_int8 -->|"shares tiled GEMM with"| node_conv_tiled
+node_kvcache -->|"uses mmap file primitives of"| node_file_loader
+node_module -->|"runs vars through"| node_executor
+node_module_impl -->|"implements"| node_module
+node_module_impl -->|"acquires RuntimeManager from"| node_executor
+node_executor -->|"requests runtimes from"| node_runtime_factory
+node_nnops -->|"builds vars consumed by"| node_module
+node_optimizer -->|"fuses modules for"| node_module
+node_llm -->|"reads options from"| node_llm_config
+node_llm -->|"encodes prompts with"| node_tokenizer
+node_llm -->|"gathers input embeddings from"| node_embedding
+node_llm -->|"loads transformer via"| node_module_impl
+node_llm -->|"picks tokens via"| node_sampler
+node_llm -->|"spills KV cache through"| node_kvcache
+node_sampler -->|"reads sampling params from"| node_llm_config
+node_pymnn_llm -->|"pybinds"| node_llm
+node_pymnn -->|"exposes classic API to Python"| node_interpreter
+node_pymnn -->|"exposes expr API to Python"| node_module
+
+click node_schema "https://github.com/alibaba/MNN/blob/master/schema/default/MNN.fbs"
+click node_converter_main "https://github.com/alibaba/MNN/blob/master/tools/converter/source/MNNConverter.cpp"
+click node_cli "https://github.com/alibaba/MNN/blob/master/tools/converter/source/common/cli.cpp"
+click node_conv_common "https://github.com/alibaba/MNN/blob/master/source/core/ConvolutionCommon.cpp"
+click node_interpreter "https://github.com/alibaba/MNN/blob/master/source/core/Interpreter.cpp"
+click node_file_loader "https://github.com/alibaba/MNN/blob/master/source/core/FileLoader.cpp"
+click node_session "https://github.com/alibaba/MNN/blob/master/source/core/Session.cpp"
+click node_geometry "https://github.com/alibaba/MNN/blob/master/source/geometry/GeometryConvUtils.cpp"
+click node_schedule "https://github.com/alibaba/MNN/blob/master/source/core/Schedule.cpp"
+click node_runtime_factory "https://github.com/alibaba/MNN/blob/master/source/core/RuntimeFactory.cpp"
+click node_backend_api "https://github.com/alibaba/MNN/blob/master/source/core/Backend.hpp"
+click node_kvcache "https://github.com/alibaba/MNN/blob/master/source/core/KVCacheManager.cpp"
+click node_cpu_backend "https://github.com/alibaba/MNN/blob/master/source/backend/cpu/CPUBackend.cpp"
+click node_cpu_info "https://github.com/alibaba/MNN/blob/master/source/backend/cpu/CPURuntime.cpp"
+click node_cpu_conv "https://github.com/alibaba/MNN/blob/master/source/backend/cpu/CPUConvolution.cpp"
+click node_opencl "https://github.com/alibaba/MNN/blob/master/source/backend/opencl/core/OpenCLBackend.hpp"
+click node_metal "https://github.com/alibaba/MNN/blob/master/source/backend/metal/MetalBackend.hpp"
+click node_conv_tiled "https://github.com/alibaba/MNN/blob/master/source/backend/cpu/compute/ConvolutionTiledExecutor.cpp"
+click node_conv_int8 "https://github.com/alibaba/MNN/blob/master/source/backend/cpu/compute/ConvInt8TiledExecutor.cpp"
+click node_winograd "https://github.com/alibaba/MNN/blob/master/source/backend/cpu/compute/ConvolutionWinogradImpl.cpp"
+click node_module "https://github.com/alibaba/MNN/blob/master/include/MNN/expr/Module.hpp"
+click node_module_impl "https://github.com/alibaba/MNN/blob/master/express/module/Module.cpp"
+click node_executor "https://github.com/alibaba/MNN/blob/master/express/Executor.cpp"
+click node_nnops "https://github.com/alibaba/MNN/blob/master/include/MNN/expr/NeuralNetWorkOp.hpp"
+click node_optimizer "https://github.com/alibaba/MNN/blob/master/express/Optimizer.cpp"
+click node_llm "https://github.com/alibaba/MNN/blob/master/transformers/llm/engine/src/llm.cpp"
+click node_llm_config "https://github.com/alibaba/MNN/blob/master/transformers/llm/engine/src/llmconfig.hpp"
+click node_sampler "https://github.com/alibaba/MNN/blob/master/transformers/llm/engine/src/sampler.cpp"
+click node_tokenizer "https://github.com/alibaba/MNN/blob/master/transformers/llm/engine/src/tokenizer/tokenizer.cpp"
+click node_embedding "https://github.com/alibaba/MNN/blob/master/transformers/llm/engine/src/diskembedding.cpp"
+click node_pymnn "https://github.com/alibaba/MNN/blob/master/pymnn/src/MNN.cc"
+click node_pymnn_llm "https://github.com/alibaba/MNN/blob/master/pymnn/src/llm.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_schema,node_converter_main,node_cli,node_conv_common,node_llm,node_llm_config,node_sampler,node_tokenizer,node_embedding toneBlue
+class node_interpreter,node_file_loader,node_session,node_geometry,node_pymnn,node_pymnn_llm toneAmber
+class node_schedule,node_runtime_factory,node_backend_api,node_kvcache toneMint
+class node_cpu_backend,node_cpu_info,node_cpu_conv,node_opencl,node_metal toneRose
+class node_conv_tiled,node_conv_int8,node_winograd toneIndigo
+class node_module,node_module_impl,node_executor,node_nnops,node_optimizer toneTeal
