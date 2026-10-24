@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_g0["Entry Points"]
+  node_hubconf_create["hubconf._create<br/>[hubconf.py]"]
+  node_parse_opt["detect.parse_opt<br/>[detect.py]"]
+  node_detect_run["detect.run<br/>[detect.py]"]
+  node_export_run["export.run<br/>[export.py]"]
+end
+
+subgraph group_g1["Model Core"]
+  node_yaml_s["yolov5s.yaml<br/>[yolov5s.yaml]"]
+  node_parse_model["parse_model<br/>[yolo.py]"]
+  node_detection_model["DetectionModel<br/>[yolo.py]"]
+  node_base_model["BaseModel<br/>[yolo.py]"]
+  node_forward_once["_forward_once<br/>[yolo.py]"]
+  node_detect_head["Detect<br/>[yolo.py]"]
+  node_make_grid["Detect._make_grid<br/>[yolo.py]"]
+end
+
+subgraph group_g2["Blocks &amp; Backends"]
+  node_conv["Conv<br/>[common.py]"]
+  node_autopad["autopad<br/>[common.py]"]
+  node_bottleneck["Bottleneck<br/>[common.py]"]
+  node_c3["C3<br/>[common.py]"]
+  node_sppf["SPPF<br/>[common.py]"]
+  node_multibackend["DetectMultiBackend<br/>[common.py]"]
+  node_attempt_load["attempt_load<br/>[experimental.py]"]
+  node_autoshape["AutoShape<br/>[common.py]"]
+end
+
+subgraph group_g3["Data &amp; Detection Ops"]
+  node_load_images["LoadImages<br/>[dataloaders.py]"]
+  node_letterbox["letterbox<br/>[augmentations.py]"]
+  node_check_img_size["check_img_size<br/>[general.py]"]
+  node_nms["non_max_suppression<br/>[general.py]"]
+  node_scale_boxes["scale_boxes<br/>[general.py]"]
+  node_increment_path["increment_path<br/>[general.py]"]
+end
+
+subgraph group_g4["Torch Engine Utils"]
+  node_select_device["select_device<br/>[torch_utils.py]"]
+  node_fuse_conv_and_bn["fuse_conv_and_bn<br/>[torch_utils.py]"]
+  node_check_anchors["check_anchors<br/>[autoanchor.py]"]
+end
+
+subgraph group_g5["Loss &amp; Metrics"]
+  node_compute_loss["ComputeLoss<br/>[loss.py]"]
+  node_ap_per_class["ap_per_class<br/>[metrics.py]"]
+  node_export_onnx["export_onnx<br/>[export.py]"]
+  node_export_engine["export_engine<br/>[export.py]"]
+end
+
+node_hubconf_create -->|"loads ckpt &amp; builds"| node_detection_model
+node_hubconf_create -->|"wraps with"| node_autoshape
+node_parse_opt -->|"parsed args to"| node_detect_run
+node_parse_opt -->|"validates imgsz"| node_check_img_size
+node_detect_run -->|"picks hardware"| node_select_device
+node_detect_run -->|"iterates"| node_load_images
+node_load_images -->|"pads to stride"| node_letterbox
+node_letterbox -->|"preprocessed input"| node_detection_model
+node_detect_run -->|"warm &amp; infer"| node_detection_model
+node_detection_model -->|"extends"| node_base_model
+node_base_model -->|"delegates to"| node_forward_once
+node_detection_model -->|"built by"| node_parse_model
+node_parse_model -->|"reads rows from"| node_yaml_s
+node_parse_model -->|"repeats"| node_conv
+node_parse_model -->|"stacks"| node_c3
+node_parse_model -->|"appends stage"| node_sppf
+node_parse_model -->|"attaches"| node_detect_head
+node_conv -->|"padding from"| node_autopad
+node_c3 -->|"repeats"| node_bottleneck
+node_c3 -->|"stem/exit convs"| node_conv
+node_sppf -->|"P3-P5 feats"| node_detect_head
+node_detect_head -->|"rebuild on resize"| node_make_grid
+node_detect_head -->|"raw anchor preds"| node_nms
+node_detect_run -->|"applies"| node_nms
+node_nms -->|"survivors rescaled"| node_scale_boxes
+node_nms -->|"final dets back"| node_detect_run
+node_detect_run -->|"names save dirs"| node_increment_path
+node_detect_run -->|"loads weights via"| node_multibackend
+node_multibackend -->|"loads .pt via"| node_attempt_load
+node_attempt_load -->|"rebuilds graph"| node_detection_model
+node_detection_model -->|"fuses via"| node_fuse_conv_and_bn
+node_export_run -->|"loads ckpt"| node_detection_model
+node_export_run -->|"writes ONNX"| node_export_onnx
+node_export_run -->|"builds TRT"| node_export_engine
+node_export_onnx -->|"traces head out"| node_detect_head
+node_multibackend -->|"consumes .onnx"| node_export_onnx
+node_check_anchors -->|"recomputes anchors"| node_detection_model
+node_compute_loss -->|"targets vs preds"| node_detect_head
+node_nms -->|"preds scored by"| node_ap_per_class
+node_detect_run -->|"unscales boxes"| node_scale_boxes
+
+click node_hubconf_create "https://github.com/Ultralytics/yolov5/blob/master/hubconf.py"
+click node_parse_opt "https://github.com/Ultralytics/yolov5/blob/master/detect.py"
+click node_detect_run "https://github.com/Ultralytics/yolov5/blob/master/detect.py"
+click node_export_run "https://github.com/Ultralytics/yolov5/blob/master/export.py"
+click node_yaml_s "https://github.com/Ultralytics/yolov5/blob/master/models/yolov5s.yaml"
+click node_parse_model "https://github.com/Ultralytics/yolov5/blob/master/models/yolo.py"
+click node_detection_model "https://github.com/Ultralytics/yolov5/blob/master/models/yolo.py"
+click node_base_model "https://github.com/Ultralytics/yolov5/blob/master/models/yolo.py"
+click node_forward_once "https://github.com/Ultralytics/yolov5/blob/master/models/yolo.py"
+click node_detect_head "https://github.com/Ultralytics/yolov5/blob/master/models/yolo.py"
+click node_make_grid "https://github.com/Ultralytics/yolov5/blob/master/models/yolo.py"
+click node_conv "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_autopad "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_bottleneck "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_c3 "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_sppf "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_multibackend "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_attempt_load "https://github.com/Ultralytics/yolov5/blob/master/models/experimental.py"
+click node_autoshape "https://github.com/Ultralytics/yolov5/blob/master/models/common.py"
+click node_load_images "https://github.com/Ultralytics/yolov5/blob/master/utils/dataloaders.py"
+click node_letterbox "https://github.com/Ultralytics/yolov5/blob/master/utils/augmentations.py"
+click node_check_img_size "https://github.com/Ultralytics/yolov5/blob/master/utils/general.py"
+click node_nms "https://github.com/Ultralytics/yolov5/blob/master/utils/general.py"
+click node_scale_boxes "https://github.com/Ultralytics/yolov5/blob/master/utils/general.py"
+click node_increment_path "https://github.com/Ultralytics/yolov5/blob/master/utils/general.py"
+click node_select_device "https://github.com/Ultralytics/yolov5/blob/master/utils/torch_utils.py"
+click node_fuse_conv_and_bn "https://github.com/Ultralytics/yolov5/blob/master/utils/torch_utils.py"
+click node_check_anchors "https://github.com/Ultralytics/yolov5/blob/master/utils/autoanchor.py"
+click node_compute_loss "https://github.com/Ultralytics/yolov5/blob/master/utils/loss.py"
+click node_ap_per_class "https://github.com/Ultralytics/yolov5/blob/master/utils/metrics.py"
+click node_export_onnx "https://github.com/Ultralytics/yolov5/blob/master/export.py"
+click node_export_engine "https://github.com/Ultralytics/yolov5/blob/master/export.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_hubconf_create,node_parse_opt,node_detect_run,node_export_run toneBlue
+class node_yaml_s,node_parse_model,node_detection_model,node_base_model,node_forward_once,node_detect_head,node_make_grid toneAmber
+class node_conv,node_autopad,node_bottleneck,node_c3,node_sppf,node_multibackend,node_attempt_load,node_autoshape toneMint
+class node_load_images,node_letterbox,node_check_img_size,node_nms,node_scale_boxes,node_increment_path toneRose
+class node_select_device,node_fuse_conv_and_bn,node_check_anchors toneIndigo
+class node_compute_loss,node_ap_per_class,node_export_onnx,node_export_engine toneTeal
