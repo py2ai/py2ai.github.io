@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_g0["Factory"]
+  node_create_model["create_model<br/>[_factory.py]"]
+  node_resolve_model_input_args["resolve_model_input_args<br/>[_factory.py]"]
+end
+
+subgraph group_g1["Registry"]
+  node_split_model_name_tag["split_model_name_tag<br/>[_registry.py]"]
+  node_model_entrypoint["model_entrypoint<br/>[_registry.py]"]
+  node_list_models["list_models<br/>[_registry.py]"]
+  node_register_model["register_model<br/>[_registry.py]"]
+  node_generate_default_cfgs["generate_default_cfgs<br/>[_registry.py]"]
+end
+
+subgraph group_g2["Builder &amp; weights"]
+  node_build_model_with_cfg["build_model_with_cfg<br/>[_builder.py]"]
+  node_resolve_pretrained_cfg["resolve_pretrained_cfg<br/>[_builder.py]"]
+  node_load_pretrained["load_pretrained<br/>[_builder.py]"]
+  node_load_state_dict["load_state_dict<br/>[_helpers.py]"]
+  node_adapt_input_conv["adapt_input_conv<br/>[_manipulate.py]"]
+end
+
+subgraph group_g3["ViT internals"]
+  node_vit_base["vit_base_patch16_224"]
+  node_create_vit["_create_vision_transformer"]
+  node_vit["VisionTransformer"]
+  node_vit_block["Block"]
+  node_checkpoint_filter_fn["checkpoint_filter_fn"]
+  node_load_weights_vit["_load_weights"]
+  node_resize_pos_embed["resize_pos_embed"]
+end
+
+subgraph group_g4["ResNet internals"]
+  node_resnet50["resnet50<br/>[resnet.py]"]
+  node_resnet["ResNet<br/>[resnet.py]"]
+  node_make_blocks["make_blocks<br/>[resnet.py]"]
+  node_basicblock["BasicBlock<br/>[resnet.py]"]
+  node_bottleneck["Bottleneck<br/>[resnet.py]"]
+end
+
+subgraph group_g5["Shared layers"]
+  node_patch_embed["PatchEmbed<br/>[patch_embed.py]"]
+  node_attention["Attention<br/>[attention.py]"]
+  node_droppath["DropPath<br/>[drop.py]"]
+end
+
+subgraph group_g6["Data &amp; training"]
+  node_create_transform["create_transform"]
+  node_transforms_imagenet_train["transforms_imagenet_train"]
+  node_create_loader["create_loader<br/>[loader.py]"]
+  node_prefetch_loader["PrefetchLoader<br/>[loader.py]"]
+  node_train_one_epoch["train_one_epoch<br/>[train.py]"]
+  node_validate["validate<br/>[train.py]"]
+  node_model_ema_v2["ModelEmaV2<br/>[model_ema.py]"]
+end
+
+node_create_model -->|"parses name"| node_split_model_name_tag
+node_create_model -->|"resolves fn"| node_model_entrypoint
+node_create_model -->|"resolves input args"| node_resolve_model_input_args
+node_model_entrypoint -->|"reads registry"| node_register_model
+node_list_models -->|"enumerates"| node_register_model
+node_generate_default_cfgs -->|"seeds default cfgs"| node_register_model
+node_register_model -->|"decorates"| node_vit_base
+node_register_model -->|"decorates"| node_resnet50
+node_create_model -->|"delegates"| node_build_model_with_cfg
+node_build_model_with_cfg -->|"picks cfg"| node_resolve_pretrained_cfg
+node_build_model_with_cfg -->|"loads weights"| node_load_pretrained
+node_build_model_with_cfg -->|"adapts stem conv"| node_adapt_input_conv
+node_load_pretrained -->|"applies checkpoint"| node_load_state_dict
+node_build_model_with_cfg -->|"instantiates"| node_vit
+node_build_model_with_cfg -->|"instantiates"| node_resnet
+node_vit_base -->|"delegates"| node_create_vit
+node_create_vit -->|"constructs"| node_vit
+node_vit -->|"tokenizes input"| node_patch_embed
+node_vit -->|"stacks blocks"| node_vit_block
+node_vit_block -->|"self-attn"| node_attention
+node_vit_block -->|"stochastic depth"| node_droppath
+node_create_vit -->|"remaps ckpt"| node_checkpoint_filter_fn
+node_checkpoint_filter_fn -->|"interpolates"| node_resize_pos_embed
+node_create_vit -->|"torch hub path"| node_load_weights_vit
+node_resnet50 -->|"constructs"| node_resnet
+node_resnet -->|"stacks stages"| node_make_blocks
+node_make_blocks -->|"shallow stages"| node_basicblock
+node_make_blocks -->|"deep stages"| node_bottleneck
+node_basicblock -->|"drop schedule"| node_droppath
+node_create_transform -->|"train branch"| node_transforms_imagenet_train
+node_create_transform -->|"transforms"| node_create_loader
+node_create_loader -->|"wraps GPU prefetch"| node_prefetch_loader
+node_create_loader -->|"feeds batches"| node_train_one_epoch
+node_create_loader -->|"eval batches"| node_validate
+node_train_one_epoch -->|"updates EMA"| node_model_ema_v2
+node_train_one_epoch -->|"periodic eval"| node_validate
+
+click node_create_model "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_factory.py"
+click node_resolve_model_input_args "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_factory.py"
+click node_split_model_name_tag "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_registry.py"
+click node_model_entrypoint "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_registry.py"
+click node_list_models "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_registry.py"
+click node_register_model "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_registry.py"
+click node_generate_default_cfgs "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_registry.py"
+click node_build_model_with_cfg "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_builder.py"
+click node_resolve_pretrained_cfg "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_builder.py"
+click node_load_pretrained "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_builder.py"
+click node_load_state_dict "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_helpers.py"
+click node_adapt_input_conv "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/_manipulate.py"
+click node_vit_base "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_create_vit "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_vit "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_vit_block "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_checkpoint_filter_fn "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_load_weights_vit "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_resize_pos_embed "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/vision_transformer.py"
+click node_resnet50 "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/resnet.py"
+click node_resnet "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/resnet.py"
+click node_make_blocks "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/resnet.py"
+click node_basicblock "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/resnet.py"
+click node_bottleneck "https://github.com/huggingface/pytorch-image-models/blob/main/timm/models/resnet.py"
+click node_patch_embed "https://github.com/huggingface/pytorch-image-models/blob/main/timm/layers/patch_embed.py"
+click node_attention "https://github.com/huggingface/pytorch-image-models/blob/main/timm/layers/attention.py"
+click node_droppath "https://github.com/huggingface/pytorch-image-models/blob/main/timm/layers/drop.py"
+click node_create_transform "https://github.com/huggingface/pytorch-image-models/blob/main/timm/data/transforms_factory.py"
+click node_transforms_imagenet_train "https://github.com/huggingface/pytorch-image-models/blob/main/timm/data/transforms_factory.py"
+click node_create_loader "https://github.com/huggingface/pytorch-image-models/blob/main/timm/data/loader.py"
+click node_prefetch_loader "https://github.com/huggingface/pytorch-image-models/blob/main/timm/data/loader.py"
+click node_train_one_epoch "https://github.com/huggingface/pytorch-image-models/blob/main/train.py"
+click node_validate "https://github.com/huggingface/pytorch-image-models/blob/main/train.py"
+click node_model_ema_v2 "https://github.com/huggingface/pytorch-image-models/blob/main/timm/utils/model_ema.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_create_model,node_resolve_model_input_args,node_create_transform,node_transforms_imagenet_train,node_create_loader,node_prefetch_loader,node_train_one_epoch,node_validate,node_model_ema_v2 toneBlue
+class node_split_model_name_tag,node_model_entrypoint,node_list_models,node_register_model,node_generate_default_cfgs toneAmber
+class node_build_model_with_cfg,node_resolve_pretrained_cfg,node_load_pretrained,node_load_state_dict,node_adapt_input_conv toneMint
+class node_vit_base,node_create_vit,node_vit,node_vit_block,node_checkpoint_filter_fn,node_load_weights_vit,node_resize_pos_embed toneRose
+class node_resnet50,node_resnet,node_make_blocks,node_basicblock,node_bottleneck toneIndigo
+class node_patch_embed,node_attention,node_droppath toneTeal
