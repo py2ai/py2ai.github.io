@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_g0["Entry Points"]
+  node_txt2img["txt2img.py main&#40;&#41;<br/>[txt2img.py]"]
+  node_load_model_from_config["load_model_from_config<br/>[txt2img.py]"]
+  node_sample_loop["Sampling Loop<br/>[txt2img.py]"]
+  node_instantiate_from_config["instantiate_from_config<br/>[util.py]"]
+end
+
+subgraph group_g1["Samplers"]
+  node_ddim["DDIMSampler<br/>[ddim.py]"]
+  node_ddim_sampling["DDIMSampler.ddim_sampling<br/>[ddim.py]"]
+  node_p_sample_ddim["p_sample_ddim<br/>[ddim.py]"]
+  node_plms["PLMSSampler<br/>[plms.py]"]
+  node_p_sample_plms["p_sample_plms<br/>[plms.py]"]
+  node_apply_model["LatentDiffusion.apply_model<br/>[ddpm.py]"]
+end
+
+subgraph group_g2["Diffusion Core"]
+  node_latent_diff["LatentDiffusion<br/>[ddpm.py]"]
+  node_ddpm_base["DDPM<br/>[ddpm.py]"]
+  node_p_losses["LatentDiffusion.p_losses<br/>[ddpm.py]"]
+  node_q_sample["DDPM.q_sample<br/>[ddpm.py]"]
+end
+
+subgraph group_g3["UNet Backbone"]
+  node_unet["UNetModel<br/>[openaimodel.py]"]
+  node_unet_forward["UNetModel.forward<br/>[openaimodel.py]"]
+  node_tes["TimestepEmbedSequential<br/>[openaimodel.py]"]
+  node_time_embed["time_embed MLP<br/>[openaimodel.py]"]
+  node_timestep_embedding["timestep_embedding<br/>[util.py]"]
+  node_resblock["ResBlock &#40;UNet&#41;<br/>[openaimodel.py]"]
+end
+
+subgraph group_g4["Attention Modules"]
+  node_spatial_transformer["SpatialTransformer<br/>[attention.py]"]
+  node_basic_transformer_block["BasicTransformerBlock<br/>[attention.py]"]
+  node_cross_attention["CrossAttention<br/>[attention.py]"]
+end
+
+subgraph group_g5["VAE First Stage"]
+  node_autoencoder_kl["AutoencoderKL<br/>[autoencoder.py]"]
+  node_ae_encode["AutoencoderKL.encode<br/>[autoencoder.py]"]
+  node_ae_decode["AutoencoderKL.decode<br/>[autoencoder.py]"]
+  node_vae_enc["Encoder &#40;VAE&#41;<br/>[model.py]"]
+  node_vae_dec["Decoder &#40;VAE&#41;<br/>[model.py]"]
+  node_vae_res["ResnetBlock &#40;VAE&#41;<br/>[model.py]"]
+  node_vae_attn["AttnBlock &#40;VAE&#41;<br/>[model.py]"]
+end
+
+subgraph group_g6["Text Conditioning"]
+  node_clip["FrozenCLIPEmbedder<br/>[modules.py]"]
+  node_clip_encode["FrozenCLIPEmbedder.encode<br/>[modules.py]"]
+end
+
+node_txt2img -->|"builds model"| node_load_model_from_config
+node_txt2img -->|"runs"| node_sample_loop
+node_load_model_from_config -->|"resolves targets"| node_instantiate_from_config
+node_load_model_from_config -->|"instantiates"| node_latent_diff
+node_sample_loop -->|"get_learned_conditioning"| node_clip_encode
+node_sample_loop -->|"sampler.sample"| node_ddim
+node_sample_loop -->|"sampler.sample"| node_plms
+node_ddim -->|"steps"| node_ddim_sampling
+node_ddim_sampling -->|"one step"| node_p_sample_ddim
+node_plms -->|"one step"| node_p_sample_plms
+node_p_sample_ddim -->|"eps via"| node_apply_model
+node_p_sample_plms -->|"eps via"| node_apply_model
+node_latent_diff -->|"subclasses"| node_ddpm_base
+node_latent_diff -->|"training objective"| node_p_losses
+node_ddpm_base -->|"forward noising"| node_q_sample
+node_p_losses -->|"predicts eps"| node_unet
+node_apply_model -->|"routes x_noisy"| node_unet
+node_unet -->|"forward"| node_unet_forward
+node_unet_forward -->|"dispatches"| node_tes
+node_unet_forward -->|"embeds timesteps"| node_time_embed
+node_time_embed -->|"sinusoidal input"| node_timestep_embedding
+node_tes -->|"contains"| node_resblock
+node_tes -->|"contains"| node_spatial_transformer
+node_spatial_transformer -->|"stacks"| node_basic_transformer_block
+node_basic_transformer_block -->|"context injection"| node_cross_attention
+node_cross_attention -->|"77x768 context"| node_clip_encode
+node_latent_diff -->|"conditioning encoders"| node_clip
+node_latent_diff -->|"first stage"| node_autoencoder_kl
+node_autoencoder_kl -->|"compresses"| node_ae_encode
+node_autoencoder_kl -->|"reconstructs"| node_ae_decode
+node_ae_encode -->|"downsamples"| node_vae_enc
+node_ae_decode -->|"upsamples"| node_vae_dec
+node_vae_enc -->|"residual stages"| node_vae_res
+node_vae_enc -->|"bottleneck attention"| node_vae_attn
+node_vae_dec -->|"residual stages"| node_vae_res
+node_vae_dec -->|"bottleneck attention"| node_vae_attn
+
+click node_txt2img "https://github.com/CompVis/stable-diffusion/blob/main/scripts/txt2img.py"
+click node_load_model_from_config "https://github.com/CompVis/stable-diffusion/blob/main/scripts/txt2img.py"
+click node_sample_loop "https://github.com/CompVis/stable-diffusion/blob/main/scripts/txt2img.py"
+click node_instantiate_from_config "https://github.com/CompVis/stable-diffusion/blob/main/ldm/util.py"
+click node_ddim "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddim.py"
+click node_ddim_sampling "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddim.py"
+click node_p_sample_ddim "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddim.py"
+click node_plms "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/plms.py"
+click node_p_sample_plms "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/plms.py"
+click node_apply_model "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddpm.py"
+click node_latent_diff "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddpm.py"
+click node_ddpm_base "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddpm.py"
+click node_p_losses "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddpm.py"
+click node_q_sample "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/diffusion/ddpm.py"
+click node_unet "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/openaimodel.py"
+click node_unet_forward "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/openaimodel.py"
+click node_tes "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/openaimodel.py"
+click node_time_embed "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/openaimodel.py"
+click node_timestep_embedding "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/util.py"
+click node_resblock "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/openaimodel.py"
+click node_spatial_transformer "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/attention.py"
+click node_basic_transformer_block "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/attention.py"
+click node_cross_attention "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/attention.py"
+click node_autoencoder_kl "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/autoencoder.py"
+click node_ae_encode "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/autoencoder.py"
+click node_ae_decode "https://github.com/CompVis/stable-diffusion/blob/main/ldm/models/autoencoder.py"
+click node_vae_enc "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/model.py"
+click node_vae_dec "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/model.py"
+click node_vae_res "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/model.py"
+click node_vae_attn "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/model.py"
+click node_clip "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/encoders/modules.py"
+click node_clip_encode "https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/encoders/modules.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_txt2img,node_load_model_from_config,node_sample_loop,node_instantiate_from_config,node_clip,node_clip_encode toneBlue
+class node_ddim,node_ddim_sampling,node_p_sample_ddim,node_plms,node_p_sample_plms,node_apply_model toneAmber
+class node_latent_diff,node_ddpm_base,node_p_losses,node_q_sample toneMint
+class node_unet,node_unet_forward,node_tes,node_time_embed,node_timestep_embedding,node_resblock toneRose
+class node_spatial_transformer,node_basic_transformer_block,node_cross_attention toneIndigo
+class node_autoencoder_kl,node_ae_encode,node_ae_decode,node_vae_enc,node_vae_dec,node_vae_res,node_vae_attn toneTeal
