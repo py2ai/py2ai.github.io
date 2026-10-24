@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_g0["Vision encoder"]
+  node_vit["VisionTransformer<br/>[vit.py]"]
+  node_vit_block["Block<br/>[vit.py]"]
+  node_vit_attn["Attention<br/>[vit.py]"]
+  node_vit_mlp["Mlp<br/>[vit.py]"]
+  node_interpolate_pos_embed["interpolate_pos_embed<br/>[vit.py]"]
+  node_create_vit["create_vit<br/>[blip.py]"]
+end
+
+subgraph group_g1["MED text model"]
+  node_bert_embeddings["BertEmbeddings<br/>[med.py]"]
+  node_bert_model["BertModel<br/>[med.py]"]
+  node_bert_encoder["BertEncoder<br/>[med.py]"]
+  node_bert_layer["BertLayer<br/>[med.py]"]
+  node_bert_attention["BertAttention<br/>[med.py]"]
+  node_bert_self_attn["BertSelfAttention<br/>[med.py]"]
+  node_bert_lm_head_model["BertLMHeadModel<br/>[med.py]"]
+  node_bert_lm_pred_head["BertLMPredictionHead<br/>[med.py]"]
+end
+
+subgraph group_g2["Shared BLIP module"]
+  node_blip_decoder_cls["BLIP_Decoder<br/>[blip.py]"]
+  node_blip_decoder["blip_decoder&#40;&#41;<br/>[blip.py]"]
+  node_generate["BLIP_Decoder.generate<br/>[blip.py]"]
+  node_init_tokenizer["init_tokenizer<br/>[blip.py]"]
+  node_load_checkpoint["load_checkpoint<br/>[blip.py]"]
+end
+
+subgraph group_g3["Task heads"]
+  node_blip_itm_cls["BLIP_ITM<br/>[blip_itm.py]"]
+  node_blip_itm["blip_itm&#40;&#41;<br/>[blip_itm.py]"]
+  node_blip_vqa_cls["BLIP_VQA<br/>[blip_vqa.py]"]
+  node_blip_vqa["blip_vqa&#40;&#41;<br/>[blip_vqa.py]"]
+  node_rank_answer["BLIP_VQA.rank_answer<br/>[blip_vqa.py]"]
+  node_blip_retrieval_cls["BLIP_Retrieval<br/>[blip_retrieval.py]"]
+  node_blip_retrieval["blip_retrieval&#40;&#41;<br/>[blip_retrieval.py]"]
+end
+
+subgraph group_g4["Pretraining"]
+  node_blip_pretrain_cls["BLIP_Pretrain<br/>[blip_pretrain.py]"]
+  node_blip_pretrain["blip_pretrain&#40;&#41;<br/>[blip_pretrain.py]"]
+  node_tie_encoder_decoder_weights["tie_encoder_decoder_weights<br/>[blip_pretrain.py]"]
+  node_momentum_update["_momentum_update<br/>[blip_pretrain.py]"]
+  node_dequeue_enqueue["_dequeue_and_enqueue<br/>[blip_pretrain.py]"]
+end
+
+subgraph group_g5["Training infra"]
+  node_pretrain_train["train&#40;&#41;<br/>[pretrain.py]"]
+  node_pretrain_main["main&#40;&#41;<br/>[pretrain.py]"]
+  node_metric_logger["MetricLogger<br/>[utils.py]"]
+end
+
+node_create_vit -->|"builds base/large"| node_vit
+node_vit -->|"depth 12/24 stack"| node_vit_block
+node_vit_block -->|"x + attn&#40;norm1&#40;x&#41;&#41;"| node_vit_attn
+node_vit_block -->|"x + mlp&#40;norm2&#40;x&#41;&#41;"| node_vit_mlp
+node_load_checkpoint -->|"resize 224-&gt;384 pos embed"| node_interpolate_pos_embed
+node_interpolate_pos_embed -->|"fits checkpoint grid"| node_vit
+node_bert_model -->|"token embeddings"| node_bert_embeddings
+node_bert_model -->|"encoder stack"| node_bert_encoder
+node_bert_encoder -->|"iterates layers"| node_bert_layer
+node_bert_layer -->|"self + cross attention"| node_bert_attention
+node_bert_attention -->|"K/V from image embeds"| node_bert_self_attn
+node_vit -->|"encoder_hidden_states"| node_bert_self_attn
+node_bert_lm_head_model -->|"backbone"| node_bert_model
+node_bert_lm_head_model -->|"vocab logits"| node_bert_lm_pred_head
+node_blip_decoder -->|"constructs"| node_blip_decoder_cls
+node_blip_decoder_cls -->|"visual encoder"| node_create_vit
+node_blip_decoder_cls -->|"text decoder"| node_bert_lm_head_model
+node_blip_decoder_cls -->|"&#91;DEC&#93;/&#91;ENC&#93; tokens"| node_init_tokenizer
+node_blip_decoder_cls -->|"inference"| node_generate
+node_generate -->|"beam search / top-p"| node_bert_lm_head_model
+node_blip_decoder -->|"load .pth"| node_load_checkpoint
+node_blip_itm -->|"constructs"| node_blip_itm_cls
+node_blip_itm_cls -->|"visual encoder"| node_create_vit
+node_blip_itm_cls -->|"itm/itc modes"| node_bert_model
+node_blip_vqa -->|"constructs"| node_blip_vqa_cls
+node_blip_vqa_cls -->|"question encoder"| node_bert_model
+node_blip_vqa_cls -->|"answer decoder"| node_bert_lm_head_model
+node_blip_vqa_cls -->|"inference='rank'"| node_rank_answer
+node_blip_retrieval -->|"constructs"| node_blip_retrieval_cls
+node_blip_retrieval_cls -->|"text encoder + ITM"| node_bert_model
+node_blip_retrieval_cls -->|"visual encoder"| node_create_vit
+node_blip_pretrain -->|"constructs"| node_blip_pretrain_cls
+node_blip_pretrain_cls -->|"DeiT-init ViT"| node_create_vit
+node_blip_pretrain_cls -->|"from bert-base-uncased"| node_bert_model
+node_blip_pretrain_cls -->|"from bert-base-uncased"| node_bert_lm_head_model
+node_blip_pretrain_cls -->|"init decoder from encoder"| node_tie_encoder_decoder_weights
+node_blip_pretrain_cls -->|"EMA model pairs"| node_momentum_update
+node_blip_pretrain_cls -->|"feature queue"| node_dequeue_enqueue
+node_pretrain_main -->|"build model"| node_blip_pretrain
+node_pretrain_main -->|"per-epoch loop"| node_pretrain_train
+node_pretrain_train -->|"loss_ita+loss_itm+loss_lm"| node_blip_pretrain_cls
+node_pretrain_train -->|"meters"| node_metric_logger
+
+click node_vit "https://github.com/salesforce/BLIP/blob/main/models/vit.py"
+click node_vit_block "https://github.com/salesforce/BLIP/blob/main/models/vit.py"
+click node_vit_attn "https://github.com/salesforce/BLIP/blob/main/models/vit.py"
+click node_vit_mlp "https://github.com/salesforce/BLIP/blob/main/models/vit.py"
+click node_interpolate_pos_embed "https://github.com/salesforce/BLIP/blob/main/models/vit.py"
+click node_create_vit "https://github.com/salesforce/BLIP/blob/main/models/blip.py"
+click node_bert_embeddings "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_model "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_encoder "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_layer "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_attention "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_self_attn "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_lm_head_model "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_bert_lm_pred_head "https://github.com/salesforce/BLIP/blob/main/models/med.py"
+click node_blip_decoder_cls "https://github.com/salesforce/BLIP/blob/main/models/blip.py"
+click node_blip_decoder "https://github.com/salesforce/BLIP/blob/main/models/blip.py"
+click node_generate "https://github.com/salesforce/BLIP/blob/main/models/blip.py"
+click node_init_tokenizer "https://github.com/salesforce/BLIP/blob/main/models/blip.py"
+click node_load_checkpoint "https://github.com/salesforce/BLIP/blob/main/models/blip.py"
+click node_blip_itm_cls "https://github.com/salesforce/BLIP/blob/main/models/blip_itm.py"
+click node_blip_itm "https://github.com/salesforce/BLIP/blob/main/models/blip_itm.py"
+click node_blip_vqa_cls "https://github.com/salesforce/BLIP/blob/main/models/blip_vqa.py"
+click node_blip_vqa "https://github.com/salesforce/BLIP/blob/main/models/blip_vqa.py"
+click node_rank_answer "https://github.com/salesforce/BLIP/blob/main/models/blip_vqa.py"
+click node_blip_retrieval_cls "https://github.com/salesforce/BLIP/blob/main/models/blip_retrieval.py"
+click node_blip_retrieval "https://github.com/salesforce/BLIP/blob/main/models/blip_retrieval.py"
+click node_blip_pretrain_cls "https://github.com/salesforce/BLIP/blob/main/models/blip_pretrain.py"
+click node_blip_pretrain "https://github.com/salesforce/BLIP/blob/main/models/blip_pretrain.py"
+click node_tie_encoder_decoder_weights "https://github.com/salesforce/BLIP/blob/main/models/blip_pretrain.py"
+click node_momentum_update "https://github.com/salesforce/BLIP/blob/main/models/blip_pretrain.py"
+click node_dequeue_enqueue "https://github.com/salesforce/BLIP/blob/main/models/blip_pretrain.py"
+click node_pretrain_train "https://github.com/salesforce/BLIP/blob/main/pretrain.py"
+click node_pretrain_main "https://github.com/salesforce/BLIP/blob/main/pretrain.py"
+click node_metric_logger "https://github.com/salesforce/BLIP/blob/main/utils.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_vit,node_vit_block,node_vit_attn,node_vit_mlp,node_interpolate_pos_embed,node_create_vit toneBlue
+class node_bert_embeddings,node_bert_model,node_bert_encoder,node_bert_layer,node_bert_attention,node_bert_self_attn,node_bert_lm_head_model,node_bert_lm_pred_head toneAmber
+class node_blip_decoder_cls,node_blip_decoder,node_generate,node_init_tokenizer,node_load_checkpoint toneMint
+class node_blip_itm_cls,node_blip_itm,node_blip_vqa_cls,node_blip_vqa,node_rank_answer,node_blip_retrieval_cls,node_blip_retrieval toneRose
+class node_blip_pretrain_cls,node_blip_pretrain,node_tie_encoder_decoder_weights,node_momentum_update,node_dequeue_enqueue toneIndigo
+class node_pretrain_train,node_pretrain_main,node_metric_logger toneTeal
