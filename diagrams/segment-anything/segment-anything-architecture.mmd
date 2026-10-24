@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_g0["Vision encoder"]
+  node_image_encoder["ImageEncoderViT<br/>[image_encoder.py]"]
+  node_patch_embed["PatchEmbed<br/>[image_encoder.py]"]
+  node_vit_block["Block<br/>[image_encoder.py]"]
+  node_vit_attention["Attention<br/>[image_encoder.py]"]
+  node_window_partition["window_partition<br/>[image_encoder.py]"]
+end
+
+subgraph group_g1["Prompt encoding"]
+  node_prompt_encoder["PromptEncoder<br/>[prompt_encoder.py]"]
+  node_embed_points["_embed_points<br/>[prompt_encoder.py]"]
+  node_embed_boxes["_embed_boxes<br/>[prompt_encoder.py]"]
+  node_embed_masks["_embed_masks<br/>[prompt_encoder.py]"]
+  node_dense_pe["get_dense_pe<br/>[prompt_encoder.py]"]
+end
+
+subgraph group_g2["Mask decoder"]
+  node_mask_decoder["MaskDecoder<br/>[mask_decoder.py]"]
+  node_predict_masks["predict_masks<br/>[mask_decoder.py]"]
+  node_output_upscaling["output_upscaling<br/>[mask_decoder.py]"]
+  node_iou_token["iou_token<br/>[mask_decoder.py]"]
+  node_mask_tokens["mask_tokens<br/>[mask_decoder.py]"]
+  node_hyper_mlps["output_hypernetworks_mlps<br/>[mask_decoder.py]"]
+  node_iou_head["iou_prediction_head<br/>[mask_decoder.py]"]
+  node_dec_mlp["MLP<br/>[mask_decoder.py]"]
+  node_two_way["TwoWayTransformer<br/>[transformer.py]"]
+  node_twa_block["TwoWayAttentionBlock<br/>[transformer.py]"]
+  node_tr_attention["Attention<br/>[transformer.py]"]
+end
+
+subgraph group_g3["Inference runtime"]
+  node_predictor["SamPredictor<br/>[predictor.py]"]
+  node_set_image["set_image<br/>[predictor.py]"]
+  node_predict_torch["predict_torch<br/>[predictor.py]"]
+  node_amg["SamAutomaticMaskGenerator"]
+  node_amg_generate["generate"]
+  node_process_crop["_process_crop"]
+end
+
+subgraph group_g4["Checkpoint builder"]
+  node_sam_cls["Sam<br/>[sam.py]"]
+  node_registry["sam_model_registry<br/>[build_sam.py]"]
+  node_build_sam["_build_sam<br/>[build_sam.py]"]
+end
+
+subgraph group_g5["Shared helpers"]
+  node_neck_ln2d["LayerNorm2d<br/>[common.py]"]
+  node_mlp_block["MLPBlock<br/>[common.py]"]
+  node_mask_data["MaskData<br/>[amg.py]"]
+  node_onnx_model["SamOnnxModel<br/>[onnx.py]"]
+end
+
+node_registry -->|"dispatches vit_b/l/h"| node_build_sam
+node_build_sam -->|"assembles"| node_sam_cls
+node_sam_cls -->|"owns"| node_image_encoder
+node_sam_cls -->|"owns"| node_prompt_encoder
+node_sam_cls -->|"owns"| node_mask_decoder
+node_image_encoder -->|"patchifies"| node_patch_embed
+node_image_encoder -->|"stacks 32x"| node_vit_block
+node_vit_block -->|"windowed MSA"| node_vit_attention
+node_vit_block -->|"FFN"| node_mlp_block
+node_vit_attention -->|"crops windows"| node_window_partition
+node_image_encoder -->|"conv neck"| node_neck_ln2d
+node_prompt_encoder -->|"clicks"| node_embed_points
+node_prompt_encoder -->|"boxes"| node_embed_boxes
+node_prompt_encoder -->|"mask prompts"| node_embed_masks
+node_prompt_encoder -->|"positional encoding"| node_dense_pe
+node_mask_decoder -->|"core"| node_predict_masks
+node_predict_masks -->|"appends"| node_iou_token
+node_predict_masks -->|"appends"| node_mask_tokens
+node_mask_decoder -->|"upscales"| node_output_upscaling
+node_mask_decoder -->|"kernel weights"| node_hyper_mlps
+node_mask_decoder -->|"quality scores"| node_iou_head
+node_hyper_mlps -->|"instantiated from"| node_dec_mlp
+node_iou_head -->|"instantiated from"| node_dec_mlp
+node_predict_masks -->|"runs"| node_two_way
+node_two_way -->|"stacks"| node_twa_block
+node_twa_block -->|"self/cross-attn"| node_tr_attention
+node_output_upscaling -->|"norms"| node_neck_ln2d
+node_predictor -->|"entry"| node_set_image
+node_set_image -->|"caches features"| node_image_encoder
+node_predictor -->|"predicts"| node_predict_torch
+node_predict_torch -->|"decodes"| node_mask_decoder
+node_predict_torch -->|"embeds prompts"| node_prompt_encoder
+node_amg -->|"grid sampling"| node_amg_generate
+node_amg_generate -->|"per-crop"| node_process_crop
+node_process_crop -->|"per-point prompts"| node_predictor
+node_amg -->|"filters via"| node_mask_data
+node_onnx_model -->|"ONNX export"| node_mask_decoder
+node_onnx_model -->|"ONNX export"| node_prompt_encoder
+
+click node_sam_cls "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/sam.py"
+click node_image_encoder "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py"
+click node_patch_embed "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py"
+click node_vit_block "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py"
+click node_vit_attention "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py"
+click node_window_partition "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py"
+click node_neck_ln2d "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/common.py"
+click node_mlp_block "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/common.py"
+click node_prompt_encoder "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/prompt_encoder.py"
+click node_embed_points "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/prompt_encoder.py"
+click node_embed_boxes "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/prompt_encoder.py"
+click node_embed_masks "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/prompt_encoder.py"
+click node_dense_pe "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/prompt_encoder.py"
+click node_mask_decoder "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_predict_masks "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_output_upscaling "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_iou_token "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_mask_tokens "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_hyper_mlps "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_iou_head "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_dec_mlp "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/mask_decoder.py"
+click node_two_way "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/transformer.py"
+click node_twa_block "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/transformer.py"
+click node_tr_attention "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/transformer.py"
+click node_predictor "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/predictor.py"
+click node_set_image "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/predictor.py"
+click node_predict_torch "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/predictor.py"
+click node_amg "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/automatic_mask_generator.py"
+click node_amg_generate "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/automatic_mask_generator.py"
+click node_process_crop "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/automatic_mask_generator.py"
+click node_mask_data "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/utils/amg.py"
+click node_registry "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/build_sam.py"
+click node_build_sam "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/build_sam.py"
+click node_onnx_model "https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/utils/onnx.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_image_encoder,node_patch_embed,node_vit_block,node_vit_attention,node_window_partition toneBlue
+class node_prompt_encoder,node_embed_points,node_embed_boxes,node_embed_masks,node_dense_pe toneAmber
+class node_mask_decoder,node_predict_masks,node_output_upscaling,node_iou_token,node_mask_tokens,node_hyper_mlps,node_iou_head,node_dec_mlp,node_two_way,node_twa_block,node_tr_attention toneMint
+class node_predictor,node_set_image,node_predict_torch,node_amg,node_amg_generate,node_process_crop toneRose
+class node_sam_cls,node_registry,node_build_sam toneIndigo
+class node_neck_ln2d,node_mlp_block,node_mask_data,node_onnx_model toneTeal
