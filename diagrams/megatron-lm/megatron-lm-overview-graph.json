@@ -1,0 +1,45 @@
+{
+  "owner": "NVIDIA",
+  "repo": "Megatron-LM",
+  "branch": "main",
+  "groups": [
+    {"id": "g0", "name": "parallel", "label": "Parallelism"},
+    {"id": "g1", "name": "tensor", "label": "Tensor Parallel Layers"},
+    {"id": "g2", "name": "transformer", "label": "Transformer Stack"},
+    {"id": "g3", "name": "training", "label": "Training & Optimizer"}
+  ],
+  "nodes": [
+    {"id": "parallel_state", "label": "parallel_state", "file": "megatron/core/parallel_state.py", "path": "megatron/core/parallel_state.py", "group": "parallel", "groupId": "g0", "desc": "initialize_model_parallel carves the tensor, data and context process groups every collective relies on."},
+    {"id": "mappings", "label": "mappings", "file": "megatron/core/tensor_parallel/mappings.py", "path": "megatron/core/tensor_parallel/mappings.py", "group": "parallel", "groupId": "g0", "desc": "copy_to_tensor_model_parallel_region and gather_from_sequence_parallel_region move activations across groups."},
+    {"id": "column_linear", "label": "ColumnParallelLinear", "file": "megatron/core/tensor_parallel/layers.py", "path": "megatron/core/tensor_parallel/layers.py", "group": "tensor", "groupId": "g1", "desc": "Splits weight matrices along the output dimension so each rank owns an activation shard."},
+    {"id": "row_linear", "label": "RowParallelLinear", "file": "megatron/core/tensor_parallel/layers.py", "path": "megatron/core/tensor_parallel/layers.py", "group": "tensor", "groupId": "g1", "desc": "Splits weights along the input dimension and all-reduces the partial outputs."},
+    {"id": "mlp", "label": "MLP", "file": "megatron/core/transformer/mlp.py", "path": "megatron/core/transformer/mlp.py", "group": "transformer", "groupId": "g2", "desc": "Pairs a column-parallel fc1 with a row-parallel fc2 and a GELU fusion."},
+    {"id": "attention", "label": "SelfAttention", "file": "megatron/core/transformer/attention.py", "path": "megatron/core/transformer/attention.py", "group": "transformer", "groupId": "g2", "desc": "Routes QKV and output projections through the parallel layers."},
+    {"id": "dot_product", "label": "DotProductAttention", "file": "megatron/core/transformer/dot_product_attention.py", "path": "megatron/core/transformer/dot_product_attention.py", "group": "transformer", "groupId": "g2", "desc": "Scaled dot-product core with backend dispatch for fused kernels."},
+    {"id": "transformer_layer", "label": "TransformerLayer", "file": "megatron/core/transformer/transformer_layer.py", "path": "megatron/core/transformer/transformer_layer.py", "group": "transformer", "groupId": "g2", "desc": "Chains norms, the attention branch and the MLP branch with residuals."},
+    {"id": "transformer_block", "label": "TransformerBlock", "file": "megatron/core/transformer/transformer_block.py", "path": "megatron/core/transformer/transformer_block.py", "group": "transformer", "groupId": "g2", "desc": "Builds and runs the full layer list defined by a layer spec."},
+    {"id": "distrib_optimizer", "label": "DistributedOptimizer", "file": "megatron/core/optimizer/distrib_optimizer.py", "path": "megatron/core/optimizer/distrib_optimizer.py", "group": "training", "groupId": "g3", "desc": "Shards optimizer state across the data group instead of replicating it."},
+    {"id": "arguments", "label": "arguments", "file": "megatron/training/arguments.py", "path": "megatron/training/arguments.py", "group": "training", "groupId": "g3", "desc": "parse_args and validate_args turn CLI flags into a consistent world layout."},
+    {"id": "training", "label": "training", "file": "megatron/training/training.py", "path": "megatron/training/training.py", "group": "training", "groupId": "g3", "desc": "train() runs the step loop, logging and evaluation."}
+  ],
+  "edges": [
+    {"from": "arguments", "to": "training", "label": "validated flags for"},
+    {"from": "arguments", "to": "parallel_state", "label": "sizes"},
+    {"from": "training", "to": "parallel_state", "label": "initializes"},
+    {"from": "parallel_state", "to": "mappings", "label": "backs collectives"},
+    {"from": "parallel_state", "to": "distrib_optimizer", "label": "assigns DP ranks"},
+    {"from": "mappings", "to": "column_linear", "label": "copy-in"},
+    {"from": "mappings", "to": "row_linear", "label": "reduce-out"},
+    {"from": "mappings", "to": "dot_product", "label": "sequence gather"},
+    {"from": "column_linear", "to": "mlp", "label": "fc1"},
+    {"from": "row_linear", "to": "mlp", "label": "fc2"},
+    {"from": "column_linear", "to": "attention", "label": "QKV proj"},
+    {"from": "row_linear", "to": "attention", "label": "out proj"},
+    {"from": "dot_product", "to": "attention", "label": "core math"},
+    {"from": "attention", "to": "transformer_layer", "label": "attention branch"},
+    {"from": "mlp", "to": "transformer_layer", "label": "MLP branch"},
+    {"from": "transformer_layer", "to": "transformer_block", "label": "stacked in"},
+    {"from": "transformer_block", "to": "training", "label": "trained by"},
+    {"from": "distrib_optimizer", "to": "training", "label": "steps grads"}
+  ]
+}
