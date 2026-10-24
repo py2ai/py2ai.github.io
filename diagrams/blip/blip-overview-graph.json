@@ -1,0 +1,44 @@
+{
+  "owner": "salesforce",
+  "repo": "BLIP",
+  "branch": "main",
+  "groups": [
+    {"id": "g0", "name": "vision", "label": "Vision encoder"},
+    {"id": "g1", "name": "med", "label": "MED text model"},
+    {"id": "g2", "name": "pretrain", "label": "Pretraining"},
+    {"id": "g3", "name": "tasks", "label": "Task heads"},
+    {"id": "g4", "name": "infra", "label": "Training infra"}
+  ],
+  "nodes": [
+    {"id": "vit", "label": "VisionTransformer", "file": "models/vit.py", "path": "models/vit.py", "group": "vision", "groupId": "g0", "desc": "ViT-B/L patch encoder (16px patches, depth 12/24) producing image embeddings"},
+    {"id": "interpolate_pos_embed", "label": "interpolate_pos_embed", "file": "models/vit.py", "path": "models/vit.py", "group": "vision", "groupId": "g0", "desc": "Bicubic resize of checkpoint position embeddings when image size changes"},
+    {"id": "bert_model", "label": "BertModel (MED encoder)", "file": "models/med.py", "path": "models/med.py", "group": "med", "groupId": "g1", "desc": "Modified BERT that switches between unimodal text mode and multimodal cross-attention mode"},
+    {"id": "bert_layer", "label": "BertLayer + crossattention", "file": "models/med.py", "path": "models/med.py", "group": "med", "groupId": "g1", "desc": "Transformer layer whose cross-attention takes image embeddings as keys/values in multimodal mode"},
+    {"id": "bert_lm_head_model", "label": "BertLMHeadModel", "file": "models/med.py", "path": "models/med.py", "group": "med", "groupId": "g1", "desc": "Causal text decoder over image embeddings for captioning, with label-smoothed LM loss"},
+    {"id": "blip_pretrain_cls", "label": "BLIP_Pretrain", "file": "models/blip_pretrain.py", "path": "models/blip_pretrain.py", "group": "pretrain", "groupId": "g2", "desc": "Ties ViT + MED encoder/decoder and computes the ITC/ITM/LM loss triplet with momentum encoders and a feature queue"},
+    {"id": "pretrain_train", "label": "train()", "file": "pretrain.py", "path": "pretrain.py", "group": "infra", "groupId": "g4", "desc": "Pretraining loop that sums loss_ita + loss_itm + loss_lm and steps AdamW"},
+    {"id": "metric_logger", "label": "MetricLogger", "file": "utils.py", "path": "utils.py", "group": "infra", "groupId": "g4", "desc": "Smoothed per-meter logging for loss_ita/loss_itm/loss_lm and lr"},
+    {"id": "blip_decoder_cls", "label": "BLIP_Decoder", "file": "models/blip.py", "path": "models/blip.py", "group": "tasks", "groupId": "g3", "desc": "Captioning head: ViT + BertLMHeadModel with beam-search/nucleus generate()"},
+    {"id": "blip_itm_cls", "label": "BLIP_ITM", "file": "models/blip_itm.py", "path": "models/blip_itm.py", "group": "tasks", "groupId": "g3", "desc": "Image-text matching head: vision_proj/text_proj projections plus a 2-way itm_head"},
+    {"id": "blip_vqa_cls", "label": "BLIP_VQA", "file": "models/blip_vqa.py", "path": "models/blip_vqa.py", "group": "tasks", "groupId": "g3", "desc": "VQA head: multimodal question encoder + answer decoder with generate or answer-ranking inference"},
+    {"id": "blip_retrieval_cls", "label": "BLIP_Retrieval", "file": "models/blip_retrieval.py", "path": "models/blip_retrieval.py", "group": "tasks", "groupId": "g3", "desc": "Retrieval head: ITC similarity plus hard-negative ITM finetuning over a 57,600-entry queue"}
+  ],
+  "edges": [
+    {"from": "blip_pretrain_cls", "to": "vit", "label": "visual encoder"},
+    {"from": "blip_pretrain_cls", "to": "bert_model", "label": "text encoder + ITM"},
+    {"from": "blip_pretrain_cls", "to": "bert_lm_head_model", "label": "caption decoder"},
+    {"from": "bert_model", "to": "bert_layer", "label": "stacked layers"},
+    {"from": "vit", "to": "bert_layer", "label": "image embeds as K/V"},
+    {"from": "interpolate_pos_embed", "to": "vit", "label": "resize pos embed at load"},
+    {"from": "blip_decoder_cls", "to": "bert_lm_head_model", "label": "text decoder"},
+    {"from": "blip_decoder_cls", "to": "vit", "label": "visual encoder"},
+    {"from": "blip_itm_cls", "to": "bert_model", "label": "multimodal/unimodal encoder"},
+    {"from": "blip_itm_cls", "to": "vit", "label": "visual encoder"},
+    {"from": "blip_vqa_cls", "to": "bert_model", "label": "question encoder"},
+    {"from": "blip_vqa_cls", "to": "bert_lm_head_model", "label": "answer decoder"},
+    {"from": "blip_retrieval_cls", "to": "bert_model", "label": "text encoder + ITM"},
+    {"from": "blip_retrieval_cls", "to": "vit", "label": "visual encoder"},
+    {"from": "pretrain_train", "to": "blip_pretrain_cls", "label": "loss_ita + loss_itm + loss_lm"},
+    {"from": "pretrain_train", "to": "metric_logger", "label": "smoothed meters"}
+  ]
+}
