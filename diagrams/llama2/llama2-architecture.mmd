@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_g0["Model"]
+  node_model_args["ModelArgs<br/>[model.py]"]
+  node_transformer["Transformer<br/>[model.py]"]
+  node_transformer_block["TransformerBlock<br/>[model.py]"]
+  node_attention["Attention<br/>[model.py]"]
+  node_cache_k["cache_k / cache_v<br/>[model.py]"]
+  node_repeat_kv["repeat_kv<br/>[model.py]"]
+  node_feedforward["FeedForward<br/>[model.py]"]
+  node_rmsnorm["RMSNorm<br/>[model.py]"]
+  node_precompute_freqs_cis["precompute_freqs_cis<br/>[model.py]"]
+  node_apply_rotary_emb["apply_rotary_emb<br/>[model.py]"]
+  node_parallel_embedding["tok_embeddings<br/>[model.py]"]
+  node_output_layer["output head<br/>[model.py]"]
+  node_causal_mask["causal mask<br/>[model.py]"]
+end
+
+subgraph group_g1["Tokenizer"]
+  node_tokenizer["Tokenizer<br/>[tokenizer.py]"]
+  node_encode["encode<br/>[tokenizer.py]"]
+  node_decode["decode<br/>[tokenizer.py]"]
+end
+
+subgraph group_g2["Generation"]
+  node_llama["Llama<br/>[generation.py]"]
+  node_build["Llama.build<br/>[generation.py]"]
+  node_model_parallel["fairscale MP init<br/>[generation.py]"]
+  node_checkpoint_load["torch.load shard<br/>[generation.py]"]
+  node_generate["generate<br/>[generation.py]"]
+  node_sample_top_p["sample_top_p<br/>[generation.py]"]
+  node_eos_check["EOS stopping<br/>[generation.py]"]
+  node_text_completion["text_completion<br/>[generation.py]"]
+  node_chat_completion["chat_completion<br/>[generation.py]"]
+  node_chat_template["&#91;INST&#93;/&lt;&lt;SYS&gt;&gt; tags<br/>[generation.py]"]
+  node_message_types["Message / Dialog<br/>[generation.py]"]
+end
+
+subgraph group_g3["Examples"]
+  node_example_chat["example_chat_completion.py"]
+  node_example_text["example_text_completion.py"]
+end
+
+subgraph group_g4["Packaging &amp; Weights"]
+  node_setup["setup.py<br/>[setup.py]"]
+  node_requirements["requirements.txt<br/>[requirements.txt]"]
+  node_readme["README.md<br/>[README.md]"]
+  node_download_sh["download.sh<br/>[download.sh]"]
+end
+
+node_model_args -->|"configures"| node_transformer
+node_transformer -->|"stacks n_layers of"| node_transformer_block
+node_transformer -->|"embeds tokens via"| node_parallel_embedding
+node_transformer -->|"projects logits via"| node_output_layer
+node_transformer -->|"precomputes RoPE tables with"| node_precompute_freqs_cis
+node_transformer -->|"final norm via"| node_rmsnorm
+node_transformer -->|"builds per step"| node_causal_mask
+node_transformer_block -->|"self-attention sublayer"| node_attention
+node_transformer_block -->|"SwiGLU sublayer"| node_feedforward
+node_transformer_block -->|"pre-norms with"| node_rmsnorm
+node_attention -->|"applies"| node_apply_rotary_emb
+node_attention -->|"writes incremental KV to"| node_cache_k
+node_attention -->|"expands KV heads via"| node_repeat_kv
+node_attention -->|"masks scores with"| node_causal_mask
+node_precompute_freqs_cis -->|"freqs_cis consumed by"| node_apply_rotary_emb
+node_tokenizer -->|"exposes"| node_encode
+node_tokenizer -->|"exposes"| node_decode
+node_model_parallel -->|"initializes NCCL + MP inside"| node_build
+node_build -->|"reads rank shard via"| node_checkpoint_load
+node_build -->|"hydrates params.json into"| node_model_args
+node_build -->|"sets vocab_size, instantiates"| node_tokenizer
+node_build -->|"load_state_dict into"| node_transformer
+node_llama -->|"constructed via"| node_build
+node_llama -->|"decodes with"| node_generate
+node_llama -->|"exposes"| node_text_completion
+node_llama -->|"exposes"| node_chat_completion
+node_text_completion -->|"calls"| node_generate
+node_chat_completion -->|"calls"| node_generate
+node_chat_completion -->|"renders dialogs with"| node_chat_template
+node_chat_completion -->|"validates role-ordered"| node_message_types
+node_chat_template -->|"wraps &#91;INST&#93; turns before"| node_encode
+node_generate -->|"forward passes through"| node_transformer
+node_generate -->|"reads pad/eos ids from"| node_tokenizer
+node_generate -->|"nucleus-samples via"| node_sample_top_p
+node_generate -->|"stops per row with"| node_eos_check
+node_example_chat -->|"entry point uses"| node_llama
+node_example_chat -->|"demos"| node_chat_completion
+node_example_text -->|"entry point uses"| node_llama
+node_example_text -->|"demos"| node_text_completion
+node_setup -->|"installs"| node_requirements
+node_readme -->|"quick-start runs"| node_example_chat
+node_readme -->|"documents gated weights in"| node_download_sh
+node_download_sh -->|"fetches shards later loaded by"| node_checkpoint_load
+
+click node_model_args "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_transformer "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_transformer_block "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_attention "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_cache_k "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_repeat_kv "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_feedforward "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_rmsnorm "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_precompute_freqs_cis "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_apply_rotary_emb "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_parallel_embedding "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_output_layer "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_causal_mask "https://github.com/meta-llama/llama/blob/main/llama/model.py"
+click node_tokenizer "https://github.com/meta-llama/llama/blob/main/llama/tokenizer.py"
+click node_encode "https://github.com/meta-llama/llama/blob/main/llama/tokenizer.py"
+click node_decode "https://github.com/meta-llama/llama/blob/main/llama/tokenizer.py"
+click node_llama "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_build "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_model_parallel "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_checkpoint_load "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_generate "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_sample_top_p "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_eos_check "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_text_completion "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_chat_completion "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_chat_template "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_message_types "https://github.com/meta-llama/llama/blob/main/llama/generation.py"
+click node_example_chat "https://github.com/meta-llama/llama/blob/main/example_chat_completion.py"
+click node_example_text "https://github.com/meta-llama/llama/blob/main/example_text_completion.py"
+click node_setup "https://github.com/meta-llama/llama/blob/main/setup.py"
+click node_requirements "https://github.com/meta-llama/llama/blob/main/requirements.txt"
+click node_readme "https://github.com/meta-llama/llama/blob/main/README.md"
+click node_download_sh "https://github.com/meta-llama/llama/blob/main/download.sh"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_model_args,node_transformer,node_transformer_block,node_attention,node_cache_k,node_repeat_kv,node_feedforward,node_rmsnorm,node_precompute_freqs_cis,node_apply_rotary_emb,node_parallel_embedding,node_output_layer,node_causal_mask toneBlue
+class node_tokenizer,node_encode,node_decode toneAmber
+class node_llama,node_build,node_model_parallel,node_checkpoint_load,node_generate,node_sample_top_p,node_eos_check,node_text_completion,node_chat_completion,node_chat_template,node_message_types toneMint
+class node_example_chat,node_example_text toneRose
+class node_setup,node_requirements,node_readme,node_download_sh toneIndigo
