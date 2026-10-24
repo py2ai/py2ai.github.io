@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_g0["Inference Path"]
+  node_pybind["pybind11 _sentencepiece"]
+  node_processor["SentencePieceProcessor::Encode"]
+  node_populate["PopulateSentencePieceText"]
+  node_decode["SentencePieceProcessor::Decode"]
+  node_normalizer["Normalizer::Normalize<br/>[normalizer.cc]"]
+  node_prefix_matcher["PrefixMatcher::PrefixMatch<br/>[normalizer.cc]"]
+end
+
+subgraph group_g1["Lattice &amp; Viterbi"]
+  node_lattice["Lattice<br/>[unigram_model.cc]"]
+  node_viterbi["Lattice::Viterbi<br/>[unigram_model.cc]"]
+  node_marginal["Lattice::PopulateMarginal<br/>[unigram_model.cc]"]
+end
+
+subgraph group_g2["Model Internals"]
+  node_model_interface["ModelInterface<br/>[model_interface.cc]"]
+  node_piece_to_id["PieceToId<br/>[model_interface.cc]"]
+  node_init_pieces["InitializePieces<br/>[model_interface.cc]"]
+  node_unigram_model["unigram::Model<br/>[unigram_model.cc]"]
+  node_encode_opt["Model::EncodeOptimized<br/>[unigram_model.cc]"]
+  node_populate_nodes["Model::PopulateNodes<br/>[unigram_model.cc]"]
+  node_bpe_sample["bpe::Model::SampleEncode<br/>[bpe_model.cc]"]
+  node_word_enc["word::Model::Encode<br/>[word_model.cc]"]
+  node_char_enc["char::Model::Encode<br/>[char_model.cc]"]
+  node_factory["ModelFactory<br/>[model_factory.cc]"]
+end
+
+subgraph group_g3["Unigram Training"]
+  node_sp_trainer["SentencePieceTrainer::Train"]
+  node_trainer_factory["TrainerFactory<br/>[trainer_factory.cc]"]
+  node_utrainer["UnigramTrainer::Train"]
+  node_seed["MakeSeedSentencePieces"]
+  node_estep["Trainer::RunEStep"]
+  node_mstep["Trainer::RunMStep"]
+  node_prune["Trainer::PruneSentencePieces"]
+  node_trainer_interface["TrainerInterface"]
+  node_load_sentences["TrainerInterface::LoadSentences"]
+  node_valid_piece["IsValidSentencePiece"]
+  node_serialize["TrainerInterface::Serialize"]
+  node_spm_train["spm_train main<br/>[spm_train_main.cc]"]
+end
+
+subgraph group_g4["Model Format"]
+  node_proto["ModelProto"]
+  node_trainerspec["TrainerSpec"]
+end
+
+node_pybind -->|"binds encode/decode"| node_processor
+node_pybind -->|"binds Trainer.train"| node_sp_trainer
+node_processor -->|"normalize step"| node_normalizer
+node_normalizer -->|"protect user symbols"| node_prefix_matcher
+node_processor -->|"align offsets"| node_populate
+node_processor -->|"inverse op"| node_decode
+node_populate -->|"reads pieces"| node_proto
+node_processor -->|"model_-&gt;Encode"| node_model_interface
+node_model_interface -->|"load pieces"| node_init_pieces
+node_model_interface -->|"id lookup"| node_piece_to_id
+node_init_pieces -->|"parses"| node_proto
+node_unigram_model -->|"default path"| node_encode_opt
+node_unigram_model -->|"NBest/Sample"| node_populate_nodes
+node_unigram_model -->|"subclass"| node_model_interface
+node_bpe_sample -->|"merge lookup"| node_piece_to_id
+node_bpe_sample -->|"subclass"| node_model_interface
+node_word_enc -->|"subclass"| node_model_interface
+node_char_enc -->|"subclass"| node_model_interface
+node_factory -->|"creates"| node_unigram_model
+node_factory -->|"creates"| node_bpe_sample
+node_factory -->|"creates"| node_word_enc
+node_factory -->|"creates"| node_char_enc
+node_populate_nodes -->|"Insert nodes"| node_lattice
+node_lattice -->|"best path"| node_viterbi
+node_lattice -->|"expected freq"| node_marginal
+node_encode_opt -->|"same DP idea"| node_viterbi
+node_spm_train -->|"CLI entry"| node_sp_trainer
+node_sp_trainer -->|"components"| node_trainer_factory
+node_sp_trainer -->|"reads flags"| node_trainerspec
+node_sp_trainer -->|"unigram path"| node_utrainer
+node_trainer_factory -->|"selects"| node_utrainer
+node_utrainer -->|"bootstrap vocab"| node_seed
+node_utrainer -->|"E step"| node_estep
+node_utrainer -->|"M step"| node_mstep
+node_utrainer -->|"cut pieces"| node_prune
+node_estep -->|"counts from lattice"| node_marginal
+node_estep -->|"scores corpus"| node_viterbi
+node_utrainer -->|"inherits"| node_trainer_interface
+node_trainer_interface -->|"corpus in"| node_load_sentences
+node_trainer_interface -->|"filters pieces"| node_valid_piece
+node_trainer_interface -->|"builds proto"| node_serialize
+node_serialize -->|"writes pieces"| node_proto
+node_trainer_interface -->|"Save .model"| node_proto
+
+click node_pybind "https://github.com/google/sentencepiece/blob/master/python/src/sentencepiece/sentencepiece_pybind.cc"
+click node_processor "https://github.com/google/sentencepiece/blob/master/src/sentencepiece_processor.cc"
+click node_populate "https://github.com/google/sentencepiece/blob/master/src/sentencepiece_processor.cc"
+click node_decode "https://github.com/google/sentencepiece/blob/master/src/sentencepiece_processor.cc"
+click node_normalizer "https://github.com/google/sentencepiece/blob/master/src/normalizer.cc"
+click node_prefix_matcher "https://github.com/google/sentencepiece/blob/master/src/normalizer.cc"
+click node_model_interface "https://github.com/google/sentencepiece/blob/master/src/model_interface.cc"
+click node_piece_to_id "https://github.com/google/sentencepiece/blob/master/src/model_interface.cc"
+click node_init_pieces "https://github.com/google/sentencepiece/blob/master/src/model_interface.cc"
+click node_unigram_model "https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc"
+click node_encode_opt "https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc"
+click node_populate_nodes "https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc"
+click node_bpe_sample "https://github.com/google/sentencepiece/blob/master/src/bpe_model.cc"
+click node_word_enc "https://github.com/google/sentencepiece/blob/master/src/word_model.cc"
+click node_char_enc "https://github.com/google/sentencepiece/blob/master/src/char_model.cc"
+click node_factory "https://github.com/google/sentencepiece/blob/master/src/model_factory.cc"
+click node_lattice "https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc"
+click node_viterbi "https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc"
+click node_marginal "https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc"
+click node_sp_trainer "https://github.com/google/sentencepiece/blob/master/src/sentencepiece_trainer.cc"
+click node_trainer_factory "https://github.com/google/sentencepiece/blob/master/src/trainer_factory.cc"
+click node_utrainer "https://github.com/google/sentencepiece/blob/master/src/unigram_model_trainer.cc"
+click node_seed "https://github.com/google/sentencepiece/blob/master/src/unigram_model_trainer.cc"
+click node_estep "https://github.com/google/sentencepiece/blob/master/src/unigram_model_trainer.cc"
+click node_mstep "https://github.com/google/sentencepiece/blob/master/src/unigram_model_trainer.cc"
+click node_prune "https://github.com/google/sentencepiece/blob/master/src/unigram_model_trainer.cc"
+click node_trainer_interface "https://github.com/google/sentencepiece/blob/master/src/trainer_interface.cc"
+click node_load_sentences "https://github.com/google/sentencepiece/blob/master/src/trainer_interface.cc"
+click node_valid_piece "https://github.com/google/sentencepiece/blob/master/src/trainer_interface.cc"
+click node_serialize "https://github.com/google/sentencepiece/blob/master/src/trainer_interface.cc"
+click node_spm_train "https://github.com/google/sentencepiece/blob/master/src/spm_train_main.cc"
+click node_proto "https://github.com/google/sentencepiece/blob/master/src/sentencepiece_model.proto"
+click node_trainerspec "https://github.com/google/sentencepiece/blob/master/src/sentencepiece_model.proto"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_pybind,node_processor,node_populate,node_decode,node_normalizer,node_prefix_matcher toneBlue
+class node_lattice,node_viterbi,node_marginal toneAmber
+class node_model_interface,node_piece_to_id,node_init_pieces,node_unigram_model,node_encode_opt,node_populate_nodes,node_bpe_sample,node_word_enc,node_char_enc,node_factory toneMint
+class node_sp_trainer,node_trainer_factory,node_utrainer,node_seed,node_estep,node_mstep,node_prune,node_trainer_interface,node_load_sentences,node_valid_piece,node_serialize,node_spm_train toneRose
+class node_proto,node_trainerspec toneIndigo
