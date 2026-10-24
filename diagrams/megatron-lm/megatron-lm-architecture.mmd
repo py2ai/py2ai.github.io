@@ -1,0 +1,134 @@
+flowchart TD
+
+subgraph group_g0["Parallelism"]
+  node_parallel_state["parallel_state<br/>[parallel_state.py]"]
+  node_mappings["mappings<br/>[mappings.py]"]
+end
+
+subgraph group_g1["Tensor Parallel"]
+  node_column_linear["ColumnParallelLinear<br/>[layers.py]"]
+  node_row_linear["RowParallelLinear<br/>[layers.py]"]
+  node_linear_async["LinearAsyncComm<br/>[layers.py]"]
+  node_cross_entropy["VocabParallelCE<br/>[cross_entropy.py]"]
+  node_random["CudaRNGStatesTracker<br/>[random.py]"]
+end
+
+subgraph group_g2["Transformer"]
+  node_transformer_config["TransformerConfig"]
+  node_mlp["MLP<br/>[mlp.py]"]
+  node_attention["SelfAttention<br/>[attention.py]"]
+  node_dot_product["DotProductAttention"]
+  node_multi_latent_attention["MultiLatentAttention"]
+  node_transformer_layer["TransformerLayer"]
+  node_transformer_block["TransformerBlock"]
+  node_spec_utils["spec_utils<br/>[spec_utils.py]"]
+end
+
+subgraph group_g3["Optimizer"]
+  node_optimizer_config["OptimizerConfig"]
+  node_optimizer_init["get_megatron_optimizer<br/>[__init__.py]"]
+  node_optimizer["MegatronOptimizer<br/>[optimizer.py]"]
+  node_distrib_optimizer["DistributedOptimizer"]
+end
+
+subgraph group_g4["Training Loop"]
+  node_initialize["initialize<br/>[initialize.py]"]
+  node_arguments["arguments<br/>[arguments.py]"]
+  node_training["training<br/>[training.py]"]
+  node_checkpointing["checkpointing<br/>[checkpointing.py]"]
+end
+
+subgraph group_g5["Models"]
+  node_gpt_model["GPTModel<br/>[gpt_model.py]"]
+  node_gpt_layer_specs["gpt_layer_specs<br/>[gpt_layer_specs.py]"]
+end
+
+subgraph group_g6["Distributed"]
+  node_ddp["DistributedDataParallel"]
+  node_finalize_model_grads["finalize_model_grads"]
+end
+
+node_initialize -->|"applies defaults"| node_arguments
+node_initialize -->|"creates groups with"| node_parallel_state
+node_arguments -->|"flags into"| node_transformer_config
+node_arguments -->|"validated flags"| node_training
+node_training -->|"assumes groups"| node_parallel_state
+node_training -->|"builds via"| node_optimizer_init
+node_training -->|"saves with"| node_checkpointing
+node_training -->|"invokes"| node_finalize_model_grads
+node_parallel_state -->|"provides groups"| node_mappings
+node_parallel_state -->|"sizes buckets"| node_ddp
+node_parallel_state -->|"DP ranks from"| node_distrib_optimizer
+node_mappings -->|"copy-in"| node_column_linear
+node_mappings -->|"reduce-out"| node_row_linear
+node_mappings -->|"sequence gather"| node_dot_product
+node_mappings -->|"vocab collectives"| node_cross_entropy
+node_column_linear -->|"runs through"| node_linear_async
+node_row_linear -->|"runs through"| node_linear_async
+node_column_linear -->|"fc1"| node_mlp
+node_row_linear -->|"fc2"| node_mlp
+node_column_linear -->|"QKV proj"| node_attention
+node_row_linear -->|"out proj"| node_attention
+node_dot_product -->|"backend of"| node_attention
+node_multi_latent_attention -->|"variant of"| node_attention
+node_random -->|"dropout RNG"| node_dot_product
+node_random -->|"dropout RNG"| node_transformer_layer
+node_attention -->|"attention branch"| node_transformer_layer
+node_mlp -->|"MLP branch"| node_transformer_layer
+node_transformer_config -->|"sizes"| node_transformer_layer
+node_transformer_layer -->|"stacked in"| node_transformer_block
+node_transformer_config -->|"sizes"| node_transformer_block
+node_spec_utils -->|"specs"| node_transformer_block
+node_gpt_layer_specs -->|"selects"| node_transformer_layer
+node_gpt_layer_specs -->|"specs for"| node_gpt_model
+node_transformer_block -->|"decoder of"| node_gpt_model
+node_cross_entropy -->|"loss head"| node_gpt_model
+node_optimizer_config -->|"configures"| node_optimizer_init
+node_optimizer_init -->|"wraps"| node_optimizer
+node_optimizer_init -->|"creates"| node_distrib_optimizer
+node_distrib_optimizer -->|"extends"| node_optimizer
+node_ddp -->|"buckets"| node_finalize_model_grads
+node_checkpointing -->|"shard-aware save"| node_distrib_optimizer
+node_transformer_config -->|"sizes"| node_gpt_model
+
+click node_initialize "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/training/initialize.py"
+click node_arguments "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/training/arguments.py"
+click node_training "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/training/training.py"
+click node_checkpointing "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/training/checkpointing.py"
+click node_parallel_state "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/parallel_state.py"
+click node_mappings "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/mappings.py"
+click node_column_linear "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/layers.py"
+click node_row_linear "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/layers.py"
+click node_linear_async "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/layers.py"
+click node_cross_entropy "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/cross_entropy.py"
+click node_random "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/tensor_parallel/random.py"
+click node_transformer_config "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/transformer_config.py"
+click node_mlp "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/mlp.py"
+click node_attention "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/attention.py"
+click node_dot_product "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/dot_product_attention.py"
+click node_multi_latent_attention "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/multi_latent_attention.py"
+click node_transformer_layer "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/transformer_layer.py"
+click node_transformer_block "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/transformer_block.py"
+click node_spec_utils "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/transformer/spec_utils.py"
+click node_optimizer_config "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/optimizer/optimizer_config.py"
+click node_optimizer_init "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/optimizer/__init__.py"
+click node_optimizer "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/optimizer/optimizer.py"
+click node_distrib_optimizer "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/optimizer/distrib_optimizer.py"
+click node_gpt_model "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/models/gpt/gpt_model.py"
+click node_gpt_layer_specs "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/models/gpt/gpt_layer_specs.py"
+click node_ddp "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/distributed/distributed_data_parallel.py"
+click node_finalize_model_grads "https://github.com/NVIDIA/Megatron-LM/blob/main/megatron/core/distributed/finalize_model_grads.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_parallel_state,node_mappings,node_ddp,node_finalize_model_grads toneBlue
+class node_column_linear,node_row_linear,node_linear_async,node_cross_entropy,node_random toneAmber
+class node_transformer_config,node_mlp,node_attention,node_dot_product,node_multi_latent_attention,node_transformer_layer,node_transformer_block,node_spec_utils toneMint
+class node_optimizer_config,node_optimizer_init,node_optimizer,node_distrib_optimizer toneRose
+class node_initialize,node_arguments,node_training,node_checkpointing toneIndigo
+class node_gpt_model,node_gpt_layer_specs toneTeal
