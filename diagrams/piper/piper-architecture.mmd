@@ -1,0 +1,121 @@
+flowchart TD
+
+subgraph group_cli["CLI Entry"]
+  node_cli_main{{"int main&#40;&#41;: stdin loop<br/>[main.cpp]"}}
+  node_cli_runconfig["RunConfig flags<br/>[main.cpp]"]
+  node_cli_rawout["rawOutputProc thread<br/>[main.cpp]"]
+end
+
+subgraph group_cppcore["C++ Core"]
+  node_cpp_hpp["piper.hpp structs<br/>[piper.hpp]"]
+  node_cpp_piper["piper.cpp engine<br/>[piper.cpp]"]
+  node_cpp_initialize["initialize&#40;&#41;: espeak-ng<br/>[piper.cpp]"]
+  node_cpp_loadvoice["loadVoice&#40;&#41;: config parse<br/>[piper.cpp]"]
+  node_cpp_loadmodel["loadModel&#40;&#41;: Ort::Session<br/>[piper.cpp]"]
+  node_cpp_synthesize["synthesize&#40;&#41;: ids to audio<br/>[piper.cpp]"]
+  node_cpp_texttoaudio["textToAudio&#40;&#41;: per sentence<br/>[piper.cpp]"]
+  node_cpp_jsonhpp["nlohmann JSON<br/>[json.hpp]"]
+end
+
+subgraph group_onnx["ONNX Runtime"]
+  node_onnx_session["ModelSession struct<br/>[piper.hpp]"]
+  node_onnx_run["session.onnx.Run&#40;&#41;<br/>[piper.cpp]"]
+end
+
+subgraph group_audio["Audio Out"]
+  node_audio_wavfile["WavHeader writer<br/>[wavfile.hpp]"]
+  node_audio_wavout["textToWavFile&#40;&#41;: PCM16<br/>[piper.cpp]"]
+end
+
+subgraph group_pypkg["Python Runtime"]
+  node_py_init["piper/__init__.py<br/>[__init__.py]"]
+  node_py_main{{"python -m piper<br/>[__main__.py]"}}
+  node_py_config["config.py<br/>[config.py]"]
+  node_py_const["const.py tokens<br/>[const.py]"]
+  node_py_voice["PiperVoice class<br/>[voice.py]"]
+  node_py_http["http_server.py<br/>[http_server.py]"]
+end
+
+subgraph group_train["Training &amp; Export"]
+  node_train_main{{"piper_train entry<br/>[__main__.py]"}}
+  node_train_preprocess["preprocess.py<br/>[preprocess.py]"]
+  node_train_export["export_onnx.py<br/>[export_onnx.py]"]
+  node_train_infer["infer_onnx.py<br/>[infer_onnx.py]"]
+  node_train_vits["SynthesizerTrn<br/>[models.py]"]
+  node_train_lightning["VitsModel &#40;PyTorch Lightning&#41;<br/>[lightning.py]"]
+end
+
+node_cli_runconfig -->|"parsed flags"| node_cli_main
+node_cli_main -->|"--output-raw thread"| node_cli_rawout
+node_cli_main -->|"piper::initialize"| node_cpp_initialize
+node_cli_main -->|"loadVoice&#40;&#41;"| node_cpp_loadvoice
+node_cli_main -->|"textToWavFile&#40;&#41;"| node_audio_wavout
+node_cpp_piper -->|"implements structs"| node_cpp_hpp
+node_cpp_piper -->|"setup"| node_cpp_initialize
+node_cpp_piper -->|"config parsing"| node_cpp_loadvoice
+node_cpp_piper -->|"model loading"| node_cpp_loadmodel
+node_cpp_piper -->|"core math"| node_cpp_synthesize
+node_cpp_piper -->|"text entry"| node_cpp_texttoaudio
+node_cpp_piper -->|"WAV export"| node_audio_wavout
+node_cpp_hpp -->|"json alias"| node_cpp_jsonhpp
+node_cpp_loadvoice -->|"json::parse"| node_cpp_jsonhpp
+node_cpp_loadvoice -->|"after config"| node_cpp_loadmodel
+node_cpp_loadmodel -->|"fills session"| node_onnx_session
+node_onnx_session -->|"tensor inputs"| node_cpp_synthesize
+node_cpp_synthesize -->|"executes"| node_onnx_run
+node_cpp_texttoaudio -->|"per phrase"| node_cpp_synthesize
+node_audio_wavout -->|"wraps"| node_cpp_texttoaudio
+node_audio_wavout -->|"writeWavHeader"| node_audio_wavfile
+node_py_main -->|"imports"| node_py_init
+node_py_init -->|"re-export"| node_py_voice
+node_py_voice -->|"PiperConfig.from_dict"| node_py_config
+node_py_voice -->|"BOS/EOS/PAD"| node_py_const
+node_py_http -->|"serves voices"| node_py_voice
+node_py_voice -->|"same ONNX I/O"| node_train_infer
+node_train_main -->|"dataset prep"| node_train_preprocess
+node_train_vits -->|"training wrapper"| node_train_lightning
+node_train_lightning -->|"checkpoint"| node_train_export
+node_train_export -->|"produces .onnx"| node_train_infer
+node_train_infer -->|"vits.utils helpers"| node_train_vits
+
+click node_cli_main "https://github.com/rhasspy/piper/blob/master/src/cpp/main.cpp"
+click node_cli_runconfig "https://github.com/rhasspy/piper/blob/master/src/cpp/main.cpp"
+click node_cli_rawout "https://github.com/rhasspy/piper/blob/master/src/cpp/main.cpp"
+click node_cpp_hpp "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.hpp"
+click node_cpp_piper "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_cpp_initialize "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_cpp_loadvoice "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_cpp_loadmodel "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_cpp_synthesize "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_cpp_texttoaudio "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_cpp_jsonhpp "https://github.com/rhasspy/piper/blob/master/src/cpp/json.hpp"
+click node_onnx_session "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.hpp"
+click node_onnx_run "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_audio_wavfile "https://github.com/rhasspy/piper/blob/master/src/cpp/wavfile.hpp"
+click node_audio_wavout "https://github.com/rhasspy/piper/blob/master/src/cpp/piper.cpp"
+click node_py_init "https://github.com/rhasspy/piper/blob/master/src/python_run/piper/__init__.py"
+click node_py_main "https://github.com/rhasspy/piper/blob/master/src/python_run/piper/__main__.py"
+click node_py_config "https://github.com/rhasspy/piper/blob/master/src/python_run/piper/config.py"
+click node_py_const "https://github.com/rhasspy/piper/blob/master/src/python_run/piper/const.py"
+click node_py_voice "https://github.com/rhasspy/piper/blob/master/src/python_run/piper/voice.py"
+click node_py_http "https://github.com/rhasspy/piper/blob/master/src/python_run/piper/http_server.py"
+click node_train_main "https://github.com/rhasspy/piper/blob/master/src/python/piper_train/__main__.py"
+click node_train_preprocess "https://github.com/rhasspy/piper/blob/master/src/python/piper_train/preprocess.py"
+click node_train_export "https://github.com/rhasspy/piper/blob/master/src/python/piper_train/export_onnx.py"
+click node_train_infer "https://github.com/rhasspy/piper/blob/master/src/python/piper_train/infer_onnx.py"
+click node_train_vits "https://github.com/rhasspy/piper/blob/master/src/python/piper_train/vits/models.py"
+click node_train_lightning "https://github.com/rhasspy/piper/blob/master/src/python/piper_train/vits/lightning.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_main,node_cli_runconfig,node_cli_rawout toneBlue
+class node_cpp_hpp,node_cpp_piper,node_cpp_initialize,node_cpp_loadvoice,node_cpp_loadmodel,node_cpp_synthesize,node_cpp_texttoaudio,node_cpp_jsonhpp toneAmber
+class node_onnx_session,node_onnx_run toneMint
+class node_audio_wavfile,node_audio_wavout toneRose
+class node_py_init,node_py_main,node_py_config,node_py_const,node_py_voice,node_py_http toneIndigo
+class node_train_main,node_train_preprocess,node_train_export,node_train_infer,node_train_vits,node_train_lightning toneTeal
