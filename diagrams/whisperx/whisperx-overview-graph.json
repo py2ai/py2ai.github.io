@@ -1,0 +1,41 @@
+{
+  "owner": "m-bain",
+  "repo": "whisperX",
+  "branch": "main",
+  "groups": [
+    {"id": "cli", "name": "CLI & Orchestration", "label": "CLI & Orchestration"},
+    {"id": "audio", "name": "Audio Frontend", "label": "Audio Frontend"},
+    {"id": "asr", "name": "Batched ASR Core", "label": "Batched ASR Core"},
+    {"id": "vad", "name": "Voice Activity Detection", "label": "Voice Activity Detection"},
+    {"id": "align", "name": "Forced Alignment", "label": "Forced Alignment"},
+    {"id": "diarize", "name": "Speaker Diarization", "label": "Speaker Diarization"},
+    {"id": "output", "name": "Writers & Output", "label": "Writers & Output"}
+  ],
+  "nodes": [
+    {"id": "cli", "label": "cli", "file": "whisperx/__main__.py", "path": "whisperx/__main__.py", "group": "cli", "groupId": "cli", "desc": "argparse entry point that wires every flag and dispatches the transcription task"},
+    {"id": "transcribe_task", "label": "transcribe_task", "file": "whisperx/transcribe.py", "path": "whisperx/transcribe.py", "group": "cli", "groupId": "cli", "desc": "three-stage orchestration: transcribe, align, then optionally diarize"},
+    {"id": "load_audio", "label": "load_audio", "file": "whisperx/audio.py", "path": "whisperx/audio.py", "group": "audio", "groupId": "audio", "desc": "decodes any input file to 16 kHz mono float32 via ffmpeg"},
+    {"id": "asr", "label": "asr engine", "file": "whisperx/asr.py", "path": "whisperx/asr.py", "group": "asr", "groupId": "asr", "desc": "load_model builds a faster-whisper CTranslate2 engine; transcribe() runs batched inference over VAD chunks"},
+    {"id": "vad", "label": "Vad base", "file": "whisperx/vads/vad.py", "path": "whisperx/vads/vad.py", "group": "vad", "groupId": "vad", "desc": "base class exposing the static merge_chunks chunker shared by backends"},
+    {"id": "vad_pyannote", "label": "Pyannote VAD", "file": "whisperx/vads/pyannote.py", "path": "whisperx/vads/pyannote.py", "group": "vad", "groupId": "vad", "desc": "load_vad_model default voice-activity backend with onset/offset thresholds"},
+    {"id": "vad_silero", "label": "Silero VAD", "file": "whisperx/vads/silero.py", "path": "whisperx/vads/silero.py", "group": "vad", "groupId": "vad", "desc": "lightweight Silero alternative selected with --vad_method silero"},
+    {"id": "align", "label": "align", "file": "whisperx/alignment.py", "path": "whisperx/alignment.py", "group": "align", "groupId": "align", "desc": "wav2vec2 forced alignment with Viterbi decoding for word-level timestamps"},
+    {"id": "diarize", "label": "diarize", "file": "whisperx/diarize.py", "path": "whisperx/diarize.py", "group": "diarize", "groupId": "diarize", "desc": "pyannote speaker turns plus assign_word_speakers to label each word"},
+    {"id": "writers", "label": "get_writer", "file": "whisperx/utils.py", "path": "whisperx/utils.py", "group": "output", "groupId": "output", "desc": "writer factory producing srt, vtt, tsv, json, txt and Audacity labels"}
+  ],
+  "edges": [
+    {"from": "cli", "to": "transcribe_task", "label": "dispatches args"},
+    {"from": "transcribe_task", "to": "load_audio", "label": "decode input"},
+    {"from": "transcribe_task", "to": "asr", "label": "load_model()"},
+    {"from": "asr", "to": "load_audio", "label": "SAMPLE_RATE slicing"},
+    {"from": "asr", "to": "vad", "label": "merge_chunks(30 s)"},
+    {"from": "asr", "to": "vad_pyannote", "label": "default backend"},
+    {"from": "asr", "to": "vad_silero", "label": "--vad_method silero"},
+    {"from": "vad_pyannote", "to": "vad", "label": "extends Vad"},
+    {"from": "vad_silero", "to": "vad", "label": "extends Vad"},
+    {"from": "transcribe_task", "to": "align", "label": "word timestamps"},
+    {"from": "transcribe_task", "to": "diarize", "label": "optional --diarize"},
+    {"from": "align", "to": "diarize", "label": "word timings"},
+    {"from": "transcribe_task", "to": "writers", "label": "srt / vtt / json / tsv"}
+  ]
+}
