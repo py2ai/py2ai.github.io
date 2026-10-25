@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_cli["CLI &amp; Orchestration"]
+  node_cli["cli<br/>[__main__.py]"]
+  node_transcribe_task["transcribe_task<br/>[transcribe.py]"]
+end
+
+subgraph group_audio["Audio Frontend"]
+  node_load_audio["load_audio<br/>[audio.py]"]
+  node_sample_rate["SAMPLE_RATE<br/>[audio.py]"]
+end
+
+subgraph group_asr["Batched ASR Core"]
+  node_load_model["load_model<br/>[asr.py]"]
+  node_asr_engine["faster-whisper wrapper<br/>[asr.py]"]
+  node_transcribe_batched["transcribe<br/>[asr.py]"]
+  node_encode["encode<br/>[asr.py]"]
+  node_generate_segment_batched["generate_segment_batched<br/>[asr.py]"]
+  node_detect_language["detect_language<br/>[asr.py]"]
+end
+
+subgraph group_vad["Voice Activity Detection"]
+  node_vad_base["Vad base<br/>[vad.py]"]
+  node_merge_chunks["merge_chunks<br/>[vad.py]"]
+  node_load_vad_model["load_vad_model<br/>[pyannote.py]"]
+  node_pyannote_vad["Pyannote<br/>[pyannote.py]"]
+  node_silero_vad["Silero<br/>[silero.py]"]
+end
+
+subgraph group_align["Forced Alignment"]
+  node_load_align_model["load_align_model<br/>[alignment.py]"]
+  node_align_models_hf["DEFAULT_ALIGN_MODELS_HF<br/>[alignment.py]"]
+  node_align["align<br/>[alignment.py]"]
+  node_get_trellis["get_trellis<br/>[alignment.py]"]
+  node_backtrack["backtrack<br/>[alignment.py]"]
+  node_merge_repeats["merge_repeats<br/>[alignment.py]"]
+  node_merge_words["merge_words<br/>[alignment.py]"]
+  node_interpolate_nans["interpolate_nans<br/>[utils.py]"]
+end
+
+subgraph group_diarize["Speaker Diarization"]
+  node_diarize_wrapper["diarization wrapper<br/>[diarize.py]"]
+  node_interval_tree["IntervalTree<br/>[diarize.py]"]
+  node_assign_word_speakers["assign_word_speakers<br/>[diarize.py]"]
+  node_segment_turn["Segment<br/>[diarize.py]"]
+end
+
+subgraph group_output["Writers &amp; Output"]
+  node_schema_types["result TypedDicts<br/>[schema.py]"]
+  node_get_writer["get_writer<br/>[utils.py]"]
+  node_write_srt["WriteSRT<br/>[utils.py]"]
+  node_write_vtt["WriteVTT<br/>[utils.py]"]
+  node_write_json["WriteJSON<br/>[utils.py]"]
+  node_write_tsv["WriteTSV<br/>[utils.py]"]
+end
+
+node_cli -->|"dispatches args"| node_transcribe_task
+node_transcribe_task -->|"per input file"| node_load_audio
+node_transcribe_task -->|"build engine"| node_load_model
+node_load_model -->|"instantiates"| node_asr_engine
+node_load_model -->|"default VAD"| node_load_vad_model
+node_load_model -->|"--vad_method silero"| node_silero_vad
+node_load_vad_model -->|"constructs"| node_pyannote_vad
+node_pyannote_vad -->|"extends"| node_vad_base
+node_silero_vad -->|"extends"| node_vad_base
+node_transcribe_task -->|"model.transcribe&#40;&#41;"| node_transcribe_batched
+node_transcribe_batched -->|"accepts str path"| node_load_audio
+node_transcribe_batched -->|"issubclass check"| node_vad_base
+node_transcribe_batched -->|"30 s chunks"| node_merge_chunks
+node_vad_base -->|"static helper"| node_merge_chunks
+node_transcribe_batched -->|"index slicing"| node_sample_rate
+node_transcribe_batched -->|"log-mel features"| node_encode
+node_encode -->|"StorageView"| node_asr_engine
+node_transcribe_batched -->|"batched decode"| node_generate_segment_batched
+node_generate_segment_batched -->|"beam search"| node_asr_engine
+node_transcribe_batched -->|"no --language"| node_detect_language
+node_detect_language -->|"reads logits"| node_asr_engine
+node_transcribe_task -->|"wav2vec2 model"| node_load_align_model
+node_load_align_model -->|"language lookup"| node_align_models_hf
+node_transcribe_task -->|"word timestamps"| node_align
+node_align -->|"Viterbi trellis"| node_get_trellis
+node_align -->|"best path"| node_backtrack
+node_align -->|"token spans"| node_merge_repeats
+node_merge_repeats -->|"word joins"| node_merge_words
+node_align -->|"gap filling"| node_interpolate_nans
+node_align -->|"typed result"| node_schema_types
+node_transcribe_task -->|"optional --diarize"| node_diarize_wrapper
+node_diarize_wrapper -->|"turn index"| node_interval_tree
+node_diarize_wrapper -->|"turn model"| node_segment_turn
+node_transcribe_task -->|"speaker per word"| node_assign_word_speakers
+node_assign_word_speakers -->|"overlap lookup"| node_interval_tree
+node_assign_word_speakers -->|"reads turns"| node_segment_turn
+node_transcribe_task -->|"format writer"| node_get_writer
+node_get_writer -->|"srt"| node_write_srt
+node_get_writer -->|"vtt"| node_write_vtt
+node_get_writer -->|"json"| node_write_json
+node_get_writer -->|"tsv"| node_write_tsv
+
+click node_cli "https://github.com/m-bain/whisperX/blob/main/whisperx/__main__.py"
+click node_transcribe_task "https://github.com/m-bain/whisperX/blob/main/whisperx/transcribe.py"
+click node_load_audio "https://github.com/m-bain/whisperX/blob/main/whisperx/audio.py"
+click node_sample_rate "https://github.com/m-bain/whisperX/blob/main/whisperx/audio.py"
+click node_load_model "https://github.com/m-bain/whisperX/blob/main/whisperx/asr.py"
+click node_asr_engine "https://github.com/m-bain/whisperX/blob/main/whisperx/asr.py"
+click node_transcribe_batched "https://github.com/m-bain/whisperX/blob/main/whisperx/asr.py"
+click node_encode "https://github.com/m-bain/whisperX/blob/main/whisperx/asr.py"
+click node_generate_segment_batched "https://github.com/m-bain/whisperX/blob/main/whisperx/asr.py"
+click node_detect_language "https://github.com/m-bain/whisperX/blob/main/whisperx/asr.py"
+click node_vad_base "https://github.com/m-bain/whisperX/blob/main/whisperx/vads/vad.py"
+click node_merge_chunks "https://github.com/m-bain/whisperX/blob/main/whisperx/vads/vad.py"
+click node_load_vad_model "https://github.com/m-bain/whisperX/blob/main/whisperx/vads/pyannote.py"
+click node_pyannote_vad "https://github.com/m-bain/whisperX/blob/main/whisperx/vads/pyannote.py"
+click node_silero_vad "https://github.com/m-bain/whisperX/blob/main/whisperx/vads/silero.py"
+click node_load_align_model "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_align_models_hf "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_align "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_get_trellis "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_backtrack "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_merge_repeats "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_merge_words "https://github.com/m-bain/whisperX/blob/main/whisperx/alignment.py"
+click node_interpolate_nans "https://github.com/m-bain/whisperX/blob/main/whisperx/utils.py"
+click node_schema_types "https://github.com/m-bain/whisperX/blob/main/whisperx/schema.py"
+click node_diarize_wrapper "https://github.com/m-bain/whisperX/blob/main/whisperx/diarize.py"
+click node_interval_tree "https://github.com/m-bain/whisperX/blob/main/whisperx/diarize.py"
+click node_assign_word_speakers "https://github.com/m-bain/whisperX/blob/main/whisperx/diarize.py"
+click node_segment_turn "https://github.com/m-bain/whisperX/blob/main/whisperx/diarize.py"
+click node_get_writer "https://github.com/m-bain/whisperX/blob/main/whisperx/utils.py"
+click node_write_srt "https://github.com/m-bain/whisperX/blob/main/whisperx/utils.py"
+click node_write_vtt "https://github.com/m-bain/whisperX/blob/main/whisperx/utils.py"
+click node_write_json "https://github.com/m-bain/whisperX/blob/main/whisperx/utils.py"
+click node_write_tsv "https://github.com/m-bain/whisperX/blob/main/whisperx/utils.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli,node_transcribe_task,node_schema_types,node_get_writer,node_write_srt,node_write_vtt,node_write_json,node_write_tsv toneBlue
+class node_load_audio,node_sample_rate toneAmber
+class node_load_model,node_asr_engine,node_transcribe_batched,node_encode,node_generate_segment_batched,node_detect_language toneMint
+class node_vad_base,node_merge_chunks,node_load_vad_model,node_pyannote_vad,node_silero_vad toneRose
+class node_load_align_model,node_align_models_hf,node_align,node_get_trellis,node_backtrack,node_merge_repeats,node_merge_words,node_interpolate_nans toneIndigo
+class node_diarize_wrapper,node_interval_tree,node_assign_word_speakers,node_segment_turn toneTeal
