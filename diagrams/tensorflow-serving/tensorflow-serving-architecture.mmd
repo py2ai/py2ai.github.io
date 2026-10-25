@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_entry["Entry"]
+  node_main["main.cc<br/>[main.cc]"]
+end
+
+subgraph group_server["Server Wiring"]
+  node_server["Server<br/>[server.cc]"]
+  node_server_core["ServerCore<br/>[server_core.cc]"]
+  node_platform_config["PlatformConfigMap"]
+end
+
+subgraph group_api["Request APIs"]
+  node_prediction_service["PredictionServiceImpl"]
+  node_http_server["HttpServer<br/>[http_server.cc]"]
+  node_http_rest_api_handler["HttpRestApiHandler"]
+  node_get_model_status["GetModelStatusImpl"]
+  node_predict_impl["TensorflowPredictor<br/>[predict_impl.cc]"]
+  node_predict_util["RunPredict<br/>[predict_util.cc]"]
+end
+
+subgraph group_sources["Model Discovery"]
+  node_fs_source["FileSystemStoragePathSource"]
+  node_router["DynamicSourceRouter"]
+  node_source["Source<br/>[source.h]"]
+end
+
+subgraph group_manager["Servable Manager"]
+  node_av_manager["AspiredVersionsManager"]
+  node_basic_manager["BasicManager<br/>[basic_manager.h]"]
+  node_manager["Manager<br/>[manager.h]"]
+  node_policy["AspiredVersionPolicy"]
+  node_av_policy["AvailabilityPreservingPolicy"]
+  node_rp_policy["ResourcePreservingPolicy"]
+  node_loader["Loader<br/>[loader.h]"]
+  node_loader_harness["LoaderHarness<br/>[loader_harness.h]"]
+  node_servable_handle["ServableHandle<br/>[servable_handle.h]"]
+  node_state_monitor["ServableStateMonitor"]
+  node_servable_state["ServableState<br/>[servable_state.h]"]
+end
+
+subgraph group_adapters["Load Adapters"]
+  node_adapter["SavedModelBundleSourceAdapter"]
+  node_source_adapter["SourceAdapter<br/>[source_adapter.h]"]
+  node_bundle_factory["SavedModelBundleFactory"]
+  node_bundle_factory_util["bundle_factory_util"]
+  node_warmup["SavedModelWarmup"]
+  node_tfrt_factory["TfrtSavedModelFactory"]
+end
+
+subgraph group_batching["Request Batching"]
+  node_batching_session["BatchingSession"]
+  node_batch_scheduler["StreamingBatchScheduler"]
+  node_batching_util["batching_util<br/>[batching_util.cc]"]
+end
+
+node_main -->|"BuildAndStart"| node_server
+node_server -->|"creates ServerCore"| node_server_core
+node_platform_config -->|"supplies adapter config"| node_server_core
+node_server -->|"registers gRPC service"| node_prediction_service
+node_server -->|"starts REST listener"| node_http_server
+node_http_server -->|"dispatches requests"| node_http_rest_api_handler
+node_http_rest_api_handler -->|"resolves via core"| node_server_core
+node_prediction_service -->|"delegates Predict"| node_predict_impl
+node_prediction_service -->|"GetModelStatus"| node_get_model_status
+node_predict_impl -->|"acquires handle"| node_servable_handle
+node_predict_impl -->|"RunPredict"| node_predict_util
+node_get_model_status -->|"queries servable states"| node_manager
+node_manager -->|"returns scoped handle"| node_servable_handle
+node_av_manager -->|"extends"| node_basic_manager
+node_basic_manager -->|"implements"| node_manager
+node_av_manager -->|"orders aspired versions"| node_policy
+node_policy -->|"default policy"| node_av_policy
+node_policy -->|"memory-first policy"| node_rp_policy
+node_av_manager -->|"advances state machine"| node_loader_harness
+node_loader_harness -->|"calls Load/Unload"| node_loader
+node_av_manager -->|"publishes events"| node_state_monitor
+node_state_monitor -->|"records snapshots"| node_servable_state
+node_state_monitor -->|"WaitUntilModelsAvailable"| node_server_core
+node_server_core -->|"CreateStoragePathSource"| node_fs_source
+node_fs_source -->|"implements Source"| node_source
+node_fs_source -->|"emits aspired versions"| node_router
+node_server_core -->|"CreateRouter"| node_router
+node_router -->|"routes per model"| node_adapter
+node_adapter -->|"specializes"| node_source_adapter
+node_adapter -->|"delegates bundle creation"| node_bundle_factory
+node_adapter -->|"emits a Loader per version"| node_loader
+node_bundle_factory -->|"resource and batching helpers"| node_bundle_factory_util
+node_bundle_factory_util -->|"WrapSessionForBatching"| node_batching_session
+node_bundle_factory -->|"RunSavedModelWarmup"| node_warmup
+node_bundle_factory -->|"TFRT sibling factory"| node_tfrt_factory
+node_server_core -->|"CreateAspiredVersionsManager"| node_av_manager
+node_server_core -->|"CreateAdapters"| node_adapter
+node_server_core -->|"default version policy"| node_av_policy
+node_av_manager -->|"drives Load&#40;&#41;"| node_loader
+node_batching_session -->|"queues tasks"| node_batch_scheduler
+node_batching_session -->|"pads and merges tensors"| node_batching_util
+node_predict_impl -->|"runs batched session"| node_batching_session
+
+click node_main "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/main.cc"
+click node_server "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/server.cc"
+click node_server_core "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/server_core.cc"
+click node_platform_config "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/platform_config_util.cc"
+click node_prediction_service "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/prediction_service_impl.cc"
+click node_http_server "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/http_server.cc"
+click node_http_rest_api_handler "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/http_rest_api_handler.cc"
+click node_get_model_status "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/model_servers/get_model_status_impl.cc"
+click node_predict_impl "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/predict_impl.cc"
+click node_predict_util "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/predict_util.cc"
+click node_fs_source "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/sources/storage_path/file_system_storage_path_source.cc"
+click node_router "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/dynamic_source_router.h"
+click node_source "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/source.h"
+click node_av_manager "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/aspired_versions_manager.h"
+click node_basic_manager "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/basic_manager.h"
+click node_manager "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/manager.h"
+click node_policy "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/aspired_version_policy.h"
+click node_av_policy "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/availability_preserving_policy.h"
+click node_rp_policy "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/resource_preserving_policy.h"
+click node_loader "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/loader.h"
+click node_loader_harness "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/loader_harness.h"
+click node_servable_handle "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/servable_handle.h"
+click node_state_monitor "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/servable_state_monitor.h"
+click node_servable_state "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/servable_state.h"
+click node_adapter "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/saved_model_bundle_source_adapter.cc"
+click node_source_adapter "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/core/source_adapter.h"
+click node_bundle_factory "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/saved_model_bundle_factory.cc"
+click node_bundle_factory_util "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/bundle_factory_util.cc"
+click node_warmup "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/saved_model_warmup.cc"
+click node_tfrt_factory "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/servables/tensorflow/tfrt_saved_model_factory.cc"
+click node_batching_session "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/batching/batching_session.cc"
+click node_batch_scheduler "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/batching/streaming_batch_scheduler.h"
+click node_batching_util "https://github.com/tensorflow/serving/blob/master/tensorflow_serving/batching/batching_util.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_batching_session,node_batch_scheduler,node_batching_util toneBlue
+class node_server,node_server_core,node_platform_config toneAmber
+class node_prediction_service,node_http_server,node_http_rest_api_handler,node_get_model_status,node_predict_impl,node_predict_util toneMint
+class node_fs_source,node_router,node_source toneRose
+class node_av_manager,node_basic_manager,node_manager,node_policy,node_av_policy,node_rp_policy,node_loader,node_loader_harness,node_servable_handle,node_state_monitor,node_servable_state toneIndigo
+class node_adapter,node_source_adapter,node_bundle_factory,node_bundle_factory_util,node_warmup,node_tfrt_factory toneTeal
