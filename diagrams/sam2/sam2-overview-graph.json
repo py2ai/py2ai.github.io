@@ -1,0 +1,42 @@
+{
+  "owner": "facebookresearch",
+  "repo": "sam2",
+  "branch": "main",
+  "groups": [
+    {"id": "entrypoints", "name": "entrypoints", "label": "User-Facing Entry Points"},
+    {"id": "assembly", "name": "assembly", "label": "Model Assembly"},
+    {"id": "core", "name": "core", "label": "Streaming Core"},
+    {"id": "vision", "name": "vision", "label": "Vision Backbone"},
+    {"id": "memory", "name": "memory", "label": "Memory Stack"},
+    {"id": "heads", "name": "heads", "label": "SAM Promptable Heads"}
+  ],
+  "nodes": [
+    {"id": "img_pred", "label": "SAM2ImagePredictor", "file": "sam2/sam2_image_predictor.py", "path": "sam2/sam2_image_predictor.py", "group": "entrypoints", "groupId": "entrypoints", "desc": "Interactive image segmentation: set_image, then predict from points, boxes, or masks"},
+    {"id": "vid_pred", "label": "SAM2VideoPredictor", "file": "sam2/sam2_video_predictor.py", "path": "sam2/sam2_video_predictor.py", "group": "entrypoints", "groupId": "entrypoints", "desc": "Video segmentation state machine: init_state, add_new_points_or_box, propagate_in_video"},
+    {"id": "amg", "label": "SAM2AutomaticMaskGenerator", "file": "sam2/automatic_mask_generator.py", "path": "sam2/automatic_mask_generator.py", "group": "entrypoints", "groupId": "entrypoints", "desc": "Prompt-free whole-image mask generation built on top of the image predictor"},
+    {"id": "build_sam2", "label": "build_sam2", "file": "sam2/build_sam.py", "path": "sam2/build_sam.py", "group": "assembly", "groupId": "assembly", "desc": "Hydra-driven factory that reads model configs, loads checkpoints, instantiates predictors"},
+    {"id": "sam2_base", "label": "SAM2Base", "file": "sam2/modeling/sam2_base.py", "path": "sam2/modeling/sam2_base.py", "group": "core", "groupId": "core", "desc": "The engine: track_step wires backbone features, memory, and SAM heads for every frame"},
+    {"id": "image_encoder", "label": "ImageEncoder", "file": "sam2/modeling/backbones/image_encoder.py", "path": "sam2/modeling/backbones/image_encoder.py", "group": "vision", "groupId": "vision", "desc": "Wraps the Hiera trunk with an FPN neck to emit multi-scale features"},
+    {"id": "hiera", "label": "Hiera", "file": "sam2/modeling/backbones/hieradet.py", "path": "sam2/modeling/backbones/hieradet.py", "group": "vision", "groupId": "vision", "desc": "Hierarchical ViT trunk using multi-scale attention blocks and window partitioning"},
+    {"id": "memory_encoder", "label": "MemoryEncoder", "file": "sam2/modeling/memory_encoder.py", "path": "sam2/modeling/memory_encoder.py", "group": "memory", "groupId": "memory", "desc": "Downsamples predicted masks into memory features fused via CX blocks"},
+    {"id": "memory_attention", "label": "MemoryAttention", "file": "sam2/modeling/memory_attention.py", "path": "sam2/modeling/memory_attention.py", "group": "memory", "groupId": "memory", "desc": "Cross-attends current frame features to the memory bank for temporally consistent masks"},
+    {"id": "mask_decoder", "label": "MaskDecoder", "file": "sam2/modeling/sam/mask_decoder.py", "path": "sam2/modeling/sam/mask_decoder.py", "group": "heads", "groupId": "heads", "desc": "Runs the two-way transformer to output masks, IoU scores, and object pointers"},
+    {"id": "prompt_encoder", "label": "PromptEncoder", "file": "sam2/modeling/sam/prompt_encoder.py", "path": "sam2/modeling/sam/prompt_encoder.py", "group": "heads", "groupId": "heads", "desc": "Embeds clicks, boxes, and masks into sparse and dense prompt tokens"},
+    {"id": "two_way", "label": "TwoWayTransformer", "file": "sam2/modeling/sam/transformer.py", "path": "sam2/modeling/sam/transformer.py", "group": "heads", "groupId": "heads", "desc": "Bidirectional attention between image embedding and prompt tokens, with RoPE"}
+  ],
+  "edges": [
+    {"from": "build_sam2", "to": "img_pred", "label": "constructs"},
+    {"from": "build_sam2", "to": "vid_pred", "label": "constructs"},
+    {"from": "build_sam2", "to": "sam2_base", "label": "instantiates"},
+    {"from": "amg", "to": "img_pred", "label": "wraps"},
+    {"from": "img_pred", "to": "sam2_base", "label": "delegates inference"},
+    {"from": "vid_pred", "to": "sam2_base", "label": "inherits"},
+    {"from": "sam2_base", "to": "image_encoder", "label": "forward_image"},
+    {"from": "image_encoder", "to": "hiera", "label": "trunk"},
+    {"from": "sam2_base", "to": "prompt_encoder", "label": "encodes prompts"},
+    {"from": "sam2_base", "to": "mask_decoder", "label": "decodes masks"},
+    {"from": "mask_decoder", "to": "two_way", "label": "cross-attends"},
+    {"from": "sam2_base", "to": "memory_attention", "label": "conditions on memory"},
+    {"from": "sam2_base", "to": "memory_encoder", "label": "writes memory"}
+  ]
+}

@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_entrypoints["User-Facing Entry Points"]
+  node_img_pred["SAM2ImagePredictor"]
+  node_vid_pred["SAM2VideoPredictor"]
+  node_amg["SAM2AutomaticMaskGenerator"]
+end
+
+subgraph group_assembly["Model Assembly"]
+  node_build_sam2["build_sam2<br/>[build_sam.py]"]
+  node_build_sam2_video["build_sam2_video_predictor<br/>[build_sam.py]"]
+  node_load_checkpoint["_load_checkpoint<br/>[build_sam.py]"]
+end
+
+subgraph group_core["Streaming Core"]
+  node_sam2_base["SAM2Base<br/>[sam2_base.py]"]
+  node_track_step["track_step<br/>[sam2_base.py]"]
+  node_prep_memory_cond["_prepare_memory_conditioned_features<br/>[sam2_base.py]"]
+  node_encode_new_memory["_encode_new_memory<br/>[sam2_base.py]"]
+  node_forward_sam_heads["_forward_sam_heads<br/>[sam2_base.py]"]
+  node_sam2_utils["select_closest_cond_frames<br/>[sam2_utils.py]"]
+end
+
+subgraph group_heads["SAM Promptable Heads"]
+  node_mask_decoder["MaskDecoder<br/>[mask_decoder.py]"]
+  node_predict_masks["predict_masks<br/>[mask_decoder.py]"]
+  node_prompt_encoder["PromptEncoder<br/>[prompt_encoder.py]"]
+  node_embed_points["_embed_points<br/>[prompt_encoder.py]"]
+  node_two_way["TwoWayTransformer<br/>[transformer.py]"]
+  node_rope_attn["RoPEAttention<br/>[transformer.py]"]
+end
+
+subgraph group_vision["Vision Backbone"]
+  node_image_encoder["ImageEncoder<br/>[image_encoder.py]"]
+  node_fpn_neck["FpnNeck<br/>[image_encoder.py]"]
+  node_hiera["Hiera<br/>[hieradet.py]"]
+  node_ms_block["MultiScaleBlock<br/>[hieradet.py]"]
+  node_patch_embed["PatchEmbed<br/>[utils.py]"]
+end
+
+subgraph group_memory["Memory Stack"]
+  node_memory_encoder["MemoryEncoder<br/>[memory_encoder.py]"]
+  node_mask_down_sampler["MaskDownSampler<br/>[memory_encoder.py]"]
+  node_cx_fuser["Fuser<br/>[memory_encoder.py]"]
+  node_memory_attention["MemoryAttention"]
+  node_mem_attn_layer["MemoryAttentionLayer"]
+end
+
+subgraph group_support["Support Utilities"]
+  node_load_video_frames["load_video_frames<br/>[misc.py]"]
+  node_async_loader["AsyncVideoFrameLoader<br/>[misc.py]"]
+  node_fill_holes["fill_holes_in_mask_scores<br/>[misc.py]"]
+end
+
+node_build_sam2 -->|"instantiates"| node_sam2_base
+node_build_sam2 -->|"loads weights"| node_load_checkpoint
+node_build_sam2 -->|"builds for images"| node_img_pred
+node_build_sam2_video -->|"instantiates"| node_vid_pred
+node_build_sam2_video -->|"loads weights"| node_load_checkpoint
+node_amg -->|"wraps"| node_img_pred
+node_img_pred -->|"delegates inference"| node_sam2_base
+node_vid_pred -->|"inherits"| node_sam2_base
+node_vid_pred -->|"init_state"| node_load_video_frames
+node_load_video_frames -->|"prefetches"| node_async_loader
+node_vid_pred -->|"cleans outputs"| node_fill_holes
+node_sam2_base -->|"per-frame"| node_track_step
+node_track_step -->|"reads memory"| node_prep_memory_cond
+node_track_step -->|"decodes"| node_forward_sam_heads
+node_track_step -->|"writes memory"| node_encode_new_memory
+node_prep_memory_cond -->|"picks cond frames"| node_sam2_utils
+node_prep_memory_cond -->|"cross-attends"| node_memory_attention
+node_encode_new_memory -->|"encodes"| node_memory_encoder
+node_forward_sam_heads -->|"encodes prompts"| node_prompt_encoder
+node_forward_sam_heads -->|"decodes masks"| node_mask_decoder
+node_prompt_encoder -->|"point prompts"| node_embed_points
+node_mask_decoder -->|"core decoding"| node_predict_masks
+node_predict_masks -->|"cross-attends"| node_two_way
+node_two_way -->|"rotary attention"| node_rope_attn
+node_sam2_base -->|"forward_image"| node_image_encoder
+node_image_encoder -->|"trunk"| node_hiera
+node_image_encoder -->|"neck"| node_fpn_neck
+node_hiera -->|"stacked blocks"| node_ms_block
+node_hiera -->|"input embedding"| node_patch_embed
+node_memory_encoder -->|"shrinks masks"| node_mask_down_sampler
+node_memory_encoder -->|"fuses features"| node_cx_fuser
+node_memory_attention -->|"stacked layers"| node_mem_attn_layer
+
+click node_img_pred "https://github.com/facebookresearch/sam2/blob/main/sam2/sam2_image_predictor.py"
+click node_vid_pred "https://github.com/facebookresearch/sam2/blob/main/sam2/sam2_video_predictor.py"
+click node_amg "https://github.com/facebookresearch/sam2/blob/main/sam2/automatic_mask_generator.py"
+click node_build_sam2 "https://github.com/facebookresearch/sam2/blob/main/sam2/build_sam.py"
+click node_build_sam2_video "https://github.com/facebookresearch/sam2/blob/main/sam2/build_sam.py"
+click node_load_checkpoint "https://github.com/facebookresearch/sam2/blob/main/sam2/build_sam.py"
+click node_sam2_base "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam2_base.py"
+click node_track_step "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam2_base.py"
+click node_prep_memory_cond "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam2_base.py"
+click node_encode_new_memory "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam2_base.py"
+click node_forward_sam_heads "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam2_base.py"
+click node_sam2_utils "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam2_utils.py"
+click node_mask_decoder "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam/mask_decoder.py"
+click node_predict_masks "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam/mask_decoder.py"
+click node_prompt_encoder "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam/prompt_encoder.py"
+click node_embed_points "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam/prompt_encoder.py"
+click node_two_way "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam/transformer.py"
+click node_rope_attn "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/sam/transformer.py"
+click node_image_encoder "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/backbones/image_encoder.py"
+click node_fpn_neck "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/backbones/image_encoder.py"
+click node_hiera "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/backbones/hieradet.py"
+click node_ms_block "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/backbones/hieradet.py"
+click node_patch_embed "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/backbones/utils.py"
+click node_memory_encoder "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/memory_encoder.py"
+click node_mask_down_sampler "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/memory_encoder.py"
+click node_cx_fuser "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/memory_encoder.py"
+click node_memory_attention "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/memory_attention.py"
+click node_mem_attn_layer "https://github.com/facebookresearch/sam2/blob/main/sam2/modeling/memory_attention.py"
+click node_load_video_frames "https://github.com/facebookresearch/sam2/blob/main/sam2/utils/misc.py"
+click node_async_loader "https://github.com/facebookresearch/sam2/blob/main/sam2/utils/misc.py"
+click node_fill_holes "https://github.com/facebookresearch/sam2/blob/main/sam2/utils/misc.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_img_pred,node_vid_pred,node_amg,node_load_video_frames,node_async_loader,node_fill_holes toneBlue
+class node_build_sam2,node_build_sam2_video,node_load_checkpoint toneAmber
+class node_sam2_base,node_track_step,node_prep_memory_cond,node_encode_new_memory,node_forward_sam_heads,node_sam2_utils toneMint
+class node_mask_decoder,node_predict_masks,node_prompt_encoder,node_embed_points,node_two_way,node_rope_attn toneRose
+class node_image_encoder,node_fpn_neck,node_hiera,node_ms_block,node_patch_embed toneIndigo
+class node_memory_encoder,node_mask_down_sampler,node_cx_fuser,node_memory_attention,node_mem_attn_layer toneTeal
