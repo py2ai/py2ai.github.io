@@ -1,0 +1,42 @@
+{
+  "owner": "deepseek-ai",
+  "repo": "DeepSeek-V3",
+  "branch": "main",
+  "groups": [
+    { "id": "entry", "name": "Generation Entry", "label": "Generation Entry" },
+    { "id": "model", "name": "Model Core", "label": "Model Core" },
+    { "id": "attention", "name": "MLA Attention", "label": "MLA Attention" },
+    { "id": "moe", "name": "Mixture of Experts", "label": "Mixture of Experts" },
+    { "id": "quant", "name": "FP8 Kernels", "label": "FP8 Kernels" },
+    { "id": "weights", "name": "Weights & Config", "label": "Weights & Config" }
+  ],
+  "nodes": [
+    { "id": "generate", "label": "generate()", "file": "inference/generate.py", "path": "inference/generate.py", "group": "entry", "groupId": "entry", "desc": "Chat and batch generation loop with KV caching", "shape": "hexagon" },
+    { "id": "transformer", "label": "Transformer", "file": "inference/model.py", "path": "inference/model.py", "group": "model", "groupId": "model", "desc": "Top-level model: embed, 61 blocks, norm, lm head" },
+    { "id": "block", "label": "Block", "file": "inference/model.py", "path": "inference/model.py", "group": "model", "groupId": "model", "desc": "One transformer layer: MLA attention plus FFN" },
+    { "id": "mla", "label": "MLA", "file": "inference/model.py", "path": "inference/model.py", "group": "attention", "groupId": "attention", "desc": "Multi-head Latent Attention with low-rank KV compression" },
+    { "id": "gate", "label": "Gate", "file": "inference/model.py", "path": "inference/model.py", "group": "moe", "groupId": "moe", "desc": "Sigmoid routing with bias correction, top-8 of 256 experts" },
+    { "id": "moe", "label": "MoE", "file": "inference/model.py", "path": "inference/model.py", "group": "moe", "groupId": "moe", "desc": "Mixture-of-experts FFN with shared experts" },
+    { "id": "mlp", "label": "MLP", "file": "inference/model.py", "path": "inference/model.py", "group": "model", "groupId": "model", "desc": "Dense SwiGLU FFN, also reused for shared experts" },
+    { "id": "linear", "label": "Linear", "file": "inference/model.py", "path": "inference/model.py", "group": "quant", "groupId": "quant", "desc": "Quantization-aware linear layer, fp8 or bf16" },
+    { "id": "act_quant", "label": "act_quant", "file": "inference/kernel.py", "path": "inference/kernel.py", "group": "quant", "groupId": "quant", "desc": "Triton block-wise activation quantization, 128x tiles" },
+    { "id": "fp8_gemm", "label": "fp8_gemm", "file": "inference/kernel.py", "path": "inference/kernel.py", "group": "quant", "groupId": "quant", "desc": "Triton fp8 GEMM with per-block scale accumulation" },
+    { "id": "convert", "label": "convert.py", "file": "inference/convert.py", "path": "inference/convert.py", "group": "weights", "groupId": "weights", "desc": "Remaps and shards Hugging Face checkpoints for the demo" },
+    { "id": "config", "label": "config_671B.json", "file": "inference/configs/config_671B.json", "path": "inference/configs/config_671B.json", "group": "weights", "groupId": "weights", "desc": "671B hyperparameters feeding ModelArgs", "shape": "document" }
+  ],
+  "edges": [
+    { "from": "generate", "to": "transformer", "label": "forward per token step" },
+    { "from": "generate", "to": "config", "label": "ModelArgs from JSON" },
+    { "from": "convert", "to": "transformer", "label": "sharded checkpoints" },
+    { "from": "transformer", "to": "block", "label": "n_layers x" },
+    { "from": "block", "to": "mla", "label": "attn" },
+    { "from": "block", "to": "moe", "label": "ffn, MoE layers" },
+    { "from": "block", "to": "mlp", "label": "ffn, dense layer 0" },
+    { "from": "moe", "to": "gate", "label": "top-k routing" },
+    { "from": "moe", "to": "mlp", "label": "shared experts" },
+    { "from": "mla", "to": "linear", "label": "low-rank projections" },
+    { "from": "moe", "to": "linear", "label": "expert linears" },
+    { "from": "linear", "to": "act_quant", "label": "quantize x" },
+    { "from": "linear", "to": "fp8_gemm", "label": "fp8 GEMM" }
+  ]
+}

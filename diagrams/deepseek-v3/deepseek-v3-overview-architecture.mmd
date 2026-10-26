@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_entry["Generation Entry"]
+  node_generate{{"generate&#40;&#41;<br/>[generate.py]"}}
+end
+
+subgraph group_model["Model Core"]
+  node_transformer["Transformer<br/>[model.py]"]
+  node_block["Block<br/>[model.py]"]
+  node_mlp["MLP<br/>[model.py]"]
+end
+
+subgraph group_attention["MLA Attention"]
+  node_mla["MLA<br/>[model.py]"]
+end
+
+subgraph group_moe["Mixture of Experts"]
+  node_gate["Gate<br/>[model.py]"]
+  node_moe["MoE<br/>[model.py]"]
+end
+
+subgraph group_quant["FP8 Kernels"]
+  node_linear["Linear<br/>[model.py]"]
+  node_act_quant["act_quant<br/>[kernel.py]"]
+  node_fp8_gemm["fp8_gemm<br/>[kernel.py]"]
+end
+
+subgraph group_weights["Weights &amp; Config"]
+  node_convert["convert.py<br/>[convert.py]"]
+  node_config["config_671B.json<br/>[config_671B.json]"]
+end
+
+node_generate -->|"forward per token step"| node_transformer
+node_generate -->|"ModelArgs from JSON"| node_config
+node_convert -->|"sharded checkpoints"| node_transformer
+node_transformer -->|"n_layers x"| node_block
+node_block -->|"attn"| node_mla
+node_block -->|"ffn, MoE layers"| node_moe
+node_block -->|"ffn, dense layer 0"| node_mlp
+node_moe -->|"top-k routing"| node_gate
+node_moe -->|"shared experts"| node_mlp
+node_mla -->|"low-rank projections"| node_linear
+node_moe -->|"expert linears"| node_linear
+node_linear -->|"quantize x"| node_act_quant
+node_linear -->|"fp8 GEMM"| node_fp8_gemm
+
+click node_generate "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/generate.py"
+click node_transformer "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_block "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_mla "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_gate "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_moe "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_mlp "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_linear "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_act_quant "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_fp8_gemm "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_convert "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/convert.py"
+click node_config "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/configs/config_671B.json"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_generate toneBlue
+class node_transformer,node_block,node_mlp toneAmber
+class node_mla toneMint
+class node_gate,node_moe toneRose
+class node_linear,node_act_quant,node_fp8_gemm toneIndigo
+class node_convert,node_config toneTeal

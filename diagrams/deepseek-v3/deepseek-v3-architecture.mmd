@@ -1,0 +1,125 @@
+flowchart TD
+
+subgraph group_entry["Generation Entry"]
+  node_gen_main{{"main&#40;&#41;<br/>[generate.py]"}}
+  node_generate["generate&#40;&#41;<br/>[generate.py]"]
+  node_sample["sample&#40;&#41;<br/>[generate.py]"]
+end
+
+subgraph group_model["Model Core"]
+  node_transformer["Transformer<br/>[model.py]"]
+  node_block["Block<br/>[model.py]"]
+  node_modelargs["ModelArgs<br/>[model.py]"]
+  node_parallel_embed["ParallelEmbedding<br/>[model.py]"]
+  node_rmsnorm["RMSNorm<br/>[model.py]"]
+  node_freqs["precompute_freqs_cis<br/>[model.py]"]
+  node_rotary["apply_rotary_emb<br/>[model.py]"]
+  node_linear["Linear<br/>[model.py]"]
+  node_col_parallel["ColumnParallelLinear<br/>[model.py]"]
+  node_row_parallel["RowParallelLinear<br/>[model.py]"]
+  node_mlp["MLP<br/>[model.py]"]
+end
+
+subgraph group_attention["MLA Attention"]
+  node_mla["MLA<br/>[model.py]"]
+end
+
+subgraph group_moe["Mixture of Experts"]
+  node_moe["MoE<br/>[model.py]"]
+  node_gate["Gate<br/>[model.py]"]
+  node_expert["Expert<br/>[model.py]"]
+end
+
+subgraph group_quant["FP8 Kernels"]
+  node_linear_fn["linear&#40;&#41;<br/>[model.py]"]
+  node_act_quant["act_quant<br/>[kernel.py]"]
+  node_act_quant_kernel["act_quant_kernel<br/>[kernel.py]"]
+  node_weight_dequant["weight_dequant<br/>[kernel.py]"]
+  node_fp8_gemm["fp8_gemm<br/>[kernel.py]"]
+  node_fp8_gemm_kernel["fp8_gemm_kernel<br/>[kernel.py]"]
+end
+
+subgraph group_weights["Weights &amp; Config"]
+  node_convert["convert.py<br/>[convert.py]"]
+  node_fp8_cast["fp8_cast_bf16.py<br/>[fp8_cast_bf16.py]"]
+  node_config["config_671B.json<br/>[config_671B.json]"]
+end
+
+node_gen_main -->|"calls"| node_generate
+node_gen_main -->|"builds from JSON"| node_modelargs
+node_gen_main -->|"reads"| node_config
+node_generate -->|"forward per step"| node_transformer
+node_generate -->|"temperature sampling"| node_sample
+node_transformer -->|"embed tokens"| node_parallel_embed
+node_transformer -->|"n_layers x"| node_block
+node_transformer -->|"lm head"| node_col_parallel
+node_transformer -->|"precompute RoPE"| node_freqs
+node_transformer -->|"final norm"| node_rmsnorm
+node_block -->|"attn"| node_mla
+node_block -->|"MoE layers"| node_moe
+node_block -->|"dense layer 0"| node_mlp
+node_block -->|"pre-norm x2"| node_rmsnorm
+node_mla -->|"apply RoPE"| node_rotary
+node_mla -->|"wq_b / wkv_b"| node_col_parallel
+node_mla -->|"wo"| node_row_parallel
+node_mla -->|"q_norm / kv_norm"| node_rmsnorm
+node_mla -->|"absorb path"| node_linear_fn
+node_moe -->|"route tokens"| node_gate
+node_moe -->|"routed experts"| node_expert
+node_moe -->|"shared experts"| node_mlp
+node_expert -->|"w1 / w2 / w3"| node_linear
+node_mlp -->|"w1 / w3"| node_col_parallel
+node_mlp -->|"w2"| node_row_parallel
+node_gate -->|"scores"| node_linear_fn
+node_col_parallel -->|"inherits"| node_linear
+node_row_parallel -->|"inherits"| node_linear
+node_linear -->|"forward"| node_linear_fn
+node_linear_fn -->|"bf16 path"| node_weight_dequant
+node_linear_fn -->|"fp8 path"| node_act_quant
+node_linear_fn -->|"fp8 GEMM"| node_fp8_gemm
+node_act_quant -->|"triton"| node_act_quant_kernel
+node_fp8_gemm -->|"triton"| node_fp8_gemm_kernel
+node_fp8_cast -->|"cast weights"| node_weight_dequant
+node_convert -->|"sharded checkpoints"| node_transformer
+
+click node_gen_main "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/generate.py"
+click node_generate "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/generate.py"
+click node_sample "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/generate.py"
+click node_transformer "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_block "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_modelargs "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_parallel_embed "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_rmsnorm "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_freqs "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_rotary "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_linear "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_col_parallel "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_row_parallel "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_mlp "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_mla "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_moe "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_gate "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_expert "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_linear_fn "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/model.py"
+click node_act_quant "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_act_quant_kernel "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_weight_dequant "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_fp8_gemm "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_fp8_gemm_kernel "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/kernel.py"
+click node_convert "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/convert.py"
+click node_fp8_cast "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/fp8_cast_bf16.py"
+click node_config "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/inference/configs/config_671B.json"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_gen_main,node_generate,node_sample toneBlue
+class node_transformer,node_block,node_modelargs,node_parallel_embed,node_rmsnorm,node_freqs,node_rotary,node_linear,node_col_parallel,node_row_parallel,node_mlp toneAmber
+class node_mla toneMint
+class node_moe,node_gate,node_expert toneRose
+class node_linear_fn,node_act_quant,node_act_quant_kernel,node_weight_dequant,node_fp8_gemm,node_fp8_gemm_kernel toneIndigo
+class node_convert,node_fp8_cast,node_config toneTeal
