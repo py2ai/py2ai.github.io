@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_api["Public API &amp; Recipes"]
+  node_quantize_{{"quantize_&#40;&#41;<br/>[quant_api.py]"}}
+  node_ao_base_config["AOBaseConfig<br/>[config.py]"]
+  node_cfg_int8_da_w8["Int8DynActInt8Weight<br/>[quant_api.py]"]
+  node_cfg_int4_wo["Int4WeightOnly<br/>[quant_api.py]"]
+  node_cfg_int8_wo["Int8WeightOnly<br/>[quant_api.py]"]
+  node_cfg_float8["Float8DynActF8Weight<br/>[quant_api.py]"]
+  node_cfg_intx_dyn["Int8DynActIntxWeight<br/>[quant_api.py]"]
+end
+
+subgraph group_core["Transform Core"]
+  node_registry["Handler Registry"]
+  node_packing_format["PackingFormat<br/>[packing_format.py]"]
+  node_kernel_preference["KernelPreference"]
+  node_torchao_utils["TorchAOBaseTensor<br/>[utils.py]"]
+end
+
+subgraph group_primitives["Quant Primitives"]
+  node_quant_primitives["Quant Primitives"]
+  node_granularity["Granularity<br/>[granularity.py]"]
+end
+
+subgraph group_int8["Int8 Workflow"]
+  node_int8_tensor["Int8Tensor<br/>[int8_tensor.py]"]
+  node_int8_kernels["Int8 Matmul<br/>[kernels.py]"]
+end
+
+subgraph group_int4["Int4 &amp; NF4 Workflows"]
+  node_int4_tensor["Int4Tensor<br/>[int4_tensor.py]"]
+  node_int4_packing["Int4PackingFormat"]
+  node_int4_qparams["Int4ChooseQParams"]
+  node_nf4_tensor["NF4Tensor<br/>[nf4_tensor.py]"]
+end
+
+subgraph group_float8["Float8 Workflows"]
+  node_float8_tensor["Float8Tensor<br/>[float8_tensor.py]"]
+  node_float8_packing["Float8PackingFormat"]
+  node_float8_sparse["Float8 Sparse 2x4"]
+end
+
+subgraph group_kernels["Native Kernels &amp; Custom Ops"]
+  node_torchao_ops["Custom Op Registry<br/>[ops.py]"]
+  node_experimental_api["MPS UIntx API<br/>[quant_api.py]"]
+  node_cpu_da8w4[("CPU da8w4 Kernel<br/>[da8w4_linear.cpp]")]
+  node_cuda_mxfp8[("MXFP8 CUDA<br/>[mxfp8_cuda.cu]")]
+  node_cuda_sparse_cutlass[("CUTLASS Sparse fp8")]
+end
+
+subgraph group_training["Training &amp; Graph Mode"]
+  node_float8_linear["Float8Linear<br/>[float8_linear.py]"]
+  node_convert_f8{{"convert_to_float8_training"}}
+  node_pt2e_quantize["PT2E prepare/convert<br/>[quantize_pt2e.py]"]
+  node_qat_config["QATConfig<br/>[api.py]"]
+  node_fake_quantized_linear["FakeQuantizedLinear<br/>[linear.py]"]
+  node_optim_8bit["OptimState8bit<br/>[subclass_8bit.py]"]
+end
+
+node_ao_base_config -->|"recipes passed to quantize_"| node_quantize_
+node_cfg_int8_da_w8 -->|"recipe"| node_quantize_
+node_cfg_int4_wo -->|"recipe"| node_quantize_
+node_cfg_int8_wo -->|"recipe"| node_quantize_
+node_cfg_float8 -->|"recipe"| node_quantize_
+node_cfg_intx_dyn -->|"recipe"| node_quantize_
+node_quantize_ -->|"handler lookup"| node_registry
+node_cfg_intx_dyn -->|"registered handler"| node_registry
+node_experimental_api -->|"registers UIntxWeightOnlyConfig"| node_registry
+node_cfg_int8_da_w8 -->|"PerRow / PerGroup"| node_granularity
+node_cfg_int4_wo -->|"group_size via PerGroup"| node_granularity
+node_granularity -->|"maps to block_size"| node_quant_primitives
+node_quant_primitives -->|"choose/quantize/dequantize affine"| node_int8_tensor
+node_quant_primitives -->|"fake quant primitives"| node_fake_quantized_linear
+node_quantize_ -->|"swaps in Int8Tensor"| node_int8_tensor
+node_quantize_ -->|"swaps in Int4Tensor"| node_int4_tensor
+node_quantize_ -->|"swaps in NF4Tensor"| node_nf4_tensor
+node_quantize_ -->|"swaps in Float8Tensor"| node_float8_tensor
+node_quantize_ -->|"swaps in 2:4 sparse fp8"| node_float8_sparse
+node_packing_format -->|"packing format attribute"| node_int8_tensor
+node_cfg_int4_wo -->|"int4_packing_format field"| node_int4_packing
+node_cfg_int4_wo -->|"int4_choose_qparams_algorithm field"| node_int4_qparams
+node_cfg_float8 -->|"packing_format field"| node_float8_packing
+node_cfg_float8 -->|"SPARSE packing selects"| node_float8_sparse
+node_kernel_preference -->|"kernel dispatch field"| node_float8_tensor
+node_kernel_preference -->|"recipe field"| node_cfg_float8
+node_int8_tensor -->|"linear via _int_scaled_matmul"| node_int8_kernels
+node_int8_tensor -->|"extends TorchAOBaseTensor"| node_torchao_utils
+node_int4_tensor -->|"extends TorchAOBaseTensor"| node_torchao_utils
+node_float8_tensor -->|"extends TorchAOBaseTensor"| node_torchao_utils
+node_float8_sparse -->|"extends TorchAOBaseTensor"| node_torchao_utils
+node_optim_8bit -->|"extends TorchAOBaseTensor"| node_torchao_utils
+node_float8_sparse -->|"to_sparse_semi_structured_cutlass_sm9x_f8"| node_torchao_ops
+node_torchao_ops -->|"CUTLASS implementation"| node_cuda_sparse_cutlass
+node_torchao_ops -->|"torchao::da8w4_linear_cpu"| node_cpu_da8w4
+node_torchao_ops -->|"torchao::mx_fp8_bf16"| node_cuda_mxfp8
+node_cfg_intx_dyn -->|"da8w4 CPU linear path"| node_cpu_da8w4
+node_convert_f8 -->|"swap_linear_layers"| node_float8_linear
+node_quantize_ -->|"eager twin of graph-mode flow"| node_pt2e_quantize
+node_qat_config -->|"registers QAT handler"| node_registry
+node_qat_config -->|"builds FakeQuantizedLinear"| node_fake_quantized_linear
+
+click node_quantize_ "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_api.py"
+click node_ao_base_config "https://github.com/pytorch/ao/blob/main/torchao/core/config.py"
+click node_cfg_int8_da_w8 "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_api.py"
+click node_cfg_int4_wo "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_api.py"
+click node_cfg_int8_wo "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_api.py"
+click node_cfg_float8 "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_api.py"
+click node_cfg_intx_dyn "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_api.py"
+click node_registry "https://github.com/pytorch/ao/blob/main/torchao/quantization/transform_module.py"
+click node_packing_format "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/common/packing_format.py"
+click node_kernel_preference "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/common/kernel_preference.py"
+click node_torchao_utils "https://github.com/pytorch/ao/blob/main/torchao/utils.py"
+click node_quant_primitives "https://github.com/pytorch/ao/blob/main/torchao/quantization/quant_primitives.py"
+click node_granularity "https://github.com/pytorch/ao/blob/main/torchao/quantization/granularity.py"
+click node_int8_tensor "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/int8/int8_tensor.py"
+click node_int8_kernels "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/int8/kernels.py"
+click node_int4_tensor "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/int4/int4_tensor.py"
+click node_int4_packing "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/int4/int4_packing_format.py"
+click node_int4_qparams "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/int4/int4_choose_qparams_algorithm.py"
+click node_nf4_tensor "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/nf4/nf4_tensor.py"
+click node_float8_tensor "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/float8/float8_tensor.py"
+click node_float8_packing "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/float8/float8_packing_format.py"
+click node_float8_sparse "https://github.com/pytorch/ao/blob/main/torchao/quantization/quantize_/workflows/float8/float8_sparse_2x4_1d_data_1d_metadata_tensor.py"
+click node_torchao_ops "https://github.com/pytorch/ao/blob/main/torchao/ops.py"
+click node_experimental_api "https://github.com/pytorch/ao/blob/main/torchao/experimental/quant_api.py"
+click node_cpu_da8w4 "https://github.com/pytorch/ao/blob/main/torchao/csrc/cpu/aten_kernels/da8w4_linear.cpp"
+click node_cuda_mxfp8 "https://github.com/pytorch/ao/blob/main/torchao/csrc/cuda/mx_kernels/mxfp8_cuda.cu"
+click node_cuda_sparse_cutlass "https://github.com/pytorch/ao/blob/main/torchao/csrc/cuda/to_sparse_semi_structured_cutlass_sm9x/to_sparse_semi_structured_cutlass_sm9x_f8.cu"
+click node_float8_linear "https://github.com/pytorch/ao/blob/main/torchao/float8/float8_linear.py"
+click node_convert_f8 "https://github.com/pytorch/ao/blob/main/torchao/float8/float8_linear_utils.py"
+click node_pt2e_quantize "https://github.com/pytorch/ao/blob/main/torchao/quantization/pt2e/quantize_pt2e.py"
+click node_qat_config "https://github.com/pytorch/ao/blob/main/torchao/quantization/qat/api.py"
+click node_fake_quantized_linear "https://github.com/pytorch/ao/blob/main/torchao/quantization/qat/linear.py"
+click node_optim_8bit "https://github.com/pytorch/ao/blob/main/torchao/optim/subclass_8bit.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_quantize_,node_ao_base_config,node_cfg_int8_da_w8,node_cfg_int4_wo,node_cfg_int8_wo,node_cfg_float8,node_cfg_intx_dyn,node_torchao_ops,node_experimental_api,node_cpu_da8w4,node_cuda_mxfp8,node_cuda_sparse_cutlass toneBlue
+class node_registry,node_packing_format,node_kernel_preference,node_torchao_utils,node_float8_linear,node_convert_f8,node_pt2e_quantize,node_qat_config,node_fake_quantized_linear,node_optim_8bit toneAmber
+class node_quant_primitives,node_granularity toneMint
+class node_int8_tensor,node_int8_kernels toneRose
+class node_int4_tensor,node_int4_packing,node_int4_qparams,node_nf4_tensor toneIndigo
+class node_float8_tensor,node_float8_packing,node_float8_sparse toneTeal
