@@ -1,0 +1,128 @@
+{
+  "owner": "casper-hansen",
+  "repo": "AutoAWQ",
+  "branch": "main",
+  "groups": [
+    { "id": "entry", "name": "Entry & config", "label": "Entry & config" },
+    { "id": "models", "name": "Model zoo", "label": "Model zoo" },
+    { "id": "quantize", "name": "Quantization core", "label": "Quantization core" },
+    { "id": "kernels", "name": "Quantized kernels", "label": "Quantized kernels" },
+    { "id": "fused", "name": "Fused inference stack", "label": "Fused inference stack" },
+    { "id": "utils", "name": "Utilities", "label": "Utilities" }
+  ],
+  "nodes": [
+    {
+      "id": "entry_auto",
+      "label": "AutoAWQForCausalLM",
+      "file": "awq/models/auto.py",
+      "path": "awq/models/auto.py",
+      "group": "entry",
+      "groupId": "entry",
+      "desc": "Factory that resolves any Hugging Face causal LM name to the matching AWQ model wrapper"
+    },
+    {
+      "id": "base_model",
+      "label": "BaseAWQForCausalLM",
+      "file": "awq/models/base.py",
+      "path": "awq/models/base.py",
+      "group": "models",
+      "groupId": "models",
+      "desc": "Shared load, quantize, fuse, pack and save logic inherited by every architecture"
+    },
+    {
+      "id": "llama_model",
+      "label": "LlamaAWQForCausalLM",
+      "file": "awq/models/llama.py",
+      "path": "awq/models/llama.py",
+      "group": "models",
+      "groupId": "models",
+      "desc": "Llama family: per-layer scaling rules plus a fuser that swaps in fast blocks"
+    },
+    {
+      "id": "quantizer",
+      "label": "AwqQuantizer",
+      "file": "awq/quantize/quantizer.py",
+      "path": "awq/quantize/quantizer.py",
+      "group": "quantize",
+      "groupId": "quantize",
+      "desc": "Four-step per-layer loop: collect inputs, search scales, search clips, pseudo-quantize"
+    },
+    {
+      "id": "scale_helpers",
+      "label": "apply_scale / apply_clip",
+      "file": "awq/quantize/scale.py",
+      "path": "awq/quantize/scale.py",
+      "group": "quantize",
+      "groupId": "quantize",
+      "desc": "Mathematical migration of magnitudes between norms and linear layers"
+    },
+    {
+      "id": "calib_data",
+      "label": "get_calib_dataset",
+      "file": "awq/utils/calib_data.py",
+      "path": "awq/utils/calib_data.py",
+      "group": "utils",
+      "groupId": "utils",
+      "desc": "Sample texts that drive activation statistics during calibration"
+    },
+    {
+      "id": "module_utils",
+      "label": "get_named_linears",
+      "file": "awq/utils/module.py",
+      "path": "awq/utils/module.py",
+      "group": "utils",
+      "groupId": "utils",
+      "desc": "Locates nn.Linear layers inside each block and swaps them for quantized versions"
+    },
+    {
+      "id": "wq_linear_gemm",
+      "label": "WQLinear_GEMM",
+      "file": "awq/modules/linear/gemm.py",
+      "path": "awq/modules/linear/gemm.py",
+      "group": "kernels",
+      "groupId": "kernels",
+      "desc": "4-bit matrix-multiply kernel that replaces nn.Linear for batched workloads"
+    },
+    {
+      "id": "wq_linear_gemv",
+      "label": "WQLinear_GEMV",
+      "file": "awq/modules/linear/gemv.py",
+      "path": "awq/modules/linear/gemv.py",
+      "group": "kernels",
+      "groupId": "kernels",
+      "desc": "4-bit matrix-vector kernel optimized for single-token decoding"
+    },
+    {
+      "id": "fused_model",
+      "label": "LlamaLikeModel",
+      "file": "awq/modules/fused/model.py",
+      "path": "awq/modules/fused/model.py",
+      "group": "fused",
+      "groupId": "fused",
+      "desc": "Inference-time transformer that stacks fused blocks with shared KV cache"
+    },
+    {
+      "id": "fused_attn",
+      "label": "QuantAttentionFused",
+      "file": "awq/modules/fused/attn.py",
+      "path": "awq/modules/fused/attn.py",
+      "group": "fused",
+      "groupId": "fused",
+      "desc": "Single attention module merging QKV projections, RoPE and the KV cache"
+    }
+  ],
+  "edges": [
+    { "from": "entry_auto", "to": "llama_model", "label": "resolves name to" },
+    { "from": "entry_auto", "to": "base_model", "label": "instantiates" },
+    { "from": "llama_model", "to": "base_model", "label": "extends" },
+    { "from": "base_model", "to": "quantizer", "label": "delegates calibration to" },
+    { "from": "quantizer", "to": "calib_data", "label": "streams samples from" },
+    { "from": "quantizer", "to": "module_utils", "label": "scans linears with" },
+    { "from": "quantizer", "to": "scale_helpers", "label": "applies" },
+    { "from": "quantizer", "to": "wq_linear_gemm", "label": "packs into (gemm)" },
+    { "from": "quantizer", "to": "wq_linear_gemv", "label": "packs into (gemv)" },
+    { "from": "llama_model", "to": "fused_model", "label": "fuse_layers swaps in" },
+    { "from": "fused_model", "to": "fused_attn", "label": "runs" },
+    { "from": "base_model", "to": "wq_linear_gemm", "label": "loads checkpoints with" }
+  ]
+}

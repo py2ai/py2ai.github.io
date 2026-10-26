@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_entry["Entry &amp; config"]
+  node_entry_auto["AutoAWQForCausalLM<br/>[auto.py]"]
+end
+
+subgraph group_models["Model zoo"]
+  node_base_model["BaseAWQForCausalLM<br/>[base.py]"]
+  node_llama_model["LlamaAWQForCausalLM<br/>[llama.py]"]
+end
+
+subgraph group_quantize["Quantization core"]
+  node_quantizer["AwqQuantizer<br/>[quantizer.py]"]
+  node_scale_helpers["apply_scale / apply_clip<br/>[scale.py]"]
+end
+
+subgraph group_kernels["Quantized kernels"]
+  node_wq_linear_gemm["WQLinear_GEMM<br/>[gemm.py]"]
+  node_wq_linear_gemv["WQLinear_GEMV<br/>[gemv.py]"]
+end
+
+subgraph group_fused["Fused inference stack"]
+  node_fused_model["LlamaLikeModel<br/>[model.py]"]
+  node_fused_attn["QuantAttentionFused<br/>[attn.py]"]
+end
+
+subgraph group_utils["Utilities"]
+  node_calib_data["get_calib_dataset<br/>[calib_data.py]"]
+  node_module_utils["get_named_linears<br/>[module.py]"]
+end
+
+node_entry_auto -->|"resolves name to"| node_llama_model
+node_entry_auto -->|"instantiates"| node_base_model
+node_llama_model -->|"extends"| node_base_model
+node_base_model -->|"delegates calibration to"| node_quantizer
+node_quantizer -->|"streams samples from"| node_calib_data
+node_quantizer -->|"scans linears with"| node_module_utils
+node_quantizer -->|"applies"| node_scale_helpers
+node_quantizer -->|"packs into &#40;gemm&#41;"| node_wq_linear_gemm
+node_quantizer -->|"packs into &#40;gemv&#41;"| node_wq_linear_gemv
+node_llama_model -->|"fuse_layers swaps in"| node_fused_model
+node_fused_model -->|"runs"| node_fused_attn
+node_base_model -->|"loads checkpoints with"| node_wq_linear_gemm
+
+click node_entry_auto "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/auto.py"
+click node_base_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/base.py"
+click node_llama_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/llama.py"
+click node_quantizer "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/quantize/quantizer.py"
+click node_scale_helpers "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/quantize/scale.py"
+click node_calib_data "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/calib_data.py"
+click node_module_utils "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/module.py"
+click node_wq_linear_gemm "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/linear/gemm.py"
+click node_wq_linear_gemv "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/linear/gemv.py"
+click node_fused_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/model.py"
+click node_fused_attn "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/attn.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry_auto toneBlue
+class node_base_model,node_llama_model toneAmber
+class node_quantizer,node_scale_helpers toneMint
+class node_wq_linear_gemm,node_wq_linear_gemv toneRose
+class node_fused_model,node_fused_attn toneIndigo
+class node_calib_data,node_module_utils toneTeal
