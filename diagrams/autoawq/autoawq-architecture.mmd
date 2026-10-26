@@ -1,0 +1,119 @@
+flowchart TD
+
+subgraph group_entry["Entry &amp; config"]
+  node_entry_auto["AutoAWQForCausalLM<br/>[auto.py]"]
+  node_awq_config["AwqConfig<br/>[_config.py]"]
+end
+
+subgraph group_models["Model zoo"]
+  node_base_model["BaseAWQForCausalLM<br/>[base.py]"]
+  node_llama_model["LlamaAWQForCausalLM<br/>[llama.py]"]
+  node_mpt_model["MptAWQForCausalLM<br/>[mpt.py]"]
+  node_act_module["ScaledActivation<br/>[act.py]"]
+end
+
+subgraph group_quantize["Quantization core"]
+  node_quantizer["AwqQuantizer<br/>[quantizer.py]"]
+  node_scale_helpers["apply_scale / apply_clip<br/>[scale.py]"]
+end
+
+subgraph group_kernels["Quantized kernels"]
+  node_wq_gemm["WQLinear_GEMM<br/>[gemm.py]"]
+  node_wq_gemv["WQLinear_GEMV<br/>[gemv.py]"]
+  node_wq_gemv_fast["WQLinear_GEMVFast<br/>[gemv_fast.py]"]
+  node_wq_marlin["WQLinear_Marlin<br/>[marlin.py]"]
+  node_triton_gemm["awq_gemm_triton<br/>[gemm.py]"]
+end
+
+subgraph group_fused["Fused inference stack"]
+  node_fused_model["LlamaLikeModel<br/>[model.py]"]
+  node_fused_block["LlamaLikeBlock<br/>[block.py]"]
+  node_fused_attn["QuantAttentionFused<br/>[attn.py]"]
+  node_fused_mlp["QuantFusedMLP<br/>[mlp.py]"]
+  node_fused_norm["FasterTransformerRMSNorm<br/>[norm.py]"]
+  node_fused_utils["fuse_qkv / fuse_linears<br/>[fused_utils.py]"]
+end
+
+subgraph group_utils["Utilities"]
+  node_calib_data["get_calib_dataset<br/>[calib_data.py]"]
+  node_module_utils["get_named_linears<br/>[module.py]"]
+  node_quant_utils["quantize / dequantize<br/>[quant_utils.py]"]
+  node_packing_utils["unpack_reorder_pack<br/>[packing_utils.py]"]
+  node_general_utils["clear_memory / get_best_device<br/>[utils.py]"]
+end
+
+subgraph group_examples["Examples"]
+  node_example_quantize["examples/quantize.py<br/>[quantize.py]"]
+  node_example_cli["examples/cli.py<br/>[cli.py]"]
+end
+
+node_entry_auto -->|"instantiates"| node_base_model
+node_entry_auto -->|"carries"| node_awq_config
+node_base_model -->|"reads settings from"| node_awq_config
+node_llama_model -->|"extends"| node_base_model
+node_mpt_model -->|"extends"| node_base_model
+node_base_model -->|"wraps activations with"| node_act_module
+node_base_model -->|"delegates calibration to"| node_quantizer
+node_base_model -->|"rebuilds linears as"| node_wq_gemm
+node_quantizer -->|"streams samples from"| node_calib_data
+node_quantizer -->|"scans linears with"| node_module_utils
+node_quantizer -->|"applies"| node_scale_helpers
+node_quantizer -->|"packs into &#40;gemm&#41;"| node_wq_gemm
+node_quantizer -->|"packs into &#40;gemv&#41;"| node_wq_gemv
+node_quantizer -->|"packs into &#40;gemv_fast&#41;"| node_wq_gemv_fast
+node_quantizer -->|"packs into &#40;marlin&#41;"| node_wq_marlin
+node_quantizer -->|"frees memory via"| node_general_utils
+node_wq_gemm -->|"falls back to"| node_triton_gemm
+node_wq_gemm -->|"repacks via"| node_packing_utils
+node_llama_model -->|"fuse_layers swaps in"| node_fused_model
+node_llama_model -->|"merges qkv with"| node_fused_utils
+node_fused_model -->|"stacks"| node_fused_block
+node_fused_block -->|"contains"| node_fused_attn
+node_fused_block -->|"contains"| node_fused_mlp
+node_fused_block -->|"normalizes with"| node_fused_norm
+node_fused_attn -->|"shapes caches via"| node_fused_utils
+node_fused_model -->|"prepares inputs via"| node_fused_utils
+node_example_quantize -->|"calls"| node_entry_auto
+node_example_cli -->|"calls"| node_entry_auto
+node_wq_marlin -->|"repacks via"| node_packing_utils
+
+click node_entry_auto "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/auto.py"
+click node_awq_config "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/_config.py"
+click node_base_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/base.py"
+click node_llama_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/llama.py"
+click node_mpt_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/models/mpt.py"
+click node_act_module "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/act.py"
+click node_quantizer "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/quantize/quantizer.py"
+click node_scale_helpers "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/quantize/scale.py"
+click node_wq_gemm "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/linear/gemm.py"
+click node_wq_gemv "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/linear/gemv.py"
+click node_wq_gemv_fast "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/linear/gemv_fast.py"
+click node_wq_marlin "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/linear/marlin.py"
+click node_triton_gemm "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/triton/gemm.py"
+click node_fused_model "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/model.py"
+click node_fused_block "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/block.py"
+click node_fused_attn "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/attn.py"
+click node_fused_mlp "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/mlp.py"
+click node_fused_norm "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/modules/fused/norm.py"
+click node_fused_utils "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/fused_utils.py"
+click node_calib_data "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/calib_data.py"
+click node_module_utils "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/module.py"
+click node_quant_utils "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/quant_utils.py"
+click node_packing_utils "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/packing_utils.py"
+click node_general_utils "https://github.com/casper-hansen/AutoAWQ/blob/main/awq/utils/utils.py"
+click node_example_quantize "https://github.com/casper-hansen/AutoAWQ/blob/main/examples/quantize.py"
+click node_example_cli "https://github.com/casper-hansen/AutoAWQ/blob/main/examples/cli.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry_auto,node_awq_config,node_example_quantize,node_example_cli toneBlue
+class node_base_model,node_llama_model,node_mpt_model,node_act_module toneAmber
+class node_quantizer,node_scale_helpers toneMint
+class node_wq_gemm,node_wq_gemv,node_wq_gemv_fast,node_wq_marlin,node_triton_gemm toneRose
+class node_fused_model,node_fused_block,node_fused_attn,node_fused_mlp,node_fused_norm,node_fused_utils toneIndigo
+class node_calib_data,node_module_utils,node_quant_utils,node_packing_utils,node_general_utils toneTeal
