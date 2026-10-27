@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_g1["Python Package"]
+  node_py_train["train&#40;&#41;<br/>[training.py]"]
+  node_py_sklearn["XGBModel.fit<br/>[sklearn.py]"]
+  node_py_booster["Booster<br/>[core.py]"]
+  node_py_dmatrix["DMatrix<br/>[core.py]"]
+  node_py_callback["TrainingCallback<br/>[callback.py]"]
+  node_py_capi["_LIB<br/>[_c_api.py]"]
+end
+
+subgraph group_g2["C API Boundary"]
+  node_c_api["XGBoosterUpdateOneIter<br/>[c_api.cc]"]
+end
+
+subgraph group_g3["Learner &amp; Factories"]
+  node_learner["LearnerImpl<br/>[learner.cc]"]
+  node_learner_update["UpdateOneIter<br/>[learner.cc]"]
+  node_learner_predict["PredictRaw<br/>[learner.cc]"]
+  node_gbm_factory["GradientBooster::Create<br/>[gbm.cc]"]
+  node_obj_factory["ObjFunction::Create<br/>[objective.cc]"]
+  node_metric_factory["Metric::Create<br/>[metric.cc]"]
+end
+
+subgraph group_g4["Gradient Booster"]
+  node_gbtree["GBTree::DoBoost<br/>[gbtree.cc]"]
+  node_gbtree_boost["BoostNewTrees<br/>[gbtree.cc]"]
+  node_gbtree_predict["GBTree::PredictBatch<br/>[gbtree.cc]"]
+  node_gbtree_model["GBTreeModel<br/>[gbtree_model.h]"]
+end
+
+subgraph group_g5["Tree Growth"]
+  node_updater_factory["TreeUpdater::Create<br/>[tree_updater.cc]"]
+  node_quantile_hist["QuantileHistMaker"]
+  node_update_tree["UpdateTree loop"]
+  node_hist_updater["HistUpdater"]
+  node_driver["Driver<br/>[driver.h]"]
+  node_expand_entry["CPUExpandEntry<br/>[expand_entry.h]"]
+  node_partitioner["CommonRowPartitioner"]
+end
+
+subgraph group_g6["Histogram Engine"]
+  node_histogram_builder["HistogramBuilder<br/>[histogram.h]"]
+  node_build_hist["common::BuildHist<br/>[hist_util.cc]"]
+  node_evaluator["HistEvaluator<br/>[evaluate_splits.h]"]
+  node_quantile_sketch["WQuantileSketch<br/>[quantile.h]"]
+  node_add_cuts["AddCutPoints<br/>[quantile.cc]"]
+end
+
+subgraph group_g7["Data &amp; Bins"]
+  node_dmatrix_create["DMatrix::Create<br/>[data.cc]"]
+  node_simple_dmatrix["SimpleDMatrix<br/>[simple_dmatrix.cc]"]
+  node_gradient_index["GHistIndexMatrix<br/>[gradient_index.cc]"]
+end
+
+subgraph group_g8["Prediction Kernels"]
+  node_predict_kernel["PredictBatchKernel"]
+end
+
+node_py_sklearn -->|"fit&#40;&#41; calls train&#40;&#41;"| node_py_train
+node_py_train -->|"CallbackContainer per round"| node_py_callback
+node_py_train -->|"Booster&#40;...&#41; then bst.update&#40;&#41;"| node_py_booster
+node_py_dmatrix -->|"cached as training data"| node_py_booster
+node_py_booster -->|"ctypes calls"| node_py_capi
+node_py_dmatrix -->|"construction via C ABI"| node_py_capi
+node_py_capi -->|"FFI into libxgboost"| node_c_api
+node_c_api -->|"XGBoosterCreate"| node_learner
+node_c_api -->|"XGBoosterUpdateOneIter"| node_learner_update
+node_c_api -->|"XGDMatrixCreateFrom*"| node_dmatrix_create
+node_learner -->|"one-iteration routine"| node_learner_update
+node_learner_update -->|"PredictRaw for gradients"| node_learner_predict
+node_learner -->|"booster factory"| node_gbm_factory
+node_learner -->|"objective factory"| node_obj_factory
+node_learner -->|"metric factory"| node_metric_factory
+node_gbm_factory -->|"instantiates GBTree"| node_gbtree
+node_learner_update -->|"gbm_-&gt;DoBoost"| node_gbtree
+node_gbtree -->|"per-round tree building"| node_gbtree_boost
+node_gbtree -->|"PredictBatch"| node_gbtree_predict
+node_learner_predict -->|"gbm_-&gt;PredictBatch"| node_gbtree_predict
+node_gbtree_boost -->|"commit new trees"| node_gbtree_model
+node_gbtree_boost -->|"TreeUpdater::Create"| node_updater_factory
+node_updater_factory -->|"grow_quantile_histmaker"| node_quantile_hist
+node_gbtree_predict -->|"DispatchKernel&lt;&gt;"| node_predict_kernel
+node_quantile_hist -->|"Update&#40;&#41; runs the loop"| node_update_tree
+node_update_tree -->|"drives updater methods"| node_hist_updater
+node_update_tree -->|"Push / Pop entries"| node_driver
+node_hist_updater -->|"candidate nodes"| node_expand_entry
+node_hist_updater -->|"UpdatePosition row splits"| node_partitioner
+node_hist_updater -->|"BuildRootHist / BuildHistogram"| node_histogram_builder
+node_histogram_builder -->|"scatter into bins"| node_build_hist
+node_gradient_index -->|"binned feature indices"| node_build_hist
+node_hist_updater -->|"EvaluateSplits / ApplyTreeSplit"| node_evaluator
+node_quantile_sketch -->|"merged summaries"| node_add_cuts
+node_add_cuts -->|"HistogramCuts define bins"| node_gradient_index
+node_dmatrix_create -->|"adapter to in-memory pages"| node_simple_dmatrix
+node_simple_dmatrix -->|"pages become bins"| node_gradient_index
+
+click node_py_train "https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/training.py"
+click node_py_sklearn "https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/sklearn.py"
+click node_py_booster "https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/core.py"
+click node_py_dmatrix "https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/core.py"
+click node_py_callback "https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/callback.py"
+click node_py_capi "https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/_c_api.py"
+click node_c_api "https://github.com/dmlc/xgboost/blob/master/src/c_api/c_api.cc"
+click node_learner "https://github.com/dmlc/xgboost/blob/master/src/learner.cc"
+click node_learner_update "https://github.com/dmlc/xgboost/blob/master/src/learner.cc"
+click node_learner_predict "https://github.com/dmlc/xgboost/blob/master/src/learner.cc"
+click node_gbm_factory "https://github.com/dmlc/xgboost/blob/master/src/gbm/gbm.cc"
+click node_obj_factory "https://github.com/dmlc/xgboost/blob/master/src/objective/objective.cc"
+click node_metric_factory "https://github.com/dmlc/xgboost/blob/master/src/metric/metric.cc"
+click node_gbtree "https://github.com/dmlc/xgboost/blob/master/src/gbm/gbtree.cc"
+click node_gbtree_boost "https://github.com/dmlc/xgboost/blob/master/src/gbm/gbtree.cc"
+click node_gbtree_predict "https://github.com/dmlc/xgboost/blob/master/src/gbm/gbtree.cc"
+click node_gbtree_model "https://github.com/dmlc/xgboost/blob/master/src/gbm/gbtree_model.h"
+click node_updater_factory "https://github.com/dmlc/xgboost/blob/master/src/tree/tree_updater.cc"
+click node_quantile_hist "https://github.com/dmlc/xgboost/blob/master/src/tree/updater_quantile_hist.cc"
+click node_update_tree "https://github.com/dmlc/xgboost/blob/master/src/tree/updater_quantile_hist.cc"
+click node_hist_updater "https://github.com/dmlc/xgboost/blob/master/src/tree/updater_quantile_hist.cc"
+click node_driver "https://github.com/dmlc/xgboost/blob/master/src/tree/driver.h"
+click node_expand_entry "https://github.com/dmlc/xgboost/blob/master/src/tree/hist/expand_entry.h"
+click node_partitioner "https://github.com/dmlc/xgboost/blob/master/src/tree/common_row_partitioner.h"
+click node_histogram_builder "https://github.com/dmlc/xgboost/blob/master/src/tree/hist/histogram.h"
+click node_build_hist "https://github.com/dmlc/xgboost/blob/master/src/common/hist_util.cc"
+click node_evaluator "https://github.com/dmlc/xgboost/blob/master/src/tree/hist/evaluate_splits.h"
+click node_quantile_sketch "https://github.com/dmlc/xgboost/blob/master/src/common/quantile.h"
+click node_add_cuts "https://github.com/dmlc/xgboost/blob/master/src/common/quantile.cc"
+click node_dmatrix_create "https://github.com/dmlc/xgboost/blob/master/src/data/data.cc"
+click node_simple_dmatrix "https://github.com/dmlc/xgboost/blob/master/src/data/simple_dmatrix.cc"
+click node_gradient_index "https://github.com/dmlc/xgboost/blob/master/src/data/gradient_index.cc"
+click node_predict_kernel "https://github.com/dmlc/xgboost/blob/master/src/predictor/prediction_kernel.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_train,node_py_sklearn,node_py_booster,node_py_dmatrix,node_py_callback,node_py_capi,node_dmatrix_create,node_simple_dmatrix,node_gradient_index toneBlue
+class node_c_api,node_predict_kernel toneAmber
+class node_learner,node_learner_update,node_learner_predict,node_gbm_factory,node_obj_factory,node_metric_factory toneMint
+class node_gbtree,node_gbtree_boost,node_gbtree_predict,node_gbtree_model toneRose
+class node_updater_factory,node_quantile_hist,node_update_tree,node_hist_updater,node_driver,node_expand_entry,node_partitioner toneIndigo
+class node_histogram_builder,node_build_hist,node_evaluator,node_quantile_sketch,node_add_cuts toneTeal
