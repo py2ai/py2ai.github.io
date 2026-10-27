@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_g1["Python Layer"]
+  node_py_online["OnlineRecognizer &#40;py&#41;"]
+  node_py_offline["OfflineRecognizer &#40;py&#41;"]
+end
+
+subgraph group_g2["Streaming ASR Core"]
+  node_online_recognizer["OnlineRecognizer"]
+  node_online_impl["OnlineRecognizerImpl::Create"]
+  node_transducer_impl["OnlineRecognizerTransducerImpl"]
+  node_ctc_impl["OnlineRecognizerCtcImpl"]
+  node_online_stream["OnlineStream<br/>[online-stream.cc]"]
+  node_features["FeatureExtractor<br/>[features.cc]"]
+  node_transducer_model["OnlineTransducerModel"]
+  node_zipformer2_model["OnlineZipformer2TransducerModel"]
+end
+
+subgraph group_g3["Decoding &amp; Scoring"]
+  node_hypothesis["Hypothesis<br/>[hypothesis.h]"]
+  node_greedy_decoder["GreedySearchDecoder"]
+  node_beam_decoder["ModifiedBeamSearchDecoder"]
+  node_context_graph["ContextGraph<br/>[context-graph.cc]"]
+  node_rnn_lm["OnlineRnnLm<br/>[online-rnn-lm.cc]"]
+  node_endpoint["Endpoint::IsEndpoint<br/>[endpoint.cc]"]
+end
+
+subgraph group_g4["Audio Input"]
+  node_wave_reader["ReadWave<br/>[wave-reader.cc]"]
+  node_circular_buffer["CircularBuffer<br/>[circular-buffer.cc]"]
+end
+
+subgraph group_g5["Offline ASR"]
+  node_offline_recognizer["OfflineRecognizer"]
+  node_offline_impl["OfflineRecognizerImpl::Create"]
+  node_offline_stream["OfflineStream<br/>[offline-stream.cc]"]
+  node_sense_voice["OfflineSenseVoiceModel"]
+  node_paraformer_model["OfflineParaformerModel"]
+  node_ctc_greedy["OfflineCtcGreedySearchDecoder"]
+end
+
+subgraph group_g6["Text To Speech"]
+  node_offline_tts["OfflineTts<br/>[offline-tts.cc]"]
+  node_tts_impl["OfflineTtsImpl::Create"]
+  node_kokoro_model["OfflineTtsKokoroModel"]
+  node_matcha_model["OfflineTtsMatchaModel"]
+  node_vocoder["Vocoder<br/>[vocoder.cc]"]
+  node_tts_frontend["OfflineTtsFrontend"]
+end
+
+subgraph group_g7["Voice Activity Detection"]
+  node_vad["VoiceActivityDetector"]
+  node_vad_model["VadModel::Create<br/>[vad-model.cc]"]
+  node_silero["SileroVadModel"]
+end
+
+subgraph group_g8["onnxruntime Runtime"]
+  node_session["GetSessionOptions<br/>[session.cc]"]
+end
+
+node_py_online -->|"pybind11 wrapper"| node_online_recognizer
+node_py_offline -->|"pybind11 wrapper"| node_offline_recognizer
+node_online_recognizer -->|"Create&#40;config&#41;"| node_online_impl
+node_online_impl -->|"transducer path"| node_transducer_impl
+node_online_impl -->|"CTC path"| node_ctc_impl
+node_online_impl -->|"probe decoder session"| node_session
+node_transducer_impl -->|"RunEncoder/RunDecoder/RunJoiner"| node_transducer_model
+node_transducer_model -->|"Create&#40;&#41; dispatch"| node_zipformer2_model
+node_transducer_impl -->|"greedy_search"| node_greedy_decoder
+node_transducer_impl -->|"modified_beam_search"| node_beam_decoder
+node_transducer_impl -->|"IsEndpoint/Reset"| node_endpoint
+node_transducer_impl -->|"hypotheses bookkeeping"| node_hypothesis
+node_beam_decoder -->|"Key&#40;&#41;/scores"| node_hypothesis
+node_beam_decoder -->|"hotword biasing"| node_context_graph
+node_beam_decoder -->|"shallow fusion"| node_rnn_lm
+node_online_recognizer -->|"CreateStream&#40;&#41;"| node_online_stream
+node_online_stream -->|"fbank frames"| node_features
+node_transducer_impl -->|"IsReady/GetResult"| node_online_stream
+node_wave_reader -->|"samples in"| node_online_stream
+node_wave_reader -->|"samples in"| node_offline_stream
+node_circular_buffer -->|"recent audio"| node_vad
+node_offline_recognizer -->|"Create&#40;config&#41;"| node_offline_impl
+node_offline_recognizer -->|"CreateStream&#40;&#41;"| node_offline_stream
+node_offline_stream -->|"feature frames"| node_features
+node_offline_impl -->|"SenseVoice family"| node_sense_voice
+node_offline_impl -->|"Paraformer family"| node_paraformer_model
+node_offline_impl -->|"CTC decoding"| node_ctc_greedy
+node_offline_impl -->|"session options"| node_session
+node_transducer_model -->|"session options"| node_session
+node_offline_tts -->|"Create&#40;config&#41;"| node_tts_impl
+node_tts_impl -->|"Kokoro"| node_kokoro_model
+node_tts_impl -->|"Matcha"| node_matcha_model
+node_tts_impl -->|"text to tokens"| node_tts_frontend
+node_matcha_model -->|"mel to wave"| node_vocoder
+node_tts_impl -->|"session options"| node_session
+node_vad -->|"Create&#40;config&#41;"| node_vad_model
+node_vad_model -->|"Silero backend"| node_silero
+
+click node_py_online "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/python/sherpa_onnx/online_recognizer.py"
+click node_py_offline "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/python/sherpa_onnx/offline_recognizer.py"
+click node_online_recognizer "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-recognizer.cc"
+click node_online_impl "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-recognizer-impl.cc"
+click node_transducer_impl "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-recognizer-transducer-impl.h"
+click node_ctc_impl "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-recognizer-ctc-impl.h"
+click node_online_stream "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-stream.cc"
+click node_features "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/features.cc"
+click node_transducer_model "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-transducer-model.cc"
+click node_zipformer2_model "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-zipformer2-transducer-model.cc"
+click node_hypothesis "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/hypothesis.h"
+click node_greedy_decoder "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-transducer-greedy-search-decoder.cc"
+click node_beam_decoder "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-transducer-modified-beam-search-decoder.cc"
+click node_context_graph "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/context-graph.cc"
+click node_rnn_lm "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/online-rnn-lm.cc"
+click node_endpoint "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/endpoint.cc"
+click node_wave_reader "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/wave-reader.cc"
+click node_circular_buffer "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/circular-buffer.cc"
+click node_offline_recognizer "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-recognizer.cc"
+click node_offline_impl "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-recognizer-impl.cc"
+click node_offline_stream "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-stream.cc"
+click node_sense_voice "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-sense-voice-model.cc"
+click node_paraformer_model "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-paraformer-model.cc"
+click node_ctc_greedy "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-ctc-greedy-search-decoder.cc"
+click node_offline_tts "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-tts.cc"
+click node_tts_impl "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-tts-impl.cc"
+click node_kokoro_model "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-tts-kokoro-model.cc"
+click node_matcha_model "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-tts-matcha-model.cc"
+click node_vocoder "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/vocoder.cc"
+click node_tts_frontend "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/offline-tts-frontend.cc"
+click node_vad "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/voice-activity-detector.cc"
+click node_vad_model "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/vad-model.cc"
+click node_silero "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/silero-vad-model.cc"
+click node_session "https://github.com/k2-fsa/sherpa-onnx/blob/master/sherpa-onnx/csrc/session.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_online,node_py_offline,node_vad,node_vad_model,node_silero toneBlue
+class node_online_recognizer,node_online_impl,node_transducer_impl,node_ctc_impl,node_online_stream,node_features,node_transducer_model,node_zipformer2_model,node_session toneAmber
+class node_hypothesis,node_greedy_decoder,node_beam_decoder,node_context_graph,node_rnn_lm,node_endpoint toneMint
+class node_wave_reader,node_circular_buffer toneRose
+class node_offline_recognizer,node_offline_impl,node_offline_stream,node_sense_voice,node_paraformer_model,node_ctc_greedy toneIndigo
+class node_offline_tts,node_tts_impl,node_kokoro_model,node_matcha_model,node_vocoder,node_tts_frontend toneTeal
