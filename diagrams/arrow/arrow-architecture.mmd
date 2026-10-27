@@ -1,0 +1,128 @@
+flowchart TD
+
+subgraph group_g1["Python Surface"]
+  node_py_table["Table / RecordBatch<br/>[table.pxi]"]
+  node_py_array["Array<br/>[array.pxi]"]
+  node_py_dataset["pyarrow.dataset<br/>[dataset.py]"]
+  node_py_parquet["pyarrow.parquet<br/>[core.py]"]
+end
+
+subgraph group_g2["Core Datatypes"]
+  node_array_base["Array base<br/>[array_base.cc]"]
+  node_concatenate["Concatenate<br/>[concatenate.cc]"]
+  node_builder_base["ArrayBuilder<br/>[builder_base.cc]"]
+  node_table_cc["Table<br/>[table.cc]"]
+  node_record_batch["RecordBatch<br/>[record_batch.cc]"]
+end
+
+subgraph group_g3["IPC &amp; Feather"]
+  node_ipc_writer["IPC writer<br/>[writer.cc]"]
+  node_ipc_reader["IPC reader<br/>[reader.cc]"]
+  node_ipc_message["Message<br/>[message.cc]"]
+  node_dictionary["Dictionary memo<br/>[dictionary.cc]"]
+  node_feather["Feather<br/>[feather.cc]"]
+end
+
+subgraph group_g4["Compute"]
+  node_kernel_cc["Kernel core<br/>[kernel.cc]"]
+  node_function_cc["Function dispatch<br/>[function.cc]"]
+  node_exec_cc["ExecBatch<br/>[exec.cc]"]
+end
+
+subgraph group_g5["Dataset Layer"]
+  node_dataset_cc["Dataset<br/>[dataset.cc]"]
+  node_scanner_cc["Scanner<br/>[scanner.cc]"]
+  node_discovery["DatasetFactory<br/>[discovery.cc]"]
+  node_file_parquet["Parquet format<br/>[file_parquet.cc]"]
+  node_file_ipc["IPC format<br/>[file_ipc.cc]"]
+  node_file_csv["CSV format<br/>[file_csv.cc]"]
+  node_dataset_writer["DatasetWriter<br/>[dataset_writer.cc]"]
+end
+
+subgraph group_g6["CSV Stack"]
+  node_csv_reader["CSV reader<br/>[reader.cc]"]
+  node_csv_parser["CSV parser<br/>[parser.cc]"]
+  node_csv_column_decoder["Column decoder<br/>[column_decoder.cc]"]
+end
+
+subgraph group_g7["Memory &amp; IO"]
+  node_memory_pool["MemoryPool<br/>[memory_pool.cc]"]
+  node_io_memory["In-memory IO<br/>[memory.cc]"]
+end
+
+node_py_table -->|"columns are ChunkedArrays"| node_py_array
+node_py_array -->|"Cython handle on Array"| node_array_base
+node_py_table -->|"wraps C++ Table"| node_table_cc
+node_py_dataset -->|"dataset&#40;&#41; entry"| node_dataset_cc
+node_py_dataset -->|"Scanner API"| node_scanner_cc
+node_py_parquet -->|"dataset-based I/O"| node_dataset_cc
+node_table_cc -->|"chunks of batches"| node_record_batch
+node_record_batch -->|"owns column Arrays"| node_array_base
+node_builder_base -->|"Finish&#40;&#41; seals buffers"| node_array_base
+node_concatenate -->|"CombineChunks path"| node_table_cc
+node_record_batch -->|"serialize"| node_ipc_writer
+node_ipc_writer -->|"flatbuffer envelopes"| node_ipc_message
+node_ipc_message -->|"parse and decode"| node_ipc_reader
+node_ipc_reader -->|"ArrayLoader rebuilds"| node_array_base
+node_ipc_writer -->|"dictionary deltas"| node_dictionary
+node_ipc_reader -->|"memo lookup"| node_dictionary
+node_feather -->|"Feather V2 framing"| node_ipc_writer
+node_ipc_reader -->|"compat read path"| node_feather
+node_function_cc -->|"dispatch to kernel"| node_kernel_cc
+node_kernel_cc -->|"ExecBatch spans"| node_exec_cc
+node_exec_cc -->|"reads spans"| node_array_base
+node_dataset_cc -->|"NewScan"| node_scanner_cc
+node_scanner_cc -->|"factories infer schema"| node_discovery
+node_scanner_cc -->|"fragments per format"| node_file_parquet
+node_file_ipc -->|"ipc fragments"| node_ipc_reader
+node_file_csv -->|"csv fragments"| node_csv_reader
+node_csv_reader -->|"block parsing"| node_csv_parser
+node_csv_parser -->|"value spans"| node_csv_column_decoder
+node_csv_column_decoder -->|"build typed arrays"| node_builder_base
+node_dataset_writer -->|"writes fragments"| node_file_parquet
+node_memory_pool -->|"allocates buffers"| node_builder_base
+node_io_memory -->|"in-memory streams"| node_ipc_writer
+
+click node_py_table "https://github.com/apache/arrow/blob/main/python/pyarrow/table.pxi"
+click node_py_array "https://github.com/apache/arrow/blob/main/python/pyarrow/array.pxi"
+click node_py_dataset "https://github.com/apache/arrow/blob/main/python/pyarrow/dataset.py"
+click node_py_parquet "https://github.com/apache/arrow/blob/main/python/pyarrow/parquet/core.py"
+click node_array_base "https://github.com/apache/arrow/blob/main/cpp/src/arrow/array/array_base.cc"
+click node_concatenate "https://github.com/apache/arrow/blob/main/cpp/src/arrow/array/concatenate.cc"
+click node_builder_base "https://github.com/apache/arrow/blob/main/cpp/src/arrow/array/builder_base.cc"
+click node_table_cc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/table.cc"
+click node_record_batch "https://github.com/apache/arrow/blob/main/cpp/src/arrow/record_batch.cc"
+click node_ipc_writer "https://github.com/apache/arrow/blob/main/cpp/src/arrow/ipc/writer.cc"
+click node_ipc_reader "https://github.com/apache/arrow/blob/main/cpp/src/arrow/ipc/reader.cc"
+click node_ipc_message "https://github.com/apache/arrow/blob/main/cpp/src/arrow/ipc/message.cc"
+click node_dictionary "https://github.com/apache/arrow/blob/main/cpp/src/arrow/ipc/dictionary.cc"
+click node_feather "https://github.com/apache/arrow/blob/main/cpp/src/arrow/ipc/feather.cc"
+click node_kernel_cc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/compute/kernel.cc"
+click node_function_cc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/compute/function.cc"
+click node_exec_cc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/compute/exec.cc"
+click node_dataset_cc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/dataset.cc"
+click node_scanner_cc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/scanner.cc"
+click node_discovery "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/discovery.cc"
+click node_file_parquet "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/file_parquet.cc"
+click node_file_ipc "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/file_ipc.cc"
+click node_file_csv "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/file_csv.cc"
+click node_dataset_writer "https://github.com/apache/arrow/blob/main/cpp/src/arrow/dataset/dataset_writer.cc"
+click node_csv_reader "https://github.com/apache/arrow/blob/main/cpp/src/arrow/csv/reader.cc"
+click node_csv_parser "https://github.com/apache/arrow/blob/main/cpp/src/arrow/csv/parser.cc"
+click node_csv_column_decoder "https://github.com/apache/arrow/blob/main/cpp/src/arrow/csv/column_decoder.cc"
+click node_memory_pool "https://github.com/apache/arrow/blob/main/cpp/src/arrow/memory_pool.cc"
+click node_io_memory "https://github.com/apache/arrow/blob/main/cpp/src/arrow/io/memory.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_table,node_py_array,node_py_dataset,node_py_parquet,node_memory_pool,node_io_memory toneBlue
+class node_array_base,node_concatenate,node_builder_base,node_table_cc,node_record_batch toneAmber
+class node_ipc_writer,node_ipc_reader,node_ipc_message,node_dictionary,node_feather toneMint
+class node_kernel_cc,node_function_cc,node_exec_cc toneRose
+class node_dataset_cc,node_scanner_cc,node_discovery,node_file_parquet,node_file_ipc,node_file_csv,node_dataset_writer toneIndigo
+class node_csv_reader,node_csv_parser,node_csv_column_decoder toneTeal
