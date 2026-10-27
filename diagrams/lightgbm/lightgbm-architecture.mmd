@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_g1["Python Surface"]
+  node_py_sklearn["LGBMModel.fit<br/>[sklearn.py]"]
+  node_py_train["engine.train<br/>[engine.py]"]
+  node_py_basic["Dataset &#40;Python&#41;<br/>[basic.py]"]
+  node_py_booster["Booster &#40;Python&#41;<br/>[basic.py]"]
+end
+
+subgraph group_g2["C API &amp; App"]
+  node_c_api_create["LGBM_BoosterCreate<br/>[c_api.cpp]"]
+  node_c_api_update["LGBM_BoosterUpdateOneIter<br/>[c_api.cpp]"]
+  node_c_api_predict["LGBM_BoosterPredictForMat<br/>[c_api.cpp]"]
+  node_c_api_save["LGBM_BoosterSaveModel<br/>[c_api.cpp]"]
+  node_application["Application::Train<br/>[application.cpp]"]
+end
+
+subgraph group_g3["Data &amp; IO"]
+  node_io_config["Config::Set<br/>[config.cpp]"]
+  node_io_dataset["Dataset<br/>[dataset.cpp]"]
+  node_io_dataset_loader["DatasetLoader<br/>[dataset_loader.cpp]"]
+  node_io_binmapper["BinMapper::FindBin<br/>[bin.cpp]"]
+end
+
+subgraph group_g4["Boosting Core"]
+  node_boosting_factory["Boosting::CreateBoosting<br/>[boosting.cpp]"]
+  node_gbdt_train["GBDT::Train<br/>[gbdt.cpp]"]
+  node_gbdt_oneiter["GBDT::TrainOneIter<br/>[gbdt.cpp]"]
+  node_gbdt_eval["GBDT::EvalAndCheckEarlyStopping<br/>[gbdt.cpp]"]
+  node_gbdt_model_text["GBDT::SaveModelToString"]
+  node_gbdt_predict["GBDT::PredictRaw"]
+  node_score_updater["ScoreUpdater<br/>[score_updater.hpp]"]
+end
+
+subgraph group_g5["Row Sampling"]
+  node_bagging["BaggingSampleStrategy<br/>[bagging.hpp]"]
+  node_goss["GOSSStrategy<br/>[goss.hpp]"]
+  node_dart["DART<br/>[dart.hpp]"]
+  node_rf["RF<br/>[rf.hpp]"]
+end
+
+subgraph group_g6["Tree Learners"]
+  node_serial_train["SerialTreeLearner::Train"]
+  node_construct_hist["ConstructHistograms"]
+  node_find_splits["FindBestSplitsFromHistograms"]
+  node_split_inner["SplitInner"]
+  node_feature_histogram["FeatureHistogram"]
+  node_data_partition["DataPartition<br/>[data_partition.hpp]"]
+end
+
+subgraph group_g7["Objectives &amp; Metrics"]
+  node_obj_factory["ObjectiveFunction::CreateObjectiveFunction"]
+  node_metric_factory["Metric::CreateMetric<br/>[metric.cpp]"]
+end
+
+subgraph group_g8["Prediction &amp; Tree"]
+  node_predictor["Predictor<br/>[predictor.hpp]"]
+  node_tree_h["Tree<br/>[tree.h]"]
+end
+
+node_py_sklearn -->|"fit&#40;&#41; calls train&#40;&#41;"| node_py_train
+node_py_train -->|"constructs Dataset"| node_py_basic
+node_py_train -->|"Booster&#40;params, train_set&#41;"| node_py_booster
+node_py_booster -->|"LGBM_BoosterCreate"| node_c_api_create
+node_py_booster -->|"Booster.update&#40;&#41;"| node_c_api_update
+node_c_api_create -->|"wraps a Boosting model"| node_boosting_factory
+node_c_api_update -->|"per-iteration training"| node_gbdt_oneiter
+node_c_api_predict -->|"Booster::Predict path"| node_predictor
+node_c_api_save -->|"model serialization"| node_gbdt_model_text
+node_application -->|"CLI parameters"| node_io_config
+node_application -->|"CreateBoosting"| node_boosting_factory
+node_application -->|"task=prediction"| node_predictor
+node_io_dataset_loader -->|"builds feature groups"| node_io_dataset
+node_io_dataset -->|"FindBin over sampled values"| node_io_binmapper
+node_io_dataset -->|"binned rows feed histograms"| node_construct_hist
+node_boosting_factory -->|"gbdt/dart/rf factory"| node_gbdt_train
+node_gbdt_train -->|"num_iterations loop"| node_gbdt_oneiter
+node_gbdt_oneiter -->|"check early stopping"| node_gbdt_eval
+node_gbdt_oneiter -->|"tree_learner_-&gt;Train"| node_serial_train
+node_gbdt_oneiter -->|"GetGradients"| node_obj_factory
+node_gbdt_oneiter -->|"UpdateScore"| node_score_updater
+node_gbdt_train -->|"snapshot saves"| node_gbdt_model_text
+node_predictor -->|"predict_fun_ dispatch"| node_gbdt_predict
+node_gbdt_oneiter -->|"Bagging&#40;&#41;"| node_bagging
+node_gbdt_oneiter -->|"GOSS sampling"| node_goss
+node_dart -->|"extends GBDT"| node_gbdt_train
+node_rf -->|"extends GBDT"| node_gbdt_train
+node_serial_train -->|"per-leaf histograms"| node_construct_hist
+node_serial_train -->|"argmax split gain"| node_find_splits
+node_serial_train -->|"grow best leaf"| node_split_inner
+node_construct_hist -->|"sum gradients/hessians"| node_feature_histogram
+node_find_splits -->|"threshold scan"| node_feature_histogram
+node_find_splits -->|"leaf row indices"| node_data_partition
+node_split_inner -->|"re-partition rows"| node_data_partition
+node_split_inner -->|"Split and SetLeafOutput"| node_tree_h
+node_metric_factory -->|"per-iteration eval"| node_gbdt_eval
+
+click node_py_sklearn "https://github.com/microsoft/LightGBM/blob/main/python-package/lightgbm/sklearn.py"
+click node_py_train "https://github.com/microsoft/LightGBM/blob/main/python-package/lightgbm/engine.py"
+click node_py_basic "https://github.com/microsoft/LightGBM/blob/main/python-package/lightgbm/basic.py"
+click node_py_booster "https://github.com/microsoft/LightGBM/blob/main/python-package/lightgbm/basic.py"
+click node_c_api_create "https://github.com/microsoft/LightGBM/blob/main/src/c_api.cpp"
+click node_c_api_update "https://github.com/microsoft/LightGBM/blob/main/src/c_api.cpp"
+click node_c_api_predict "https://github.com/microsoft/LightGBM/blob/main/src/c_api.cpp"
+click node_c_api_save "https://github.com/microsoft/LightGBM/blob/main/src/c_api.cpp"
+click node_application "https://github.com/microsoft/LightGBM/blob/main/src/application/application.cpp"
+click node_io_config "https://github.com/microsoft/LightGBM/blob/main/src/io/config.cpp"
+click node_io_dataset "https://github.com/microsoft/LightGBM/blob/main/src/io/dataset.cpp"
+click node_io_dataset_loader "https://github.com/microsoft/LightGBM/blob/main/src/io/dataset_loader.cpp"
+click node_io_binmapper "https://github.com/microsoft/LightGBM/blob/main/src/io/bin.cpp"
+click node_boosting_factory "https://github.com/microsoft/LightGBM/blob/main/src/boosting/boosting.cpp"
+click node_gbdt_train "https://github.com/microsoft/LightGBM/blob/main/src/boosting/gbdt.cpp"
+click node_gbdt_oneiter "https://github.com/microsoft/LightGBM/blob/main/src/boosting/gbdt.cpp"
+click node_gbdt_eval "https://github.com/microsoft/LightGBM/blob/main/src/boosting/gbdt.cpp"
+click node_gbdt_model_text "https://github.com/microsoft/LightGBM/blob/main/src/boosting/gbdt_model_text.cpp"
+click node_gbdt_predict "https://github.com/microsoft/LightGBM/blob/main/src/boosting/gbdt_prediction.cpp"
+click node_score_updater "https://github.com/microsoft/LightGBM/blob/main/src/boosting/score_updater.hpp"
+click node_bagging "https://github.com/microsoft/LightGBM/blob/main/src/boosting/bagging.hpp"
+click node_goss "https://github.com/microsoft/LightGBM/blob/main/src/boosting/goss.hpp"
+click node_dart "https://github.com/microsoft/LightGBM/blob/main/src/boosting/dart.hpp"
+click node_rf "https://github.com/microsoft/LightGBM/blob/main/src/boosting/rf.hpp"
+click node_serial_train "https://github.com/microsoft/LightGBM/blob/main/src/treelearner/serial_tree_learner.cpp"
+click node_construct_hist "https://github.com/microsoft/LightGBM/blob/main/src/treelearner/serial_tree_learner.cpp"
+click node_find_splits "https://github.com/microsoft/LightGBM/blob/main/src/treelearner/serial_tree_learner.cpp"
+click node_split_inner "https://github.com/microsoft/LightGBM/blob/main/src/treelearner/serial_tree_learner.cpp"
+click node_feature_histogram "https://github.com/microsoft/LightGBM/blob/main/src/treelearner/feature_histogram.hpp"
+click node_data_partition "https://github.com/microsoft/LightGBM/blob/main/src/treelearner/data_partition.hpp"
+click node_obj_factory "https://github.com/microsoft/LightGBM/blob/main/src/objective/objective_function.cpp"
+click node_metric_factory "https://github.com/microsoft/LightGBM/blob/main/src/metric/metric.cpp"
+click node_predictor "https://github.com/microsoft/LightGBM/blob/main/src/application/predictor.hpp"
+click node_tree_h "https://github.com/microsoft/LightGBM/blob/main/include/LightGBM/tree.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_sklearn,node_py_train,node_py_basic,node_py_booster,node_obj_factory,node_metric_factory toneBlue
+class node_c_api_create,node_c_api_update,node_c_api_predict,node_c_api_save,node_application,node_predictor,node_tree_h toneAmber
+class node_io_config,node_io_dataset,node_io_dataset_loader,node_io_binmapper toneMint
+class node_boosting_factory,node_gbdt_train,node_gbdt_oneiter,node_gbdt_eval,node_gbdt_model_text,node_gbdt_predict,node_score_updater toneRose
+class node_bagging,node_goss,node_dart,node_rf toneIndigo
+class node_serial_train,node_construct_hist,node_find_splits,node_split_inner,node_feature_histogram,node_data_partition toneTeal
