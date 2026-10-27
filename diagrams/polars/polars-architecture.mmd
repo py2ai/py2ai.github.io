@@ -1,0 +1,151 @@
+flowchart TD
+
+subgraph group_g1["Python Eager API"]
+  node_py_dataframe["DataFrame<br/>[frame.py]"]
+  node_py_groupby["GroupBy<br/>[group_by.py]"]
+end
+
+subgraph group_g2["Python Lazy API"]
+  node_py_lazyframe["LazyFrame<br/>[frame.py]"]
+  node_py_groupby_lf["group_by&#40;&#41;<br/>[frame.py]"]
+  node_py_collect["collect&#40;&#41;<br/>[frame.py]"]
+  node_py_engine_select["_select_engine<br/>[engine_config.py]"]
+  node_py_expr["Expr<br/>[expr.py]"]
+  node_py_col["col&#40;&#41;<br/>[col.py]"]
+end
+
+subgraph group_g3["PyO3 Bridge"]
+  node_plr["_plr runtime<br/>[_plr.py]"]
+  node_pydataframe["PyDataFrame<br/>[mod.rs]"]
+  node_pyexpr["PyExpr<br/>[mod.rs]"]
+end
+
+subgraph group_g4["Plan &amp; Optimize &#40;Rust&#41;"]
+  node_dsl["DslPlan<br/>[plan.rs]"]
+  node_to_alp["to_alp_impl<br/>[mod.rs]"]
+  node_ir["IR<br/>[mod.rs]"]
+  node_optimize["optimize&#40;&#41;<br/>[mod.rs]"]
+  node_ppd["PredicatePushDown<br/>[mod.rs]"]
+  node_ppv["ProjectionPushdownVisitor<br/>[mod.rs]"]
+end
+
+subgraph group_g5["Physical Engines"]
+  node_cpe["create_physical_expr<br/>[planner.rs]"]
+  node_executor["Executor trait<br/>[executor.rs]"]
+  node_gby_exec["GroupByExec<br/>[group_by.rs]"]
+  node_lower_ir["lower_ir<br/>[lower_ir.rs]"]
+  node_phys_kind["PhysNodeKind<br/>[mod.rs]"]
+  node_exec_graph["execute_graph<br/>[execute.rs]"]
+  node_morsel["Morsel<br/>[morsel.rs]"]
+end
+
+subgraph group_g6["Columnar Core"]
+  node_rs_frame["DataFrame<br/>[dataframe.rs]"]
+  node_series["Series<br/>[mod.rs]"]
+  node_series_trait["SeriesTrait<br/>[series_trait.rs]"]
+  node_chunked["ChunkedArray<br/>[mod.rs]"]
+  node_dtype["DataType<br/>[dtype.rs]"]
+end
+
+subgraph group_g7["IO Readers"]
+  node_py_read_csv["read_csv<br/>[functions.py]"]
+  node_py_read_parquet["read_parquet<br/>[functions.py]"]
+  node_py_scan_parquet["scan_parquet<br/>[functions.py]"]
+  node_csv_reader["CsvReader<br/>[reader.rs]"]
+  node_parquet_reader["ParquetReader<br/>[reader.rs]"]
+end
+
+node_py_dataframe -->|"df.lazy&#40;&#41; defers"| node_py_lazyframe
+node_py_dataframe -->|"df.group_by&#40;&#41;"| node_py_groupby
+node_py_dataframe -->|"delegates to"| node_pydataframe
+node_py_groupby -->|"aggregate via"| node_pydataframe
+node_py_lazyframe -->|"creates LazyGroupBy"| node_py_groupby_lf
+node_py_groupby_lf -->|"keys and aggregations"| node_py_expr
+node_py_lazyframe -->|"expressions in select"| node_py_col
+node_py_col -->|"wrap_expr result"| node_py_expr
+node_py_lazyframe -->|"triggered by"| node_py_collect
+node_py_collect -->|"engine='auto'"| node_py_engine_select
+node_py_engine_select -.->|"in-memory path"| node_executor
+node_py_engine_select -.->|"streaming path"| node_lower_ir
+node_py_collect -->|"receives result"| node_pydataframe
+node_py_col -->|"plr.col&#40;name&#41;"| node_plr
+node_py_expr -->|"calls plr.*"| node_pyexpr
+node_plr -->|"module swap provides"| node_pyexpr
+node_plr -->|"provides"| node_pydataframe
+node_pyexpr -->|"serializes DSL nodes"| node_dsl
+node_pydataframe -->|"wraps"| node_rs_frame
+node_dsl -->|"converted by"| node_to_alp
+node_to_alp -->|"resolves into"| node_ir
+node_ir -->|"optimize&#40;&#41;"| node_optimize
+node_optimize -->|"predicate pushdown"| node_ppd
+node_optimize -->|"projection pushdown"| node_ppv
+node_ppd -->|"rewrites"| node_ir
+node_ppv -->|"rewrites"| node_ir
+node_ir -->|"physical expressions"| node_cpe
+node_executor -->|"evaluates via"| node_cpe
+node_executor -->|"group_by operator"| node_gby_exec
+node_ir -->|"lowered for streaming"| node_lower_ir
+node_lower_ir -->|"emits"| node_phys_kind
+node_phys_kind -->|"nodes run as"| node_exec_graph
+node_exec_graph -->|"data flows in"| node_morsel
+node_morsel -->|"batches of"| node_rs_frame
+node_gby_exec -->|"aggregates"| node_series
+node_rs_frame -->|"columns are"| node_series
+node_series -->|"dyn trait object"| node_series_trait
+node_series_trait -->|"implemented by"| node_chunked
+node_chunked -->|"typed by"| node_dtype
+node_rs_frame -->|"schema types"| node_dtype
+node_py_read_csv -->|"delegates"| node_csv_reader
+node_py_read_parquet -->|"delegates"| node_parquet_reader
+node_csv_reader -->|"yields"| node_rs_frame
+node_parquet_reader -->|"yields"| node_rs_frame
+node_py_scan_parquet -->|"creates scan node"| node_dsl
+
+click node_py_dataframe "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/dataframe/frame.py"
+click node_py_groupby "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/dataframe/group_by.py"
+click node_py_lazyframe "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/lazyframe/frame.py"
+click node_py_groupby_lf "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/lazyframe/frame.py"
+click node_py_collect "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/lazyframe/frame.py"
+click node_py_engine_select "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/lazyframe/engine_config.py"
+click node_py_expr "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/expr/expr.py"
+click node_py_col "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/functions/col.py"
+click node_plr "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/_plr.py"
+click node_pydataframe "https://github.com/pola-rs/polars/blob/main/crates/polars-python/src/dataframe/mod.rs"
+click node_pyexpr "https://github.com/pola-rs/polars/blob/main/crates/polars-python/src/expr/mod.rs"
+click node_dsl "https://github.com/pola-rs/polars/blob/main/crates/polars-plan/src/dsl/plan.rs"
+click node_to_alp "https://github.com/pola-rs/polars/blob/main/crates/polars-plan/src/plans/conversion/dsl_to_ir/mod.rs"
+click node_ir "https://github.com/pola-rs/polars/blob/main/crates/polars-plan/src/plans/ir/mod.rs"
+click node_optimize "https://github.com/pola-rs/polars/blob/main/crates/polars-plan/src/plans/optimizer/mod.rs"
+click node_ppd "https://github.com/pola-rs/polars/blob/main/crates/polars-plan/src/plans/optimizer/predicate_pushdown/mod.rs"
+click node_ppv "https://github.com/pola-rs/polars/blob/main/crates/polars-plan/src/plans/optimizer/projection_pushdown/mod.rs"
+click node_cpe "https://github.com/pola-rs/polars/blob/main/crates/polars-expr/src/planner.rs"
+click node_executor "https://github.com/pola-rs/polars/blob/main/crates/polars-mem-engine/src/executors/executor.rs"
+click node_gby_exec "https://github.com/pola-rs/polars/blob/main/crates/polars-mem-engine/src/executors/group_by.rs"
+click node_lower_ir "https://github.com/pola-rs/polars/blob/main/crates/polars-stream/src/physical_plan/lower_ir.rs"
+click node_phys_kind "https://github.com/pola-rs/polars/blob/main/crates/polars-stream/src/physical_plan/mod.rs"
+click node_exec_graph "https://github.com/pola-rs/polars/blob/main/crates/polars-stream/src/execute.rs"
+click node_morsel "https://github.com/pola-rs/polars/blob/main/crates/polars-stream/src/morsel.rs"
+click node_rs_frame "https://github.com/pola-rs/polars/blob/main/crates/polars-core/src/frame/dataframe.rs"
+click node_series "https://github.com/pola-rs/polars/blob/main/crates/polars-core/src/series/mod.rs"
+click node_series_trait "https://github.com/pola-rs/polars/blob/main/crates/polars-core/src/series/series_trait.rs"
+click node_chunked "https://github.com/pola-rs/polars/blob/main/crates/polars-core/src/chunked_array/mod.rs"
+click node_dtype "https://github.com/pola-rs/polars/blob/main/crates/polars-core/src/datatypes/dtype.rs"
+click node_py_read_csv "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/io/csv/functions.py"
+click node_py_read_parquet "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/io/parquet/functions.py"
+click node_py_scan_parquet "https://github.com/pola-rs/polars/blob/main/py-polars/src/polars/io/parquet/functions.py"
+click node_csv_reader "https://github.com/pola-rs/polars/blob/main/crates/polars-io/src/csv/read/reader.rs"
+click node_parquet_reader "https://github.com/pola-rs/polars/blob/main/crates/polars-io/src/parquet/read/reader.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_py_dataframe,node_py_groupby,node_py_read_csv,node_py_read_parquet,node_py_scan_parquet,node_csv_reader,node_parquet_reader toneBlue
+class node_py_lazyframe,node_py_groupby_lf,node_py_collect,node_py_engine_select,node_py_expr,node_py_col toneAmber
+class node_plr,node_pydataframe,node_pyexpr toneMint
+class node_dsl,node_to_alp,node_ir,node_optimize,node_ppd,node_ppv toneRose
+class node_cpe,node_executor,node_gby_exec,node_lower_ir,node_phys_kind,node_exec_graph,node_morsel toneIndigo
+class node_rs_frame,node_series,node_series_trait,node_chunked,node_dtype toneTeal
