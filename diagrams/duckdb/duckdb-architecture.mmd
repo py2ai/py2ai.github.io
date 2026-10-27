@@ -1,0 +1,112 @@
+flowchart TD
+
+subgraph group_g1["Session &amp; Preparation"]
+  node_capi_conn["duckdb_v2_connection_create"]
+  node_query["ClientContext::QueryInternal<br/>[client_context.cpp]"]
+  node_prepare["ClientContext::Prepare<br/>[client_context.cpp]"]
+end
+
+subgraph group_g2["Parsing &amp; Binding"]
+  node_parser["Parser::ParseQuery<br/>[parser.cpp]"]
+  node_binder["Binder::Bind<br/>[binder.cpp]"]
+  node_bind_select["Binder::Bind&#40;SelectStatement&#41;<br/>[bind_select.cpp]"]
+  node_planner_create["Planner::CreatePlan<br/>[planner.cpp]"]
+end
+
+subgraph group_g3["Plan Optimization"]
+  node_optimizer["Optimizer::Optimize<br/>[optimizer.cpp]"]
+  node_builtins["Optimizer::RunBuiltInOptimizers<br/>[optimizer.cpp]"]
+  node_filter_pushdown["FilterPushdown::Rewrite"]
+  node_stats_prop["StatisticsPropagator::PropagateStatistics"]
+end
+
+subgraph group_g4["Physical Operators"]
+  node_plan_gen["PhysicalPlanGenerator::CreatePlan"]
+  node_phys_op["PhysicalOperator"]
+  node_expr_exec["ExpressionExecutor::Execute"]
+  node_table_scan["PhysicalTableScan::GetDataInternal"]
+  node_hash_join["PhysicalHashJoin::Sink"]
+  node_hash_agg["PhysicalHashAggregate::Sink"]
+end
+
+subgraph group_g5["Scheduling &amp; Data Flow"]
+  node_executor["Executor::ScheduleEventsInternal<br/>[executor.cpp]"]
+  node_sched["TaskScheduler::ScheduleTask<br/>[task_scheduler.cpp]"]
+  node_cdc["ColumnDataCollection"]
+end
+
+subgraph group_g6["Storage &amp; Ingest"]
+  node_data_table["DataTable::Scan<br/>[data_table.cpp]"]
+  node_append["DataTable::Append<br/>[data_table.cpp]"]
+  node_read_csv["ReadCSVTableFunction::GetFunction<br/>[read_csv.cpp]"]
+  node_mfr["MultiFileReader::Create"]
+  node_blocks["SingleFileBlockManager::WriteHeader"]
+  node_ckpt["SingleFileCheckpointWriter::CreateCheckpoint"]
+end
+
+node_capi_conn -->|"embedded entry"| node_query
+node_query -->|"prepared path"| node_prepare
+node_prepare -->|"SQL text"| node_parser
+node_parser -->|"parse tree"| node_binder
+node_binder -->|"statement dispatch"| node_bind_select
+node_bind_select -->|"bound plan"| node_planner_create
+node_planner_create -->|"Planner::Optimize"| node_optimizer
+node_optimizer -->|"pass list"| node_builtins
+node_builtins -->|"rule pass"| node_filter_pushdown
+node_builtins -->|"rule pass"| node_stats_prop
+node_planner_create -->|"lower to physical"| node_plan_gen
+node_plan_gen -->|"operator tree"| node_phys_op
+node_phys_op -->|"evaluates expressions"| node_expr_exec
+node_plan_gen -->|"scan node"| node_table_scan
+node_plan_gen -->|"join node"| node_hash_join
+node_plan_gen -->|"aggregate node"| node_hash_agg
+node_executor -->|"drives work units"| node_phys_op
+node_executor -->|"dispatches tasks"| node_sched
+node_hash_agg -->|"materializes groups"| node_cdc
+node_hash_join -->|"spill and collect"| node_cdc
+node_table_scan -->|"row group reads"| node_data_table
+node_data_table -->|"reads persisted blocks"| node_blocks
+node_read_csv -->|"multi-file dispatch"| node_mfr
+node_append -->|"writes new blocks"| node_blocks
+node_ckpt -->|"rewrites header"| node_blocks
+
+click node_capi_conn "https://github.com/duckdb/duckdb/blob/main/src/main/capi/v2/capi_v2_connection.cpp"
+click node_query "https://github.com/duckdb/duckdb/blob/main/src/main/client_context.cpp"
+click node_prepare "https://github.com/duckdb/duckdb/blob/main/src/main/client_context.cpp"
+click node_parser "https://github.com/duckdb/duckdb/blob/main/src/parser/parser.cpp"
+click node_binder "https://github.com/duckdb/duckdb/blob/main/src/planner/binder.cpp"
+click node_bind_select "https://github.com/duckdb/duckdb/blob/main/src/planner/binder/statement/bind_select.cpp"
+click node_planner_create "https://github.com/duckdb/duckdb/blob/main/src/planner/planner.cpp"
+click node_optimizer "https://github.com/duckdb/duckdb/blob/main/src/optimizer/optimizer.cpp"
+click node_builtins "https://github.com/duckdb/duckdb/blob/main/src/optimizer/optimizer.cpp"
+click node_filter_pushdown "https://github.com/duckdb/duckdb/blob/main/src/optimizer/filter_pushdown.cpp"
+click node_stats_prop "https://github.com/duckdb/duckdb/blob/main/src/optimizer/statistics_propagator.cpp"
+click node_plan_gen "https://github.com/duckdb/duckdb/blob/main/src/execution/physical_plan_generator.cpp"
+click node_phys_op "https://github.com/duckdb/duckdb/blob/main/src/execution/physical_operator.cpp"
+click node_expr_exec "https://github.com/duckdb/duckdb/blob/main/src/execution/expression_executor.cpp"
+click node_table_scan "https://github.com/duckdb/duckdb/blob/main/src/execution/operator/scan/physical_table_scan.cpp"
+click node_hash_join "https://github.com/duckdb/duckdb/blob/main/src/execution/operator/join/physical_hash_join.cpp"
+click node_hash_agg "https://github.com/duckdb/duckdb/blob/main/src/execution/operator/aggregate/physical_hash_aggregate.cpp"
+click node_executor "https://github.com/duckdb/duckdb/blob/main/src/parallel/executor.cpp"
+click node_sched "https://github.com/duckdb/duckdb/blob/main/src/parallel/task_scheduler.cpp"
+click node_cdc "https://github.com/duckdb/duckdb/blob/main/src/common/types/column/column_data_collection.cpp"
+click node_data_table "https://github.com/duckdb/duckdb/blob/main/src/storage/data_table.cpp"
+click node_append "https://github.com/duckdb/duckdb/blob/main/src/storage/data_table.cpp"
+click node_read_csv "https://github.com/duckdb/duckdb/blob/main/src/function/table/read_csv.cpp"
+click node_mfr "https://github.com/duckdb/duckdb/blob/main/src/common/multi_file/multi_file_reader.cpp"
+click node_blocks "https://github.com/duckdb/duckdb/blob/main/src/storage/single_file_block_manager.cpp"
+click node_ckpt "https://github.com/duckdb/duckdb/blob/main/src/storage/checkpoint_manager.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_capi_conn,node_query,node_prepare toneBlue
+class node_parser,node_binder,node_bind_select,node_planner_create toneAmber
+class node_optimizer,node_builtins,node_filter_pushdown,node_stats_prop toneMint
+class node_plan_gen,node_phys_op,node_expr_exec,node_table_scan,node_hash_join,node_hash_agg toneRose
+class node_executor,node_sched,node_cdc toneIndigo
+class node_data_table,node_append,node_read_csv,node_mfr,node_blocks,node_ckpt toneTeal
