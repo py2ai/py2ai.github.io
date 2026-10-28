@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_gp1["Python Bridge"]
+  node_pyinit["PyInit_cv2<br/>[cv2.cpp]"]
+  node_initbody["init_body<br/>[cv2.cpp]"]
+  node_pyconv["pyopencv_to<br/>[cv2_convert.cpp]"]
+  node_pynumpy["NumPy interop<br/>[cv2_numpy.cpp]"]
+  node_pyallow["PyAllowThreads<br/>[cv2_util.hpp]"]
+  node_pyensure["PyEnsureGIL<br/>[cv2_util.hpp]"]
+end
+
+subgraph group_gp2["Core Runtime"]
+  node_matcreate["Mat::create<br/>[matrix.cpp]"]
+  node_umatcreate["UMat::create<br/>[umatrix.cpp]"]
+  node_fastmalloc["fastMalloc<br/>[alloc.cpp]"]
+  node_filestorage["FileStorage::open<br/>[persistence.cpp]"]
+  node_fsop["FileStorage::operator&#91;&#93;<br/>[persistence.cpp]"]
+  node_pfor["parallel_for_<br/>[parallel.cpp]"]
+  node_pforimpl["parallel_for_impl<br/>[parallel.cpp]"]
+  node_setthreads["setNumThreads<br/>[parallel.cpp]"]
+  node_oclctx["initializeContextFromHandle<br/>[ocl.cpp]"]
+end
+
+subgraph group_gp3["Image Kernels"]
+  node_resizeapi["cv::resize<br/>[resize.cpp]"]
+  node_resizeinv["resizeGeneric_Invoker<br/>[resize.cpp]"]
+  node_gaussian["GaussianBlur"]
+  node_cannyapi["Canny<br/>[canny.cpp]"]
+  node_cannypar["parallelCanny<br/>[canny.cpp]"]
+  node_cvtcolor["cvtColor<br/>[color.cpp]"]
+end
+
+subgraph group_gp4["DNN Frontend"]
+  node_readnet["readNet<br/>[dnn_read.cpp]"]
+  node_readonnx["readNetFromONNX<br/>[onnx_importer.cpp]"]
+  node_readonnx2["readNetFromONNX2<br/>[onnx_importer2.cpp]"]
+  node_setupnet["Net::Impl::setUpNet<br/>[net_impl.cpp]"]
+  node_fuselayers["Net::Impl::fuseLayers<br/>[net_impl_fuse.cpp]"]
+  node_forwardlayer["Net::Impl::forwardLayer<br/>[net_impl.cpp]"]
+  node_netforward["Net::forward<br/>[net.cpp]"]
+end
+
+subgraph group_gp5["DNN Layers and Backends"]
+  node_convimpl["ConvolutionLayerImpl"]
+  node_conv2["Conv2LayerImpl<br/>[conv2_layer.cpp]"]
+  node_gemm["GemmLayerImpl<br/>[gemm_layer.cpp]"]
+  node_sdpa["SDPALayerImpl<br/>[sdpa_layer.cpp]"]
+  node_kvcache["KVCacheManager::reserve"]
+  node_backendwrap["preferableBackend dispatch"]
+end
+
+node_pyinit -->|"PyInit_cv2 calls"| node_initbody
+node_initbody -->|"registered wrappers invoke"| node_pyconv
+node_pyconv -->|"NumPy C-API view"| node_pynumpy
+node_pynumpy -->|"reacquire GIL"| node_pyensure
+node_pyconv -->|"release GIL"| node_pyallow
+node_pyconv -->|"fill Mat from buffer"| node_matcreate
+node_matcreate -->|"aligned allocation"| node_fastmalloc
+node_umatcreate -->|"cl buffer backing"| node_oclctx
+node_filestorage -->|"FileNode lookup"| node_fsop
+node_resizeapi -->|"dst.create"| node_matcreate
+node_cvtcolor -->|"dst.create"| node_matcreate
+node_resizeapi -->|"generic interpolation"| node_resizeinv
+node_resizeinv -->|"row ranges"| node_pfor
+node_pfor -->|"dispatch stripes"| node_pforimpl
+node_setthreads -->|"pool size"| node_pforimpl
+node_gaussian -->|"row and column filters"| node_pfor
+node_cannyapi -->|"hysteresis body"| node_cannypar
+node_cannypar -->|"fan out rows"| node_pfor
+node_cannyapi -->|"dst.create"| node_matcreate
+node_readnet -->|"format detection"| node_readonnx
+node_readonnx -->|"protobuf walk"| node_readonnx2
+node_readonnx2 -->|"attach layers"| node_setupnet
+node_netforward -->|"ensure configured"| node_setupnet
+node_setupnet -->|"optimize graph"| node_fuselayers
+node_setupnet -->|"pick backend"| node_backendwrap
+node_netforward -->|"iterate layers"| node_forwardlayer
+node_forwardlayer -->|"execute conv"| node_convimpl
+node_forwardlayer -->|"new engine conv"| node_conv2
+node_forwardlayer -->|"GEMM stage"| node_gemm
+node_forwardlayer -->|"attention"| node_sdpa
+node_forwardlayer -->|"backend node lookup"| node_backendwrap
+node_forwardlayer -->|"OpenCL blob path"| node_umatcreate
+node_conv2 -->|"parallel tiles"| node_pfor
+node_gemm -->|"threaded blocks"| node_pfor
+node_sdpa -->|"batch x heads rows"| node_pfor
+node_setupnet -->|"wire KV caches"| node_kvcache
+node_kvcache -->|"parallel cache ops"| node_pfor
+
+click node_pyinit "https://github.com/opencv/opencv/blob/master/modules/python/src2/cv2.cpp"
+click node_initbody "https://github.com/opencv/opencv/blob/master/modules/python/src2/cv2.cpp"
+click node_pyconv "https://github.com/opencv/opencv/blob/master/modules/python/src2/cv2_convert.cpp"
+click node_pynumpy "https://github.com/opencv/opencv/blob/master/modules/python/src2/cv2_numpy.cpp"
+click node_pyallow "https://github.com/opencv/opencv/blob/master/modules/python/src2/cv2_util.hpp"
+click node_pyensure "https://github.com/opencv/opencv/blob/master/modules/python/src2/cv2_util.hpp"
+click node_matcreate "https://github.com/opencv/opencv/blob/master/modules/core/src/matrix.cpp"
+click node_umatcreate "https://github.com/opencv/opencv/blob/master/modules/core/src/umatrix.cpp"
+click node_fastmalloc "https://github.com/opencv/opencv/blob/master/modules/core/src/alloc.cpp"
+click node_filestorage "https://github.com/opencv/opencv/blob/master/modules/core/src/persistence.cpp"
+click node_fsop "https://github.com/opencv/opencv/blob/master/modules/core/src/persistence.cpp"
+click node_pfor "https://github.com/opencv/opencv/blob/master/modules/core/src/parallel.cpp"
+click node_pforimpl "https://github.com/opencv/opencv/blob/master/modules/core/src/parallel.cpp"
+click node_setthreads "https://github.com/opencv/opencv/blob/master/modules/core/src/parallel.cpp"
+click node_oclctx "https://github.com/opencv/opencv/blob/master/modules/core/src/ocl.cpp"
+click node_resizeapi "https://github.com/opencv/opencv/blob/master/modules/imgproc/src/resize.cpp"
+click node_resizeinv "https://github.com/opencv/opencv/blob/master/modules/imgproc/src/resize.cpp"
+click node_gaussian "https://github.com/opencv/opencv/blob/master/modules/imgproc/src/smooth.dispatch.cpp"
+click node_cannyapi "https://github.com/opencv/opencv/blob/master/modules/imgproc/src/canny.cpp"
+click node_cannypar "https://github.com/opencv/opencv/blob/master/modules/imgproc/src/canny.cpp"
+click node_cvtcolor "https://github.com/opencv/opencv/blob/master/modules/imgproc/src/color.cpp"
+click node_readnet "https://github.com/opencv/opencv/blob/master/modules/dnn/src/dnn_read.cpp"
+click node_readonnx "https://github.com/opencv/opencv/blob/master/modules/dnn/src/onnx/onnx_importer.cpp"
+click node_readonnx2 "https://github.com/opencv/opencv/blob/master/modules/dnn/src/onnx/onnx_importer2.cpp"
+click node_setupnet "https://github.com/opencv/opencv/blob/master/modules/dnn/src/net_impl.cpp"
+click node_fuselayers "https://github.com/opencv/opencv/blob/master/modules/dnn/src/net_impl_fuse.cpp"
+click node_forwardlayer "https://github.com/opencv/opencv/blob/master/modules/dnn/src/net_impl.cpp"
+click node_netforward "https://github.com/opencv/opencv/blob/master/modules/dnn/src/net.cpp"
+click node_convimpl "https://github.com/opencv/opencv/blob/master/modules/dnn/src/layers/convolution_layer.cpp"
+click node_conv2 "https://github.com/opencv/opencv/blob/master/modules/dnn/src/layers/conv2_layer.cpp"
+click node_gemm "https://github.com/opencv/opencv/blob/master/modules/dnn/src/layers/gemm_layer.cpp"
+click node_sdpa "https://github.com/opencv/opencv/blob/master/modules/dnn/src/layers/sdpa_layer.cpp"
+click node_kvcache "https://github.com/opencv/opencv/blob/master/modules/dnn/src/kv_cache_manager.cpp"
+click node_backendwrap "https://github.com/opencv/opencv/blob/master/modules/dnn/src/net_impl_backend.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_pyinit,node_initbody,node_pyconv,node_pynumpy,node_pyallow,node_pyensure toneBlue
+class node_matcreate,node_umatcreate,node_fastmalloc,node_filestorage,node_fsop,node_pfor,node_pforimpl,node_setthreads,node_oclctx toneAmber
+class node_resizeapi,node_resizeinv,node_gaussian,node_cannyapi,node_cannypar,node_cvtcolor toneMint
+class node_readnet,node_readonnx,node_readonnx2,node_setupnet,node_fuselayers,node_forwardlayer,node_netforward toneRose
+class node_convimpl,node_conv2,node_gemm,node_sdpa,node_kvcache,node_backendwrap toneIndigo
