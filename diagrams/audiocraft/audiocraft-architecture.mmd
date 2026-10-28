@@ -1,0 +1,109 @@
+flowchart TD
+
+subgraph group_g1["Generation API"]
+  node_musicgen["MusicGen<br/>[musicgen.py]"]
+  node_genmodel["BaseGenModel<br/>[genmodel.py]"]
+end
+
+subgraph group_g2["Language Model over Codes"]
+  node_lm["LMModel<br/>[lm.py]"]
+  node_transformer["StreamingTransformer<br/>[transformer.py]"]
+  node_rope["RotaryEmbedding / XPos<br/>[rope.py]"]
+  node_patterns["Codebook Patterns"]
+end
+
+subgraph group_g3["Conditioning Stack"]
+  node_conditioners["Conditioners + Fuser<br/>[conditioners.py]"]
+  node_chroma["ChromaExtractor<br/>[chroma.py]"]
+end
+
+subgraph group_g4["Neural Codec Core"]
+  node_encodec["EncodecModel<br/>[encodec.py]"]
+  node_seanet["SEANet Encoder/Decoder<br/>[seanet.py]"]
+  node_vq["ResidualVectorQuantizer<br/>[vq.py]"]
+  node_core_vq["Core VQ<br/>[core_vq.py]"]
+  node_qbase["BaseQuantizer<br/>[base.py]"]
+end
+
+subgraph group_g5["Data and Audio IO"]
+  node_audio["audio_read / audio_write<br/>[audio.py]"]
+  node_audio_utils["audio_utils<br/>[audio_utils.py]"]
+end
+
+subgraph group_g6["Codec Training"]
+  node_solver_comp["CompressionSolver<br/>[compression.py]"]
+  node_adv_losses["Adversarial Losses<br/>[losses.py]"]
+  node_balancer["Balancer<br/>[balancer.py]"]
+end
+
+subgraph group_g7["Builders and Infra"]
+  node_builders["Model Builders<br/>[builders.py]"]
+  node_loaders["Checkpoint Loaders<br/>[loaders.py]"]
+  node_streaming["StreamingModule<br/>[streaming.py]"]
+  node_checkpoint["Checkpoint Utils<br/>[checkpoint.py]"]
+end
+
+node_musicgen -->|"extends BaseGenModel"| node_genmodel
+node_genmodel -->|"convert_audio on prompts"| node_audio_utils
+node_genmodel -->|"encode prompt / decode tokens"| node_encodec
+node_genmodel -->|"lm.generate token loop"| node_lm
+node_musicgen -->|"debug model path"| node_builders
+node_musicgen -->|"get_pretrained loads weights"| node_loaders
+node_builders -->|"get_compression_model"| node_encodec
+node_builders -->|"get_lm_model"| node_lm
+node_builders -->|"get_conditioner_provider"| node_conditioners
+node_builders -->|"get_codebooks_pattern_provider"| node_patterns
+node_lm -->|"StreamingTransformer backbone"| node_transformer
+node_transformer -->|"RotaryEmbedding positions"| node_rope
+node_lm -->|"build/revert pattern sequence"| node_patterns
+node_lm -->|"tokenize then encode conditions"| node_conditioners
+node_lm -->|"streaming&#40;&#41; context caching"| node_streaming
+node_transformer -->|"layer-wise state"| node_streaming
+node_conditioners -->|"ChromaStemConditioner features"| node_chroma
+node_conditioners -->|"ConditionFuser is StreamingModule"| node_streaming
+node_encodec -->|"conv encoder/decoder pair"| node_seanet
+node_encodec -->|"RVQ bottleneck"| node_vq
+node_vq -->|"codebook EMA and kmeans"| node_core_vq
+node_vq -->|"extends BaseQuantizer"| node_qbase
+node_audio -->|"f32_pcm, normalize_audio"| node_audio_utils
+node_solver_comp -->|"adversarial + feature matching"| node_adv_losses
+node_solver_comp -->|"weighted gradient balancing"| node_balancer
+node_solver_comp -->|"builds model and optimizers"| node_builders
+node_loaders -->|"rebuild modules from cfg"| node_builders
+
+click node_musicgen "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/models/musicgen.py"
+click node_genmodel "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/models/genmodel.py"
+click node_lm "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/models/lm.py"
+click node_transformer "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/transformer.py"
+click node_rope "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/rope.py"
+click node_patterns "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/codebooks_patterns.py"
+click node_conditioners "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/conditioners.py"
+click node_chroma "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/chroma.py"
+click node_encodec "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/models/encodec.py"
+click node_seanet "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/seanet.py"
+click node_vq "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/quantization/vq.py"
+click node_core_vq "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/quantization/core_vq.py"
+click node_qbase "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/quantization/base.py"
+click node_audio "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/data/audio.py"
+click node_audio_utils "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/data/audio_utils.py"
+click node_solver_comp "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/solvers/compression.py"
+click node_adv_losses "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/adversarial/losses.py"
+click node_balancer "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/losses/balancer.py"
+click node_builders "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/models/builders.py"
+click node_loaders "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/models/loaders.py"
+click node_streaming "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/modules/streaming.py"
+click node_checkpoint "https://github.com/facebookresearch/audiocraft/blob/main/audiocraft/utils/checkpoint.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_musicgen,node_genmodel,node_builders,node_loaders,node_streaming,node_checkpoint toneBlue
+class node_lm,node_transformer,node_rope,node_patterns toneAmber
+class node_conditioners,node_chroma toneMint
+class node_encodec,node_seanet,node_vq,node_core_vq,node_qbase toneRose
+class node_audio,node_audio_utils toneIndigo
+class node_solver_comp,node_adv_losses,node_balancer toneTeal
