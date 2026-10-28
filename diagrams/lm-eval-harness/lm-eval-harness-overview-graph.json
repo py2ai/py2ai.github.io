@@ -1,0 +1,45 @@
+{
+  "owner": "EleutherAI",
+  "repo": "lm-evaluation-harness",
+  "branch": "main",
+  "groups": [
+    { "id": "g1", "name": "g1", "label": "CLI Entry" },
+    { "id": "g2", "name": "g2", "label": "Evaluator Core" },
+    { "id": "g3", "name": "g3", "label": "Task System" },
+    { "id": "g4", "name": "g4", "label": "Request Layer" },
+    { "id": "g5", "name": "g5", "label": "Model Backends" },
+    { "id": "g6", "name": "g6", "label": "Scoring" }
+  ],
+  "nodes": [
+    { "id": "cli_main", "label": "CLI Entry", "file": "__main__.py", "path": "lm_eval/__main__.py", "group": "g1", "groupId": "g1", "desc": "cli_evaluate entry point that parses args and runs the harness" },
+    { "id": "simple_evaluate", "label": "simple_evaluate", "file": "evaluator.py", "path": "lm_eval/evaluator.py", "group": "g2", "groupId": "g2", "desc": "One-call orchestrator: seeds, model creation, task loading, config overrides" },
+    { "id": "evaluate", "label": "evaluate", "file": "evaluator.py", "path": "lm_eval/evaluator.py", "group": "g2", "groupId": "g2", "desc": "Builds requests, dispatches by request type, applies filters and metrics" },
+    { "id": "task_manager", "label": "TaskManager", "file": "manager.py", "path": "lm_eval/tasks/manager.py", "group": "g3", "groupId": "g3", "desc": "Indexes thousands of YAML task configs and loads task objects" },
+    { "id": "configurable_task", "label": "ConfigurableTask", "file": "task.py", "path": "lm_eval/api/task.py", "group": "g3", "groupId": "g3", "desc": "YAML-driven task: prompts, few-shot, requests, metrics" },
+    { "id": "sampler", "label": "ContextSampler", "file": "samplers.py", "path": "lm_eval/api/samplers.py", "group": "g3", "groupId": "g3", "desc": "Draws few-shot examples from a split, excluding the eval doc" },
+    { "id": "instance", "label": "Instance", "file": "instance.py", "path": "lm_eval/api/instance.py", "group": "g4", "groupId": "g4", "desc": "Single unit of work: request type, doc, arguments, responses" },
+    { "id": "template_lm", "label": "TemplateLM", "file": "model.py", "path": "lm_eval/api/model.py", "group": "g4", "groupId": "g4", "desc": "Shared tokenization and context/continuation scoring boilerplate" },
+    { "id": "hf", "label": "HFLM", "file": "huggingface.py", "path": "lm_eval/models/huggingface.py", "group": "g5", "groupId": "g5", "desc": "Transformers backend: generate, loglikelihood, batch sizing" },
+    { "id": "vllm", "label": "VLLM", "file": "vllm_causallms.py", "path": "lm_eval/models/vllm_causallms.py", "group": "g5", "groupId": "g5", "desc": "vLLM backend with tensor/data parallel serving" },
+    { "id": "filters", "label": "RegexFilter", "file": "extraction.py", "path": "lm_eval/filters/extraction.py", "group": "g6", "groupId": "g6", "desc": "Extracts the answer out of raw generated text" },
+    { "id": "metrics", "label": "Metrics", "file": "metrics.py", "path": "lm_eval/api/metrics.py", "group": "g6", "groupId": "g6", "desc": "Registered metric fns and aggregations like mean and exact_match" }
+  ],
+  "edges": [
+    { "from": "cli_main", "to": "simple_evaluate", "label": "invokes" },
+    { "from": "simple_evaluate", "to": "evaluate", "label": "calls" },
+    { "from": "simple_evaluate", "to": "task_manager", "label": "loads tasks" },
+    { "from": "simple_evaluate", "to": "template_lm", "label": "creates model" },
+    { "from": "task_manager", "to": "configurable_task", "label": "builds from YAML" },
+    { "from": "evaluate", "to": "configurable_task", "label": "build_all_requests" },
+    { "from": "configurable_task", "to": "sampler", "label": "few-shot context" },
+    { "from": "configurable_task", "to": "instance", "label": "construct_requests" },
+    { "from": "evaluate", "to": "instance", "label": "clones and batches" },
+    { "from": "evaluate", "to": "template_lm", "label": "getattr(lm, reqtype)" },
+    { "from": "instance", "to": "template_lm", "label": "arguments scored" },
+    { "from": "template_lm", "to": "hf", "label": "subclass" },
+    { "from": "template_lm", "to": "vllm", "label": "subclass" },
+    { "from": "evaluate", "to": "filters", "label": "task.apply_filters" },
+    { "from": "filters", "to": "metrics", "label": "filtered_resps" },
+    { "from": "configurable_task", "to": "metrics", "label": "process_results" }
+  ]
+}
