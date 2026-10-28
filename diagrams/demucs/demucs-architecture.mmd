@@ -1,0 +1,149 @@
+flowchart TD
+
+subgraph group_g1["CLI &amp; API"]
+  node_separate_main["separate.main<br/>[separate.py]"]
+  node_separator["Separator<br/>[api.py]"]
+  node_sep_audio_file["separate_audio_file<br/>[api.py]"]
+end
+
+subgraph group_g2["Model Registry"]
+  node_get_model["get_model<br/>[pretrained.py]"]
+  node_any_repo["AnyModelRepo<br/>[repo.py]"]
+  node_remote_repo["RemoteRepo<br/>[repo.py]"]
+  node_bag_repo["BagOnlyRepo<br/>[repo.py]"]
+  node_bag_of_models["BagOfModels<br/>[apply.py]"]
+end
+
+subgraph group_g3["Inference Engine"]
+  node_apply_model["apply_model<br/>[apply.py]"]
+  node_save_audio["save_audio<br/>[audio.py]"]
+end
+
+subgraph group_g4["Hybrid Architecture"]
+  node_htdemucs["HTDemucs<br/>[htdemucs.py]"]
+  node_htdemucs_forward["HTDemucs.forward<br/>[htdemucs.py]"]
+  node_spec_layer["HTDemucs._spec<br/>[htdemucs.py]"]
+  node_mask_layer["HTDemucs._mask<br/>[htdemucs.py]"]
+  node_wiener["HTDemucs._wiener<br/>[htdemucs.py]"]
+  node_ispec["HTDemucs._ispec<br/>[htdemucs.py]"]
+end
+
+subgraph group_g5["Transformer Core"]
+  node_crosstransformer["CrossTransformerEncoder<br/>[transformer.py]"]
+  node_xformer_layer["CrossTransformerEncoderLayer<br/>[transformer.py]"]
+  node_mha["MultiheadAttention<br/>[transformer.py]"]
+end
+
+subgraph group_g6["Conv Encoder/Decoder"]
+  node_henc["HEncLayer<br/>[hdemucs.py]"]
+  node_hdec["HDecLayer<br/>[hdemucs.py]"]
+  node_multiwrap["MultiWrap<br/>[hdemucs.py]"]
+  node_hdemucs["HDemucs<br/>[hdemucs.py]"]
+  node_demucs["Demucs<br/>[demucs.py]"]
+end
+
+subgraph group_g7["Spectro &amp; Audio"]
+  node_spectro["spectro<br/>[spec.py]"]
+  node_ispectro["ispectro<br/>[spec.py]"]
+  node_audio_file["AudioFile<br/>[audio.py]"]
+  node_convert_audio["convert_audio<br/>[audio.py]"]
+end
+
+subgraph group_g8["Training"]
+  node_train_main["train.main<br/>[train.py]"]
+  node_train_get_model["train.get_model<br/>[train.py]"]
+  node_solver["Solver<br/>[solver.py]"]
+  node_solver_train["Solver.train<br/>[solver.py]"]
+  node_run_epoch["Solver._run_one_epoch<br/>[solver.py]"]
+  node_wavset["Wavset<br/>[wav.py]"]
+end
+
+node_separate_main -->|"builds Separator"| node_separator
+node_separator -->|"per track"| node_sep_audio_file
+node_sep_audio_file -->|"runs separation"| node_apply_model
+node_sep_audio_file -->|"reads via ffmpeg"| node_audio_file
+node_sep_audio_file -->|"writes stems"| node_save_audio
+node_separator -->|"_load_model"| node_get_model
+node_get_model -->|"delegates lookup"| node_any_repo
+node_any_repo -->|"reads files.txt"| node_remote_repo
+node_any_repo -->|"resolves bags"| node_bag_repo
+node_bag_repo -->|"fetches checkpoints"| node_remote_repo
+node_any_repo -->|"assembles bag"| node_bag_of_models
+node_get_model -->|"default model"| node_htdemucs
+node_apply_model -->|"averages sub-models"| node_bag_of_models
+node_apply_model -->|"model&#40;padded_mix&#41;"| node_htdemucs_forward
+node_htdemucs -->|"forward"| node_htdemucs_forward
+node_htdemucs_forward -->|"_spec STFT"| node_spec_layer
+node_spec_layer -->|"wraps th.stft"| node_spectro
+node_htdemucs_forward -->|"_mask"| node_mask_layer
+node_mask_layer -->|"OpenUnmix wiener"| node_wiener
+node_htdemucs_forward -->|"_ispec"| node_ispec
+node_ispec -->|"wraps th.istft"| node_ispectro
+node_htdemucs_forward -->|"bottom block"| node_crosstransformer
+node_htdemucs_forward -->|"freq encoder"| node_henc
+node_htdemucs_forward -->|"freq decoder"| node_hdec
+node_crosstransformer -->|"t_layers per branch"| node_xformer_layer
+node_xformer_layer -->|"attention"| node_mha
+node_henc -->|"multi_freqs bands"| node_multiwrap
+node_hdec -->|"shared weights"| node_multiwrap
+node_hdemucs -->|"builds encoder"| node_henc
+node_hdemucs -->|"builds decoder"| node_hdec
+node_htdemucs -->|"reuses layer recipe"| node_hdemucs
+node_htdemucs -->|"waveform sibling"| node_demucs
+node_audio_file -->|"resample on read"| node_convert_audio
+node_train_main -->|"builds model"| node_train_get_model
+node_train_main -->|"get_solver"| node_solver
+node_solver -->|"train&#40;&#41;"| node_solver_train
+node_solver_train -->|"epoch loop"| node_run_epoch
+node_run_epoch -->|"batches"| node_wavset
+node_wavset -->|"channels and samplerate"| node_convert_audio
+node_train_get_model -->|"wraps HTDemucs"| node_htdemucs
+
+click node_separate_main "https://github.com/facebookresearch/demucs/blob/main/demucs/separate.py"
+click node_separator "https://github.com/facebookresearch/demucs/blob/main/demucs/api.py"
+click node_sep_audio_file "https://github.com/facebookresearch/demucs/blob/main/demucs/api.py"
+click node_get_model "https://github.com/facebookresearch/demucs/blob/main/demucs/pretrained.py"
+click node_any_repo "https://github.com/facebookresearch/demucs/blob/main/demucs/repo.py"
+click node_remote_repo "https://github.com/facebookresearch/demucs/blob/main/demucs/repo.py"
+click node_bag_repo "https://github.com/facebookresearch/demucs/blob/main/demucs/repo.py"
+click node_bag_of_models "https://github.com/facebookresearch/demucs/blob/main/demucs/apply.py"
+click node_apply_model "https://github.com/facebookresearch/demucs/blob/main/demucs/apply.py"
+click node_save_audio "https://github.com/facebookresearch/demucs/blob/main/demucs/audio.py"
+click node_htdemucs "https://github.com/facebookresearch/demucs/blob/main/demucs/htdemucs.py"
+click node_htdemucs_forward "https://github.com/facebookresearch/demucs/blob/main/demucs/htdemucs.py"
+click node_spec_layer "https://github.com/facebookresearch/demucs/blob/main/demucs/htdemucs.py"
+click node_mask_layer "https://github.com/facebookresearch/demucs/blob/main/demucs/htdemucs.py"
+click node_wiener "https://github.com/facebookresearch/demucs/blob/main/demucs/htdemucs.py"
+click node_ispec "https://github.com/facebookresearch/demucs/blob/main/demucs/htdemucs.py"
+click node_crosstransformer "https://github.com/facebookresearch/demucs/blob/main/demucs/transformer.py"
+click node_xformer_layer "https://github.com/facebookresearch/demucs/blob/main/demucs/transformer.py"
+click node_mha "https://github.com/facebookresearch/demucs/blob/main/demucs/transformer.py"
+click node_henc "https://github.com/facebookresearch/demucs/blob/main/demucs/hdemucs.py"
+click node_hdec "https://github.com/facebookresearch/demucs/blob/main/demucs/hdemucs.py"
+click node_multiwrap "https://github.com/facebookresearch/demucs/blob/main/demucs/hdemucs.py"
+click node_hdemucs "https://github.com/facebookresearch/demucs/blob/main/demucs/hdemucs.py"
+click node_demucs "https://github.com/facebookresearch/demucs/blob/main/demucs/demucs.py"
+click node_spectro "https://github.com/facebookresearch/demucs/blob/main/demucs/spec.py"
+click node_ispectro "https://github.com/facebookresearch/demucs/blob/main/demucs/spec.py"
+click node_audio_file "https://github.com/facebookresearch/demucs/blob/main/demucs/audio.py"
+click node_convert_audio "https://github.com/facebookresearch/demucs/blob/main/demucs/audio.py"
+click node_train_main "https://github.com/facebookresearch/demucs/blob/main/demucs/train.py"
+click node_train_get_model "https://github.com/facebookresearch/demucs/blob/main/demucs/train.py"
+click node_solver "https://github.com/facebookresearch/demucs/blob/main/demucs/solver.py"
+click node_solver_train "https://github.com/facebookresearch/demucs/blob/main/demucs/solver.py"
+click node_run_epoch "https://github.com/facebookresearch/demucs/blob/main/demucs/solver.py"
+click node_wavset "https://github.com/facebookresearch/demucs/blob/main/demucs/wav.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_separate_main,node_separator,node_sep_audio_file,node_spectro,node_ispectro,node_audio_file,node_convert_audio toneBlue
+class node_get_model,node_any_repo,node_remote_repo,node_bag_repo,node_bag_of_models,node_train_main,node_train_get_model,node_solver,node_solver_train,node_run_epoch,node_wavset toneAmber
+class node_apply_model,node_save_audio toneMint
+class node_htdemucs,node_htdemucs_forward,node_spec_layer,node_mask_layer,node_wiener,node_ispec toneRose
+class node_crosstransformer,node_xformer_layer,node_mha toneIndigo
+class node_henc,node_hdec,node_multiwrap,node_hdemucs,node_demucs toneTeal
