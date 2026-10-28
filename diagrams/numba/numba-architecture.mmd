@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_g1["Entry &amp; Dispatch"]
+  node_jit["@jit<br/>[decorators.py]"]
+  node_njit["@njit<br/>[decorators.py]"]
+  node_dispatcher["Dispatcher<br/>[dispatcher.py]"]
+  node_compile_for_args["_compile_for_args<br/>[dispatcher.py]"]
+  node_cpu_registry["CPUDispatcher<br/>[registry.py]"]
+end
+
+subgraph group_g2["Frontend IR Stages"]
+  node_run_frontend["run_frontend<br/>[compiler.py]"]
+  node_interpreter["Interpreter<br/>[interpreter.py]"]
+  node_untyped_passes["Untyped rewrites<br/>[untyped_passes.py]"]
+  node_ssa["ReconstructSSA<br/>[untyped_passes.py]"]
+  node_compiler_base["CompilerBase<br/>[compiler.py]"]
+  node_compile_extra["compile_extra<br/>[compiler.py]"]
+end
+
+subgraph group_g3["Typing Engine"]
+  node_typed_passes["NopythonTypeInference<br/>[typed_passes.py]"]
+  node_typeinfer["TypeInferer<br/>[typeinfer.py]"]
+  node_build_constraint["build_constraint<br/>[typeinfer.py]"]
+  node_propagate["propagate<br/>[typeinfer.py]"]
+  node_typing_ctx["BaseContext<br/>[context.py]"]
+  node_templates["AbstractTemplate<br/>[templates.py]"]
+end
+
+subgraph group_g4["Lowering &amp; Codegen"]
+  node_native_lowering["NativeLowering<br/>[typed_passes.py]"]
+  node_base_lower["BaseLower<br/>[lowering.py]"]
+  node_lower["Lower<br/>[lowering.py]"]
+  node_no_python_backend["NoPythonBackend<br/>[typed_passes.py]"]
+  node_codegen["JITCPUCodegen<br/>[codegen.py]"]
+  node_code_library["JITCodeLibrary<br/>[codegen.py]"]
+end
+
+subgraph group_g5["Parallel &amp; GPU"]
+  node_parfor_pass["ParforPass wrapper<br/>[typed_passes.py]"]
+  node_parfor["ParforPass<br/>[parfor.py]"]
+  node_parfor_node["Parfor node<br/>[parfor.py]"]
+  node_vectorize["@vectorize<br/>[decorators.py]"]
+  node_cuda_jit["@cuda.jit<br/>[decorators.py]"]
+  node_cuda_dispatcher["CUDADispatcher<br/>[dispatcher.py]"]
+  node_cuda_compiler["CUDACompiler<br/>[compiler.py]"]
+  node_cuda_codegen["JITCUDACodegen<br/>[codegen.py]"]
+end
+
+subgraph group_g6["Stage Machinery"]
+  node_pass_manager["PassManager"]
+  node_compiler_pass["CompilerPass"]
+  node_pass_registry["PassRegistry"]
+end
+
+node_njit -->|"alias of"| node_jit
+node_jit -->|"returns"| node_dispatcher
+node_dispatcher -->|"first call"| node_compile_for_args
+node_compile_for_args -->|"CPU target types"| node_cpu_registry
+node_compile_for_args -->|"starts compilation"| node_compile_extra
+node_compile_extra -->|"builds state"| node_compiler_base
+node_compiler_base -->|"stages executed"| node_pass_manager
+node_pass_registry -->|"name to class"| node_pass_manager
+node_pass_manager -->|"runs each stage"| node_compiler_pass
+node_compiler_base -->|"first stage"| node_run_frontend
+node_run_frontend -->|"bytecode to IR"| node_interpreter
+node_interpreter -->|"func_ir"| node_untyped_passes
+node_untyped_passes -->|"variable renaming"| node_ssa
+node_untyped_passes -->|"typed stages begin"| node_typed_passes
+node_typed_passes -->|"runs TypeInferer"| node_typeinfer
+node_typeinfer -->|"seed constraints"| node_build_constraint
+node_build_constraint -->|"iterate to fixpoint"| node_propagate
+node_typeinfer -->|"resolve calls"| node_typing_ctx
+node_typing_ctx -->|"signature hooks"| node_templates
+node_typed_passes -->|"auto_parallel on"| node_parfor_pass
+node_parfor_pass -->|"pattern match loops"| node_parfor
+node_parfor -->|"creates"| node_parfor_node
+node_typed_passes -->|"lowering stage"| node_native_lowering
+node_native_lowering -->|"constructs"| node_base_lower
+node_base_lower -->|"per instruction"| node_lower
+node_native_lowering -->|"after lowering"| node_no_python_backend
+node_no_python_backend -->|"finalize module"| node_codegen
+node_codegen -->|"linked modules"| node_code_library
+node_code_library -->|"compiled fn returned"| node_dispatcher
+node_vectorize -->|"compiles kernels"| node_compile_extra
+node_cuda_jit -->|"returns"| node_cuda_dispatcher
+node_cuda_dispatcher -->|"kernel compilation"| node_cuda_compiler
+node_cuda_compiler -->|"extends"| node_compiler_base
+node_cuda_compiler -->|"NVVM PTX"| node_cuda_codegen
+
+click node_jit "https://github.com/numba/numba/blob/main/numba/core/decorators.py"
+click node_njit "https://github.com/numba/numba/blob/main/numba/core/decorators.py"
+click node_dispatcher "https://github.com/numba/numba/blob/main/numba/core/dispatcher.py"
+click node_compile_for_args "https://github.com/numba/numba/blob/main/numba/core/dispatcher.py"
+click node_cpu_registry "https://github.com/numba/numba/blob/main/numba/core/registry.py"
+click node_run_frontend "https://github.com/numba/numba/blob/main/numba/core/compiler.py"
+click node_interpreter "https://github.com/numba/numba/blob/main/numba/core/interpreter.py"
+click node_untyped_passes "https://github.com/numba/numba/blob/main/numba/core/untyped_passes.py"
+click node_ssa "https://github.com/numba/numba/blob/main/numba/core/untyped_passes.py"
+click node_compiler_base "https://github.com/numba/numba/blob/main/numba/core/compiler.py"
+click node_compile_extra "https://github.com/numba/numba/blob/main/numba/core/compiler.py"
+click node_typed_passes "https://github.com/numba/numba/blob/main/numba/core/typed_passes.py"
+click node_typeinfer "https://github.com/numba/numba/blob/main/numba/core/typeinfer.py"
+click node_build_constraint "https://github.com/numba/numba/blob/main/numba/core/typeinfer.py"
+click node_propagate "https://github.com/numba/numba/blob/main/numba/core/typeinfer.py"
+click node_typing_ctx "https://github.com/numba/numba/blob/main/numba/core/typing/context.py"
+click node_templates "https://github.com/numba/numba/blob/main/numba/core/typing/templates.py"
+click node_parfor_pass "https://github.com/numba/numba/blob/main/numba/core/typed_passes.py"
+click node_parfor "https://github.com/numba/numba/blob/main/numba/parfors/parfor.py"
+click node_parfor_node "https://github.com/numba/numba/blob/main/numba/parfors/parfor.py"
+click node_vectorize "https://github.com/numba/numba/blob/main/numba/np/ufunc/decorators.py"
+click node_native_lowering "https://github.com/numba/numba/blob/main/numba/core/typed_passes.py"
+click node_base_lower "https://github.com/numba/numba/blob/main/numba/core/lowering.py"
+click node_lower "https://github.com/numba/numba/blob/main/numba/core/lowering.py"
+click node_no_python_backend "https://github.com/numba/numba/blob/main/numba/core/typed_passes.py"
+click node_codegen "https://github.com/numba/numba/blob/main/numba/core/codegen.py"
+click node_code_library "https://github.com/numba/numba/blob/main/numba/core/codegen.py"
+click node_pass_manager "https://github.com/numba/numba/blob/main/numba/core/compiler_machinery.py"
+click node_compiler_pass "https://github.com/numba/numba/blob/main/numba/core/compiler_machinery.py"
+click node_pass_registry "https://github.com/numba/numba/blob/main/numba/core/compiler_machinery.py"
+click node_cuda_jit "https://github.com/numba/numba/blob/main/numba/cuda/decorators.py"
+click node_cuda_dispatcher "https://github.com/numba/numba/blob/main/numba/cuda/dispatcher.py"
+click node_cuda_compiler "https://github.com/numba/numba/blob/main/numba/cuda/compiler.py"
+click node_cuda_codegen "https://github.com/numba/numba/blob/main/numba/cuda/codegen.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_jit,node_njit,node_dispatcher,node_compile_for_args,node_cpu_registry toneBlue
+class node_run_frontend,node_interpreter,node_untyped_passes,node_ssa,node_compiler_base,node_compile_extra toneAmber
+class node_typed_passes,node_typeinfer,node_build_constraint,node_propagate,node_typing_ctx,node_templates toneMint
+class node_native_lowering,node_base_lower,node_lower,node_no_python_backend,node_codegen,node_code_library toneRose
+class node_parfor_pass,node_parfor,node_parfor_node,node_vectorize,node_cuda_jit,node_cuda_dispatcher,node_cuda_compiler,node_cuda_codegen toneIndigo
+class node_pass_manager,node_compiler_pass,node_pass_registry toneTeal
