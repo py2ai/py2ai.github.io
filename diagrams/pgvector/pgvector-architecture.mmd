@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_type_io["Type I/O"]
+  node_vector_h["vector.h<br/>type header"]
+  node_vector_in["vector_in<br/>text input"]
+  node_vector_out["vector_out<br/>text output"]
+  node_vector_send["vector_send<br/>binary output"]
+  node_vector_typmod_in["vector_typmod_in<br/>typmod parser"]
+  node_halfvec_c["halfvec.c<br/>half-precision type"]
+  node_sparsevec_c["sparsevec.c<br/>sparse type"]
+  node_bitvec_c["bitvec.c<br/>binary quantization ops"]
+end
+
+subgraph group_distances["Distance Kernels"]
+  node_l2_distance{{"l2_distance<br/>Euclidean"}}
+  node_inner_product{{"inner_product<br/>dot product"}}
+  node_cosine_distance{{"cosine_distance<br/>[vector.c]"}}
+  node_l1_distance{{"l1_distance<br/>taxicab"}}
+  node_halfutils["halfutils.c<br/>F16 SIMD kernels"]
+end
+
+subgraph group_hnsw_am["HNSW Access Method"]
+  node_hnsw_h["hnsw.h<br/>on-disk format"]
+  node_hnsw_c{{"hnsw.c<br/>AM handler"}}
+  node_hnswutils_c{{"hnswutils.c<br/>meta + traversal helpers"}}
+  node_hnswvacuum_c["hnswvacuum.c<br/>[hnswvacuum.c]"]
+end
+
+subgraph group_hnsw_build["HNSW Build"]
+  node_hnswbuild_fn["hnswbuild<br/>build entry"]
+  node_create_meta["CreateMetaPage<br/>metapage init"]
+  node_flush_pages["FlushPages<br/>memory spill"]
+  node_hnswbuildempty_fn["hnswbuildempty<br/>empty build"]
+end
+
+subgraph group_hnsw_dml["HNSW Insert &amp; Scan"]
+  node_hnswinsert_fn["hnswinsert<br/>aminsert"]
+  node_hnsw_insert_tuple["HnswInsertTuple<br/>insert core"]
+  node_hnsw_insert_ondisk["HnswInsertTupleOnDisk<br/>on-disk insert"]
+  node_hnswgettuple_fn["hnswgettuple<br/>amgettuple"]
+  node_hnsw_search_layer{{"HnswSearchLayer<br/>greedy descent"}}
+end
+
+subgraph group_ivfflat_am["IVFFlat Access Method"]
+  node_ivfflat_h["ivfflat.h<br/>on-disk format"]
+  node_ivfflat_c{{"ivfflat.c<br/>AM handler"}}
+  node_ivfflatbuild_fn["ivfflatbuild<br/>build entry"]
+  node_ivfflatinsert_fn["ivfflatinsert<br/>aminsert"]
+  node_ivfflatgettuple_fn["ivfflatgettuple<br/>amgettuple"]
+  node_ivfvacuum_c["ivfvacuum.c<br/>[ivfvacuum.c]"]
+end
+
+subgraph group_kmeans["K-Means"]
+  node_ivfkmeans_c{{"ivfkmeans.c<br/>clustering core"}}
+  node_elkan_kmeans["ElkanKmeans<br/>accelerated k-means"]
+end
+
+node_vector_h -->|"defines layout"| node_vector_in
+node_vector_h -->|"defines layout"| node_vector_out
+node_vector_h -->|"defines layout"| node_vector_send
+node_vector_typmod_in -->|"enforces vector&#40;n&#41; dims"| node_vector_in
+node_halfvec_c -->|"halfvec opclasses"| node_hnsw_c
+node_sparsevec_c -->|"sparsevec opclasses"| node_hnsw_c
+node_bitvec_c -->|"bit opclasses"| node_hnsw_c
+node_halfutils -->|"F16 distance kernels"| node_halfvec_c
+node_hnsw_search_layer -->|"distance proc"| node_l2_distance
+node_hnsw_search_layer -->|"distance proc"| node_cosine_distance
+node_hnsw_search_layer -->|"distance proc"| node_inner_product
+node_ivfflatgettuple_fn -->|"distance proc"| node_l2_distance
+node_ivfflatgettuple_fn -->|"distance proc"| node_cosine_distance
+node_hnsw_h -->|"page + tuple structs"| node_hnswutils_c
+node_hnsw_c -->|"ambuild"| node_hnswbuild_fn
+node_hnsw_c -->|"aminsert"| node_hnswinsert_fn
+node_hnsw_c -->|"amgettuple"| node_hnswgettuple_fn
+node_hnsw_c -->|"ambulkdelete + amvacuumcleanup"| node_hnswvacuum_c
+node_hnswbuild_fn -->|"initializes"| node_create_meta
+node_hnswbuild_fn -->|"spills when out of memory"| node_flush_pages
+node_hnswbuildempty_fn -->|"metapage only"| node_create_meta
+node_hnswbuild_fn -->|"on-disk phase reuses insert"| node_hnsw_insert_ondisk
+node_hnswinsert_fn -->|"dispatch"| node_hnsw_insert_tuple
+node_hnsw_insert_tuple -->|"materialize"| node_hnsw_insert_ondisk
+node_hnsw_insert_ondisk -->|"selects neighbors"| node_hnsw_search_layer
+node_hnswgettuple_fn -->|"entry point descent"| node_hnsw_search_layer
+node_hnswutils_c -->|"beam search core"| node_hnsw_search_layer
+node_ivfflat_h -->|"reloption bounds"| node_ivfflat_c
+node_ivfflat_c -->|"ambuild"| node_ivfflatbuild_fn
+node_ivfflat_c -->|"aminsert"| node_ivfflatinsert_fn
+node_ivfflat_c -->|"amgettuple"| node_ivfflatgettuple_fn
+node_ivfflat_c -->|"ambulkdelete"| node_ivfvacuum_c
+node_ivfflatbuild_fn -->|"trains centers"| node_ivfkmeans_c
+node_ivfkmeans_c -->|"Elkan bounds"| node_elkan_kmeans
+node_ivfflatbuild_fn -->|"assign tuples like insert"| node_ivfflatinsert_fn
+
+click node_vector_h "https://github.com/pgvector/pgvector/blob/master/src/vector.h"
+click node_vector_in "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_vector_out "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_vector_send "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_vector_typmod_in "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_halfvec_c "https://github.com/pgvector/pgvector/blob/master/src/halfvec.c"
+click node_sparsevec_c "https://github.com/pgvector/pgvector/blob/master/src/sparsevec.c"
+click node_bitvec_c "https://github.com/pgvector/pgvector/blob/master/src/bitvec.c"
+click node_l2_distance "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_inner_product "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_cosine_distance "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_l1_distance "https://github.com/pgvector/pgvector/blob/master/src/vector.c"
+click node_halfutils "https://github.com/pgvector/pgvector/blob/master/src/halfutils.c"
+click node_hnsw_h "https://github.com/pgvector/pgvector/blob/master/src/hnsw.h"
+click node_hnsw_c "https://github.com/pgvector/pgvector/blob/master/src/hnsw.c"
+click node_hnswutils_c "https://github.com/pgvector/pgvector/blob/master/src/hnswutils.c"
+click node_hnswvacuum_c "https://github.com/pgvector/pgvector/blob/master/src/hnswvacuum.c"
+click node_hnswbuild_fn "https://github.com/pgvector/pgvector/blob/master/src/hnswbuild.c"
+click node_create_meta "https://github.com/pgvector/pgvector/blob/master/src/hnswbuild.c"
+click node_flush_pages "https://github.com/pgvector/pgvector/blob/master/src/hnswbuild.c"
+click node_hnswbuildempty_fn "https://github.com/pgvector/pgvector/blob/master/src/hnswbuild.c"
+click node_hnswinsert_fn "https://github.com/pgvector/pgvector/blob/master/src/hnswinsert.c"
+click node_hnsw_insert_tuple "https://github.com/pgvector/pgvector/blob/master/src/hnswinsert.c"
+click node_hnsw_insert_ondisk "https://github.com/pgvector/pgvector/blob/master/src/hnswinsert.c"
+click node_hnswgettuple_fn "https://github.com/pgvector/pgvector/blob/master/src/hnswscan.c"
+click node_hnsw_search_layer "https://github.com/pgvector/pgvector/blob/master/src/hnswutils.c"
+click node_ivfflat_h "https://github.com/pgvector/pgvector/blob/master/src/ivfflat.h"
+click node_ivfflat_c "https://github.com/pgvector/pgvector/blob/master/src/ivfflat.c"
+click node_ivfflatbuild_fn "https://github.com/pgvector/pgvector/blob/master/src/ivfbuild.c"
+click node_ivfflatinsert_fn "https://github.com/pgvector/pgvector/blob/master/src/ivfinsert.c"
+click node_ivfflatgettuple_fn "https://github.com/pgvector/pgvector/blob/master/src/ivfscan.c"
+click node_ivfvacuum_c "https://github.com/pgvector/pgvector/blob/master/src/ivfvacuum.c"
+click node_ivfkmeans_c "https://github.com/pgvector/pgvector/blob/master/src/ivfkmeans.c"
+click node_elkan_kmeans "https://github.com/pgvector/pgvector/blob/master/src/ivfkmeans.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_vector_h,node_vector_in,node_vector_out,node_vector_send,node_vector_typmod_in,node_halfvec_c,node_sparsevec_c,node_bitvec_c,node_ivfkmeans_c,node_elkan_kmeans toneBlue
+class node_l2_distance,node_inner_product,node_cosine_distance,node_l1_distance,node_halfutils toneAmber
+class node_hnsw_h,node_hnsw_c,node_hnswutils_c,node_hnswvacuum_c toneMint
+class node_hnswbuild_fn,node_create_meta,node_flush_pages,node_hnswbuildempty_fn toneRose
+class node_hnswinsert_fn,node_hnsw_insert_tuple,node_hnsw_insert_ondisk,node_hnswgettuple_fn,node_hnsw_search_layer toneIndigo
+class node_ivfflat_h,node_ivfflat_c,node_ivfflatbuild_fn,node_ivfflatinsert_fn,node_ivfflatgettuple_fn,node_ivfvacuum_c toneTeal
