@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_public_api["Public API surface"]
+  node_init_exports["__init__ re-exports<br/>[__init__.py]"]
+  node_hf_api["HfApi<br/>[hf_api.py]"]
+  node_whoami["whoami<br/>[hf_api.py]"]
+  node_list_models["list_models<br/>[hf_api.py]"]
+  node_model_info["model_info<br/>[hf_api.py]"]
+  node_create_repo["create_repo<br/>[hf_api.py]"]
+  node_create_commit["create_commit<br/>[hf_api.py]"]
+  node_upload_file["upload_file / upload_folder<br/>[hf_api.py]"]
+end
+
+subgraph group_download["Download path"]
+  node_hf_hub_download["hf_hub_download<br/>[file_download.py]"]
+  node_hf_hub_url["hf_hub_url<br/>[file_download.py]"]
+  node_try_to_load_from_cache["try_to_load_from_cache<br/>[file_download.py]"]
+  node_snapshot_download["snapshot_download"]
+end
+
+subgraph group_upload["Upload path"]
+  node_op_add["CommitOperationAdd<br/>[_commit_api.py]"]
+  node_op_delete["CommitOperationDelete<br/>[_commit_api.py]"]
+  node_fetch_upload_modes["_fetch_upload_modes<br/>[_commit_api.py]"]
+  node_upload_lfs["_upload_lfs_files<br/>[_commit_api.py]"]
+  node_upload_xet["_upload_xet_files<br/>[_commit_api.py]"]
+  node_send_commit["_prepare_commit_payload / _send_commit<br/>[_commit_api.py]"]
+end
+
+subgraph group_cache["Cache and local state"]
+  node_constants[("ENDPOINT / HF_HUB_CACHE<br/>[constants.py]")]
+  node_local_folder[("read_download_metadata<br/>[_local_folder.py]")]
+  node_write_metadata[("write_download_metadata<br/>[_local_folder.py]")]
+  node_scan_cache_dir[("scan_cache_dir<br/>[_cache_manager.py]")]
+end
+
+subgraph group_infra["HTTP, auth and defaults"]
+  node_http_backoff["http_backoff<br/>[_http.py]"]
+  node_hf_raise_for_status["hf_raise_for_status<br/>[_http.py]"]
+  node_get_token["get_token<br/>[_auth.py]"]
+  node_login["login<br/>[_login.py]"]
+  node_xet["parse_xet_file_data_from_response<br/>[_xet.py]"]
+  node_validate_repo_id["validate_repo_id<br/>[_validators.py]"]
+end
+
+subgraph group_ecosystem["Ecosystem surfaces"]
+  node_inference_client["InferenceClient<br/>[_client.py]"]
+  node_chat_completion["chat_completion<br/>[_client.py]"]
+  node_hf_file_system["HfFileSystem<br/>[hf_file_system.py]"]
+  node_repocard["RepoCard<br/>[repocard.py]"]
+end
+
+node_init_exports -->|"re-export"| node_hf_api
+node_init_exports -->|"re-export"| node_hf_hub_download
+node_init_exports -->|"re-export"| node_snapshot_download
+node_init_exports -->|"re-export"| node_inference_client
+node_init_exports -->|"re-export"| node_hf_file_system
+node_init_exports -->|"re-export"| node_repocard
+node_hf_api -->|"identity"| node_whoami
+node_hf_api -->|"search"| node_list_models
+node_hf_api -->|"metadata"| node_model_info
+node_hf_api -->|"repo mgmt"| node_create_repo
+node_hf_api -->|"lower-level"| node_create_commit
+node_hf_api -->|"sugar over commit"| node_upload_file
+node_hf_api -->|"error mapping"| node_hf_raise_for_status
+node_hf_api -->|"REST calls"| node_http_backoff
+node_hf_hub_download -->|"resolve URL"| node_hf_hub_url
+node_hf_hub_download -->|"etag + GET"| node_http_backoff
+node_hf_hub_download -->|"local_dir metadata"| node_local_folder
+node_hf_hub_download -->|"record etag/commit"| node_write_metadata
+node_hf_hub_download -->|"Xet fast path"| node_xet
+node_hf_hub_download -->|"cache layout"| node_constants
+node_hf_hub_download -->|"input checks"| node_validate_repo_id
+node_snapshot_download -->|"per-file loop"| node_hf_hub_download
+node_try_to_load_from_cache -->|"offline cache lookup"| node_constants
+node_create_commit -->|"pack additions"| node_op_add
+node_create_commit -->|"pack deletions"| node_op_delete
+node_upload_file -->|"lower to ops"| node_create_commit
+node_op_add -->|"preupload info"| node_fetch_upload_modes
+node_fetch_upload_modes -->|"large blobs"| node_upload_lfs
+node_fetch_upload_modes -->|"Xet-backed repos"| node_upload_xet
+node_op_add -->|"serialize payload"| node_send_commit
+node_send_commit -->|"commit result"| node_hf_raise_for_status
+node_upload_lfs -->|"LFS transfer"| node_http_backoff
+node_upload_xet -->|"dedup chunks"| node_xet
+node_fetch_upload_modes -->|"auth headers"| node_get_token
+node_login -->|"stores token"| node_get_token
+node_http_backoff -->|"Authorization header"| node_get_token
+node_http_backoff -->|"timeouts"| node_constants
+node_inference_client -->|"resolves model"| node_hf_api
+node_inference_client -->|"conversation"| node_chat_completion
+node_hf_file_system -->|"path to URL"| node_hf_hub_url
+node_hf_file_system -->|"remote IO"| node_http_backoff
+node_scan_cache_dir -->|"HF_HUB_CACHE root"| node_constants
+
+click node_init_exports "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/__init__.py"
+click node_hf_api "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_whoami "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_list_models "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_model_info "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_create_repo "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_create_commit "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_upload_file "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_api.py"
+click node_hf_hub_download "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/file_download.py"
+click node_hf_hub_url "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/file_download.py"
+click node_try_to_load_from_cache "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/file_download.py"
+click node_snapshot_download "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_snapshot_download.py"
+click node_op_add "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_commit_api.py"
+click node_op_delete "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_commit_api.py"
+click node_fetch_upload_modes "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_commit_api.py"
+click node_upload_lfs "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_commit_api.py"
+click node_upload_xet "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_commit_api.py"
+click node_send_commit "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_commit_api.py"
+click node_constants "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/constants.py"
+click node_local_folder "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_local_folder.py"
+click node_write_metadata "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_local_folder.py"
+click node_scan_cache_dir "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_cache_manager.py"
+click node_http_backoff "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_http.py"
+click node_hf_raise_for_status "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_http.py"
+click node_get_token "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_auth.py"
+click node_login "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/_login.py"
+click node_xet "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_xet.py"
+click node_validate_repo_id "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_validators.py"
+click node_inference_client "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/inference/_client.py"
+click node_chat_completion "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/inference/_client.py"
+click node_hf_file_system "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/hf_file_system.py"
+click node_repocard "https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/repocard.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init_exports,node_hf_api,node_whoami,node_list_models,node_model_info,node_create_repo,node_create_commit,node_upload_file toneBlue
+class node_hf_hub_download,node_hf_hub_url,node_try_to_load_from_cache,node_snapshot_download toneAmber
+class node_op_add,node_op_delete,node_fetch_upload_modes,node_upload_lfs,node_upload_xet,node_send_commit toneMint
+class node_constants,node_local_folder,node_write_metadata,node_scan_cache_dir toneRose
+class node_http_backoff,node_hf_raise_for_status,node_get_token,node_login,node_xet,node_validate_repo_id toneIndigo
+class node_inference_client,node_chat_completion,node_hf_file_system,node_repocard toneTeal
