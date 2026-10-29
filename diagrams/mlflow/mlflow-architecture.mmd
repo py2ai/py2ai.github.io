@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_fluent["Fluent Tracking API"]
+  node_fluent_start_run["start_run<br/>[fluent.py]"]
+  node_fluent_end_run["end_run<br/>[fluent.py]"]
+  node_fluent_log_param["log_param<br/>[fluent.py]"]
+  node_fluent_log_metric["log_metric<br/>[fluent.py]"]
+  node_fluent_active_run["active_run<br/>[fluent.py]"]
+  node_fluent_log_artifact["log_artifact<br/>[fluent.py]"]
+end
+
+subgraph group_client["Client Layer"]
+  node_mlflow_client["MlflowClient<br/>[client.py]"]
+  node_client_create_run["MlflowClient.create_run<br/>[client.py]"]
+  node_client_log_batch["MlflowClient.log_batch<br/>[client.py]"]
+  node_svc_client["TrackingServiceClient<br/>[client.py]"]
+  node_svc_create_run["svc.create_run<br/>[client.py]"]
+  node_svc_log_metric["svc.log_metric<br/>[client.py]"]
+  node_svc_log_batch["svc.log_batch<br/>[client.py]"]
+  node_svc_set_uri["set_tracking_uri<br/>[utils.py]"]
+  node_svc_get_store["_get_store<br/>[utils.py]"]
+end
+
+subgraph group_stores["Backend Stores"]
+  node_file_store[("FileStore<br/>[file_store.py]")]
+  node_sql_store[("SqlAlchemyStore")]
+  node_sql_create_run[("sql.create_run")]
+  node_sql_log_metric[("sql.log_metric")]
+  node_sql_log_batch[("sql.log_batch")]
+end
+
+subgraph group_models["Models &amp; Flavors"]
+  node_model_class["Model<br/>[model.py]"]
+  node_pyfunc_model["PythonModel<br/>[model.py]"]
+  node_pyfunc_load["pyfunc.load_model<br/>[__init__.py]"]
+  node_sklearn_log_model["sklearn.log_model<br/>[__init__.py]"]
+  node_sklearn_load_model["sklearn.load_model<br/>[__init__.py]"]
+end
+
+subgraph group_serving["Server &amp; Registry"]
+  node_cli_server{{"mlflow server<br/>[__init__.py]"}}
+  node_server_run_server{{"_run_server<br/>[__init__.py]"}}
+  node_registry_create_model[("create_registered_model")]
+  node_registry_create_version[("create_model_version")]
+end
+
+subgraph group_entities["Data Entities"]
+  node_entity_run["Run<br/>[run.py]"]
+  node_entity_run_info["RunInfo<br/>[run_info.py]"]
+  node_entity_metric["Metric<br/>[metric.py]"]
+  node_entity_param["Param<br/>[param.py]"]
+end
+
+node_fluent_start_run -->|"resolves client"| node_mlflow_client
+node_fluent_start_run -->|"returns ActiveRun wrapper"| node_entity_run
+node_fluent_active_run -->|"context-managed"| node_fluent_start_run
+node_fluent_end_run -->|"terminates"| node_fluent_active_run
+node_fluent_log_param -->|"logs via client"| node_mlflow_client
+node_fluent_log_metric -->|"logs via client"| node_mlflow_client
+node_fluent_log_artifact -->|"artifact upload"| node_mlflow_client
+node_mlflow_client -->|"owns"| node_svc_client
+node_client_create_run -->|"delegates"| node_svc_create_run
+node_client_log_batch -->|"delegates"| node_svc_log_batch
+node_svc_set_uri -->|"URI consumed on next store build"| node_svc_get_store
+node_svc_get_store -->|"file: scheme"| node_file_store
+node_svc_get_store -->|"db: scheme"| node_sql_store
+node_svc_create_run -->|"SQL path"| node_sql_create_run
+node_svc_create_run -->|"file path"| node_file_store
+node_svc_log_metric -->|"SQL path"| node_sql_log_metric
+node_svc_log_metric -->|"file path"| node_file_store
+node_svc_log_batch -->|"SQL path"| node_sql_log_batch
+node_sql_create_run -->|"persists"| node_entity_run
+node_sql_create_run -->|"stamps status"| node_entity_run_info
+node_sql_log_metric -->|"persists"| node_entity_metric
+node_sql_log_batch -->|"persists params/tags"| node_entity_param
+node_file_store -->|"writes metadata files"| node_entity_run
+node_sklearn_log_model -->|"logs under a run"| node_fluent_start_run
+node_sklearn_log_model -->|"packages MLmodel"| node_model_class
+node_sklearn_log_model -->|"python_function wrapper"| node_pyfunc_model
+node_model_class -->|"records source run"| node_entity_run_info
+node_sklearn_load_model -->|"delegates to pyfunc"| node_pyfunc_load
+node_pyfunc_load -->|"reads MLmodel config"| node_model_class
+node_pyfunc_load -->|"builds PythonModel"| node_pyfunc_model
+node_cli_server -->|"launches"| node_server_run_server
+node_server_run_server -->|"REST handlers hit store"| node_sql_store
+node_server_run_server -->|"artifact serving"| node_file_store
+node_sklearn_log_model -->|"registered_model_name"| node_registry_create_version
+node_registry_create_version -->|"records source run_id"| node_entity_run_info
+
+click node_fluent_start_run "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/fluent.py"
+click node_fluent_end_run "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/fluent.py"
+click node_fluent_log_param "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/fluent.py"
+click node_fluent_log_metric "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/fluent.py"
+click node_fluent_active_run "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/fluent.py"
+click node_fluent_log_artifact "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/fluent.py"
+click node_mlflow_client "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/client.py"
+click node_client_create_run "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/client.py"
+click node_client_log_batch "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/client.py"
+click node_svc_client "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/_tracking_service/client.py"
+click node_svc_create_run "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/_tracking_service/client.py"
+click node_svc_log_metric "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/_tracking_service/client.py"
+click node_svc_log_batch "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/_tracking_service/client.py"
+click node_svc_set_uri "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/_tracking_service/utils.py"
+click node_svc_get_store "https://github.com/mlflow/mlflow/blob/master/mlflow/tracking/_tracking_service/utils.py"
+click node_file_store "https://github.com/mlflow/mlflow/blob/master/mlflow/store/tracking/file_store.py"
+click node_sql_store "https://github.com/mlflow/mlflow/blob/master/mlflow/store/tracking/sqlalchemy_store.py"
+click node_sql_create_run "https://github.com/mlflow/mlflow/blob/master/mlflow/store/tracking/sqlalchemy_store.py"
+click node_sql_log_metric "https://github.com/mlflow/mlflow/blob/master/mlflow/store/tracking/sqlalchemy_store.py"
+click node_sql_log_batch "https://github.com/mlflow/mlflow/blob/master/mlflow/store/tracking/sqlalchemy_store.py"
+click node_model_class "https://github.com/mlflow/mlflow/blob/master/mlflow/models/model.py"
+click node_pyfunc_model "https://github.com/mlflow/mlflow/blob/master/mlflow/pyfunc/model.py"
+click node_pyfunc_load "https://github.com/mlflow/mlflow/blob/master/mlflow/pyfunc/__init__.py"
+click node_sklearn_log_model "https://github.com/mlflow/mlflow/blob/master/mlflow/sklearn/__init__.py"
+click node_sklearn_load_model "https://github.com/mlflow/mlflow/blob/master/mlflow/sklearn/__init__.py"
+click node_cli_server "https://github.com/mlflow/mlflow/blob/master/mlflow/cli/__init__.py"
+click node_server_run_server "https://github.com/mlflow/mlflow/blob/master/mlflow/server/__init__.py"
+click node_registry_create_model "https://github.com/mlflow/mlflow/blob/master/mlflow/store/model_registry/sqlalchemy_store.py"
+click node_registry_create_version "https://github.com/mlflow/mlflow/blob/master/mlflow/store/model_registry/sqlalchemy_store.py"
+click node_entity_run "https://github.com/mlflow/mlflow/blob/master/mlflow/entities/run.py"
+click node_entity_run_info "https://github.com/mlflow/mlflow/blob/master/mlflow/entities/run_info.py"
+click node_entity_metric "https://github.com/mlflow/mlflow/blob/master/mlflow/entities/metric.py"
+click node_entity_param "https://github.com/mlflow/mlflow/blob/master/mlflow/entities/param.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_fluent_start_run,node_fluent_end_run,node_fluent_log_param,node_fluent_log_metric,node_fluent_active_run,node_fluent_log_artifact toneBlue
+class node_mlflow_client,node_client_create_run,node_client_log_batch,node_svc_client,node_svc_create_run,node_svc_log_metric,node_svc_log_batch,node_svc_set_uri,node_svc_get_store toneAmber
+class node_file_store,node_sql_store,node_sql_create_run,node_sql_log_metric,node_sql_log_batch toneMint
+class node_model_class,node_pyfunc_model,node_pyfunc_load,node_sklearn_log_model,node_sklearn_load_model toneRose
+class node_cli_server,node_server_run_server,node_registry_create_model,node_registry_create_version toneIndigo
+class node_entity_run,node_entity_run_info,node_entity_metric,node_entity_param toneTeal
