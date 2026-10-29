@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_core["Embeddings Core"]
+  node_embeddings{{"Embeddings<br/>engine facade"}}
+  node_embeddings_index["Embeddings.index<br/>index build"]
+  node_embeddings_upsert["Embeddings.upsert<br/>incremental update"]
+  node_embeddings_search["Embeddings.search<br/>query entry"]
+  node_embeddings_reindex["Embeddings.reindex<br/>refresh"]
+  node_explain["Embeddings.explain<br/>query explanation"]
+  node_hybrid["Hybrid<br/>dense + sparse fusion"]
+end
+
+subgraph group_vectorize["Dense Vectorization"]
+  node_vectors_factory["VectorsFactory<br/>model loader"]
+  node_vectors["Vectors<br/>vectorization base"]
+  node_stvectors["STVectors<br/>sentence-transformers"]
+  node_onnx_vec["ONNX vectors<br/>quantized inference"]
+end
+
+subgraph group_annidx["ANN Backends"]
+  node_ann_factory["ANNFactory<br/>backend loader"]
+  node_ann["ANN<br/>index wrapper"]
+  node_numpy_ann["NumPy ANN<br/>default backend"]
+  node_faiss_ann["Faiss<br/>[faiss.py]"]
+  node_hnsw_ann["HNSW<br/>[hnsw.py]"]
+end
+
+subgraph group_sparse["Sparse Scoring"]
+  node_scoring_factory["ScoringFactory<br/>scoring loader"]
+  node_scoring["Scoring<br/>terms base"]
+  node_tfidf["TFIDF<br/>term weighting"]
+  node_bm25["BM25<br/>lexical ranker"]
+  node_sparse_vec["Sparse<br/>[sparse.py]"]
+end
+
+subgraph group_store["Content Store"]
+  node_database_factory["DatabaseFactory<br/>storage loader"]
+  node_database[("Database<br/>document store")]
+  node_sqlite_db[("SQLite<br/>embedded store")]
+end
+
+subgraph group_graphnet["Graph Network"]
+  node_graph_factory["GraphFactory<br/>graph loader"]
+  node_graph[("Graph<br/>relationship engine")]
+end
+
+subgraph group_runtime["Workflow, Agents &amp; API"]
+  node_workflow_factory["WorkflowFactory<br/>task loader"]
+  node_workflow["Workflow<br/>task DAG"]
+  node_execute["Execute<br/>execution engine"]
+  node_agent_factory["ProcessFactory<br/>agent loader"]
+  node_agent["Agent<br/>[base.py]"]
+  node_application["Application<br/>app base"]
+  node_api["API<br/>[base.py]"]
+  node_fastapi_create["create&#40;&#41;<br/>server bootstrap"]
+end
+
+node_embeddings -->|"creates vector model"| node_vectors_factory
+node_embeddings -->|"creates ANN backend"| node_ann_factory
+node_embeddings -->|"creates scoring backend"| node_scoring_factory
+node_embeddings -->|"creates content store"| node_database_factory
+node_embeddings -->|"creates graph network"| node_graph_factory
+node_vectors_factory -->|"builds"| node_vectors
+node_vectors -->|"model backend"| node_stvectors
+node_vectors -->|"model backend"| node_onnx_vec
+node_ann_factory -->|"builds"| node_ann
+node_ann -->|"backend"| node_numpy_ann
+node_ann -->|"backend"| node_faiss_ann
+node_ann -->|"backend"| node_hnsw_ann
+node_scoring_factory -->|"builds"| node_scoring
+node_scoring -->|"backend"| node_tfidf
+node_scoring -->|"backend"| node_bm25
+node_bm25 -->|"extends"| node_tfidf
+node_scoring -->|"backend"| node_sparse_vec
+node_database_factory -->|"builds"| node_database
+node_database -->|"backend"| node_sqlite_db
+node_graph_factory -->|"builds"| node_graph
+node_embeddings_index -->|"batch transforms"| node_vectors
+node_embeddings_index -->|"appends vectors"| node_ann
+node_embeddings_index -->|"inserts rows"| node_database
+node_embeddings_index -->|"indexes terms"| node_scoring
+node_embeddings_upsert -->|"reindexes subset"| node_embeddings_index
+node_embeddings_search -->|"queries neighbors"| node_ann
+node_embeddings_search -->|"applies SQL filters"| node_database
+node_embeddings_search -->|"fuses rankings"| node_hybrid
+node_hybrid -->|"combines sparse hits"| node_sparse_vec
+node_embeddings -->|"explains matches"| node_explain
+node_workflow_factory -->|"builds"| node_workflow
+node_workflow -->|"schedules tasks"| node_execute
+node_workflow -->|"task graphs act on"| node_embeddings
+node_agent_factory -->|"builds"| node_agent
+node_agent -->|"runs task graphs"| node_workflow
+node_agent -->|"retrieves context"| node_embeddings
+node_api -->|"extends"| node_application
+node_api -->|"serves index"| node_embeddings
+node_fastapi_create -->|"bootstraps server"| node_api
+
+click node_embeddings "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/base.py"
+click node_embeddings_index "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/base.py"
+click node_embeddings_upsert "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/base.py"
+click node_embeddings_search "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/base.py"
+click node_embeddings_reindex "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/base.py"
+click node_explain "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/base.py"
+click node_vectors_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/vectors/dense/factory.py"
+click node_vectors "https://github.com/neuml/txtai/blob/master/src/python/txtai/vectors/base.py"
+click node_stvectors "https://github.com/neuml/txtai/blob/master/src/python/txtai/vectors/dense/sbert.py"
+click node_onnx_vec "https://github.com/neuml/txtai/blob/master/src/python/txtai/vectors/dense/onnx.py"
+click node_ann_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/ann/dense/factory.py"
+click node_ann "https://github.com/neuml/txtai/blob/master/src/python/txtai/ann/base.py"
+click node_numpy_ann "https://github.com/neuml/txtai/blob/master/src/python/txtai/ann/dense/numpy.py"
+click node_faiss_ann "https://github.com/neuml/txtai/blob/master/src/python/txtai/ann/dense/faiss.py"
+click node_hnsw_ann "https://github.com/neuml/txtai/blob/master/src/python/txtai/ann/dense/hnsw.py"
+click node_scoring_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/scoring/factory.py"
+click node_scoring "https://github.com/neuml/txtai/blob/master/src/python/txtai/scoring/base.py"
+click node_tfidf "https://github.com/neuml/txtai/blob/master/src/python/txtai/scoring/tfidf.py"
+click node_bm25 "https://github.com/neuml/txtai/blob/master/src/python/txtai/scoring/bm25.py"
+click node_sparse_vec "https://github.com/neuml/txtai/blob/master/src/python/txtai/scoring/sparse.py"
+click node_database_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/database/factory.py"
+click node_database "https://github.com/neuml/txtai/blob/master/src/python/txtai/database/base.py"
+click node_sqlite_db "https://github.com/neuml/txtai/blob/master/src/python/txtai/database/sqlite.py"
+click node_graph_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/graph/factory.py"
+click node_graph "https://github.com/neuml/txtai/blob/master/src/python/txtai/graph/base.py"
+click node_hybrid "https://github.com/neuml/txtai/blob/master/src/python/txtai/embeddings/search/hybrid.py"
+click node_workflow_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/workflow/factory.py"
+click node_workflow "https://github.com/neuml/txtai/blob/master/src/python/txtai/workflow/base.py"
+click node_execute "https://github.com/neuml/txtai/blob/master/src/python/txtai/workflow/execute.py"
+click node_agent_factory "https://github.com/neuml/txtai/blob/master/src/python/txtai/agent/factory.py"
+click node_agent "https://github.com/neuml/txtai/blob/master/src/python/txtai/agent/base.py"
+click node_application "https://github.com/neuml/txtai/blob/master/src/python/txtai/app/base.py"
+click node_api "https://github.com/neuml/txtai/blob/master/src/python/txtai/api/base.py"
+click node_fastapi_create "https://github.com/neuml/txtai/blob/master/src/python/txtai/api/application.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_embeddings,node_embeddings_index,node_embeddings_upsert,node_embeddings_search,node_embeddings_reindex,node_explain,node_hybrid,node_workflow_factory,node_workflow,node_execute,node_agent_factory,node_agent,node_application,node_api,node_fastapi_create toneBlue
+class node_vectors_factory,node_vectors,node_stvectors,node_onnx_vec toneAmber
+class node_ann_factory,node_ann,node_numpy_ann,node_faiss_ann,node_hnsw_ann toneMint
+class node_scoring_factory,node_scoring,node_tfidf,node_bm25,node_sparse_vec toneRose
+class node_database_factory,node_database,node_sqlite_db toneIndigo
+class node_graph_factory,node_graph toneTeal
