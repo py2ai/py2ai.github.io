@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_g_api["Public API"]
+  node_facade["instructor/__init__.py<br/>[__init__.py]"]
+  node_shim["core.client shim<br/>[client.py]"]
+end
+
+subgraph group_g_client["Client Wrappers"]
+  node_instructor_client["Instructor<br/>[client.py]"]
+  node_async_instructor["AsyncInstructor<br/>[client.py]"]
+end
+
+subgraph group_g_dispatch["Patching &amp; Dispatch"]
+  node_patch{{"patch&#40;&#41;<br/>[patch.py]"}}
+  node_mode["Mode enum<br/>[mode.py]"]
+  node_registry[("ModeRegistry<br/>[registry.py]")]
+end
+
+subgraph group_g_providers["Provider Factories"]
+  node_from_openai{{"from_openai<br/>[client.py]"}}
+  node_from_anthropic{{"from_anthropic<br/>[client.py]"}}
+  node_from_provider{{"from_provider<br/>[auto_client.py]"}}
+end
+
+subgraph group_g_loop["Validation &amp; Retry"]
+  node_retry["retry_sync_v2<br/>[retry.py]"]
+  node_process_response["process_response<br/>[response.py]"]
+end
+
+node_facade -->|"lazy-exports"| node_instructor_client
+node_facade -->|"lazy-exports"| node_from_provider
+node_facade -->|"lazy-exports"| node_patch
+node_shim -->|"re-exports"| node_instructor_client
+node_from_provider -->|"routes 'openai/...'"| node_from_openai
+node_from_provider -->|"routes 'anthropic/...'"| node_from_anthropic
+node_from_openai -->|"builds &#40;sync&#41;"| node_instructor_client
+node_from_openai -->|"builds &#40;AsyncOpenAI&#41;"| node_async_instructor
+node_from_anthropic -->|"builds &#40;sync&#41;"| node_instructor_client
+node_from_anthropic -->|"builds &#40;AsyncOpenAI&#41;"| node_async_instructor
+node_instructor_client -->|"create wraps patched create_fn"| node_patch
+node_async_instructor -->|"create wraps patched create_fn"| node_patch
+node_mode -->|"selects strategy"| node_patch
+node_patch -->|"handler lookup"| node_registry
+node_patch -->|"delegates prepared request"| node_retry
+node_retry -->|"request/reask/parse handlers"| node_registry
+node_retry -->|"parse &amp; validate"| node_process_response
+
+click node_facade "https://github.com/567-labs/instructor/blob/main/instructor/__init__.py"
+click node_shim "https://github.com/567-labs/instructor/blob/main/instructor/core/client.py"
+click node_instructor_client "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/client.py"
+click node_async_instructor "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/client.py"
+click node_patch "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/patch.py"
+click node_mode "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/mode.py"
+click node_registry "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/registry.py"
+click node_from_openai "https://github.com/567-labs/instructor/blob/main/instructor/v2/providers/openai/client.py"
+click node_from_anthropic "https://github.com/567-labs/instructor/blob/main/instructor/v2/providers/anthropic/client.py"
+click node_from_provider "https://github.com/567-labs/instructor/blob/main/instructor/v2/auto_client.py"
+click node_retry "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/retry.py"
+click node_process_response "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/response.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_facade,node_shim toneBlue
+class node_instructor_client,node_async_instructor toneAmber
+class node_patch,node_mode,node_registry toneMint
+class node_from_openai,node_from_anthropic,node_from_provider toneRose
+class node_retry,node_process_response toneIndigo
