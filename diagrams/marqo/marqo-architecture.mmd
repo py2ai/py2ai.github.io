@@ -1,0 +1,141 @@
+﻿flowchart TD
+
+subgraph group_api["Marqo API &#40;FastAPI, port 8882&#41;"]
+  node_api_server{{"FastAPI app<br/>[api.py]"}}
+  node_generate_config["generate_config<br/>[api.py]"]
+  node_custom_route["MarqoCustomRoute<br/>[route.py]"]
+  node_on_start["on_start<br/>[on_start_script.py]"]
+end
+
+subgraph group_core["Core services &#40;config wiring&#41;"]
+  node_config["Config<br/>[config.py]"]
+  node_document["Document<br/>[document.py]"]
+  node_add_docs_handler["AddDocumentsHandler"]
+  node_structured_handler["StructuredAddDocumentsHandler"]
+  node_index_mgmt["IndexManagement"]
+  node_app_package["VespaApplicationPackage"]
+  node_embed["Embed<br/>[embed.py]"]
+  node_recommender["Recommender<br/>[recommender.py]"]
+end
+
+subgraph group_search["Search core"]
+  node_search["search<br/>[tensor_search.py]"]
+  node_vector_text["_vector_text_search<br/>[tensor_search.py]"]
+  node_lexical["_lexical_search<br/>[tensor_search.py]"]
+  node_hybrid_search["HybridSearch<br/>[hybrid_search.py]"]
+  node_meta_cache["index_meta_cache"]
+end
+
+subgraph group_store["Vespa vector store"]
+  node_vespa_client[("VespaClient<br/>[vespa_client.py]")]
+  node_query["query &#40;YQL&#41;<br/>[vespa_client.py]"]
+  node_feed_batch["feed_batch_multithreaded<br/>[vespa_client.py]"]
+  node_structured_index[("StructuredVespaIndex")]
+  node_semi_index[("SemiStructuredVespaIndex")]
+  node_unstructured_index[("UnstructuredVespaIndex")]
+  node_zookeeper["ZookeeperClient"]
+end
+
+subgraph group_inference["Inference client &#40;Marqo side&#41;"]
+  node_inference_client["InferenceClient"]
+  node_caching["CachingInference"]
+  node_inference_api["Inference &#40;ABC&#41;<br/>[inference.py]"]
+end
+
+subgraph group_services["Sidecar services &#40;MIOC + MMC&#41;"]
+  node_mioc_app{{"Orchestrator app<br/>[main.py]"}}
+  node_vectorise["POST /vectorise<br/>[main.py]"]
+  node_triton_inference["TritonInference"]
+  node_model_registry["get_model_properties"]
+  node_mmc_app{{"MMC app<br/>[main.py]"}}
+  node_load_model["POST /models/load<br/>[v1_routes.py]"]
+  node_model_manager["ModelManager<br/>[model_manager.py]"]
+end
+
+node_api_server -->|"module-level init L95"| node_generate_config
+node_api_server -->|"route_class L120"| node_custom_route
+node_api_server -->|"startup hook"| node_on_start
+node_api_server -->|"POST /indexes/&#123;index&#125;/search L441"| node_search
+node_generate_config -->|"Config&#40;...&#41; L90"| node_config
+node_generate_config -->|"InferenceClient L71"| node_inference_client
+node_config -->|"constructs L43"| node_index_mgmt
+node_config -->|"constructs L50"| node_document
+node_config -->|"constructs L52"| node_embed
+node_config -->|"constructs L51"| node_recommender
+node_document -->|"get_index L46"| node_index_mgmt
+node_document -->|"dispatch by index type L57"| node_add_docs_handler
+node_add_docs_handler -->|"structured subclass"| node_structured_handler
+node_search -->|"cached MarqoIndex L440"| node_meta_cache
+node_search -->|"TENSOR method"| node_vector_text
+node_search -->|"LEXICAL method"| node_lexical
+node_search -->|"HYBRID method"| node_hybrid_search
+node_hybrid_search -->|"tensor leg"| node_vector_text
+node_hybrid_search -->|"lexical leg"| node_lexical
+node_vector_text -->|"embed query"| node_inference_client
+node_vector_text -->|"to_vespa_tensor_query"| node_structured_index
+node_lexical -->|"to_vespa_lexical_query"| node_structured_index
+node_structured_index -->|"YQL execution"| node_query
+node_add_docs_handler -->|"feed converted docs"| node_feed_batch
+node_document -->|"vectorise fields"| node_inference_client
+node_embed -->|"embed content"| node_inference_client
+node_index_mgmt -->|"generate application"| node_app_package
+node_index_mgmt -->|"deploy_application"| node_vespa_client
+node_index_mgmt -->|"deployment lock"| node_zookeeper
+node_inference_client -->|"optional cache wrapper"| node_caching
+node_inference_api -->|"implements vectorise"| node_inference_client
+node_inference_client -->|"HTTP /vectorise"| node_mioc_app
+node_mioc_app -->|"handler"| node_vectorise
+node_vectorise -->|"gRPC to Triton"| node_triton_inference
+node_vectorise -->|"resolve model class"| node_model_registry
+node_mioc_app -->|"ensure model loaded"| node_mmc_app
+node_mmc_app -->|"v1 route"| node_load_model
+node_load_model -->|"download + config.pbtxt"| node_model_manager
+
+click node_api_server "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/api.py"
+click node_generate_config "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/api.py"
+click node_custom_route "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/api/route.py"
+click node_on_start "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/on_start_script.py"
+click node_config "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/config.py"
+click node_document "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/document/document.py"
+click node_add_docs_handler "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/vespa_index/add_documents_handler.py"
+click node_structured_handler "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/structured_vespa_index/structured_add_document_handler.py"
+click node_index_mgmt "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/index_management/index_management.py"
+click node_app_package "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/index_management/vespa_application_package.py"
+click node_embed "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/embed/embed.py"
+click node_recommender "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/search/recommender.py"
+click node_search "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/tensor_search.py"
+click node_vector_text "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/tensor_search.py"
+click node_lexical "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/tensor_search.py"
+click node_hybrid_search "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/search/hybrid_search.py"
+click node_meta_cache "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/tensor_search/index_meta_cache.py"
+click node_vespa_client "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/vespa/vespa_client.py"
+click node_query "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/vespa/vespa_client.py"
+click node_feed_batch "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/vespa/vespa_client.py"
+click node_structured_index "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/structured_vespa_index/structured_vespa_index.py"
+click node_semi_index "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/semi_structured_vespa_index/semi_structured_vespa_index.py"
+click node_unstructured_index "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/unstructured_vespa_index/unstructured_vespa_index.py"
+click node_zookeeper "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/vespa/zookeeper_client.py"
+click node_inference_client "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/inference/inference_client/inference_client.py"
+click node_caching "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/inference/inference_cache/caching_inference.py"
+click node_inference_api "https://github.com/marqo-ai/marqo/blob/mainline/components/marqo/src/marqo/core/inference/api/inference.py"
+click node_mioc_app "https://github.com/marqo-ai/marqo/blob/mainline/components/inference_orchestrator/src/inference_orchestrator/main.py"
+click node_vectorise "https://github.com/marqo-ai/marqo/blob/mainline/components/inference_orchestrator/src/inference_orchestrator/main.py"
+click node_triton_inference "https://github.com/marqo-ai/marqo/blob/mainline/components/inference_orchestrator/src/inference_orchestrator/services/triton_inference/triton_inference.py"
+click node_model_registry "https://github.com/marqo-ai/marqo/blob/mainline/components/inference_orchestrator/src/inference_orchestrator/services/triton_inference/embedding_models/marqo_model_registry.py"
+click node_mmc_app "https://github.com/marqo-ai/marqo/blob/mainline/components/model_management/src/model_management/main.py"
+click node_load_model "https://github.com/marqo-ai/marqo/blob/mainline/components/model_management/src/model_management/api/v1_routes.py"
+click node_model_manager "https://github.com/marqo-ai/marqo/blob/mainline/components/model_management/src/model_management/services/model_manager/model_manager.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_server,node_generate_config,node_custom_route,node_on_start toneBlue
+class node_config,node_document,node_add_docs_handler,node_structured_handler,node_index_mgmt,node_app_package,node_embed,node_recommender toneAmber
+class node_search,node_vector_text,node_lexical,node_hybrid_search,node_meta_cache toneMint
+class node_vespa_client,node_query,node_feed_batch,node_structured_index,node_semi_index,node_unstructured_index,node_zookeeper toneRose
+class node_inference_client,node_caching,node_inference_api toneIndigo
+class node_mioc_app,node_vectorise,node_triton_inference,node_model_registry,node_mmc_app,node_load_model,node_model_manager toneTeal
