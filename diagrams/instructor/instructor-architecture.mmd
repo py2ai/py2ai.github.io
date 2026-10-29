@@ -1,0 +1,151 @@
+flowchart TD
+
+subgraph group_g_facade["Package Facade"]
+  node_package_init["instructor/__init__.py<br/>[__init__.py]"]
+  node_v2_shims["compat shims<br/>[client.py]"]
+end
+
+subgraph group_g_client["Client Layer"]
+  node_instructor_cls["Instructor<br/>[client.py]"]
+  node_async_instructor["AsyncInstructor<br/>[client.py]"]
+  node_create_method{{"Instructor.create<br/>[client.py]"}}
+  node_create_with_completion{{"create_with_completion<br/>[client.py]"}}
+  node_hooks["Hooks / HookName<br/>[hooks.py]"]
+end
+
+subgraph group_g_patching["Patching Layer"]
+  node_patch_fn{{"patch&#40;&#41;<br/>[patch.py]"}}
+  node_patch_v2_fn{{"patch_v2&#40;&#41;<br/>[patch.py]"}}
+  node_sync_wrapper["_create_sync_wrapper<br/>[patch.py]"]
+  node_async_wrapper["_create_async_wrapper<br/>[patch.py]"]
+  node_budget["token budget<br/>[budget.py]"]
+  node_templating["handle_templating<br/>[templating.py]"]
+end
+
+subgraph group_g_dispatch["Mode Registry &amp; Handlers"]
+  node_mode_enum["Mode<br/>[mode.py]"]
+  node_provider_enum["Provider<br/>[providers.py]"]
+  node_registry[("ModeRegistry<br/>[registry.py]")]
+  node_mode_handlers["ModeHandlers<br/>[registry.py]"]
+  node_mode_handler["ModeHandler ABC<br/>[handler.py]"]
+end
+
+subgraph group_g_loop["Retry &amp; Validation Loop"]
+  node_retry_sync{{"retry_sync_v2<br/>[retry.py]"}}
+  node_retry_async{{"retry_async_v2<br/>[retry.py]"}}
+  node_retry_exception["InstructorRetryException<br/>[errors.py]"]
+  node_usage["update_total_usage<br/>[usage.py]"]
+  node_process_response{{"process_response<br/>[response.py]"}}
+  node_prepare_model["prepare_response_model<br/>[response_model.py]"]
+  node_errors_mod["error taxonomy<br/>[errors.py]"]
+end
+
+subgraph group_g_dsl["Response DSL"]
+  node_partial["Partial<br/>[partial.py]"]
+  node_iterable_model["IterableModel<br/>[iterable.py]"]
+  node_model_adapter["ModelAdapter<br/>[simple_type.py]"]
+  node_function_calls["ResponseSchema<br/>[function_calls.py]"]
+  node_json_extract["extract_json_from_codeblock<br/>[json.py]"]
+end
+
+subgraph group_g_providers["Provider Integrations"]
+  node_openai_client{{"from_openai<br/>[client.py]"}}
+  node_anthropic_client{{"from_anthropic<br/>[client.py]"}}
+  node_auto_client{{"from_provider<br/>[auto_client.py]"}}
+  node_openai_handlers["OpenAI handlers<br/>[handlers.py]"]
+end
+
+node_package_init -->|"lazy-exports"| node_instructor_cls
+node_package_init -->|"lazy-exports from_openai"| node_openai_client
+node_package_init -->|"lazy-exports from_provider"| node_auto_client
+node_package_init -->|"lazy-exports patch"| node_patch_fn
+node_v2_shims -->|"re-exports v2 code"| node_instructor_cls
+node_openai_client -->|"builds &#40;sync&#41;"| node_instructor_cls
+node_openai_client -->|"builds &#40;AsyncOpenAI&#41;"| node_async_instructor
+node_anthropic_client -->|"builds &#40;sync&#41;"| node_instructor_cls
+node_anthropic_client -->|"builds &#40;AsyncOpenAI&#41;"| node_async_instructor
+node_auto_client -->|"routes 'openai/...'"| node_openai_client
+node_auto_client -->|"routes 'anthropic/...'"| node_anthropic_client
+node_instructor_cls -->|"entry point"| node_create_method
+node_create_method -->|"calls patched create_fn"| node_patch_fn
+node_create_with_completion -->|"calls patched create_fn"| node_patch_fn
+node_instructor_cls -->|"registers handlers"| node_hooks
+node_patch_fn -->|"delegates"| node_patch_v2_fn
+node_patch_v2_fn -->|"wraps sync func"| node_sync_wrapper
+node_patch_v2_fn -->|"wraps async func"| node_async_wrapper
+node_sync_wrapper -->|"get_handlers"| node_registry
+node_sync_wrapper -->|"normalize model"| node_prepare_model
+node_sync_wrapper -->|"render context"| node_templating
+node_sync_wrapper -->|"validate budget"| node_budget
+node_sync_wrapper -->|"retry chain"| node_retry_sync
+node_async_wrapper -->|"get_handlers"| node_registry
+node_async_wrapper -->|"normalize model"| node_prepare_model
+node_async_wrapper -->|"validate budget"| node_budget
+node_async_wrapper -->|"retry chain"| node_retry_async
+node_registry -->|"keyed by Mode"| node_mode_enum
+node_registry -->|"keyed by Provider"| node_provider_enum
+node_registry -->|"returns bundle"| node_mode_handlers
+node_mode_handlers -->|"implements contract"| node_mode_handler
+node_retry_sync -->|"reask_handler"| node_openai_handlers
+node_retry_sync -->|"response_parser"| node_process_response
+node_retry_sync -->|"accumulate tokens"| node_usage
+node_retry_sync -->|"emit events"| node_hooks
+node_retry_sync -->|"raises when exhausted"| node_retry_exception
+node_retry_async -->|"reask_handler"| node_openai_handlers
+node_retry_async -->|"response_parser"| node_process_response
+node_process_response -->|"handler dispatch"| node_registry
+node_function_calls -->|"from_response delegates"| node_process_response
+node_json_extract -->|"JSON-mode extraction"| node_process_response
+node_instructor_cls -->|"create_partial wraps"| node_partial
+node_process_response -->|"stream partials"| node_partial
+node_process_response -->|"split tasks"| node_iterable_model
+node_process_response -->|"adapt simple types"| node_model_adapter
+
+click node_package_init "https://github.com/567-labs/instructor/blob/main/instructor/__init__.py"
+click node_v2_shims "https://github.com/567-labs/instructor/blob/main/instructor/core/client.py"
+click node_instructor_cls "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/client.py"
+click node_async_instructor "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/client.py"
+click node_create_method "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/client.py"
+click node_create_with_completion "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/client.py"
+click node_hooks "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/hooks.py"
+click node_patch_fn "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/patch.py"
+click node_patch_v2_fn "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/patch.py"
+click node_sync_wrapper "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/patch.py"
+click node_async_wrapper "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/patch.py"
+click node_budget "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/budget.py"
+click node_templating "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/templating.py"
+click node_mode_enum "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/mode.py"
+click node_provider_enum "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/providers.py"
+click node_registry "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/registry.py"
+click node_mode_handlers "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/registry.py"
+click node_mode_handler "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/handler.py"
+click node_retry_sync "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/retry.py"
+click node_retry_async "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/retry.py"
+click node_retry_exception "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/errors.py"
+click node_usage "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/usage.py"
+click node_process_response "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/response.py"
+click node_prepare_model "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/response_model.py"
+click node_errors_mod "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/errors.py"
+click node_partial "https://github.com/567-labs/instructor/blob/main/instructor/v2/dsl/partial.py"
+click node_iterable_model "https://github.com/567-labs/instructor/blob/main/instructor/v2/dsl/iterable.py"
+click node_model_adapter "https://github.com/567-labs/instructor/blob/main/instructor/v2/dsl/simple_type.py"
+click node_function_calls "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/function_calls.py"
+click node_json_extract "https://github.com/567-labs/instructor/blob/main/instructor/v2/core/json.py"
+click node_openai_client "https://github.com/567-labs/instructor/blob/main/instructor/v2/providers/openai/client.py"
+click node_anthropic_client "https://github.com/567-labs/instructor/blob/main/instructor/v2/providers/anthropic/client.py"
+click node_auto_client "https://github.com/567-labs/instructor/blob/main/instructor/v2/auto_client.py"
+click node_openai_handlers "https://github.com/567-labs/instructor/blob/main/instructor/v2/providers/openai/handlers.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_package_init,node_v2_shims,node_openai_client,node_anthropic_client,node_auto_client,node_openai_handlers toneBlue
+class node_instructor_cls,node_async_instructor,node_create_method,node_create_with_completion,node_hooks toneAmber
+class node_patch_fn,node_patch_v2_fn,node_sync_wrapper,node_async_wrapper,node_budget,node_templating toneMint
+class node_mode_enum,node_provider_enum,node_registry,node_mode_handlers,node_mode_handler toneRose
+class node_retry_sync,node_retry_async,node_retry_exception,node_usage,node_process_response,node_prepare_model,node_errors_mod toneIndigo
+class node_partial,node_iterable_model,node_model_adapter,node_function_calls,node_json_extract toneTeal
