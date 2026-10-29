@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_api["Public API &#40;modin.pandas&#41;"]
+  node_entry["import modin.pandas<br/>[__init__.py]"]
+  node_dataframe["DataFrame<br/>[dataframe.py]"]
+  node_series["Series<br/>[series.py]"]
+  node_general["general functions<br/>[general.py]"]
+  node_groupby_api["GroupBy API<br/>[groupby.py]"]
+  node_io_api["io: read_csv / from_pandas<br/>[io.py]"]
+end
+
+subgraph group_boot["Config &amp; Engine Boot"]
+  node_config_env["Engine / Backend / StorageFormat<br/>[envvars.py]"]
+  node_init_engine["_initialize_engine<br/>[__init__.py]"]
+  node_ray_init["initialize_ray<br/>[utils.py]"]
+  node_dask_init["initialize_dask<br/>[utils.py]"]
+end
+
+subgraph group_dispatch["Factory Dispatch"]
+  node_dispatcher["FactoryDispatcher<br/>[dispatcher.py]"]
+  node_base_factory["BaseFactory<br/>[factories.py]"]
+  node_ray_factory["PandasOnRayFactory<br/>[factories.py]"]
+  node_dask_factory["PandasOnDaskFactory<br/>[factories.py]"]
+end
+
+subgraph group_io["I/O Core"]
+  node_base_io["BaseIO<br/>[io.py]"]
+  node_file_dispatcher["FileDispatcher<br/>[file_dispatcher.py]"]
+  node_text_dispatcher["TextFileDispatcher"]
+  node_csv_dispatcher["CSVDispatcher<br/>[csv_dispatcher.py]"]
+  node_ray_generic_io["RayIO<br/>[io.py]"]
+end
+
+subgraph group_storage["Storage Format Layer"]
+  node_base_qc["BaseQueryCompiler<br/>[query_compiler.py]"]
+  node_qc["PandasQueryCompiler<br/>[query_compiler.py]"]
+  node_caster["QueryCompilerCaster"]
+  node_pd_dataframe["PandasDataframe<br/>[dataframe.py]"]
+  node_part_mgr["PandasDataframePartitionManager"]
+  node_axis_part["PandasDataframeAxisPartition<br/>[axis_partition.py]"]
+end
+
+subgraph group_ray["Ray Engine"]
+  node_ray_io["PandasOnRayIO<br/>[io.py]"]
+  node_ray_df["PandasOnRayDataframe<br/>[dataframe.py]"]
+  node_ray_part_mgr["PandasOnRayDataframePartitionManager"]
+  node_ray_virt["PandasOnRayDataframeVirtualPartition"]
+  node_ray_part["PandasOnRayDataframePartition<br/>[partition.py]"]
+end
+
+subgraph group_dask["Dask Engine"]
+  node_dask_df["PandasOnDaskDataframe<br/>[dataframe.py]"]
+  node_dask_part_mgr["PandasOnDaskDataframePartitionManager"]
+  node_dask_part["PandasOnDaskDataframePartition<br/>[partition.py]"]
+end
+
+node_entry -->|"exports"| node_dataframe
+node_entry -->|"exports"| node_series
+node_entry -->|"re-exports functions"| node_general
+node_entry -->|"re-exports GroupBy"| node_groupby_api
+node_dataframe -->|"eager pandas df -&gt; from_pandas"| node_io_api
+node_io_api -->|"delegates all IO"| node_dispatcher
+node_groupby_api -->|"args cast per pandas version"| node_caster
+node_groupby_api -->|"groupby_agg on the compiler"| node_qc
+node_caster -->|"caster works on query compilers"| node_qc
+node_config_env -->|"Engine/Backend subscriptions"| node_dispatcher
+node_dispatcher -->|"get_factory boots engine"| node_init_engine
+node_init_engine -->|"engine == 'Ray'"| node_ray_init
+node_init_engine -->|"engine == 'Dask'"| node_dask_init
+node_dispatcher -->|"resolve factory name &#40;L147&#41;"| node_base_factory
+node_base_factory -->|"Ray variant"| node_ray_factory
+node_base_factory -->|"Dask variant"| node_dask_factory
+node_ray_factory -->|"prepare&#40;&#41; binds io_cls"| node_ray_io
+node_dask_factory -->|"Dask IO path lands in BaseIO"| node_base_io
+node_io_api -->|"factory.io_cls executes reads"| node_base_io
+node_base_io -->|"from_pandas builds QC &#40;L99&#41;"| node_qc
+node_ray_generic_io -->|"subclass"| node_base_io
+node_ray_io -->|"subclass &#40;L68&#41;"| node_ray_generic_io
+node_ray_io -->|"read_csv composition &#40;L89&#41;"| node_csv_dispatcher
+node_csv_dispatcher -->|"extends"| node_text_dispatcher
+node_text_dispatcher -->|"extends"| node_file_dispatcher
+node_dispatcher -->|"returns BaseQueryCompiler"| node_qc
+node_base_qc -->|"pandas storage format impl"| node_qc
+node_qc -->|"wraps partitioned frame"| node_pd_dataframe
+node_pd_dataframe -->|"layout via manager"| node_part_mgr
+node_pd_dataframe -->|"axis submissions"| node_axis_part
+node_ray_df -->|"subclass &#40;L23&#41;"| node_pd_dataframe
+node_ray_df -->|"partition manager"| node_ray_part_mgr
+node_ray_part_mgr -->|"specializes &#40;L35&#41;"| node_part_mgr
+node_ray_virt -->|"specializes"| node_axis_part
+node_ray_part_mgr -->|"manages physical chunks"| node_ray_part
+node_ray_io -->|"frame_cls binding &#40;L71&#41;"| node_ray_df
+node_dask_df -->|"subclass &#40;L22&#41;"| node_pd_dataframe
+node_dask_df -->|"partition manager"| node_dask_part_mgr
+node_dask_part_mgr -->|"manages Dask futures"| node_dask_part
+node_pd_dataframe -->|"chunks hold Ray refs"| node_ray_part
+
+click node_entry "https://github.com/modin-project/modin/blob/main/modin/pandas/__init__.py"
+click node_dataframe "https://github.com/modin-project/modin/blob/main/modin/pandas/dataframe.py"
+click node_series "https://github.com/modin-project/modin/blob/main/modin/pandas/series.py"
+click node_general "https://github.com/modin-project/modin/blob/main/modin/pandas/general.py"
+click node_groupby_api "https://github.com/modin-project/modin/blob/main/modin/pandas/groupby.py"
+click node_io_api "https://github.com/modin-project/modin/blob/main/modin/pandas/io.py"
+click node_config_env "https://github.com/modin-project/modin/blob/main/modin/config/envvars.py"
+click node_init_engine "https://github.com/modin-project/modin/blob/main/modin/pandas/__init__.py"
+click node_ray_init "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/common/utils.py"
+click node_dask_init "https://github.com/modin-project/modin/blob/main/modin/core/execution/dask/common/utils.py"
+click node_dispatcher "https://github.com/modin-project/modin/blob/main/modin/core/execution/dispatching/factories/dispatcher.py"
+click node_base_factory "https://github.com/modin-project/modin/blob/main/modin/core/execution/dispatching/factories/factories.py"
+click node_ray_factory "https://github.com/modin-project/modin/blob/main/modin/core/execution/dispatching/factories/factories.py"
+click node_dask_factory "https://github.com/modin-project/modin/blob/main/modin/core/execution/dispatching/factories/factories.py"
+click node_base_io "https://github.com/modin-project/modin/blob/main/modin/core/io/io.py"
+click node_file_dispatcher "https://github.com/modin-project/modin/blob/main/modin/core/io/file_dispatcher.py"
+click node_text_dispatcher "https://github.com/modin-project/modin/blob/main/modin/core/io/text/text_file_dispatcher.py"
+click node_csv_dispatcher "https://github.com/modin-project/modin/blob/main/modin/core/io/text/csv_dispatcher.py"
+click node_ray_generic_io "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/generic/io/io.py"
+click node_ray_io "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/implementations/pandas_on_ray/io/io.py"
+click node_base_qc "https://github.com/modin-project/modin/blob/main/modin/core/storage_formats/base/query_compiler.py"
+click node_qc "https://github.com/modin-project/modin/blob/main/modin/core/storage_formats/pandas/query_compiler.py"
+click node_caster "https://github.com/modin-project/modin/blob/main/modin/core/storage_formats/pandas/query_compiler_caster.py"
+click node_pd_dataframe "https://github.com/modin-project/modin/blob/main/modin/core/dataframe/pandas/dataframe/dataframe.py"
+click node_part_mgr "https://github.com/modin-project/modin/blob/main/modin/core/dataframe/pandas/partitioning/partition_manager.py"
+click node_axis_part "https://github.com/modin-project/modin/blob/main/modin/core/dataframe/pandas/partitioning/axis_partition.py"
+click node_ray_df "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/implementations/pandas_on_ray/dataframe/dataframe.py"
+click node_ray_part_mgr "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/implementations/pandas_on_ray/partitioning/partition_manager.py"
+click node_ray_virt "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/implementations/pandas_on_ray/partitioning/virtual_partition.py"
+click node_ray_part "https://github.com/modin-project/modin/blob/main/modin/core/execution/ray/implementations/pandas_on_ray/partitioning/partition.py"
+click node_dask_df "https://github.com/modin-project/modin/blob/main/modin/core/execution/dask/implementations/pandas_on_dask/dataframe/dataframe.py"
+click node_dask_part_mgr "https://github.com/modin-project/modin/blob/main/modin/core/execution/dask/implementations/pandas_on_dask/partitioning/partition_manager.py"
+click node_dask_part "https://github.com/modin-project/modin/blob/main/modin/core/execution/dask/implementations/pandas_on_dask/partitioning/partition.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry,node_dataframe,node_series,node_general,node_groupby_api,node_io_api,node_dask_df,node_dask_part_mgr,node_dask_part toneBlue
+class node_config_env,node_init_engine,node_ray_init,node_dask_init toneAmber
+class node_dispatcher,node_base_factory,node_ray_factory,node_dask_factory toneMint
+class node_base_io,node_file_dispatcher,node_text_dispatcher,node_csv_dispatcher,node_ray_generic_io toneRose
+class node_base_qc,node_qc,node_caster,node_pd_dataframe,node_part_mgr,node_axis_part toneIndigo
+class node_ray_io,node_ray_df,node_ray_part_mgr,node_ray_virt,node_ray_part toneTeal
