@@ -1,0 +1,152 @@
+flowchart TD
+
+subgraph group_g1["CLI Layer"]
+  node_oaieval["oaieval run&#40;&#41;<br/>[oaieval.py]"]
+  node_oaievalset["oaievalset run&#40;&#41;<br/>[oaievalset.py]"]
+end
+
+subgraph group_g2["Registry &amp; Specs"]
+  node_registry["Registry<br/>[registry.py]"]
+  node_dereference["_dereference<br/>[registry.py]"]
+  node_evalsets["Eval Set YAML<br/>[test-basic.yaml]"]
+  node_specs["EvalSpec / RunSpec<br/>[base.py]"]
+end
+
+subgraph group_g3["Eval Core"]
+  node_evalcore["Eval<br/>[eval.py]"]
+  node_solvereval["SolverEval<br/>[eval.py]"]
+  node_data["get_jsonl<br/>[data.py]"]
+  node_taskstate["TaskState<br/>[task_state.py]"]
+end
+
+subgraph group_g4["Prompts"]
+  node_promptbase["Prompt Classes<br/>[base.py]"]
+  node_formatting["make_abc<br/>[formatting.py]"]
+end
+
+subgraph group_g5["Completion Fns"]
+  node_api["CompletionFn Protocol<br/>[api.py]"]
+  node_checkmatch["record_and_check_match<br/>[api.py]"]
+  node_openaifn["OpenAICompletionFn<br/>[openai.py]"]
+  node_chatfn["OpenAIChatCompletionFn<br/>[openai.py]"]
+  node_retrying["create_retrying<br/>[api_utils.py]"]
+  node_cotfn["ChainOfThoughtCompletionFn<br/>[cot.py]"]
+end
+
+subgraph group_g6["Solvers"]
+  node_solver["Solver ABC<br/>[solver.py]"]
+  node_solverresult["SolverResult<br/>[solver.py]"]
+  node_nestsolver["NestedSolver<br/>[solver.py]"]
+  node_cotsolver["CoTSolver<br/>[cot_solver.py]"]
+  node_postproc["PostProcessor<br/>[postprocessors.py]"]
+  node_openaisolver["OpenAISolver<br/>[openai_solver.py]"]
+end
+
+subgraph group_g7["Elsuite Library"]
+  node_match["Match<br/>[match.py]"]
+  node_fuzzy["FuzzyMatch<br/>[fuzzy_match.py]"]
+  node_mc["MultipleChoice<br/>[multiple_choice.py]"]
+  node_mbc["ModelBasedClassify<br/>[classify.py]"]
+  node_mgspec["ModelGradedSpec<br/>[base.py]"]
+  node_promptfn["PromptFn<br/>[utils.py]"]
+end
+
+subgraph group_g8["Recording &amp; Metrics"]
+  node_record["RecorderBase<br/>[record.py]"]
+  node_localrec["LocalRecorder<br/>[record.py]"]
+  node_event["Event<br/>[record.py]"]
+  node_metrics["get_accuracy<br/>[metrics.py]"]
+end
+
+node_oaieval -->|"get_eval"| node_registry
+node_oaieval -->|"constructs RunSpec"| node_specs
+node_oaieval -->|"registry.get_class then run"| node_evalcore
+node_oaieval -->|"build_recorder default"| node_localrec
+node_oaievalset -->|"get_eval_set"| node_evalsets
+node_oaievalset -->|"subprocess per eval"| node_oaieval
+node_registry -->|"get_eval / get_solver"| node_dereference
+node_dereference -->|"returns typed specs"| node_specs
+node_evalcore -->|"get_samples"| node_data
+node_evalcore -->|"as_default_recorder"| node_record
+node_evalcore -->|"completion_fns"| node_api
+node_solvereval -->|"subclass of Eval"| node_evalcore
+node_solvereval -->|"per-sample Solver copy"| node_solver
+node_solver -->|"consumes TaskState"| node_taskstate
+node_solver -->|"returns"| node_solverresult
+node_solver -->|"chains output cleaners"| node_postproc
+node_nestsolver -->|"extends"| node_solver
+node_cotsolver -->|"extends"| node_nestsolver
+node_openaisolver -->|"extends"| node_solver
+node_api -->|"implemented by"| node_openaifn
+node_api -->|"implemented by"| node_chatfn
+node_openaifn -->|"openai_completion_create_retrying"| node_retrying
+node_chatfn -->|"openai_chat_completion_create_retrying"| node_retrying
+node_openaifn -->|"CompletionPrompt"| node_promptbase
+node_chatfn -->|"ChatCompletionPrompt"| node_promptbase
+node_promptbase -->|"option strings for MC prompts"| node_formatting
+node_cotfn -->|"wraps CompletionFn"| node_api
+node_openaifn -->|"record_sampling"| node_record
+node_chatfn -->|"record_sampling with usage"| node_record
+node_checkmatch -->|"record_match"| node_record
+node_match -->|"subclasses Eval"| node_evalcore
+node_match -->|"eval_sample scoring"| node_checkmatch
+node_match -->|"samples_jsonl"| node_data
+node_fuzzy -->|"subclasses Eval"| node_evalcore
+node_mc -->|"make_abc options"| node_formatting
+node_mbc -->|"subclasses Eval"| node_evalcore
+node_mbc -->|"registry.get_modelgraded_spec"| node_mgspec
+node_mbc -->|"sample completions"| node_promptfn
+node_promptfn -->|"calls completion_fn"| node_api
+node_record -->|"appends"| node_event
+node_record -->|"LocalRecorder extends"| node_localrec
+node_localrec -->|"events feed metrics"| node_metrics
+node_match -->|"get_accuracy in run"| node_metrics
+
+click node_oaieval "https://github.com/openai/evals/blob/main/evals/cli/oaieval.py"
+click node_oaievalset "https://github.com/openai/evals/blob/main/evals/cli/oaievalset.py"
+click node_registry "https://github.com/openai/evals/blob/main/evals/registry.py"
+click node_dereference "https://github.com/openai/evals/blob/main/evals/registry.py"
+click node_evalsets "https://github.com/openai/evals/blob/main/evals/registry/eval_sets/test-basic.yaml"
+click node_specs "https://github.com/openai/evals/blob/main/evals/base.py"
+click node_evalcore "https://github.com/openai/evals/blob/main/evals/eval.py"
+click node_solvereval "https://github.com/openai/evals/blob/main/evals/eval.py"
+click node_data "https://github.com/openai/evals/blob/main/evals/data.py"
+click node_taskstate "https://github.com/openai/evals/blob/main/evals/task_state.py"
+click node_api "https://github.com/openai/evals/blob/main/evals/api.py"
+click node_checkmatch "https://github.com/openai/evals/blob/main/evals/api.py"
+click node_promptbase "https://github.com/openai/evals/blob/main/evals/prompt/base.py"
+click node_formatting "https://github.com/openai/evals/blob/main/evals/formatting.py"
+click node_openaifn "https://github.com/openai/evals/blob/main/evals/completion_fns/openai.py"
+click node_chatfn "https://github.com/openai/evals/blob/main/evals/completion_fns/openai.py"
+click node_retrying "https://github.com/openai/evals/blob/main/evals/utils/api_utils.py"
+click node_cotfn "https://github.com/openai/evals/blob/main/evals/completion_fns/cot.py"
+click node_solver "https://github.com/openai/evals/blob/main/evals/solvers/solver.py"
+click node_solverresult "https://github.com/openai/evals/blob/main/evals/solvers/solver.py"
+click node_nestsolver "https://github.com/openai/evals/blob/main/evals/solvers/solver.py"
+click node_cotsolver "https://github.com/openai/evals/blob/main/evals/solvers/nested/cot_solver.py"
+click node_postproc "https://github.com/openai/evals/blob/main/evals/solvers/postprocessors/postprocessors.py"
+click node_openaisolver "https://github.com/openai/evals/blob/main/evals/solvers/providers/openai/openai_solver.py"
+click node_match "https://github.com/openai/evals/blob/main/evals/elsuite/basic/match.py"
+click node_fuzzy "https://github.com/openai/evals/blob/main/evals/elsuite/basic/fuzzy_match.py"
+click node_mc "https://github.com/openai/evals/blob/main/evals/elsuite/multiple_choice.py"
+click node_mbc "https://github.com/openai/evals/blob/main/evals/elsuite/modelgraded/classify.py"
+click node_mgspec "https://github.com/openai/evals/blob/main/evals/elsuite/modelgraded/base.py"
+click node_promptfn "https://github.com/openai/evals/blob/main/evals/elsuite/utils.py"
+click node_record "https://github.com/openai/evals/blob/main/evals/record.py"
+click node_localrec "https://github.com/openai/evals/blob/main/evals/record.py"
+click node_event "https://github.com/openai/evals/blob/main/evals/record.py"
+click node_metrics "https://github.com/openai/evals/blob/main/evals/metrics.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_oaieval,node_oaievalset,node_match,node_fuzzy,node_mc,node_mbc,node_mgspec,node_promptfn toneBlue
+class node_registry,node_dereference,node_evalsets,node_specs,node_record,node_localrec,node_event,node_metrics toneAmber
+class node_evalcore,node_solvereval,node_data,node_taskstate toneMint
+class node_promptbase,node_formatting toneRose
+class node_api,node_checkmatch,node_openaifn,node_chatfn,node_retrying,node_cotfn toneIndigo
+class node_solver,node_solverresult,node_nestsolver,node_cotsolver,node_postproc,node_openaisolver toneTeal
