@@ -1,0 +1,129 @@
+flowchart TD
+
+subgraph group_g_api["Public API"]
+  node_init["opik/__init__<br/>[__init__.py]"]
+  node_track["BaseTrackDecorator.track"]
+  node_track_impl["OpikTrackDecorator<br/>[tracker.py]"]
+end
+
+subgraph group_g_config["Configuration &amp; Identity"]
+  node_configure["configure&#40;&#41;<br/>[configure.py]"]
+  node_config["OpikConfig<br/>[config.py]"]
+  node_apikey["OpikApiKey<br/>[opik_api_key.py]"]
+end
+
+subgraph group_g_client["Client &amp; API Objects"]
+  node_client["Opik<br/>[opik_client.py]"]
+  node_trace_obj["Trace<br/>[trace_client.py]"]
+  node_span_obj["Span<br/>[span_client.py]"]
+  node_dataset["Dataset<br/>[dataset.py]"]
+  node_experiment["Experiment<br/>[experiment.py]"]
+  node_conn_res["SharedConnectionResourcesBundle"]
+  node_conn_mgr["ConnectionResourceManager"]
+end
+
+subgraph group_g_msg["Message Processing &amp; Batching"]
+  node_streamer["Streamer<br/>[streamer.py]"]
+  node_messages["BaseMessage<br/>[messages.py]"]
+  node_queue_consumer["QueueConsumer<br/>[queue_consumer.py]"]
+  node_preprocessor["MessagePreprocessor<br/>[preprocessor.py]"]
+  node_batching_pre["BatchingPreprocessor"]
+  node_batch_manager["BatchManager<br/>[batch_manager.py]"]
+  node_base_batcher["BaseBatcher<br/>[base_batcher.py]"]
+  node_flushing["FlushingThread<br/>[flushing_thread.py]"]
+end
+
+subgraph group_g_rest["REST Transport"]
+  node_rest_api["OpikApi<br/>[client.py]"]
+end
+
+subgraph group_g_eval["Evaluation &amp; Metrics"]
+  node_evaluator["evaluate&#40;&#41;<br/>[evaluator.py]"]
+  node_base_metric["BaseMetric<br/>[base_metric.py]"]
+  node_hallucination["Hallucination<br/>[metric.py]"]
+  node_bleu["SentenceBLEU<br/>[bleu.py]"]
+end
+
+subgraph group_g_int["Provider Integrations"]
+  node_openai_tracker["track_openai<br/>[opik_tracker.py]"]
+  node_openai_dec["OpenaiChatCompletionsTrackDecorator"]
+end
+
+node_init -->|"exposes"| node_track
+node_init -->|"exposes"| node_client
+node_init -->|"exposes"| node_configure
+node_track -->|"default impl"| node_track_impl
+node_track_impl -->|"get_global_client"| node_client
+node_configure -->|"writes settings"| node_config
+node_config -->|"parse_api_key"| node_apikey
+node_client -->|"reads settings"| node_config
+node_client -->|"lease&#40;&#41;"| node_conn_mgr
+node_conn_mgr -->|"builds &amp; ref-counts"| node_conn_res
+node_conn_res -->|"assembles"| node_streamer
+node_conn_res -->|"builds OpikApi"| node_rest_api
+node_client -->|"creates"| node_trace_obj
+node_client -->|"creates"| node_span_obj
+node_client -->|"get / create"| node_dataset
+node_client -->|"create_experiment"| node_experiment
+node_client -->|"put&#40;CreateTraceMessage&#41;"| node_streamer
+node_trace_obj -->|"end&#40;&#41; enqueues"| node_streamer
+node_span_obj -->|"end&#40;&#41; enqueues"| node_streamer
+node_streamer -->|"queues"| node_messages
+node_streamer -->|"background drain"| node_queue_consumer
+node_streamer -->|"drain_to_processors"| node_preprocessor
+node_preprocessor -->|"extended by"| node_batching_pre
+node_batching_pre -->|"routes items"| node_batch_manager
+node_batch_manager -->|"per-type batchers"| node_base_batcher
+node_base_batcher -->|"interval flush"| node_flushing
+node_batch_manager -->|"flush via"| node_rest_api
+node_evaluator -->|"reads items"| node_dataset
+node_evaluator -->|"logs experiment"| node_client
+node_evaluator -->|"scores"| node_experiment
+node_evaluator -->|"applies metrics"| node_base_metric
+node_base_metric -->|"extended by"| node_hallucination
+node_base_metric -->|"extended by"| node_bleu
+node_openai_tracker -->|"installs"| node_openai_dec
+node_openai_dec -->|"extends base"| node_track
+
+click node_init "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/__init__.py"
+click node_track "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/decorator/base_track_decorator.py"
+click node_track_impl "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/decorator/tracker.py"
+click node_configure "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/configurator/configure.py"
+click node_config "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/config.py"
+click node_apikey "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_key/opik_api_key.py"
+click node_client "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/opik_client.py"
+click node_trace_obj "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/trace/trace_client.py"
+click node_span_obj "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/span/span_client.py"
+click node_dataset "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/dataset/dataset.py"
+click node_experiment "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/experiment/experiment.py"
+click node_conn_res "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/connection_resources.py"
+click node_conn_mgr "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/api_objects/connection_resources.py"
+click node_streamer "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/streamer.py"
+click node_messages "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/messages.py"
+click node_queue_consumer "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/queue_consumer.py"
+click node_preprocessor "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/preprocessing/preprocessor.py"
+click node_batching_pre "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/preprocessing/batching_preprocessor.py"
+click node_batch_manager "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/batching/batch_manager.py"
+click node_base_batcher "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/batching/base_batcher.py"
+click node_flushing "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/message_processing/batching/flushing_thread.py"
+click node_rest_api "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/rest_api/client.py"
+click node_evaluator "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/evaluation/evaluator.py"
+click node_base_metric "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/evaluation/metrics/base_metric.py"
+click node_hallucination "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/evaluation/metrics/llm_judges/hallucination/metric.py"
+click node_bleu "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/evaluation/metrics/heuristics/bleu.py"
+click node_openai_tracker "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/integrations/openai/opik_tracker.py"
+click node_openai_dec "https://github.com/comet-ml/opik/blob/main/sdks/python/src/opik/integrations/openai/openai_chat_completions_decorator.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init,node_track,node_track_impl,node_openai_tracker,node_openai_dec toneBlue
+class node_configure,node_config,node_apikey toneAmber
+class node_client,node_trace_obj,node_span_obj,node_dataset,node_experiment,node_conn_res,node_conn_mgr toneMint
+class node_streamer,node_messages,node_queue_consumer,node_preprocessor,node_batching_pre,node_batch_manager,node_base_batcher,node_flushing toneRose
+class node_rest_api toneIndigo
+class node_evaluator,node_base_metric,node_hallucination,node_bleu toneTeal
