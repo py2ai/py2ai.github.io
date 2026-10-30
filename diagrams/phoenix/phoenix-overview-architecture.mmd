@@ -1,0 +1,75 @@
+flowchart TD
+
+subgraph group_g_instrument["Instrumentation"]
+  node_otel_register["register&#40;&#41;<br/>[otel.py]"]
+end
+
+subgraph group_g_entry["Server Entry"]
+  node_cli_serve["phoenix serve &#40;run&#41;<br/>[serve.py]"]
+  node_app_create["create_app<br/>[app.py]"]
+end
+
+subgraph group_g_ingest["OTLP Ingest"]
+  node_grpc_ingest["GrpcServer<br/>[grpc_server.py]"]
+  node_http_ingest["post_traces<br/>[traces.py]"]
+  node_otel_decode["decode_otlp_span<br/>[otel.py]"]
+end
+
+subgraph group_g_write["Write Path"]
+  node_bulk_inserter["BulkInserter<br/>[bulk_inserter.py]"]
+end
+
+subgraph group_g_store["Storage"]
+  node_db_models["Span / Trace / Project models<br/>[models.py]"]
+end
+
+subgraph group_g_api["Query APIs"]
+  node_rest_api["v1 REST router<br/>[__init__.py]"]
+  node_graphql_api["build_graphql_schema<br/>[schema.py]"]
+end
+
+subgraph group_g_pkgs["Python Packages"]
+  node_client["Client<br/>[client.py]"]
+  node_evals["LLMEvaluator<br/>[evaluators.py]"]
+end
+
+node_otel_register -->|"exports OTLP spans over gRPC"| node_grpc_ingest
+node_otel_register -->|"exports OTLP/JSON over HTTP"| node_http_ingest
+node_cli_serve -->|"runs the FastAPI app in uvicorn"| node_app_create
+node_app_create -->|"binds and starts the gRPC server"| node_grpc_ingest
+node_app_create -->|"constructs BulkInserter for span writes"| node_bulk_inserter
+node_grpc_ingest -->|"Servicer.Export decodes each OTLP span"| node_otel_decode
+node_http_ingest -->|"enqueues posted spans"| node_bulk_inserter
+node_otel_decode -->|"hands decoded spans to the queue"| node_bulk_inserter
+node_bulk_inserter -->|"inserts Span rows"| node_db_models
+node_rest_api -->|"reads traces, datasets, experiments"| node_db_models
+node_graphql_api -->|"resolvers query the same models"| node_db_models
+node_client -->|"calls /v1 REST endpoints"| node_rest_api
+node_evals -->|"scores logged back via the client"| node_client
+
+click node_otel_register "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-otel/src/phoenix/otel/otel.py"
+click node_cli_serve "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/cli/commands/serve.py"
+click node_app_create "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/app.py"
+click node_grpc_ingest "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/grpc_server.py"
+click node_http_ingest "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/routers/v1/traces.py"
+click node_otel_decode "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/trace/otel.py"
+click node_bulk_inserter "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/bulk_inserter.py"
+click node_db_models "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/models.py"
+click node_rest_api "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/routers/v1/__init__.py"
+click node_graphql_api "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/schema.py"
+click node_client "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-client/src/phoenix/client/client.py"
+click node_evals "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-evals/src/phoenix/evals/evaluators.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_otel_register,node_client,node_evals toneBlue
+class node_cli_serve,node_app_create toneAmber
+class node_grpc_ingest,node_http_ingest,node_otel_decode toneMint
+class node_bulk_inserter toneRose
+class node_db_models toneIndigo
+class node_rest_api,node_graphql_api toneTeal
