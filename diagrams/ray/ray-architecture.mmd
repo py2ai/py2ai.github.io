@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_api["Driver API"]
+  node_init["init<br/>[worker.py]"]
+  node_remote["remote<br/>[worker.py]"]
+  node_get["get<br/>[worker.py]"]
+  node_put["put<br/>[worker.py]"]
+  node_wait["wait<br/>[worker.py]"]
+end
+
+subgraph group_worker["Worker Internals"]
+  node_worker_cls["Worker<br/>[worker.py]"]
+  node_connect["connect<br/>[worker.py]"]
+  node_core_worker["CoreWorker<br/>[worker.py]"]
+  node_node["Node<br/>[node.py]"]
+  node_services["services<br/>[services.py]"]
+end
+
+subgraph group_tasks["Task Path"]
+  node_make_remote["_make_remote<br/>[worker.py]"]
+  node_remote_function["RemoteFunction<br/>[remote_function.py]"]
+  node_rf_submit["RemoteFunction._remote<br/>[remote_function.py]"]
+  node_function_export["export"]
+  node_fetch_register["fetch_and_register"]
+end
+
+subgraph group_actors["Actor Path"]
+  node_actor_class["ActorClass<br/>[actor.py]"]
+  node_actor_remote["ActorClass._remote<br/>[actor.py]"]
+  node_make_actor["_make_actor<br/>[actor.py]"]
+  node_create_actor["create_actor<br/>[actor.py]"]
+  node_actor_handle["ActorHandle<br/>[actor.py]"]
+  node_actor_method_call["_actor_method_call<br/>[actor.py]"]
+  node_submit_actor_task["submit_actor_task<br/>[actor.py]"]
+  node_actor_pool["ActorPool<br/>[actor_pool.py]"]
+end
+
+subgraph group_objects["Objects and Serialization"]
+  node_object_ref["ObjectRef<br/>[object_ref.pxi]"]
+  node_put_object["Worker.put_object<br/>[worker.py]"]
+  node_get_objects["Worker.get_objects<br/>[worker.py]"]
+  node_serialization["SerializationContext<br/>[serialization.py]"]
+  node_runtime_context["get_runtime_context<br/>[runtime_context.py]"]
+end
+
+subgraph group_cluster["Cluster Metadata"]
+  node_actor_class_id["ActorClassID<br/>[unique_ids.pxi]"]
+  node_gcs_channel["GcsChannel<br/>[gcs_utils.py]"]
+end
+
+subgraph group_libs["Libraries"]
+  node_tuner["Tuner<br/>[tuner.py]"]
+  node_dataset["Dataset<br/>[dataset.py]"]
+end
+
+node_init -->|"drives"| node_worker_cls
+node_init -->|"creates Node"| node_node
+node_node -->|"spawns processes"| node_services
+node_init -->|"then connects"| node_connect
+node_connect -->|"instantiates"| node_core_worker
+node_connect -->|"reads config"| node_node
+node_remote -->|"dispatches"| node_make_remote
+node_make_remote -->|"functions become tasks"| node_remote_function
+node_make_remote -->|"classes become actors"| node_actor_class
+node_remote_function -->|".remote&#40;&#41; calls"| node_rf_submit
+node_rf_submit -->|"publishes pickle"| node_function_export
+node_function_export -->|"writes to GCS"| node_gcs_channel
+node_worker_cls -->|"on task receipt"| node_fetch_register
+node_fetch_register -->|"reads from GCS"| node_gcs_channel
+node_rf_submit -->|"submits task spec"| node_core_worker
+node_rf_submit -->|"serializes args"| node_serialization
+node_actor_class -->|".remote&#40;&#41; calls"| node_actor_remote
+node_make_actor -->|"builds"| node_actor_class
+node_make_actor -->|"mints ID"| node_actor_class_id
+node_actor_class_id -->|"registered"| node_gcs_channel
+node_actor_remote -->|"requests placement"| node_create_actor
+node_create_actor -->|"C++ path"| node_core_worker
+node_create_actor -->|"returns handle"| node_actor_handle
+node_actor_handle -->|"method call"| node_actor_method_call
+node_actor_method_call -->|"queues task"| node_submit_actor_task
+node_submit_actor_task -->|"C++ path"| node_core_worker
+node_submit_actor_task -->|"returns refs"| node_object_ref
+node_actor_pool -->|"maps over pool"| node_actor_handle
+node_put -->|"writes value"| node_put_object
+node_put_object -->|"store write"| node_core_worker
+node_put -->|"returns ref"| node_object_ref
+node_get -->|"fetches"| node_get_objects
+node_get_objects -->|"store read"| node_core_worker
+node_get -->|"blocks on"| node_object_ref
+node_wait -->|"polls readiness"| node_object_ref
+node_object_ref -->|"custom deser"| node_serialization
+node_runtime_context -->|"reads state"| node_worker_cls
+node_tuner -->|"built on actors"| node_actor_class
+node_dataset -->|"built on tasks"| node_remote_function
+
+click node_init "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_remote "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_get "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_put "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_wait "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_worker_cls "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_connect "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_core_worker "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_node "https://github.com/ray-project/ray/blob/master/python/ray/_private/node.py"
+click node_services "https://github.com/ray-project/ray/blob/master/python/ray/_private/services.py"
+click node_make_remote "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_remote_function "https://github.com/ray-project/ray/blob/master/python/ray/remote_function.py"
+click node_rf_submit "https://github.com/ray-project/ray/blob/master/python/ray/remote_function.py"
+click node_function_export "https://github.com/ray-project/ray/blob/master/python/ray/_private/function_manager.py"
+click node_fetch_register "https://github.com/ray-project/ray/blob/master/python/ray/_private/function_manager.py"
+click node_actor_class "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_actor_remote "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_make_actor "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_create_actor "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_actor_handle "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_actor_method_call "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_submit_actor_task "https://github.com/ray-project/ray/blob/master/python/ray/actor.py"
+click node_actor_pool "https://github.com/ray-project/ray/blob/master/python/ray/util/actor_pool.py"
+click node_object_ref "https://github.com/ray-project/ray/blob/master/python/ray/includes/object_ref.pxi"
+click node_put_object "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_get_objects "https://github.com/ray-project/ray/blob/master/python/ray/_private/worker.py"
+click node_serialization "https://github.com/ray-project/ray/blob/master/python/ray/_private/serialization.py"
+click node_runtime_context "https://github.com/ray-project/ray/blob/master/python/ray/runtime_context.py"
+click node_actor_class_id "https://github.com/ray-project/ray/blob/master/python/ray/includes/unique_ids.pxi"
+click node_gcs_channel "https://github.com/ray-project/ray/blob/master/python/ray/_private/gcs_utils.py"
+click node_tuner "https://github.com/ray-project/ray/blob/master/python/ray/tune/tuner.py"
+click node_dataset "https://github.com/ray-project/ray/blob/master/python/ray/data/dataset.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init,node_remote,node_get,node_put,node_wait,node_tuner,node_dataset toneBlue
+class node_worker_cls,node_connect,node_core_worker,node_node,node_services toneAmber
+class node_make_remote,node_remote_function,node_rf_submit,node_function_export,node_fetch_register toneMint
+class node_actor_class,node_actor_remote,node_make_actor,node_create_actor,node_actor_handle,node_actor_method_call,node_submit_actor_task,node_actor_pool toneRose
+class node_object_ref,node_put_object,node_get_objects,node_serialization,node_runtime_context toneIndigo
+class node_actor_class_id,node_gcs_channel toneTeal
