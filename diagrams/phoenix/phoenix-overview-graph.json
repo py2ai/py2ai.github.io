@@ -1,0 +1,139 @@
+{
+  "owner": "arize-ai",
+  "repo": "phoenix",
+  "branch": "main",
+  "groups": [
+    {"id": "g_instrument", "name": "instrument", "label": "Instrumentation"},
+    {"id": "g_entry", "name": "entry", "label": "Server Entry"},
+    {"id": "g_ingest", "name": "ingest", "label": "OTLP Ingest"},
+    {"id": "g_write", "name": "write", "label": "Write Path"},
+    {"id": "g_store", "name": "store", "label": "Storage"},
+    {"id": "g_api", "name": "api", "label": "Query APIs"},
+    {"id": "g_pkgs", "name": "pkgs", "label": "Python Packages"}
+  ],
+  "nodes": [
+    {
+      "id": "otel_register",
+      "label": "register()",
+      "file": "otel.py",
+      "path": "packages/phoenix-otel/src/phoenix/otel/otel.py",
+      "group": "Instrumentation",
+      "groupId": "g_instrument",
+      "desc": "Wraps OpenTelemetry with Phoenix-aware defaults and auto-instruments installed OpenInference libraries."
+    },
+    {
+      "id": "cli_serve",
+      "label": "phoenix serve (run)",
+      "file": "serve.py",
+      "path": "src/phoenix/server/cli/commands/serve.py",
+      "group": "Server Entry",
+      "groupId": "g_entry",
+      "desc": "Argparse subcommand that builds the database engine and launches uvicorn."
+    },
+    {
+      "id": "app_create",
+      "label": "create_app",
+      "file": "app.py",
+      "path": "src/phoenix/server/app.py",
+      "group": "Server Entry",
+      "groupId": "g_entry",
+      "desc": "FastAPI application factory wiring middleware, routers, GraphQL, gRPC, and the bulk inserter."
+    },
+    {
+      "id": "grpc_ingest",
+      "label": "GrpcServer",
+      "file": "grpc_server.py",
+      "path": "src/phoenix/server/grpc_server.py",
+      "group": "OTLP Ingest",
+      "groupId": "g_ingest",
+      "desc": "Async gRPC server exposing the OpenTelemetry TraceService used by arize-phoenix-otel."
+    },
+    {
+      "id": "http_ingest",
+      "label": "post_traces",
+      "file": "traces.py",
+      "path": "src/phoenix/server/api/routers/v1/traces.py",
+      "group": "OTLP Ingest",
+      "groupId": "g_ingest",
+      "desc": "OTLP/JSON HTTP ingest endpoint mounted at POST /v1/traces."
+    },
+    {
+      "id": "otel_decode",
+      "label": "decode_otlp_span",
+      "file": "otel.py",
+      "path": "src/phoenix/trace/otel.py",
+      "group": "OTLP Ingest",
+      "groupId": "g_ingest",
+      "desc": "Converts protobuf OTLP spans into Phoenix Span domain objects."
+    },
+    {
+      "id": "bulk_inserter",
+      "label": "BulkInserter",
+      "file": "bulk_inserter.py",
+      "path": "src/phoenix/db/bulk_inserter.py",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Batches queued spans and annotations, then flushes them into the database."
+    },
+    {
+      "id": "db_models",
+      "label": "Span / Trace / Project models",
+      "file": "models.py",
+      "path": "src/phoenix/db/models.py",
+      "group": "Storage",
+      "groupId": "g_store",
+      "desc": "SQLAlchemy ORM models: Project, Trace, Span, Dataset, Experiment."
+    },
+    {
+      "id": "rest_api",
+      "label": "v1 REST router",
+      "file": "__init__.py",
+      "path": "src/phoenix/server/api/routers/v1/__init__.py",
+      "group": "Query APIs",
+      "groupId": "g_api",
+      "desc": "create_v1_router mounts versioned REST endpoints for projects, traces, datasets, and experiments."
+    },
+    {
+      "id": "graphql_api",
+      "label": "build_graphql_schema",
+      "file": "schema.py",
+      "path": "src/phoenix/server/api/schema.py",
+      "group": "Query APIs",
+      "groupId": "g_api",
+      "desc": "Strawberry GraphQL schema powering the web UI at /graphql."
+    },
+    {
+      "id": "client",
+      "label": "Client",
+      "file": "client.py",
+      "path": "packages/phoenix-client/src/phoenix/client/client.py",
+      "group": "Python Packages",
+      "groupId": "g_pkgs",
+      "desc": "Lightweight REST client for datasets, spans, prompts, and experiments."
+    },
+    {
+      "id": "evals",
+      "label": "LLMEvaluator",
+      "file": "evaluators.py",
+      "path": "packages/phoenix-evals/src/phoenix/evals/evaluators.py",
+      "group": "Python Packages",
+      "groupId": "g_pkgs",
+      "desc": "LLM-graded evaluators for RAG relevance, hallucination, and QA correctness."
+    }
+  ],
+  "edges": [
+    {"from": "otel_register", "to": "grpc_ingest", "label": "exports OTLP spans over gRPC"},
+    {"from": "otel_register", "to": "http_ingest", "label": "exports OTLP/JSON over HTTP"},
+    {"from": "cli_serve", "to": "app_create", "label": "runs the FastAPI app in uvicorn"},
+    {"from": "app_create", "to": "grpc_ingest", "label": "binds and starts the gRPC server"},
+    {"from": "app_create", "to": "bulk_inserter", "label": "constructs BulkInserter for span writes"},
+    {"from": "grpc_ingest", "to": "otel_decode", "label": "Servicer.Export decodes each OTLP span"},
+    {"from": "http_ingest", "to": "bulk_inserter", "label": "enqueues posted spans"},
+    {"from": "otel_decode", "to": "bulk_inserter", "label": "hands decoded spans to the queue"},
+    {"from": "bulk_inserter", "to": "db_models", "label": "inserts Span rows"},
+    {"from": "rest_api", "to": "db_models", "label": "reads traces, datasets, experiments"},
+    {"from": "graphql_api", "to": "db_models", "label": "resolvers query the same models"},
+    {"from": "client", "to": "rest_api", "label": "calls /v1 REST endpoints"},
+    {"from": "evals", "to": "client", "label": "scores logged back via the client"}
+  ]
+}

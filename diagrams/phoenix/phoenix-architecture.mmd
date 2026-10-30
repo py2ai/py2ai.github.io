@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_g_instrument["Instrumentation"]
+  node_otel_register["register&#40;&#41;<br/>[otel.py]"]
+  node_otel_tracer_provider["TracerProvider<br/>[otel.py]"]
+  node_http_exporter["HTTPSpanExporter<br/>[otel.py]"]
+  node_grpc_exporter["GRPCSpanExporter<br/>[otel.py]"]
+end
+
+subgraph group_g_entry["Server Entry"]
+  node_server_main["main&#40;&#41;<br/>[main.py]"]
+  node_cli_serve["run&#40;&#41;<br/>[serve.py]"]
+  node_app_create["create_app<br/>[app.py]"]
+  node_db_engine["create_engine<br/>[engines.py]"]
+end
+
+subgraph group_g_ingest["OTLP Ingest"]
+  node_grpc_server["GrpcServer<br/>[grpc_server.py]"]
+  node_grpc_servicer["Servicer<br/>[grpc_server.py]"]
+  node_grpc_export["Export<br/>[grpc_server.py]"]
+  node_otel_decode["decode_otlp_span<br/>[otel.py]"]
+  node_span_schemas["Span &#40;domain&#41;<br/>[schemas.py]"]
+  node_http_post_traces["post_traces<br/>[traces.py]"]
+end
+
+subgraph group_g_write["Write Path"]
+  node_bulk_inserter["BulkInserter<br/>[bulk_inserter.py]"]
+  node_bulk_insert_loop["_insert_spans<br/>[bulk_inserter.py]"]
+  node_insert_span["insert_span<br/>[span.py]"]
+  node_dml_handler["DmlEventHandler"]
+end
+
+subgraph group_g_store["Storage"]
+  node_model_project["Project<br/>[models.py]"]
+  node_model_trace["Trace<br/>[models.py]"]
+  node_model_span["Span<br/>[models.py]"]
+  node_model_dataset["Dataset<br/>[models.py]"]
+  node_model_experiment["Experiment<br/>[models.py]"]
+end
+
+subgraph group_g_api["Query APIs"]
+  node_rest_v1["create_v1_router<br/>[__init__.py]"]
+  node_traces_router["list_project_traces<br/>[traces.py]"]
+  node_graphql_schema["build_graphql_schema<br/>[schema.py]"]
+  node_graphql_router["create_graphql_router<br/>[app.py]"]
+  node_session["Session<br/>[session.py]"]
+end
+
+subgraph group_g_client["Client Package"]
+  node_client["Client<br/>[client.py]"]
+  node_datasets_res["Datasets.create_dataset<br/>[__init__.py]"]
+  node_spans_res["Spans.get_spans_dataframe<br/>[__init__.py]"]
+  node_experiments_res["Experiments<br/>[__init__.py]"]
+end
+
+subgraph group_g_evals["Evals Package"]
+  node_llm_evaluator["LLMEvaluator<br/>[evaluators.py]"]
+  node_classification_evaluator["ClassificationEvaluator<br/>[evaluators.py]"]
+end
+
+node_server_main -->|"dispatches subcommands"| node_cli_serve
+node_cli_serve -->|"creates the async DB engine"| node_db_engine
+node_cli_serve -->|"builds the FastAPI app"| node_app_create
+node_app_create -->|"mounts GraphQL at /graphql"| node_graphql_router
+node_app_create -->|"mounts /v1 REST routes"| node_rest_v1
+node_app_create -->|"starts the gRPC listener"| node_grpc_server
+node_app_create -->|"constructs with span queue"| node_bulk_inserter
+node_app_create -->|"wires DML events"| node_dml_handler
+node_grpc_server -->|"registers the servicer"| node_grpc_servicer
+node_grpc_servicer -->|"handles Export RPC"| node_grpc_export
+node_grpc_export -->|"decodes each OTLP span"| node_otel_decode
+node_otel_decode -->|"produces domain Span objects"| node_span_schemas
+node_grpc_export -->|"enqueues &#40;span, project&#41; pairs"| node_bulk_inserter
+node_http_post_traces -->|"enqueues posted spans"| node_bulk_inserter
+node_bulk_inserter -->|"drains queue in batches"| node_bulk_insert_loop
+node_bulk_insert_loop -->|"inserts each span row"| node_insert_span
+node_insert_span -->|"writes to spans table"| node_model_span
+node_bulk_inserter -->|"emits DML events after insert"| node_dml_handler
+node_otel_register -->|"returns configured provider"| node_otel_tracer_provider
+node_otel_tracer_provider -->|"HTTP/protobuf export"| node_http_exporter
+node_otel_tracer_provider -->|"gRPC export"| node_grpc_exporter
+node_grpc_exporter -->|"exports spans to the Phoenix gRPC endpoint"| node_grpc_server
+node_http_exporter -->|"POSTs OTLP/JSON to /v1/traces"| node_http_post_traces
+node_rest_v1 -->|"includes trace endpoints"| node_traces_router
+node_traces_router -->|"lists trace rows"| node_model_trace
+node_graphql_router -->|"serves the strawberry schema"| node_graphql_schema
+node_graphql_router -->|"resolvers read spans and traces"| node_model_span
+node_session -->|"reads trace data into notebooks"| node_rest_v1
+node_client -->|"HTTP REST calls"| node_rest_v1
+node_client -->|"exposes .datasets"| node_datasets_res
+node_client -->|"exposes .spans"| node_spans_res
+node_client -->|"exposes .experiments"| node_experiments_res
+node_datasets_res -->|"creates datasets over REST"| node_model_dataset
+node_spans_res -->|"reads and logs spans"| node_model_span
+node_experiments_res -->|"runs evaluators over runs"| node_llm_evaluator
+node_llm_evaluator -->|"subclass for labeled choices"| node_classification_evaluator
+node_db_engine -->|"sessions execute ORM writes"| node_model_span
+
+click node_otel_register "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-otel/src/phoenix/otel/otel.py"
+click node_otel_tracer_provider "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-otel/src/phoenix/otel/otel.py"
+click node_http_exporter "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-otel/src/phoenix/otel/otel.py"
+click node_grpc_exporter "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-otel/src/phoenix/otel/otel.py"
+click node_server_main "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/main.py"
+click node_cli_serve "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/cli/commands/serve.py"
+click node_app_create "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/app.py"
+click node_db_engine "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/engines.py"
+click node_grpc_server "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/grpc_server.py"
+click node_grpc_servicer "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/grpc_server.py"
+click node_grpc_export "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/grpc_server.py"
+click node_otel_decode "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/trace/otel.py"
+click node_span_schemas "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/trace/schemas.py"
+click node_http_post_traces "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/routers/v1/traces.py"
+click node_bulk_inserter "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/bulk_inserter.py"
+click node_bulk_insert_loop "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/bulk_inserter.py"
+click node_insert_span "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/insertion/span.py"
+click node_dml_handler "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/dml_event_handler.py"
+click node_model_project "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/models.py"
+click node_model_trace "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/models.py"
+click node_model_span "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/models.py"
+click node_model_dataset "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/models.py"
+click node_model_experiment "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/db/models.py"
+click node_rest_v1 "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/routers/v1/__init__.py"
+click node_traces_router "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/routers/v1/traces.py"
+click node_graphql_schema "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/api/schema.py"
+click node_graphql_router "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/server/app.py"
+click node_session "https://github.com/arize-ai/phoenix/blob/main/src/phoenix/session/session.py"
+click node_client "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-client/src/phoenix/client/client.py"
+click node_datasets_res "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-client/src/phoenix/client/resources/datasets/__init__.py"
+click node_spans_res "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-client/src/phoenix/client/resources/spans/__init__.py"
+click node_experiments_res "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-client/src/phoenix/client/resources/experiments/__init__.py"
+click node_llm_evaluator "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-evals/src/phoenix/evals/evaluators.py"
+click node_classification_evaluator "https://github.com/arize-ai/phoenix/blob/main/packages/phoenix-evals/src/phoenix/evals/evaluators.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_otel_register,node_otel_tracer_provider,node_http_exporter,node_grpc_exporter,node_client,node_datasets_res,node_spans_res,node_experiments_res toneBlue
+class node_server_main,node_cli_serve,node_app_create,node_db_engine,node_llm_evaluator,node_classification_evaluator toneAmber
+class node_grpc_server,node_grpc_servicer,node_grpc_export,node_otel_decode,node_span_schemas,node_http_post_traces toneMint
+class node_bulk_inserter,node_bulk_insert_loop,node_insert_span,node_dml_handler toneRose
+class node_model_project,node_model_trace,node_model_span,node_model_dataset,node_model_experiment toneIndigo
+class node_rest_v1,node_traces_router,node_graphql_schema,node_graphql_router,node_session toneTeal
