@@ -1,0 +1,2204 @@
+
+
+  <!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Theme initialization to prevent flash -->
+  <script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
+
+  <!-- Pinterest & Google verification -->
+  <meta name="p:domain_verify" content="fb68a8459fe32b8b072bcd5cc620d125"/>
+  <meta name="google-site-verification" content="WAkFPi5cvufClnQetgIl0STmvvwHhVf8jfyENFWhsxU" />
+  <meta name="google-site-verification" content="g2pFZlv-92XQD67BPgiVHsvZ4TZH13Ucvmmvvv36kU4" />
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs | PyShine</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs" />
+<meta name="author" content="PyShine" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="A guided walk through the Apache Airflow 3 codebase: DAG authoring in the Task SDK, parsing, the scheduler loop, executors, and the FastAPI-backed UI." />
+<meta property="og:description" content="A guided walk through the Apache Airflow 3 codebase: DAG authoring in the Task SDK, parsing, the scheduler loop, executors, and the FastAPI-backed UI." />
+<link rel="canonical" href="https://pyshine.com/airflow/" />
+<meta property="og:url" content="https://pyshine.com/airflow/" />
+<meta property="og:site_name" content="PyShine" />
+<meta property="og:image" content="https://pyshine.com/assets/img/diagrams/airflow/apache-airflow-overview-architecture.svg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-10-30T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://pyshine.com/assets/img/diagrams/airflow/apache-airflow-overview-architecture.svg" />
+<meta property="twitter:title" content="Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"PyShine"},"dateModified":"2026-10-30T00:00:00+00:00","datePublished":"2026-10-30T00:00:00+00:00","description":"A guided walk through the Apache Airflow 3 codebase: DAG authoring in the Task SDK, parsing, the scheduler loop, executors, and the FastAPI-backed UI.","headline":"Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs","image":"https://pyshine.com/assets/img/diagrams/airflow/apache-airflow-overview-architecture.svg","mainEntityOfPage":{"@type":"WebPage","@id":"https://pyshine.com/airflow/"},"name":"{{ page.title escape }}","url":"https://pyshine.com/airflow/"}</script>
+<!-- End Jekyll SEO tag -->
+  <!-- This will generate canonical link automatically -->
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="post">
+  <meta property="og:url" content="https://pyshine.com/airflow/">
+  <meta property="og:title" content="Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs">
+  <meta property="og:description" content="A guided walk through the Apache Airflow 3 codebase: DAG authoring in the Task SDK, parsing, the scheduler loop, executors, and the FastAPI-backed UI.">
+  <meta property="og:image" content="https://pyshine.com/assets/img/diagrams/airflow/apache-airflow-overview-architecture.svg">
+  <meta property="og:site_name" content="PyShine">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://pyshine.com/airflow/">
+  <meta name="twitter:title" content="Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs">
+  <meta name="twitter:description" content="A guided walk through the Apache Airflow 3 codebase: DAG authoring in the Task SDK, parsing, the scheduler loop, executors, and the FastAPI-backed UI.">
+  <meta name="twitter:image" content="https://pyshine.com/assets/img/diagrams/airflow/apache-airflow-overview-architecture.svg">
+
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="Im0K82YsmEDy08+6wyUIZA" async></script>
+
+  <!-- Favicon & App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icons/apple-touch-icon.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png?v=qA3OXqyw77">
+  <link rel="manifest" href="/assets/img/icons/manifest.json?v=qA3OXqyw77">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+
+  <!-- App & Theme Info -->
+  <meta name="apple-mobile-web-app-title" content="Sleek">
+  <meta name="application-name" content="Sleek">
+  <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77">
+  <meta name="theme-color" content="#ffffff">
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-TCVFBKF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-TCVFBKF');
+</script>
+
+  
+
+  <!-- Critical CSS Inline -->
+  <style class="inlineCSS">
+    /* Critical CSS - inlined by Jekyll at build time */
+    :root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --text-color: #343851;
+  --text-secondary: #5a5f7a;
+  --heading-color: #313237;
+  --link-color: #277cea;
+  --link-hover: #68a4f1;
+  --border-color: #dce6f0;
+  --card-bg: #ffffff;
+  --card-border: #ededed;
+  --code-bg: #f6f8fa;
+  --code-text: #25292e;
+  --header-bg: #ffffff;
+  --header-text: #000000;
+  --header-shadow: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #dbdbdb;
+  --input-text: #343851;
+  --button-bg: #222325;
+  --button-text: #ffffff;
+  --success-color: #8fd896;
+  --error-color: #ff6161;
+  --table-header-bg: #f5f5f5;
+  --table-row-hover: #f9f9f9;
+  --blockquote-bg: #f5f5f5;
+  --blockquote-border: #277cea;
+  --pre-bg: #f6f8fa;
+  --hr-color: #dce6f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --hero-bg: #dde5ea;
+  --hero-overlay: rgba(52, 56, 81, 0.8);
+  /* Syntax highlighting colors - VSCode Light+ theme */
+  --syntax-bg: #ffffff;
+  --syntax-text: #383a42;
+  --syntax-comment: #a0a1a7;
+  --syntax-keyword: #e45649;
+  --syntax-string: #50a14f;
+  --syntax-function: #4078f2;
+  --syntax-number: #986801;
+  --syntax-type: #c18401;
+  --syntax-operator: #0184bc;
+  --syntax-punctuation: #383a42;
+  --syntax-variable: #e06c75;
+  --syntax-constant: #986801;
+  --syntax-class: #c18401;
+  --syntax-regex: #50a14f;
+  --syntax-error: #e45649;
+  --syntax-warning: #c18401;
+  --syntax-diff-add: #50a14f;
+  --syntax-diff-del: #e45649;
+  --syntax-diff-add-bg: #e6ffed;
+  --syntax-diff-del-bg: #ffebe9;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.1);
+  /* Copy button colors - light theme */
+  --copy-btn-bg-start: #4facfe;
+  --copy-btn-bg-end: #00f2fe;
+  --copy-btn-border: #4facfe;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --copy-btn-hover-bg-start: #00f2fe;
+  --copy-btn-hover-bg-end: #4facfe;
+  --copy-btn-hover-border: #00f2fe;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --text-color: #ffffff;
+  --text-secondary: #8b949e;
+  --heading-color: #ffffff;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --border-color: #30363d;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --code-bg: #161b22;
+  --code-text: #ffffff;
+  --header-bg: #0d1117;
+  --header-text: #e6e6e6;
+  --header-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #0d1117;
+  --input-border: #30363d;
+  --input-text: #ffffff;
+  --button-bg: #21262d;
+  --button-text: #ffffff;
+  --success-color: #3fb950;
+  --error-color: #f85149;
+  --table-header-bg: #161b22;
+  --table-row-hover: #21262d;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #58a6ff;
+  --pre-bg: #161b22;
+  --hr-color: #30363d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hero-bg: #161b22;
+  --hero-overlay: rgba(13, 17, 23, 0.85);
+  /* Syntax highlighting colors - Night Owl theme */
+  --syntax-bg: #011627;
+  --syntax-text: #d6deeb;
+  --syntax-comment: #637777;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-function: #82aaff;
+  --syntax-number: #f78c6c;
+  --syntax-type: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-punctuation: #89ddff;
+  --syntax-variable: #f78c6c;
+  --syntax-constant: #f78c6c;
+  --syntax-class: #ffcb6b;
+  --syntax-regex: #c3e88d;
+  --syntax-error: #c792ea;
+  --syntax-warning: #ffcb6b;
+  --syntax-diff-add: #c3e88d;
+  --syntax-diff-del: #c792ea;
+  --syntax-diff-add-bg: #1e3a1e;
+  --syntax-diff-del-bg: #3a1e1e;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.05);
+  /* Copy button colors - dark theme */
+  --copy-btn-bg-start: #1f6feb;
+  --copy-btn-bg-end: #388bfd;
+  --copy-btn-border: #1f6feb;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --copy-btn-hover-bg-start: #388bfd;
+  --copy-btn-hover-bg-end: #1f6feb;
+  --copy-btn-hover-border: #58a6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] body {
+  background-color: #0d1117;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] a {
+  color: #58a6ff;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .post-content p,
+[data-theme="dark"] .post-content li,
+[data-theme="dark"] .post-content td,
+[data-theme="dark"] .post-content th,
+[data-theme="dark"] .post-content figure {
+  color: #ffffff !important;
+}
+
+/* Dark theme table styles */
+[data-theme="dark"] .post-content table {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table thead,
+[data-theme="dark"] .post-content table th {
+  background-color: #21262d;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table td {
+  background-color: #0d1117;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table tr:hover td {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .post-content code:not(.highlight code) {
+  color: #ffffff !important;
+  background-color: #30363d;
+}
+
+/* Ensure syntax tokens inside code blocks have no individual background */
+[data-theme="dark"] .highlight code,
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight span {
+  background-color: transparent;
+}
+
+/* Ensure syntax text color is applied in dark theme */
+[data-theme="dark"] .highlight {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight code {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .site {
+  background-color: #0d1117;
+}
+
+[data-theme="dark"] .blog {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-card {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .footer {
+  background-color: #161b22;
+  color: #8b949e;
+}
+
+/* Header dark theme */
+[data-theme="dark"] .header {
+  background: #0d1117 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__logo {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__logo:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__link,
+[data-theme="dark"] .header__dropdown-toggle {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__toggle span {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .header__links {
+  background: #0d1117;
+}
+
+[data-theme="dark"] .header__dropdown-menu {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__dropdown-item {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__dropdown-item:hover {
+  background: #21262d;
+}
+
+/* YouTube section dark theme */
+[data-theme="dark"] #youtube-video {
+  background: #161b22 !important;
+}
+
+/* Back to top button dark theme */
+[data-theme="dark"] .back-to-top {
+  background: #21262d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .back-to-top:hover {
+  background: #30363d;
+}
+
+/* Related posts dark theme */
+[data-theme="dark"] .related-posts {
+  border-top-color: #30363d;
+}
+
+[data-theme="dark"] .related-post-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .related-posts__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__excerpt {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .related-post-card__date {
+  color: #8b949e;
+}
+
+/* Link preview dark theme */
+[data-theme="dark"] .link-preview-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .link-preview-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .link-preview-description {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .link-preview-domain {
+  color: #8b949e;
+}
+
+/* Code header container for copy button positioning */
+.code-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.code-header .copy-btn {
+  position: relative;
+  z-index: 10;
+}
+
+  </style>
+
+  <!-- Main CSS -->
+  <link rel="preload" href="/assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/css/main.css"></noscript>
+
+  <script type="text/javascript">
+    /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+(function(w){"use strict";if(!w.loadCSS){w.loadCSS=function(){}}
+var rp=loadCSS.relpreload={};rp.support=(function(){var ret;try{ret=w.document.createElement("link").relList.supports("preload")}catch(e){ret=!1}
+return function(){return ret}})();rp.bindMediaToggle=function(link){var finalMedia=link.media||"all";function enableStylesheet(){link.media=finalMedia}
+if(link.addEventListener){link.addEventListener("load",enableStylesheet)}else if(link.attachEvent){link.attachEvent("onload",enableStylesheet)}
+setTimeout(function(){link.rel="stylesheet";link.media="only x"});setTimeout(enableStylesheet,3000)};rp.poly=function(){if(rp.support()){return}
+var links=w.document.getElementsByTagName("link");for(var i=0;i<links.length;i++){var link=links[i];if(link.rel==="preload"&&link.getAttribute("as")==="style"&&!link.getAttribute("data-loadcss")){link.setAttribute("data-loadcss",!0);rp.bindMediaToggle(link)}}};if(!rp.support()){rp.poly();var run=w.setInterval(rp.poly,500);if(w.addEventListener){w.addEventListener("load",function(){rp.poly();w.clearInterval(run)})}else if(w.attachEvent){w.attachEvent("onload",function(){rp.poly();w.clearInterval(run)})}}
+if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}
+else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this))
+
+  </script>
+
+  
+</head>
+
+
+  <!-- Zoomable SVG Viewer CSS -->
+  <link rel="stylesheet" href="/assets/css/svg-viewer.css">
+
+  <body class="site" itemscope itemtype="https://schema.org/WebPage">
+
+    
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCVFBKF"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager -->
+    
+
+    <header class="header"
+  itemscope
+  itemtype="http://schema.org/SiteNavigationElement"
+  aria-label="Main navigation">
+
+  <div class="container">
+    <div class="header__inner">
+
+      <!-- Logo -->
+      <a class="header__logo" href="/">
+        <div class="header__logo--container">
+          <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve">
+<g>
+	<path d="M18.121,9.88l-7.832-7.836c-0.155-0.158-0.428-0.155-0.584,0L1.842,9.913c-0.262,0.263-0.073,0.705,0.292,0.705h2.069v7.042c0,0.227,0.187,0.414,0.414,0.414h3.725c0.228,0,0.414-0.188,0.414-0.414v-3.313h2.483v3.313c0,0.227,0.187,0.414,0.413,0.414h3.726c0.229,0,0.414-0.188,0.414-0.414v-7.042h2.068h0.004C18.331,10.617,18.389,10.146,18.121,9.88 M14.963,17.245h-2.896v-3.313c0-0.229-0.186-0.415-0.414-0.415H8.342c-0.228,0-0.414,0.187-0.414,0.415v3.313H5.032v-6.628h9.931V17.245z M3.133,9.79l6.864-6.868l6.867,6.868H3.133z"></path>
+
+	
+	
+</g>
+</svg>
+
+        </div>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header__links">
+        <div class="header__links-wrapper">
+
+          
+            
+              <a class="header__link" href="/">
+                Home
+              </a>
+            
+          
+            
+              <a class="header__link" href="/categories">
+                Posts
+              </a>
+            
+          
+            
+              <a class="header__link" href="/all-posts/">
+                All Posts
+              </a>
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Tutorials
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/tutorials/">
+                    🔍 View All Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Rust-in-One-Post-Complete-Tutorial-Ownership-Borrow-Async-Quick-Start/">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-JavaScript-TypeScript-in-One-Post-Complete-Tutorial-Async-Types-Quick-Start/">
+                    JavaScript / TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Java-in-One-Post-Complete-Tutorial-OOP-Streams-Virtual-Threads-JVM-Quick-Start/">
+                    Java
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-CPP-in-One-Post-Complete-Tutorial-Modern-Cpp-Quick-Start/">
+                    C++
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-SQL-in-One-Post-Complete-Tutorial-Joins-Window-Functions-Transactions-Quick-Start/">
+                    SQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">
+                    Docker
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">
+                    Kubernetes
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Git-in-One-Post-Complete-Tutorial-Branches-Rebase-Workflows-Quick-Start/">
+                    Git
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/">
+                    Linux CLI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">
+                    REST API
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-GraphQL-in-One-Post-Complete-Tutorial-Schema-Queries-Mutations-Resolvers-Apollo-Quick-Start/">
+                    GraphQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-React-Next-js-in-One-Post-Complete-Tutorial-Components-Hooks-Server-Components-Quick-Start/">
+                    React / Next.js
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">
+                    FastAPI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">
+                    Deep Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">
+                    System Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Bash-in-One-Post-Complete-Tutorial-Pipelines-Functions-Scripts-Quick-Start/">
+                    Bash
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Regex-in-One-Post-Complete-Tutorial-Anchors-Quantifiers-Lookarounds-Quick-Start/">
+                    Regex
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Terraform-in-One-Post-Complete-Tutorial-HCL-State-Modules-Providers-Quick-Start/">
+                    Terraform
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Redis-in-One-Post-Complete-Tutorial-Data-Structures-Caching-Persistence-Quick-Start/">
+                    Redis
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-PostgreSQL-in-One-Post-Complete-Tutorial-Indexes-MVCC-Performance-Quick-Start/">
+                    PostgreSQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-gRPC-Protobuf-in-One-Post-Complete-Tutorial-Proto-Streaming-Interceptors-Quick-Start/">
+                    gRPC / Protobuf
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-WebSocket-in-One-Post-Complete-Tutorial-Handshake-Frames-Scaling-Quick-Start/">
+                    WebSocket
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Categories
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/">
+                    All Categories
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-developertools">
+                    Developer Tools
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-opensource">
+                    Open Source
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aiagents">
+                    AI Agents
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-python">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-machinelearning">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-typescript">
+                    TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-tutorial">
+                    Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-rust">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aidesign">
+                    AI Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-security">
+                    Security
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-devops">
+                    DevOps
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-go">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-webdevelopment">
+                    Web Development
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Applications
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/m3u8-player.html">
+                    Online M3U8 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/dash-player.html">
+                    Online DASH (MPD) Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/mp4-player.html">
+                    Online MP4 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/solar-map/">
+                    Solar Helper
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Clipboard-App-for-Two-PCs/">
+                    Clipboard App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo_correction">
+                    Online Photo Correction
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo">
+                    Online Passport Photo 20KB
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/finger.html">
+                    Online Fingers Scanner
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/avatars">
+                    Online Make Avatars
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/kanban/debounce.html">
+                    Online Reminder App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/converter.html">
+                    Online Image Resize
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/translator.html">
+                    Online Live Translator
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-sv.html">
+                    Procreate Swatch Viewer
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-bv.html">
+                    Procreate Brush Viewer
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Games
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/games/snake/">
+                    Snake Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/flappy-bird/">
+                    Flappy Bird
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/tetris/">
+                    Tetris
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/memory-match/">
+                    Memory Match
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/pong/">
+                    Pong
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/2048/">
+                    2048
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/battleship/">
+                    Battleship
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/go/">
+                    GO Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/chess/">
+                    Chess Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/copter/">
+                    Copter Game
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+              <a class="header__link" href="/about">
+                About
+              </a>
+            
+          
+            
+              <a class="header__link" href="/contact">
+                Contact
+              </a>
+            
+          
+            
+              <a class="header__link" href="/privacy">
+                Privacy Policy
+              </a>
+            
+          
+            
+              <a class="header__link" href="/disclaimer">
+                Disclaimer
+              </a>
+            
+          
+
+        </div>
+      </nav>
+
+      <!-- Language Switcher -->
+      
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <div class="header__toggle">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </div>
+
+<style>
+/* ==================================================
+   🔒 HEADER — ALWAYS VISIBLE, FULL WIDTH COLOR
+================================================== */
+.header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 10000;
+  background: var(--header-bg, #ffffff) !important;
+  box-shadow: 0 1px 3px var(--header-shadow, rgba(0, 0, 0, 0.1));
+  transform: none !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header__inner{
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body{
+  padding-top: 56px;
+}
+
+/* ===============================
+   NAV BASE
+=============================== */
+.header__links-wrapper{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  flex-wrap:nowrap;
+}
+
+.header__link,
+.header__dropdown-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color: var(--header-text);
+  white-space:nowrap;
+  padding:3px 6px;
+}
+
+/* ===============================
+   DROPDOWN
+=============================== */
+.header__dropdown{
+  position:relative;
+}
+
+.dropdown-arrow{
+  font-size:1em;
+  transition:transform .2s ease;
+}
+
+.header__dropdown:hover .dropdown-arrow{
+  transform:rotate(180deg);
+}
+
+.header__dropdown-menu{
+  position:absolute;
+  top:100%;
+  left:0;
+  min-width:200px;
+  background:var(--card-bg, #ffffff);
+  border:1px solid var(--border-color, #dce6f0);
+  border-radius:8px;
+  padding:4px 0;
+  display:none;
+  z-index:9999;
+  box-shadow:0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.header__dropdown:hover .header__dropdown-menu{
+  display:block;
+}
+
+.header__dropdown-item{
+  display:block;
+  padding:8px 14px;
+  color:var(--text-color, #343851);
+  text-decoration:none;
+  font-size:13px;
+  transition:background-color 0.2s ease;
+}
+
+.header__dropdown-item:hover{
+  background:var(--bg-secondary, #f9f9f9);
+}
+
+/* ===============================
+   MOBILE
+=============================== */
+@media (max-width:768px){
+
+  body{
+    padding-top: 56px;
+  }
+
+  .header__inner{
+    min-height: 56px;
+  }
+
+  .header__links-wrapper{
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+  }
+
+  .header__dropdown-toggle{
+    justify-content:space-between;
+    padding:12px 14px;
+  }
+
+  .header__dropdown-menu{
+    position:static;
+    display:none;
+    background:var(--card-bg, #ffffff);
+    border:none;
+  }
+
+  .header__dropdown:hover .header__dropdown-menu{
+    display:block;
+  }
+
+  .header__dropdown-item{
+    padding:12px 18px;
+    background:var(--card-bg, #ffffff);
+    border-top:1px solid var(--border-color, #dce6f0);
+    font-size:14px;
+  }
+}
+
+/* ===============================
+   LANGUAGE SWITCHER
+=============================== */
+.header__lang-switcher{
+  display:inline-flex;
+  gap:.4rem;
+  align-items:center;
+  font-size:1.1rem;
+  margin-left:0.5rem;
+}
+.lang-flag.active{ text-decoration:underline }
+.lang-flag.disabled{ opacity:.5; filter:grayscale(100%) }
+
+/* ===============================
+   THEME TOGGLE BUTTON
+=============================== */
+.theme-toggle {
+  background: rgba(79, 172, 254, 0.15);
+  border: 2px solid #4facfe;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-left: 0.5rem;
+  color: #4facfe;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.3);
+  border-color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(79, 172, 254, 0.2);
+  border: 2px solid #6fc3ff;
+  color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.35);
+  border-color: #8fd4ff;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+</style>
+
+<script>
+(function() {
+  /* Theme toggle - use addEventListener only, no onclick */
+  var themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+  
+  /* Dropdown functionality for mobile */
+  var dropdowns = document.querySelectorAll('.header__dropdown');
+  
+  dropdowns.forEach(function(dropdown) {
+    var toggle = dropdown.querySelector('.header__dropdown-toggle');
+    var menu = dropdown.querySelector('.header__dropdown-menu');
+    
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          var isOpen = menu.style.display === 'block';
+          document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+          menu.style.display = isOpen ? 'none' : 'block';
+          var arrow = toggle.querySelector('.dropdown-arrow');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && !e.target.closest('.header__dropdown')) {
+      document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.querySelectorAll('.dropdown-arrow').forEach(function(a) { a.style.transform = ''; });
+    }
+  });
+})();
+</script>
+</header>
+
+
+    
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs">
+    
+        <div class="hero__wrap">
+
+          
+            <div class="hero__categories">
+              
+                <a class="label"
+                   href="/categories/#AI Inference"
+                   aria-label="Category: AI Inference">
+                   AI Inference
+                </a>
+                
+              
+            </div>
+          
+
+          <h1 class="hero__title" itemprop="headline">Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs</h1>
+
+          <p class="hero__meta">
+            <time datetime="2026-10-30T00:00:00+00:00" itemprop="datePublished">
+              30 Oct 2026
+            </time>
+            &nbsp;·&nbsp;
+            
+            <span itemprop="timeRequired">
+              
+                13 mins read
+              
+            </span>
+          </p>
+        </div>
+      </div>
+
+    <main class="site__content" role="main">
+
+      <div class="container post-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="post-toc" id="post-toc">
+          <h3 class="no-toc">Contents</h3>
+          <nav id="toc-list"></nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <article class="post-content"
+                 itemprop="articleBody"
+                 itemscope itemtype="https://schema.org/Article">
+
+          <p>Apache Airflow is the open-source orchestrator that turned “cron jobs with dependencies” into a programmable, observable discipline. If you have ever waited on a nightly data load, chained an extraction step to a training job, or retried a flaky API sync until it finally went green, you have almost certainly been leaning on Airflow’s core loop. The project is now deep into its third major era: Airflow 3 split the codebase into a core (<code class="language-plaintext highlighter-rouge">airflow-core</code>), a Task SDK (<code class="language-plaintext highlighter-rouge">task-sdk</code>), and dozens of provider distributions, and swapped the old Flask UI for a React frontend backed by FastAPI.</p>
+
+<p>That refactoring makes the current <code class="language-plaintext highlighter-rouge">main</code> branch a fascinating place to read code. The <code class="language-plaintext highlighter-rouge">DAG</code> class you import in your DAG file no longer lives where it did in Airflow 2 — it moved into the Task SDK so task processes can import DAG definitions without dragging the whole database layer along. The scheduler no longer forks workers for every task; instead it hands compact “workloads” to pluggable executors, and each task runs in a supervised subprocess that talks back to a versioned execution API. None of this is hidden, but it is spread across two packages and several long files, which is exactly why a map helps.</p>
+
+<p>This post is that map. I rendered two call-graph diagrams straight from the <code class="language-plaintext highlighter-rouge">main</code> tree of <a href="https://github.com/apache/airflow">apache/airflow</a> (verified at commit time, Airflow <code class="language-plaintext highlighter-rouge">3.4.0dev</code>), then walked every symbol the diagrams reference with grep so the line numbers below point at real code. The first diagram is the 10,000-foot view: who parses, who schedules, who executes. The second zooms into the database models, job runners, and runtime pieces that make one task go from “queued” to “success”.</p>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/airflow/apache-airflow-overview-architecture.svg" alt="Overview architecture diagram of Apache Airflow: DAG authoring, parsing, scheduling, execution, and the API layer" /></div>
+
+<p><em>Overview of Airflow 3: your DAG file is parsed by DagBag, serialized into the database, picked up by SchedulerJobRunner, dispatched through an executor, and executed by the Task SDK runtime — while the FastAPI app serves both the UI and the task execution API.</em></p>
+
+<p>Reading the overview from left to right:</p>
+
+<ul>
+  <li><strong>DAG authoring</strong> starts in the Task SDK: the <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/definitions/dag.py#L330">DAG class, L330</a> is an attrs-based container of tasks, and the <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/definitions/decorators/__init__.py#L67">@task collection, L67</a> turns plain Python functions into operators. Every operator descends from <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/bases/operator.py#L670">BaseOperator, L670</a>, whose <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/bases/operator.py#L1663">execute(), L1663</a> is the method your task actually runs.</li>
+  <li><strong>When things run</strong> is decided by timetables. <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/bases/timetable.py#L26">BaseTimetable, L26</a> defines the contract, and <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/definitions/timetables/interval.py#L30">CronDataIntervalTimetable, L30</a> is the concrete cron-based schedule most DAGs use.</li>
+  <li><strong>Parsing</strong> is a separate process: <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/dag_processing/manager.py#L198">DagFileProcessorManager, L198</a> supervises a pool of parser subprocesses via its <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/dag_processing/manager.py#L560">_run_parsing_loop, L560</a>, and <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/dag_processing/dagbag.py#L289">DagBag.process_file, L289</a> does the actual import of a Python file.</li>
+  <li><strong>Serialization</strong> bridges parsing and scheduling: <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/serialized_dag.py#L285">SerializedDagModel, L285</a> stores each DAG as JSON — <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/serialized_dag.py#L608">write_dag, L608</a> — so the scheduler and web UI never re-import your DAG file.</li>
+  <li><strong>Scheduling</strong> is <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/jobs/scheduler_job_runner.py#L337">SchedulerJobRunner, L337</a>: its <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/jobs/scheduler_job_runner.py#L1981">_run_scheduler_loop, L1981</a> wakes up, runs <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/jobs/scheduler_job_runner.py#L2183">_do_scheduling, L2183</a>, creates <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/dagrun.py#L308">DagRun, L308</a> rows, and queues task instances toward executors.</li>
+  <li><strong>Execution</strong> begins at <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/executors/base_executor.py#L201">BaseExecutor, L201</a>, which accepts workloads through <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/executors/base_executor.py#L442">queue_workload, L442</a> and reports finished runs through <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/executors/base_executor.py#L682">get_event_buffer, L682</a>.</li>
+  <li><strong>The task process</strong> is the Task SDK runtime: <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/execution_time/task_runner.py#L1780">run(), L1780</a> executes one task instance end to end, spawned and watched by <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/execution_time/supervisor.py#L3103">supervise_task, L3103</a>.</li>
+  <li><strong>Everything user-facing</strong> exits through the FastAPI app built by <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/api_fastapi/app.py#L136">create_app, L136</a>, which mounts the REST API, the task execution API, and the React UI backend.</li>
+</ul>
+
+<h2 id="why-a-dag-is-the-unit-of-work">Why a DAG Is the Unit of Work</h2>
+
+<p>Airflow’s central abstraction is refreshingly small. A <code class="language-plaintext highlighter-rouge">DAG</code> is “a collection of tasks with directional dependencies” — that phrase is the actual docstring of the class at line 330 of the Task SDK’s <code class="language-plaintext highlighter-rouge">dag.py</code>. Tasks are added to a DAG either imperatively (<code class="language-plaintext highlighter-rouge">task_a &gt;&gt; task_b</code>) or by the decorator machinery; the <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/bases/operator.py#L1799">chain(), L1799</a> helper is just sugar over the shift operators. Dependencies between tasks are not implicit in time — they are edges the scheduler must respect, and the SDK enforces that a <code class="language-plaintext highlighter-rouge">task_id</code> can only be added once per DAG.</p>
+
+<p>What makes the abstraction powerful is what hangs off it. A DAG’s <code class="language-plaintext highlighter-rouge">schedule</code> parameter accepts a cron string, a timetable object, or a list of Assets; the <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/definitions/asset/__init__.py#L267">Asset class, L267</a> turns data availability into a first-class trigger, with <code class="language-plaintext highlighter-rouge">|</code> and <code class="language-plaintext highlighter-rouge">&amp;</code> combinators for “any” and “all” semantics. Data outputs travel between tasks as XCom handles: the <a href="https://github.com/apache/airflow/blob/main/task-sdk/src/airflow/sdk/definitions/xcom_arg.py#L50">XComArg, L50</a> proxy in the SDK resolves lazily at run time, so you can write <code class="language-plaintext highlighter-rouge">train_model(load_data())</code> and the framework wires the dependency for you. If you have used Dask or Ray for parallel compute, the mental shift is that Airflow does not move your data or run your math — it only decides <em>when</em> each piece runs and <em>what happens when it fails</em>. Tools like <a href="/dask/">Dask</a> and <a href="/ray/">Ray</a> remain excellent executors of the actual computation; Airflow sits above them, which is exactly why provider packages can wrap both.</p>
+
+<h2 id="parsing-serialization-and-the-scheduler-loop">Parsing, Serialization, and the Scheduler Loop</h2>
+
+<p>The parsing layer solves a subtle problem: Python code is unsafe to import inside a long-running orchestrator. A DAG file with a syntax error, an infinite loop, or a heavy import must not take down the scheduler. Airflow’s answer is process isolation. <code class="language-plaintext highlighter-rouge">DagFileProcessorManager</code> runs a bounded pool of subprocesses, each of which imports one DAG file via <code class="language-plaintext highlighter-rouge">DagBag.process_file</code> and returns a parsing result over IPC. Import errors are captured and surfaced in the UI instead of crashing anything.</p>
+
+<p>Parsed DAGs are then flattened into JSON by <code class="language-plaintext highlighter-rouge">SerializedDagModel.write_dag</code>. This is one of the most consequential design choices in the codebase: the scheduler, the API, and the task runtime all read the <em>serialized</em> form, never your original file. It gives the system a stable schema, makes the web UI fast (no re-importing on page load), and lets task processes reconstruct their operator without importing the DAG bundle.</p>
+
+<p>The scheduler itself is a loop over database state. <code class="language-plaintext highlighter-rouge">SchedulerJobRunner._do_scheduling</code> consults <code class="language-plaintext highlighter-rouge">DagModel</code> rows (the per-DAG bookkeeping record at <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/dag.py#L316">L316</a>) to decide which DAGs need a new <code class="language-plaintext highlighter-rouge">DagRun</code>, then for each run checks which <code class="language-plaintext highlighter-rouge">TaskInstance</code> rows (the per-task state machine at <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/taskinstance.py#L1067">L1067</a>) are ready: dependencies satisfied, pool slots free, concurrency limits respected. The <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/dagrun.py#L1353">update_state, L1353</a> method on <code class="language-plaintext highlighter-rouge">DagRun</code> recomputes whether the whole run is running, success, or failed, while <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/taskinstance.py#L2786">handle_failure, L2786</a> implements retry bookkeeping with exponential-ish delays up to <code class="language-plaintext highlighter-rouge">max_tries</code>. A separate <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/jobs/triggerer_job_runner.py#L214">TriggererJobRunner, L214</a> runs async “trigger” coroutines so sensors can wait on external events without occupying a worker slot — the <code class="language-plaintext highlighter-rouge">Trigger</code> model it serves lives at <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/models/trigger.py#L74">L74</a>.</p>
+
+<h2 id="from-install-to-your-first-model">From Install to Your First Model</h2>
+
+<p>The README is explicit that a bare <code class="language-plaintext highlighter-rouge">pip install apache-airflow</code> “will not work from time to time” because Airflow is “a bit of both a library and application” — its dependencies are deliberately open, so you must pin them with a constraints file. The documented install is:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install</span> <span class="s1">'apache-airflow==3.3.2'</span> <span class="se">\</span>
+  <span class="nt">--constraint</span> <span class="s2">"https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.10.txt"</span>
+</code></pre></div></div>
+
+<p>The fastest way to a running system is <code class="language-plaintext highlighter-rouge">airflow standalone</code>, implemented by <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/cli/commands/standalone_command.py#L51">StandaloneCommand, L51</a>. It boots the scheduler, the <code class="language-plaintext highlighter-rouge">api-server</code> (the Airflow 3 name for the webserver, now a FastAPI + React app), and the triggerer in one process tree, initializes the SQLite metadata database, and configures the <code class="language-plaintext highlighter-rouge">SimpleAuthManager</code>. Because that auth manager generates credentials rather than asking you to invent them, the command writes the admin password to a file and tells you where — see <code class="language-plaintext highlighter-rouge">find_user_info</code> at <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/cli/commands/standalone_command.py#L227">L227</a>. If you prefer the manual path, <code class="language-plaintext highlighter-rouge">airflow db migrate</code> (the <code class="language-plaintext highlighter-rouge">migratedb</code> handler is at <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/cli/commands/db_command.py#L218">L218</a>) applies schema migrations, and user management is delegated to whichever auth manager you configured rather than a built-in <code class="language-plaintext highlighter-rouge">users create</code> command.</p>
+
+<p>Now the fun part: a first DAG that actually produces a model artifact. Save this as <code class="language-plaintext highlighter-rouge">tiny_model_dag.py</code> in your <code class="language-plaintext highlighter-rouge">dags</code> folder:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span> <span class="nn">airflow.sdk</span> <span class="kn">import</span> <span class="n">DAG</span><span class="p">,</span> <span class="n">task</span>
+
+<span class="n">ARTIFACT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s">"/tmp/tiny_model.json"</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">DAG</span><span class="p">(</span>
+    <span class="n">dag_id</span><span class="o">=</span><span class="s">"tiny_model"</span><span class="p">,</span>
+    <span class="n">schedule</span><span class="o">=</span><span class="s">"@daily"</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">catchup</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
+
+    <span class="o">@</span><span class="n">task</span>
+    <span class="k">def</span> <span class="nf">load_numbers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]</span>
+
+    <span class="o">@</span><span class="n">task</span>
+    <span class="k">def</span> <span class="nf">fit_baseline</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">"kind"</span><span class="p">:</span> <span class="s">"mean_baseline"</span><span class="p">,</span> <span class="s">"center"</span><span class="p">:</span> <span class="n">mean</span><span class="p">,</span> <span class="s">"n"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)}</span>
+
+    <span class="o">@</span><span class="n">task</span>
+    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">ARTIFACT</span><span class="p">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">ARTIFACT</span><span class="p">)</span>
+
+    <span class="n">publish</span><span class="p">(</span><span class="n">fit_baseline</span><span class="p">(</span><span class="n">load_numbers</span><span class="p">()))</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">load_numbers &gt;&gt; fit_baseline &gt;&gt; publish</code> is expressed by nesting the calls: each decorated function returns an <code class="language-plaintext highlighter-rouge">XComArg</code>, and passing it as an argument both defines the edge and moves the value. To run it without the whole orchestration stack, <code class="language-plaintext highlighter-rouge">airflow dags test tiny_model 2026-10-29</code> executes the entire DAG locally for one data interval — the handler is <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/cli/commands/dag_command.py#L835">dag_test, L835</a>. Once you are happy, the scheduler takes over and creates a run per daily interval. From here the natural next step is pointing the tasks at real work — a training script that logs to <a href="/mlflow/">MLflow</a>, for instance — while Airflow handles the when and what-if.</p>
+
+<h2 id="executors-and-the-task-sdk-runtime">Executors and the Task SDK Runtime</h2>
+
+<p>Executors are where scheduling meets the operating system. <code class="language-plaintext highlighter-rouge">BaseExecutor</code> defines the contract: accept queued work, run it somewhere, heartbeat, and surface completion events. The bundled <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/executors/local_executor.py#L120">LocalExecutor, L120</a> spawns worker processes per task and drains results in its <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/executors/local_executor.py#L260">sync(), L260</a>; the Celery and Kubernetes executors ship as providers with the same interface. Which executor you get is decided once at startup by <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/executors/executor_loader.py#L372">ExecutorLoader, L57</a> — its <code class="language-plaintext highlighter-rouge">load_executor</code> resolves names like <code class="language-plaintext highlighter-rouge">LocalExecutor</code> or <code class="language-plaintext highlighter-rouge">celery</code> against installed providers.</p>
+
+<p>The interesting part is what the executor actually receives. In Airflow 3 it is not a fork request; it is a serialized <em>workload</em> object. The executor’s job is to end up running <code class="language-plaintext highlighter-rouge">supervise_task</code> in some process: the supervisor spawns a fresh Python child, loads the Task SDK runtime, and the child’s <code class="language-plaintext highlighter-rouge">run()</code> does the real work — render templates, call <code class="language-plaintext highlighter-rouge">execute()</code> on the operator, push XComs, and transition the task’s state. State writes flow through the execution API (part of the same FastAPI server the UI uses), so a task process never touches the metadata database directly. This is why the Task SDK exists as a separate package: a worker machine needs <code class="language-plaintext highlighter-rouge">airflow.sdk</code> and a way to reach the API, not the full core installation.</p>
+
+<h2 id="the-fastapi-era-of-the-ui-and-rest-api">The FastAPI Era of the UI and REST API</h2>
+
+<p>If you knew Airflow 2’s Flask-AppBuilder UI, the new frontend is a genuine architectural break. The server-side entry point is <code class="language-plaintext highlighter-rouge">create_app</code>, which assembles middleware, auth-manager wiring, CORS policy, and then mounts routers defined in <code class="language-plaintext highlighter-rouge">airflow.api_fastapi.core_api</code> — <a href="https://github.com/apache/airflow/blob/main/airflow-core/src/airflow/api_fastapi/core_api/app.py#L162">init_views, L162</a> registers both an authenticated <code class="language-plaintext highlighter-rouge">ui_router</code> (consumed by the React SPA) and a versioned public REST API under <code class="language-plaintext highlighter-rouge">/api/v2</code>. The old <code class="language-plaintext highlighter-rouge">/api/v1</code> endpoints are gone entirely; the app returns a hard 404 telling you to migrate. Auth is pluggable via auth managers, and the simple auth manager that <code class="language-plaintext highlighter-rouge">airflow standalone</code> uses stores its generated credentials in a file on disk.</p>
+
+<h2 id="honest-limits">Honest Limits</h2>
+
+<p>A few things worth knowing before you bet on this codebase, all verifiable in the docs and source:</p>
+
+<ul>
+  <li><strong>Installation needs constraints.</strong> The README warns that without a constraints file a plain <code class="language-plaintext highlighter-rouge">pip install apache-airflow</code> “will not work from time to time or will produce unusable Airflow installation”. Poetry and pip-tools are explicitly “not currently supported” for installing it.</li>
+  <li><strong>The main branch is a dev tree.</strong> The tree toured here declares version <code class="language-plaintext highlighter-rouge">3.4.0</code> in <code class="language-plaintext highlighter-rouge">airflow-core/pyproject.toml</code> while the README’s stable install example pins <code class="language-plaintext highlighter-rouge">3.3.2</code>; APIs on <code class="language-plaintext highlighter-rouge">main</code> move quickly and line numbers in this post will drift as development continues.</li>
+  <li><strong>Breaking changes are real.</strong> Airflow 3 removed <code class="language-plaintext highlighter-rouge">/api/v1</code>, moved the <code class="language-plaintext highlighter-rouge">DAG</code> class and operator bases into the Task SDK, and deprecated importing <code class="language-plaintext highlighter-rouge">DagBag</code> from <code class="language-plaintext highlighter-rouge">airflow.models.dagbag</code> in favor of <code class="language-plaintext highlighter-rouge">airflow.dag_processing.dagbag</code> — an actual deprecation shim in that module.</li>
+  <li><strong>It is an orchestrator, not a data engine.</strong> Nothing in the core executes your computation beyond one <code class="language-plaintext highlighter-rouge">execute()</code> call per task; scale comes from executors and providers, not from the core. The core is also strict about what runs where: task processes deliberately cannot reach the metadata database, which occasionally surprises people debugging connectivity in locked-down clusters.</li>
+</ul>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/airflow/apache-airflow-architecture.svg" alt="Detailed architecture diagram of Apache Airflow internals: Task SDK definitions, DB models, scheduler jobs, executors, task runtime, and API/CLI" /></div>
+
+<p><em>The detail view: Task SDK authoring types on the left, the parsing and serialization path, the DB models the scheduler lives on, executors spawning supervised task subprocesses, and the FastAPI/CLI surface on the right.</em></p>
+
+<p>For a different take on structuring LLM-heavy applications, see <a href="/dspy/">DSPy</a>, which compiles declarative prompts rather than scheduling tasks; for typed configuration shared between DAG files, <a href="/pydantic/">Pydantic</a> pairs naturally with Airflow 3, whose Task SDK API datamodels are themselves Pydantic-generated.</p>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Apache Airflow Source Tour: How Airflow 3 Schedules, Executes, and Serves Your DAGs",
+  "description": "A guided walk through the Apache Airflow 3 codebase: DAG authoring in the Task SDK, parsing, the scheduler loop, executors, and the FastAPI-backed UI.",
+  "datePublished": "2026-10-30",
+  "author": {"@type": "Person", "name": "PyShine"},
+  "publisher": {"@type": "Organization", "name": "PyShine"},
+  "keywords": "apache airflow, airflow architecture, scheduler, task sdk, dag",
+  "url": "https://pyshine.com/airflow/"
+}
+</script>
+
+
+
+          <!-- Follow.it CTA -->
+          <section class="follow-cta" aria-label="Follow for updates">
+  <div class="follow-cta-content">
+    <img src="/assets/img/formit.png" alt="Follow.it" class="follow-cta-icon">
+    <p class="follow-cta-text">
+      Enjoyed this post? <a href="https://follow.it/pyshine?leanpub" target="_blank" rel="noopener noreferrer">Never miss out on future posts by following us</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .follow-cta {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--bg-color, #f8f9fa);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .follow-cta:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .follow-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .follow-cta-icon {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  
+  .follow-cta-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
+  
+  .follow-cta-text a {
+    color: var(--link-color, #0066cc);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .follow-cta-text a:hover {
+    color: var(--link-hover-color, #004499);
+    text-decoration: none;
+  }
+  
+  @media (max-width: 480px) {
+    .follow-cta {
+      padding: 1.25rem;
+    }
+    
+    .follow-cta-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .follow-cta-icon {
+      width: 100px;
+      height: auto;
+    }
+    
+    .follow-cta-text {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Dark theme support */
+  [data-theme="dark"] .follow-cta,
+  body.dark-theme .follow-cta {
+    background: var(--bg-color, #1e1e1e);
+    border-color: var(--border-color, #333);
+  }
+  
+  [data-theme="dark"] .follow-cta-text,
+  body.dark-theme .follow-cta-text {
+    color: var(--text-color, #e0e0e0);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a,
+  body.dark-theme .follow-cta-text a {
+    color: var(--link-color, #66b3ff);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a:hover,
+  body.dark-theme .follow-cta-text a:hover {
+    color: var(--link-hover-color, #99ccff);
+  }
+</style>
+
+          <!-- Syntax Highlighting -->
+          <link href="/assets/css/syntax.css" rel="stylesheet">
+          <script src="/assets/scripts/copyCode.js" async></script>
+
+          <!-- Ads -->
+          <section aria-label="Advertisements" class="ads mt-4">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+                    crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2976211678184829"
+                 data-ad-slot="7658460605"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </section>
+
+        </article>
+
+      </div>
+
+      <!-- Post Navigation -->
+      <nav class="post-navigation controls__inner mt-5" aria-label="Post navigation">
+        <div class="controls__item prev">
+          
+            <span>Previous</span>
+            <a href="/usearch/" rel="prev">
+              USearch Architecture: A Source Tour o...
+            </a>
+          
+        </div>
+
+        <div class="controls__item next">
+          
+            <span>Next</span>
+            <a href="/fastapi/" rel="next">
+              FastAPI Source Tour: How Requests, De...
+            </a>
+          
+        </div>
+      </nav>
+
+      <!-- Related Posts -->
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        <section class="related-posts mt-5" aria-label="Related Posts">
+          <div class="container">
+            <h2 class="related-posts__title">Related Posts</h2>
+            <div class="related-posts__grid">
+              
+                <a class="related-post-card" href="/fastapi/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/fastapi/fastapi-fastapi-overview-architecture.svg"
+                           alt="FastAPI Source Tour: How Requests, Dependencies and OpenAPI Are Wired Together"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">FastAPI Source Tour: How Requests, Dependencies and OpenA...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        FastAPI has quietly become the default answer to "how do I expose this Python function...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/huggingface-hub/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/huggingface-hub/huggingface-huggingface-hub-overview-architecture.svg"
+                           alt="huggingface_hub: A Source Tour of the Python Client Behind the Hugging Face Hub"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">huggingface_hub: A Source Tour of the Python Client Behin...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every time you call from_pretrained in [transformers](/transformers/) — well, not quite. What actually fetches the...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/mlflow/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/mlflow/mlflow-mlflow-overview-architecture.svg"
+                           alt="MLflow Source Tour: From Fluent API to Backend Stores and the Model Registry"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">MLflow Source Tour: From Fluent API to Backend Stores and...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        MLflow describes itself on its README as "The Open Source AI Engineering Platform for Agents,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/pydantic/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/pydantic/pydantic-pydantic-overview-architecture.svg"
+                           alt="Pydantic source tour: how BaseModel turns type hints into validators and serializers"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Pydantic source tour: how BaseModel turns type hints into...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Pydantic is the quiet dependency under a remarkable amount of the modern Python stack. If...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/ray/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/ray/ray-project-ray-overview-architecture.svg"
+                           alt="Ray Source Tour: How Tasks, Actors and the Object Store Fit Together"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Ray Source Tour: How Tasks, Actors and the Object Store F...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Ray began as a research project at UC Berkeley and grew into what its README...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 30, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/guidance/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/guidance/guidance-ai-guidance-overview-architecture.svg"
+                           alt="Guidance Source Tour: The Architecture Behind Constrained LLM Generation"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Guidance Source Tour: The Architecture Behind Constrained...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Most libraries that talk to language models treat the model as an oracle: you send...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Oct 29, 2026
+                    </span>
+                  </div>
+                </a>
+              
+            </div>
+          </div>
+        </section>
+      
+
+    </main>
+
+    <!-- YouTube Video Section -->
+    <section id="youtube-video" style="text-align:center; padding:30px 20px; background:var(--bg-secondary, #f8f8f8);">
+      <div class="container">
+        <div style="margin-top:10px;">
+          <a href="https://www.youtube.com/@pyshine_official/shorts"
+            target="_blank"
+            style="background:#ff0000; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 24 24">
+              <path fill="#FFF" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8z"/>
+              <path fill="#FF0000" d="M9.75 15.02v-6l6 3z"/>
+            </svg>
+            Watch PyShine on YouTube
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+  <div class="container">
+    <div class="footer__links" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+      <a href="/" style="color: #00A8E8; text-decoration: none;">Home</a>
+      <a href="/about/" style="color: #00A8E8; text-decoration: none;">About</a>
+      <a href="/contact/" style="color: #00A8E8; text-decoration: none;">Contact</a>
+      <a href="/games/" style="color: #00A8E8; text-decoration: none;">Games</a>
+      <a href="/solar-map/" style="color: #00A8E8; text-decoration: none;">Solar Map</a>
+      <a href="/Clipboard-App-for-Two-PCs/" style="color: #00A8E8; text-decoration: none;">Clipboard App</a>
+      <a href="/privacy/" style="color: #00A8E8; text-decoration: none;">Privacy</a>
+      <a href="/disclaimer/" style="color: #00A8E8; text-decoration: none;">Disclaimer</a>
+    </div>
+    <nav class="social">
+      
+        <a class="social__link" target="_blank" rel="noopener noreferrer" href="https://github.com/pyshine-labs">
+          <svg class="social__icon" viewBox="0 0 20 20" width="20px" height="20px"><path d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+        </a>
+      
+      
+      
+    </nav>
+    <span>&copy; 2026 PyShine. All rights reserved.</span>
+  </div>
+</footer>
+<script async src="/assets/js/bundle.js"></script>
+
+<script async>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function( registration ) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  }
+</script>
+
+
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Button -->
+    <button id="mobile-toc-btn" class="mobile-toc-btn" aria-label="Table of Contents">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Modal -->
+    <div id="mobile-toc-modal" class="mobile-toc-modal">
+      <div class="mobile-toc-content">
+        <div class="mobile-toc-header">
+          <h3>Contents</h3>
+          <button class="mobile-toc-close" aria-label="Close">&times;</button>
+        </div>
+        <ul id="mobile-toc-list" class="mobile-toc-list"></ul>
+      </div>
+    </div>
+
+    <!-- MathJax -->
+    
+
+
+    <!-- Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+            crossorigin="anonymous"></script>
+
+    <!-- SIDEBAR TOC SCRIPT -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toc = document.getElementById("toc-list");
+      const mobileTocList = document.getElementById("mobile-toc-list");
+      const headings = document.querySelectorAll(
+        ".post-content h2:not(.no-toc), .post-content h3:not(.no-toc)"
+      );
+      if ((!toc && !mobileTocList) || headings.length === 0) return;
+
+      const ul = document.createElement("ul");
+      const mobileUl = document.createElement("ul");
+      mobileUl.className = "mobile-toc-list";
+
+      headings.forEach(h => {
+        const id = h.id || h.textContent.trim().toLowerCase().replace(/\s+/g, "-");
+        h.id = id;
+
+        const li = document.createElement("li");
+        const mobileLi = document.createElement("li");
+        
+        if (h.tagName === "H3") {
+          li.style.marginLeft = "1rem";
+          mobileLi.setAttribute("data-level", "3");
+        }
+
+        li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        mobileLi.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        
+        ul.appendChild(li);
+        mobileUl.appendChild(mobileLi);
+      });
+      
+      if (toc) toc.appendChild(ul);
+      if (mobileTocList) mobileTocList.appendChild(mobileUl);
+
+      /* Scroll-spy: highlight active TOC link as user scrolls */
+      const tocLinks = toc ? toc.querySelectorAll("a") : [];
+      const mobileTocLinks = mobileTocList ? mobileTocList.querySelectorAll("a") : [];
+      /* The scrollable container is the aside (#post-toc), not the nav (#toc-list) */
+      const tocScrollContainer = document.getElementById("post-toc");
+
+      function setActiveLink(headingEl) {
+        const id = headingEl.id;
+        let activeDesktopLink = null;
+        tocLinks.forEach(function(link) {
+          const isActive = link.getAttribute("href") === "#" + id;
+          link.classList.toggle("active", isActive);
+          if (isActive) activeDesktopLink = link;
+        });
+        mobileTocLinks.forEach(function(link) {
+          link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+        });
+        /* Auto-scroll the TOC sidebar to keep the active link visible */
+        if (activeDesktopLink && tocScrollContainer) {
+          const linkRect = activeDesktopLink.getBoundingClientRect();
+          const containerRect = tocScrollContainer.getBoundingClientRect();
+          const margin = 40;
+          if (linkRect.top < containerRect.top + margin) {
+            /* Active link is above the visible area — scroll container up */
+            tocScrollContainer.scrollTop -= (containerRect.top + margin - linkRect.top);
+          } else if (linkRect.bottom > containerRect.bottom - margin) {
+            /* Active link is below the visible area — scroll container down */
+            tocScrollContainer.scrollTop += (linkRect.bottom - (containerRect.bottom - margin));
+          }
+        }
+      }
+
+      if (tocLinks.length > 0 && "IntersectionObserver" in window) {
+        const observerOptions = {
+          rootMargin: "-100px 0px -70% 0px",
+          threshold: 0
+        };
+        const headingObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              setActiveLink(entry.target);
+            }
+          });
+        }, observerOptions);
+        headings.forEach(function(h) {
+          headingObserver.observe(h);
+        });
+      }
+
+      /* Mobile TOC Modal */
+      const mobileTocBtn = document.getElementById("mobile-toc-btn");
+      const mobileTocModal = document.getElementById("mobile-toc-modal");
+      const mobileTocClose = mobileTocModal ? mobileTocModal.querySelector(".mobile-toc-close") : null;
+
+      if (mobileTocBtn && mobileTocModal) {
+        mobileTocBtn.addEventListener("click", function() {
+          mobileTocModal.classList.add("active");
+        });
+
+        if (mobileTocClose) {
+          mobileTocClose.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        }
+
+        mobileTocModal.addEventListener("click", function(e) {
+          if (e.target === mobileTocModal) {
+            mobileTocModal.classList.remove("active");
+          }
+        });
+
+        mobileUl.querySelectorAll("a").forEach(function(link) {
+          link.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        });
+      }
+    });
+    </script>
+
+    <!-- Back to Top Button Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const backToTopButton = document.getElementById("back-to-top");
+      if (!backToTopButton) return;
+
+      /* Show button when scrolled down 300px */
+      window.addEventListener("scroll", function() {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("visible");
+        } else {
+          backToTopButton.classList.remove("visible");
+        }
+      });
+
+      /* Smooth scroll to top when clicked */
+      backToTopButton.addEventListener("click", function() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+    </script>
+
+    <style>
+      /* Center post navigation */
+      .post-navigation.controls__inner {
+        justify-content: center !important;
+        gap: 4rem;
+      }
+      /* Related Posts Styles */
+      .related-posts {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+      }
+      .related-posts .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      .related-posts__title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading-color, #000000);
+        text-align: center;
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .related-post-card {
+        display: block;
+        text-decoration: none;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .related-post-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-4px);
+      }
+      .related-post-card__image {
+        width: 100%;
+        height: 100px;
+        background: var(--bg-secondary, #f5f5f5);
+      }
+      .related-post-card__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .related-post-card__content {
+        padding: 0.75rem;
+      }
+      .related-post-card__title {
+        font-size: 0.95rem;
+        margin: 0 0 0.4rem 0;
+        color: var(--heading-color, #000000);
+        line-height: 1.3;
+        font-weight: 600;
+      }
+      .related-post-card__excerpt {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+      }
+      .related-post-card__date {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #999);
+      }
+      @media (max-width: 992px) {
+        .related-posts__grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .related-posts__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Back to Top Button Styles */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg, #000000);
+        color: var(--button-text, #ffffff);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 9999;
+      }
+      .back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .back-to-top:hover {
+        background: var(--text-color, #333333);
+        box-shadow: 0 6px 16px var(--shadow-color, rgba(0, 0, 0, 0.4));
+        transform: translateY(-2px);
+      }
+      .back-to-top:active {
+        transform: translateY(0);
+      }
+      @media (max-width: 768px) {
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
+      }
+      /* Link Preview Styles */
+      .link-preview-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .link-preview-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
+      }
+      .link-preview-link {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        text-decoration: none;
+        width: 100%;
+      }
+      .link-preview-image {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary, #f5f5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .link-preview-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .link-preview-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--heading-color, #000000);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-domain {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #999999);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .link-preview-domain::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--border-color, #e0e0e0);
+        border-radius: 50%;
+      }
+      @media (max-width: 600px) {
+        .link-preview-card {
+          flex-direction: column;
+        }
+        .link-preview-image {
+          width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <!-- Zoomable SVG Viewer JS -->
+    <script src="/assets/js/svg-viewer.js" defer></script>
+  </body>
+</html>
+
+
