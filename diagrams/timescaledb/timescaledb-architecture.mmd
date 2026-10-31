@@ -1,0 +1,149 @@
+flowchart TD
+
+subgraph group_g_sql["SQL &amp; DDL layer"]
+  node_create_hypertable_sql["create_hypertable&#40;&#41;<br/>[ddl_api.sql]"]
+  node_policy_api_sql["policy_api.sql<br/>[policy_api.sql]"]
+  node_ddl_hook["timescaledb_ddl_command_start<br/>[process_utility.c]"]
+end
+
+subgraph group_g_boot["Bootstrap &amp; caches"]
+  node_init["_PG_init<br/>[init.c]"]
+  node_extension["ts_extension_is_loaded<br/>[extension.c]"]
+  node_guc["GUC settings<br/>[guc.c]"]
+  node_cache["ts_cache_pin<br/>[cache.c]"]
+  node_hcache["hypertable cache<br/>[hypertable_cache.c]"]
+end
+
+subgraph group_g_core["Hypertable core"]
+  node_hypertable["ts_hypertable_create<br/>[hypertable.c]"]
+  node_catalog["catalog_get_table<br/>[catalog.c]"]
+  node_dimension["dimension slices<br/>[dimension.c]"]
+  node_dimslice["dimension_slice scan<br/>[dimension_slice.c]"]
+  node_hypercube["ts_hypercube_add_slice_from_range<br/>[hypercube.c]"]
+  node_partitioning["ts_partitioning_func_apply<br/>[partitioning.c]"]
+end
+
+subgraph group_g_chunks["Chunking &amp; write path"]
+  node_chunk["ts_chunk_create_for_point<br/>[chunk.c]"]
+  node_subspace["ts_subspace_store_get<br/>[subspace_store.c]"]
+  node_routing["ts_chunk_tuple_routing_find_chunk"]
+  node_insert_state["ts_chunk_insert_state_create"]
+  node_copy["copy_chunk_state_create<br/>[copy.c]"]
+end
+
+subgraph group_g_exec["Planner &amp; executor"]
+  node_planner["timescaledb_planner<br/>[planner.c]"]
+  node_expand["ts_transform_time_bucket_comparison"]
+  node_modify["ts_modify_hypertable_path_create"]
+  node_func_cache["ts_func_cache_get<br/>[func_cache.c]"]
+end
+
+subgraph group_g_store["TSL: columnstore"]
+  node_tsl_api["tsl_compress_chunk<br/>[api.c]"]
+  node_tsl_compress["compress_chunk<br/>[compression.c]"]
+  node_tsl_create["tsl_process_compress_table<br/>[create.c]"]
+  node_csettings["ts_compression_settings_create"]
+end
+
+subgraph group_g_cagg["TSL: continuous aggregates"]
+  node_cagg_create["tsl_process_continuous_agg_viewstmt<br/>[create.c]"]
+  node_cagg_inval_dml["continuous_agg_dml_invalidate<br/>[insert.c]"]
+  node_cagg_inval_log["invalidation_cagg_log_add_entry<br/>[invalidation.c]"]
+  node_cagg_refresh["continuous_agg_refresh<br/>[refresh.c]"]
+end
+
+subgraph group_g_bgw["Background workers"]
+  node_launcher["ts_bgw_cluster_launcher_main<br/>[bgw_launcher.c]"]
+  node_scheduler["ts_bgw_scheduler_main<br/>[scheduler.c]"]
+  node_job["ts_bgw_job_start<br/>[job.c]"]
+end
+
+node_init -->|"loads and gates behavior"| node_extension
+node_init -->|"registers timescaledb.* settings"| node_guc
+node_create_hypertable_sql -->|"C function via fmgr"| node_hypertable
+node_ddl_hook -->|"intercepts hypertable DDL"| node_hypertable
+node_ddl_hook -->|"SET &#40;timescaledb.compress&#41;"| node_tsl_create
+node_policy_api_sql -->|"schedules refresh job"| node_cagg_refresh
+node_hypertable -->|"metadata rows"| node_catalog
+node_hypertable -->|"adds dimensions"| node_dimension
+node_dimension -->|"slices per dimension"| node_dimslice
+node_dimslice -->|"slices form cube"| node_hypercube
+node_hypercube -->|"defines chunk bounds"| node_chunk
+node_partitioning -->|"tuple -&gt; Point"| node_routing
+node_cache -->|"pinned cache infra"| node_hcache
+node_hcache -->|"lookup by relid"| node_hypertable
+node_chunk -->|"chunk metadata"| node_catalog
+node_routing -->|"memoized lookup"| node_subspace
+node_subspace -->|"resolves chunk"| node_chunk
+node_routing -->|"find-or-create"| node_chunk
+node_routing -->|"opens insert state"| node_insert_state
+node_insert_state -->|"decompress before insert"| node_tsl_api
+node_copy -->|"bulk load state"| node_insert_state
+node_copy -->|"same routing path"| node_routing
+node_planner -->|"resolve hypertable"| node_hcache
+node_planner -->|"expand hypertable quals"| node_expand
+node_planner -->|"wrap DML"| node_modify
+node_planner -->|"time_bucket lookup"| node_func_cache
+node_modify -->|"executor routing"| node_routing
+node_tsl_api -->|"wraps columnar rewrite"| node_tsl_compress
+node_tsl_compress -->|"segment_by / order_by"| node_csettings
+node_tsl_create -->|"persist settings"| node_csettings
+node_tsl_compress -->|"rewrite chunk columnar"| node_chunk
+node_cagg_create -->|"materialization hypertable"| node_hypertable
+node_insert_state -->|"invalidation on DML"| node_cagg_inval_dml
+node_cagg_inval_dml -->|"append ranges"| node_cagg_inval_log
+node_cagg_inval_log -->|"windows to refresh"| node_cagg_refresh
+node_cagg_refresh -->|"reads raw chunks"| node_chunk
+node_launcher -->|"spawn per-DB workers"| node_scheduler
+node_scheduler -->|"pick due jobs"| node_job
+node_job -->|"run refresh policy"| node_cagg_refresh
+node_job -->|"run compression policy"| node_tsl_api
+
+click node_create_hypertable_sql "https://github.com/timescale/timescaledb/blob/main/sql/ddl_api.sql"
+click node_policy_api_sql "https://github.com/timescale/timescaledb/blob/main/sql/policy_api.sql"
+click node_ddl_hook "https://github.com/timescale/timescaledb/blob/main/src/process_utility.c"
+click node_init "https://github.com/timescale/timescaledb/blob/main/src/init.c"
+click node_extension "https://github.com/timescale/timescaledb/blob/main/src/extension.c"
+click node_guc "https://github.com/timescale/timescaledb/blob/main/src/guc.c"
+click node_cache "https://github.com/timescale/timescaledb/blob/main/src/cache.c"
+click node_hcache "https://github.com/timescale/timescaledb/blob/main/src/hypertable_cache.c"
+click node_hypertable "https://github.com/timescale/timescaledb/blob/main/src/hypertable.c"
+click node_catalog "https://github.com/timescale/timescaledb/blob/main/src/ts_catalog/catalog.c"
+click node_dimension "https://github.com/timescale/timescaledb/blob/main/src/dimension.c"
+click node_dimslice "https://github.com/timescale/timescaledb/blob/main/src/dimension_slice.c"
+click node_hypercube "https://github.com/timescale/timescaledb/blob/main/src/hypercube.c"
+click node_partitioning "https://github.com/timescale/timescaledb/blob/main/src/partitioning.c"
+click node_chunk "https://github.com/timescale/timescaledb/blob/main/src/chunk.c"
+click node_subspace "https://github.com/timescale/timescaledb/blob/main/src/subspace_store.c"
+click node_routing "https://github.com/timescale/timescaledb/blob/main/src/chunk_tuple_routing.c"
+click node_insert_state "https://github.com/timescale/timescaledb/blob/main/src/chunk_insert_state.c"
+click node_copy "https://github.com/timescale/timescaledb/blob/main/src/copy.c"
+click node_planner "https://github.com/timescale/timescaledb/blob/main/src/planner/planner.c"
+click node_expand "https://github.com/timescale/timescaledb/blob/main/src/planner/expand_hypertable.c"
+click node_modify "https://github.com/timescale/timescaledb/blob/main/src/nodes/modify_hypertable.c"
+click node_func_cache "https://github.com/timescale/timescaledb/blob/main/src/func_cache.c"
+click node_tsl_api "https://github.com/timescale/timescaledb/blob/main/tsl/src/compression/api.c"
+click node_tsl_compress "https://github.com/timescale/timescaledb/blob/main/tsl/src/compression/compression.c"
+click node_tsl_create "https://github.com/timescale/timescaledb/blob/main/tsl/src/compression/create.c"
+click node_csettings "https://github.com/timescale/timescaledb/blob/main/src/ts_catalog/compression_settings.c"
+click node_cagg_create "https://github.com/timescale/timescaledb/blob/main/tsl/src/continuous_aggs/create.c"
+click node_cagg_inval_dml "https://github.com/timescale/timescaledb/blob/main/tsl/src/continuous_aggs/insert.c"
+click node_cagg_inval_log "https://github.com/timescale/timescaledb/blob/main/tsl/src/continuous_aggs/invalidation.c"
+click node_cagg_refresh "https://github.com/timescale/timescaledb/blob/main/tsl/src/continuous_aggs/refresh.c"
+click node_launcher "https://github.com/timescale/timescaledb/blob/main/src/loader/bgw_launcher.c"
+click node_scheduler "https://github.com/timescale/timescaledb/blob/main/src/bgw/scheduler.c"
+click node_job "https://github.com/timescale/timescaledb/blob/main/src/bgw/job.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_create_hypertable_sql,node_policy_api_sql,node_ddl_hook,node_cagg_create,node_cagg_inval_dml,node_cagg_inval_log,node_cagg_refresh toneBlue
+class node_init,node_extension,node_guc,node_cache,node_hcache,node_launcher,node_scheduler,node_job toneAmber
+class node_hypertable,node_catalog,node_dimension,node_dimslice,node_hypercube,node_partitioning toneMint
+class node_chunk,node_subspace,node_routing,node_insert_state,node_copy toneRose
+class node_planner,node_expand,node_modify,node_func_cache toneIndigo
+class node_tsl_api,node_tsl_compress,node_tsl_create,node_csettings toneTeal
