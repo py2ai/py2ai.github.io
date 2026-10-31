@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_edge["S3 API Edge"]
+  node_api_router["S3 Router<br/>[api-router.go]"]
+end
+
+subgraph group_handlers["Request Handlers"]
+  node_object_handlers["Object Handlers<br/>[object-handlers.go]"]
+  node_object_handlers_common["Handler Helpers"]
+  node_multipart_handlers["Multipart Handlers"]
+  node_bucket_handlers["Bucket Handlers<br/>[bucket-handlers.go]"]
+  node_notification_handlers["Notification Handlers"]
+end
+
+subgraph group_layer["Object Layer"]
+  node_object_interface["ObjectLayer Interface"]
+  node_server_main["Server Bootstrap<br/>[server-main.go]"]
+  node_server_pools["Server Pools"]
+  node_erasure_sets["Erasure Sets<br/>[erasure-sets.go]"]
+  node_erasure_object["Erasure Object Ops<br/>[erasure-object.go]"]
+  node_erasure_multipart["Erasure Multipart"]
+  node_erasure_healing["Healing<br/>[erasure-healing.go]"]
+end
+
+subgraph group_erasure["Erasure Coding Engine"]
+  node_erasure_coding["Reed-Solomon Codec<br/>[erasure-coding.go]"]
+  node_erasure_encode["Shard Encoder<br/>[erasure-encode.go]"]
+  node_erasure_decode["Shard Decoder<br/>[erasure-decode.go]"]
+  node_erasure_metadata["Erasure Metadata"]
+  node_erasure_metadata_utils["Shard Placement"]
+  node_bitrot_streaming["Bitrot Protection"]
+  node_storage_datatypes["FileInfo Types"]
+end
+
+subgraph group_storage["XL Storage Layer"]
+  node_xl_storage["XL Storage<br/>[xl-storage.go]"]
+  node_xl_storage_format_v2["xl.meta v2"]
+end
+
+subgraph group_locking["Distributed Locking"]
+  node_namespace_lock["Namespace Locks<br/>[namespace-lock.go]"]
+  node_drwmutex["DRWMutex<br/>[drwmutex.go]"]
+  node_dsync["dsync Core<br/>[dsync.go]"]
+  node_lock_rest_client["Lock REST Client"]
+  node_lock_rest_server["Lock REST Server"]
+end
+
+subgraph group_cluster["Cluster &amp; Peers"]
+  node_peer_rest_server["Peer REST Server"]
+  node_peer_rest_client["Peer REST Client"]
+  node_grid["Grid Messaging<br/>[grid.go]"]
+end
+
+subgraph group_config["Config &amp; Crypto"]
+  node_config["Config Subsystem<br/>[config.go]"]
+  node_sse_kms["SSE Crypto<br/>[sse-kms.go]"]
+  node_kms["KMS Client<br/>[kms.go]"]
+  node_event["Event Targets<br/>[event.go]"]
+end
+
+node_api_router -->|"object verbs"| node_object_handlers
+node_api_router -->|"multipart endpoints"| node_multipart_handlers
+node_api_router -->|"bucket endpoints"| node_bucket_handlers
+node_api_router -->|"notification endpoints"| node_notification_handlers
+node_object_handlers -->|"shared helpers"| node_object_handlers_common
+node_object_handlers -->|"ObjectLayer calls"| node_object_interface
+node_multipart_handlers -->|"upload APIs"| node_object_interface
+node_bucket_handlers -->|"bucket APIs"| node_object_interface
+node_notification_handlers -->|"validates SNS configs"| node_event
+node_server_main -->|"newObjectLayer"| node_server_pools
+node_server_main -->|"publishes global layer"| node_object_interface
+node_server_pools -->|"one sets set per pool"| node_erasure_sets
+node_erasure_sets -->|"set-local operations"| node_erasure_object
+node_erasure_sets -->|"NewNSLock"| node_namespace_lock
+node_erasure_sets -->|"newLockAPI per endpoint"| node_lock_rest_client
+node_erasure_object -->|"implements"| node_object_interface
+node_erasure_object -->|"multipart state"| node_erasure_multipart
+node_erasure_object -->|"codec params"| node_erasure_coding
+node_erasure_object -->|"FileInfo quorum"| node_erasure_metadata
+node_erasure_healing -->|"Erasure.Heal"| node_erasure_coding
+node_erasure_coding -->|"Encode"| node_erasure_encode
+node_erasure_coding -->|"Decode/Heal"| node_erasure_decode
+node_erasure_metadata -->|"hashOrder placement"| node_erasure_metadata_utils
+node_erasure_metadata -->|"FileInfo structs"| node_storage_datatypes
+node_erasure_encode -->|"checksummed shards"| node_bitrot_streaming
+node_erasure_encode -->|"writes shards"| node_xl_storage
+node_erasure_decode -->|"reads shards"| node_xl_storage
+node_xl_storage -->|"parses xl.meta"| node_xl_storage_format_v2
+node_namespace_lock -->|"RW lock instances"| node_drwmutex
+node_drwmutex -->|"quorum acquisition"| node_dsync
+node_dsync -->|"NetLocker stubs"| node_lock_rest_client
+node_lock_rest_client -->|"lock RPC"| node_lock_rest_server
+node_lock_rest_server -->|"single-handlers"| node_grid
+node_peer_rest_client -->|"peer RPC"| node_peer_rest_server
+node_peer_rest_client -->|"grid connections"| node_grid
+node_peer_rest_server -->|"grid handlers"| node_grid
+node_config -->|"KMS settings"| node_kms
+node_sse_kms -->|"DEK requests"| node_kms
+node_erasure_object -->|"object encryption"| node_sse_kms
+
+click node_api_router "https://github.com/minio/minio/blob/master/cmd/api-router.go"
+click node_object_handlers "https://github.com/minio/minio/blob/master/cmd/object-handlers.go"
+click node_object_handlers_common "https://github.com/minio/minio/blob/master/cmd/object-handlers-common.go"
+click node_multipart_handlers "https://github.com/minio/minio/blob/master/cmd/object-multipart-handlers.go"
+click node_bucket_handlers "https://github.com/minio/minio/blob/master/cmd/bucket-handlers.go"
+click node_notification_handlers "https://github.com/minio/minio/blob/master/cmd/bucket-notification-handlers.go"
+click node_object_interface "https://github.com/minio/minio/blob/master/cmd/object-api-interface.go"
+click node_server_main "https://github.com/minio/minio/blob/master/cmd/server-main.go"
+click node_server_pools "https://github.com/minio/minio/blob/master/cmd/erasure-server-pool.go"
+click node_erasure_sets "https://github.com/minio/minio/blob/master/cmd/erasure-sets.go"
+click node_erasure_object "https://github.com/minio/minio/blob/master/cmd/erasure-object.go"
+click node_erasure_multipart "https://github.com/minio/minio/blob/master/cmd/erasure-multipart.go"
+click node_erasure_healing "https://github.com/minio/minio/blob/master/cmd/erasure-healing.go"
+click node_erasure_coding "https://github.com/minio/minio/blob/master/cmd/erasure-coding.go"
+click node_erasure_encode "https://github.com/minio/minio/blob/master/cmd/erasure-encode.go"
+click node_erasure_decode "https://github.com/minio/minio/blob/master/cmd/erasure-decode.go"
+click node_erasure_metadata "https://github.com/minio/minio/blob/master/cmd/erasure-metadata.go"
+click node_erasure_metadata_utils "https://github.com/minio/minio/blob/master/cmd/erasure-metadata-utils.go"
+click node_bitrot_streaming "https://github.com/minio/minio/blob/master/cmd/bitrot-streaming.go"
+click node_storage_datatypes "https://github.com/minio/minio/blob/master/cmd/storage-datatypes.go"
+click node_xl_storage "https://github.com/minio/minio/blob/master/cmd/xl-storage.go"
+click node_xl_storage_format_v2 "https://github.com/minio/minio/blob/master/cmd/xl-storage-format-v2.go"
+click node_namespace_lock "https://github.com/minio/minio/blob/master/cmd/namespace-lock.go"
+click node_drwmutex "https://github.com/minio/minio/blob/master/internal/dsync/drwmutex.go"
+click node_dsync "https://github.com/minio/minio/blob/master/internal/dsync/dsync.go"
+click node_lock_rest_client "https://github.com/minio/minio/blob/master/cmd/lock-rest-client.go"
+click node_lock_rest_server "https://github.com/minio/minio/blob/master/cmd/lock-rest-server.go"
+click node_peer_rest_server "https://github.com/minio/minio/blob/master/cmd/peer-rest-server.go"
+click node_peer_rest_client "https://github.com/minio/minio/blob/master/cmd/peer-rest-client.go"
+click node_grid "https://github.com/minio/minio/blob/master/internal/grid/grid.go"
+click node_config "https://github.com/minio/minio/blob/master/internal/config/config.go"
+click node_sse_kms "https://github.com/minio/minio/blob/master/internal/crypto/sse-kms.go"
+click node_kms "https://github.com/minio/minio/blob/master/internal/kms/kms.go"
+click node_event "https://github.com/minio/minio/blob/master/internal/event/event.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_router,node_peer_rest_server,node_peer_rest_client,node_grid toneBlue
+class node_object_handlers,node_object_handlers_common,node_multipart_handlers,node_bucket_handlers,node_notification_handlers,node_config,node_sse_kms,node_kms,node_event toneAmber
+class node_object_interface,node_server_main,node_server_pools,node_erasure_sets,node_erasure_object,node_erasure_multipart,node_erasure_healing toneMint
+class node_erasure_coding,node_erasure_encode,node_erasure_decode,node_erasure_metadata,node_erasure_metadata_utils,node_bitrot_streaming,node_storage_datatypes toneRose
+class node_xl_storage,node_xl_storage_format_v2 toneIndigo
+class node_namespace_lock,node_drwmutex,node_dsync,node_lock_rest_client,node_lock_rest_server toneTeal

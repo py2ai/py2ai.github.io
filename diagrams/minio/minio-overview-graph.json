@@ -1,0 +1,137 @@
+{
+  "owner": "minio",
+  "repo": "minio",
+  "branch": "master",
+  "groups": [
+    { "id": "api", "name": "api", "label": "S3 API Edge" },
+    { "id": "core", "name": "core", "label": "Object Layer Core" },
+    { "id": "topology", "name": "topology", "label": "Pool & Set Topology" },
+    { "id": "erasure", "name": "erasure", "label": "Erasure Coding Engine" },
+    { "id": "storage", "name": "storage", "label": "XL Storage Layer" },
+    { "id": "locks", "name": "locks", "label": "Namespace Locking" }
+  ],
+  "nodes": [
+    {
+      "id": "api_router",
+      "label": "S3 Router",
+      "file": "cmd/api-router.go",
+      "path": "cmd/api-router.go",
+      "group": "api",
+      "groupId": "api",
+      "desc": "registerAPIRouter wires every S3 REST verb through s3APIMiddleware; objectAPIHandlers struct is defined here."
+    },
+    {
+      "id": "object_handlers",
+      "label": "Object Handlers",
+      "file": "cmd/object-handlers.go",
+      "path": "cmd/object-handlers.go",
+      "group": "api",
+      "groupId": "api",
+      "desc": "HTTP layer for GetObject (L717), HeadObject (L1012), CopyObject (L1157), PutObject (L1793), DeleteObject (L2563)."
+    },
+    {
+      "id": "object_interface",
+      "label": "ObjectLayer Interface",
+      "file": "cmd/object-api-interface.go",
+      "path": "cmd/object-api-interface.go",
+      "group": "core",
+      "groupId": "core",
+      "desc": "The ObjectLayer interface (L246) every backend implements: buckets, objects, versions, healing, pool info."
+    },
+    {
+      "id": "server_main",
+      "label": "Server Bootstrap",
+      "file": "cmd/server-main.go",
+      "path": "cmd/server-main.go",
+      "group": "core",
+      "groupId": "core",
+      "desc": "serverMain (L746) parses endpoints and calls newObjectLayer (L1199) to build the backend, then serves the API."
+    },
+    {
+      "id": "server_pools",
+      "label": "Server Pools",
+      "file": "cmd/erasure-server-pool.go",
+      "path": "cmd/erasure-server-pool.go",
+      "group": "topology",
+      "groupId": "topology",
+      "desc": "erasureServerPools (L52) federates multiple pool of sets; newErasureServerPools (L78) is the ObjectLayer factory."
+    },
+    {
+      "id": "erasure_sets",
+      "label": "Erasure Sets",
+      "file": "cmd/erasure-sets.go",
+      "path": "cmd/erasure-sets.go",
+      "group": "topology",
+      "groupId": "topology",
+      "desc": "erasureSets (L51) maps objects to a set of disks by hash; newErasureSets (L352) builds sets and their lockers."
+    },
+    {
+      "id": "erasure_object",
+      "label": "Erasure Object Ops",
+      "file": "cmd/erasure-object.go",
+      "path": "cmd/erasure-object.go",
+      "group": "erasure",
+      "groupId": "erasure",
+      "desc": "GetObjectNInfo (L203), PutObject (L1249), DeleteObject (L1885) fan out reads and writes across the set."
+    },
+    {
+      "id": "erasure_coding",
+      "label": "Reed-Solomon Codec",
+      "file": "cmd/erasure-coding.go",
+      "path": "cmd/erasure-coding.go",
+      "group": "erasure",
+      "groupId": "erasure",
+      "desc": "Erasure struct (L35) and NewErasure (L42) wrap klauspost/reedsolomon with data and parity shard counts."
+    },
+    {
+      "id": "erasure_metadata",
+      "label": "Erasure Metadata",
+      "file": "cmd/erasure-metadata.go",
+      "path": "cmd/erasure-metadata.go",
+      "group": "erasure",
+      "groupId": "erasure",
+      "desc": "FileInfo quorum logic: shard placement via hashOrder (erasure-metadata-utils.go L178), part offsets, modtime quorum."
+    },
+    {
+      "id": "xl_storage",
+      "label": "XL Storage",
+      "file": "cmd/xl-storage.go",
+      "path": "cmd/xl-storage.go",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "Per-disk backend xlStorage (L98): ReadAll (L1829), CreateFile (L2092), WriteAll (L2305), RenameFile (L2997)."
+    },
+    {
+      "id": "xl_meta",
+      "label": "xl.meta Format",
+      "file": "cmd/xl-storage-format-v2.go",
+      "path": "cmd/xl-storage-format-v2.go",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "xlMetaV2 (L901) is the on-disk metadata blob: object versions, parts, checksums, inline data."
+    },
+    {
+      "id": "namespace_lock",
+      "label": "Namespace Locks",
+      "file": "cmd/namespace-lock.go",
+      "path": "cmd/namespace-lock.go",
+      "group": "locks",
+      "groupId": "locks",
+      "desc": "nsLockMap (L85) serializes bucket/object operations locally before they reach the distributed lock quorum."
+    }
+  ],
+  "edges": [
+    { "from": "server_main", "to": "server_pools", "label": "boots the object layer" },
+    { "from": "api_router", "to": "object_handlers", "label": "routes object verbs" },
+    { "from": "object_handlers", "to": "object_interface", "label": "invokes ObjectLayer" },
+    { "from": "server_pools", "to": "erasure_sets", "label": "spawns sets per pool" },
+    { "from": "erasure_sets", "to": "erasure_object", "label": "set-local object ops" },
+    { "from": "erasure_object", "to": "erasure_coding", "label": "encode/decode shards" },
+    { "from": "erasure_object", "to": "erasure_metadata", "label": "reads/writes FileInfo" },
+    { "from": "erasure_coding", "to": "xl_storage", "label": "shard IO on disks" },
+    { "from": "erasure_metadata", "to": "xl_meta", "label": "persists xl.meta" },
+    { "from": "erasure_object", "to": "namespace_lock", "label": "locks bucket/object" },
+    { "from": "erasure_object", "to": "object_interface", "label": "implements ObjectLayer" },
+    { "from": "erasure_metadata", "to": "xl_storage", "label": "quorum on-disk checks" }
+  ]
+}
