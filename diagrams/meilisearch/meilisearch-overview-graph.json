@@ -1,0 +1,43 @@
+{
+  "owner": "meilisearch",
+  "repo": "meilisearch",
+  "branch": "main",
+  "groups": [
+    { "id": "api", "name": "HTTP API", "label": "Actix-web REST layer" },
+    { "id": "queue", "name": "Task Queue", "label": "Async indexing scheduler" },
+    { "id": "engine", "name": "Search Engine", "label": "milli crate core" }
+  ],
+  "nodes": [
+    { "id": "entry_main", "label": "main.rs setup", "file": "main.rs", "path": "crates/meilisearch/src/main.rs", "group": "HTTP API", "groupId": "api", "desc": "Binary entrypoint: parses Opt, wires tracing, starts the actix HttpServer." },
+    { "id": "create_app", "label": "create_app", "file": "lib.rs", "path": "crates/meilisearch/src/lib.rs", "group": "HTTP API", "groupId": "api", "desc": "Builds the actix app and mounts every REST route module." },
+    { "id": "setup_meilisearch", "label": "setup_meilisearch", "file": "lib.rs", "path": "crates/meilisearch/src/lib.rs", "group": "HTTP API", "groupId": "api", "desc": "Creates the IndexScheduler, AuthController and shared state." },
+    { "id": "create_index", "label": "create_index", "file": "mod.rs", "path": "crates/meilisearch/src/routes/indexes/mod.rs", "group": "HTTP API", "groupId": "api", "desc": "POST /indexes handler; enqueues an IndexCreation task." },
+    { "id": "replace_documents", "label": "replace_documents", "file": "documents.rs", "path": "crates/meilisearch/src/routes/indexes/documents.rs", "group": "HTTP API", "groupId": "api", "desc": "POST /indexes/{uid}/documents handler; returns HTTP 202 with a task." },
+    { "id": "search_with_post", "label": "search_with_post", "file": "search.rs", "path": "crates/meilisearch/src/routes/indexes/search.rs", "group": "HTTP API", "groupId": "api", "desc": "POST /indexes/{uid}/search handler; synchronous query execution." },
+    { "id": "search_settings", "label": "settings handlers", "file": "settings.rs", "path": "crates/meilisearch/src/routes/indexes/settings.rs", "group": "HTTP API", "groupId": "api", "desc": "Reads ranking rules, filterables and embedder settings; writes become tasks." },
+    { "id": "index_scheduler", "label": "IndexScheduler", "file": "lib.rs", "path": "crates/index-scheduler/src/lib.rs", "group": "Task Queue", "groupId": "queue", "desc": "Central scheduler: durable task queue over LMDB plus the run loop." },
+    { "id": "index_mapper", "label": "IndexMapper", "file": "mod.rs", "path": "crates/index-scheduler/src/index_mapper/mod.rs", "group": "Task Queue", "groupId": "queue", "desc": "Creates, opens and caches physical indexes on disk." },
+    { "id": "milli_index", "label": "Index (milli)", "file": "index.rs", "path": "crates/milli/src/index.rs", "group": "Search Engine", "groupId": "engine", "desc": "Per-index LMDB databases: postings, facets, synonyms, vectors, settings." },
+    { "id": "milli_search", "label": "execute_search", "file": "mod.rs", "path": "crates/milli/src/search/new/mod.rs", "group": "Search Engine", "groupId": "engine", "desc": "Core query graph search driving ranking rules to a PartialSearchResult." },
+    { "id": "vector_db", "label": "vector store", "file": "db.rs", "path": "crates/milli/src/vector/db.rs", "group": "Search Engine", "groupId": "engine", "desc": "Embedder runtime and vector database backing hybrid and semantic search." }
+  ],
+  "edges": [
+    { "from": "entry_main", "to": "create_app", "label": "launch server" },
+    { "from": "create_app", "to": "setup_meilisearch", "label": "bootstrap state" },
+    { "from": "create_app", "to": "create_index", "label": "mount routes" },
+    { "from": "create_app", "to": "replace_documents", "label": "mount routes" },
+    { "from": "create_app", "to": "search_with_post", "label": "mount routes" },
+    { "from": "create_app", "to": "search_settings", "label": "mount routes" },
+    { "from": "setup_meilisearch", "to": "index_scheduler", "label": "runs scheduler" },
+    { "from": "create_index", "to": "index_scheduler", "label": "enqueue task" },
+    { "from": "replace_documents", "to": "index_scheduler", "label": "enqueue task" },
+    { "from": "search_settings", "to": "index_scheduler", "label": "enqueue writes" },
+    { "from": "index_scheduler", "to": "index_mapper", "label": "apply batch" },
+    { "from": "index_scheduler", "to": "milli_index", "label": "write documents" },
+    { "from": "index_mapper", "to": "milli_index", "label": "open LMDB env" },
+    { "from": "search_with_post", "to": "index_mapper", "label": "resolve index" },
+    { "from": "search_with_post", "to": "milli_search", "label": "execute query" },
+    { "from": "milli_search", "to": "milli_index", "label": "read postings" },
+    { "from": "milli_search", "to": "vector_db", "label": "hybrid search" }
+  ]
+}

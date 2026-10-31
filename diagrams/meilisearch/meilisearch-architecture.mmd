@@ -1,0 +1,127 @@
+flowchart TD
+
+subgraph group_api["Actix-web handlers"]
+  node_entry_main["main.rs setup<br/>[main.rs]"]
+  node_create_app["create_app<br/>[lib.rs]"]
+  node_setup_meilisearch["setup_meilisearch<br/>[lib.rs]"]
+  node_configure_data["configure_data<br/>[lib.rs]"]
+  node_create_index["create_index<br/>[mod.rs]"]
+  node_update_index["update_index<br/>[mod.rs]"]
+  node_delete_index["delete_index<br/>[mod.rs]"]
+  node_replace_documents["replace_documents<br/>[documents.rs]"]
+  node_document_addition["document_addition<br/>[documents.rs]"]
+  node_search_with_post["search_with_post<br/>[search.rs]"]
+  node_settings_update_all["update_all &#40;settings&#41;<br/>[settings.rs]"]
+  node_search_query["SearchQuery<br/>[mod.rs]"]
+  node_perform_search["perform_search<br/>[mod.rs]"]
+end
+
+subgraph group_scheduler["index-scheduler crate"]
+  node_index_scheduler["IndexScheduler<br/>[lib.rs]"]
+  node_sched_run["run loop<br/>[lib.rs]"]
+  node_sched_register["register task<br/>[mod.rs]"]
+  node_create_next_batch["create_next_batch<br/>[create_batch.rs]"]
+  node_process_batch["process_batch<br/>[process_batch.rs]"]
+  node_sched_tick["tick<br/>[mod.rs]"]
+  node_index_mapper["IndexMapper<br/>[mod.rs]"]
+end
+
+subgraph group_search_core["milli query execution"]
+  node_milli_index["Index &#40;milli&#41;<br/>[index.rs]"]
+  node_execute_search["execute_search<br/>[mod.rs]"]
+  node_execute_vector_search["execute_vector_search<br/>[mod.rs]"]
+  node_ranking_rules["ranking rules builder<br/>[mod.rs]"]
+  node_resolve_sort_criteria["resolve_sort_criteria<br/>[mod.rs]"]
+  node_extract_tokens["extract_tokens<br/>[mod.rs]"]
+  node_facet_distribution["FacetDistribution"]
+end
+
+subgraph group_indexing["milli write side"]
+  node_indexer_extract["extract &#40;indexer&#41;"]
+  node_document_operation["document operations"]
+  node_vector_db["vector store<br/>[db.rs]"]
+end
+
+node_entry_main -->|"launch"| node_create_app
+node_create_app -->|"bootstrap"| node_setup_meilisearch
+node_create_app -->|"attach state"| node_configure_data
+node_create_app -->|"mount"| node_create_index
+node_create_app -->|"mount"| node_update_index
+node_create_app -->|"mount"| node_delete_index
+node_create_app -->|"mount"| node_replace_documents
+node_create_app -->|"mount"| node_search_with_post
+node_create_app -->|"mount"| node_settings_update_all
+node_setup_meilisearch -->|"creates"| node_index_scheduler
+node_create_index -->|"IndexCreation"| node_sched_register
+node_update_index -->|"IndexUpdate"| node_sched_register
+node_delete_index -->|"IndexDeletion"| node_sched_register
+node_document_addition -->|"DocumentAddition"| node_sched_register
+node_replace_documents -->|"delegate"| node_document_addition
+node_settings_update_all -->|"SettingsUpdate"| node_sched_register
+node_sched_register -->|"persist + wake"| node_index_scheduler
+node_index_scheduler -->|"thread"| node_sched_run
+node_sched_run -->|"loop step"| node_sched_tick
+node_sched_tick -->|"plan work"| node_create_next_batch
+node_sched_tick -->|"execute"| node_process_batch
+node_process_batch -->|"open index"| node_index_mapper
+node_process_batch -->|"document ops"| node_document_operation
+node_document_operation -->|"change set"| node_indexer_extract
+node_indexer_extract -->|"embed"| node_vector_db
+node_indexer_extract -->|"write LMDB"| node_milli_index
+node_vector_db -->|"store vectors"| node_milli_index
+node_index_mapper -->|"open env"| node_milli_index
+node_search_with_post -->|"parse body"| node_search_query
+node_search_with_post -->|"execute"| node_perform_search
+node_perform_search -->|"resolve index"| node_index_mapper
+node_perform_search -->|"core query"| node_execute_search
+node_perform_search -->|"facet counts"| node_facet_distribution
+node_perform_search -->|"sort"| node_resolve_sort_criteria
+node_execute_search -->|"tokenize q"| node_extract_tokens
+node_execute_search -->|"rank"| node_ranking_rules
+node_execute_search -->|"hybrid mode"| node_execute_vector_search
+node_execute_vector_search -->|"ANN query"| node_vector_db
+node_ranking_rules -->|"read postings"| node_milli_index
+node_facet_distribution -->|"read facets"| node_milli_index
+
+click node_entry_main "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/main.rs"
+click node_create_app "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/lib.rs"
+click node_setup_meilisearch "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/lib.rs"
+click node_configure_data "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/lib.rs"
+click node_create_index "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/mod.rs"
+click node_update_index "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/mod.rs"
+click node_delete_index "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/mod.rs"
+click node_replace_documents "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/documents.rs"
+click node_document_addition "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/documents.rs"
+click node_search_with_post "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/search.rs"
+click node_settings_update_all "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/routes/indexes/settings.rs"
+click node_search_query "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/search/mod.rs"
+click node_perform_search "https://github.com/meilisearch/meilisearch/blob/main/crates/meilisearch/src/search/mod.rs"
+click node_index_scheduler "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/lib.rs"
+click node_sched_run "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/lib.rs"
+click node_sched_register "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/queue/mod.rs"
+click node_create_next_batch "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/scheduler/create_batch.rs"
+click node_process_batch "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/scheduler/process_batch.rs"
+click node_sched_tick "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/scheduler/mod.rs"
+click node_index_mapper "https://github.com/meilisearch/meilisearch/blob/main/crates/index-scheduler/src/index_mapper/mod.rs"
+click node_milli_index "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/index.rs"
+click node_execute_search "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/search/new/mod.rs"
+click node_execute_vector_search "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/search/new/mod.rs"
+click node_ranking_rules "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/search/new/mod.rs"
+click node_resolve_sort_criteria "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/search/new/mod.rs"
+click node_extract_tokens "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/search/new/mod.rs"
+click node_facet_distribution "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/search/facet/facet_distribution.rs"
+click node_indexer_extract "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/update/new/indexer/document_changes.rs"
+click node_document_operation "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/update/new/indexer/document_operation.rs"
+click node_vector_db "https://github.com/meilisearch/meilisearch/blob/main/crates/milli/src/vector/db.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry_main,node_create_app,node_setup_meilisearch,node_configure_data,node_create_index,node_update_index,node_delete_index,node_replace_documents,node_document_addition,node_search_with_post,node_settings_update_all,node_search_query,node_perform_search toneBlue
+class node_index_scheduler,node_sched_run,node_sched_register,node_create_next_batch,node_process_batch,node_sched_tick,node_index_mapper toneAmber
+class node_milli_index,node_execute_search,node_execute_vector_search,node_ranking_rules,node_resolve_sort_criteria,node_extract_tokens,node_facet_distribution toneMint
+class node_indexer_extract,node_document_operation,node_vector_db toneRose
