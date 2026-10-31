@@ -1,0 +1,235 @@
+{
+  "owner": "quickwit-oss",
+  "repo": "tantivy",
+  "branch": "main",
+  "groups": [
+    {
+      "id": "authoring",
+      "name": "Schema authoring",
+      "label": "Schema authoring"
+    },
+    {
+      "id": "indexing",
+      "name": "Indexing side",
+      "label": "Indexing side"
+    },
+    {
+      "id": "storage",
+      "name": "On-disk storage",
+      "label": "On-disk storage"
+    },
+    {
+      "id": "search",
+      "name": "Search side",
+      "label": "Search side"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "schema_builder",
+      "label": "SchemaBuilder",
+      "file": "schema.rs",
+      "path": "src/schema/schema.rs",
+      "group": "authoring",
+      "groupId": "authoring",
+      "shape": "hexagon",
+      "desc": "Fluent builder that declares fields and their options, then build() freezes a Schema."
+    },
+    {
+      "id": "index",
+      "label": "Index",
+      "file": "index.rs",
+      "path": "src/index/index.rs",
+      "group": "authoring",
+      "groupId": "authoring",
+      "shape": "database",
+      "desc": "Entry point: owns the schema and directory; hands out writers and readers."
+    },
+    {
+      "id": "index_writer",
+      "label": "IndexWriter",
+      "file": "index_writer.rs",
+      "path": "src/indexer/index_writer.rs",
+      "group": "indexing",
+      "groupId": "indexing",
+      "shape": "hexagon",
+      "desc": "Multithreaded writer: add_document, delete_term, commit; spawns merge workers."
+    },
+    {
+      "id": "segment_writer",
+      "label": "SegmentWriter",
+      "file": "segment_writer.rs",
+      "path": "src/indexer/segment_writer.rs",
+      "group": "indexing",
+      "groupId": "indexing",
+      "shape": "box",
+      "desc": "One per indexing thread; buffers a batch of docs into in-memory per-field structures."
+    },
+    {
+      "id": "segment_updater",
+      "label": "SegmentUpdater",
+      "file": "segment_updater.rs",
+      "path": "src/indexer/segment_updater.rs",
+      "group": "indexing",
+      "groupId": "indexing",
+      "shape": "box",
+      "desc": "Turns committed in-memory segments into on-disk files and updates meta.json."
+    },
+    {
+      "id": "merger",
+      "label": "IndexMerger",
+      "file": "merger.rs",
+      "path": "src/indexer/merger.rs",
+      "group": "indexing",
+      "groupId": "indexing",
+      "shape": "box",
+      "desc": "K-way merge of several segments into one, dropping deleted documents."
+    },
+    {
+      "id": "directory",
+      "label": "Directory",
+      "file": "directory.rs",
+      "path": "src/directory/directory.rs",
+      "group": "storage",
+      "groupId": "storage",
+      "shape": "box",
+      "desc": "Trait abstracting file storage; implemented by MmapDirectory and RamDirectory."
+    },
+    {
+      "id": "segments",
+      "label": "Segment files",
+      "file": "segment.rs",
+      "path": "src/index/segment.rs",
+      "group": "storage",
+      "groupId": "storage",
+      "shape": "database",
+      "desc": "Immutable per-segment files (.idx postings, .store, .fast, .fieldnorm, .pos) listed in meta.json."
+    },
+    {
+      "id": "index_reader",
+      "label": "IndexReader",
+      "file": "mod.rs",
+      "path": "src/reader/mod.rs",
+      "group": "search",
+      "groupId": "search",
+      "shape": "box",
+      "desc": "Watches the index, reloads on commit, and hands out consistent Searcher snapshots."
+    },
+    {
+      "id": "searcher",
+      "label": "Searcher",
+      "file": "searcher.rs",
+      "path": "src/core/searcher.rs",
+      "group": "search",
+      "groupId": "search",
+      "shape": "hexagon",
+      "desc": "Immutable snapshot holding SegmentReaders; search() runs query + collector."
+    },
+    {
+      "id": "query_parser",
+      "label": "QueryParser",
+      "file": "query_parser.rs",
+      "path": "src/query/query_parser/query_parser.rs",
+      "group": "search",
+      "groupId": "search",
+      "shape": "box",
+      "desc": "Parses the query language (AND/OR/phrase/field:) into a Query tree."
+    },
+    {
+      "id": "collector",
+      "label": "Collector",
+      "file": "mod.rs",
+      "path": "src/collector/mod.rs",
+      "group": "search",
+      "groupId": "search",
+      "shape": "box",
+      "desc": "Trait deciding what happens with matches: TopDocs ranking, counts, aggregations."
+    }
+  ],
+  "edges": [
+    {
+      "from": "schema_builder",
+      "to": "index",
+      "label": "build() then Index::create_in_ram / open",
+      "style": "solid"
+    },
+    {
+      "from": "index",
+      "to": "index_writer",
+      "label": "index.writer(mem) -> IndexWriter",
+      "style": "solid"
+    },
+    {
+      "from": "index",
+      "to": "index_reader",
+      "label": "index.reader() -> IndexReader",
+      "style": "solid"
+    },
+    {
+      "from": "index_writer",
+      "to": "segment_writer",
+      "label": "routes docs to per-thread writers",
+      "style": "solid"
+    },
+    {
+      "from": "segment_writer",
+      "to": "segment_updater",
+      "label": "commit: sealed segment",
+      "style": "solid"
+    },
+    {
+      "from": "segment_updater",
+      "to": "segments",
+      "label": "writes files + meta.json",
+      "style": "solid"
+    },
+    {
+      "from": "index_writer",
+      "to": "merger",
+      "label": "background merge tasks",
+      "style": "solid"
+    },
+    {
+      "from": "merger",
+      "to": "segments",
+      "label": "compacts, purges deletes",
+      "style": "solid"
+    },
+    {
+      "from": "segments",
+      "to": "directory",
+      "label": "stored through Directory",
+      "style": "solid"
+    },
+    {
+      "from": "index_reader",
+      "to": "segments",
+      "label": "reload picks up new files",
+      "style": "dashed"
+    },
+    {
+      "from": "index_reader",
+      "to": "searcher",
+      "label": "searcher() snapshot",
+      "style": "solid"
+    },
+    {
+      "from": "searcher",
+      "to": "segments",
+      "label": "reads via SegmentReader",
+      "style": "dashed"
+    },
+    {
+      "from": "query_parser",
+      "to": "searcher",
+      "label": "Query -> search(query, collector)",
+      "style": "solid"
+    },
+    {
+      "from": "searcher",
+      "to": "collector",
+      "label": "collect(doc, score) per match",
+      "style": "solid"
+    }
+  ]
+}

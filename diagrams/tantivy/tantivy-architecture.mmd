@@ -1,0 +1,153 @@
+flowchart TD
+
+subgraph group_schema_side["Schema &#40;what is a document?&#41;"]
+  node_schema_builder{{"SchemaBuilder<br/>[schema.rs]"}}
+  node_schema["Schema<br/>[schema.rs]"]
+  node_field_type["FieldType<br/>[field_type.rs]"]
+end
+
+subgraph group_core_side["Core: index, segments, searchers"]
+  node_index[("Index<br/>[index.rs]")]
+  node_segment["Segment<br/>[segment.rs]"]
+  node_segment_reader["SegmentReader<br/>[segment_reader.rs]"]
+  node_searcher{{"Searcher<br/>[searcher.rs]"}}
+  node_index_reader["IndexReader<br/>[mod.rs]"]
+end
+
+subgraph group_indexer_side["Indexer: writing and merging"]
+  node_index_writer{{"IndexWriter<br/>[index_writer.rs]"}}
+  node_delete_queue["DeleteQueue<br/>[delete_queue.rs]"]
+  node_segment_writer["SegmentWriter<br/>[segment_writer.rs]"]
+  node_segment_manager["SegmentManager<br/>[segment_manager.rs]"]
+  node_log_merge_policy["LogMergePolicy"]
+  node_merger["IndexMerger<br/>[merger.rs]"]
+end
+
+subgraph group_storage_side["Storage: directories and doc store"]
+  node_directory_trait["Directory &#40;trait&#41;<br/>[directory.rs]"]
+  node_mmap_directory["MmapDirectory<br/>[mod.rs]"]
+  node_ram_directory["RamDirectory<br/>[ram_directory.rs]"]
+  node_store_writer["StoreWriter<br/>[writer.rs]"]
+  node_store_reader["StoreReader<br/>[reader.rs]"]
+end
+
+subgraph group_query_side["Querying: parse, score, collect"]
+  node_query_trait["Query &#40;trait&#41;<br/>[query.rs]"]
+  node_query_parser{{"QueryParser<br/>[query_parser.rs]"}}
+  node_boolean_query["BooleanQuery<br/>[boolean_query.rs]"]
+  node_term_query["TermQuery<br/>[term_query.rs]"]
+  node_bm25["Bm25Weight<br/>[bm25.rs]"]
+  node_scorer_trait["Scorer &#40;trait&#41;<br/>[scorer.rs]"]
+  node_collector_trait["Collector &#40;trait&#41;<br/>[mod.rs]"]
+  node_top_docs["TopDocs"]
+end
+
+subgraph group_lexicon_side["Inverted index: postings and term dictionary"]
+  node_postings_writer["PostingsWriter<br/>[postings_writer.rs]"]
+  node_term_info["TermInfo<br/>[term_info.rs]"]
+  node_termdict["Term dictionary<br/>[mod.rs]"]
+  node_inverted_index_serializer["InvertedIndexSerializer<br/>[serializer.rs]"]
+  node_inverted_index_reader["InvertedIndexReader"]
+end
+
+subgraph group_text_side["Text processing"]
+  node_tokenizer_manager["TokenizerManager"]
+  node_text_analyzer["TextAnalyzer<br/>[tokenizer.rs]"]
+end
+
+node_schema_builder -->|"build&#40;&#41;"| node_schema
+node_schema -->|"one FieldType per field"| node_field_type
+node_schema -->|"field existence + types checked"| node_query_parser
+node_schema -->|"default_en_text etc."| node_tokenizer_manager
+node_tokenizer_manager -->|"get&#40;name&#41; -&gt; analyzer"| node_text_analyzer
+node_schema -->|"schema frozen into Index"| node_index
+node_index -->|"writer&#40;overall_budget&#41;"| node_index_writer
+node_index -->|"reader&#40;&#41;"| node_index_reader
+node_index -->|"backed by a Directory"| node_directory_trait
+node_index_writer -->|"delete_term enqueued"| node_delete_queue
+node_index_writer -->|"add_document routed to a thread"| node_segment_writer
+node_index_writer -->|"commit&#40;entries&#41;"| node_segment_manager
+node_delete_queue -->|"deletes applied per commit"| node_segment_manager
+node_segment_manager -->|"tracks SegmentEntry state"| node_segment
+node_segment_manager -->|"candidates below target count"| node_log_merge_policy
+node_log_merge_policy -->|"MergeCandidate list"| node_merger
+node_index_writer -->|"spawns merge tasks"| node_merger
+node_merger -->|"writes merged segment"| node_segment
+node_segment_writer -->|"tokenizes field values"| node_text_analyzer
+node_segment_writer -->|"invert terms per field"| node_postings_writer
+node_postings_writer -->|"records doc freq + offsets"| node_term_info
+node_term_info -->|"stored in term info store"| node_termdict
+node_segment_writer -->|"seal batch to disk"| node_inverted_index_serializer
+node_inverted_index_serializer -->|"writes .idx postings"| node_segment
+node_segment_writer -->|"stored fields serialized"| node_store_writer
+node_store_writer -->|"writes .store"| node_segment
+node_index_reader -->|"one reader per live segment"| node_segment_reader
+node_index_reader -->|"searcher&#40;&#41; borrows snapshot"| node_searcher
+node_segment_reader -->|"opens component files"| node_segment
+node_segment_reader -->|"inverted_index&#40;field&#41;"| node_inverted_index_reader
+node_segment_reader -->|"get_store_reader"| node_store_reader
+node_inverted_index_reader -->|"term dictionary lookup"| node_termdict
+node_termdict -->|"TermOrdinal -&gt; TermInfo"| node_term_info
+node_query_parser -->|"AND/OR/NOT composition"| node_boolean_query
+node_query_parser -->|"leaf terms"| node_term_query
+node_boolean_query -->|"implements"| node_query_trait
+node_term_query -->|"implements"| node_query_trait
+node_term_query -->|"BM25 scoring"| node_bm25
+node_bm25 -->|"Bm25Scorer per segment"| node_scorer_trait
+node_boolean_query -->|"union / intersection cursors"| node_scorer_trait
+node_searcher -->|"iterate segments"| node_segment_reader
+node_searcher -->|"search&#40;query, collector&#41;"| node_collector_trait
+node_top_docs -->|"implements"| node_collector_trait
+node_searcher -.->|"retrieve stored docs"| node_store_reader
+node_store_reader -->|"reads .store blocks"| node_segment
+node_directory_trait -->|"impl"| node_mmap_directory
+node_directory_trait -->|"impl"| node_ram_directory
+
+click node_schema_builder "https://github.com/quickwit-oss/tantivy/blob/main/src/schema/schema.rs"
+click node_schema "https://github.com/quickwit-oss/tantivy/blob/main/src/schema/schema.rs"
+click node_field_type "https://github.com/quickwit-oss/tantivy/blob/main/src/schema/field_type.rs"
+click node_index "https://github.com/quickwit-oss/tantivy/blob/main/src/index/index.rs"
+click node_segment "https://github.com/quickwit-oss/tantivy/blob/main/src/index/segment.rs"
+click node_segment_reader "https://github.com/quickwit-oss/tantivy/blob/main/src/index/segment_reader.rs"
+click node_searcher "https://github.com/quickwit-oss/tantivy/blob/main/src/core/searcher.rs"
+click node_index_reader "https://github.com/quickwit-oss/tantivy/blob/main/src/reader/mod.rs"
+click node_index_writer "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/index_writer.rs"
+click node_delete_queue "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/delete_queue.rs"
+click node_segment_writer "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/segment_writer.rs"
+click node_segment_manager "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/segment_manager.rs"
+click node_log_merge_policy "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/log_merge_policy.rs"
+click node_merger "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/merger.rs"
+click node_directory_trait "https://github.com/quickwit-oss/tantivy/blob/main/src/directory/directory.rs"
+click node_mmap_directory "https://github.com/quickwit-oss/tantivy/blob/main/src/directory/mmap_directory/mod.rs"
+click node_ram_directory "https://github.com/quickwit-oss/tantivy/blob/main/src/directory/ram_directory.rs"
+click node_store_writer "https://github.com/quickwit-oss/tantivy/blob/main/src/store/writer.rs"
+click node_store_reader "https://github.com/quickwit-oss/tantivy/blob/main/src/store/reader.rs"
+click node_query_trait "https://github.com/quickwit-oss/tantivy/blob/main/src/query/query.rs"
+click node_query_parser "https://github.com/quickwit-oss/tantivy/blob/main/src/query/query_parser/query_parser.rs"
+click node_boolean_query "https://github.com/quickwit-oss/tantivy/blob/main/src/query/boolean_query/boolean_query.rs"
+click node_term_query "https://github.com/quickwit-oss/tantivy/blob/main/src/query/term_query/term_query.rs"
+click node_bm25 "https://github.com/quickwit-oss/tantivy/blob/main/src/query/bm25.rs"
+click node_scorer_trait "https://github.com/quickwit-oss/tantivy/blob/main/src/query/scorer.rs"
+click node_collector_trait "https://github.com/quickwit-oss/tantivy/blob/main/src/collector/mod.rs"
+click node_top_docs "https://github.com/quickwit-oss/tantivy/blob/main/src/collector/top_score_collector.rs"
+click node_postings_writer "https://github.com/quickwit-oss/tantivy/blob/main/src/postings/postings_writer.rs"
+click node_term_info "https://github.com/quickwit-oss/tantivy/blob/main/src/postings/term_info.rs"
+click node_termdict "https://github.com/quickwit-oss/tantivy/blob/main/src/termdict/mod.rs"
+click node_inverted_index_serializer "https://github.com/quickwit-oss/tantivy/blob/main/src/postings/serializer.rs"
+click node_inverted_index_reader "https://github.com/quickwit-oss/tantivy/blob/main/src/index/inverted_index_reader.rs"
+click node_tokenizer_manager "https://github.com/quickwit-oss/tantivy/blob/main/src/tokenizer/tokenizer_manager.rs"
+click node_text_analyzer "https://github.com/quickwit-oss/tantivy/blob/main/src/tokenizer/tokenizer.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_schema_builder,node_schema,node_field_type,node_tokenizer_manager,node_text_analyzer toneBlue
+class node_index,node_segment,node_segment_reader,node_searcher,node_index_reader toneAmber
+class node_index_writer,node_delete_queue,node_segment_writer,node_segment_manager,node_log_merge_policy,node_merger toneMint
+class node_directory_trait,node_mmap_directory,node_ram_directory,node_store_writer,node_store_reader toneRose
+class node_query_trait,node_query_parser,node_boolean_query,node_term_query,node_bm25,node_scorer_trait,node_collector_trait,node_top_docs toneIndigo
+class node_postings_writer,node_term_info,node_termdict,node_inverted_index_serializer,node_inverted_index_reader toneTeal
