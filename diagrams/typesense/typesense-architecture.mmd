@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_http["HTTP Layer"]
+  node_routes{{"master_server_routes"}}
+  node_http_server["HttpServer<br/>[http_server.cpp]"]
+  node_server_utils["run_server"]
+  node_get_search["get_search<br/>[core_api.cpp]"]
+  node_post_add_document["post_add_document<br/>[core_api.cpp]"]
+  node_post_create_collection["post_create_collection<br/>[core_api.cpp]"]
+end
+
+subgraph group_replication["Replication &amp; Write Path"]
+  node_batched_indexer["BatchedIndexer"]
+  node_raft_state{{"ReplicationState::write<br/>[raft_server.cpp]"}}
+  node_raft_apply["ReplicationState::on_apply<br/>[raft_server.cpp]"]
+  node_config["Config<br/>[tsconfig.h]"]
+end
+
+subgraph group_collections["Collection Layer"]
+  node_collection_manager["CollectionManager"]
+  node_coll_mgr_search["CollectionManager::do_search"]
+  node_collection_add["Collection::add<br/>[collection.cpp]"]
+  node_batch_index_in_memory["batch_index_in_memory<br/>[collection.cpp]"]
+  node_collection_search["Collection::search<br/>[collection.cpp]"]
+  node_run_search_with_lock["Collection::run_search_with_lock<br/>[collection.cpp]"]
+end
+
+subgraph group_search["Search Execution"]
+  node_index_ctor{{"Index::Index<br/>[index.cpp]"}}
+  node_validate_preprocess["Index::batch_validate_and_preprocess<br/>[index.cpp]"]
+  node_batch_memory_index["Index::batch_memory_index<br/>[index.cpp]"]
+  node_index_run_search{{"Index::run_search<br/>[index.cpp]"}}
+  node_index_search["Index::search<br/>[index.cpp]"]
+  node_search_across_fields["Index::search_across_fields<br/>[index.cpp]"]
+  node_search_all_candidates["Index::search_all_candidates<br/>[index.cpp]"]
+  node_search_wildcard["Index::search_wildcard<br/>[index.cpp]"]
+  node_do_facets["Index::do_facets<br/>[index.cpp]"]
+  node_index_remove["Index::remove<br/>[index.cpp]"]
+end
+
+subgraph group_query["Query Parsing"]
+  node_filter_parse["filter::parse_filter_query<br/>[filter.cpp]"]
+  node_vector_parse["VectorQueryOps::parse_vector_query_str"]
+  node_curation_parse["curation_t::parse<br/>[curation.cpp]"]
+  node_synonym_add["SynonymIndex::add_synonym<br/>[synonym_index.cpp]"]
+  node_field_parse["field::json_field_to_field<br/>[field.cpp]"]
+end
+
+subgraph group_storage["Storage Structures"]
+  node_art["art_search<br/>[art.h]"]
+  node_topster["Topster<br/>[topster.h]"]
+  node_store[("Store<br/>[store.h]")]
+end
+
+node_routes -->|"route table"| node_http_server
+node_server_utils -->|"starts"| node_http_server
+node_config -->|"runtime settings"| node_server_utils
+node_http_server -->|"GET search"| node_get_search
+node_http_server -->|"POST document"| node_post_add_document
+node_http_server -->|"POST collections"| node_post_create_collection
+node_post_create_collection -->|"schema validation"| node_field_parse
+node_post_add_document -->|"enqueue"| node_batched_indexer
+node_batched_indexer -->|"batched proposal"| node_raft_state
+node_raft_state -->|"committed log"| node_raft_apply
+node_raft_apply -->|"index documents"| node_collection_add
+node_raft_apply -->|"schema ops"| node_collection_manager
+node_get_search -->|"params"| node_coll_mgr_search
+node_coll_mgr_search -->|"resolve name"| node_collection_manager
+node_coll_mgr_search -->|"delegate"| node_collection_search
+node_collection_add -->|"validate &amp; insert"| node_batch_index_in_memory
+node_batch_index_in_memory -->|"pre-validate"| node_validate_preprocess
+node_validate_preprocess -->|"insert"| node_batch_memory_index
+node_batch_memory_index -->|"uses structures"| node_index_ctor
+node_batch_memory_index -->|"persist raw doc"| node_store
+node_collection_search -->|"apply overrides"| node_curation_parse
+node_collection_search -->|"locked execution"| node_run_search_with_lock
+node_run_search_with_lock -->|"call"| node_index_run_search
+node_index_run_search -->|"filter_by"| node_filter_parse
+node_index_run_search -->|"vector clause"| node_vector_parse
+node_index_run_search -->|"field queries"| node_index_search
+node_index_search -->|"union fields"| node_search_across_fields
+node_index_search -->|"token expansion"| node_search_all_candidates
+node_index_run_search -->|"empty query"| node_search_wildcard
+node_index_run_search -->|"facet counts"| node_do_facets
+node_search_all_candidates -->|"trie scan"| node_art
+node_index_search -->|"top-K heap"| node_topster
+node_index_remove -->|"delete key"| node_store
+
+click node_routes "https://github.com/typesense/typesense/blob/v31/src/main/typesense_server.cpp"
+click node_http_server "https://github.com/typesense/typesense/blob/v31/src/http_server.cpp"
+click node_server_utils "https://github.com/typesense/typesense/blob/v31/src/typesense_server_utils.cpp"
+click node_get_search "https://github.com/typesense/typesense/blob/v31/src/core_api.cpp"
+click node_post_add_document "https://github.com/typesense/typesense/blob/v31/src/core_api.cpp"
+click node_post_create_collection "https://github.com/typesense/typesense/blob/v31/src/core_api.cpp"
+click node_batched_indexer "https://github.com/typesense/typesense/blob/v31/src/batched_indexer.cpp"
+click node_raft_state "https://github.com/typesense/typesense/blob/v31/src/raft_server.cpp"
+click node_raft_apply "https://github.com/typesense/typesense/blob/v31/src/raft_server.cpp"
+click node_config "https://github.com/typesense/typesense/blob/v31/include/tsconfig.h"
+click node_collection_manager "https://github.com/typesense/typesense/blob/v31/src/collection_manager.cpp"
+click node_coll_mgr_search "https://github.com/typesense/typesense/blob/v31/src/collection_manager.cpp"
+click node_collection_add "https://github.com/typesense/typesense/blob/v31/src/collection.cpp"
+click node_batch_index_in_memory "https://github.com/typesense/typesense/blob/v31/src/collection.cpp"
+click node_collection_search "https://github.com/typesense/typesense/blob/v31/src/collection.cpp"
+click node_run_search_with_lock "https://github.com/typesense/typesense/blob/v31/src/collection.cpp"
+click node_index_ctor "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_validate_preprocess "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_batch_memory_index "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_index_run_search "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_index_search "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_search_across_fields "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_search_all_candidates "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_search_wildcard "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_do_facets "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_index_remove "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_filter_parse "https://github.com/typesense/typesense/blob/v31/src/filter.cpp"
+click node_vector_parse "https://github.com/typesense/typesense/blob/v31/src/vector_query_ops.cpp"
+click node_curation_parse "https://github.com/typesense/typesense/blob/v31/src/curation.cpp"
+click node_synonym_add "https://github.com/typesense/typesense/blob/v31/src/synonym_index.cpp"
+click node_field_parse "https://github.com/typesense/typesense/blob/v31/src/field.cpp"
+click node_art "https://github.com/typesense/typesense/blob/v31/include/art.h"
+click node_topster "https://github.com/typesense/typesense/blob/v31/include/topster.h"
+click node_store "https://github.com/typesense/typesense/blob/v31/include/store.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_routes,node_http_server,node_server_utils,node_get_search,node_post_add_document,node_post_create_collection toneBlue
+class node_batched_indexer,node_raft_state,node_raft_apply,node_config toneAmber
+class node_collection_manager,node_coll_mgr_search,node_collection_add,node_batch_index_in_memory,node_collection_search,node_run_search_with_lock toneMint
+class node_index_ctor,node_validate_preprocess,node_batch_memory_index,node_index_run_search,node_index_search,node_search_across_fields,node_search_all_candidates,node_search_wildcard,node_do_facets,node_index_remove toneRose
+class node_filter_parse,node_vector_parse,node_curation_parse,node_synonym_add,node_field_parse toneIndigo
+class node_art,node_topster,node_store toneTeal

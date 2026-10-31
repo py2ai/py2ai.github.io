@@ -1,0 +1,62 @@
+flowchart TD
+
+subgraph group_api["HTTP API"]
+  node_routes{{"master_server_routes"}}
+  node_http_server["HttpServer<br/>[http_server.cpp]"]
+  node_core_api["REST handlers<br/>[core_api.cpp]"]
+end
+
+subgraph group_cluster["Cluster &amp; Write Path"]
+  node_batched_indexer["BatchedIndexer"]
+  node_raft_state{{"ReplicationState<br/>[raft_server.cpp]"}}
+  node_tsconfig["Config<br/>[tsconfig.h]"]
+end
+
+subgraph group_collections["Collections"]
+  node_collection_manager["CollectionManager"]
+  node_collection["Collection<br/>[collection.cpp]"]
+end
+
+subgraph group_engine["Index &amp; Search"]
+  node_index{{"Index<br/>[index.cpp]"}}
+  node_art["ART trie<br/>[art.h]"]
+  node_store[("Store &#40;RocksDB&#41;<br/>[store.h]")]
+end
+
+node_routes -->|"registers endpoints"| node_http_server
+node_http_server -->|"dispatches requests"| node_core_api
+node_core_api -->|"writes via enqueue"| node_batched_indexer
+node_batched_indexer -->|"RAFT log"| node_raft_state
+node_raft_state -->|"on_apply applies entries"| node_collection
+node_core_api -->|"search requests"| node_collection_manager
+node_tsconfig -->|"listen address &amp; ports"| node_http_server
+node_tsconfig -->|"nodes &amp; data dir"| node_raft_state
+node_collection_manager -->|"resolves by name"| node_collection
+node_collection -->|"search under read lock"| node_index
+node_collection -->|"persist raw documents"| node_store
+node_index -->|"token lookup"| node_art
+node_index -->|"fetch stored docs"| node_store
+
+click node_routes "https://github.com/typesense/typesense/blob/v31/src/main/typesense_server.cpp"
+click node_http_server "https://github.com/typesense/typesense/blob/v31/src/http_server.cpp"
+click node_core_api "https://github.com/typesense/typesense/blob/v31/src/core_api.cpp"
+click node_batched_indexer "https://github.com/typesense/typesense/blob/v31/src/batched_indexer.cpp"
+click node_raft_state "https://github.com/typesense/typesense/blob/v31/src/raft_server.cpp"
+click node_collection_manager "https://github.com/typesense/typesense/blob/v31/src/collection_manager.cpp"
+click node_collection "https://github.com/typesense/typesense/blob/v31/src/collection.cpp"
+click node_index "https://github.com/typesense/typesense/blob/v31/src/index.cpp"
+click node_art "https://github.com/typesense/typesense/blob/v31/include/art.h"
+click node_store "https://github.com/typesense/typesense/blob/v31/include/store.h"
+click node_tsconfig "https://github.com/typesense/typesense/blob/v31/include/tsconfig.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_routes,node_http_server,node_core_api toneBlue
+class node_batched_indexer,node_raft_state,node_tsconfig toneAmber
+class node_collection_manager,node_collection toneMint
+class node_index,node_art,node_store toneRose
