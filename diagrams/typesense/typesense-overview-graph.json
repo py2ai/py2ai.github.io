@@ -1,0 +1,39 @@
+{
+  "owner": "typesense",
+  "repo": "typesense",
+  "branch": "v31",
+  "groups": [
+    {"id": "api", "name": "HTTP API", "label": "HTTP API"},
+    {"id": "cluster", "name": "Cluster & Write Path", "label": "Cluster & Write Path"},
+    {"id": "collections", "name": "Collections", "label": "Collections"},
+    {"id": "engine", "name": "Index & Search", "label": "Index & Search"}
+  ],
+  "nodes": [
+    {"id": "routes", "label": "master_server_routes", "file": "typesense_server.cpp", "path": "src/main/typesense_server.cpp", "group": "HTTP API", "groupId": "api", "shape": "hexagon", "desc": "Registers every REST endpoint on startup (L22)"},
+    {"id": "http_server", "label": "HttpServer", "file": "http_server.cpp", "path": "src/http_server.cpp", "group": "HTTP API", "groupId": "api", "shape": "box", "desc": "h2o-based async HTTP listener and dispatcher (L233)"},
+    {"id": "core_api", "label": "REST handlers", "file": "core_api.cpp", "path": "src/core_api.cpp", "group": "HTTP API", "groupId": "api", "shape": "box", "desc": "get_search / post_add_document / post_create_collection (L639)"},
+    {"id": "batched_indexer", "label": "BatchedIndexer", "file": "batched_indexer.cpp", "path": "src/batched_indexer.cpp", "group": "Cluster & Write Path", "groupId": "cluster", "shape": "box", "desc": "Coalesces concurrent writes into batched RAFT log entries (L205)"},
+    {"id": "raft_state", "label": "ReplicationState", "file": "raft_server.cpp", "path": "src/raft_server.cpp", "group": "Cluster & Write Path", "groupId": "cluster", "shape": "hexagon", "desc": "braft state machine: write, replicate, on_apply (L540)"},
+    {"id": "collection_manager", "label": "CollectionManager", "file": "collection_manager.cpp", "path": "src/collection_manager.cpp", "group": "Collections", "groupId": "collections", "shape": "box", "desc": "Registry of collections; do_search fan-out (L3275)"},
+    {"id": "collection", "label": "Collection", "file": "collection.cpp", "path": "src/collection.cpp", "group": "Collections", "groupId": "collections", "shape": "box", "desc": "add (L996) and search (L3552) orchestration per collection"},
+    {"id": "index", "label": "Index", "file": "index.cpp", "path": "src/index.cpp", "group": "Index & Search", "groupId": "engine", "shape": "hexagon", "desc": "In-memory inverted index; run_search entry (L2492)"},
+    {"id": "art", "label": "ART trie", "file": "art.h", "path": "include/art.h", "group": "Index & Search", "groupId": "engine", "shape": "document", "desc": "Adaptive radix tree token index with fuzzy search (L220)"},
+    {"id": "store", "label": "Store (RocksDB)", "file": "store.h", "path": "include/store.h", "group": "Index & Search", "groupId": "engine", "shape": "database", "desc": "Durable key-value persistence of raw documents (L54)"},
+    {"id": "tsconfig", "label": "Config", "file": "tsconfig.h", "path": "include/tsconfig.h", "group": "Cluster & Write Path", "groupId": "cluster", "shape": "box", "desc": "CLI/env/file configuration for data dir, ports, API key (L11)"}
+  ],
+  "edges": [
+    {"from": "routes", "to": "http_server", "label": "registers endpoints"},
+    {"from": "http_server", "to": "core_api", "label": "dispatches requests"},
+    {"from": "core_api", "to": "batched_indexer", "label": "writes via enqueue"},
+    {"from": "batched_indexer", "to": "raft_state", "label": "RAFT log"},
+    {"from": "raft_state", "to": "collection", "label": "on_apply applies entries"},
+    {"from": "core_api", "to": "collection_manager", "label": "search requests"},
+    {"from": "tsconfig", "to": "http_server", "label": "listen address & ports"},
+    {"from": "tsconfig", "to": "raft_state", "label": "nodes & data dir"},
+    {"from": "collection_manager", "to": "collection", "label": "resolves by name"},
+    {"from": "collection", "to": "index", "label": "search under read lock"},
+    {"from": "collection", "to": "store", "label": "persist raw documents"},
+    {"from": "index", "to": "art", "label": "token lookup"},
+    {"from": "index", "to": "store", "label": "fetch stored docs"}
+  ]
+}
