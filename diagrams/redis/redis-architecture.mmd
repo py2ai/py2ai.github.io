@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_runtime_core["Runtime core &#40;server.c / ae.c&#41;"]
+  node_main["main&#40;&#41;<br/>[server.c]"]
+  node_server_cron["serverCron<br/>[server.c]"]
+  node_before_sleep["beforeSleep<br/>[server.c]"]
+  node_dispatch["processCommand<br/>[server.c]"]
+  node_propagate["propagateNow<br/>[server.c]"]
+  node_ae_loop{{"aeMain<br/>[ae.c]"}}
+  node_ae_events["aeProcessEvents<br/>[ae.c]"]
+  node_bio_jobs{{"bioProcessBackgroundJobs<br/>[bio.c]"}}
+end
+
+subgraph group_client_network["Client networking &#40;networking.c&#41;"]
+  node_read_client["readQueryFromClient<br/>[networking.c]"]
+  node_parse_input["processInputBuffer<br/>[networking.c]"]
+  node_write_client["writeToClient<br/>[networking.c]"]
+end
+
+subgraph group_data_types["Data type commands &#40;t_*.c&#41;"]
+  node_set_cmd["setCommand<br/>[t_string.c]"]
+  node_get_cmd["getCommand<br/>[t_string.c]"]
+  node_hset_cmd["hsetCommand<br/>[t_hash.c]"]
+  node_hget_cmd["hgetCommand<br/>[t_hash.c]"]
+  node_hgetall_cmd["genericHgetallCommand<br/>[t_hash.c]"]
+  node_zadd_gen["zaddGenericCommand<br/>[t_zset.c]"]
+  node_zrange_gen["zrangeGenericCommand<br/>[t_zset.c]"]
+  node_zrank_gen["zrankGenericCommand<br/>[t_zset.c]"]
+  node_lpush_cmd["lpushCommand<br/>[t_list.c]"]
+  node_blpop_cmd["blpopCommand<br/>[t_list.c]"]
+end
+
+subgraph group_persistence["Persistence &#40;rdb.c / aof.c&#41;"]
+  node_rdb_save[("rdbSaveBackground<br/>[rdb.c]")]
+  node_rdb_load[("rdbLoad<br/>[rdb.c]")]
+  node_aof_feed[("feedAppendOnlyFile<br/>[aof.c]")]
+  node_aof_flush[("flushAppendOnlyFile<br/>[aof.c]")]
+  node_aof_rewrite["rewriteAppendOnlyFileBackground<br/>[aof.c]"]
+end
+
+subgraph group_replication["Replication &#40;replication.c&#41;"]
+  node_feed_slaves["replicationFeedSlaves<br/>[replication.c]"]
+  node_sync_cmd["syncCommand<br/>[replication.c]"]
+  node_partial_resync["masterTryPartialResynchronization<br/>[replication.c]"]
+  node_full_resync["replicationSetupSlaveForFullResync<br/>[replication.c]"]
+end
+
+subgraph group_cluster["Cluster &#40;cluster.c / cluster_legacy.c&#41;"]
+  node_cluster_cron["clusterCron<br/>[cluster_legacy.c]"]
+  node_ping_peers["clusterSendPing<br/>[cluster_legacy.c]"]
+  node_process_packet["clusterProcessPacket<br/>[cluster_legacy.c]"]
+  node_slots_update["clusterUpdateSlotsConfigWith<br/>[cluster_legacy.c]"]
+end
+
+node_main -->|"runs the event loop"| node_ae_loop
+node_main -->|"registers timer callback"| node_server_cron
+node_main -->|"restore RDB at startup"| node_rdb_load
+node_ae_loop -->|"one loop iteration"| node_ae_events
+node_ae_events -->|"readable socket"| node_read_client
+node_ae_events -->|"writable socket"| node_write_client
+node_read_client -->|"query buffer grows"| node_parse_input
+node_parse_input -->|"execute ready command"| node_dispatch
+node_dispatch -->|"SET"| node_set_cmd
+node_dispatch -->|"GET"| node_get_cmd
+node_dispatch -->|"HSET"| node_hset_cmd
+node_dispatch -->|"HGET"| node_hget_cmd
+node_dispatch -->|"HGETALL"| node_hgetall_cmd
+node_dispatch -->|"ZADD"| node_zadd_gen
+node_dispatch -->|"ZRANGE"| node_zrange_gen
+node_dispatch -->|"ZRANK"| node_zrank_gen
+node_dispatch -->|"LPUSH"| node_lpush_cmd
+node_dispatch -->|"BLPOP"| node_blpop_cmd
+node_dispatch -->|"BGSAVE"| node_rdb_save
+node_dispatch -->|"SYNC / PSYNC"| node_sync_cmd
+node_propagate -->|"write command to log"| node_aof_feed
+node_propagate -->|"replication stream"| node_feed_slaves
+node_before_sleep -->|"flush each cycle"| node_aof_flush
+node_before_sleep -->|"pending replies"| node_write_client
+node_aof_feed -->|"buffered appends"| node_aof_flush
+node_aof_flush -.->|"deferred fsync job"| node_bio_jobs
+node_aof_flush -.->|"oversize triggers rewrite"| node_aof_rewrite
+node_server_cron -.->|"save-point checks"| node_rdb_save
+node_server_cron -.->|"gossip ticks"| node_cluster_cron
+node_sync_cmd -->|"offset in backlog"| node_partial_resync
+node_sync_cmd -->|"fallback full sync"| node_full_resync
+node_feed_slaves -.->|"queued on repl links"| node_write_client
+node_cluster_cron -->|"PING / MEET gossip"| node_ping_peers
+node_ping_peers -->|"cluster bus messages"| node_process_packet
+node_process_packet -->|"apply new slot config"| node_slots_update
+
+click node_main "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_server_cron "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_before_sleep "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_dispatch "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_propagate "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_ae_loop "https://github.com/redis/redis/blob/unstable/src/ae.c"
+click node_ae_events "https://github.com/redis/redis/blob/unstable/src/ae.c"
+click node_bio_jobs "https://github.com/redis/redis/blob/unstable/src/bio.c"
+click node_read_client "https://github.com/redis/redis/blob/unstable/src/networking.c"
+click node_parse_input "https://github.com/redis/redis/blob/unstable/src/networking.c"
+click node_write_client "https://github.com/redis/redis/blob/unstable/src/networking.c"
+click node_set_cmd "https://github.com/redis/redis/blob/unstable/src/t_string.c"
+click node_get_cmd "https://github.com/redis/redis/blob/unstable/src/t_string.c"
+click node_hset_cmd "https://github.com/redis/redis/blob/unstable/src/t_hash.c"
+click node_hget_cmd "https://github.com/redis/redis/blob/unstable/src/t_hash.c"
+click node_hgetall_cmd "https://github.com/redis/redis/blob/unstable/src/t_hash.c"
+click node_zadd_gen "https://github.com/redis/redis/blob/unstable/src/t_zset.c"
+click node_zrange_gen "https://github.com/redis/redis/blob/unstable/src/t_zset.c"
+click node_zrank_gen "https://github.com/redis/redis/blob/unstable/src/t_zset.c"
+click node_lpush_cmd "https://github.com/redis/redis/blob/unstable/src/t_list.c"
+click node_blpop_cmd "https://github.com/redis/redis/blob/unstable/src/t_list.c"
+click node_rdb_save "https://github.com/redis/redis/blob/unstable/src/rdb.c"
+click node_rdb_load "https://github.com/redis/redis/blob/unstable/src/rdb.c"
+click node_aof_feed "https://github.com/redis/redis/blob/unstable/src/aof.c"
+click node_aof_flush "https://github.com/redis/redis/blob/unstable/src/aof.c"
+click node_aof_rewrite "https://github.com/redis/redis/blob/unstable/src/aof.c"
+click node_feed_slaves "https://github.com/redis/redis/blob/unstable/src/replication.c"
+click node_sync_cmd "https://github.com/redis/redis/blob/unstable/src/replication.c"
+click node_partial_resync "https://github.com/redis/redis/blob/unstable/src/replication.c"
+click node_full_resync "https://github.com/redis/redis/blob/unstable/src/replication.c"
+click node_cluster_cron "https://github.com/redis/redis/blob/unstable/src/cluster_legacy.c"
+click node_ping_peers "https://github.com/redis/redis/blob/unstable/src/cluster_legacy.c"
+click node_process_packet "https://github.com/redis/redis/blob/unstable/src/cluster_legacy.c"
+click node_slots_update "https://github.com/redis/redis/blob/unstable/src/cluster_legacy.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_server_cron,node_before_sleep,node_dispatch,node_propagate,node_ae_loop,node_ae_events,node_bio_jobs toneBlue
+class node_read_client,node_parse_input,node_write_client toneAmber
+class node_set_cmd,node_get_cmd,node_hset_cmd,node_hget_cmd,node_hgetall_cmd,node_zadd_gen,node_zrange_gen,node_zrank_gen,node_lpush_cmd,node_blpop_cmd toneMint
+class node_rdb_save,node_rdb_load,node_aof_feed,node_aof_flush,node_aof_rewrite toneRose
+class node_feed_slaves,node_sync_cmd,node_partial_resync,node_full_resync toneIndigo
+class node_cluster_cron,node_ping_peers,node_process_packet,node_slots_update toneTeal

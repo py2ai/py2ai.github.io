@@ -1,0 +1,66 @@
+flowchart TD
+
+subgraph group_runtime_core["Runtime core &#40;server.c / ae.c&#41;"]
+  node_main_loop["main&#40;&#41;<br/>[server.c]"]
+  node_ae_loop{{"aeMain event loop<br/>[ae.c]"}}
+  node_dispatch["processCommand<br/>[server.c]"]
+end
+
+subgraph group_client_network["Client networking &#40;networking.c&#41;"]
+  node_client_io["readQueryFromClient<br/>[networking.c]"]
+end
+
+subgraph group_data_types["Data type commands &#40;t_*.c&#41;"]
+  node_strings["String commands<br/>[t_string.c]"]
+  node_hashes["Hash commands<br/>[t_hash.c]"]
+  node_zsets["Sorted-set commands<br/>[t_zset.c]"]
+  node_lists["List commands<br/>[t_list.c]"]
+end
+
+subgraph group_persistence["Persistence &#40;rdb.c / aof.c&#41;"]
+  node_rdb[("RDB snapshots<br/>[rdb.c]")]
+  node_aof[("AOF log<br/>[aof.c]")]
+end
+
+subgraph group_replication_cluster["Replication &#40;replication.c&#41;"]
+  node_replication["Replication<br/>[replication.c]"]
+end
+
+node_main_loop -->|"boots server, runs loop"| node_ae_loop
+node_main_loop -->|"restore dataset on boot"| node_rdb
+node_ae_loop -->|"fires on readable sockets"| node_client_io
+node_ae_loop -.->|"beforeSleep flush"| node_aof
+node_client_io -->|"parsed RESP commands"| node_dispatch
+node_dispatch -->|"SET GET INCR"| node_strings
+node_dispatch -->|"HSET HGET HGETALL"| node_hashes
+node_dispatch -->|"ZADD ZRANGE ZRANK"| node_zsets
+node_dispatch -->|"LPUSH BLPOP"| node_lists
+node_dispatch -->|"SAVE BGSAVE"| node_rdb
+node_dispatch -->|"propagated writes"| node_aof
+node_dispatch -->|"SYNC / PSYNC"| node_replication
+node_main_loop -.->|"cron keeps repl link alive"| node_replication
+
+click node_main_loop "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_ae_loop "https://github.com/redis/redis/blob/unstable/src/ae.c"
+click node_dispatch "https://github.com/redis/redis/blob/unstable/src/server.c"
+click node_client_io "https://github.com/redis/redis/blob/unstable/src/networking.c"
+click node_strings "https://github.com/redis/redis/blob/unstable/src/t_string.c"
+click node_hashes "https://github.com/redis/redis/blob/unstable/src/t_hash.c"
+click node_zsets "https://github.com/redis/redis/blob/unstable/src/t_zset.c"
+click node_lists "https://github.com/redis/redis/blob/unstable/src/t_list.c"
+click node_rdb "https://github.com/redis/redis/blob/unstable/src/rdb.c"
+click node_aof "https://github.com/redis/redis/blob/unstable/src/aof.c"
+click node_replication "https://github.com/redis/redis/blob/unstable/src/replication.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_loop,node_ae_loop,node_dispatch toneBlue
+class node_client_io toneAmber
+class node_strings,node_hashes,node_zsets,node_lists toneMint
+class node_rdb,node_aof toneRose
+class node_replication toneIndigo
