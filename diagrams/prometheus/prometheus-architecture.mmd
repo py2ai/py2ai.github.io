@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_entry["cmd/prometheus"]
+  node_main["main&#40;&#41;<br/>[main.go]"]
+end
+
+subgraph group_scrape["scrape/ collection"]
+  node_scrape_manager["scrape.Manager<br/>[manager.go]"]
+  node_scrape_run["Manager.Run<br/>[manager.go]"]
+  node_scrape_loop["scrapeLoop<br/>[scrape.go]"]
+  node_loop_run["scrapeLoop.run<br/>[scrape.go]"]
+  node_scrape_and_report["scrapeAndReport<br/>[scrape.go]"]
+end
+
+subgraph group_ingest["tsdb/ write path"]
+  node_db["DB<br/>[db.go]"]
+  node_db_open["Open<br/>[db.go]"]
+  node_db_appender["DB.Appender<br/>[db.go]"]
+  node_head["Head<br/>[head.go]"]
+  node_head_append["headAppender.Append<br/>[head_append.go]"]
+  node_wal_log["WL.Log<br/>[wlog.go]"]
+  node_load_wal["Head.loadWAL<br/>[head_wal.go]"]
+end
+
+subgraph group_compact["tsdb/ block lifecycle"]
+  node_db_compact["DB.Compact<br/>[db.go]"]
+  node_compactor_iface["Compactor<br/>[compact.go]"]
+  node_leveled_compactor["LeveledCompactor<br/>[compact.go]"]
+end
+
+subgraph group_promql["promql/ query engine"]
+  node_engine["Engine<br/>[engine.go]"]
+  node_new_engine["NewEngine<br/>[engine.go]"]
+  node_instant_query["NewInstantQuery<br/>[engine.go]"]
+  node_range_query["NewRangeQuery<br/>[engine.go]"]
+  node_exec_fn["Engine.exec<br/>[engine.go]"]
+  node_exec_eval["execEvalStmt<br/>[engine.go]"]
+end
+
+subgraph group_read["tsdb/ read path"]
+  node_block_reader["BlockReader<br/>[block.go]"]
+end
+
+subgraph group_rules["rules/ evaluation"]
+  node_rule_manager["rules.Manager<br/>[manager.go]"]
+  node_rule_group["Group<br/>[group.go]"]
+  node_group_eval["Group.Eval<br/>[group.go]"]
+  node_alerting_rule["AlertingRule<br/>[alerting.go]"]
+end
+
+subgraph group_webapi["web/ serving"]
+  node_web_handler["web.Handler<br/>[web.go]"]
+  node_web_run["Handler.Run<br/>[web.go]"]
+  node_api["v1 API<br/>[api.go]"]
+  node_api_query["api.query<br/>[api.go]"]
+  node_api_query_range["api.queryRange<br/>[api.go]"]
+end
+
+node_main -->|"opens TSDB storage"| node_db_open
+node_main -->|"scrape.NewManager"| node_scrape_manager
+node_main -->|"rules.NewManager"| node_rule_manager
+node_main -->|"web.New"| node_web_handler
+node_scrape_manager -->|"start goroutine"| node_scrape_run
+node_scrape_run -->|"spawn per target"| node_scrape_loop
+node_scrape_loop -->|"loop body"| node_loop_run
+node_loop_run -->|"each interval"| node_scrape_and_report
+node_scrape_and_report -->|"decoded samples"| node_db_appender
+node_db_appender -->|"delegates to head"| node_head_append
+node_head_append -->|"series into mem chunks"| node_head
+node_head_append -->|"record before ack"| node_wal_log
+node_db_open -->|"startup replay"| node_load_wal
+node_load_wal -->|"rebuilds series"| node_head
+node_db_open -->|"background loop"| node_db_compact
+node_db_compact -->|"Plan + Write"| node_compactor_iface
+node_compactor_iface -->|"default impl"| node_leveled_compactor
+node_leveled_compactor -->|"writes index + chunks"| node_block_reader
+node_web_handler -->|"mounts /api/v1"| node_api
+node_web_handler -->|"run loop"| node_web_run
+node_api -->|"GET/POST /query"| node_api_query
+node_api -->|"GET/POST /query_range"| node_api_query_range
+node_api_query -->|"one timestamp"| node_instant_query
+node_api_query_range -->|"start/end/step"| node_range_query
+node_instant_query -->|"submit"| node_exec_fn
+node_range_query -->|"submit"| node_exec_fn
+node_exec_fn -->|"evaluate AST"| node_exec_eval
+node_exec_eval -->|"querier: newest samples"| node_head
+node_exec_eval -->|"querier: old blocks"| node_block_reader
+node_rule_manager -->|"runs groups"| node_rule_group
+node_rule_group -->|"per interval"| node_group_eval
+node_group_eval -->|"rule expressions"| node_exec_fn
+node_group_eval -->|"state transitions"| node_alerting_rule
+
+click node_main "https://github.com/prometheus/prometheus/blob/main/cmd/prometheus/main.go"
+click node_scrape_manager "https://github.com/prometheus/prometheus/blob/main/scrape/manager.go"
+click node_scrape_run "https://github.com/prometheus/prometheus/blob/main/scrape/manager.go"
+click node_scrape_loop "https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go"
+click node_loop_run "https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go"
+click node_scrape_and_report "https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go"
+click node_db "https://github.com/prometheus/prometheus/blob/main/tsdb/db.go"
+click node_db_open "https://github.com/prometheus/prometheus/blob/main/tsdb/db.go"
+click node_db_appender "https://github.com/prometheus/prometheus/blob/main/tsdb/db.go"
+click node_head "https://github.com/prometheus/prometheus/blob/main/tsdb/head.go"
+click node_head_append "https://github.com/prometheus/prometheus/blob/main/tsdb/head_append.go"
+click node_wal_log "https://github.com/prometheus/prometheus/blob/main/tsdb/wlog/wlog.go"
+click node_load_wal "https://github.com/prometheus/prometheus/blob/main/tsdb/head_wal.go"
+click node_db_compact "https://github.com/prometheus/prometheus/blob/main/tsdb/db.go"
+click node_compactor_iface "https://github.com/prometheus/prometheus/blob/main/tsdb/compact.go"
+click node_leveled_compactor "https://github.com/prometheus/prometheus/blob/main/tsdb/compact.go"
+click node_block_reader "https://github.com/prometheus/prometheus/blob/main/tsdb/block.go"
+click node_engine "https://github.com/prometheus/prometheus/blob/main/promql/engine.go"
+click node_new_engine "https://github.com/prometheus/prometheus/blob/main/promql/engine.go"
+click node_instant_query "https://github.com/prometheus/prometheus/blob/main/promql/engine.go"
+click node_range_query "https://github.com/prometheus/prometheus/blob/main/promql/engine.go"
+click node_exec_fn "https://github.com/prometheus/prometheus/blob/main/promql/engine.go"
+click node_exec_eval "https://github.com/prometheus/prometheus/blob/main/promql/engine.go"
+click node_rule_manager "https://github.com/prometheus/prometheus/blob/main/rules/manager.go"
+click node_rule_group "https://github.com/prometheus/prometheus/blob/main/rules/group.go"
+click node_group_eval "https://github.com/prometheus/prometheus/blob/main/rules/group.go"
+click node_alerting_rule "https://github.com/prometheus/prometheus/blob/main/rules/alerting.go"
+click node_web_handler "https://github.com/prometheus/prometheus/blob/main/web/web.go"
+click node_web_run "https://github.com/prometheus/prometheus/blob/main/web/web.go"
+click node_api "https://github.com/prometheus/prometheus/blob/main/web/api/v1/api.go"
+click node_api_query "https://github.com/prometheus/prometheus/blob/main/web/api/v1/api.go"
+click node_api_query_range "https://github.com/prometheus/prometheus/blob/main/web/api/v1/api.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_rule_manager,node_rule_group,node_group_eval,node_alerting_rule toneBlue
+class node_scrape_manager,node_scrape_run,node_scrape_loop,node_loop_run,node_scrape_and_report,node_web_handler,node_web_run,node_api,node_api_query,node_api_query_range toneAmber
+class node_db,node_db_open,node_db_appender,node_head,node_head_append,node_wal_log,node_load_wal toneMint
+class node_db_compact,node_compactor_iface,node_leveled_compactor toneRose
+class node_engine,node_new_engine,node_instant_query,node_range_query,node_exec_fn,node_exec_eval toneIndigo
+class node_block_reader toneTeal
