@@ -1,0 +1,130 @@
+﻿flowchart TD
+
+subgraph group_producer_internals["Producer internals &#40;clients&#41;"]
+  node_kafka_producer["KafkaProducer<br/>[KafkaProducer.java]"]
+  node_record_accumulator[("RecordAccumulator")]
+  node_producer_batch["ProducerBatch<br/>[ProducerBatch.java]"]
+  node_sender["Sender<br/>[Sender.java]"]
+  node_network_client["NetworkClient<br/>[NetworkClient.java]"]
+end
+
+subgraph group_consumer_internals["Consumer internals &#40;clients&#41;"]
+  node_kafka_consumer["KafkaConsumer<br/>[KafkaConsumer.java]"]
+  node_classic_consumer["ClassicKafkaConsumer"]
+  node_async_consumer["AsyncKafkaConsumer"]
+  node_fetch_collector["FetchCollector"]
+  node_consumer_network_client["ConsumerNetworkClient"]
+end
+
+subgraph group_broker_network["Broker network &amp; handler pool"]
+  node_socket_server{{"SocketServer<br/>[SocketServer.scala]"}}
+  node_request_channel["RequestChannel"]
+  node_request_handler["KafkaRequestHandler"]
+  node_handler_pool["KafkaRequestHandlerPool"]
+end
+
+subgraph group_broker_apis["KafkaApis &amp; replication"]
+  node_kafka_apis["KafkaApis<br/>[KafkaApis.scala]"]
+  node_replica_manager["ReplicaManager"]
+  node_partition["Partition<br/>[Partition.scala]"]
+end
+
+subgraph group_storage_log["Commit log, segments &amp; indexes"]
+  node_log_manager_scala["LogManager &#40;Scala factory&#41;<br/>[LogManager.scala]"]
+  node_log_manager["LogManager &#40;Java&#41;<br/>[LogManager.java]"]
+  node_log_config["LogConfig<br/>[LogConfig.java]"]
+  node_unified_log[("UnifiedLog<br/>[UnifiedLog.java]")]
+  node_local_log["LocalLog<br/>[LocalLog.java]"]
+  node_log_segment[("LogSegment<br/>[LogSegment.java]")]
+  node_file_records["FileRecords<br/>[FileRecords.java]"]
+  node_offset_index["OffsetIndex<br/>[OffsetIndex.java]"]
+  node_time_index["TimeIndex<br/>[TimeIndex.java]"]
+  node_producer_state_manager["ProducerStateManager"]
+end
+
+subgraph group_group_coordination["Group coordinator &#40;new runtime&#41;"]
+  node_group_coordinator_service["GroupCoordinatorService"]
+  node_group_coordinator_shard["GroupCoordinatorShard"]
+  node_offset_metadata_manager["OffsetMetadataManager"]
+end
+
+node_kafka_producer -->|"doSend&#40;&#41; appends to partition batch"| node_record_accumulator
+node_record_accumulator -->|"tryAppend&#40;&#41; fills batches"| node_producer_batch
+node_record_accumulator -->|"drain&#40;&#41; ready batches"| node_sender
+node_sender -->|"sendProduceRequest&#40;&#41;"| node_network_client
+node_network_client -->|"ProduceRequest over the wire"| node_socket_server
+node_kafka_consumer -->|"delegates &#40;classic protocol&#41;"| node_classic_consumer
+node_kafka_consumer -->|"delegates &#40;KIP-848 protocol&#41;"| node_async_consumer
+node_classic_consumer -->|"collectFetch&#40;&#41;"| node_fetch_collector
+node_async_consumer -->|"collectFetch&#40;&#41;"| node_fetch_collector
+node_classic_consumer -->|"send&#40;&#41; fetch &amp; commit"| node_consumer_network_client
+node_async_consumer -->|"background fetchers"| node_consumer_network_client
+node_consumer_network_client -.->|"shared I/O layer"| node_network_client
+node_network_client -.->|"FetchRequest"| node_socket_server
+node_socket_server -->|"enqueue request"| node_request_channel
+node_request_channel -->|"bounded queue"| node_request_handler
+node_handler_pool -->|"num.io.threads workers"| node_request_handler
+node_request_handler -->|"apis.handle&#40;&#41;"| node_kafka_apis
+node_kafka_apis -->|"produce / fetch paths"| node_replica_manager
+node_replica_manager -->|"per-partition leader state"| node_partition
+node_partition -.->|"ISR &amp; acks check"| node_replica_manager
+node_replica_manager -->|"broker wires log dirs"| node_log_manager_scala
+node_log_manager_scala -->|"builds Java LogManager"| node_log_manager
+node_log_manager -->|"retention &amp; segment knobs"| node_log_config
+node_log_manager -->|"getOrCreateLog&#40;&#41;"| node_unified_log
+node_unified_log -->|"delegates local appends"| node_local_log
+node_unified_log -->|"idempotence &amp; txn state"| node_producer_state_manager
+node_local_log -->|"active segment append"| node_log_segment
+node_unified_log -->|"maybeRoll&#40;&#41; new segment"| node_log_segment
+node_log_segment -->|"append&#40;&#41; to mmap file"| node_file_records
+node_log_segment -->|"index first entry"| node_offset_index
+node_log_segment -->|"maybeAppend&#40;&#41; timestamps"| node_time_index
+node_kafka_apis -->|"JoinGroup / SyncGroup"| node_group_coordinator_service
+node_group_coordinator_service -->|"route to partition shard"| node_group_coordinator_shard
+node_group_coordinator_shard -->|"commitOffset&#40;&#41;"| node_offset_metadata_manager
+node_group_coordinator_service -.->|"assignment &amp; heartbeats"| node_kafka_consumer
+
+click node_kafka_producer "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/producer/KafkaProducer.java"
+click node_record_accumulator "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/producer/internals/RecordAccumulator.java"
+click node_producer_batch "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/producer/internals/ProducerBatch.java"
+click node_sender "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/producer/internals/Sender.java"
+click node_network_client "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/NetworkClient.java"
+click node_kafka_consumer "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/consumer/KafkaConsumer.java"
+click node_classic_consumer "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/consumer/internals/ClassicKafkaConsumer.java"
+click node_async_consumer "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AsyncKafkaConsumer.java"
+click node_fetch_collector "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/consumer/internals/FetchCollector.java"
+click node_consumer_network_client "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/clients/consumer/internals/ConsumerNetworkClient.java"
+click node_socket_server "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/network/SocketServer.scala"
+click node_request_channel "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/network/RequestChannel.scala"
+click node_request_handler "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/server/KafkaRequestHandler.scala"
+click node_handler_pool "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/server/KafkaRequestHandler.scala"
+click node_kafka_apis "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/server/KafkaApis.scala"
+click node_replica_manager "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/server/ReplicaManager.scala"
+click node_partition "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/cluster/Partition.scala"
+click node_log_manager_scala "https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/log/LogManager.scala"
+click node_log_manager "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/LogManager.java"
+click node_log_config "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/LogConfig.java"
+click node_unified_log "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/UnifiedLog.java"
+click node_local_log "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/LocalLog.java"
+click node_log_segment "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/LogSegment.java"
+click node_file_records "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/FileRecords.java"
+click node_offset_index "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/OffsetIndex.java"
+click node_time_index "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/TimeIndex.java"
+click node_producer_state_manager "https://github.com/apache/kafka/blob/trunk/storage/src/main/java/org/apache/kafka/storage/internals/log/ProducerStateManager.java"
+click node_group_coordinator_service "https://github.com/apache/kafka/blob/trunk/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupCoordinatorService.java"
+click node_group_coordinator_shard "https://github.com/apache/kafka/blob/trunk/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupCoordinatorShard.java"
+click node_offset_metadata_manager "https://github.com/apache/kafka/blob/trunk/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/OffsetMetadataManager.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_kafka_producer,node_record_accumulator,node_producer_batch,node_sender,node_network_client toneBlue
+class node_kafka_consumer,node_classic_consumer,node_async_consumer,node_fetch_collector,node_consumer_network_client toneAmber
+class node_socket_server,node_request_channel,node_request_handler,node_handler_pool toneMint
+class node_kafka_apis,node_replica_manager,node_partition toneRose
+class node_log_manager_scala,node_log_manager,node_log_config,node_unified_log,node_local_log,node_log_segment,node_file_records,node_offset_index,node_time_index,node_producer_state_manager toneIndigo
+class node_group_coordinator_service,node_group_coordinator_shard,node_offset_metadata_manager toneTeal
