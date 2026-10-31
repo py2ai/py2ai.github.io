@@ -1,0 +1,42 @@
+{
+  "owner": "prometheus",
+  "repo": "prometheus",
+  "branch": "main",
+  "groups": [
+    { "id": "entry", "name": "Entry", "label": "cmd/prometheus" },
+    { "id": "web", "name": "Web", "label": "web/ HTTP + API" },
+    { "id": "promql", "name": "PromQL", "label": "promql/ query engine" },
+    { "id": "tsdb", "name": "TSDB", "label": "tsdb/ storage" },
+    { "id": "scrape", "name": "Scrape", "label": "scrape/ collection" },
+    { "id": "rules", "name": "Rules", "label": "rules/ evaluation" }
+  ],
+  "nodes": [
+    { "id": "main", "label": "main()", "file": "main.go", "path": "cmd/prometheus/main.go", "group": "Entry", "groupId": "entry", "desc": "Bootstraps flags, loads prometheus.yml, wires and starts every component" },
+    { "id": "web_handler", "label": "web.Handler", "file": "web.go", "path": "web/web.go", "group": "Web", "groupId": "web", "desc": "HTTP server hosting the UI, /-/ reload endpoints and the v1 API" },
+    { "id": "api", "label": "v1 API", "file": "api.go", "path": "web/api/v1/api.go", "group": "Web", "groupId": "web", "desc": "REST endpoints: /query, /query_range, /series, label values" },
+    { "id": "engine", "label": "Engine", "file": "engine.go", "path": "promql/engine.go", "group": "PromQL", "groupId": "promql", "desc": "Parses PromQL into an AST and evaluates it against storage" },
+    { "id": "db", "label": "DB", "file": "db.go", "path": "tsdb/db.go", "group": "TSDB", "groupId": "tsdb", "desc": "Storage facade: opens blocks, hands out appenders and queriers" },
+    { "id": "head", "label": "Head block", "file": "head.go", "path": "tsdb/head.go", "group": "TSDB", "groupId": "tsdb", "desc": "In-memory head holding all recent samples" },
+    { "id": "wal", "label": "WAL", "file": "wlog.go", "path": "tsdb/wlog/wlog.go", "group": "TSDB", "groupId": "tsdb", "desc": "Write-ahead log: fsynced records before samples are acknowledged" },
+    { "id": "compact", "label": "LeveledCompactor", "file": "compact.go", "path": "tsdb/compact.go", "group": "TSDB", "groupId": "tsdb", "desc": "Merges head + old blocks into leveled persistent blocks" },
+    { "id": "scrape_manager", "label": "scrape.Manager", "file": "manager.go", "path": "scrape/manager.go", "group": "Scrape", "groupId": "scrape", "desc": "Tracks target pools from service discovery and spawns loops" },
+    { "id": "scrape_loop", "label": "scrapeLoop", "file": "scrape.go", "path": "scrape/scrape.go", "group": "Scrape", "groupId": "scrape", "desc": "Per-target loop: GET /metrics, decode, append samples" },
+    { "id": "rule_manager", "label": "rules.Manager", "file": "manager.go", "path": "rules/manager.go", "group": "Rules", "groupId": "rules", "desc": "Loads rule groups from config and schedules their evaluation" }
+  ],
+  "edges": [
+    { "from": "main", "to": "web_handler", "label": "serves UI + API on :9090" },
+    { "from": "web_handler", "to": "api", "label": "mounts /api/v1" },
+    { "from": "api", "to": "engine", "label": "compiles queries" },
+    { "from": "engine", "to": "db", "label": "pulls series via queriers" },
+    { "from": "main", "to": "scrape_manager", "label": "starts scrape manager" },
+    { "from": "scrape_manager", "to": "scrape_loop", "label": "one loop per target" },
+    { "from": "scrape_loop", "to": "db", "label": "appends samples" },
+    { "from": "main", "to": "rule_manager", "label": "starts rule manager" },
+    { "from": "rule_manager", "to": "engine", "label": "evaluates rule expressions" },
+    { "from": "main", "to": "db", "label": "opens local TSDB" },
+    { "from": "db", "to": "head", "label": "fresh writes land here" },
+    { "from": "head", "to": "wal", "label": "records before ack" },
+    { "from": "db", "to": "compact", "label": "background compaction" },
+    { "from": "compact", "to": "head", "label": "drains head into blocks" }
+  ]
+}
