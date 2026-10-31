@@ -1,0 +1,65 @@
+flowchart TD
+
+subgraph group_authoring["Schema authoring"]
+  node_schema_builder{{"SchemaBuilder<br/>[schema.rs]"}}
+  node_index[("Index<br/>[index.rs]")]
+end
+
+subgraph group_indexing["Indexing side"]
+  node_index_writer{{"IndexWriter<br/>[index_writer.rs]"}}
+  node_segment_writer["SegmentWriter<br/>[segment_writer.rs]"]
+  node_segment_updater["SegmentUpdater<br/>[segment_updater.rs]"]
+  node_merger["IndexMerger<br/>[merger.rs]"]
+end
+
+subgraph group_storage["On-disk storage"]
+  node_directory["Directory<br/>[directory.rs]"]
+  node_segments[("Segment files<br/>[segment.rs]")]
+end
+
+subgraph group_search["Search side"]
+  node_index_reader["IndexReader<br/>[mod.rs]"]
+  node_searcher{{"Searcher<br/>[searcher.rs]"}}
+  node_query_parser["QueryParser<br/>[query_parser.rs]"]
+  node_collector["Collector<br/>[mod.rs]"]
+end
+
+node_schema_builder -->|"build&#40;&#41; then Index::create_in_ram / open"| node_index
+node_index -->|"index.writer&#40;mem&#41; -&gt; IndexWriter"| node_index_writer
+node_index -->|"index.reader&#40;&#41; -&gt; IndexReader"| node_index_reader
+node_index_writer -->|"routes docs to per-thread writers"| node_segment_writer
+node_segment_writer -->|"commit: sealed segment"| node_segment_updater
+node_segment_updater -->|"writes files + meta.json"| node_segments
+node_index_writer -->|"background merge tasks"| node_merger
+node_merger -->|"compacts, purges deletes"| node_segments
+node_segments -->|"stored through Directory"| node_directory
+node_index_reader -.->|"reload picks up new files"| node_segments
+node_index_reader -->|"searcher&#40;&#41; snapshot"| node_searcher
+node_searcher -.->|"reads via SegmentReader"| node_segments
+node_query_parser -->|"Query -&gt; search&#40;query, collector&#41;"| node_searcher
+node_searcher -->|"collect&#40;doc, score&#41; per match"| node_collector
+
+click node_schema_builder "https://github.com/quickwit-oss/tantivy/blob/main/src/schema/schema.rs"
+click node_index "https://github.com/quickwit-oss/tantivy/blob/main/src/index/index.rs"
+click node_index_writer "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/index_writer.rs"
+click node_segment_writer "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/segment_writer.rs"
+click node_segment_updater "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/segment_updater.rs"
+click node_merger "https://github.com/quickwit-oss/tantivy/blob/main/src/indexer/merger.rs"
+click node_directory "https://github.com/quickwit-oss/tantivy/blob/main/src/directory/directory.rs"
+click node_segments "https://github.com/quickwit-oss/tantivy/blob/main/src/index/segment.rs"
+click node_index_reader "https://github.com/quickwit-oss/tantivy/blob/main/src/reader/mod.rs"
+click node_searcher "https://github.com/quickwit-oss/tantivy/blob/main/src/core/searcher.rs"
+click node_query_parser "https://github.com/quickwit-oss/tantivy/blob/main/src/query/query_parser/query_parser.rs"
+click node_collector "https://github.com/quickwit-oss/tantivy/blob/main/src/collector/mod.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_schema_builder,node_index toneBlue
+class node_index_writer,node_segment_writer,node_segment_updater,node_merger toneAmber
+class node_directory,node_segments toneMint
+class node_index_reader,node_searcher,node_query_parser,node_collector toneRose
