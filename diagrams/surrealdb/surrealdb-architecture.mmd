@@ -1,0 +1,150 @@
+flowchart TD
+
+subgraph group_cli_server["CLI &amp; Server Bootstrap"]
+  node_cli_commands["Commands enum<br/>[mod.rs]"]
+  node_server_init["start::init<br/>[start.rs]"]
+end
+
+subgraph group_http["HTTP Surface"]
+  node_http_router["community_router<br/>[mod.rs]"]
+  node_rpc_endpoint["/rpc handler<br/>[rpc.rs]"]
+  node_sql_endpoint["/sql handler<br/>[sql.rs]"]
+  node_signin_endpoint["/signin handler<br/>[signin.rs]"]
+  node_signup_endpoint["/signup handler<br/>[signup.rs]"]
+end
+
+subgraph group_rpc["RPC &amp; Auth"]
+  node_ws_session["Websocket<br/>[websocket.rs]"]
+  node_ws_live["handle_live<br/>[websocket.rs]"]
+  node_rpc_protocol["RpcProtocol trait<br/>[protocol.rs]"]
+  node_rpc_methods["Method enum<br/>[method.rs]"]
+  node_auth_signin["iam::signin<br/>[signin.rs]"]
+  node_auth_signup["iam::signup<br/>[signup.rs]"]
+end
+
+subgraph group_parse["Parser &amp; Statements"]
+  node_syn_parse["syn::parse_with_capabilities<br/>[mod.rs]"]
+  node_statement_enum["dbs::Statement<br/>[statement.rs]"]
+end
+
+subgraph group_exec["Executor &amp; Planning"]
+  node_datastore_exec["Datastore::execute<br/>[ds.rs]"]
+  node_executor["Executor<br/>[executor.rs]"]
+  node_planner["Planner<br/>[planner.rs]"]
+  node_index_analyzer["IndexAnalyzer<br/>[analysis.rs]"]
+  node_access_path["select_access_path<br/>[access_path.rs]"]
+  node_iterator["Iterator::process<br/>[iterator.rs]"]
+end
+
+subgraph group_doc["Document Engine"]
+  node_document["Document<br/>[document.rs]"]
+  node_doc_create["Document::create<br/>[create.rs]"]
+  node_doc_relate["Document::relate<br/>[relate.rs]"]
+  node_doc_store["store_record_data<br/>[store.rs]"]
+end
+
+subgraph group_kvs["KV Storage Backends"]
+  node_kvs_builder["Builder::build_with_path<br/>[builder.rs]"]
+  node_flavor_match["flavour dispatch<br/>[ds.rs]"]
+  node_rocksdb_backend["rocksdb::Datastore<br/>[mod.rs]"]
+  node_mem_backend["mem::Datastore<br/>[mod.rs]"]
+  node_surrealkv_backend["surrealkv::Datastore<br/>[mod.rs]"]
+  node_transactor["Transactor<br/>[tr.rs]"]
+end
+
+subgraph group_index["Indexes &amp; Search"]
+  node_fulltext["FullTextIndex<br/>[fulltext.rs]"]
+  node_hnsw["HnswIndex<br/>[index.rs]"]
+  node_knn["KnnPriorityList<br/>[knn.rs]"]
+end
+
+node_cli_commands -->|"surreal start"| node_server_init
+node_server_init -->|"bind listener"| node_http_router
+node_http_router -->|"route /rpc"| node_rpc_endpoint
+node_http_router -->|"route /sql"| node_sql_endpoint
+node_http_router -->|"route /signin"| node_signin_endpoint
+node_http_router -->|"route /signup"| node_signup_endpoint
+node_rpc_endpoint -->|"ws upgrade"| node_ws_session
+node_ws_session -->|"RpcProtocol::execute"| node_rpc_protocol
+node_ws_session -->|"LIVE subscriptions"| node_ws_live
+node_rpc_protocol -->|"method names"| node_rpc_methods
+node_signin_endpoint -->|"verify grant"| node_auth_signin
+node_signup_endpoint -->|"record user"| node_auth_signup
+node_rpc_protocol -->|"signin&#40;&#41;"| node_auth_signin
+node_rpc_protocol -->|"signup&#40;&#41;"| node_auth_signup
+node_sql_endpoint -->|"SurrealQL text"| node_datastore_exec
+node_rpc_protocol -->|"run_query"| node_datastore_exec
+node_datastore_exec -->|"parse_with_capabilities"| node_syn_parse
+node_syn_parse -->|"Ast stream"| node_executor
+node_executor -->|"statement compute"| node_statement_enum
+node_statement_enum -->|"match arms"| node_iterator
+node_executor -->|"physical planning"| node_planner
+node_planner -->|"WHERE analysis"| node_index_analyzer
+node_index_analyzer -->|"candidates"| node_access_path
+node_access_path -->|"scan records"| node_iterator
+node_iterator -->|"Document::new"| node_document
+node_document -->|"CREATE path"| node_doc_create
+node_document -->|"RELATE path"| node_doc_relate
+node_doc_create -->|"persist record"| node_doc_store
+node_doc_relate -->|"persist edge"| node_doc_store
+node_doc_store -->|"KV set/del"| node_transactor
+node_datastore_exec -->|"boot backend"| node_kvs_builder
+node_kvs_builder -->|"scheme parse"| node_flavor_match
+node_flavor_match -->|"rocksdb://"| node_rocksdb_backend
+node_flavor_match -->|"memory"| node_mem_backend
+node_flavor_match -->|"surrealkv://"| node_surrealkv_backend
+node_rocksdb_backend -->|"Tx impl"| node_transactor
+node_mem_backend -->|"Tx impl"| node_transactor
+node_surrealkv_backend -->|"Tx impl"| node_transactor
+node_access_path -->|"MATCHES scan"| node_fulltext
+node_access_path -->|"KNN scan"| node_hnsw
+node_hnsw -->|"top-k"| node_knn
+
+click node_cli_commands "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/cli/mod.rs"
+click node_server_init "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/cli/start.rs"
+click node_http_router "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/ntw/mod.rs"
+click node_rpc_endpoint "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/ntw/rpc.rs"
+click node_sql_endpoint "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/ntw/sql.rs"
+click node_signin_endpoint "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/ntw/signin.rs"
+click node_signup_endpoint "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/ntw/signup.rs"
+click node_ws_session "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/rpc/websocket.rs"
+click node_ws_live "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/server/src/rpc/websocket.rs"
+click node_rpc_protocol "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/rpc/protocol.rs"
+click node_rpc_methods "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/rpc/method.rs"
+click node_auth_signin "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/iam/signin.rs"
+click node_auth_signup "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/iam/signup.rs"
+click node_syn_parse "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/syn/mod.rs"
+click node_statement_enum "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/dbs/statement.rs"
+click node_datastore_exec "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/ds.rs"
+click node_executor "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/dbs/executor.rs"
+click node_planner "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/exec/planner.rs"
+click node_index_analyzer "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/exec/index/analysis.rs"
+click node_access_path "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/exec/index/access_path.rs"
+click node_iterator "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/dbs/iterator.rs"
+click node_document "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/doc/document.rs"
+click node_doc_create "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/doc/create.rs"
+click node_doc_relate "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/doc/relate.rs"
+click node_doc_store "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/doc/store.rs"
+click node_kvs_builder "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/ds/builder.rs"
+click node_flavor_match "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/ds.rs"
+click node_rocksdb_backend "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/rocksdb/mod.rs"
+click node_mem_backend "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/mem/mod.rs"
+click node_surrealkv_backend "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/surrealkv/mod.rs"
+click node_transactor "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/kvs/tr.rs"
+click node_fulltext "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/idx/ft/fulltext.rs"
+click node_hnsw "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/idx/trees/hnsw/index.rs"
+click node_knn "https://github.com/surrealdb/surrealdb/blob/main/surrealdb/core/src/idx/planner/knn.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_commands,node_server_init,node_kvs_builder,node_flavor_match,node_rocksdb_backend,node_mem_backend,node_surrealkv_backend,node_transactor toneBlue
+class node_http_router,node_rpc_endpoint,node_sql_endpoint,node_signin_endpoint,node_signup_endpoint,node_fulltext,node_hnsw,node_knn toneAmber
+class node_ws_session,node_ws_live,node_rpc_protocol,node_rpc_methods,node_auth_signin,node_auth_signup toneMint
+class node_syn_parse,node_statement_enum toneRose
+class node_datastore_exec,node_executor,node_planner,node_index_analyzer,node_access_path,node_iterator toneIndigo
+class node_document,node_doc_create,node_doc_relate,node_doc_store toneTeal
