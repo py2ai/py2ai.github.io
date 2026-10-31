@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_sql["SQL Surface"]
+  node_ext_init["_PG_init<br/>[lib.rs]"]
+  node_gucs["gucs::init<br/>[gucs.rs]"]
+  node_operator["CREATE OPERATOR @@@<br/>[operator.rs]"]
+  node_op_selectivity["estimate_selectivity_and_cost<br/>[operator.rs]"]
+  node_query_dsl["pdb::Query<br/>[pdb_query.rs]"]
+  node_query_input["SearchQueryInput<br/>[mod.rs]"]
+  node_aggregate["aggregate<br/>[aggregate.rs]"]
+  node_tokenize["pdb.tokenize<br/>[tokenize.rs]"]
+  node_config_field["pdb.field / pdb.tokenizer<br/>[config.rs]"]
+end
+
+subgraph group_am["Index Access Method"]
+  node_am_handler["bm25_handler<br/>[mod.rs]"]
+  node_ambuild["ambuild<br/>[build.rs]"]
+  node_create_index["create_index<br/>[build.rs]"]
+  node_ambuildempty["ambuildempty<br/>[build.rs]"]
+  node_aminsert["aminsert<br/>[insert.rs]"]
+  node_aminsertcleanup["aminsertcleanup<br/>[insert.rs]"]
+  node_ambulkdelete["ambulkdelete<br/>[delete.rs]"]
+  node_amvacuumcleanup["amvacuumcleanup<br/>[vacuum.rs]"]
+  node_amscan["amgettuple<br/>[scan.rs]"]
+  node_amgetbitmap["amgetbitmap<br/>[scan.rs]"]
+  node_index_options["BM25IndexOptions<br/>[options.rs]"]
+end
+
+subgraph group_planner["Custom Scan Planning"]
+  node_planner_hook["register_planner_hook<br/>[hook.rs]"]
+  node_basescan["BaseScan<br/>[mod.rs]"]
+  node_topk["TopKScanExecState<br/>[top_k.rs]"]
+end
+
+subgraph group_reader["Tantivy Reader"]
+  node_reader["SearchIndexReader<br/>[index.rs]"]
+  node_reader_search["search<br/>[index.rs]"]
+  node_estimate_docs["estimate_docs<br/>[index.rs]"]
+end
+
+subgraph group_writer["Tantivy Writer"]
+  node_writer["SerialIndexWriter<br/>[index.rs]"]
+  node_writer_commit["commit<br/>[index.rs]"]
+  node_merger["SearchIndexMerger<br/>[index.rs]"]
+end
+
+subgraph group_storage["Segment Storage"]
+  node_mvcc_dir["MVCCDirectory<br/>[mvcc.rs]"]
+  node_open_index["open_index<br/>[mod.rs]"]
+  node_merge_lock["MergeLock<br/>[merge.rs]"]
+end
+
+node_ext_init -->|"registers settings"| node_gucs
+node_ext_init -->|"installs access method"| node_am_handler
+node_am_handler -->|"ambuild"| node_ambuild
+node_am_handler -->|"empty builds"| node_ambuildempty
+node_am_handler -->|"aminsert"| node_aminsert
+node_am_handler -->|"amgettuple"| node_amscan
+node_am_handler -->|"amgetbitmap"| node_amgetbitmap
+node_am_handler -->|"delete hooks"| node_ambulkdelete
+node_am_handler -->|"vacuum hooks"| node_amvacuumcleanup
+node_ambuild -->|"builds"| node_create_index
+node_create_index -->|"reads options"| node_index_options
+node_create_index -->|"creates segments"| node_writer
+node_aminsert -->|"deferred finish"| node_aminsertcleanup
+node_aminsert -->|"indexes docs"| node_writer
+node_writer -->|"commit"| node_writer_commit
+node_writer_commit -->|"merge candidates"| node_merger
+node_merge_lock -->|"serializes"| node_merger
+node_amscan -->|"opens"| node_reader
+node_amgetbitmap -->|"opens"| node_reader
+node_amscan -->|"executes"| node_reader_search
+node_basescan -->|"top-N exec"| node_topk
+node_basescan -->|"queries"| node_reader_search
+node_planner_hook -->|"creates plan"| node_basescan
+node_planner_hook -->|"aggregate scan"| node_aggregate
+node_gucs -->|"feature flags"| node_planner_hook
+node_gucs -->|"segment tuning"| node_writer
+node_operator -->|"cost support"| node_op_selectivity
+node_operator -->|"parses RHS"| node_query_dsl
+node_operator -->|"rewrites to"| node_query_input
+node_query_dsl -->|"converts"| node_query_input
+node_query_input -->|"compiled to Tantivy"| node_reader_search
+node_op_selectivity -->|"row estimates"| node_estimate_docs
+node_reader -->|"cost model"| node_estimate_docs
+node_reader -->|"multi-segment"| node_reader_search
+node_open_index -->|"snapshot views"| node_mvcc_dir
+node_mvcc_dir -->|"visible segments"| node_reader
+node_mvcc_dir -->|"MVCC writer"| node_writer
+node_index_options -->|"field configs"| node_config_field
+node_aggregate -->|"aggregates over"| node_query_input
+
+click node_ext_init "https://github.com/paradedb/paradedb/blob/main/pg_search/src/lib.rs"
+click node_gucs "https://github.com/paradedb/paradedb/blob/main/pg_search/src/gucs.rs"
+click node_operator "https://github.com/paradedb/paradedb/blob/main/pg_search/src/api/operator.rs"
+click node_op_selectivity "https://github.com/paradedb/paradedb/blob/main/pg_search/src/api/operator.rs"
+click node_query_dsl "https://github.com/paradedb/paradedb/blob/main/pg_search/src/query/pdb_query.rs"
+click node_query_input "https://github.com/paradedb/paradedb/blob/main/pg_search/src/query/mod.rs"
+click node_aggregate "https://github.com/paradedb/paradedb/blob/main/pg_search/src/api/aggregate.rs"
+click node_tokenize "https://github.com/paradedb/paradedb/blob/main/pg_search/src/api/tokenize.rs"
+click node_config_field "https://github.com/paradedb/paradedb/blob/main/pg_search/src/api/config.rs"
+click node_am_handler "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/mod.rs"
+click node_ambuild "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/build.rs"
+click node_create_index "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/build.rs"
+click node_ambuildempty "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/build.rs"
+click node_aminsert "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/insert.rs"
+click node_aminsertcleanup "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/insert.rs"
+click node_ambulkdelete "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/delete.rs"
+click node_amvacuumcleanup "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/vacuum.rs"
+click node_amscan "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/scan.rs"
+click node_amgetbitmap "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/scan.rs"
+click node_index_options "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/options.rs"
+click node_planner_hook "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/customscan/hook.rs"
+click node_basescan "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/customscan/basescan/mod.rs"
+click node_topk "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/customscan/basescan/exec_methods/top_k.rs"
+click node_reader "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/reader/index.rs"
+click node_reader_search "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/reader/index.rs"
+click node_estimate_docs "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/reader/index.rs"
+click node_writer "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/writer/index.rs"
+click node_writer_commit "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/writer/index.rs"
+click node_merger "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/writer/index.rs"
+click node_mvcc_dir "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/directory/mvcc.rs"
+click node_open_index "https://github.com/paradedb/paradedb/blob/main/pg_search/src/index/mod.rs"
+click node_merge_lock "https://github.com/paradedb/paradedb/blob/main/pg_search/src/postgres/storage/merge.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ext_init,node_gucs,node_operator,node_op_selectivity,node_query_dsl,node_query_input,node_aggregate,node_tokenize,node_config_field toneBlue
+class node_am_handler,node_ambuild,node_create_index,node_ambuildempty,node_aminsert,node_aminsertcleanup,node_ambulkdelete,node_amvacuumcleanup,node_amscan,node_amgetbitmap,node_index_options toneAmber
+class node_planner_hook,node_basescan,node_topk toneMint
+class node_reader,node_reader_search,node_estimate_docs toneRose
+class node_writer,node_writer_commit,node_merger toneIndigo
+class node_mvcc_dir,node_open_index,node_merge_lock toneTeal
