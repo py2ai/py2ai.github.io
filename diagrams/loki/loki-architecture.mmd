@@ -1,0 +1,127 @@
+flowchart TD
+
+subgraph group_entry["Binary &amp; Wiring"]
+  node_loki_main{{"Loki binary<br/>[main.go]"}}
+  node_loki_root["Loki root struct<br/>[loki.go]"]
+  node_module_mgr["Module manager<br/>[modules.go]"]
+end
+
+subgraph group_write["HTTP Push &amp; Distributor"]
+  node_push_handler["Push HTTP handler<br/>[http.go]"]
+  node_otlp_handler["OTLP push handler<br/>[http.go]"]
+  node_push_parse["Request decoder<br/>[push.go]"]
+  node_distributor["Distributor<br/>[distributor.go]"]
+  node_push_flow["Push flow<br/>[distributor.go]"]
+end
+
+subgraph group_ingest["Ingester &amp; WAL"]
+  node_ingester["Ingester service<br/>[ingester.go]"]
+  node_instance["Tenant instance<br/>[instance.go]"]
+  node_create_stream["Stream creation<br/>[instance.go]"]
+  node_stream[("Stream buffer<br/>[stream.go]")]
+  node_cut_chunk["Chunk cut<br/>[stream.go]"]
+  node_wal["Write-ahead log<br/>[wal.go]"]
+end
+
+subgraph group_query["LogQL Engine &amp; Queriers"]
+  node_querier_api["Querier API wiring<br/>[modules.go]"]
+  node_syntax["LogQL parser<br/>[parser.go]"]
+  node_engine["QueryEngine<br/>[engine.go]"]
+  node_query_exec["Query execution<br/>[engine.go]"]
+  node_evaluator["Evaluator<br/>[evaluator.go]"]
+  node_querier["Single-tenant querier<br/>[querier.go]"]
+  node_select_samples["Sample selection<br/>[querier.go]"]
+  node_ing_querier["Ingester querier"]
+end
+
+subgraph group_storage["Index &amp; Object Storage"]
+  node_loki_store[("LokiStore<br/>[store.go]")]
+  node_store_reads["Store reads<br/>[store.go]"]
+  node_chunk_client["Chunk client<br/>[factory.go]"]
+  node_object_client[("Object client<br/>[factory.go]")]
+  node_tsdb_index[("TSDB index builder<br/>[builder.go]")]
+  node_dataobj["Data object format<br/>[dataobj.go]"]
+end
+
+subgraph group_automation["Ruler &amp; Data Objects"]
+  node_ruler["Ruler<br/>[ruler.go]"]
+  node_ruler_engine["Ruler query engine<br/>[modules.go]"]
+end
+
+node_loki_main -->|"loki.New &#40;L138&#41;"| node_loki_root
+node_loki_root -->|"setupModuleManager &#40;L798&#41;"| node_module_mgr
+node_module_mgr -->|"route push &#40;L403&#41;"| node_push_handler
+node_module_mgr -->|"route /otlp/v1/logs &#40;L404&#41;"| node_otlp_handler
+node_push_handler -->|"decode body"| node_push_parse
+node_push_handler -->|"d.Push &#40;L508&#41;"| node_push_flow
+node_otlp_handler -->|"pushWithResolver &#40;L520&#41;"| node_push_flow
+node_push_flow -->|"gRPC Push via ring"| node_ingester
+node_module_mgr -->|"initIngester &#40;L836&#41;"| node_ingester
+node_ingester -->|"GetOrCreateInstance &#40;L1036&#41;"| node_instance
+node_instance -->|"new streams &#40;L283&#41;"| node_create_stream
+node_instance -->|"s.Push &#40;L260&#41;"| node_stream
+node_stream -->|"chunk full &#40;L492&#41;"| node_cut_chunk
+node_instance -->|"record writes &#40;L265&#41;"| node_wal
+node_module_mgr -->|"initQuerier &#40;L520&#41;"| node_querier_api
+node_querier_api -->|"logql.NewEngine &#40;L2298&#41;"| node_engine
+node_engine -->|"parse query text"| node_syntax
+node_engine -->|"Query &#40;L230&#41;"| node_query_exec
+node_query_exec -->|"Eval &#40;L314&#41;"| node_evaluator
+node_evaluator -->|"fetch log streams"| node_querier
+node_evaluator -->|"fetch samples"| node_select_samples
+node_querier -.->|"live logs"| node_ing_querier
+node_select_samples -.->|"live samples"| node_ing_querier
+node_querier -->|"long-term logs &#40;L531&#41;"| node_store_reads
+node_select_samples -->|"long-term samples &#40;L579&#41;"| node_store_reads
+node_store_reads -->|"LokiStore &#40;L99&#41;"| node_loki_store
+node_loki_store -->|"label index lookups"| node_tsdb_index
+node_loki_store -->|"per-period clients &#40;L354&#41;"| node_chunk_client
+node_loki_store -->|"chunk fetch &#40;L415&#41;"| node_object_client
+node_querier -.->|"dataObjStore param &#40;L186&#41;"| node_dataobj
+node_module_mgr -->|"initRuler &#40;L1458&#41;"| node_ruler
+node_ruler -->|"query engine &#40;L1548&#41;"| node_ruler_engine
+
+click node_loki_main "https://github.com/grafana/loki/blob/main/cmd/loki/main.go"
+click node_loki_root "https://github.com/grafana/loki/blob/main/pkg/loki/loki.go"
+click node_module_mgr "https://github.com/grafana/loki/blob/main/pkg/loki/modules.go"
+click node_push_handler "https://github.com/grafana/loki/blob/main/pkg/distributor/http.go"
+click node_otlp_handler "https://github.com/grafana/loki/blob/main/pkg/distributor/http.go"
+click node_push_parse "https://github.com/grafana/loki/blob/main/pkg/loghttp/push/push.go"
+click node_distributor "https://github.com/grafana/loki/blob/main/pkg/distributor/distributor.go"
+click node_push_flow "https://github.com/grafana/loki/blob/main/pkg/distributor/distributor.go"
+click node_ingester "https://github.com/grafana/loki/blob/main/pkg/ingester/ingester.go"
+click node_instance "https://github.com/grafana/loki/blob/main/pkg/ingester/instance.go"
+click node_create_stream "https://github.com/grafana/loki/blob/main/pkg/ingester/instance.go"
+click node_stream "https://github.com/grafana/loki/blob/main/pkg/ingester/stream.go"
+click node_cut_chunk "https://github.com/grafana/loki/blob/main/pkg/ingester/stream.go"
+click node_wal "https://github.com/grafana/loki/blob/main/pkg/ingester/wal.go"
+click node_querier_api "https://github.com/grafana/loki/blob/main/pkg/loki/modules.go"
+click node_syntax "https://github.com/grafana/loki/blob/main/pkg/logql/syntax/parser.go"
+click node_engine "https://github.com/grafana/loki/blob/main/pkg/logql/engine.go"
+click node_query_exec "https://github.com/grafana/loki/blob/main/pkg/logql/engine.go"
+click node_evaluator "https://github.com/grafana/loki/blob/main/pkg/logql/evaluator.go"
+click node_querier "https://github.com/grafana/loki/blob/main/pkg/querier/querier.go"
+click node_select_samples "https://github.com/grafana/loki/blob/main/pkg/querier/querier.go"
+click node_ing_querier "https://github.com/grafana/loki/blob/main/pkg/querier/ingester_querier.go"
+click node_loki_store "https://github.com/grafana/loki/blob/main/pkg/storage/store.go"
+click node_store_reads "https://github.com/grafana/loki/blob/main/pkg/storage/store.go"
+click node_chunk_client "https://github.com/grafana/loki/blob/main/pkg/storage/factory.go"
+click node_object_client "https://github.com/grafana/loki/blob/main/pkg/storage/factory.go"
+click node_tsdb_index "https://github.com/grafana/loki/blob/main/pkg/storage/stores/shipper/indexshipper/tsdb/builder.go"
+click node_dataobj "https://github.com/grafana/loki/blob/main/pkg/dataobj/dataobj.go"
+click node_ruler "https://github.com/grafana/loki/blob/main/pkg/ruler/ruler.go"
+click node_ruler_engine "https://github.com/grafana/loki/blob/main/pkg/loki/modules.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_loki_main,node_loki_root,node_module_mgr toneBlue
+class node_push_handler,node_otlp_handler,node_push_parse,node_distributor,node_push_flow toneAmber
+class node_ingester,node_instance,node_create_stream,node_stream,node_cut_chunk,node_wal toneMint
+class node_querier_api,node_syntax,node_engine,node_query_exec,node_evaluator,node_querier,node_select_samples,node_ing_querier toneRose
+class node_loki_store,node_store_reads,node_chunk_client,node_object_client,node_tsdb_index,node_dataobj toneIndigo
+class node_ruler,node_ruler_engine toneTeal
