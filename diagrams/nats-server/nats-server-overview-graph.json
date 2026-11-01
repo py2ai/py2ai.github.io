@@ -1,0 +1,140 @@
+{
+  "owner": "nats-io",
+  "repo": "nats-server",
+  "branch": "main",
+  "groups": [
+    { "id": "connections", "name": "Connections", "label": "Client Connections" },
+    { "id": "routing", "name": "Routing", "label": "Pub/Sub Routing Core" },
+    { "id": "jetstream", "name": "JetStream", "label": "JetStream Persistence" },
+    { "id": "cluster", "name": "Clustering", "label": "Clustering & Edge" },
+    { "id": "monitoring", "name": "Monitoring", "label": "Monitoring & Ops" }
+  ],
+  "nodes": [
+    {
+      "id": "server_core",
+      "label": "Server lifecycle",
+      "file": "server.go",
+      "path": "server/server.go",
+      "group": "connections",
+      "groupId": "connections",
+      "desc": "Server.Start boots listeners, monitor endpoints, routes and JetStream"
+    },
+    {
+      "id": "client_conn",
+      "label": "Client read loop",
+      "file": "client.go",
+      "path": "server/client.go",
+      "group": "connections",
+      "groupId": "connections",
+      "desc": "readLoop parses inbound protocol; processPub, processSub, deliverMsg fan out messages"
+    },
+    {
+      "id": "parser",
+      "label": "Protocol parser",
+      "file": "parser.go",
+      "path": "server/parser.go",
+      "group": "connections",
+      "groupId": "connections",
+      "desc": "client.parse is the state machine turning bytes into PUB/SUB/UNSUB/PING ops"
+    },
+    {
+      "id": "sublist",
+      "label": "Subject trie",
+      "file": "sublist.go",
+      "path": "server/sublist.go",
+      "group": "routing",
+      "groupId": "routing",
+      "desc": "Sublist.Insert registers subscriptions, Sublist.Match resolves wildcards like orders.*"
+    },
+    {
+      "id": "js_enable",
+      "label": "JetStream enable",
+      "file": "jetstream.go",
+      "path": "server/jetstream.go",
+      "group": "jetstream",
+      "groupId": "jetstream",
+      "desc": "EnableJetStream wires the storage dir, accounts and internal service imports"
+    },
+    {
+      "id": "js_api",
+      "label": "JS API dispatch",
+      "file": "jetstream_api.go",
+      "path": "server/jetstream_api.go",
+      "group": "jetstream",
+      "groupId": "jetstream",
+      "desc": "apiDispatch routes $JS.API requests to stream and consumer handlers"
+    },
+    {
+      "id": "stream",
+      "label": "Stream engine",
+      "file": "stream.go",
+      "path": "server/stream.go",
+      "group": "jetstream",
+      "groupId": "jetstream",
+      "desc": "processJetStreamMsg stores published messages, dedupe, limits and retention"
+    },
+    {
+      "id": "consumer",
+      "label": "Consumer delivery",
+      "file": "consumer.go",
+      "path": "server/consumer.go",
+      "group": "jetstream",
+      "groupId": "jetstream",
+      "desc": "consumer.deliverMsg pushes stored messages to pull/push consumers and tracks acks"
+    },
+    {
+      "id": "filestore",
+      "label": "File storage",
+      "file": "filestore.go",
+      "path": "server/filestore.go",
+      "group": "jetstream",
+      "groupId": "jetstream",
+      "desc": "fileStore.StoreMsg appends into message blocks with crc, encryption and async flush"
+    },
+    {
+      "id": "route",
+      "label": "Cluster routes",
+      "file": "route.go",
+      "path": "server/route.go",
+      "group": "cluster",
+      "groupId": "cluster",
+      "desc": "Gossip discovery, connectToRoute and addRoute sync subscriptions across servers"
+    },
+    {
+      "id": "leafnode",
+      "label": "Leaf nodes",
+      "file": "leafnode.go",
+      "path": "server/leafnode.go",
+      "group": "cluster",
+      "groupId": "cluster",
+      "desc": "startLeafNodeAcceptLoop and createLeafNode bridge edge servers into a hub cluster"
+    },
+    {
+      "id": "monitor",
+      "label": "Monitor endpoints",
+      "file": "monitor.go",
+      "path": "server/monitor.go",
+      "group": "monitoring",
+      "groupId": "monitoring",
+      "desc": "HandleRoot serves the endpoint index; Varz and Connz expose live server state"
+    }
+  ],
+  "edges": [
+    { "from": "server_core", "to": "client_conn", "label": "accepts clients" },
+    { "from": "client_conn", "to": "parser", "label": "parses bytes" },
+    { "from": "client_conn", "to": "sublist", "label": "insert + match subs" },
+    { "from": "server_core", "to": "js_enable", "label": "enables JetStream" },
+    { "from": "client_conn", "to": "js_api", "label": "$JS.API requests" },
+    { "from": "js_api", "to": "stream", "label": "create/config streams" },
+    { "from": "stream", "to": "filestore", "label": "persist messages" },
+    { "from": "stream", "to": "consumer", "label": "attach consumers" },
+    { "from": "consumer", "to": "client_conn", "label": "delivers messages" },
+    { "from": "consumer", "to": "filestore", "label": "reads state" },
+    { "from": "server_core", "to": "route", "label": "solicit + accept routes" },
+    { "from": "client_conn", "to": "route", "label": "forward msgs to peers" },
+    { "from": "route", "to": "sublist", "label": "sync interest" },
+    { "from": "server_core", "to": "leafnode", "label": "accept leaf nodes" },
+    { "from": "leafnode", "to": "route", "label": "edge fan-in to hub" },
+    { "from": "server_core", "to": "monitor", "label": "starts HTTP monitor" }
+  ]
+}
