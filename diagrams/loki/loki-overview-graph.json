@@ -1,0 +1,141 @@
+{
+  "owner": "grafana",
+  "repo": "loki",
+  "branch": "main",
+  "groups": [
+    { "id": "entry", "name": "Entry & Wiring", "label": "Entry & Wiring" },
+    { "id": "write", "name": "Write Path", "label": "Write Path" },
+    { "id": "read", "name": "Read Path", "label": "Read Path" },
+    { "id": "storage", "name": "Storage & Index", "label": "Storage & Index" }
+  ],
+  "nodes": [
+    {
+      "id": "loki_main",
+      "label": "Loki binary",
+      "file": "main.go",
+      "path": "cmd/loki/main.go",
+      "group": "Entry & Wiring",
+      "groupId": "entry",
+      "shape": "hexagon",
+      "desc": "main() parses config, calls loki.New (L138) and t.Run (L149) to start services"
+    },
+    {
+      "id": "loki_root",
+      "label": "Loki root struct",
+      "file": "loki.go",
+      "path": "pkg/loki/loki.go",
+      "group": "Entry & Wiring",
+      "groupId": "entry",
+      "desc": "Loki struct (L446) holds every service; setupModuleManager (L798) wires module dependencies"
+    },
+    {
+      "id": "module_mgr",
+      "label": "Module manager",
+      "file": "modules.go",
+      "path": "pkg/loki/modules.go",
+      "group": "Entry & Wiring",
+      "groupId": "entry",
+      "desc": "initDistributor (L341), initIngester (L836), initQuerier (L520), initRuler (L1458) build each -target component"
+    },
+    {
+      "id": "push_handler",
+      "label": "HTTP push handler",
+      "file": "http.go",
+      "path": "pkg/distributor/http.go",
+      "group": "Write Path",
+      "groupId": "write",
+      "desc": "PushHandler (L32) serves POST /loki/api/v1/push"
+    },
+    {
+      "id": "distributor",
+      "label": "Distributor",
+      "file": "distributor.go",
+      "path": "pkg/distributor/distributor.go",
+      "group": "Write Path",
+      "groupId": "write",
+      "desc": "Distributor.Push (L508) validates streams, shards them by label hash and forwards to ingesters"
+    },
+    {
+      "id": "instance",
+      "label": "Ingester instance",
+      "file": "instance.go",
+      "path": "pkg/ingester/instance.go",
+      "group": "Write Path",
+      "groupId": "write",
+      "shape": "database",
+      "desc": "instance.Push (L231) appends entries into per-tenant streams and writes WAL records"
+    },
+    {
+      "id": "engine",
+      "label": "LogQL engine",
+      "file": "engine.go",
+      "path": "pkg/logql/engine.go",
+      "group": "Read Path",
+      "groupId": "read",
+      "desc": "QueryEngine (L208); query.Exec (L273) evaluates instant and range LogQL queries"
+    },
+    {
+      "id": "querier",
+      "label": "Querier",
+      "file": "querier.go",
+      "path": "pkg/querier/querier.go",
+      "group": "Read Path",
+      "groupId": "read",
+      "desc": "SingleTenantQuerier.SelectLogs (L217) and SelectSamples (L290) merge ingester and store results"
+    },
+    {
+      "id": "loki_store",
+      "label": "LokiStore",
+      "file": "store.go",
+      "path": "pkg/storage/store.go",
+      "group": "Storage & Index",
+      "groupId": "storage",
+      "shape": "database",
+      "desc": "NewStore (L132) builds per-period index and chunk clients; SelectLogs (L531) fans out reads"
+    },
+    {
+      "id": "tsdb_index",
+      "label": "TSDB index",
+      "file": "builder.go",
+      "path": "pkg/storage/stores/shipper/indexshipper/tsdb/builder.go",
+      "group": "Storage & Index",
+      "groupId": "storage",
+      "shape": "database",
+      "desc": "Single-store TSDB index: only stream labels are indexed, not log line text"
+    },
+    {
+      "id": "object_client",
+      "label": "Object client",
+      "file": "factory.go",
+      "path": "pkg/storage/factory.go",
+      "group": "Storage & Index",
+      "groupId": "storage",
+      "desc": "NewObjectClient (L415) returns S3/GCS/Azure/FS clients for compressed chunks"
+    },
+    {
+      "id": "ruler",
+      "label": "Ruler",
+      "file": "ruler.go",
+      "path": "pkg/ruler/ruler.go",
+      "group": "Read Path",
+      "groupId": "read",
+      "desc": "NewRuler (L14) evaluates LogQL alerting and recording rules on a schedule"
+    }
+  ],
+  "edges": [
+    { "from": "loki_main", "to": "loki_root", "label": "loki.New (L138)" },
+    { "from": "loki_root", "to": "module_mgr", "label": "setupModuleManager (L798)" },
+    { "from": "module_mgr", "to": "push_handler", "label": "wire push route (L393)" },
+    { "from": "push_handler", "to": "distributor", "label": "d.Push (L508)" },
+    { "from": "distributor", "to": "instance", "label": "gRPC Push via ring" },
+    { "from": "module_mgr", "to": "instance", "label": "initIngester (L836)" },
+    { "from": "module_mgr", "to": "querier", "label": "initQuerier (L520)" },
+    { "from": "module_mgr", "to": "engine", "label": "logql.NewEngine (L2298)" },
+    { "from": "module_mgr", "to": "ruler", "label": "initRuler (L1458)" },
+    { "from": "engine", "to": "querier", "label": "evaluator pulls streams" },
+    { "from": "querier", "to": "instance", "label": "recent unflushed logs", "style": "dashed" },
+    { "from": "querier", "to": "loki_store", "label": "store reads (L531)" },
+    { "from": "loki_store", "to": "tsdb_index", "label": "label index lookups" },
+    { "from": "loki_store", "to": "object_client", "label": "chunk fetch (L415)" }
+  ]
+}
