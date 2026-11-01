@@ -1,0 +1,152 @@
+flowchart TD
+
+subgraph group_clients["Clients"]
+  node_client_new["clientv3.New<br/>[client.go]"]
+  node_client_kv["KV interface<br/>[kv.go]"]
+  node_client_watch["Watcher<br/>[watch.go]"]
+end
+
+subgraph group_api["gRPC API"]
+  node_rpc_kv["service KV<br/>[rpc.proto]"]
+  node_raft_internal["InternalRaftRequest"]
+end
+
+subgraph group_server_core["etcdserver"]
+  node_server_start["EtcdServer.Start<br/>[server.go]"]
+  node_v3_server["KV handlers<br/>[v3_server.go]"]
+  node_raft_request["raftRequest<br/>[v3_server.go]"]
+  node_read_index["LinearizableReadLoop<br/>[read.go]"]
+  node_apply_entries["applyEntries<br/>[server.go]"]
+end
+
+subgraph group_consensus["Raft Consensus"]
+  node_raft_node["raftNode<br/>[raft.go]"]
+  node_raft_loop["raftNode.start loop<br/>[raft.go]"]
+  node_rafthttp["Transport.Send<br/>[transport.go]"]
+end
+
+subgraph group_applier["Apply Layer"]
+  node_apply_entry["Apply<br/>[apply.go]"]
+  node_uber_applier["uberApplier.Apply<br/>[uber_applier.go]"]
+  node_applier_backend["applierV3backend<br/>[backend.go]"]
+  node_txn_put["txn.Put<br/>[put.go]"]
+  node_txn_range["txn.Range<br/>[range.go]"]
+  node_txn_txn["txn.Txn<br/>[txn.go]"]
+end
+
+subgraph group_mvcc["MVCC Store"]
+  node_kv_store["mvcc store<br/>[kvstore.go]"]
+  node_kv_txn["store.Write<br/>[kvstore_txn.go]"]
+  node_store_put["storeTxnWrite.put<br/>[kvstore_txn.go]"]
+  node_watch_txn["watchableStoreTxnWrite.End"]
+  node_watchable_store["watchableStore<br/>[watchable_store.go]"]
+  node_sync_watchers["syncWatchers<br/>[watchable_store.go]"]
+  node_tree_index["treeIndex<br/>[index.go]"]
+  node_key_index["keyIndex<br/>[key_index.go]"]
+  node_revision["Revision codec<br/>[revision.go]"]
+  node_compaction["scheduleCompaction"]
+end
+
+subgraph group_storage["Durable Storage"]
+  node_wal_save["WAL.Save<br/>[wal.go]"]
+  node_wal_read["WAL.ReadAll<br/>[wal.go]"]
+  node_schema_key["schema.Key bucket<br/>[bucket.go]"]
+  node_backend["backend.New<br/>[backend.go]"]
+end
+
+subgraph group_lease["Leases"]
+  node_lessor["lessor<br/>[lessor.go]"]
+end
+
+node_client_new -->|"exposes KV"| node_client_kv
+node_client_new -->|"exposes Watcher"| node_client_watch
+node_client_kv -->|"gRPC stubs"| node_rpc_kv
+node_client_watch -->|"Watch stream"| node_rpc_kv
+node_rpc_kv -->|"server-side handlers"| node_v3_server
+node_raft_internal -->|"request envelope"| node_raft_request
+node_v3_server -->|"mutations"| node_raft_request
+node_v3_server -->|"linearizable reads"| node_read_index
+node_v3_server -->|"serializable reads"| node_txn_range
+node_raft_request -->|"Propose"| node_raft_loop
+node_server_start -->|"start raft goroutine"| node_raft_loop
+node_server_start -->|"attach read loop"| node_read_index
+node_raft_node -->|"run loop"| node_raft_loop
+node_raft_loop -->|"persist before ack"| node_wal_save
+node_raft_loop -->|"leader sends"| node_rafthttp
+node_rafthttp -->|"peer messages in"| node_raft_loop
+node_raft_loop -->|"committed entries"| node_apply_entries
+node_raft_loop -->|"replay at boot"| node_wal_read
+node_read_index -->|"ReadIndex round"| node_raft_loop
+node_apply_entries -->|"one Apply per entry"| node_apply_entry
+node_apply_entry -->|"wrapped request"| node_uber_applier
+node_uber_applier -->|"wrapper chain"| node_applier_backend
+node_uber_applier -->|"dispatch Range"| node_txn_range
+node_uber_applier -->|"dispatch Txn"| node_txn_txn
+node_applier_backend -->|"execute Put"| node_txn_put
+node_txn_txn -->|"branch ops"| node_txn_put
+node_txn_put -->|"write via TxnWrite"| node_kv_txn
+node_txn_range -->|"read view"| node_kv_store
+node_kv_store -->|"Write&#40;&#41; txn"| node_kv_txn
+node_kv_txn -->|"per-key put"| node_store_put
+node_store_put -->|"RevToBytes"| node_revision
+node_store_put -->|"index update"| node_tree_index
+node_store_put -->|"UnsafeSeqPut"| node_schema_key
+node_store_put -->|"changes buffered"| node_watch_txn
+node_store_put -->|"Attach/Detach"| node_lessor
+node_tree_index -->|"generations"| node_key_index
+node_schema_key -->|"bolt txns"| node_backend
+node_kv_store -->|"history grows"| node_compaction
+node_compaction -->|"drop old revs"| node_tree_index
+node_watch_txn -->|"notify&#40;rev, events&#41;"| node_watchable_store
+node_watchable_store -->|"catch up slow watchers"| node_sync_watchers
+node_watchable_store -->|"WatchResponse"| node_client_watch
+node_wal_read -->|"restore index"| node_kv_store
+
+click node_client_new "https://github.com/etcd-io/etcd/blob/main/client/v3/client.go"
+click node_client_kv "https://github.com/etcd-io/etcd/blob/main/client/v3/kv.go"
+click node_client_watch "https://github.com/etcd-io/etcd/blob/main/client/v3/watch.go"
+click node_rpc_kv "https://github.com/etcd-io/etcd/blob/main/api/etcdserverpb/rpc.proto"
+click node_raft_internal "https://github.com/etcd-io/etcd/blob/main/api/etcdserverpb/raft_internal.proto"
+click node_server_start "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/server.go"
+click node_v3_server "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/v3_server.go"
+click node_raft_request "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/v3_server.go"
+click node_read_index "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/read/read.go"
+click node_apply_entries "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/server.go"
+click node_raft_node "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/raft.go"
+click node_raft_loop "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/raft.go"
+click node_rafthttp "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/api/rafthttp/transport.go"
+click node_apply_entry "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/apply/apply.go"
+click node_uber_applier "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/apply/uber_applier.go"
+click node_applier_backend "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/apply/backend.go"
+click node_txn_put "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/txn/put.go"
+click node_txn_range "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/txn/range.go"
+click node_txn_txn "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/txn/txn.go"
+click node_kv_store "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/kvstore.go"
+click node_kv_txn "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/kvstore_txn.go"
+click node_store_put "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/kvstore_txn.go"
+click node_watch_txn "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/watchable_store_txn.go"
+click node_watchable_store "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/watchable_store.go"
+click node_sync_watchers "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/watchable_store.go"
+click node_tree_index "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/index.go"
+click node_key_index "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/key_index.go"
+click node_revision "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/revision.go"
+click node_compaction "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/kvstore_compaction.go"
+click node_wal_save "https://github.com/etcd-io/etcd/blob/main/server/storage/wal/wal.go"
+click node_wal_read "https://github.com/etcd-io/etcd/blob/main/server/storage/wal/wal.go"
+click node_schema_key "https://github.com/etcd-io/etcd/blob/main/server/storage/schema/bucket.go"
+click node_backend "https://github.com/etcd-io/etcd/blob/main/server/storage/backend/backend.go"
+click node_lessor "https://github.com/etcd-io/etcd/blob/main/server/lease/lessor.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_client_new,node_client_kv,node_client_watch,node_wal_save,node_wal_read,node_schema_key,node_backend toneBlue
+class node_rpc_kv,node_raft_internal,node_lessor toneAmber
+class node_server_start,node_v3_server,node_raft_request,node_read_index,node_apply_entries toneMint
+class node_raft_node,node_raft_loop,node_rafthttp toneRose
+class node_apply_entry,node_uber_applier,node_applier_backend,node_txn_put,node_txn_range,node_txn_txn toneIndigo
+class node_kv_store,node_kv_txn,node_store_put,node_watch_txn,node_watchable_store,node_sync_watchers,node_tree_index,node_key_index,node_revision,node_compaction toneTeal

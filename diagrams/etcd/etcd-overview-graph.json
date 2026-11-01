@@ -1,0 +1,39 @@
+{
+  "owner": "etcd-io",
+  "repo": "etcd",
+  "branch": "main",
+  "groups": [
+    { "id": "clients", "name": "clients", "label": "Clients" },
+    { "id": "api", "name": "api", "label": "gRPC API" },
+    { "id": "server_core", "name": "server_core", "label": "etcdserver" },
+    { "id": "consensus", "name": "consensus", "label": "Raft Consensus" },
+    { "id": "storage", "name": "storage", "label": "Storage" }
+  ],
+  "nodes": [
+    { "id": "client_v3", "label": "client/v3 Client", "file": "client.go", "path": "client/v3/client.go", "group": "clients", "groupId": "clients", "desc": "Dials the cluster and hands out KV, lease and watch stubs" },
+    { "id": "kv_api", "label": "service KV (protobuf)", "file": "rpc.proto", "path": "api/etcdserverpb/rpc.proto", "group": "api", "groupId": "api", "desc": "Range, Put, Txn, Watch and lease RPC definitions" },
+    { "id": "v3_server", "label": "EtcdServer request handlers", "file": "v3_server.go", "path": "server/etcdserver/v3_server.go", "group": "server_core", "groupId": "server_core", "desc": "Routes Put and Txn through Raft; serves Range from the store" },
+    { "id": "raft_node", "label": "raftNode loop", "file": "raft.go", "path": "server/etcdserver/raft.go", "group": "consensus", "groupId": "consensus", "desc": "Drives tick and Ready cycles: propose, persist, replicate" },
+    { "id": "rafthttp", "label": "rafthttp Transport", "file": "transport.go", "path": "server/etcdserver/api/rafthttp/transport.go", "group": "consensus", "groupId": "consensus", "desc": "Ships raftpb.Message between cluster peers over HTTP" },
+    { "id": "wal", "label": "WAL", "file": "wal.go", "path": "server/storage/wal/wal.go", "group": "storage", "groupId": "storage", "desc": "Durably saves hard state and entries before acknowledgement" },
+    { "id": "apply_entry", "label": "Apply entry", "file": "apply.go", "path": "server/etcdserver/apply/apply.go", "group": "server_core", "groupId": "server_core", "desc": "Unmarshals committed entries into internal requests" },
+    { "id": "uber_applier", "label": "uberApplier dispatch", "file": "uber_applier.go", "path": "server/etcdserver/apply/uber_applier.go", "group": "server_core", "groupId": "server_core", "desc": "Runs auth, quota and capped wrappers, then dispatches by request type" },
+    { "id": "txn_put", "label": "txn.Put", "file": "put.go", "path": "server/etcdserver/txn/put.go", "group": "server_core", "groupId": "server_core", "desc": "Validates lease and prev_kv options, executes the mutation" },
+    { "id": "mvcc_store", "label": "MVCC storeTxnWrite", "file": "kvstore_txn.go", "path": "server/storage/mvcc/kvstore_txn.go", "group": "storage", "groupId": "storage", "desc": "Writes revisioned records to bolt and updates the tree index" },
+    { "id": "watchable", "label": "watchableStore", "file": "watchable_store.go", "path": "server/storage/mvcc/watchable_store.go", "group": "storage", "groupId": "storage", "desc": "Broadcasts events to synced watchers and recovers slow ones" }
+  ],
+  "edges": [
+    { "from": "client_v3", "to": "kv_api", "label": "gRPC calls" },
+    { "from": "kv_api", "to": "v3_server", "label": "RPC handlers" },
+    { "from": "v3_server", "to": "raft_node", "label": "propose InternalRaftRequest" },
+    { "from": "raft_node", "to": "wal", "label": "Save hard state + entries" },
+    { "from": "raft_node", "to": "rafthttp", "label": "leader replicates" },
+    { "from": "raft_node", "to": "apply_entry", "label": "committed entries" },
+    { "from": "apply_entry", "to": "uber_applier", "label": "wrapped request" },
+    { "from": "uber_applier", "to": "txn_put", "label": "dispatch Put" },
+    { "from": "txn_put", "to": "mvcc_store", "label": "storeTxnWrite.put" },
+    { "from": "mvcc_store", "to": "watchable", "label": "txn End() emits events" },
+    { "from": "v3_server", "to": "mvcc_store", "label": "Range reads" },
+    { "from": "watchable", "to": "client_v3", "label": "WatchResponse stream" }
+  ]
+}
