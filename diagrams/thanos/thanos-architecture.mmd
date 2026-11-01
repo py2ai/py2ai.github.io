@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_g_cmd["CLI"]
+  node_main["thanos main<br/>[main.go]"]
+end
+
+subgraph group_g_ingest["Ingest"]
+  node_sidecar["Sidecar<br/>[sidecar.go]"]
+  node_shipper["Shipper<br/>[shipper.go]"]
+  node_receive["Receive<br/>[handler.go]"]
+  node_hashring["Hashring<br/>[hashring.go]"]
+  node_multitsdb["MultiTSDB<br/>[multitsdb.go]"]
+  node_writer["Writer<br/>[writer.go]"]
+end
+
+subgraph group_g_blocks["Blocks"]
+  node_meta["Block Meta<br/>[meta.go]"]
+  node_blockio["Block IO<br/>[block.go]"]
+  node_fetcher["MetaFetcher<br/>[fetcher.go]"]
+  node_blockwriter["DiskWriter<br/>[writer.go]"]
+end
+
+subgraph group_g_serve["Serve"]
+  node_storepb["Store API proto<br/>[rpc.proto]"]
+  node_storegw["BucketStore<br/>[bucket.go]"]
+  node_bucketblock["bucketBlock<br/>[bucket.go]"]
+  node_lazyindex["LazyBinaryReader"]
+  node_cache["CachingBucket<br/>[caching_bucket.go]"]
+end
+
+subgraph group_g_query["Query"]
+  node_endpointset["EndpointSet<br/>[endpointset.go]"]
+  node_querier["Fanout Querier<br/>[querier.go]"]
+  node_grpcapi["gRPC Query API<br/>[grpc.go]"]
+  node_frontend["Query Frontend<br/>[roundtrip.go]"]
+  node_splitter["splitByInterval"]
+  node_sharder["querySharder<br/>[shard_query.go]"]
+  node_analyzer["QueryAnalyzer<br/>[analyzer.go]"]
+  node_dedup["dedupSeriesIterator<br/>[iter.go]"]
+end
+
+subgraph group_g_ops["Ops"]
+  node_compact["Compactor Syncer<br/>[compact.go]"]
+  node_compactv2["Compactor v2<br/>[compactor.go]"]
+  node_planner["tsdbBasedPlanner<br/>[planner.go]"]
+  node_downsample["Downsample<br/>[downsample.go]"]
+  node_retention["Retention<br/>[retention.go]"]
+  node_cleaner["BlocksCleaner<br/>[blocks_cleaner.go]"]
+  node_ruler["Rule Manager<br/>[manager.go]"]
+end
+
+node_main -->|"registers subcommand"| node_sidecar
+node_main -->|"registers subcommand"| node_receive
+node_main -->|"registers subcommand"| node_storegw
+node_main -->|"registers subcommand"| node_endpointset
+node_main -->|"registers subcommand"| node_compact
+node_main -->|"registers subcommand"| node_ruler
+node_main -->|"registers subcommand"| node_frontend
+node_sidecar -->|"shipper.New at L466"| node_shipper
+node_shipper -->|"Shipper.Sync uploads Meta"| node_meta
+node_shipper -->|"block.Upload at L97"| node_blockio
+node_receive -->|"Handler.Hashring at L363"| node_hashring
+node_receive -->|"Writer.Write appends"| node_writer
+node_writer -->|"TenantAppendable per tenant"| node_multitsdb
+node_receive -->|"receive serves Store API"| node_storepb
+node_storegw -->|"lists bucket metas"| node_fetcher
+node_fetcher -->|"parses Meta JSON"| node_meta
+node_storegw -->|"manages bucketBlock sets"| node_bucketblock
+node_bucketblock -->|"index header on demand"| node_lazyindex
+node_storegw -->|"NewCachingBucket at L56"| node_cache
+node_storegw -->|"serves service Store"| node_storepb
+node_endpointset -->|"Info and Series RPCs"| node_storepb
+node_querier -->|"fanout across endpoints"| node_endpointset
+node_grpcapi -->|"Series via fanout querier"| node_querier
+node_frontend -->|"downstream queries"| node_grpcapi
+node_frontend -->|"splits long ranges"| node_splitter
+node_frontend -->|"shards queries"| node_sharder
+node_sharder -->|"QueryAnalyzer picks shards"| node_analyzer
+node_querier -->|"merges replica labels"| node_dedup
+node_endpointset -->|"sidecar Store API"| node_sidecar
+node_endpointset -->|"receive Store API"| node_receive
+node_compact -->|"Syncer.fetcher.Fetch at L163"| node_fetcher
+node_compact -->|"plans compaction levels"| node_planner
+node_compactv2 -->|"WriteSeries into block.Writer"| node_blockwriter
+node_compact -->|"vertical compaction core"| node_compactv2
+node_compact -->|"Downsample 5m and 1h"| node_downsample
+node_compact -->|"ApplyRetentionPolicyByResolution"| node_retention
+node_compact -->|"BlocksCleaner deletes blocks"| node_cleaner
+node_ruler -->|"QueryFunc hits query layer"| node_querier
+
+click node_main "https://github.com/thanos-io/thanos/blob/main/cmd/thanos/main.go"
+click node_sidecar "https://github.com/thanos-io/thanos/blob/main/cmd/thanos/sidecar.go"
+click node_shipper "https://github.com/thanos-io/thanos/blob/main/pkg/shipper/shipper.go"
+click node_receive "https://github.com/thanos-io/thanos/blob/main/pkg/receive/handler.go"
+click node_hashring "https://github.com/thanos-io/thanos/blob/main/pkg/receive/hashring.go"
+click node_multitsdb "https://github.com/thanos-io/thanos/blob/main/pkg/receive/multitsdb.go"
+click node_writer "https://github.com/thanos-io/thanos/blob/main/pkg/receive/writer.go"
+click node_meta "https://github.com/thanos-io/thanos/blob/main/pkg/block/metadata/meta.go"
+click node_blockio "https://github.com/thanos-io/thanos/blob/main/pkg/block/block.go"
+click node_fetcher "https://github.com/thanos-io/thanos/blob/main/pkg/block/fetcher.go"
+click node_blockwriter "https://github.com/thanos-io/thanos/blob/main/pkg/block/writer.go"
+click node_storepb "https://github.com/thanos-io/thanos/blob/main/pkg/store/storepb/rpc.proto"
+click node_storegw "https://github.com/thanos-io/thanos/blob/main/pkg/store/bucket.go"
+click node_bucketblock "https://github.com/thanos-io/thanos/blob/main/pkg/store/bucket.go"
+click node_lazyindex "https://github.com/thanos-io/thanos/blob/main/pkg/block/indexheader/lazy_binary_reader.go"
+click node_cache "https://github.com/thanos-io/thanos/blob/main/pkg/store/cache/caching_bucket.go"
+click node_endpointset "https://github.com/thanos-io/thanos/blob/main/pkg/query/endpointset.go"
+click node_querier "https://github.com/thanos-io/thanos/blob/main/pkg/query/querier.go"
+click node_grpcapi "https://github.com/thanos-io/thanos/blob/main/pkg/api/query/grpc.go"
+click node_frontend "https://github.com/thanos-io/thanos/blob/main/pkg/queryfrontend/roundtrip.go"
+click node_splitter "https://github.com/thanos-io/thanos/blob/main/pkg/queryfrontend/split_by_interval.go"
+click node_sharder "https://github.com/thanos-io/thanos/blob/main/pkg/queryfrontend/shard_query.go"
+click node_analyzer "https://github.com/thanos-io/thanos/blob/main/pkg/querysharding/analyzer.go"
+click node_dedup "https://github.com/thanos-io/thanos/blob/main/pkg/dedup/iter.go"
+click node_compact "https://github.com/thanos-io/thanos/blob/main/pkg/compact/compact.go"
+click node_compactv2 "https://github.com/thanos-io/thanos/blob/main/pkg/compactv2/compactor.go"
+click node_planner "https://github.com/thanos-io/thanos/blob/main/pkg/compact/planner.go"
+click node_downsample "https://github.com/thanos-io/thanos/blob/main/pkg/compact/downsample/downsample.go"
+click node_retention "https://github.com/thanos-io/thanos/blob/main/pkg/compact/retention.go"
+click node_cleaner "https://github.com/thanos-io/thanos/blob/main/pkg/compact/blocks_cleaner.go"
+click node_ruler "https://github.com/thanos-io/thanos/blob/main/pkg/rules/manager.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main toneBlue
+class node_sidecar,node_shipper,node_receive,node_hashring,node_multitsdb,node_writer toneAmber
+class node_meta,node_blockio,node_fetcher,node_blockwriter toneMint
+class node_storepb,node_storegw,node_bucketblock,node_lazyindex,node_cache toneRose
+class node_endpointset,node_querier,node_grpcapi,node_frontend,node_splitter,node_sharder,node_analyzer,node_dedup toneIndigo
+class node_compact,node_compactv2,node_planner,node_downsample,node_retention,node_cleaner,node_ruler toneTeal

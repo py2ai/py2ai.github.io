@@ -1,0 +1,40 @@
+{
+  "owner": "thanos-io",
+  "repo": "thanos",
+  "branch": "main",
+  "groups": [
+    { "id": "g_ingest", "name": "Ingest and Upload", "label": "Ingest" },
+    { "id": "g_blocks", "name": "Blocks and Metadata", "label": "Blocks" },
+    { "id": "g_serve", "name": "Store Gateway", "label": "Serve" },
+    { "id": "g_query", "name": "Query Layer", "label": "Query" },
+    { "id": "g_ops", "name": "Compaction and Rules", "label": "Ops" }
+  ],
+  "nodes": [
+    { "id": "sidecar", "label": "Sidecar", "file": "cmd/thanos/sidecar.go", "path": "cmd/thanos/sidecar.go", "group": "Ingest", "groupId": "g_ingest", "desc": "registerSidecar wires Prometheus proxying and the block shipper (L61)" },
+    { "id": "shipper", "label": "Shipper", "file": "pkg/shipper/shipper.go", "path": "pkg/shipper/shipper.go", "group": "Ingest", "groupId": "g_ingest", "desc": "Shipper.Sync uploads local TSDB blocks to the object store (L344)" },
+    { "id": "receive", "label": "Receive", "file": "pkg/receive/handler.go", "path": "pkg/receive/handler.go", "group": "Ingest", "groupId": "g_ingest", "desc": "Handler.receiveHTTP and RemoteWrite accept remote-write traffic (L809, L1427)" },
+    { "id": "writer", "label": "Writer", "file": "pkg/receive/writer.go", "path": "pkg/receive/writer.go", "group": "Ingest", "groupId": "g_ingest", "desc": "Writer.Write appends tenant series into the per-tenant TSDB (L74)" },
+    { "id": "meta", "label": "Block Meta", "file": "pkg/block/metadata/meta.go", "path": "pkg/block/metadata/meta.go", "group": "Blocks", "groupId": "g_blocks", "desc": "Meta describes every block: ULID, time range, stats, labels (L66)" },
+    { "id": "storegw", "label": "Store Gateway", "file": "pkg/store/bucket.go", "path": "pkg/store/bucket.go", "group": "Serve", "groupId": "g_serve", "desc": "BucketStore.Series serves bucket data over the Store API (L1560)" },
+    { "id": "cache", "label": "CachingBucket", "file": "pkg/store/cache/caching_bucket.go", "path": "pkg/store/cache/caching_bucket.go", "group": "Serve", "groupId": "g_serve", "desc": "CachingBucket shields the object store from hot index reads (L39)" },
+    { "id": "endpointset", "label": "EndpointSet", "file": "pkg/query/endpointset.go", "path": "pkg/query/endpointset.go", "group": "Query", "groupId": "g_query", "desc": "EndpointSet discovers and tracks Store API endpoints (L255)" },
+    { "id": "querier", "label": "Fanout Querier", "file": "pkg/query/querier.go", "path": "pkg/query/querier.go", "group": "Query", "groupId": "g_query", "desc": "fanout querier merges series from every engine (L143, L298)" },
+    { "id": "frontend", "label": "Query Frontend", "file": "pkg/queryfrontend/roundtrip.go", "path": "pkg/queryfrontend/roundtrip.go", "group": "Query", "groupId": "g_query", "desc": "roundTripper caches, splits and retries query ranges (L97)" },
+    { "id": "compact", "label": "Compactor", "file": "pkg/compact/compact.go", "path": "pkg/compact/compact.go", "group": "Ops", "groupId": "g_ops", "desc": "Syncer.SyncMetas and Group drive bucket compaction (L55, L437)" },
+    { "id": "ruler", "label": "Ruler", "file": "pkg/rules/manager.go", "path": "pkg/rules/manager.go", "group": "Ops", "groupId": "g_ops", "desc": "Manager evaluates recording and alerting rules globally (L117)" }
+  ],
+  "edges": [
+    { "from": "sidecar", "to": "shipper", "label": "shipper.New at L466" },
+    { "from": "shipper", "to": "meta", "label": "uploads block Meta" },
+    { "from": "receive", "to": "writer", "label": "tenant writes via Writer.Write" },
+    { "from": "storegw", "to": "meta", "label": "SyncBlocks reads block metas" },
+    { "from": "storegw", "to": "cache", "label": "NewCachingBucket" },
+    { "from": "endpointset", "to": "storegw", "label": "Store API fan-out" },
+    { "from": "endpointset", "to": "sidecar", "label": "sidecar exposes Store API" },
+    { "from": "endpointset", "to": "receive", "label": "receive exposes Store API" },
+    { "from": "querier", "to": "endpointset", "label": "fanout across endpoints" },
+    { "from": "frontend", "to": "querier", "label": "downstream tripperware" },
+    { "from": "compact", "to": "meta", "label": "SyncMetas and GarbageCollect" },
+    { "from": "ruler", "to": "querier", "label": "rules evaluate through query layer" }
+  ]
+}
