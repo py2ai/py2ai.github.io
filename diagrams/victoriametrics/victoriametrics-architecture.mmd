@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_apps["Binaries &amp; App Wiring"]
+  node_vmsingle_main["victoria-metrics-prod main<br/>[main.go]"]
+  node_vmagent_main["vmagent main<br/>[main.go]"]
+  node_vmagent_client["remotewrite client<br/>[client.go]"]
+  node_vmstorage_main["vmstorage main<br/>[main.go]"]
+  node_vmstorage_api["VMStorage facade<br/>[vmstorage.go]"]
+end
+
+subgraph group_ingestion["Ingestion Path &#40;vminsert&#41;"]
+  node_vminsert_main["vminsert main<br/>[main.go]"]
+  node_promremotewrite["promremotewrite<br/>[request_handler.go]"]
+  node_insert_ctx["InsertCtx<br/>[insert_ctx.go]"]
+  node_vminsert_relabel["relabel<br/>[relabel.go]"]
+end
+
+subgraph group_query["Query Path &#40;vmselect&#41;"]
+  node_vmselect_main["vmselect main<br/>[main.go]"]
+  node_prometheus_api["prometheus API<br/>[prometheus.go]"]
+  node_promql_exec["promql Exec<br/>[exec.go]"]
+  node_promql_eval["promql evalExpr<br/>[eval.go]"]
+  node_promql_rollup["rollup functions<br/>[rollup.go]"]
+  node_rollup_cache["rollup result cache"]
+  node_netstorage["netstorage<br/>[netstorage.go]"]
+end
+
+subgraph group_storagecore["Storage Core &#40;Storage/Table/Partition&#41;"]
+  node_storage_main["Storage<br/>[storage.go]"]
+  node_storage_search["Search / SearchQuery<br/>[search.go]"]
+  node_table["table<br/>[table.go]"]
+  node_table_search["tableSearch<br/>[table_search.go]"]
+  node_partition["partition<br/>[partition.go]"]
+  node_partition_search["partitionSearch"]
+end
+
+subgraph group_parts["Parts &amp; Block Streaming"]
+  node_merge["mergeBlockStreams<br/>[merge.go]"]
+  node_dedup["DeduplicateSamples<br/>[dedup.go]"]
+  node_inmemory_part["inmemoryPart<br/>[inmemory_part.go]"]
+  node_part["part<br/>[part.go]"]
+  node_part_header["partHeader<br/>[part_header.go]"]
+  node_part_search["partSearch<br/>[part_search.go]"]
+  node_block["Block<br/>[block.go]"]
+  node_bsr["blockStreamReader"]
+  node_bsw["blockStreamWriter"]
+end
+
+subgraph group_index["Inverted Index &#40;indexDB&#41;"]
+  node_indexdb["indexDB<br/>[index_db.go]"]
+  node_tag_filters["TagFilters<br/>[tag_filters.go]"]
+  node_metric_name["MetricName<br/>[metric_name.go]"]
+end
+
+node_vmagent_main -->|"queues blocks"| node_vmagent_client
+node_vmagent_client -->|"POST /api/v1/write"| node_vminsert_main
+node_vmsingle_main -->|"vmstorage.Init"| node_vmstorage_main
+node_vmsingle_main -->|"vminsert.Init"| node_vminsert_main
+node_vmsingle_main -->|"vmselect.Init"| node_vmselect_main
+node_vmstorage_main -->|"newVMStorage"| node_vmstorage_api
+node_vmstorage_main -->|"MustOpenStorage"| node_storage_main
+node_vmstorage_api -->|"AddRows / InitSearch"| node_storage_main
+node_vminsert_main -->|"route /prometheus/api/v1/write"| node_promremotewrite
+node_promremotewrite -->|"insertRows"| node_insert_ctx
+node_insert_ctx -->|"ApplyRelabeling"| node_vminsert_relabel
+node_insert_ctx -->|"FlushBufs -&gt; WriteRows"| node_vmstorage_api
+node_vmselect_main -->|"API handlers"| node_prometheus_api
+node_vmselect_main -->|"query handlers"| node_promql_exec
+node_prometheus_api -->|"ProcessSearchQuery"| node_netstorage
+node_promql_exec -->|"evalExpr"| node_promql_eval
+node_promql_eval -->|"rollup funcs"| node_promql_rollup
+node_promql_eval -->|"cache rollup results"| node_rollup_cache
+node_promql_eval -->|"ProcessSearchQuery"| node_netstorage
+node_netstorage -->|"InitSearch"| node_vmstorage_api
+node_netstorage -->|"SearchQuery"| node_storage_search
+node_storage_search -->|"iterate TSIDs"| node_table_search
+node_storage_main -->|"run Search"| node_storage_search
+node_storage_main -->|"mustOpenTable"| node_table
+node_table -->|"merge per-partition"| node_table_search
+node_table -->|"MustAddRows -&gt; newPartition"| node_partition
+node_partition -->|"scan parts"| node_partition_search
+node_partition -->|"buffer recent rows"| node_inmemory_part
+node_partition -->|"mergeParts"| node_merge
+node_partition -->|"owns per-month index"| node_indexdb
+node_partition_search -->|"NextBlock"| node_part_search
+node_merge -->|"dedup samples"| node_dedup
+node_merge -->|"read sources"| node_bsr
+node_merge -->|"write result part"| node_bsw
+node_inmemory_part -->|"flush to disk"| node_part
+node_part -->|"metadata"| node_part_header
+node_part -->|"open for reads"| node_part_search
+node_part_search -->|"unmarshal"| node_block
+node_bsr -->|"stream blocks"| node_block
+node_bsw -->|"serialize blocks"| node_block
+node_indexdb -->|"resolve filters"| node_tag_filters
+node_indexdb -->|"TSID &lt;-&gt; MetricName"| node_metric_name
+
+click node_vmsingle_main "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/victoria-metrics/main.go"
+click node_vmagent_main "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmagent/main.go"
+click node_vmagent_client "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmagent/remotewrite/client.go"
+click node_vmstorage_main "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmstorage/main.go"
+click node_vmstorage_api "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmstorage/vmstorage.go"
+click node_vminsert_main "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vminsert/main.go"
+click node_promremotewrite "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vminsert/promremotewrite/request_handler.go"
+click node_insert_ctx "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vminsert/common/insert_ctx.go"
+click node_vminsert_relabel "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vminsert/relabel/relabel.go"
+click node_vmselect_main "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/main.go"
+click node_prometheus_api "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/prometheus/prometheus.go"
+click node_promql_exec "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/promql/exec.go"
+click node_promql_eval "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/promql/eval.go"
+click node_promql_rollup "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/promql/rollup.go"
+click node_rollup_cache "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/promql/rollup_result_cache.go"
+click node_netstorage "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmselect/netstorage/netstorage.go"
+click node_storage_main "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/storage.go"
+click node_storage_search "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/search.go"
+click node_table "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/table.go"
+click node_table_search "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/table_search.go"
+click node_partition "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/partition.go"
+click node_partition_search "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/partition_search.go"
+click node_merge "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/merge.go"
+click node_dedup "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/dedup.go"
+click node_inmemory_part "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/inmemory_part.go"
+click node_part "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/part.go"
+click node_part_header "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/part_header.go"
+click node_part_search "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/part_search.go"
+click node_block "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/block.go"
+click node_bsr "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/block_stream_reader.go"
+click node_bsw "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/block_stream_writer.go"
+click node_indexdb "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/index_db.go"
+click node_tag_filters "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/tag_filters.go"
+click node_metric_name "https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/storage/metric_name.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_vmsingle_main,node_vmagent_main,node_vmagent_client,node_vmstorage_main,node_vmstorage_api toneBlue
+class node_vminsert_main,node_promremotewrite,node_insert_ctx,node_vminsert_relabel toneAmber
+class node_vmselect_main,node_prometheus_api,node_promql_exec,node_promql_eval,node_promql_rollup,node_rollup_cache,node_netstorage toneMint
+class node_storage_main,node_storage_search,node_table,node_table_search,node_partition,node_partition_search toneRose
+class node_merge,node_dedup,node_inmemory_part,node_part,node_part_header,node_part_search,node_block,node_bsr,node_bsw toneIndigo
+class node_indexdb,node_tag_filters,node_metric_name toneTeal

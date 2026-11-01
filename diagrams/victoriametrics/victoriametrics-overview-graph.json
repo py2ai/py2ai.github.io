@@ -1,0 +1,42 @@
+{
+  "owner": "VictoriaMetrics",
+  "repo": "VictoriaMetrics",
+  "branch": "master",
+  "groups": [
+    { "id": "clients", "name": "clients", "label": "Clients & Writers" },
+    { "id": "ingestion", "name": "ingestion", "label": "Ingestion (vminsert)" },
+    { "id": "query", "name": "query", "label": "Query (vmselect)" },
+    { "id": "storageapp", "name": "storageapp", "label": "Storage App (vmstorage)" },
+    { "id": "tsdbcore", "name": "tsdbcore", "label": "TSDB Core (lib/storage)" }
+  ],
+  "nodes": [
+    { "id": "vmagent", "label": "vmagent", "file": "app/vmagent/main.go", "path": "app/vmagent/main.go", "group": "clients", "groupId": "clients", "desc": "Standalone agent that scrapes metrics and remote-writes them to VictoriaMetrics (main at L105)." },
+    { "id": "vmsingle", "label": "victoria-metrics-prod", "file": "app/victoria-metrics/main.go", "path": "app/victoria-metrics/main.go", "group": "clients", "groupId": "clients", "desc": "Single-node binary wiring vmstorage.Init, vmselect.Init and vminsert.Init into one process (L99-L103); serves HTTP on :8428 (L93)." },
+    { "id": "vminsert", "label": "vminsert", "file": "app/vminsert/main.go", "path": "app/vminsert/main.go", "group": "ingestion", "groupId": "ingestion", "desc": "Multi-protocol ingestion package: Init (L91) and RequestHandler (L134) route /prometheus/api/v1/write and friends (L171)." },
+    { "id": "insertctx", "label": "InsertCtx", "file": "app/vminsert/common/insert_ctx.go", "path": "app/vminsert/common/insert_ctx.go", "group": "ingestion", "groupId": "ingestion", "desc": "Per-request context buffering rows: WriteDataPoint (L133) and FlushBufs (L275) push MetricRows downstream (L292)." },
+    { "id": "vmselect", "label": "vmselect", "file": "app/vmselect/main.go", "path": "app/vmselect/main.go", "group": "query", "groupId": "query", "desc": "Query-side HTTP routing: Init (L49), /api/v1/query (L207) and /api/v1/query_range (L216), plus the /vmui web UI (L454)." },
+    { "id": "promqleval", "label": "promql eval", "file": "app/vmselect/promql/eval.go", "path": "app/vmselect/promql/eval.go", "group": "query", "groupId": "query", "desc": "MetricsQL/PromQL evaluation: EvalConfig (L116) and evalExpr (L257); fetches raw series via netstorage.ProcessSearchQuery (L1834)." },
+    { "id": "netstorage", "label": "netstorage", "file": "app/vmselect/netstorage/netstorage.go", "path": "app/vmselect/netstorage/netstorage.go", "group": "query", "groupId": "query", "desc": "Fetch layer converting SearchQuery into Results: ProcessSearchQuery (L1090), Result (L45)." },
+    { "id": "vmstorage", "label": "vmstorage", "file": "app/vmstorage/main.go", "path": "app/vmstorage/main.go", "group": "storageapp", "groupId": "storageapp", "desc": "Storage app wrapper: Init (L123) opens lib/storage at -storageDataPath (L29, L167) and exposes VMInsertAPI (L200); WriteRows facade in app/vmstorage/vmstorage.go L130." },
+    { "id": "storage", "label": "Storage", "file": "lib/storage/storage.go", "path": "lib/storage/storage.go", "group": "tsdbcore", "groupId": "tsdbcore", "desc": "Top-level TSDB object: MustOpenStorage (L183), AddRows (L1659), SearchTSIDs (L1270)." },
+    { "id": "table", "label": "table", "file": "lib/storage/table.go", "path": "lib/storage/table.go", "group": "tsdbcore", "groupId": "tsdbcore", "desc": "Holds monthly partitions: mustOpenTable (L91), MustAddRows (L300) fans raw rows out to the right partition." },
+    { "id": "partition", "label": "partition", "file": "lib/storage/partition.go", "path": "lib/storage/partition.go", "group": "tsdbcore", "groupId": "tsdbcore", "desc": "Per-month data partition with its own indexDB: newPartition (L296), background mergeParts (L1234), mustOpenParts (L1767)." },
+    { "id": "indexdb", "label": "indexDB", "file": "lib/storage/index_db.go", "path": "lib/storage/index_db.go", "group": "tsdbcore", "groupId": "tsdbcore", "desc": "Inverted index mapping label filters to TSIDs: indexDB struct (L77), mustOpenIndexDB (L168), SearchTSIDs (L1934)." }
+  ],
+  "edges": [
+    { "from": "vmagent", "to": "vminsert", "label": "remote write /api/v1/write" },
+    { "from": "vmsingle", "to": "vmstorage", "label": "vmstorage.Init" },
+    { "from": "vmsingle", "to": "vminsert", "label": "vminsert.Init" },
+    { "from": "vmsingle", "to": "vmselect", "label": "vmselect.Init" },
+    { "from": "vminsert", "to": "insertctx", "label": "WriteDataPoint" },
+    { "from": "insertctx", "to": "vmstorage", "label": "FlushBufs -> WriteRows" },
+    { "from": "vmstorage", "to": "storage", "label": "MustOpenStorage / AddRows" },
+    { "from": "vmselect", "to": "promqleval", "label": "promql.Exec" },
+    { "from": "promqleval", "to": "netstorage", "label": "ProcessSearchQuery" },
+    { "from": "netstorage", "to": "vmstorage", "label": "InitSearch / GetSearch" },
+    { "from": "netstorage", "to": "storage", "label": "SearchQuery" },
+    { "from": "storage", "to": "table", "label": "mustOpenTable" },
+    { "from": "table", "to": "partition", "label": "MustAddRows / newPartition" },
+    { "from": "partition", "to": "indexdb", "label": "own indexDB per month" }
+  ]
+}
