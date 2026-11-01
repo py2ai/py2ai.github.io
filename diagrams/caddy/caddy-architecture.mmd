@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_cli["Entry &amp; CLI"]
+  node_main["cmd.Main<br/>[main.go]"]
+  node_cmd_start["cmdStart<br/>[commandfuncs.go]"]
+  node_cmd_run["cmdRun<br/>[commandfuncs.go]"]
+  node_load_config["LoadConfig<br/>[main.go]"]
+  node_fileserver_cmd["caddy file-server<br/>[command.go]"]
+end
+
+subgraph group_core["Config Core &amp; Caddyfile"]
+  node_adapt["Adapter.Adapt<br/>[adapter.go]"]
+  node_httptype["ServerType.Setup<br/>[httptype.go]"]
+  node_caddy_run["caddy.Run<br/>[caddy.go]"]
+  node_caddy_load["caddy.Load<br/>[caddy.go]"]
+  node_change_config["changeConfig<br/>[caddy.go]"]
+  node_provision_ctx["provisionContext<br/>[caddy.go]"]
+  node_app_start_loop["apps Start loop<br/>[caddy.go]"]
+end
+
+subgraph group_admin["Admin API"]
+  node_admin_replace["replaceLocalAdminServer<br/>[admin.go]"]
+  node_admin_listen["DefaultAdminListen<br/>[admin.go]"]
+  node_admin_access["unsyncedConfigAccess<br/>[admin.go]"]
+end
+
+subgraph group_http["HTTP App &amp; Listeners"]
+  node_http_app_provision["App.Provision<br/>[app.go]"]
+  node_http_app_start["App.Start<br/>[app.go]"]
+  node_parse_addr["ParseNetworkAddress<br/>[listeners.go]"]
+  node_listen_all["NetworkAddress.ListenAll<br/>[listeners.go]"]
+end
+
+subgraph group_routing["Request Routing"]
+  node_server_serve["Server.ServeHTTP<br/>[server.go]"]
+  node_serve_http_inner["Server.serveHTTP<br/>[server.go]"]
+  node_enforcement["enforcementHandler<br/>[server.go]"]
+  node_routes_compile["RouteList.Compile<br/>[routes.go]"]
+  node_wrap_route["wrapRoute<br/>[routes.go]"]
+  node_match_host["MatchHost.Match<br/>[matchers.go]"]
+  node_match_path["MatchPath.Match<br/>[matchers.go]"]
+end
+
+subgraph group_handlers["HTTP Handlers"]
+  node_rp_handler["reverse_proxy ServeHTTP<br/>[reverseproxy.go]"]
+  node_rp_loop["proxyLoopIteration<br/>[reverseproxy.go]"]
+  node_rp_roundtrip["roundTrip<br/>[reverseproxy.go]"]
+  node_fs_serve["FileServer.ServeHTTP<br/>[staticfiles.go]"]
+end
+
+subgraph group_tls["TLS Automation"]
+  node_tls_provision["TLS.Provision<br/>[tls.go]"]
+  node_tls_start["TLS.Start<br/>[tls.go]"]
+  node_auto_policy["AutomationPolicy.Provision<br/>[automation.go]"]
+  node_default_issuers["DefaultIssuers<br/>[automation.go]"]
+end
+
+node_main -->|"dispatch 'run'"| node_cmd_run
+node_main -->|"dispatch 'start'"| node_cmd_start
+node_cmd_start -->|"spawn child process"| node_cmd_run
+node_cmd_run -->|"read config file"| node_load_config
+node_load_config -->|"adapter 'caddyfile'"| node_adapt
+node_adapt -->|"convert directives"| node_httptype
+node_cmd_run -->|"caddy.Load&#40;config, true&#41;"| node_caddy_load
+node_caddy_run -->|"Run delegates"| node_caddy_load
+node_caddy_load -->|"POST /id/config"| node_change_config
+node_change_config -->|"unsyncedConfigAccess reload"| node_provision_ctx
+node_provision_ctx -->|"swap admin endpoint"| node_admin_replace
+node_admin_replace -->|"serve localhost:2019"| node_admin_listen
+node_admin_listen -->|"handle API call"| node_admin_access
+node_admin_access -->|"mutate config"| node_change_config
+node_provision_ctx -->|"start each app"| node_app_start_loop
+node_app_start_loop -->|"provision http app"| node_http_app_provision
+node_http_app_provision -->|"provision then start"| node_http_app_start
+node_app_start_loop -->|"start tls app"| node_tls_start
+node_http_app_start -->|"parse listen addrs"| node_parse_addr
+node_parse_addr -->|"bind sockets"| node_listen_all
+node_http_app_start -->|"Server is the Handler"| node_server_serve
+node_server_serve -->|"primary chain"| node_serve_http_inner
+node_serve_http_inner -->|"wrapped stack"| node_enforcement
+node_enforcement -->|"compiled RouteList"| node_routes_compile
+node_routes_compile -->|"one wrap per route"| node_wrap_route
+node_wrap_route -->|"anyMatch matchers"| node_match_host
+node_wrap_route -->|"anyMatch matchers"| node_match_path
+node_wrap_route -->|"reverse_proxy handler"| node_rp_handler
+node_wrap_route -->|"file_server handler"| node_fs_serve
+node_fileserver_cmd -->|"builds FileServer"| node_fs_serve
+node_rp_handler -->|"retry loop"| node_rp_loop
+node_rp_loop -->|"send upstream"| node_rp_roundtrip
+node_server_serve -->|"conn policies"| node_tls_provision
+node_server_serve -->|"HandleHTTPChallenge"| node_tls_start
+node_tls_provision -->|"build certmagic config"| node_auto_policy
+node_tls_provision -->|"ACME issuers"| node_default_issuers
+node_tls_start -->|"t.Manage automate names"| node_auto_policy
+node_http_app_start -->|"listenAddr.Listen"| node_listen_all
+
+click node_main "https://github.com/caddyserver/caddy/blob/master/cmd/main.go"
+click node_cmd_start "https://github.com/caddyserver/caddy/blob/master/cmd/commandfuncs.go"
+click node_cmd_run "https://github.com/caddyserver/caddy/blob/master/cmd/commandfuncs.go"
+click node_load_config "https://github.com/caddyserver/caddy/blob/master/cmd/main.go"
+click node_fileserver_cmd "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/fileserver/command.go"
+click node_adapt "https://github.com/caddyserver/caddy/blob/master/caddyconfig/caddyfile/adapter.go"
+click node_httptype "https://github.com/caddyserver/caddy/blob/master/caddyconfig/httpcaddyfile/httptype.go"
+click node_caddy_run "https://github.com/caddyserver/caddy/blob/master/caddy.go"
+click node_caddy_load "https://github.com/caddyserver/caddy/blob/master/caddy.go"
+click node_change_config "https://github.com/caddyserver/caddy/blob/master/caddy.go"
+click node_provision_ctx "https://github.com/caddyserver/caddy/blob/master/caddy.go"
+click node_app_start_loop "https://github.com/caddyserver/caddy/blob/master/caddy.go"
+click node_admin_replace "https://github.com/caddyserver/caddy/blob/master/admin.go"
+click node_admin_listen "https://github.com/caddyserver/caddy/blob/master/admin.go"
+click node_admin_access "https://github.com/caddyserver/caddy/blob/master/admin.go"
+click node_http_app_provision "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/app.go"
+click node_http_app_start "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/app.go"
+click node_parse_addr "https://github.com/caddyserver/caddy/blob/master/listeners.go"
+click node_listen_all "https://github.com/caddyserver/caddy/blob/master/listeners.go"
+click node_server_serve "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/server.go"
+click node_serve_http_inner "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/server.go"
+click node_enforcement "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/server.go"
+click node_routes_compile "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/routes.go"
+click node_wrap_route "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/routes.go"
+click node_match_host "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/matchers.go"
+click node_match_path "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/matchers.go"
+click node_rp_handler "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/reverseproxy/reverseproxy.go"
+click node_rp_loop "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/reverseproxy/reverseproxy.go"
+click node_rp_roundtrip "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/reverseproxy/reverseproxy.go"
+click node_fs_serve "https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/fileserver/staticfiles.go"
+click node_tls_provision "https://github.com/caddyserver/caddy/blob/master/modules/caddytls/tls.go"
+click node_tls_start "https://github.com/caddyserver/caddy/blob/master/modules/caddytls/tls.go"
+click node_auto_policy "https://github.com/caddyserver/caddy/blob/master/modules/caddytls/automation.go"
+click node_default_issuers "https://github.com/caddyserver/caddy/blob/master/modules/caddytls/automation.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_cmd_start,node_cmd_run,node_load_config,node_fileserver_cmd,node_tls_provision,node_tls_start,node_auto_policy,node_default_issuers toneBlue
+class node_adapt,node_httptype,node_caddy_run,node_caddy_load,node_change_config,node_provision_ctx,node_app_start_loop toneAmber
+class node_admin_replace,node_admin_listen,node_admin_access toneMint
+class node_http_app_provision,node_http_app_start,node_parse_addr,node_listen_all toneRose
+class node_server_serve,node_serve_http_inner,node_enforcement,node_routes_compile,node_wrap_route,node_match_host,node_match_path toneIndigo
+class node_rp_handler,node_rp_loop,node_rp_roundtrip,node_fs_serve toneTeal
