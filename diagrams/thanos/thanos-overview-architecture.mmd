@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_g_ingest["Ingest"]
+  node_sidecar["Sidecar<br/>[sidecar.go]"]
+  node_shipper["Shipper<br/>[shipper.go]"]
+  node_receive["Receive<br/>[handler.go]"]
+  node_writer["Writer<br/>[writer.go]"]
+end
+
+subgraph group_g_blocks["Blocks"]
+  node_meta["Block Meta<br/>[meta.go]"]
+end
+
+subgraph group_g_serve["Serve"]
+  node_storegw["Store Gateway<br/>[bucket.go]"]
+  node_cache["CachingBucket<br/>[caching_bucket.go]"]
+end
+
+subgraph group_g_query["Query"]
+  node_endpointset["EndpointSet<br/>[endpointset.go]"]
+  node_querier["Fanout Querier<br/>[querier.go]"]
+  node_frontend["Query Frontend<br/>[roundtrip.go]"]
+end
+
+subgraph group_g_ops["Ops"]
+  node_compact["Compactor<br/>[compact.go]"]
+  node_ruler["Ruler<br/>[manager.go]"]
+end
+
+node_sidecar -->|"shipper.New at L466"| node_shipper
+node_shipper -->|"uploads block Meta"| node_meta
+node_receive -->|"tenant writes via Writer.Write"| node_writer
+node_storegw -->|"SyncBlocks reads block metas"| node_meta
+node_storegw -->|"NewCachingBucket"| node_cache
+node_endpointset -->|"Store API fan-out"| node_storegw
+node_endpointset -->|"sidecar exposes Store API"| node_sidecar
+node_endpointset -->|"receive exposes Store API"| node_receive
+node_querier -->|"fanout across endpoints"| node_endpointset
+node_frontend -->|"downstream tripperware"| node_querier
+node_compact -->|"SyncMetas and GarbageCollect"| node_meta
+node_ruler -->|"rules evaluate through query layer"| node_querier
+
+click node_sidecar "https://github.com/thanos-io/thanos/blob/main/cmd/thanos/sidecar.go"
+click node_shipper "https://github.com/thanos-io/thanos/blob/main/pkg/shipper/shipper.go"
+click node_receive "https://github.com/thanos-io/thanos/blob/main/pkg/receive/handler.go"
+click node_writer "https://github.com/thanos-io/thanos/blob/main/pkg/receive/writer.go"
+click node_meta "https://github.com/thanos-io/thanos/blob/main/pkg/block/metadata/meta.go"
+click node_storegw "https://github.com/thanos-io/thanos/blob/main/pkg/store/bucket.go"
+click node_cache "https://github.com/thanos-io/thanos/blob/main/pkg/store/cache/caching_bucket.go"
+click node_endpointset "https://github.com/thanos-io/thanos/blob/main/pkg/query/endpointset.go"
+click node_querier "https://github.com/thanos-io/thanos/blob/main/pkg/query/querier.go"
+click node_frontend "https://github.com/thanos-io/thanos/blob/main/pkg/queryfrontend/roundtrip.go"
+click node_compact "https://github.com/thanos-io/thanos/blob/main/pkg/compact/compact.go"
+click node_ruler "https://github.com/thanos-io/thanos/blob/main/pkg/rules/manager.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_sidecar,node_shipper,node_receive,node_writer toneBlue
+class node_meta toneAmber
+class node_storegw,node_cache toneMint
+class node_endpointset,node_querier,node_frontend toneRose
+class node_compact,node_ruler toneIndigo
