@@ -1,0 +1,76 @@
+flowchart TD
+
+subgraph group_g_core["Core orchestration"]
+  node_main["main / setupServer<br/>[traefik.go]"]
+  node_server["Server<br/>[server.go]"]
+  node_watcher[("ConfigurationWatcher")]
+end
+
+subgraph group_g_edge["Entrypoints &amp; listeners"]
+  node_entrypoint{{"TCPEntryPoint"}}
+end
+
+subgraph group_g_routing["Routing engine"]
+  node_routerfactory["RouterFactory<br/>[routerfactory.go]"]
+  node_routermgr["router.Manager<br/>[router.go]"]
+  node_muxer{{"http.Muxer<br/>[mux.go]"}}
+  node_rules["rules.Parser<br/>[parser.go]"]
+end
+
+subgraph group_g_services["Services &amp; proxying"]
+  node_svcmanager["service.Manager<br/>[service.go]"]
+  node_proxy["httputil.ProxyBuilder<br/>[builder.go]"]
+end
+
+subgraph group_g_providers["Dynamic config providers"]
+  node_agg[("ProviderAggregator<br/>[aggregator.go]")]
+end
+
+subgraph group_g_ops["API &amp; observability"]
+  node_api["api.Handler<br/>[handler.go]"]
+end
+
+node_main -->|"server.NewServer, L403"| node_server
+node_main -->|"aggregator.NewProviderAggregator, L181"| node_agg
+node_main -->|"server.NewTCPEntryPoints, L228"| node_entrypoint
+node_main -->|"server.NewConfigurationWatcher, L324"| node_watcher
+node_main -->|"server.NewRouterFactory, L317"| node_routerfactory
+node_agg -->|"Provide pushes configs, L84"| node_watcher
+node_watcher -->|"listeners rebuild routers"| node_routerfactory
+node_watcher -->|"exposes runtime state"| node_api
+node_server -->|"entrypoints.Start, L56"| node_entrypoint
+node_server -->|"watcher.Start, L58"| node_watcher
+node_routerfactory -->|"SwitchRouter, L383"| node_entrypoint
+node_routerfactory -->|"router.NewManager, L116"| node_routermgr
+node_routerfactory -->|"managerFactory.Build, L110"| node_svcmanager
+node_routermgr -->|"AddRoute, L92"| node_muxer
+node_routermgr -->|"parse rule strings"| node_rules
+node_entrypoint -->|"serve via switcher"| node_muxer
+node_svcmanager -->|"Build proxy handler, L41"| node_proxy
+
+click node_main "https://github.com/traefik/traefik/blob/master/cmd/traefik/traefik.go"
+click node_server "https://github.com/traefik/traefik/blob/master/pkg/server/server.go"
+click node_watcher "https://github.com/traefik/traefik/blob/master/pkg/server/configurationwatcher.go"
+click node_entrypoint "https://github.com/traefik/traefik/blob/master/pkg/server/server_entrypoint_tcp.go"
+click node_routerfactory "https://github.com/traefik/traefik/blob/master/pkg/server/routerfactory.go"
+click node_routermgr "https://github.com/traefik/traefik/blob/master/pkg/server/router/router.go"
+click node_muxer "https://github.com/traefik/traefik/blob/master/pkg/muxer/http/mux.go"
+click node_rules "https://github.com/traefik/traefik/blob/master/pkg/rules/parser.go"
+click node_svcmanager "https://github.com/traefik/traefik/blob/master/pkg/server/service/service.go"
+click node_proxy "https://github.com/traefik/traefik/blob/master/pkg/proxy/httputil/builder.go"
+click node_agg "https://github.com/traefik/traefik/blob/master/pkg/provider/aggregator/aggregator.go"
+click node_api "https://github.com/traefik/traefik/blob/master/pkg/api/handler.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_server,node_watcher toneBlue
+class node_entrypoint toneAmber
+class node_routerfactory,node_routermgr,node_muxer,node_rules toneMint
+class node_svcmanager,node_proxy toneRose
+class node_agg toneIndigo
+class node_api toneTeal
