@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_core["Event Core"]
+  node_main["main<br/>[memcached.c]"]
+  node_conn_new["conn_new<br/>[memcached.c]"]
+  node_drive_machine["drive_machine<br/>[memcached.c]"]
+end
+
+subgraph group_threads["Worker Threads"]
+  node_dispatch_conn_new["dispatch_conn_new<br/>[thread.c]"]
+  node_thread_libevent_process["thread_libevent_process<br/>[thread.c]"]
+end
+
+subgraph group_protocols["Protocols"]
+  node_try_read_command_ascii["try_read_command_ascii<br/>[proto_text.c]"]
+  node_process_command_ascii["process_command_ascii<br/>[proto_text.c]"]
+  node_process_mget_cmd["process_mget_cmd<br/>[proto_parser.c]"]
+end
+
+subgraph group_memory["Slabs &amp; Hash"]
+  node_do_item_alloc["do_item_alloc<br/>[items.c]"]
+  node_do_slabs_alloc["do_slabs_alloc<br/>[slabs.c]"]
+  node_assoc_find["assoc_find<br/>[assoc.c]"]
+end
+
+subgraph group_extstore["Flash Storage"]
+  node_storage_get_item["storage_get_item<br/>[storage.c]"]
+end
+
+node_main -->|"create listening connections"| node_conn_new
+node_conn_new -->|"attach libevent callback"| node_drive_machine
+node_drive_machine -->|"spread conns to workers"| node_dispatch_conn_new
+node_dispatch_conn_new -->|"wake worker event loop"| node_thread_libevent_process
+node_thread_libevent_process -->|"run state machine"| node_drive_machine
+node_drive_machine -->|"text protocol input"| node_try_read_command_ascii
+node_try_read_command_ascii -->|"parse and dispatch"| node_process_command_ascii
+node_process_command_ascii -->|"meta get mg"| node_process_mget_cmd
+node_process_mget_cmd -->|"lookup key"| node_assoc_find
+node_process_command_ascii -->|"set allocates item"| node_do_item_alloc
+node_do_item_alloc -->|"chunk from slab class"| node_do_slabs_alloc
+node_process_mget_cmd -->|"fetch from flash on hit"| node_storage_get_item
+
+click node_main "https://github.com/memcached/memcached/blob/master/memcached.c"
+click node_conn_new "https://github.com/memcached/memcached/blob/master/memcached.c"
+click node_drive_machine "https://github.com/memcached/memcached/blob/master/memcached.c"
+click node_dispatch_conn_new "https://github.com/memcached/memcached/blob/master/thread.c"
+click node_thread_libevent_process "https://github.com/memcached/memcached/blob/master/thread.c"
+click node_try_read_command_ascii "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_command_ascii "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_mget_cmd "https://github.com/memcached/memcached/blob/master/proto_parser.c"
+click node_do_item_alloc "https://github.com/memcached/memcached/blob/master/items.c"
+click node_do_slabs_alloc "https://github.com/memcached/memcached/blob/master/slabs.c"
+click node_assoc_find "https://github.com/memcached/memcached/blob/master/assoc.c"
+click node_storage_get_item "https://github.com/memcached/memcached/blob/master/storage.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_conn_new,node_drive_machine toneBlue
+class node_dispatch_conn_new,node_thread_libevent_process toneAmber
+class node_try_read_command_ascii,node_process_command_ascii,node_process_mget_cmd toneMint
+class node_do_item_alloc,node_do_slabs_alloc,node_assoc_find toneRose
+class node_storage_get_item toneIndigo

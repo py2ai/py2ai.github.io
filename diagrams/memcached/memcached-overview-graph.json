@@ -1,0 +1,40 @@
+{
+  "owner": "memcached",
+  "repo": "memcached",
+  "branch": "master",
+  "groups": [
+    { "id": "core", "name": "core", "label": "Event Core" },
+    { "id": "threads", "name": "threads", "label": "Worker Threads" },
+    { "id": "protocols", "name": "protocols", "label": "Protocols" },
+    { "id": "memory", "name": "memory", "label": "Slabs & Hash" },
+    { "id": "extstore", "name": "extstore", "label": "Flash Storage" }
+  ],
+  "nodes": [
+    { "id": "main", "label": "main", "file": "memcached.c", "path": "memcached.c", "group": "Event Core", "groupId": "core", "desc": "Process entry: parses flags, initializes slabs and threads, starts the libevent loop" },
+    { "id": "conn_new", "label": "conn_new", "file": "memcached.c", "path": "memcached.c", "group": "Event Core", "groupId": "core", "desc": "Wraps a client socket in a conn struct and binds it to libevent" },
+    { "id": "drive_machine", "label": "drive_machine", "file": "memcached.c", "path": "memcached.c", "group": "Event Core", "groupId": "core", "desc": "Per-connection state machine that drives every read, parse and write" },
+    { "id": "dispatch_conn_new", "label": "dispatch_conn_new", "file": "thread.c", "path": "thread.c", "group": "Worker Threads", "groupId": "threads", "desc": "Spreads newly accepted connections across worker threads" },
+    { "id": "thread_libevent_process", "label": "thread_libevent_process", "file": "thread.c", "path": "thread.c", "group": "Worker Threads", "groupId": "threads", "desc": "Worker event loop callback that picks up connections from the notify pipe" },
+    { "id": "try_read_command_ascii", "label": "try_read_command_ascii", "file": "proto_text.c", "path": "proto_text.c", "group": "Protocols", "groupId": "protocols", "desc": "Buffers input until a complete text or meta protocol line arrives" },
+    { "id": "process_command_ascii", "label": "process_command_ascii", "file": "proto_text.c", "path": "proto_text.c", "group": "Protocols", "groupId": "protocols", "desc": "Dispatches parsed text and meta commands to their handlers" },
+    { "id": "process_mget_cmd", "label": "process_mget_cmd", "file": "proto_parser.c", "path": "proto_parser.c", "group": "Protocols", "groupId": "protocols", "desc": "Meta get command (mg): flags, CAS, TTL tricks and flash fallback" },
+    { "id": "do_item_alloc", "label": "do_item_alloc", "file": "items.c", "path": "items.c", "group": "Slabs & Hash", "groupId": "memory", "desc": "Allocates an item from the right slab class and primes its LRU metadata" },
+    { "id": "do_slabs_alloc", "label": "do_slabs_alloc", "file": "slabs.c", "path": "slabs.c", "group": "Slabs & Hash", "groupId": "memory", "desc": "Hands out one fixed-size chunk from a slab page freelist" },
+    { "id": "assoc_find", "label": "assoc_find", "file": "assoc.c", "path": "assoc.c", "group": "Slabs & Hash", "groupId": "memory", "desc": "Chained hash table lookup keyed by the hashed key" },
+    { "id": "storage_get_item", "label": "storage_get_item", "file": "storage.c", "path": "storage.c", "group": "Flash Storage", "groupId": "extstore", "desc": "Issues async reads to fetch an item body back from external flash" }
+  ],
+  "edges": [
+    { "from": "main", "to": "conn_new", "label": "create listening connections" },
+    { "from": "conn_new", "to": "drive_machine", "label": "attach libevent callback" },
+    { "from": "drive_machine", "to": "dispatch_conn_new", "label": "spread conns to workers" },
+    { "from": "dispatch_conn_new", "to": "thread_libevent_process", "label": "wake worker event loop" },
+    { "from": "thread_libevent_process", "to": "drive_machine", "label": "run state machine" },
+    { "from": "drive_machine", "to": "try_read_command_ascii", "label": "text protocol input" },
+    { "from": "try_read_command_ascii", "to": "process_command_ascii", "label": "parse and dispatch" },
+    { "from": "process_command_ascii", "to": "process_mget_cmd", "label": "meta get mg" },
+    { "from": "process_mget_cmd", "to": "assoc_find", "label": "lookup key" },
+    { "from": "process_command_ascii", "to": "do_item_alloc", "label": "set allocates item" },
+    { "from": "do_item_alloc", "to": "do_slabs_alloc", "label": "chunk from slab class" },
+    { "from": "process_mget_cmd", "to": "storage_get_item", "label": "fetch from flash on hit" }
+  ]
+}

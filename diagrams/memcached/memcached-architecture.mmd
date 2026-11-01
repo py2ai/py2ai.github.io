@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_core["Event Core"]
+  node_main["main<br/>[memcached.c]"]
+  node_conn_new["conn_new<br/>[memcached.c]"]
+  node_drive_machine["drive_machine<br/>[memcached.c]"]
+end
+
+subgraph group_threads["Worker Threads"]
+  node_dispatch_conn_new["dispatch_conn_new<br/>[thread.c]"]
+  node_setup_thread["setup_thread<br/>[thread.c]"]
+  node_thread_libevent_process["thread_libevent_process<br/>[thread.c]"]
+  node_item_get["item_get<br/>[thread.c]"]
+end
+
+subgraph group_protocols["Protocols"]
+  node_try_read_command_ascii["try_read_command_ascii<br/>[proto_text.c]"]
+  node_process_command_ascii["process_command_ascii<br/>[proto_text.c]"]
+  node_process_get_command["process_get_command<br/>[proto_text.c]"]
+  node_process_update_command["process_update_command<br/>[proto_text.c]"]
+  node_process_meta_command["process_meta_command<br/>[proto_text.c]"]
+  node_process_lru_crawler_command["process_lru_crawler_command<br/>[proto_text.c]"]
+  node_process_request["process_request<br/>[proto_parser.c]"]
+  node_process_mget_cmd["process_mget_cmd<br/>[proto_parser.c]"]
+  node_try_read_command_binary["try_read_command_binary<br/>[proto_bin.c]"]
+  node_dispatch_bin_command["dispatch_bin_command<br/>[proto_bin.c]"]
+end
+
+subgraph group_memory["Slabs, Hash &amp; LRU"]
+  node_do_item_alloc["do_item_alloc<br/>[items.c]"]
+  node_do_item_get["do_item_get<br/>[items.c]"]
+  node_do_item_link["do_item_link<br/>[items.c]"]
+  node_lru_pull_tail["lru_pull_tail<br/>[items.c]"]
+  node_assoc_find["assoc_find<br/>[assoc.c]"]
+  node_assoc_insert["assoc_insert<br/>[assoc.c]"]
+  node_assoc_delete["assoc_delete<br/>[assoc.c]"]
+  node_hash_init["hash_init<br/>[hash.c]"]
+  node_do_slabs_alloc["do_slabs_alloc<br/>[slabs.c]"]
+  node_do_slabs_free["do_slabs_free<br/>[slabs.c]"]
+end
+
+subgraph group_extstore["Flash Storage"]
+  node_storage_get_item["storage_get_item<br/>[storage.c]"]
+  node_storage_write["storage_write<br/>[storage.c]"]
+  node_extstore_write["extstore_write<br/>[extstore.c]"]
+end
+
+subgraph group_crawler["LRU Crawler"]
+  node_lru_crawler_crawl["lru_crawler_crawl<br/>[crawler.c]"]
+end
+
+subgraph group_proxy["Proxy Layer"]
+  node_try_read_command_proxy["try_read_command_proxy<br/>[proto_proxy.c]"]
+  node_proxy_process_command["proxy_process_command<br/>[proto_proxy.c]"]
+  node_proxy_run_rcontext["proxy_run_rcontext<br/>[proto_proxy.c]"]
+end
+
+node_main -->|"create listening connections"| node_conn_new
+node_conn_new -->|"attach libevent callback"| node_drive_machine
+node_main -->|"initialize worker threads"| node_setup_thread
+node_main -->|"select hash algorithm"| node_hash_init
+node_drive_machine -->|"spread accepted conns"| node_dispatch_conn_new
+node_dispatch_conn_new -->|"notify worker via pipe"| node_thread_libevent_process
+node_thread_libevent_process -->|"run state machine on worker"| node_drive_machine
+node_drive_machine -->|"text protocol input"| node_try_read_command_ascii
+node_drive_machine -->|"binary protocol input"| node_try_read_command_binary
+node_drive_machine -->|"proxy listener conns"| node_try_read_command_proxy
+node_try_read_command_ascii -->|"hand parsed line to dispatcher"| node_process_command_ascii
+node_try_read_command_binary -->|"decode packet opcode"| node_dispatch_bin_command
+node_try_read_command_proxy -->|"queue client request"| node_proxy_process_command
+node_process_command_ascii -->|"tokenize text/meta request"| node_process_request
+node_process_command_ascii -->|"mg meta get"| node_process_mget_cmd
+node_process_command_ascii -->|"me meta debug"| node_process_meta_command
+node_process_command_ascii -->|"get/gets/gat/gats"| node_process_get_command
+node_process_command_ascii -->|"set/add/replace/cas"| node_process_update_command
+node_process_command_ascii -->|"lru_crawler admin"| node_process_lru_crawler_command
+node_process_update_command -->|"set path allocates item"| node_do_item_alloc
+node_process_mget_cmd -->|"lookup key in cache"| node_item_get
+node_process_mget_cmd -->|"read body from flash"| node_storage_get_item
+node_process_mget_cmd -->|"vivify links missing item"| node_do_item_link
+node_item_get -->|"lock item and bump refcount"| node_do_item_get
+node_do_item_get -->|"hash table lookup"| node_assoc_find
+node_do_item_alloc -->|"pull chunk from slab class"| node_do_slabs_alloc
+node_do_item_link -->|"publish item in hash table"| node_assoc_insert
+node_lru_pull_tail -->|"unlink evicted item"| node_assoc_delete
+node_lru_pull_tail -->|"recycle evicted chunk"| node_do_slabs_free
+node_process_lru_crawler_command -->|"start crawl on slab classes"| node_lru_crawler_crawl
+node_storage_write -->|"pull cold items for offload"| node_lru_pull_tail
+node_storage_write -->|"allocate flash header item"| node_do_item_alloc
+node_storage_write -->|"submit page write"| node_extstore_write
+node_proxy_process_command -->|"run Lua routing context"| node_proxy_run_rcontext
+
+click node_main "https://github.com/memcached/memcached/blob/master/memcached.c"
+click node_conn_new "https://github.com/memcached/memcached/blob/master/memcached.c"
+click node_drive_machine "https://github.com/memcached/memcached/blob/master/memcached.c"
+click node_dispatch_conn_new "https://github.com/memcached/memcached/blob/master/thread.c"
+click node_setup_thread "https://github.com/memcached/memcached/blob/master/thread.c"
+click node_thread_libevent_process "https://github.com/memcached/memcached/blob/master/thread.c"
+click node_item_get "https://github.com/memcached/memcached/blob/master/thread.c"
+click node_try_read_command_ascii "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_command_ascii "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_get_command "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_update_command "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_meta_command "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_lru_crawler_command "https://github.com/memcached/memcached/blob/master/proto_text.c"
+click node_process_request "https://github.com/memcached/memcached/blob/master/proto_parser.c"
+click node_process_mget_cmd "https://github.com/memcached/memcached/blob/master/proto_parser.c"
+click node_try_read_command_binary "https://github.com/memcached/memcached/blob/master/proto_bin.c"
+click node_dispatch_bin_command "https://github.com/memcached/memcached/blob/master/proto_bin.c"
+click node_do_item_alloc "https://github.com/memcached/memcached/blob/master/items.c"
+click node_do_item_get "https://github.com/memcached/memcached/blob/master/items.c"
+click node_do_item_link "https://github.com/memcached/memcached/blob/master/items.c"
+click node_lru_pull_tail "https://github.com/memcached/memcached/blob/master/items.c"
+click node_assoc_find "https://github.com/memcached/memcached/blob/master/assoc.c"
+click node_assoc_insert "https://github.com/memcached/memcached/blob/master/assoc.c"
+click node_assoc_delete "https://github.com/memcached/memcached/blob/master/assoc.c"
+click node_hash_init "https://github.com/memcached/memcached/blob/master/hash.c"
+click node_do_slabs_alloc "https://github.com/memcached/memcached/blob/master/slabs.c"
+click node_do_slabs_free "https://github.com/memcached/memcached/blob/master/slabs.c"
+click node_storage_get_item "https://github.com/memcached/memcached/blob/master/storage.c"
+click node_storage_write "https://github.com/memcached/memcached/blob/master/storage.c"
+click node_extstore_write "https://github.com/memcached/memcached/blob/master/extstore.c"
+click node_lru_crawler_crawl "https://github.com/memcached/memcached/blob/master/crawler.c"
+click node_try_read_command_proxy "https://github.com/memcached/memcached/blob/master/proto_proxy.c"
+click node_proxy_process_command "https://github.com/memcached/memcached/blob/master/proto_proxy.c"
+click node_proxy_run_rcontext "https://github.com/memcached/memcached/blob/master/proto_proxy.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_conn_new,node_drive_machine,node_try_read_command_proxy,node_proxy_process_command,node_proxy_run_rcontext toneBlue
+class node_dispatch_conn_new,node_setup_thread,node_thread_libevent_process,node_item_get toneAmber
+class node_try_read_command_ascii,node_process_command_ascii,node_process_get_command,node_process_update_command,node_process_meta_command,node_process_lru_crawler_command,node_process_request,node_process_mget_cmd,node_try_read_command_binary,node_dispatch_bin_command toneMint
+class node_do_item_alloc,node_do_item_get,node_do_item_link,node_lru_pull_tail,node_assoc_find,node_assoc_insert,node_assoc_delete,node_hash_init,node_do_slabs_alloc,node_do_slabs_free toneRose
+class node_storage_get_item,node_storage_write,node_extstore_write toneIndigo
+class node_lru_crawler_crawl toneTeal
