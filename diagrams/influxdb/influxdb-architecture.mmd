@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_cli["CLI &amp; Startup"]
+  node_main_fn["fn main&#40;&#41;<br/>[main.rs]"]
+  node_serve_command["serve command<br/>[serve.rs]"]
+  node_node_id_arg["--node-id flag<br/>[serve.rs]"]
+  node_http_bind_default["DEFAULT_HTTP_BIND_ADDR<br/>[serve.rs]"]
+  node_wire_components["runtime wiring<br/>[serve.rs]"]
+end
+
+subgraph group_server["Server Core"]
+  node_server_struct["Server<br/>[lib.rs]"]
+  node_serve_fn["serve&#40;&#41;<br/>[lib.rs]"]
+end
+
+subgraph group_http["HTTP &amp; gRPC API"]
+  node_http_api_struct["HttpApi<br/>[http.rs]"]
+  node_api_paths["route constants<br/>[all_paths.rs]"]
+  node_route_request["route_request<br/>[http.rs]"]
+  node_write_lp_handler["write_lp handler<br/>[http.rs]"]
+  node_write_lp_inner["write_lp_inner<br/>[http.rs]"]
+  node_query_sql_handler["query_sql handler<br/>[http.rs]"]
+  node_grpc_flight["FlightSQL service<br/>[grpc.rs]"]
+end
+
+subgraph group_ingest["Write Path"]
+  node_write_buffer_trait["trait WriteBuffer<br/>[lib.rs]"]
+  node_bufferer_trait["trait Bufferer<br/>[lib.rs]"]
+  node_write_buffer_impl["WriteBufferImpl<br/>[mod.rs]"]
+  node_write_lp_impl["WriteBufferImpl::write_lp<br/>[mod.rs]"]
+  node_write_lp_inner_impl["write_lp_inner<br/>[mod.rs]"]
+  node_wal_write["wal.write_ops_unconfirmed<br/>[mod.rs]"]
+  node_catalog_access["catalog&#40;&#41;<br/>[mod.rs]"]
+  node_persisted_files_struct["PersistedFiles<br/>[persisted_files.rs]"]
+end
+
+subgraph group_buffer["In-Memory Buffer"]
+  node_queryable_buffer_struct["QueryableBuffer"]
+  node_buffer_state["BufferState::buffer_write_ops"]
+  node_table_buffer_struct["TableBuffer<br/>[table_buffer.rs]"]
+end
+
+subgraph group_storage["Parquet Storage"]
+  node_persister_struct["Persister<br/>[persister.rs]"]
+  node_serialize_parquet["serialize_to_parquet<br/>[persister.rs]"]
+  node_persist_parquet_file["persist_parquet_file<br/>[persister.rs]"]
+  node_persist_snapshot["persist_snapshot<br/>[persister.rs]"]
+  node_load_parquet_file["load_parquet_file<br/>[persister.rs]"]
+end
+
+subgraph group_query["Query Engine"]
+  node_query_executor_impl["QueryExecutorImpl<br/>[lib.rs]"]
+  node_execute_stream["execute_stream<br/>[lib.rs]"]
+  node_database_struct["Database<br/>[lib.rs]"]
+end
+
+node_main_fn -->|"dispatches commands"| node_serve_command
+node_serve_command -->|"reads --node-id"| node_node_id_arg
+node_serve_command -->|"binds 0.0.0.0:8181"| node_http_bind_default
+node_serve_command -->|"assembles runtime"| node_wire_components
+node_wire_components -->|"QueryExecutorImpl::new"| node_query_executor_impl
+node_wire_components -->|"HttpApi::new"| node_http_api_struct
+node_wire_components -->|"Server::new"| node_server_struct
+node_server_struct -->|"starts listener"| node_serve_fn
+node_serve_fn -->|"serves HTTP requests"| node_http_api_struct
+node_api_paths -->|"route table"| node_route_request
+node_route_request -->|"POST /api/v3/write_lp"| node_write_lp_handler
+node_route_request -->|"GET&#124;POST /api/v3/query_sql"| node_query_sql_handler
+node_write_lp_handler -->|"parse params"| node_write_lp_inner
+node_write_lp_inner -->|"write_lp"| node_write_buffer_impl
+node_write_buffer_trait -->|"implemented by"| node_write_buffer_impl
+node_bufferer_trait -->|"supertrait"| node_write_buffer_trait
+node_write_buffer_impl -->|"Bufferer impl"| node_write_lp_impl
+node_write_lp_impl -->|"validate lines"| node_write_lp_inner_impl
+node_write_lp_inner_impl -->|"WalOp::Write"| node_wal_write
+node_wal_write -->|"WAL flush notifies"| node_queryable_buffer_struct
+node_queryable_buffer_struct -->|"applies ops"| node_buffer_state
+node_buffer_state -->|"rows per table"| node_table_buffer_struct
+node_queryable_buffer_struct -->|"snapshot and persist"| node_persister_struct
+node_persister_struct -->|"ArrowWriter"| node_serialize_parquet
+node_serialize_parquet -->|"Parquet bytes"| node_persist_parquet_file
+node_persist_parquet_file -->|"record snapshot"| node_persist_snapshot
+node_queryable_buffer_struct -->|"tracks persisted files"| node_persisted_files_struct
+node_write_buffer_impl -->|"Arc&lt;Catalog&gt;"| node_catalog_access
+node_query_sql_handler -->|"query_sql"| node_query_executor_impl
+node_grpc_flight -->|"FlightSQL queries"| node_query_executor_impl
+node_query_executor_impl -->|"run plans"| node_execute_stream
+node_execute_stream -->|"reads buffered chunks"| node_queryable_buffer_struct
+node_execute_stream -->|"reads Parquet"| node_load_parquet_file
+node_node_id_arg -->|"prefixes object paths"| node_persister_struct
+
+click node_main_fn "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/main.rs"
+click node_serve_command "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/commands/serve.rs"
+click node_node_id_arg "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/commands/serve.rs"
+click node_http_bind_default "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/commands/serve.rs"
+click node_wire_components "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/commands/serve.rs"
+click node_server_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/lib.rs"
+click node_serve_fn "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/lib.rs"
+click node_http_api_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_api_paths "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/all_paths.rs"
+click node_route_request "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_write_lp_handler "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_write_lp_inner "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_query_sql_handler "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_grpc_flight "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/grpc.rs"
+click node_write_buffer_trait "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/lib.rs"
+click node_bufferer_trait "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/lib.rs"
+click node_write_buffer_impl "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/mod.rs"
+click node_write_lp_impl "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/mod.rs"
+click node_write_lp_inner_impl "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/mod.rs"
+click node_wal_write "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/mod.rs"
+click node_catalog_access "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/mod.rs"
+click node_persisted_files_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/persisted_files.rs"
+click node_queryable_buffer_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/queryable_buffer.rs"
+click node_buffer_state "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/queryable_buffer.rs"
+click node_table_buffer_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/table_buffer.rs"
+click node_persister_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/persister.rs"
+click node_serialize_parquet "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/persister.rs"
+click node_persist_parquet_file "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/persister.rs"
+click node_persist_snapshot "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/persister.rs"
+click node_load_parquet_file "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/persister.rs"
+click node_query_executor_impl "https://github.com/influxdata/influxdb/blob/main/influxdb3_query_executor/src/lib.rs"
+click node_execute_stream "https://github.com/influxdata/influxdb/blob/main/influxdb3_query_executor/src/lib.rs"
+click node_database_struct "https://github.com/influxdata/influxdb/blob/main/influxdb3_query_executor/src/lib.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_fn,node_serve_command,node_node_id_arg,node_http_bind_default,node_wire_components,node_query_executor_impl,node_execute_stream,node_database_struct toneBlue
+class node_server_struct,node_serve_fn toneAmber
+class node_http_api_struct,node_api_paths,node_route_request,node_write_lp_handler,node_write_lp_inner,node_query_sql_handler,node_grpc_flight toneMint
+class node_write_buffer_trait,node_bufferer_trait,node_write_buffer_impl,node_write_lp_impl,node_write_lp_inner_impl,node_wal_write,node_catalog_access,node_persisted_files_struct toneRose
+class node_queryable_buffer_struct,node_buffer_state,node_table_buffer_struct toneIndigo
+class node_persister_struct,node_serialize_parquet,node_persist_parquet_file,node_persist_snapshot,node_load_parquet_file toneTeal

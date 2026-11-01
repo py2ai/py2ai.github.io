@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_cli["CLI &amp; Startup"]
+  node_cli_main["influxdb3 binary<br/>[main.rs]"]
+  node_serve_cmd["serve command<br/>[serve.rs]"]
+  node_server_lib["Server<br/>[lib.rs]"]
+end
+
+subgraph group_http["HTTP API"]
+  node_http_api["HttpApi<br/>[http.rs]"]
+  node_api_paths["route constants<br/>[all_paths.rs]"]
+  node_route_dispatch["route_request<br/>[http.rs]"]
+  node_write_lp_handler["write_lp handler<br/>[http.rs]"]
+end
+
+subgraph group_ingest["Ingest Path"]
+  node_write_buffer["WriteBufferImpl<br/>[mod.rs]"]
+  node_queryable_buffer["QueryableBuffer"]
+end
+
+subgraph group_storage["Parquet Storage"]
+  node_persister["Persister<br/>[persister.rs]"]
+end
+
+subgraph group_query["Query Engine"]
+  node_query_executor["QueryExecutorImpl<br/>[lib.rs]"]
+  node_flight_grpc["FlightSQL gRPC<br/>[grpc.rs]"]
+end
+
+node_cli_main -->|"dispatches serve"| node_serve_cmd
+node_serve_cmd -->|"Server::new"| node_server_lib
+node_serve_cmd -->|"HttpApi::new"| node_http_api
+node_serve_cmd -->|"QueryExecutorImpl::new"| node_query_executor
+node_server_lib -->|"mounts HTTP API"| node_http_api
+node_server_lib -->|"exposes FlightSQL"| node_flight_grpc
+node_api_paths -->|"route constants"| node_route_dispatch
+node_route_dispatch -->|"POST /api/v3/write_lp"| node_write_lp_handler
+node_route_dispatch -->|"GET /api/v3/query_sql"| node_query_executor
+node_write_lp_handler -->|"write_lp"| node_write_buffer
+node_write_buffer -->|"applies WAL ops"| node_queryable_buffer
+node_queryable_buffer -->|"snapshot to Parquet"| node_persister
+node_query_executor -->|"reads buffered chunks"| node_queryable_buffer
+node_query_executor -->|"scans Parquet files"| node_persister
+
+click node_cli_main "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/main.rs"
+click node_serve_cmd "https://github.com/influxdata/influxdb/blob/main/influxdb3/src/commands/serve.rs"
+click node_server_lib "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/lib.rs"
+click node_http_api "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_api_paths "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/all_paths.rs"
+click node_route_dispatch "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_write_lp_handler "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/http.rs"
+click node_write_buffer "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/mod.rs"
+click node_queryable_buffer "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/write_buffer/queryable_buffer.rs"
+click node_persister "https://github.com/influxdata/influxdb/blob/main/influxdb3_write/src/persister.rs"
+click node_query_executor "https://github.com/influxdata/influxdb/blob/main/influxdb3_query_executor/src/lib.rs"
+click node_flight_grpc "https://github.com/influxdata/influxdb/blob/main/influxdb3_server/src/grpc.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_main,node_serve_cmd,node_server_lib toneBlue
+class node_http_api,node_api_paths,node_route_dispatch,node_write_lp_handler toneAmber
+class node_write_buffer,node_queryable_buffer toneMint
+class node_persister toneRose
+class node_query_executor,node_flight_grpc toneIndigo
