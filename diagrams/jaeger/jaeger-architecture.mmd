@@ -1,0 +1,149 @@
+flowchart TD
+
+subgraph group_cli["Binary bootstrap"]
+  node_main["main&#40;&#41;<br/>[main.go]"]
+  node_cli_components["jaegercli.Components<br/>[components.go]"]
+  node_components_registry["internal.Components<br/>[components.go]"]
+  node_new_command["NewCommand<br/>[command.go]"]
+  node_aio_config["all-in-one.yaml<br/>[all-in-one.yaml]"]
+end
+
+subgraph group_ingest["Receivers &amp; processors"]
+  node_otlp_receiver{{"OTLP receiver<br/>[all-in-one.yaml]"}}
+  node_jaeger_receiver["Jaeger receiver<br/>[all-in-one.yaml]"]
+  node_adaptive_sampling["adaptivesampling<br/>[processor.go]"]
+end
+
+subgraph group_write["Storage write path"]
+  node_trace_writer["TraceWriter<br/>[exporter.go]"]
+  node_writer_start["TraceWriter.Start<br/>[exporter.go]"]
+  node_write_traces["WriteTraces<br/>[exporter.go]"]
+  node_get_trace_store_factory["GetTraceStoreFactory<br/>[extension.go]"]
+  node_trace_storage_factory["TraceStorageFactory<br/>[extension.go]"]
+  node_storage_config["CreateTraceStorageFactory<br/>[factory.go]"]
+  node_writer_interface["tracestore.Writer<br/>[writer.go]"]
+  node_reader_interface["tracestore.Reader<br/>[reader.go]"]
+end
+
+subgraph group_backends["Storage backends"]
+  node_memory_store["memory.NewStore<br/>[memory.go]"]
+  node_memory_write["memory WriteTraces<br/>[memory.go]"]
+  node_es_factory["es NewFactory<br/>[factory.go]"]
+  node_es_writer["es CreateTraceWriter<br/>[factory.go]"]
+  node_v1adapter_writer["v1adapter.TraceWriter<br/>[tracewriter.go]"]
+  node_grpc_factory["grpc storage factory<br/>[factory.go]"]
+end
+
+subgraph group_remote["Remote storage gRPC"]
+  node_remote_ext["remotestorage ext<br/>[server.go]"]
+  node_remote_server["remote app.NewServer<br/>[server.go]"]
+  node_remote_handler["grpcstorage.Handler<br/>[handler.go]"]
+end
+
+subgraph group_query["Query API &amp; UI"]
+  node_query_server["query Server<br/>[server.go]"]
+  node_register_grpc["registerGRPCHandlers<br/>[server.go]"]
+  node_api_handler["NewAPIHandler<br/>[http_handler.go]"]
+  node_register_routes["RegisterRoutes<br/>[http_handler.go]"]
+  node_query_service["QueryService<br/>[service.go]"]
+  node_svc_find_traces["FindTraces<br/>[service.go]"]
+  node_apiv3_gateway["api v3 gateway<br/>[http_gateway.go]"]
+end
+
+subgraph group_ai["AI &amp; MCP"]
+  node_ai_register["jaegerai.Register<br/>[routes.go]"]
+  node_mcp_handler["mcptools.Handler<br/>[server.go]"]
+end
+
+node_main -->|"Components&#40;&#41;"| node_cli_components
+node_cli_components -->|"delegates"| node_components_registry
+node_cli_components -->|"NewCommand"| node_new_command
+node_new_command -->|"embeds default config"| node_aio_config
+node_aio_config -->|"declares 4317/4318"| node_otlp_receiver
+node_aio_config -->|"declares 14268/14250"| node_jaeger_receiver
+node_aio_config -->|"declares processor"| node_adaptive_sampling
+node_otlp_receiver -->|"OTLP batches"| node_adaptive_sampling
+node_jaeger_receiver -->|"thrift spans"| node_adaptive_sampling
+node_adaptive_sampling -->|"jaeger_storage_exporter"| node_trace_writer
+node_trace_writer -->|"Start"| node_writer_start
+node_writer_start -->|"resolve storage"| node_get_trace_store_factory
+node_get_trace_store_factory -->|"by name"| node_trace_storage_factory
+node_trace_storage_factory -->|"create factory"| node_storage_config
+node_trace_writer -->|"per batch"| node_write_traces
+node_write_traces -->|"WriteTraces"| node_writer_interface
+node_trace_storage_factory -->|"memory backend"| node_memory_store
+node_trace_storage_factory -->|"ES/OpenSearch"| node_es_factory
+node_trace_storage_factory -->|"remote gRPC"| node_grpc_factory
+node_memory_store -->|"WriteTraces"| node_memory_write
+node_memory_write -->|"implements"| node_writer_interface
+node_es_factory -->|"creates writer"| node_es_writer
+node_es_writer -->|"implements"| node_writer_interface
+node_v1adapter_writer -->|"implements"| node_writer_interface
+node_grpc_factory -->|"dials"| node_remote_server
+node_remote_ext -->|"resolve storage"| node_get_trace_store_factory
+node_remote_ext -->|"app.NewServer"| node_remote_server
+node_remote_server -->|"NewHandler+Register"| node_remote_handler
+node_remote_handler -->|"Export"| node_writer_interface
+node_aio_config -->|"jaeger_query ext"| node_query_server
+node_query_server -->|"gRPC services"| node_register_grpc
+node_query_server -->|"builds HTTP API"| node_api_handler
+node_api_handler -->|"mounts /api"| node_register_routes
+node_query_server -->|"owns"| node_query_service
+node_api_handler -->|"handles /api/traces"| node_query_service
+node_register_grpc -->|"api_v2 handler"| node_query_service
+node_query_service -->|"search entry"| node_svc_find_traces
+node_svc_find_traces -->|"FindTraces"| node_reader_interface
+node_query_server -->|"mounts /api/v3"| node_apiv3_gateway
+node_apiv3_gateway -->|"getTrace/findTraces"| node_query_service
+node_query_server -->|"mounts /api/ai"| node_ai_register
+node_ai_register -->|"MCP at /api/ai/mcp/"| node_mcp_handler
+node_mcp_handler -->|"tools query traces"| node_query_service
+
+click node_main "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/main.go"
+click node_cli_components "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/jaegercli/components.go"
+click node_components_registry "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/components.go"
+click node_new_command "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/command.go"
+click node_aio_config "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/all-in-one.yaml"
+click node_otlp_receiver "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/all-in-one.yaml"
+click node_jaeger_receiver "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/all-in-one.yaml"
+click node_adaptive_sampling "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/processors/adaptivesampling/processor.go"
+click node_trace_writer "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/exporters/storageexporter/exporter.go"
+click node_writer_start "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/exporters/storageexporter/exporter.go"
+click node_write_traces "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/exporters/storageexporter/exporter.go"
+click node_get_trace_store_factory "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerstorage/extension.go"
+click node_trace_storage_factory "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerstorage/extension.go"
+click node_storage_config "https://github.com/jaegertracing/jaeger/blob/main/cmd/internal/storageconfig/factory.go"
+click node_writer_interface "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/api/tracestore/writer.go"
+click node_reader_interface "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/api/tracestore/reader.go"
+click node_memory_store "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/memory/memory.go"
+click node_memory_write "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/memory/memory.go"
+click node_es_factory "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/elasticsearch/factory.go"
+click node_es_writer "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/elasticsearch/factory.go"
+click node_v1adapter_writer "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/v1adapter/tracewriter.go"
+click node_grpc_factory "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/grpc/factory.go"
+click node_remote_ext "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/remotestorage/server.go"
+click node_remote_server "https://github.com/jaegertracing/jaeger/blob/main/cmd/remote-storage/app/server.go"
+click node_remote_handler "https://github.com/jaegertracing/jaeger/blob/main/internal/storage/v2/grpc/handler.go"
+click node_query_server "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/server.go"
+click node_register_grpc "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/server.go"
+click node_api_handler "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/http_handler.go"
+click node_register_routes "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/http_handler.go"
+click node_query_service "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/querysvc/service.go"
+click node_svc_find_traces "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/querysvc/service.go"
+click node_apiv3_gateway "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/apiv3/http_gateway.go"
+click node_ai_register "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/jaegerai/routes.go"
+click node_mcp_handler "https://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/internal/extension/jaegerquery/internal/mcptools/server.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_cli_components,node_components_registry,node_new_command,node_aio_config,node_ai_register,node_mcp_handler toneBlue
+class node_otlp_receiver,node_jaeger_receiver,node_adaptive_sampling toneAmber
+class node_trace_writer,node_writer_start,node_write_traces,node_get_trace_store_factory,node_trace_storage_factory,node_storage_config,node_writer_interface,node_reader_interface toneMint
+class node_memory_store,node_memory_write,node_es_factory,node_es_writer,node_v1adapter_writer,node_grpc_factory toneRose
+class node_remote_ext,node_remote_server,node_remote_handler toneIndigo
+class node_query_server,node_register_grpc,node_api_handler,node_register_routes,node_query_service,node_svc_find_traces,node_apiv3_gateway toneTeal
