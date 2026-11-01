@@ -1,0 +1,65 @@
+flowchart TD
+
+subgraph group_clients["Clients"]
+  node_client_v3["client/v3 Client<br/>[client.go]"]
+end
+
+subgraph group_api["gRPC API"]
+  node_kv_api["service KV &#40;protobuf&#41;<br/>[rpc.proto]"]
+end
+
+subgraph group_server_core["etcdserver"]
+  node_v3_server["EtcdServer request handlers<br/>[v3_server.go]"]
+  node_apply_entry["Apply entry<br/>[apply.go]"]
+  node_uber_applier["uberApplier dispatch<br/>[uber_applier.go]"]
+  node_txn_put["txn.Put<br/>[put.go]"]
+end
+
+subgraph group_consensus["Raft Consensus"]
+  node_raft_node["raftNode loop<br/>[raft.go]"]
+  node_rafthttp["rafthttp Transport<br/>[transport.go]"]
+end
+
+subgraph group_storage["Storage"]
+  node_wal["WAL<br/>[wal.go]"]
+  node_mvcc_store["MVCC storeTxnWrite<br/>[kvstore_txn.go]"]
+  node_watchable["watchableStore<br/>[watchable_store.go]"]
+end
+
+node_client_v3 -->|"gRPC calls"| node_kv_api
+node_kv_api -->|"RPC handlers"| node_v3_server
+node_v3_server -->|"propose InternalRaftRequest"| node_raft_node
+node_raft_node -->|"Save hard state + entries"| node_wal
+node_raft_node -->|"leader replicates"| node_rafthttp
+node_raft_node -->|"committed entries"| node_apply_entry
+node_apply_entry -->|"wrapped request"| node_uber_applier
+node_uber_applier -->|"dispatch Put"| node_txn_put
+node_txn_put -->|"storeTxnWrite.put"| node_mvcc_store
+node_mvcc_store -->|"txn End&#40;&#41; emits events"| node_watchable
+node_v3_server -->|"Range reads"| node_mvcc_store
+node_watchable -->|"WatchResponse stream"| node_client_v3
+
+click node_client_v3 "https://github.com/etcd-io/etcd/blob/main/client/v3/client.go"
+click node_kv_api "https://github.com/etcd-io/etcd/blob/main/api/etcdserverpb/rpc.proto"
+click node_v3_server "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/v3_server.go"
+click node_raft_node "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/raft.go"
+click node_rafthttp "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/api/rafthttp/transport.go"
+click node_wal "https://github.com/etcd-io/etcd/blob/main/server/storage/wal/wal.go"
+click node_apply_entry "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/apply/apply.go"
+click node_uber_applier "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/apply/uber_applier.go"
+click node_txn_put "https://github.com/etcd-io/etcd/blob/main/server/etcdserver/txn/put.go"
+click node_mvcc_store "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/kvstore_txn.go"
+click node_watchable "https://github.com/etcd-io/etcd/blob/main/server/storage/mvcc/watchable_store.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_client_v3 toneBlue
+class node_kv_api toneAmber
+class node_v3_server,node_apply_entry,node_uber_applier,node_txn_put toneMint
+class node_raft_node,node_rafthttp toneRose
+class node_wal,node_mvcc_store,node_watchable toneIndigo
