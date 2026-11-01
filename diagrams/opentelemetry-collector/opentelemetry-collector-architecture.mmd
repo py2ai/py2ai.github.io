@@ -1,0 +1,150 @@
+flowchart TD
+
+subgraph group_cli["CLI"]
+  node_new_command["NewCommand<br/>[command.go]"]
+  node_flags["--config / --set flags<br/>[flags.go]"]
+  node_components_cmd["otelcol components"]
+end
+
+subgraph group_lifecycle["Collector lifecycle"]
+  node_collector_struct["Collector struct<br/>[collector.go]"]
+  node_new_collector["NewCollector<br/>[collector.go]"]
+  node_run["Collector.Run<br/>[collector.go]"]
+  node_setup_components["setupConfigurationComponents<br/>[collector.go]"]
+  node_reload["reloadConfiguration<br/>[collector.go]"]
+end
+
+subgraph group_config["Config resolution"]
+  node_config_provider["ConfigProvider<br/>[configprovider.go]"]
+  node_resolver["Resolver.Resolve<br/>[resolver.go]"]
+  node_confmap_watch["Resolver.Watch<br/>[resolver.go]"]
+  node_file_provider["file provider<br/>[provider.go]"]
+  node_env_provider["env provider<br/>[provider.go]"]
+  node_cfg_struct["otelcol.Config.Validate<br/>[config.go]"]
+  node_factories["Factories<br/>[factories.go]"]
+end
+
+subgraph group_service["Service runtime"]
+  node_service_new["service.New<br/>[service.go]"]
+  node_service_start["Service.Start<br/>[service.go]"]
+  node_service_shutdown["Service.Shutdown<br/>[service.go]"]
+  node_init_graph["initGraph<br/>[service.go]"]
+  node_host_struct["graph.Host<br/>[host.go]"]
+end
+
+subgraph group_graph["Data flow graph"]
+  node_graph_build["graph.Build<br/>[graph.go]"]
+  node_create_nodes["createNodes<br/>[graph.go]"]
+  node_create_edges["createEdges<br/>[graph.go]"]
+  node_build_components["buildComponents<br/>[graph.go]"]
+  node_start_all["StartAll<br/>[graph.go]"]
+  node_receiver_node["receiverNode<br/>[receiver.go]"]
+  node_processor_node["processorNode<br/>[processor.go]"]
+  node_exporter_node["exporterNode<br/>[exporter.go]"]
+  node_connector_node["connectorNode<br/>[connector.go]"]
+  node_capabilities_node["capabilitiesNode<br/>[capabilities.go]"]
+  node_fanout_node["fanOutNode<br/>[fanout.go]"]
+end
+
+subgraph group_pdata["pdata signals"]
+  node_pdata_traces["ptrace.Traces"]
+  node_pdata_metrics["pmetric.Metrics"]
+  node_pdata_logs["plog.Logs<br/>[generated_logs.go]"]
+end
+
+node_flags -->|"--config, --set"| node_new_command
+node_new_command -->|"RunE"| node_new_collector
+node_new_command -->|"subcommand"| node_components_cmd
+node_factories -->|"lists"| node_components_cmd
+node_new_collector -->|"creates"| node_collector_struct
+node_new_collector -->|"NewConfigProvider"| node_config_provider
+node_collector_struct -->|"Run&#40;ctx&#41;"| node_run
+node_run -->|"startup"| node_setup_components
+node_run -->|"SIGHUP / watch"| node_reload
+node_run -->|"shutdown path"| node_service_shutdown
+node_reload -->|"rebuild"| node_setup_components
+node_setup_components -->|"getWithConf"| node_config_provider
+node_setup_components -->|"Factories&#40;&#41;"| node_factories
+node_setup_components -->|"Validate"| node_cfg_struct
+node_setup_components -->|"service.New"| node_service_new
+node_setup_components -->|"Start"| node_service_start
+node_config_provider -->|"Resolve"| node_resolver
+node_resolver -->|"file: scheme"| node_file_provider
+node_resolver -->|"env: scheme"| node_env_provider
+node_resolver -->|"changes"| node_confmap_watch
+node_confmap_watch -->|"triggers"| node_reload
+node_config_provider -->|"unmarshal"| node_cfg_struct
+node_service_new -->|"builders"| node_host_struct
+node_service_new -->|"initGraph"| node_init_graph
+node_init_graph -->|"graph.Build"| node_graph_build
+node_graph_build -->|"nodes"| node_create_nodes
+node_graph_build -->|"edges"| node_create_edges
+node_graph_build -->|"topo.Sort"| node_build_components
+node_create_nodes -->|"dedup per signal"| node_receiver_node
+node_create_nodes -->|"one per flow"| node_processor_node
+node_create_nodes -->|"dedup per signal"| node_exporter_node
+node_create_nodes -->|"typecheck"| node_connector_node
+node_create_nodes -->|"virtual node"| node_capabilities_node
+node_create_nodes -->|"per flow"| node_fanout_node
+node_build_components -->|"CreateTraces"| node_receiver_node
+node_build_components -->|"CreateTraces"| node_exporter_node
+node_receiver_node -->|"emits into"| node_capabilities_node
+node_capabilities_node -->|"chain"| node_processor_node
+node_processor_node -->|"chain"| node_fanout_node
+node_fanout_node -->|"copies"| node_exporter_node
+node_service_start -->|"starts graph"| node_start_all
+node_start_all -->|"downstream first"| node_exporter_node
+node_start_all -->|"receivers last"| node_receiver_node
+node_receiver_node -->|"ConsumeTraces"| node_pdata_traces
+node_receiver_node -->|"ConsumeMetrics"| node_pdata_metrics
+node_receiver_node -->|"ConsumeLogs"| node_pdata_logs
+node_pdata_traces -->|"OTLP export"| node_exporter_node
+
+click node_new_command "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/command.go"
+click node_flags "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/flags.go"
+click node_components_cmd "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/command_components.go"
+click node_collector_struct "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/collector.go"
+click node_new_collector "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/collector.go"
+click node_run "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/collector.go"
+click node_setup_components "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/collector.go"
+click node_reload "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/collector.go"
+click node_config_provider "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/configprovider.go"
+click node_resolver "https://github.com/open-telemetry/opentelemetry-collector/blob/main/confmap/resolver.go"
+click node_confmap_watch "https://github.com/open-telemetry/opentelemetry-collector/blob/main/confmap/resolver.go"
+click node_file_provider "https://github.com/open-telemetry/opentelemetry-collector/blob/main/confmap/provider/fileprovider/provider.go"
+click node_env_provider "https://github.com/open-telemetry/opentelemetry-collector/blob/main/confmap/provider/envprovider/provider.go"
+click node_cfg_struct "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/config.go"
+click node_factories "https://github.com/open-telemetry/opentelemetry-collector/blob/main/otelcol/factories.go"
+click node_service_new "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/service.go"
+click node_service_start "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/service.go"
+click node_service_shutdown "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/service.go"
+click node_init_graph "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/service.go"
+click node_host_struct "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/host.go"
+click node_graph_build "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/graph.go"
+click node_create_nodes "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/graph.go"
+click node_create_edges "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/graph.go"
+click node_build_components "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/graph.go"
+click node_start_all "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/graph.go"
+click node_receiver_node "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/receiver.go"
+click node_processor_node "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/processor.go"
+click node_exporter_node "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/exporter.go"
+click node_connector_node "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/connector.go"
+click node_capabilities_node "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/capabilities.go"
+click node_fanout_node "https://github.com/open-telemetry/opentelemetry-collector/blob/main/service/internal/graph/fanout.go"
+click node_pdata_traces "https://github.com/open-telemetry/opentelemetry-collector/blob/main/pdata/ptrace/generated_traces.go"
+click node_pdata_metrics "https://github.com/open-telemetry/opentelemetry-collector/blob/main/pdata/pmetric/generated_metrics.go"
+click node_pdata_logs "https://github.com/open-telemetry/opentelemetry-collector/blob/main/pdata/plog/generated_logs.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_new_command,node_flags,node_components_cmd toneBlue
+class node_collector_struct,node_new_collector,node_run,node_setup_components,node_reload toneAmber
+class node_config_provider,node_resolver,node_confmap_watch,node_file_provider,node_env_provider,node_cfg_struct,node_factories toneMint
+class node_service_new,node_service_start,node_service_shutdown,node_init_graph,node_host_struct toneRose
+class node_graph_build,node_create_nodes,node_create_edges,node_build_components,node_start_all,node_receiver_node,node_processor_node,node_exporter_node,node_connector_node,node_capabilities_node,node_fanout_node toneIndigo
+class node_pdata_traces,node_pdata_metrics,node_pdata_logs toneTeal

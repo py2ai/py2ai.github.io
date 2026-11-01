@@ -1,0 +1,43 @@
+{
+  "owner": "open-telemetry",
+  "repo": "opentelemetry-collector",
+  "branch": "main",
+  "groups": [
+    {"id": "binary", "name": "otelcol binary", "label": "otelcol binary"},
+    {"id": "config", "name": "Configuration", "label": "Configuration"},
+    {"id": "service", "name": "Service runtime", "label": "Service runtime"},
+    {"id": "flow", "name": "Signal flow", "label": "Signal flow"},
+    {"id": "pdata", "name": "pdata data model", "label": "pdata data model"}
+  ],
+  "nodes": [
+    {"id": "otelcol_cmd", "label": "NewCommand (otelcol CLI)", "file": "command.go", "path": "otelcol/command.go", "group": "otelcol binary", "groupId": "binary", "desc": "Builds the cobra root command, wires the --config flag and runs the Collector"},
+    {"id": "collector", "label": "Collector (Run / Shutdown)", "file": "collector.go", "path": "otelcol/collector.go", "group": "otelcol binary", "groupId": "binary", "desc": "Top-level process owner: resolves config, starts the Service, watches for reloads and OS signals"},
+    {"id": "config_provider", "label": "ConfigProvider", "file": "configprovider.go", "path": "otelcol/configprovider.go", "group": "Configuration", "groupId": "config", "desc": "Serves the service configuration via Get/Watch/Shutdown and unmarshals it into Config"},
+    {"id": "resolver", "label": "confmap Resolver.Resolve", "file": "resolver.go", "path": "confmap/resolver.go", "group": "Configuration", "groupId": "config", "desc": "Merges maps from all configured locations and expands ${env:VAR} references"},
+    {"id": "providers", "label": "URI providers (file, env, http, yaml)", "file": "provider.go", "path": "confmap/provider.go", "group": "Configuration", "groupId": "config", "desc": "Pluggable Provider interface behind file:, env:, http(s): and yaml: schemes"},
+    {"id": "service", "label": "Service (New / Start)", "file": "service.go", "path": "service/service.go", "group": "Service runtime", "groupId": "service", "desc": "Builds internal telemetry, extensions and the component graph; owns start and shutdown order"},
+    {"id": "host", "label": "graph.Host", "file": "host.go", "path": "service/internal/graph/host.go", "group": "Service runtime", "groupId": "service", "desc": "component.Host holding builder factories, the flow graph, extensions and status reporting"},
+    {"id": "graph_build", "label": "graph.Build (DAG)", "file": "graph.go", "path": "service/internal/graph/graph.go", "group": "Signal flow", "groupId": "flow", "desc": "Turns the service config into a directed acyclic graph of component instances"},
+    {"id": "receiver_node", "label": "receiverNode", "file": "receiver.go", "path": "service/internal/graph/receiver.go", "group": "Signal flow", "groupId": "flow", "desc": "One node per receiver instance; wraps next consumers in a fan-out and obsconsumer"},
+    {"id": "processor_node", "label": "processorNode", "file": "processor.go", "path": "service/internal/graph/processor.go", "group": "Signal flow", "groupId": "flow", "desc": "One node per processor instance; unique per signal flow, chained in config order"},
+    {"id": "exporter_node", "label": "exporterNode", "file": "exporter.go", "path": "service/internal/graph/exporter.go", "group": "Signal flow", "groupId": "flow", "desc": "One node per exporter instance; wrapped in obsconsumer and refconsumer"},
+    {"id": "pdata", "label": "pdata: Traces / Metrics / Logs", "file": "generated_traces.go", "path": "pdata/ptrace/generated_traces.go", "group": "pdata data model", "groupId": "pdata", "desc": "OTLP-native in-memory representation all components exchange (ptrace, pmetric, plog)"}
+  ],
+  "edges": [
+    {"from": "otelcol_cmd", "to": "collector", "label": "Run(ctx)"},
+    {"from": "collector", "to": "config_provider", "label": "getWithConf"},
+    {"from": "config_provider", "to": "resolver", "label": "Resolve"},
+    {"from": "resolver", "to": "providers", "label": "file:/ env: URIs"},
+    {"from": "collector", "to": "service", "label": "service.New"},
+    {"from": "service", "to": "host", "label": "graph.Host"},
+    {"from": "service", "to": "graph_build", "label": "initGraph"},
+    {"from": "host", "to": "graph_build", "label": "builders"},
+    {"from": "graph_build", "to": "receiver_node", "label": "createReceiver"},
+    {"from": "graph_build", "to": "processor_node", "label": "createProcessor"},
+    {"from": "graph_build", "to": "exporter_node", "label": "createExporter"},
+    {"from": "receiver_node", "to": "processor_node", "label": "chained consumers"},
+    {"from": "processor_node", "to": "exporter_node", "label": "fan-out"},
+    {"from": "receiver_node", "to": "pdata", "label": "OTLP into pdata"},
+    {"from": "pdata", "to": "exporter_node", "label": "batch and export"}
+  ]
+}
