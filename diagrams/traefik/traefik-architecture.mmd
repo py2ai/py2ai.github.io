@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_g_core["Bootstrap &amp; config core"]
+  node_main["main / setupServer<br/>[traefik.go]"]
+  node_server["Server<br/>[server.go]"]
+  node_watcher[("ConfigurationWatcher")]
+  node_merger["mergeConfiguration / applyModel<br/>[aggregator.go]"]
+  node_staticconf["static.Configuration<br/>[static_config.go]"]
+  node_dynconf["dynamic.Configuration<br/>[config.go]"]
+  node_tlsmanager["tls.Manager<br/>[tlsmanager.go]"]
+end
+
+subgraph group_g_edge["Entrypoints &amp; listeners"]
+  node_entrypoint{{"TCPEntryPoint"}}
+  node_listener["buildListener"]
+  node_httpserver["newHTTPServer"]
+  node_udpentry["UDPEntryPoints"]
+end
+
+subgraph group_g_routing["HTTP &amp; TCP routing"]
+  node_routerfactory["RouterFactory<br/>[routerfactory.go]"]
+  node_routermgr["router.Manager<br/>[router.go]"]
+  node_muxer{{"http.Muxer<br/>[mux.go]"}}
+  node_rules["rules.Parser<br/>[parser.go]"]
+  node_tcprouter{{"tcp.Router<br/>[router.go]"}}
+  node_tcproutermgr["tcp router Manager<br/>[manager.go]"]
+end
+
+subgraph group_g_services["Services &amp; load balancing"]
+  node_svcmanager["service.Manager<br/>[service.go]"]
+  node_proxy["httputil.ProxyBuilder<br/>[builder.go]"]
+  node_wrr["wrr.Balancer<br/>[wrr.go]"]
+  node_tcpsvc["tcp service Manager<br/>[service.go]"]
+  node_transport["TransportManager<br/>[transport.go]"]
+end
+
+subgraph group_g_providers["Dynamic config providers"]
+  node_agg[("ProviderAggregator<br/>[aggregator.go]")]
+  node_file["file.Provider<br/>[file.go]"]
+  node_docker["docker.Provider<br/>[pdocker.go]"]
+  node_kcrd["kubernetes crd Provider<br/>[kubernetes.go]"]
+  node_internal["internal provider<br/>[internal.go]"]
+end
+
+subgraph group_g_ops["API &amp; observability"]
+  node_api["api.Handler<br/>[handler.go]"]
+  node_accesslog["accesslog.Handler<br/>[logger.go]"]
+  node_mwbuilder["middleware Builder<br/>[middlewares.go]"]
+  node_observability["ObservabilityMgr<br/>[observability.go]"]
+end
+
+node_main -->|"server.NewServer, L403"| node_server
+node_main -->|"server.NewTCPEntryPoints, L228"| node_entrypoint
+node_main -->|"server.NewConfigurationWatcher, L324"| node_watcher
+node_main -->|"aggregator.NewProviderAggregator, L181"| node_agg
+node_main -->|"server.NewRouterFactory, L317"| node_routerfactory
+node_main -->|"tls.NewManager, L194"| node_tlsmanager
+node_main -->|"middleware.NewObservabilityMgr, L224"| node_observability
+node_main -->|"static config loaded"| node_staticconf
+node_server -->|"entrypoints.Start, L56"| node_entrypoint
+node_server -->|"udpEntryPoints.Start, L57"| node_udpentry
+node_server -->|"watcher.Start, L58"| node_watcher
+node_watcher -->|"Provide pushes configs, L84"| node_agg
+node_watcher -->|"mergeConfiguration, L186"| node_merger
+node_watcher -->|"UpdateConfigs listener"| node_tlsmanager
+node_watcher -->|"listeners rebuild routers"| node_routerfactory
+node_watcher -->|"exposes runtime state"| node_api
+node_merger -->|"one dynamic.Configuration"| node_dynconf
+node_staticconf -->|"entryPoints definitions"| node_entrypoint
+node_agg -->|"launchProvider, L205"| node_internal
+node_agg -->|"Provide, L55"| node_file
+node_agg -->|"Provide, L53"| node_docker
+node_agg -->|"Provide, L98"| node_kcrd
+node_internal -->|"api@internal services"| node_dynconf
+node_file -->|"YAML/TOML to config"| node_dynconf
+node_docker -->|"labels to routers"| node_dynconf
+node_kcrd -->|"IngressRoutes to routers"| node_dynconf
+node_entrypoint -->|"buildListener, L512"| node_listener
+node_entrypoint -->|"newHTTPServer, L643"| node_httpserver
+node_entrypoint -->|"ServeTCP via switcher"| node_tcprouter
+node_entrypoint -->|"SwitchRouter, L383"| node_routerfactory
+node_routerfactory -->|"router.NewManager, L116"| node_routermgr
+node_routerfactory -->|"tcprouter.NewManager, L130"| node_tcproutermgr
+node_routerfactory -->|"managerFactory.Build, L110"| node_svcmanager
+node_routerfactory -->|"middleware.NewBuilder, L112"| node_mwbuilder
+node_routermgr -->|"AddRoute, L92"| node_muxer
+node_routermgr -->|"rule trees"| node_rules
+node_routermgr -->|"BuildMiddlewareChain, L69"| node_mwbuilder
+node_routermgr -->|"request logging"| node_accesslog
+node_routermgr -->|"routers target services"| node_svcmanager
+node_muxer -->|"predicate parser"| node_rules
+node_tcproutermgr -->|"BuildHandlers, L61"| node_tcprouter
+node_tcproutermgr -->|"TCP services"| node_tcpsvc
+node_svcmanager -->|"proxyBuilder.Build, L41"| node_proxy
+node_svcmanager -->|"WRR balancer, L55"| node_wrr
+node_svcmanager -->|"ServersTransports"| node_transport
+node_observability -->|"access log middleware"| node_accesslog
+
+click node_main "https://github.com/traefik/traefik/blob/master/cmd/traefik/traefik.go"
+click node_server "https://github.com/traefik/traefik/blob/master/pkg/server/server.go"
+click node_watcher "https://github.com/traefik/traefik/blob/master/pkg/server/configurationwatcher.go"
+click node_merger "https://github.com/traefik/traefik/blob/master/pkg/server/aggregator.go"
+click node_staticconf "https://github.com/traefik/traefik/blob/master/pkg/config/static/static_config.go"
+click node_dynconf "https://github.com/traefik/traefik/blob/master/pkg/config/dynamic/config.go"
+click node_tlsmanager "https://github.com/traefik/traefik/blob/master/pkg/tls/tlsmanager.go"
+click node_entrypoint "https://github.com/traefik/traefik/blob/master/pkg/server/server_entrypoint_tcp.go"
+click node_listener "https://github.com/traefik/traefik/blob/master/pkg/server/server_entrypoint_tcp.go"
+click node_httpserver "https://github.com/traefik/traefik/blob/master/pkg/server/server_entrypoint_tcp.go"
+click node_udpentry "https://github.com/traefik/traefik/blob/master/pkg/server/server_entrypoint_udp.go"
+click node_routerfactory "https://github.com/traefik/traefik/blob/master/pkg/server/routerfactory.go"
+click node_routermgr "https://github.com/traefik/traefik/blob/master/pkg/server/router/router.go"
+click node_muxer "https://github.com/traefik/traefik/blob/master/pkg/muxer/http/mux.go"
+click node_rules "https://github.com/traefik/traefik/blob/master/pkg/rules/parser.go"
+click node_tcprouter "https://github.com/traefik/traefik/blob/master/pkg/server/router/tcp/router.go"
+click node_tcproutermgr "https://github.com/traefik/traefik/blob/master/pkg/server/router/tcp/manager.go"
+click node_svcmanager "https://github.com/traefik/traefik/blob/master/pkg/server/service/service.go"
+click node_proxy "https://github.com/traefik/traefik/blob/master/pkg/proxy/httputil/builder.go"
+click node_wrr "https://github.com/traefik/traefik/blob/master/pkg/server/service/loadbalancer/wrr/wrr.go"
+click node_tcpsvc "https://github.com/traefik/traefik/blob/master/pkg/server/service/tcp/service.go"
+click node_transport "https://github.com/traefik/traefik/blob/master/pkg/server/service/transport.go"
+click node_agg "https://github.com/traefik/traefik/blob/master/pkg/provider/aggregator/aggregator.go"
+click node_file "https://github.com/traefik/traefik/blob/master/pkg/provider/file/file.go"
+click node_docker "https://github.com/traefik/traefik/blob/master/pkg/provider/docker/pdocker.go"
+click node_kcrd "https://github.com/traefik/traefik/blob/master/pkg/provider/kubernetes/crd/kubernetes.go"
+click node_internal "https://github.com/traefik/traefik/blob/master/pkg/provider/traefik/internal.go"
+click node_api "https://github.com/traefik/traefik/blob/master/pkg/api/handler.go"
+click node_accesslog "https://github.com/traefik/traefik/blob/master/pkg/middlewares/accesslog/logger.go"
+click node_mwbuilder "https://github.com/traefik/traefik/blob/master/pkg/server/middleware/middlewares.go"
+click node_observability "https://github.com/traefik/traefik/blob/master/pkg/server/middleware/observability.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_server,node_watcher,node_merger,node_staticconf,node_dynconf,node_tlsmanager toneBlue
+class node_entrypoint,node_listener,node_httpserver,node_udpentry toneAmber
+class node_routerfactory,node_routermgr,node_muxer,node_rules,node_tcprouter,node_tcproutermgr toneMint
+class node_svcmanager,node_proxy,node_wrr,node_tcpsvc,node_transport toneRose
+class node_agg,node_file,node_docker,node_kcrd,node_internal toneIndigo
+class node_api,node_accesslog,node_mwbuilder,node_observability toneTeal

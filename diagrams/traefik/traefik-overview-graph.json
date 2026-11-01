@@ -1,0 +1,46 @@
+{
+  "owner": "traefik",
+  "repo": "traefik",
+  "branch": "master",
+  "groups": [
+    { "id": "g_core", "name": "Core", "label": "Core orchestration" },
+    { "id": "g_edge", "name": "Edge", "label": "Entrypoints & listeners" },
+    { "id": "g_routing", "name": "Routing", "label": "Routing engine" },
+    { "id": "g_services", "name": "Services", "label": "Services & proxying" },
+    { "id": "g_providers", "name": "Providers", "label": "Dynamic config providers" },
+    { "id": "g_ops", "name": "Ops", "label": "API & observability" }
+  ],
+  "nodes": [
+    { "id": "main", "label": "main / setupServer", "file": "cmd/traefik/traefik.go", "path": "cmd/traefik/traefik.go", "group": "Core", "groupId": "g_core", "desc": "main() boots Traefik; setupServer wires providers, entrypoints, watcher and factories (L54, L180)." },
+    { "id": "server", "label": "Server", "file": "pkg/server/server.go", "path": "pkg/server/server.go", "group": "Core", "groupId": "g_core", "desc": "Server is the reverse-proxy engine: starts entrypoints and the watcher, handles shutdown (L17, L47)." },
+    { "id": "watcher", "label": "ConfigurationWatcher", "file": "pkg/server/configurationwatcher.go", "path": "pkg/server/configurationwatcher.go", "group": "Core", "groupId": "g_core", "shape": "database", "desc": "Receives provider configs, merges and notifies listeners; hot reload with zero restarts (L19, L98)." },
+    { "id": "entrypoint", "label": "TCPEntryPoint", "file": "pkg/server/server_entrypoint_tcp.go", "path": "pkg/server/server_entrypoint_tcp.go", "group": "Edge", "groupId": "g_edge", "shape": "hexagon", "desc": "Accepts TCP/HTTP/HTTPS conns, builds listener and HTTP servers, switches routers at runtime (L171, L184)." },
+    { "id": "routerfactory", "label": "RouterFactory", "file": "pkg/server/routerfactory.go", "path": "pkg/server/routerfactory.go", "group": "Routing", "groupId": "g_routing", "desc": "CreateRouters assembles HTTP, TCP and UDP routers from runtime config (L25, L101)." },
+    { "id": "routermgr", "label": "router.Manager", "file": "pkg/server/router/router.go", "path": "pkg/server/router/router.go", "group": "Routing", "groupId": "g_routing", "desc": "Builds per-entrypoint handlers with middleware chains, priorities and TLS (L43, L55)." },
+    { "id": "muxer", "label": "http.Muxer", "file": "pkg/muxer/http/mux.go", "path": "pkg/muxer/http/mux.go", "group": "Routing", "groupId": "g_routing", "shape": "hexagon", "desc": "Matches requests against Host/Path rules and dispatches to the winning handler (L26, L48)." },
+    { "id": "rules", "label": "rules.Parser", "file": "pkg/rules/parser.go", "path": "pkg/rules/parser.go", "group": "Routing", "groupId": "g_routing", "desc": "Predicate parser turns rule strings into matcher trees (L31)." },
+    { "id": "svcmanager", "label": "service.Manager", "file": "pkg/server/service/service.go", "path": "pkg/server/service/service.go", "group": "Services", "groupId": "g_services", "desc": "Builds load-balanced service handlers: WRR, mirror, failover (L56, L96)." },
+    { "id": "proxy", "label": "httputil.ProxyBuilder", "file": "pkg/proxy/httputil/builder.go", "path": "pkg/proxy/httputil/builder.go", "group": "Services", "groupId": "g_services", "desc": "Builds the reverse proxy handlers that forward requests to backends (L22, L41)." },
+    { "id": "agg", "label": "ProviderAggregator", "file": "pkg/provider/aggregator/aggregator.go", "path": "pkg/provider/aggregator/aggregator.go", "group": "Providers", "groupId": "g_providers", "shape": "database", "desc": "Fans in Docker, Kubernetes, file and other providers into one config stream (L63, L178)." },
+    { "id": "api", "label": "api.Handler", "file": "pkg/api/handler.go", "path": "pkg/api/handler.go", "group": "Ops", "groupId": "g_ops", "desc": "Serves /api/rawdata, /api/overview and router/service endpoints behind the dashboard (L57, L94)." }
+  ],
+  "edges": [
+    { "from": "main", "to": "server", "label": "server.NewServer, L403" },
+    { "from": "main", "to": "agg", "label": "aggregator.NewProviderAggregator, L181" },
+    { "from": "main", "to": "entrypoint", "label": "server.NewTCPEntryPoints, L228" },
+    { "from": "main", "to": "watcher", "label": "server.NewConfigurationWatcher, L324" },
+    { "from": "main", "to": "routerfactory", "label": "server.NewRouterFactory, L317" },
+    { "from": "agg", "to": "watcher", "label": "Provide pushes configs, L84" },
+    { "from": "watcher", "to": "routerfactory", "label": "listeners rebuild routers" },
+    { "from": "watcher", "to": "api", "label": "exposes runtime state" },
+    { "from": "server", "to": "entrypoint", "label": "entrypoints.Start, L56" },
+    { "from": "server", "to": "watcher", "label": "watcher.Start, L58" },
+    { "from": "routerfactory", "to": "entrypoint", "label": "SwitchRouter, L383" },
+    { "from": "routerfactory", "to": "routermgr", "label": "router.NewManager, L116" },
+    { "from": "routerfactory", "to": "svcmanager", "label": "managerFactory.Build, L110" },
+    { "from": "routermgr", "to": "muxer", "label": "AddRoute, L92" },
+    { "from": "routermgr", "to": "rules", "label": "parse rule strings" },
+    { "from": "entrypoint", "to": "muxer", "label": "serve via switcher" },
+    { "from": "svcmanager", "to": "proxy", "label": "Build proxy handler, L41" }
+  ]
+}
