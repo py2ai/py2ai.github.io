@@ -1,0 +1,46 @@
+{
+  "owner": "valkey-io",
+  "repo": "valkey",
+  "branch": "unstable",
+  "groups": [
+    {"id": "runtime_core", "name": "Runtime core", "label": "Runtime core (server.c / ae.c)"},
+    {"id": "network_io", "name": "Network IO", "label": "Network IO (networking.c / io_threads.c)"},
+    {"id": "data_types", "name": "Data type commands", "label": "Data type commands (t_*.c)"},
+    {"id": "storage", "name": "Storage engine", "label": "Storage engine (hashtable.c / db.c)"},
+    {"id": "persistence", "name": "Persistence", "label": "Persistence (rdb.c / aof.c)"},
+    {"id": "replication", "name": "Replication", "label": "Replication (replication.c)"}
+  ],
+  "nodes": [
+    {"id": "main_loop", "label": "main()", "file": "server.c", "path": "src/server.c", "group": "runtime_core", "groupId": "runtime_core", "desc": "main() at L7935 initializes config and subsystems, then runs the ae event loop; global state lives in struct valkeyServer (server.h L1865)"},
+    {"id": "event_loop", "label": "aeMain loop", "file": "ae.c", "path": "src/ae.c", "group": "runtime_core", "groupId": "runtime_core", "shape": "hexagon", "desc": "single-threaded event loop aeMain at L689; serverCron (server.c L1601) runs on it as a timed job"},
+    {"id": "process_cmd", "label": "processCommand", "file": "server.c", "path": "src/server.c", "group": "runtime_core", "groupId": "runtime_core", "desc": "int processCommand() at L4647 resolves the command table (built from src/commands/*.json specs) and dispatches"},
+    {"id": "client_io", "label": "readQueryFromClient", "file": "networking.c", "path": "src/networking.c", "group": "network_io", "groupId": "network_io", "desc": "reads sockets into the query buffer at L4893 (now takes a connection*); replies flushed by int writeToClient() L3569"},
+    {"id": "io_threads", "label": "IO threads", "file": "io_threads.c", "path": "src/io_threads.c", "group": "network_io", "groupId": "network_io", "shape": "hexagon", "desc": "Valkey split async IO into io_threads.c: trySendReadToIOThreads L693, trySendWriteToIOThreads L742, processIOThreadsResponses L1324"},
+    {"id": "strings", "label": "String commands", "file": "t_string.c", "path": "src/t_string.c", "group": "data_types", "groupId": "data_types", "desc": "setCommand L265 and getCommand L356 on SDS strings; the workhorse types for caching and session workloads"},
+    {"id": "zsets", "label": "Sorted-set commands", "file": "t_zset.c", "path": "src/t_zset.c", "group": "data_types", "groupId": "data_types", "desc": "zaddGenericCommand L1226 over listpack or skiplist encodings; drives leaderboards and time-series ranking"},
+    {"id": "path_hash", "label": "Path-hash commands", "file": "t_path_hash.c", "path": "src/t_path_hash.c", "group": "data_types", "groupId": "data_types", "shape": "database", "desc": "new Valkey data type: phsetCommand L230, phgetCommand L320, phlongestCommand L458 for path-shaped keys like token prefix caches"},
+    {"id": "kvstore", "label": "Keyspace hashtables", "file": "hashtable.c", "path": "src/hashtable.c", "group": "storage", "groupId": "storage", "shape": "database", "desc": "Valkey renamed dict.c to hashtable.c (hashtableCreate L1266); kvstore.c manages logical DBs (kvstoreMemUsage L378); db.c lookupKey L87 is the key-resolution chokepoint"},
+    {"id": "rdb", "label": "RDB snapshots", "file": "rdb.c", "path": "src/rdb.c", "group": "persistence", "groupId": "persistence", "shape": "database", "desc": "rdbSaveBackground L1864 forks to serialize the dataset; rdbLoad L4182 restores on boot"},
+    {"id": "aof", "label": "AOF log", "file": "aof.c", "path": "src/aof.c", "group": "persistence", "groupId": "persistence", "shape": "database", "desc": "feedAppendOnlyFile L1455 appends writes; flushAppendOnlyFile L1184 fsyncs from beforeSleep"},
+    {"id": "replication", "label": "Replication", "file": "replication.c", "path": "src/replication.c", "group": "replication", "groupId": "replication", "desc": "syncCommand L1412 serves SYNC/PSYNC; feedReplicationBuffer L688 streams writes; dual-channel capability negotiated at L1510"}
+  ],
+  "edges": [
+    {"from": "main_loop", "to": "event_loop", "label": "boots server, enters aeMain"},
+    {"from": "main_loop", "to": "io_threads", "label": "initIOThreads at startup", "style": "dashed"},
+    {"from": "main_loop", "to": "rdb", "label": "restore dataset on boot", "style": "dashed"},
+    {"from": "event_loop", "to": "client_io", "label": "fires on readable sockets"},
+    {"from": "client_io", "to": "io_threads", "label": "read/write offload to workers", "style": "dashed"},
+    {"from": "client_io", "to": "process_cmd", "label": "parsed RESP command"},
+    {"from": "process_cmd", "to": "strings", "label": "SET GET INCR"},
+    {"from": "process_cmd", "to": "zsets", "label": "ZADD ZRANGE"},
+    {"from": "process_cmd", "to": "path_hash", "label": "PHSET PHGET"},
+    {"from": "strings", "to": "kvstore", "label": "read or write keys"},
+    {"from": "zsets", "to": "kvstore", "label": "read or write keys"},
+    {"from": "path_hash", "to": "kvstore", "label": "read or write keys"},
+    {"from": "process_cmd", "to": "rdb", "label": "BGSAVE"},
+    {"from": "process_cmd", "to": "aof", "label": "write commands appended"},
+    {"from": "event_loop", "to": "aof", "label": "beforeSleep fsync", "style": "dashed"},
+    {"from": "process_cmd", "to": "replication", "label": "SYNC / PSYNC"},
+    {"from": "replication", "to": "rdb", "label": "dual-channel RDB sync", "style": "dashed"}
+  ]
+}
