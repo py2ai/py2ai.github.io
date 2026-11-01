@@ -1,0 +1,76 @@
+flowchart TD
+
+subgraph group_runtime_core["Runtime core &#40;server.c / ae.c&#41;"]
+  node_main_loop["main&#40;&#41;<br/>[server.c]"]
+  node_event_loop{{"aeMain loop<br/>[ae.c]"}}
+  node_process_cmd["processCommand<br/>[server.c]"]
+end
+
+subgraph group_network_io["Network IO &#40;networking.c / io_threads.c&#41;"]
+  node_client_io["readQueryFromClient<br/>[networking.c]"]
+  node_io_threads{{"IO threads<br/>[io_threads.c]"}}
+end
+
+subgraph group_data_types["Data type commands &#40;t_*.c&#41;"]
+  node_strings["String commands<br/>[t_string.c]"]
+  node_zsets["Sorted-set commands<br/>[t_zset.c]"]
+  node_path_hash[("Path-hash commands<br/>[t_path_hash.c]")]
+end
+
+subgraph group_storage["Storage engine &#40;hashtable.c / db.c&#41;"]
+  node_kvstore[("Keyspace hashtables<br/>[hashtable.c]")]
+end
+
+subgraph group_persistence["Persistence &#40;rdb.c / aof.c&#41;"]
+  node_rdb[("RDB snapshots<br/>[rdb.c]")]
+  node_aof[("AOF log<br/>[aof.c]")]
+end
+
+subgraph group_replication["Replication &#40;replication.c&#41;"]
+  node_replication["Replication<br/>[replication.c]"]
+end
+
+node_main_loop -->|"boots server, enters aeMain"| node_event_loop
+node_main_loop -.->|"initIOThreads at startup"| node_io_threads
+node_main_loop -.->|"restore dataset on boot"| node_rdb
+node_event_loop -->|"fires on readable sockets"| node_client_io
+node_client_io -.->|"read/write offload to workers"| node_io_threads
+node_client_io -->|"parsed RESP command"| node_process_cmd
+node_process_cmd -->|"SET GET INCR"| node_strings
+node_process_cmd -->|"ZADD ZRANGE"| node_zsets
+node_process_cmd -->|"PHSET PHGET"| node_path_hash
+node_strings -->|"read or write keys"| node_kvstore
+node_zsets -->|"read or write keys"| node_kvstore
+node_path_hash -->|"read or write keys"| node_kvstore
+node_process_cmd -->|"BGSAVE"| node_rdb
+node_process_cmd -->|"write commands appended"| node_aof
+node_event_loop -.->|"beforeSleep fsync"| node_aof
+node_process_cmd -->|"SYNC / PSYNC"| node_replication
+node_replication -.->|"dual-channel RDB sync"| node_rdb
+
+click node_main_loop "https://github.com/valkey-io/valkey/blob/unstable/src/server.c"
+click node_event_loop "https://github.com/valkey-io/valkey/blob/unstable/src/ae.c"
+click node_process_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/server.c"
+click node_client_io "https://github.com/valkey-io/valkey/blob/unstable/src/networking.c"
+click node_io_threads "https://github.com/valkey-io/valkey/blob/unstable/src/io_threads.c"
+click node_strings "https://github.com/valkey-io/valkey/blob/unstable/src/t_string.c"
+click node_zsets "https://github.com/valkey-io/valkey/blob/unstable/src/t_zset.c"
+click node_path_hash "https://github.com/valkey-io/valkey/blob/unstable/src/t_path_hash.c"
+click node_kvstore "https://github.com/valkey-io/valkey/blob/unstable/src/hashtable.c"
+click node_rdb "https://github.com/valkey-io/valkey/blob/unstable/src/rdb.c"
+click node_aof "https://github.com/valkey-io/valkey/blob/unstable/src/aof.c"
+click node_replication "https://github.com/valkey-io/valkey/blob/unstable/src/replication.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_loop,node_event_loop,node_process_cmd toneBlue
+class node_client_io,node_io_threads toneAmber
+class node_strings,node_zsets,node_path_hash toneMint
+class node_kvstore toneRose
+class node_rdb,node_aof toneIndigo
+class node_replication toneTeal

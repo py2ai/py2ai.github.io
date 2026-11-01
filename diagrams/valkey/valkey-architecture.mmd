@@ -1,0 +1,147 @@
+flowchart TD
+
+subgraph group_boot_runtime["Boot &amp; runtime &#40;server.c / ae.c&#41;"]
+  node_main_loop["main&#40;&#41;<br/>[server.c]"]
+  node_server_cron{{"serverCron<br/>[server.c]"}}
+  node_event_loop{{"aeMain<br/>[ae.c]"}}
+  node_before_sleep["beforeSleep / afterSleep<br/>[server.c]"]
+  node_process_cmd["processCommand<br/>[server.c]"]
+end
+
+subgraph group_io_networking["Async IO networking &#40;networking.c / io_threads.c&#41;"]
+  node_read_query["readQueryFromClient<br/>[networking.c]"]
+  node_write_client["writeToClient<br/>[networking.c]"]
+  node_io_threads_init["initIOThreads<br/>[io_threads.c]"]
+  node_io_read["trySendReadToIOThreads<br/>[io_threads.c]"]
+  node_io_write["trySendWriteToIOThreads<br/>[io_threads.c]"]
+  node_io_responses["processIOThreadsResponses<br/>[io_threads.c]"]
+end
+
+subgraph group_data_types["Data type commands &#40;t_*.c&#41;"]
+  node_set_cmd["setCommand / getCommand<br/>[t_string.c]"]
+  node_hset_cmd["hsetCommand<br/>[t_hash.c]"]
+  node_zadd_cmd["zaddGenericCommand<br/>[t_zset.c]"]
+  node_phset_cmd[("phsetCommand<br/>[t_path_hash.c]")]
+end
+
+subgraph group_storage_engine["Storage engine &#40;hashtable.c / db.c / expire.c&#41;"]
+  node_lookup_key["lookupKey<br/>[db.c]"]
+  node_hashtable_core[("hashtable engine<br/>[hashtable.c]")]
+  node_kvstore_mgmt["kvstore<br/>[kvstore.c]"]
+  node_expire_cycle["activeExpireCycle<br/>[expire.c]"]
+  node_evictions["performEvictions<br/>[evict.c]"]
+end
+
+subgraph group_persistence["Persistence &#40;rdb.c / aof.c / forkless.c&#41;"]
+  node_rdb_save[("rdbSaveBackground<br/>[rdb.c]")]
+  node_rdb_load[("rdbLoad<br/>[rdb.c]")]
+  node_aof_flush["flushAppendOnlyFile<br/>[aof.c]"]
+  node_bio_jobs{{"bioProcessBackgroundJobs<br/>[bio.c]"}}
+  node_forkless_save[("forklessSaveToDisk<br/>[forkless.c]")]
+  node_check_rdb["redis_check_rdb<br/>[valkey-check-rdb.c]"]
+end
+
+subgraph group_replication["Replication &#40;replication.c&#41;"]
+  node_sync_cmd["syncCommand<br/>[replication.c]"]
+  node_repl_feed["feedReplicationBuffer<br/>[replication.c]"]
+  node_dual_channel{{"dual-channel sync<br/>[replication.c]"}}
+  node_repl_cron["replicationCron<br/>[replication.c]"]
+end
+
+subgraph group_cluster["Cluster &#40;cluster*.c&#41;"]
+  node_cluster_cmd["clusterCommand<br/>[cluster.c]"]
+  node_cluster_cron["clusterCron<br/>[cluster_legacy.c]"]
+  node_slot_migration{{"slot migration jobs"}}
+  node_slot_stats["per-slot stats"]
+end
+
+node_main_loop -->|"initServer, then enter aeMain"| node_event_loop
+node_event_loop -.->|"timed callback"| node_server_cron
+node_event_loop -->|"before each poll"| node_before_sleep
+node_before_sleep -->|"harvest IO jobs"| node_io_responses
+node_before_sleep -.->|"fsync AOF buffers"| node_aof_flush
+node_before_sleep -.->|"hand sockets to workers"| node_io_read
+node_read_query -->|"parsed RESP command"| node_process_cmd
+node_process_cmd -->|"SET GET INCR"| node_set_cmd
+node_process_cmd -->|"HSET HMGET"| node_hset_cmd
+node_process_cmd -->|"ZADD ZRANGE"| node_zadd_cmd
+node_process_cmd -->|"PHSET PHGET"| node_phset_cmd
+node_set_cmd -->|"resolve or add key"| node_lookup_key
+node_hset_cmd -->|"resolve or add key"| node_lookup_key
+node_zadd_cmd -->|"resolve or add key"| node_lookup_key
+node_phset_cmd -->|"resolve or add key"| node_lookup_key
+node_lookup_key -->|"per-DB hashtable ops"| node_hashtable_core
+node_hashtable_core -->|"logical DB containers"| node_kvstore_mgmt
+node_server_cron -.->|"incremental expiry"| node_expire_cycle
+node_server_cron -.->|"enforce maxmemory"| node_evictions
+node_process_cmd -->|"BGSAVE"| node_rdb_save
+node_rdb_save -.->|"thread-based alternative"| node_forkless_save
+node_main_loop -.->|"restore dataset on boot"| node_rdb_load
+node_aof_flush -.->|"background fsync jobs"| node_bio_jobs
+node_rdb_load -->|"dbAddRDBLoad insertions"| node_lookup_key
+node_check_rdb -.->|"validate snapshot files"| node_rdb_save
+node_process_cmd -->|"SYNC / PSYNC"| node_sync_cmd
+node_sync_cmd -->|"snapshot for replica"| node_rdb_save
+node_sync_cmd -->|"replica offers dual-channel"| node_dual_channel
+node_dual_channel -->|"RDB flows over second link"| node_rdb_load
+node_process_cmd -->|"replicate write commands"| node_repl_feed
+node_before_sleep -->|"flush pending replies"| node_write_client
+node_server_cron -.->|"link upkeep"| node_repl_cron
+node_process_cmd -->|"CLUSTER subcommands"| node_cluster_cmd
+node_server_cron -.->|"gossip and failover"| node_cluster_cron
+node_cluster_cron -->|"drive import/export jobs"| node_slot_migration
+node_slot_stats -->|"CLUSTER SLOT-STATS"| node_cluster_cmd
+node_main_loop -->|"start IO workers"| node_io_threads_init
+node_io_threads_init -->|"queue read jobs"| node_io_read
+node_io_threads_init -->|"queue write jobs"| node_io_write
+node_io_read -.->|"completed reads applied"| node_read_query
+node_io_write -.->|"completed writes applied"| node_write_client
+
+click node_main_loop "https://github.com/valkey-io/valkey/blob/unstable/src/server.c"
+click node_server_cron "https://github.com/valkey-io/valkey/blob/unstable/src/server.c"
+click node_event_loop "https://github.com/valkey-io/valkey/blob/unstable/src/ae.c"
+click node_before_sleep "https://github.com/valkey-io/valkey/blob/unstable/src/server.c"
+click node_process_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/server.c"
+click node_read_query "https://github.com/valkey-io/valkey/blob/unstable/src/networking.c"
+click node_write_client "https://github.com/valkey-io/valkey/blob/unstable/src/networking.c"
+click node_io_threads_init "https://github.com/valkey-io/valkey/blob/unstable/src/io_threads.c"
+click node_io_read "https://github.com/valkey-io/valkey/blob/unstable/src/io_threads.c"
+click node_io_write "https://github.com/valkey-io/valkey/blob/unstable/src/io_threads.c"
+click node_io_responses "https://github.com/valkey-io/valkey/blob/unstable/src/io_threads.c"
+click node_set_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/t_string.c"
+click node_hset_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/t_hash.c"
+click node_zadd_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/t_zset.c"
+click node_phset_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/t_path_hash.c"
+click node_lookup_key "https://github.com/valkey-io/valkey/blob/unstable/src/db.c"
+click node_hashtable_core "https://github.com/valkey-io/valkey/blob/unstable/src/hashtable.c"
+click node_kvstore_mgmt "https://github.com/valkey-io/valkey/blob/unstable/src/kvstore.c"
+click node_expire_cycle "https://github.com/valkey-io/valkey/blob/unstable/src/expire.c"
+click node_evictions "https://github.com/valkey-io/valkey/blob/unstable/src/evict.c"
+click node_rdb_save "https://github.com/valkey-io/valkey/blob/unstable/src/rdb.c"
+click node_rdb_load "https://github.com/valkey-io/valkey/blob/unstable/src/rdb.c"
+click node_aof_flush "https://github.com/valkey-io/valkey/blob/unstable/src/aof.c"
+click node_bio_jobs "https://github.com/valkey-io/valkey/blob/unstable/src/bio.c"
+click node_forkless_save "https://github.com/valkey-io/valkey/blob/unstable/src/forkless.c"
+click node_check_rdb "https://github.com/valkey-io/valkey/blob/unstable/src/valkey-check-rdb.c"
+click node_sync_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/replication.c"
+click node_repl_feed "https://github.com/valkey-io/valkey/blob/unstable/src/replication.c"
+click node_dual_channel "https://github.com/valkey-io/valkey/blob/unstable/src/replication.c"
+click node_repl_cron "https://github.com/valkey-io/valkey/blob/unstable/src/replication.c"
+click node_cluster_cmd "https://github.com/valkey-io/valkey/blob/unstable/src/cluster.c"
+click node_cluster_cron "https://github.com/valkey-io/valkey/blob/unstable/src/cluster_legacy.c"
+click node_slot_migration "https://github.com/valkey-io/valkey/blob/unstable/src/cluster_migrateslots.c"
+click node_slot_stats "https://github.com/valkey-io/valkey/blob/unstable/src/cluster_slot_stats.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_loop,node_server_cron,node_event_loop,node_before_sleep,node_process_cmd,node_cluster_cmd,node_cluster_cron,node_slot_migration,node_slot_stats toneBlue
+class node_read_query,node_write_client,node_io_threads_init,node_io_read,node_io_write,node_io_responses toneAmber
+class node_set_cmd,node_hset_cmd,node_zadd_cmd,node_phset_cmd toneMint
+class node_lookup_key,node_hashtable_core,node_kvstore_mgmt,node_expire_cycle,node_evictions toneRose
+class node_rdb_save,node_rdb_load,node_aof_flush,node_bio_jobs,node_forkless_save,node_check_rdb toneIndigo
+class node_sync_cmd,node_repl_feed,node_dual_channel,node_repl_cron toneTeal
