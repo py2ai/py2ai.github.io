@@ -1,0 +1,147 @@
+flowchart TD
+
+subgraph group_bootstrap["Bootstrap &amp; CLI"]
+  node_init["kong/init.lua<br/>[init.lua]"]
+  node_cmd_start["kong start<br/>[start.lua]"]
+  node_conf_loader["conf_loader<br/>[init.lua]"]
+  node_constants["constants<br/>[constants.lua]"]
+end
+
+subgraph group_pdk["Plugin Development Kit"]
+  node_kglobal["global &#40;kong table&#41;<br/>[global.lua]"]
+  node_pdk_init["PDK root<br/>[init.lua]"]
+  node_pdk_request["kong.request<br/>[request.lua]"]
+  node_pdk_response["kong.response<br/>[response.lua]"]
+  node_phases["phase checker<br/>[phases.lua]"]
+end
+
+subgraph group_nginx["Nginx Templates"]
+  node_ntemplate["nginx_kong template<br/>[nginx_kong.lua]"]
+  node_defaults["kong_defaults<br/>[kong_defaults.lua]"]
+end
+
+subgraph group_runloop["Request Runloop"]
+  node_handler["runloop handler<br/>[handler.lua]"]
+  node_balancer["balancer<br/>[init.lua]"]
+  node_round_robin["round robin<br/>[round_robin.lua]"]
+  node_piter["plugins iterator"]
+  node_upstream_retry["upstream retry<br/>[upstream_retry.lua]"]
+end
+
+subgraph group_router["Router"]
+  node_router["router<br/>[init.lua]"]
+  node_traditional["traditional router<br/>[traditional.lua]"]
+  node_expressions["expressions router<br/>[expressions.lua]"]
+  node_atc["ATC engine<br/>[atc.lua]"]
+  node_router_utils["router utils<br/>[utils.lua]"]
+end
+
+subgraph group_db["Data Layer"]
+  node_db["DB / DAO<br/>[init.lua]"]
+  node_dao["dao<br/>[init.lua]"]
+  node_postgres["postgres strategy<br/>[init.lua]"]
+  node_off["off strategy<br/>[init.lua]"]
+  node_declarative["declarative<br/>[init.lua]"]
+end
+
+subgraph group_admin["Admin API"]
+  node_api_init["Admin API app<br/>[init.lua]"]
+  node_endpoints["endpoints<br/>[endpoints.lua]"]
+  node_routes_kong["routes/kong<br/>[kong.lua]"]
+  node_routes_config["routes/config<br/>[config.lua]"]
+end
+
+subgraph group_plugins["Bundled Plugins"]
+  node_ai_proxy["ai-proxy<br/>[handler.lua]"]
+  node_prompt_guard["ai-prompt-guard<br/>[handler.lua]"]
+  node_rate_limiting["rate-limiting<br/>[handler.lua]"]
+  node_key_auth["key-auth<br/>[handler.lua]"]
+end
+
+node_cmd_start -->|"kong start boots Kong.init L636"| node_init
+node_init -->|"load kong.conf"| node_conf_loader
+node_init -->|"bundled plugins + core entities"| node_constants
+node_init -->|"_G.kong = kong_global.new&#40;&#41; L65"| node_kglobal
+node_conf_loader -->|"BUNDLED_PLUGINS merge L822"| node_constants
+node_kglobal -->|"init_pdk calls PDK.new L168"| node_pdk_init
+node_pdk_init -->|"require kong.pdk.request L261"| node_pdk_request
+node_pdk_init -->|"require kong.pdk.response L261"| node_pdk_response
+node_pdk_init -->|"phase bitmask guards L72"| node_phases
+node_handler -->|"phases run on the global kong PDK"| node_kglobal
+node_defaults -->|"listeners :8000/:8001/:8002"| node_ntemplate
+node_ntemplate -->|"rewrite/access/log by_lua blocks L145-163"| node_handler
+node_ntemplate -->|"balancer_by_lua_block L85"| node_balancer
+node_ntemplate -->|"fallback_proxy_next_upstream L363"| node_upstream_retry
+node_init -->|"require kong.runloop.handler L71"| node_handler
+node_handler -->|"get_updated_router; router:exec L1212"| node_router
+node_handler -->|"execute plugins iterator L1207"| node_piter
+node_handler -->|"balancer_execute L860"| node_balancer
+node_handler -->|"load_service_from_db L259"| node_db
+node_balancer -->|"default algorithm, dispatched via balancers.lua L7"| node_round_robin
+node_piter -->|"handlers run on kong.* PDK"| node_kglobal
+node_router -->|"flavor traditional &#40;default&#41; L18"| node_traditional
+node_router -->|"flavor expressions L19"| node_expressions
+node_router -->|"ATC matcher engine"| node_atc
+node_router -->|"match helpers L8"| node_router_utils
+node_traditional -->|"normalize + match"| node_router_utils
+node_db -->|"DAO.new L115"| node_dao
+node_db -->|"strategy postgres"| node_postgres
+node_db -->|"strategy off &#40;DB-less&#41;"| node_off
+node_off -->|"freeze declarative config"| node_declarative
+node_api_init -->|"Endpoints.new per schema L93"| node_endpoints
+node_api_init -->|"core routes L33"| node_routes_kong
+node_api_init -->|"POST /config L33"| node_routes_config
+node_api_init -->|"DAO-backed collections L91"| node_db
+node_piter -->|"access-phase handler, PRIORITY 770"| node_ai_proxy
+node_piter -->|"access-phase handler"| node_prompt_guard
+node_piter -->|"PRIORITY 910 L57"| node_rate_limiting
+node_piter -->|"PRIORITY 1250 L22"| node_key_auth
+
+click node_init "https://github.com/Kong/kong/blob/master/kong/init.lua"
+click node_cmd_start "https://github.com/Kong/kong/blob/master/kong/cmd/start.lua"
+click node_conf_loader "https://github.com/Kong/kong/blob/master/kong/conf_loader/init.lua"
+click node_constants "https://github.com/Kong/kong/blob/master/kong/constants.lua"
+click node_kglobal "https://github.com/Kong/kong/blob/master/kong/global.lua"
+click node_pdk_init "https://github.com/Kong/kong/blob/master/kong/pdk/init.lua"
+click node_pdk_request "https://github.com/Kong/kong/blob/master/kong/pdk/request.lua"
+click node_pdk_response "https://github.com/Kong/kong/blob/master/kong/pdk/response.lua"
+click node_phases "https://github.com/Kong/kong/blob/master/kong/pdk/private/phases.lua"
+click node_ntemplate "https://github.com/Kong/kong/blob/master/kong/templates/nginx_kong.lua"
+click node_defaults "https://github.com/Kong/kong/blob/master/kong/templates/kong_defaults.lua"
+click node_handler "https://github.com/Kong/kong/blob/master/kong/runloop/handler.lua"
+click node_balancer "https://github.com/Kong/kong/blob/master/kong/runloop/balancer/init.lua"
+click node_round_robin "https://github.com/Kong/kong/blob/master/kong/runloop/balancer/round_robin.lua"
+click node_piter "https://github.com/Kong/kong/blob/master/kong/runloop/plugins_iterator.lua"
+click node_upstream_retry "https://github.com/Kong/kong/blob/master/kong/runloop/upstream_retry.lua"
+click node_router "https://github.com/Kong/kong/blob/master/kong/router/init.lua"
+click node_traditional "https://github.com/Kong/kong/blob/master/kong/router/traditional.lua"
+click node_expressions "https://github.com/Kong/kong/blob/master/kong/router/expressions.lua"
+click node_atc "https://github.com/Kong/kong/blob/master/kong/router/atc.lua"
+click node_router_utils "https://github.com/Kong/kong/blob/master/kong/router/utils.lua"
+click node_db "https://github.com/Kong/kong/blob/master/kong/db/init.lua"
+click node_dao "https://github.com/Kong/kong/blob/master/kong/db/dao/init.lua"
+click node_postgres "https://github.com/Kong/kong/blob/master/kong/db/strategies/postgres/init.lua"
+click node_off "https://github.com/Kong/kong/blob/master/kong/db/strategies/off/init.lua"
+click node_declarative "https://github.com/Kong/kong/blob/master/kong/db/declarative/init.lua"
+click node_api_init "https://github.com/Kong/kong/blob/master/kong/api/init.lua"
+click node_endpoints "https://github.com/Kong/kong/blob/master/kong/api/endpoints.lua"
+click node_routes_kong "https://github.com/Kong/kong/blob/master/kong/api/routes/kong.lua"
+click node_routes_config "https://github.com/Kong/kong/blob/master/kong/api/routes/config.lua"
+click node_ai_proxy "https://github.com/Kong/kong/blob/master/kong/plugins/ai-proxy/handler.lua"
+click node_prompt_guard "https://github.com/Kong/kong/blob/master/kong/plugins/ai-prompt-guard/handler.lua"
+click node_rate_limiting "https://github.com/Kong/kong/blob/master/kong/plugins/rate-limiting/handler.lua"
+click node_key_auth "https://github.com/Kong/kong/blob/master/kong/plugins/key-auth/handler.lua"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init,node_cmd_start,node_conf_loader,node_constants,node_api_init,node_endpoints,node_routes_kong,node_routes_config toneBlue
+class node_kglobal,node_pdk_init,node_pdk_request,node_pdk_response,node_phases,node_ai_proxy,node_prompt_guard,node_rate_limiting,node_key_auth toneAmber
+class node_ntemplate,node_defaults toneMint
+class node_handler,node_balancer,node_round_robin,node_piter,node_upstream_retry toneRose
+class node_router,node_traditional,node_expressions,node_atc,node_router_utils toneIndigo
+class node_db,node_dao,node_postgres,node_off,node_declarative toneTeal

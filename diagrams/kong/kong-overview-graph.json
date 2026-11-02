@@ -1,0 +1,142 @@
+{
+  "owner": "Kong",
+  "repo": "kong",
+  "branch": "master",
+  "groups": [
+    { "id": "bootstrap", "name": "bootstrap", "label": "Bootstrap & CLI" },
+    { "id": "pdk", "name": "pdk", "label": "Plugin Development Kit" },
+    { "id": "nginx", "name": "nginx", "label": "Nginx Templates" },
+    { "id": "runloop", "name": "runloop", "label": "Request Runloop" },
+    { "id": "router", "name": "router", "label": "Router" },
+    { "id": "db", "name": "db", "label": "Data Layer" },
+    { "id": "admin", "name": "admin", "label": "Admin API" }
+  ],
+  "nodes": [
+    {
+      "id": "init",
+      "label": "kong/init.lua",
+      "file": "kong/init.lua",
+      "path": "kong/init.lua",
+      "group": "bootstrap",
+      "groupId": "bootstrap",
+      "desc": "Entry point: builds the global kong table at L65 and exposes nginx phase callbacks Kong.rewrite L1112, Kong.access L1186, Kong.balancer L1270"
+    },
+    {
+      "id": "conf_loader",
+      "label": "conf_loader",
+      "file": "kong/conf_loader/init.lua",
+      "path": "kong/conf_loader/init.lua",
+      "group": "bootstrap",
+      "groupId": "bootstrap",
+      "desc": "Parses kong.conf and declarative config; computes conf.loaded_plugins at L839"
+    },
+    {
+      "id": "kglobal",
+      "label": "global (kong table)",
+      "file": "kong/global.lua",
+      "path": "kong/global.lua",
+      "group": "pdk",
+      "groupId": "pdk",
+      "desc": "The global kong namespace; init_pdk at L161 wires the PDK into _G.kong"
+    },
+    {
+      "id": "pdk_init",
+      "label": "PDK root",
+      "file": "kong/pdk/init.lua",
+      "path": "kong/pdk/init.lua",
+      "group": "pdk",
+      "groupId": "pdk",
+      "desc": "MAJOR_MODULES list L193: kong.request, kong.response, kong.service, kong.table, kong.log..."
+    },
+    {
+      "id": "defaults",
+      "label": "kong_defaults",
+      "file": "kong/templates/kong_defaults.lua",
+      "path": "kong/templates/kong_defaults.lua",
+      "group": "nginx",
+      "groupId": "nginx",
+      "desc": "Default settings: proxy_listen 0.0.0.0:8000 and :8443 ssl L27, admin_listen 127.0.0.1:8001 and :8444 L29, admin_gui_listen :8002 L30"
+    },
+    {
+      "id": "ntemplate",
+      "label": "nginx_kong template",
+      "file": "kong/templates/nginx_kong.lua",
+      "path": "kong/templates/nginx_kong.lua",
+      "group": "nginx",
+      "groupId": "nginx",
+      "desc": "Generated nginx.conf wiring: rewrite/access/header_filter/log by_lua blocks L145-163 call Kong.*, proxy_pass to kong_upstream L216"
+    },
+    {
+      "id": "handler",
+      "label": "runloop handler",
+      "file": "kong/runloop/handler.lua",
+      "path": "kong/runloop/handler.lua",
+      "group": "runloop",
+      "groupId": "runloop",
+      "desc": "Per-request phase table: preread L1100, rewrite L1177, access L1184, header_filter L1510, log L1638; runs the router and the balancer"
+    },
+    {
+      "id": "router",
+      "label": "router",
+      "file": "kong/router/init.lua",
+      "path": "kong/router/init.lua",
+      "group": "router",
+      "groupId": "router",
+      "desc": "Router factory: FLAVOR_TO_MODULE L17 picks traditional/expressions; exec L24 and select L29 match a request to a Route"
+    },
+    {
+      "id": "piter",
+      "label": "plugins iterator",
+      "file": "kong/runloop/plugins_iterator.lua",
+      "path": "kong/runloop/plugins_iterator.lua",
+      "group": "runloop",
+      "groupId": "runloop",
+      "desc": "Loads configured plugin rows L523 and yields per-phase plugin handlers (get_collecting_iterator L414)"
+    },
+    {
+      "id": "balancer",
+      "label": "balancer",
+      "file": "kong/runloop/balancer/init.lua",
+      "path": "kong/runloop/balancer/init.lua",
+      "group": "runloop",
+      "groupId": "runloop",
+      "desc": "execute L290 picks an upstream target for the request; healthchecks and retries live alongside"
+    },
+    {
+      "id": "db",
+      "label": "DB / DAO",
+      "file": "kong/db/init.lua",
+      "path": "kong/db/init.lua",
+      "group": "db",
+      "groupId": "db",
+      "desc": "Loads entity schemas (services, routes, consumers...), validates them and builds DAOs L115; strategies: postgres or off"
+    },
+    {
+      "id": "admin",
+      "label": "Admin API",
+      "file": "kong/api/init.lua",
+      "path": "kong/api/init.lua",
+      "group": "admin",
+      "groupId": "admin",
+      "desc": "Admin API app on :8001; auto-generates CRUD endpoints from every DAO schema L91-95"
+    }
+  ],
+  "edges": [
+    { "from": "init", "to": "conf_loader", "label": "load kong.conf" },
+    { "from": "init", "to": "kglobal", "label": "_G.kong = kong_global.new() L65" },
+    { "from": "kglobal", "to": "pdk_init", "label": "init_pdk calls PDK.new L168" },
+    { "from": "init", "to": "db", "label": "require kong.db L68" },
+    { "from": "init", "to": "handler", "label": "require kong.runloop.handler L71" },
+    { "from": "init", "to": "admin", "label": "mount Admin API L89" },
+    { "from": "defaults", "to": "ntemplate", "label": "ports :8000 proxy, :8001 admin" },
+    { "from": "ntemplate", "to": "handler", "label": "Kong.rewrite/access per phase L145-163" },
+    { "from": "handler", "to": "router", "label": "router:exec(ctx) L1211" },
+    { "from": "handler", "to": "piter", "label": "get_plugins_iterator L1207" },
+    { "from": "handler", "to": "balancer", "label": "balancer_execute L860" },
+    { "from": "piter", "to": "db", "label": "kong.db.plugins:each L523" },
+    { "from": "router", "to": "db", "label": "Routes/Services from DAOs" },
+    { "from": "admin", "to": "db", "label": "DAO-backed CRUD L91" },
+    { "from": "balancer", "to": "db", "label": "upstreams/targets via cache" },
+    { "from": "piter", "to": "kglobal", "label": "plugins run on kong.* PDK" }
+  ]
+}
