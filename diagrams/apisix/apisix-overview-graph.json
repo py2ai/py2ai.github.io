@@ -1,0 +1,43 @@
+{
+  "owner": "apache",
+  "repo": "apisix",
+  "branch": "master",
+  "groups": [
+    { "id": "g_boot", "name": "Boot", "label": "Bootstrap & request phases" },
+    { "id": "g_route", "name": "Routing", "label": "HTTP routing engine" },
+    { "id": "g_plugin", "name": "Plugins", "label": "Plugin framework" },
+    { "id": "g_bal", "name": "Balancing", "label": "Upstream & load balancing" },
+    { "id": "g_config", "name": "Config", "label": "Config store (etcd / YAML)" },
+    { "id": "g_admin", "name": "Admin", "label": "Admin API & CLI" }
+  ],
+  "nodes": [
+    { "id": "cli", "label": "apisix start", "file": "apisix/cli/ops.lua", "path": "apisix/cli/ops.lua", "group": "Admin", "groupId": "g_admin", "desc": "CLI entry: start/stop/restart commands (L178); start() renders nginx.conf and launches OpenResty (L1087)." },
+    { "id": "init", "label": "http_init_worker", "file": "apisix/init.lua", "path": "apisix/init.lua", "group": "Boot", "groupId": "g_boot", "shape": "hexagon", "desc": "Worker bootstrap: seeds RNG, starts events, lrucache, timers, balancer, admin API and the config watcher (L120, L143, L145, L151)." },
+    { "id": "access", "label": "http_access_phase", "file": "apisix/init.lua", "path": "apisix/init.lua", "group": "Boot", "groupId": "g_boot", "desc": "Per-request entry: fetches api_ctx from a pool, matches the route, merges service config, runs rewrite and access plugins (L915, L991, L1105)." },
+    { "id": "router", "label": "router.lua", "file": "apisix/router.lua", "path": "apisix/router.lua", "group": "Routing", "groupId": "g_route", "desc": "Builds the configured HTTP router: radixtree_uri by default, radixtree_sni for SSL matching (L81, L91)." },
+    { "id": "radixtree", "label": "radixtree_uri match", "file": "apisix/http/router/radixtree_uri.lua", "path": "apisix/http/router/radixtree_uri.lua", "group": "Routing", "groupId": "g_route", "shape": "hexagon", "desc": "Matches URI, host and vars against the route table via a radixtree (L30, L51)." },
+    { "id": "plugin", "label": "plugin framework", "file": "apisix/plugin.lua", "path": "apisix/plugin.lua", "group": "Plugins", "groupId": "g_plugin", "shape": "database", "desc": "Loads the enabled plugin list, sorts it by priority, filters per request and runs phase hooks (L420, L142, L1362)." },
+    { "id": "upstream", "label": "upstream.set_by_route", "file": "apisix/upstream.lua", "path": "apisix/upstream.lua", "group": "Balancing", "groupId": "g_bal", "desc": "Normalizes upstream nodes, scheme and TLS settings for the matched route (L381)." },
+    { "id": "balancer", "label": "pick_server", "file": "apisix/balancer.lua", "path": "apisix/balancer.lua", "group": "Balancing", "groupId": "g_bal", "shape": "hexagon", "desc": "Health-aware node picker; loads the balancer module named by upstream.type (L151, L154, L275)." },
+    { "id": "config_etcd", "label": "config_etcd", "file": "apisix/core/config_etcd.lua", "path": "apisix/core/config_etcd.lua", "group": "Config", "groupId": "g_config", "shape": "database", "desc": "Watches etcd keys and syncs route, service, upstream and plugin config into workers (L722, L1256)." },
+    { "id": "config_yaml", "label": "config_yaml (standalone)", "file": "apisix/core/config_yaml.lua", "path": "apisix/core/config_yaml.lua", "group": "Config", "groupId": "g_config", "shape": "database", "desc": "Standalone mode: polls apisix.yaml mtime and hot-reloads the config (L245, L421)." },
+    { "id": "admin", "label": "Admin API", "file": "apisix/admin/init.lua", "path": "apisix/admin/init.lua", "group": "Admin", "groupId": "g_admin", "desc": "REST dispatcher on :9180: check_token, then method routed to the resource handler (L82, L176, L254)." },
+    { "id": "admin_routes", "label": "admin/routes", "file": "apisix/admin/routes.lua", "path": "apisix/admin/routes.lua", "group": "Admin", "groupId": "g_admin", "desc": "Route CRUD with schema, upstream-reference and vars-expression validation (L54, L183)." }
+  ],
+  "edges": [
+    { "from": "cli", "to": "init", "label": "start launches workers, L1087" },
+    { "from": "init", "to": "config_etcd", "label": "watch config, L151" },
+    { "from": "init", "to": "config_yaml", "label": "standalone provider swap" },
+    { "from": "init", "to": "plugin", "label": "plugin.init_worker, L159" },
+    { "from": "init", "to": "router", "label": "router.http_init_worker, L160" },
+    { "from": "router", "to": "radixtree", "label": "require radixtree_uri, L91" },
+    { "from": "config_etcd", "to": "radixtree", "label": "route updates refresh tree" },
+    { "from": "config_yaml", "to": "radixtree", "label": "yaml routes load" },
+    { "from": "admin", "to": "admin_routes", "label": "resource dispatch, L254" },
+    { "from": "admin_routes", "to": "config_etcd", "label": "writes routes to etcd" },
+    { "from": "access", "to": "radixtree", "label": "router_http.match, L991" },
+    { "from": "access", "to": "plugin", "label": "run_plugin rewrite+access, L1071" },
+    { "from": "access", "to": "upstream", "label": "handle_upstream, L781" },
+    { "from": "upstream", "to": "balancer", "label": "pick_server, L787" }
+  ]
+}
