@@ -66,7 +66,7 @@ Writes are deliberately slower on the happy path so that reads can be fast and t
 
 Durability is split by design: the ART trees, posting lists, and facet stores are rebuilt from the log on restart, while raw documents and collection metadata land in RocksDB through the [Store, L54](https://github.com/typesense/typesense/blob/v31/include/store.h#L54) wrapper. Snapshots bound log growth, and a node joining the cluster can catch up from a peer's snapshot rather than replaying history from zero. The error style across all of these layers is uniform — nearly every fallible operation returns the `Option<T>` type from [Option, L6](https://github.com/typesense/typesense/blob/v31/include/option.h#L6), which carries an HTTP-mappable status code alongside the absence of a value, so errors bubble up to the REST layer without exceptions.
 
-If you are comparing engines, this is the axis where Typesense differs most from its neighbors. Elasticsearch trades that consistency machinery for a much broader feature set and a JVM runtime, as we covered in our [Elasticsearch](/elasticsearch/) tour; Meilisearch makes the opposite bet with a single-node, replication-light design described in our [Meilisearch](/meilisearch/) post.
+If you are comparing engines, this is the axis where Typesense differs most from its neighbors. Elasticsearch trades that consistency machinery for a much broader feature set and a JVM runtime, as we covered in our Elasticsearch tour; Meilisearch makes the opposite bet with a single-node, replication-light design described in our [Meilisearch](/meilisearch/) post.
 
 ## Honest Limits
 
