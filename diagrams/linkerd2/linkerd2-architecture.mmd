@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_g1["CLI &amp; Inject"]
+  node_cli_root["CLI Root<br/>[root.go]"]
+  node_cli_install["newCmdInstall<br/>[install.go]"]
+  node_cli_inject["NewCmdInject<br/>[inject.go]"]
+  node_run_inject["runInjectCmd<br/>[inject.go]"]
+  node_pkg_inject["ResourceConfig<br/>[inject.go]"]
+  node_pod_patch["GetPodPatch<br/>[inject.go]"]
+  node_webhook["Injector Webhook<br/>[webhook.go]"]
+end
+
+subgraph group_g2["Destination Service"]
+  node_dest_main["destination Main<br/>[main.go]"]
+  node_dest_server["Destination Server<br/>[server.go]"]
+  node_dest_get["Get<br/>[server.go]"]
+  node_dest_profile["GetProfile<br/>[server.go]"]
+  node_ep_translator["endpointTranslator"]
+  node_ep_watcher["EndpointsWatcher"]
+end
+
+subgraph group_g3["Identity Service"]
+  node_id_main["identity Main<br/>[main.go]"]
+  node_id_service["Identity Service<br/>[service.go]"]
+  node_id_certify["Certify<br/>[service.go]"]
+  node_id_validator["K8sTokenValidator<br/>[validator.go]"]
+  node_proxy_identity["proxy-identity init<br/>[main.go]"]
+end
+
+subgraph group_g4["Policy Core Types"]
+  node_core_inbound["InboundServer<br/>[inbound.rs]"]
+  node_core_proto["ProxyProtocol<br/>[inbound.rs]"]
+  node_core_authz["ClientAuthorization<br/>[inbound.rs]"]
+end
+
+subgraph group_g5["Policy K8s Index"]
+  node_k8s_index["Inbound Index<br/>[index.rs]"]
+  node_pod_rx["pod_server_rx<br/>[index.rs]"]
+  node_saz["ServerAuthorization"]
+end
+
+subgraph group_g6["Policy gRPC Servers"]
+  node_grpc_inbound["InboundPolicyServer<br/>[inbound.rs]"]
+  node_get_port["get_port<br/>[inbound.rs]"]
+  node_watch_port["watch_port<br/>[inbound.rs]"]
+  node_grpc_outbound["OutboundPolicyServer<br/>[outbound.rs]"]
+end
+
+subgraph group_g7["Policy Runtime"]
+  node_runtime["Policy Runtime<br/>[lib.rs]"]
+  node_runtime_discover["InboundDiscover<br/>[lib.rs]"]
+end
+
+subgraph group_g8["Data Plane"]
+  node_proxy["linkerd2-proxy<br/>[README.md]"]
+end
+
+node_cli_root -->|"registers"| node_cli_install
+node_cli_root -->|"registers"| node_cli_inject
+node_cli_inject -->|"runs"| node_run_inject
+node_run_inject -->|"builds config"| node_pkg_inject
+node_pkg_inject -->|"emits"| node_pod_patch
+node_pod_patch -->|"adds sidecar"| node_proxy
+node_webhook -->|"uses"| node_pkg_inject
+node_webhook -->|"applies at deploy"| node_pod_patch
+node_dest_main -->|"starts"| node_dest_server
+node_dest_server -->|"implements"| node_dest_get
+node_dest_server -->|"implements"| node_dest_profile
+node_dest_get -->|"streams via"| node_ep_translator
+node_dest_profile -->|"profiles via"| node_ep_translator
+node_dest_server -->|"creates"| node_ep_watcher
+node_ep_watcher -->|"AddressSet updates"| node_ep_translator
+node_ep_translator -->|"serves"| node_proxy
+node_id_main -->|"starts"| node_id_service
+node_id_service -->|"gRPC method"| node_id_certify
+node_id_certify -->|"validates token"| node_id_validator
+node_proxy_identity -->|"requests cert"| node_id_certify
+node_runtime -->|"serves"| node_grpc_inbound
+node_runtime -->|"serves"| node_grpc_outbound
+node_runtime -->|"implements trait"| node_runtime_discover
+node_runtime_discover -->|"resolves watches"| node_pod_rx
+node_k8s_index -->|"exposes"| node_pod_rx
+node_saz -->|"updates authz"| node_k8s_index
+node_proxy -->|"queries"| node_get_port
+node_proxy -->|"streams"| node_watch_port
+node_proxy -->|"queries"| node_grpc_outbound
+node_grpc_inbound -->|"dispatches"| node_get_port
+node_grpc_inbound -->|"dispatches"| node_watch_port
+node_k8s_index -->|"produces"| node_core_inbound
+node_grpc_inbound -->|"converts to Authz"| node_core_authz
+
+click node_cli_root "https://github.com/linkerd/linkerd2/blob/main/cli/cmd/root.go"
+click node_cli_install "https://github.com/linkerd/linkerd2/blob/main/cli/cmd/install.go"
+click node_cli_inject "https://github.com/linkerd/linkerd2/blob/main/cli/cmd/inject.go"
+click node_run_inject "https://github.com/linkerd/linkerd2/blob/main/cli/cmd/inject.go"
+click node_pkg_inject "https://github.com/linkerd/linkerd2/blob/main/pkg/inject/inject.go"
+click node_pod_patch "https://github.com/linkerd/linkerd2/blob/main/pkg/inject/inject.go"
+click node_webhook "https://github.com/linkerd/linkerd2/blob/main/controller/proxy-injector/webhook.go"
+click node_dest_main "https://github.com/linkerd/linkerd2/blob/main/controller/cmd/destination/main.go"
+click node_dest_server "https://github.com/linkerd/linkerd2/blob/main/controller/api/destination/server.go"
+click node_dest_get "https://github.com/linkerd/linkerd2/blob/main/controller/api/destination/server.go"
+click node_dest_profile "https://github.com/linkerd/linkerd2/blob/main/controller/api/destination/server.go"
+click node_ep_translator "https://github.com/linkerd/linkerd2/blob/main/controller/api/destination/endpoint_translator.go"
+click node_ep_watcher "https://github.com/linkerd/linkerd2/blob/main/controller/api/destination/watcher/endpoints_watcher.go"
+click node_id_main "https://github.com/linkerd/linkerd2/blob/main/controller/cmd/identity/main.go"
+click node_id_service "https://github.com/linkerd/linkerd2/blob/main/pkg/identity/service.go"
+click node_id_certify "https://github.com/linkerd/linkerd2/blob/main/pkg/identity/service.go"
+click node_id_validator "https://github.com/linkerd/linkerd2/blob/main/controller/identity/validator.go"
+click node_proxy_identity "https://github.com/linkerd/linkerd2/blob/main/proxy-identity/main.go"
+click node_core_inbound "https://github.com/linkerd/linkerd2/blob/main/policy-controller/core/src/inbound.rs"
+click node_core_proto "https://github.com/linkerd/linkerd2/blob/main/policy-controller/core/src/inbound.rs"
+click node_core_authz "https://github.com/linkerd/linkerd2/blob/main/policy-controller/core/src/inbound.rs"
+click node_k8s_index "https://github.com/linkerd/linkerd2/blob/main/policy-controller/k8s/index/src/inbound/index.rs"
+click node_pod_rx "https://github.com/linkerd/linkerd2/blob/main/policy-controller/k8s/index/src/inbound/index.rs"
+click node_saz "https://github.com/linkerd/linkerd2/blob/main/policy-controller/k8s/index/src/inbound/server_authorization.rs"
+click node_grpc_inbound "https://github.com/linkerd/linkerd2/blob/main/policy-controller/grpc/src/inbound.rs"
+click node_get_port "https://github.com/linkerd/linkerd2/blob/main/policy-controller/grpc/src/inbound.rs"
+click node_watch_port "https://github.com/linkerd/linkerd2/blob/main/policy-controller/grpc/src/inbound.rs"
+click node_grpc_outbound "https://github.com/linkerd/linkerd2/blob/main/policy-controller/grpc/src/outbound.rs"
+click node_runtime "https://github.com/linkerd/linkerd2/blob/main/policy-controller/runtime/src/lib.rs"
+click node_runtime_discover "https://github.com/linkerd/linkerd2/blob/main/policy-controller/runtime/src/lib.rs"
+click node_proxy "https://github.com/linkerd/linkerd2/blob/main/README.md"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_root,node_cli_install,node_cli_inject,node_run_inject,node_pkg_inject,node_pod_patch,node_webhook,node_runtime,node_runtime_discover toneBlue
+class node_dest_main,node_dest_server,node_dest_get,node_dest_profile,node_ep_translator,node_ep_watcher,node_proxy toneAmber
+class node_id_main,node_id_service,node_id_certify,node_id_validator,node_proxy_identity toneMint
+class node_core_inbound,node_core_proto,node_core_authz toneRose
+class node_k8s_index,node_pod_rx,node_saz toneIndigo
+class node_grpc_inbound,node_get_port,node_watch_port,node_grpc_outbound toneTeal
