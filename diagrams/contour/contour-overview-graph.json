@@ -1,0 +1,45 @@
+{
+  "owner": "projectcontour",
+  "repo": "contour",
+  "branch": "main",
+  "groups": [
+    {"id": "g1", "name": "entry", "label": "Entry & Wiring"},
+    {"id": "g2", "name": "watch", "label": "Kubernetes Watch Layer"},
+    {"id": "g3", "name": "dag", "label": "DAG Build"},
+    {"id": "g4", "name": "caches", "label": "Envoy Resource Caches"},
+    {"id": "g5", "name": "xds", "label": "xDS Serving"},
+    {"id": "g6", "name": "obs", "label": "Observability"}
+  ],
+  "nodes": [
+    {"id": "main", "label": "main", "file": "contour.go", "path": "cmd/contour/contour.go", "group": "Entry & Wiring", "groupId": "g1", "desc": "Parses the contour CLI and dispatches sub-commands such as serve and bootstrap."},
+    {"id": "do_serve", "label": "Server.doServe", "file": "serve.go", "path": "cmd/contour/serve.go", "group": "Entry & Wiring", "groupId": "g1", "desc": "Assembles informers, the DAG builder, resource caches, and the xDS gRPC server."},
+    {"id": "event_handler", "label": "EventHandler", "file": "handler.go", "path": "internal/contour/handler.go", "group": "Kubernetes Watch Layer", "groupId": "g2", "desc": "Buffers Kubernetes events behind a holdoff timer, then rebuilds the DAG."},
+    {"id": "kubernetes_cache", "label": "KubernetesCache", "file": "cache.go", "path": "internal/dag/cache.go", "group": "Kubernetes Watch Layer", "groupId": "g2", "desc": "In-memory index of watched Services, Ingresses, HTTPProxies, and Secrets."},
+    {"id": "dag_builder", "label": "Builder", "file": "builder.go", "path": "internal/dag/builder.go", "group": "DAG Build", "groupId": "g3", "desc": "Runs the ordered Processor chain over the cache and prunes invalid virtual hosts."},
+    {"id": "httpproxy_processor", "label": "HTTPProxyProcessor", "file": "httpproxy_processor.go", "path": "internal/dag/httpproxy_processor.go", "group": "DAG Build", "groupId": "g3", "desc": "Turns HTTPProxy CRDs into virtual hosts, routes, and clusters."},
+    {"id": "dag", "label": "DAG", "file": "dag.go", "path": "internal/dag/dag.go", "group": "DAG Build", "groupId": "g3", "desc": "Routing model of listeners, virtual hosts, routes, and clusters."},
+    {"id": "snapshot_handler", "label": "SnapshotHandler", "file": "snapshot.go", "path": "internal/xdscache/v3/snapshot.go", "group": "Envoy Resource Caches", "groupId": "g4", "desc": "Packages the resource caches into go-control-plane snapshots on every DAG build."},
+    {"id": "route_cache", "label": "RouteCache", "file": "route.go", "path": "internal/xdscache/v3/route.go", "group": "Envoy Resource Caches", "groupId": "g4", "desc": "Converts DAG listeners into Envoy RouteConfigurations."},
+    {"id": "cluster_cache", "label": "ClusterCache", "file": "cluster.go", "path": "internal/xdscache/v3/cluster.go", "group": "Envoy Resource Caches", "groupId": "g4", "desc": "Converts DAG ServiceClusters into Envoy Clusters."},
+    {"id": "xds_server", "label": "xDS Server", "file": "server.go", "path": "internal/xds/v3/server.go", "group": "xDS Serving", "groupId": "g5", "desc": "Serves LDS, RDS, CDS, EDS, SDS, and RTDS to Envoy over gRPC."},
+    {"id": "metrics", "label": "Metrics", "file": "metrics.go", "path": "internal/metrics/metrics.go", "group": "Observability", "groupId": "g6", "desc": "Prometheus gauges and counters for proxies, DAG rebuilds, and status updates."}
+  ],
+  "edges": [
+    {"from": "main", "to": "do_serve", "label": "runs serve"},
+    {"from": "do_serve", "to": "event_handler", "label": "wires events"},
+    {"from": "do_serve", "to": "snapshot_handler", "label": "wires caches"},
+    {"from": "do_serve", "to": "xds_server", "label": "starts gRPC"},
+    {"from": "event_handler", "to": "kubernetes_cache", "label": "inserts objects"},
+    {"from": "event_handler", "to": "dag_builder", "label": "rebuilds after holdoff"},
+    {"from": "kubernetes_cache", "to": "dag_builder", "label": "read during Build"},
+    {"from": "dag_builder", "to": "httpproxy_processor", "label": "runs processors"},
+    {"from": "httpproxy_processor", "to": "dag", "label": "fills listeners"},
+    {"from": "dag", "to": "route_cache", "label": "OnChange"},
+    {"from": "dag", "to": "cluster_cache", "label": "OnChange"},
+    {"from": "route_cache", "to": "snapshot_handler", "label": "supplies resources"},
+    {"from": "cluster_cache", "to": "snapshot_handler", "label": "supplies resources"},
+    {"from": "snapshot_handler", "to": "xds_server", "label": "serves snapshots"},
+    {"from": "dag_builder", "to": "metrics", "label": "times rebuilds"},
+    {"from": "event_handler", "to": "metrics", "label": "counts events"}
+  ]
+}

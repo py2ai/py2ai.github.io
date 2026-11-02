@@ -1,0 +1,75 @@
+flowchart TD
+
+subgraph group_g1["Entry &amp; Wiring"]
+  node_main["main<br/>[contour.go]"]
+  node_do_serve["Server.doServe<br/>[serve.go]"]
+end
+
+subgraph group_g2["Kubernetes Watch Layer"]
+  node_event_handler["EventHandler<br/>[handler.go]"]
+  node_kubernetes_cache["KubernetesCache<br/>[cache.go]"]
+end
+
+subgraph group_g3["DAG Build"]
+  node_dag_builder["Builder<br/>[builder.go]"]
+  node_httpproxy_processor["HTTPProxyProcessor"]
+  node_dag["DAG<br/>[dag.go]"]
+end
+
+subgraph group_g4["Envoy Resource Caches"]
+  node_snapshot_handler["SnapshotHandler<br/>[snapshot.go]"]
+  node_route_cache["RouteCache<br/>[route.go]"]
+  node_cluster_cache["ClusterCache<br/>[cluster.go]"]
+end
+
+subgraph group_g5["xDS Serving"]
+  node_xds_server["xDS Server<br/>[server.go]"]
+end
+
+subgraph group_g6["Observability"]
+  node_metrics["Metrics<br/>[metrics.go]"]
+end
+
+node_main -->|"runs serve"| node_do_serve
+node_do_serve -->|"wires events"| node_event_handler
+node_do_serve -->|"wires caches"| node_snapshot_handler
+node_do_serve -->|"starts gRPC"| node_xds_server
+node_event_handler -->|"inserts objects"| node_kubernetes_cache
+node_event_handler -->|"rebuilds after holdoff"| node_dag_builder
+node_kubernetes_cache -->|"read during Build"| node_dag_builder
+node_dag_builder -->|"runs processors"| node_httpproxy_processor
+node_httpproxy_processor -->|"fills listeners"| node_dag
+node_dag -->|"OnChange"| node_route_cache
+node_dag -->|"OnChange"| node_cluster_cache
+node_route_cache -->|"supplies resources"| node_snapshot_handler
+node_cluster_cache -->|"supplies resources"| node_snapshot_handler
+node_snapshot_handler -->|"serves snapshots"| node_xds_server
+node_dag_builder -->|"times rebuilds"| node_metrics
+node_event_handler -->|"counts events"| node_metrics
+
+click node_main "https://github.com/projectcontour/contour/blob/main/cmd/contour/contour.go"
+click node_do_serve "https://github.com/projectcontour/contour/blob/main/cmd/contour/serve.go"
+click node_event_handler "https://github.com/projectcontour/contour/blob/main/internal/contour/handler.go"
+click node_kubernetes_cache "https://github.com/projectcontour/contour/blob/main/internal/dag/cache.go"
+click node_dag_builder "https://github.com/projectcontour/contour/blob/main/internal/dag/builder.go"
+click node_httpproxy_processor "https://github.com/projectcontour/contour/blob/main/internal/dag/httpproxy_processor.go"
+click node_dag "https://github.com/projectcontour/contour/blob/main/internal/dag/dag.go"
+click node_snapshot_handler "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/snapshot.go"
+click node_route_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/route.go"
+click node_cluster_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/cluster.go"
+click node_xds_server "https://github.com/projectcontour/contour/blob/main/internal/xds/v3/server.go"
+click node_metrics "https://github.com/projectcontour/contour/blob/main/internal/metrics/metrics.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_do_serve toneBlue
+class node_event_handler,node_kubernetes_cache toneAmber
+class node_dag_builder,node_httpproxy_processor,node_dag toneMint
+class node_snapshot_handler,node_route_cache,node_cluster_cache toneRose
+class node_xds_server toneIndigo
+class node_metrics toneTeal
