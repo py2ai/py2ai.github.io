@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_g1["Bootstrap &amp; Entry"]
+  node_main_entry["main&#40;&#41;<br/>[main.cc]"]
+  node_main_common_run["MainCommonBase::run<br/>[main_common.cc]"]
+  node_server_run["InstanceBase::run<br/>[server.cc]"]
+  node_start_workers["InstanceBase::startWorkers<br/>[server.cc]"]
+end
+
+subgraph group_g2["Server Core &amp; Config"]
+  node_config_init["MainImpl::initialize"]
+  node_xds_manager["XdsManagerImpl::initialize"]
+  node_subscription_factory["SubscriptionFactoryImpl::subscriptionFromConfigSource"]
+end
+
+subgraph group_g3["Listener Fabric"]
+  node_listener_add["ListenerManagerImpl::addOrUpdateListener"]
+  node_listener_impl["ListenerImpl<br/>[listener_impl.cc]"]
+  node_filter_chain["ListenerImpl::createListenerFilterChain<br/>[listener_impl.cc]"]
+  node_lm_start_workers["ListenerManagerImpl::startWorkers"]
+  node_worker_add_listener["WorkerImpl::addListener<br/>[worker_impl.cc]"]
+  node_conn_handler_add["ConnectionHandlerImpl::addListener"]
+  node_tcp_listener["TcpListenerImpl::onSocketEvent"]
+end
+
+subgraph group_g4["HTTP Connection Manager"]
+  node_hcm_on_data["ConnectionManagerImpl::onData"]
+  node_hcm_new_stream["ConnectionManagerImpl::newStream"]
+  node_decode_headers["ActiveStream::decodeHeaders"]
+  node_decode_data["ActiveStream::decodeData"]
+  node_encode_headers["ActiveStream::encodeHeaders"]
+  node_encode_data["ActiveStream::encodeData"]
+  node_do_end_stream["ConnectionManagerImpl::doEndStream"]
+end
+
+subgraph group_g5["L7 Router"]
+  node_router_dec_hdr["Router::Filter::decodeHeaders<br/>[router.cc]"]
+  node_router_dec_data["Router::Filter::decodeData<br/>[router.cc]"]
+  node_router_up_hdr["Router::Filter::onUpstreamHeaders<br/>[router.cc]"]
+  node_router_up_data["Router::Filter::onUpstreamData<br/>[router.cc]"]
+end
+
+subgraph group_g6["Cluster &amp; Upstream"]
+  node_cluster_mgr["ClusterManagerImpl"]
+  node_choose_host["ClusterEntry::chooseHost"]
+  node_http_conn_pool["ClusterEntry::httpConnPool"]
+  node_update_hosts["ClusterEntry::updateHosts"]
+  node_host_create_conn["HostImplBase::createConnection<br/>[upstream_impl.cc]"]
+end
+
+subgraph group_g7["xDS Control Plane"]
+  node_xds_add_watch["GrpcMuxImpl::addWatch<br/>[grpc_mux_impl.cc]"]
+  node_xds_send_req["GrpcMuxImpl::trySendDiscoveryRequests<br/>[grpc_mux_impl.cc]"]
+  node_xds_handle_resp["GrpcMuxImpl::genericHandleResponse<br/>[grpc_mux_impl.cc]"]
+end
+
+subgraph group_g8["Admin Surface"]
+  node_admin_start["AdminImpl::startHttpListener<br/>[admin.cc]"]
+end
+
+node_main_entry -->|"calls"| node_main_common_run
+node_main_common_run -->|"serves"| node_server_run
+node_server_run -->|"loads bootstrap"| node_config_init
+node_config_init -->|"builds clusters"| node_cluster_mgr
+node_config_init -->|"initializes xDS"| node_xds_manager
+node_xds_manager -->|"creates subscriptions"| node_subscription_factory
+node_subscription_factory -->|"mux watches"| node_xds_add_watch
+node_xds_add_watch -->|"queues request"| node_xds_send_req
+node_xds_handle_resp -->|"acks and re-requests"| node_xds_send_req
+node_xds_handle_resp -->|"LDS config"| node_listener_add
+node_xds_handle_resp -->|"CDS config"| node_cluster_mgr
+node_listener_add -->|"instantiates"| node_listener_impl
+node_listener_impl -->|"builds chains"| node_filter_chain
+node_server_run -->|"after CDS init"| node_start_workers
+node_start_workers -->|"starts"| node_lm_start_workers
+node_lm_start_workers -->|"hands listeners"| node_worker_add_listener
+node_worker_add_listener -->|"registers"| node_conn_handler_add
+node_conn_handler_add -->|"creates acceptor"| node_tcp_listener
+node_tcp_listener -->|"onAccept match"| node_filter_chain
+node_filter_chain -->|"HCM as network filter"| node_hcm_on_data
+node_hcm_on_data -->|"parses stream"| node_hcm_new_stream
+node_hcm_new_stream -->|"invokes"| node_decode_headers
+node_hcm_on_data -->|"body chunks"| node_decode_data
+node_decode_headers -->|"next filter"| node_router_dec_hdr
+node_decode_data -->|"next filter"| node_router_dec_data
+node_router_dec_hdr -->|"selects host"| node_choose_host
+node_cluster_mgr -->|"serves pools"| node_choose_host
+node_choose_host -->|"allocates pool"| node_http_conn_pool
+node_update_hosts -->|"refreshes pools"| node_http_conn_pool
+node_http_conn_pool -->|"dials host"| node_host_create_conn
+node_host_create_conn -->|"response arrives"| node_router_up_hdr
+node_router_up_hdr -->|"returns headers"| node_encode_headers
+node_router_up_data -->|"returns body"| node_encode_data
+node_encode_headers -->|"may complete"| node_do_end_stream
+node_encode_data -->|"completes"| node_do_end_stream
+node_server_run -->|"starts admin"| node_admin_start
+
+click node_main_entry "https://github.com/envoyproxy/envoy/blob/main/source/exe/main.cc"
+click node_main_common_run "https://github.com/envoyproxy/envoy/blob/main/source/exe/main_common.cc"
+click node_server_run "https://github.com/envoyproxy/envoy/blob/main/source/server/server.cc"
+click node_start_workers "https://github.com/envoyproxy/envoy/blob/main/source/server/server.cc"
+click node_config_init "https://github.com/envoyproxy/envoy/blob/main/source/server/configuration_impl.cc"
+click node_xds_manager "https://github.com/envoyproxy/envoy/blob/main/source/common/config/xds_manager_impl.cc"
+click node_subscription_factory "https://github.com/envoyproxy/envoy/blob/main/source/common/config/subscription_factory_impl.cc"
+click node_admin_start "https://github.com/envoyproxy/envoy/blob/main/source/server/admin/admin.cc"
+click node_listener_add "https://github.com/envoyproxy/envoy/blob/main/source/common/listener_manager/listener_manager_impl.cc"
+click node_listener_impl "https://github.com/envoyproxy/envoy/blob/main/source/common/listener_manager/listener_impl.cc"
+click node_filter_chain "https://github.com/envoyproxy/envoy/blob/main/source/common/listener_manager/listener_impl.cc"
+click node_lm_start_workers "https://github.com/envoyproxy/envoy/blob/main/source/common/listener_manager/listener_manager_impl.cc"
+click node_worker_add_listener "https://github.com/envoyproxy/envoy/blob/main/source/server/worker_impl.cc"
+click node_conn_handler_add "https://github.com/envoyproxy/envoy/blob/main/source/common/listener_manager/connection_handler_impl.cc"
+click node_tcp_listener "https://github.com/envoyproxy/envoy/blob/main/source/common/network/tcp_listener_impl.cc"
+click node_hcm_on_data "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_hcm_new_stream "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_decode_headers "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_decode_data "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_encode_headers "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_encode_data "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_do_end_stream "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_router_dec_hdr "https://github.com/envoyproxy/envoy/blob/main/source/common/router/router.cc"
+click node_router_dec_data "https://github.com/envoyproxy/envoy/blob/main/source/common/router/router.cc"
+click node_router_up_hdr "https://github.com/envoyproxy/envoy/blob/main/source/common/router/router.cc"
+click node_router_up_data "https://github.com/envoyproxy/envoy/blob/main/source/common/router/router.cc"
+click node_cluster_mgr "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/cluster_manager_impl.cc"
+click node_choose_host "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/cluster_manager_impl.cc"
+click node_http_conn_pool "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/cluster_manager_impl.cc"
+click node_update_hosts "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/cluster_manager_impl.cc"
+click node_host_create_conn "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/upstream_impl.cc"
+click node_xds_add_watch "https://github.com/envoyproxy/envoy/blob/main/source/extensions/config_subscription/grpc/xds_mux/grpc_mux_impl.cc"
+click node_xds_send_req "https://github.com/envoyproxy/envoy/blob/main/source/extensions/config_subscription/grpc/xds_mux/grpc_mux_impl.cc"
+click node_xds_handle_resp "https://github.com/envoyproxy/envoy/blob/main/source/extensions/config_subscription/grpc/xds_mux/grpc_mux_impl.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_main_common_run,node_server_run,node_start_workers,node_xds_add_watch,node_xds_send_req,node_xds_handle_resp toneBlue
+class node_config_init,node_xds_manager,node_subscription_factory,node_admin_start toneAmber
+class node_listener_add,node_listener_impl,node_filter_chain,node_lm_start_workers,node_worker_add_listener,node_conn_handler_add,node_tcp_listener toneMint
+class node_hcm_on_data,node_hcm_new_stream,node_decode_headers,node_decode_data,node_encode_headers,node_encode_data,node_do_end_stream toneRose
+class node_router_dec_hdr,node_router_dec_data,node_router_up_hdr,node_router_up_data toneIndigo
+class node_cluster_mgr,node_choose_host,node_http_conn_pool,node_update_hosts,node_host_create_conn toneTeal

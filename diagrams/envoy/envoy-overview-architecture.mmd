@@ -1,0 +1,79 @@
+flowchart TD
+
+subgraph group_g1["Bootstrap &amp; Entry"]
+  node_main_entry["main&#40;&#41;<br/>[main.cc]"]
+end
+
+subgraph group_g2["Server Core"]
+  node_server_run["InstanceBase::run<br/>[server.cc]"]
+  node_start_workers["InstanceBase::startWorkers<br/>[server.cc]"]
+end
+
+subgraph group_g3["Listener Fabric"]
+  node_listener_mgr["ListenerManagerImpl::startWorkers"]
+  node_tcp_listener["TcpListenerImpl::onSocketEvent"]
+end
+
+subgraph group_g4["HTTP Connection Manager"]
+  node_hcm_on_data["ConnectionManagerImpl::onData"]
+  node_hcm_new_stream["ConnectionManagerImpl::newStream"]
+end
+
+subgraph group_g5["L7 Router"]
+  node_router_decode["Router::Filter::decodeHeaders<br/>[router.cc]"]
+end
+
+subgraph group_g6["Cluster &amp; Upstream"]
+  node_cluster_mgr["ClusterManagerImpl"]
+  node_host_conn["HostImplBase::createConnection<br/>[upstream_impl.cc]"]
+end
+
+subgraph group_g7["xDS Control Plane"]
+  node_xds_mux["GrpcMuxImpl::genericHandleResponse<br/>[grpc_mux_impl.cc]"]
+end
+
+subgraph group_g8["Admin Surface"]
+  node_admin_start["AdminImpl::startHttpListener<br/>[admin.cc]"]
+end
+
+node_main_entry -->|"boots"| node_server_run
+node_server_run -->|"pulls config over xDS"| node_xds_mux
+node_server_run -->|"starts admin listener"| node_admin_start
+node_server_run -->|"after clusters init"| node_start_workers
+node_xds_mux -->|"LDS updates"| node_listener_mgr
+node_xds_mux -->|"CDS updates"| node_cluster_mgr
+node_start_workers -->|"spawns listeners"| node_listener_mgr
+node_listener_mgr -->|"installs acceptors"| node_tcp_listener
+node_tcp_listener -->|"accept, run filter chain"| node_hcm_on_data
+node_hcm_on_data -->|"parses HTTP"| node_hcm_new_stream
+node_hcm_new_stream -->|"runs filter chain"| node_router_decode
+node_router_decode -->|"requests conn pool"| node_cluster_mgr
+node_cluster_mgr -->|"dials chosen host"| node_host_conn
+node_host_conn -->|"returns response"| node_router_decode
+
+click node_main_entry "https://github.com/envoyproxy/envoy/blob/main/source/exe/main.cc"
+click node_server_run "https://github.com/envoyproxy/envoy/blob/main/source/server/server.cc"
+click node_start_workers "https://github.com/envoyproxy/envoy/blob/main/source/server/server.cc"
+click node_listener_mgr "https://github.com/envoyproxy/envoy/blob/main/source/common/listener_manager/listener_manager_impl.cc"
+click node_tcp_listener "https://github.com/envoyproxy/envoy/blob/main/source/common/network/tcp_listener_impl.cc"
+click node_hcm_on_data "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_hcm_new_stream "https://github.com/envoyproxy/envoy/blob/main/source/common/http/conn_manager_impl.cc"
+click node_router_decode "https://github.com/envoyproxy/envoy/blob/main/source/common/router/router.cc"
+click node_cluster_mgr "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/cluster_manager_impl.cc"
+click node_host_conn "https://github.com/envoyproxy/envoy/blob/main/source/common/upstream/upstream_impl.cc"
+click node_xds_mux "https://github.com/envoyproxy/envoy/blob/main/source/extensions/config_subscription/grpc/xds_mux/grpc_mux_impl.cc"
+click node_admin_start "https://github.com/envoyproxy/envoy/blob/main/source/server/admin/admin.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_xds_mux toneBlue
+class node_server_run,node_start_workers,node_admin_start toneAmber
+class node_listener_mgr,node_tcp_listener toneMint
+class node_hcm_on_data,node_hcm_new_stream toneRose
+class node_router_decode toneIndigo
+class node_cluster_mgr,node_host_conn toneTeal
