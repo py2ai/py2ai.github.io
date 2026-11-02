@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_startup["Startup &amp; Config"]
+  node_main["main<br/>[haproxy.c]"]
+  node_read_cfg["read_cfg<br/>[haproxy.c]"]
+  node_parse_cfg["parse_cfg<br/>[cfgparse.c]"]
+  node_cfg_parse_listen["cfg_parse_listen<br/>[cfgparse-listen.c]"]
+  node_proxy_parse_bind["proxy_parse_bind<br/>[cfgparse-listen.c]"]
+  node_proxy_parse_stick_table["proxy_parse_stick_table<br/>[cfgparse-listen.c]"]
+  node_protocol_bind_all["protocol_bind_all<br/>[protocol.c]"]
+end
+
+subgraph group_event["Event Engine"]
+  node_run_thread_poll_loop["run_thread_poll_loop<br/>[haproxy.c]"]
+  node_run_poll_loop["run_poll_loop<br/>[haproxy.c]"]
+  node_process_runnable_tasks["process_runnable_tasks<br/>[task.c]"]
+  node_run_tasks_from_lists["run_tasks_from_lists<br/>[task.c]"]
+  node_do_poll["_do_poll<br/>[ev_epoll.c]"]
+  node_fd_update_events["fd_update_events<br/>[fd.c]"]
+end
+
+subgraph group_listeners["Listeners &amp; Sessions"]
+  node_dequeue_all_listeners["dequeue_all_listeners<br/>[listener.c]"]
+  node_listener_accept["listener_accept<br/>[listener.c]"]
+  node_session_accept_fd["session_accept_fd<br/>[session.c]"]
+  node_session_new["session_new<br/>[session.c]"]
+  node_frontend_accept["frontend_accept<br/>[frontend.c]"]
+end
+
+subgraph group_streams["Streams &amp; H1 Mux"]
+  node_process_stream["process_stream<br/>[stream.c]"]
+  node_h1_process["h1_process<br/>[mux_h1.c]"]
+  node_h1_process_demux["h1_process_demux<br/>[mux_h1.c]"]
+  node_h1_process_mux["h1_process_mux<br/>[mux_h1.c]"]
+end
+
+subgraph group_balancers["Balancers"]
+  node_assign_server_and_queue["assign_server_and_queue<br/>[backend.c]"]
+  node_assign_server["assign_server<br/>[backend.c]"]
+  node_fwrr_get_next_server["fwrr_get_next_server<br/>[lb_fwrr.c]"]
+  node_fas_get_next_server["fas_get_next_server<br/>[lb_fas.c]"]
+  node_fwlc_get_next_server["fwlc_get_next_server<br/>[lb_fwlc.c]"]
+  node_chash_get_next_server["chash_get_next_server<br/>[lb_chash.c]"]
+  node_map_get_server_hash["map_get_server_hash<br/>[lb_map.c]"]
+  node_connect_server["connect_server<br/>[backend.c]"]
+  node_do_connect_server["do_connect_server<br/>[backend.c]"]
+end
+
+subgraph group_stick["Stick Tables"]
+  node_stktable_find_by_name["stktable_find_by_name<br/>[stick_table.c]"]
+  node_stktable_init["stktable_init<br/>[stick_table.c]"]
+  node_stktable_store["__stktable_store<br/>[stick_table.c]"]
+end
+
+node_main -->|"loads config"| node_read_cfg
+node_read_cfg -->|"per cfg file"| node_parse_cfg
+node_parse_cfg -->|"listen sections"| node_cfg_parse_listen
+node_cfg_parse_listen -->|"'bind' keyword"| node_proxy_parse_bind
+node_cfg_parse_listen -->|"'stick-table' keyword"| node_proxy_parse_stick_table
+node_main -->|"binds listeners"| node_protocol_bind_all
+node_main -->|"starts threads"| node_run_thread_poll_loop
+node_run_thread_poll_loop -->|"runs"| node_run_poll_loop
+node_run_poll_loop -->|"drains run queue"| node_process_runnable_tasks
+node_process_runnable_tasks -->|"budgeted execution"| node_run_tasks_from_lists
+node_run_poll_loop -->|"cur_poller.poll"| node_do_poll
+node_do_poll -->|"reports readiness"| node_fd_update_events
+node_do_poll -->|"ready listener"| node_listener_accept
+node_fd_update_events -->|"wakes tasks"| node_process_stream
+node_dequeue_all_listeners -->|"resumes listeners"| node_listener_accept
+node_listener_accept -->|"bind_conf-&gt;accept"| node_session_accept_fd
+node_session_accept_fd -->|"allocates"| node_session_new
+node_session_accept_fd -->|"frontend setup"| node_frontend_accept
+node_session_accept_fd -->|"wakes stream"| node_process_stream
+node_process_stream -->|"mux rx/tx"| node_h1_process
+node_h1_process -->|"parse input"| node_h1_process_demux
+node_h1_process -->|"flush output"| node_h1_process_mux
+node_process_stream -->|"needs upstream"| node_assign_server_and_queue
+node_assign_server_and_queue -->|"resolve server"| node_assign_server
+node_assign_server -->|"roundrobin"| node_fwrr_get_next_server
+node_assign_server -->|"first available"| node_fas_get_next_server
+node_assign_server -->|"leastconn"| node_fwlc_get_next_server
+node_assign_server -->|"consistent hash"| node_chash_get_next_server
+node_assign_server -->|"map hash"| node_map_get_server_hash
+node_assign_server_and_queue -->|"open conn"| node_connect_server
+node_connect_server -->|"per-conn dial"| node_do_connect_server
+node_do_connect_server -->|"conn ready feeds mux"| node_h1_process
+node_proxy_parse_stick_table -->|"create table"| node_stktable_init
+node_proxy_parse_stick_table -->|"resolve names"| node_stktable_find_by_name
+node_stktable_init -->|"runtime upserts"| node_stktable_store
+
+click node_main "https://github.com/haproxy/haproxy/blob/master/src/haproxy.c"
+click node_read_cfg "https://github.com/haproxy/haproxy/blob/master/src/haproxy.c"
+click node_parse_cfg "https://github.com/haproxy/haproxy/blob/master/src/cfgparse.c"
+click node_cfg_parse_listen "https://github.com/haproxy/haproxy/blob/master/src/cfgparse-listen.c"
+click node_proxy_parse_bind "https://github.com/haproxy/haproxy/blob/master/src/cfgparse-listen.c"
+click node_proxy_parse_stick_table "https://github.com/haproxy/haproxy/blob/master/src/cfgparse-listen.c"
+click node_protocol_bind_all "https://github.com/haproxy/haproxy/blob/master/src/protocol.c"
+click node_run_thread_poll_loop "https://github.com/haproxy/haproxy/blob/master/src/haproxy.c"
+click node_run_poll_loop "https://github.com/haproxy/haproxy/blob/master/src/haproxy.c"
+click node_process_runnable_tasks "https://github.com/haproxy/haproxy/blob/master/src/task.c"
+click node_run_tasks_from_lists "https://github.com/haproxy/haproxy/blob/master/src/task.c"
+click node_do_poll "https://github.com/haproxy/haproxy/blob/master/src/ev_epoll.c"
+click node_fd_update_events "https://github.com/haproxy/haproxy/blob/master/src/fd.c"
+click node_dequeue_all_listeners "https://github.com/haproxy/haproxy/blob/master/src/listener.c"
+click node_listener_accept "https://github.com/haproxy/haproxy/blob/master/src/listener.c"
+click node_session_accept_fd "https://github.com/haproxy/haproxy/blob/master/src/session.c"
+click node_session_new "https://github.com/haproxy/haproxy/blob/master/src/session.c"
+click node_frontend_accept "https://github.com/haproxy/haproxy/blob/master/src/frontend.c"
+click node_process_stream "https://github.com/haproxy/haproxy/blob/master/src/stream.c"
+click node_h1_process "https://github.com/haproxy/haproxy/blob/master/src/mux_h1.c"
+click node_h1_process_demux "https://github.com/haproxy/haproxy/blob/master/src/mux_h1.c"
+click node_h1_process_mux "https://github.com/haproxy/haproxy/blob/master/src/mux_h1.c"
+click node_assign_server_and_queue "https://github.com/haproxy/haproxy/blob/master/src/backend.c"
+click node_assign_server "https://github.com/haproxy/haproxy/blob/master/src/backend.c"
+click node_fwrr_get_next_server "https://github.com/haproxy/haproxy/blob/master/src/lb_fwrr.c"
+click node_fas_get_next_server "https://github.com/haproxy/haproxy/blob/master/src/lb_fas.c"
+click node_fwlc_get_next_server "https://github.com/haproxy/haproxy/blob/master/src/lb_fwlc.c"
+click node_chash_get_next_server "https://github.com/haproxy/haproxy/blob/master/src/lb_chash.c"
+click node_map_get_server_hash "https://github.com/haproxy/haproxy/blob/master/src/lb_map.c"
+click node_connect_server "https://github.com/haproxy/haproxy/blob/master/src/backend.c"
+click node_do_connect_server "https://github.com/haproxy/haproxy/blob/master/src/backend.c"
+click node_stktable_find_by_name "https://github.com/haproxy/haproxy/blob/master/src/stick_table.c"
+click node_stktable_init "https://github.com/haproxy/haproxy/blob/master/src/stick_table.c"
+click node_stktable_store "https://github.com/haproxy/haproxy/blob/master/src/stick_table.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_read_cfg,node_parse_cfg,node_cfg_parse_listen,node_proxy_parse_bind,node_proxy_parse_stick_table,node_protocol_bind_all toneBlue
+class node_run_thread_poll_loop,node_run_poll_loop,node_process_runnable_tasks,node_run_tasks_from_lists,node_do_poll,node_fd_update_events toneAmber
+class node_dequeue_all_listeners,node_listener_accept,node_session_accept_fd,node_session_new,node_frontend_accept toneMint
+class node_process_stream,node_h1_process,node_h1_process_demux,node_h1_process_mux toneRose
+class node_assign_server_and_queue,node_assign_server,node_fwrr_get_next_server,node_fas_get_next_server,node_fwlc_get_next_server,node_chash_get_next_server,node_map_get_server_hash,node_connect_server,node_do_connect_server toneIndigo
+class node_stktable_find_by_name,node_stktable_init,node_stktable_store toneTeal
