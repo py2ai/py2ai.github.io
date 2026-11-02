@@ -1,0 +1,45 @@
+{
+  "owner": "envoyproxy",
+  "repo": "envoy",
+  "branch": "main",
+  "groups": [
+    { "id": "g1", "name": "bootstrap", "label": "Bootstrap & Entry" },
+    { "id": "g2", "name": "server_core", "label": "Server Core" },
+    { "id": "g3", "name": "listeners", "label": "Listener Fabric" },
+    { "id": "g4", "name": "hcm", "label": "HTTP Connection Manager" },
+    { "id": "g5", "name": "router", "label": "L7 Router" },
+    { "id": "g6", "name": "upstream", "label": "Cluster & Upstream" },
+    { "id": "g7", "name": "xds", "label": "xDS Control Plane" },
+    { "id": "g8", "name": "admin", "label": "Admin Surface" }
+  ],
+  "nodes": [
+    { "id": "main_entry", "label": "main()", "file": "main.cc", "path": "source/exe/main.cc", "group": "Bootstrap & Entry", "groupId": "g1", "desc": "binary entry point that hands off to MainCommon" },
+    { "id": "server_run", "label": "InstanceBase::run", "file": "server.cc", "path": "source/server/server.cc", "group": "Server Core", "groupId": "g2", "desc": "wires RunHelper, blocks in the main dispatch loop" },
+    { "id": "start_workers", "label": "InstanceBase::startWorkers", "file": "server.cc", "path": "source/server/server.cc", "group": "Server Core", "groupId": "g2", "desc": "starts worker threads once clusters are initialized" },
+    { "id": "listener_mgr", "label": "ListenerManagerImpl::startWorkers", "file": "listener_manager_impl.cc", "path": "source/common/listener_manager/listener_manager_impl.cc", "group": "Listener Fabric", "groupId": "g3", "desc": "hands active listeners to each worker thread" },
+    { "id": "tcp_listener", "label": "TcpListenerImpl::onSocketEvent", "file": "tcp_listener_impl.cc", "path": "source/common/network/tcp_listener_impl.cc", "group": "Listener Fabric", "groupId": "g3", "desc": "evented accept callback for each new socket" },
+    { "id": "hcm_on_data", "label": "ConnectionManagerImpl::onData", "file": "conn_manager_impl.cc", "path": "source/common/http/conn_manager_impl.cc", "group": "HTTP Connection Manager", "groupId": "g4", "desc": "network-filter callback that feeds decoded HTTP into streams" },
+    { "id": "hcm_new_stream", "label": "ConnectionManagerImpl::newStream", "file": "conn_manager_impl.cc", "path": "source/common/http/conn_manager_impl.cc", "group": "HTTP Connection Manager", "groupId": "g4", "desc": "creates an ActiveStream per request" },
+    { "id": "router_decode", "label": "Router::Filter::decodeHeaders", "file": "router.cc", "path": "source/common/router/router.cc", "group": "L7 Router", "groupId": "g5", "desc": "matches route, picks cluster, forwards request" },
+    { "id": "cluster_mgr", "label": "ClusterManagerImpl", "file": "cluster_manager_impl.cc", "path": "source/common/upstream/cluster_manager_impl.cc", "group": "Cluster & Upstream", "groupId": "g6", "desc": "owns all clusters, load balancing and conn pools" },
+    { "id": "host_conn", "label": "HostImplBase::createConnection", "file": "upstream_impl.cc", "path": "source/common/upstream/upstream_impl.cc", "group": "Cluster & Upstream", "groupId": "g6", "desc": "opens a TCP connection to the chosen upstream host" },
+    { "id": "xds_mux", "label": "GrpcMuxImpl::genericHandleResponse", "file": "grpc_mux_impl.cc", "path": "source/extensions/config_subscription/grpc/xds_mux/grpc_mux_impl.cc", "group": "xDS Control Plane", "groupId": "g7", "desc": "multiplexed xDS stream handling discovery responses" },
+    { "id": "admin_start", "label": "AdminImpl::startHttpListener", "file": "admin.cc", "path": "source/server/admin/admin.cc", "group": "Admin Surface", "groupId": "g8", "desc": "binds the localhost admin HTTP listener" }
+  ],
+  "edges": [
+    { "from": "main_entry", "to": "server_run", "label": "boots" },
+    { "from": "server_run", "to": "xds_mux", "label": "pulls config over xDS" },
+    { "from": "server_run", "to": "admin_start", "label": "starts admin listener" },
+    { "from": "server_run", "to": "start_workers", "label": "after clusters init" },
+    { "from": "xds_mux", "to": "listener_mgr", "label": "LDS updates" },
+    { "from": "xds_mux", "to": "cluster_mgr", "label": "CDS updates" },
+    { "from": "start_workers", "to": "listener_mgr", "label": "spawns listeners" },
+    { "from": "listener_mgr", "to": "tcp_listener", "label": "installs acceptors" },
+    { "from": "tcp_listener", "to": "hcm_on_data", "label": "accept, run filter chain" },
+    { "from": "hcm_on_data", "to": "hcm_new_stream", "label": "parses HTTP" },
+    { "from": "hcm_new_stream", "to": "router_decode", "label": "runs filter chain" },
+    { "from": "router_decode", "to": "cluster_mgr", "label": "requests conn pool" },
+    { "from": "cluster_mgr", "to": "host_conn", "label": "dials chosen host" },
+    { "from": "host_conn", "to": "router_decode", "label": "returns response" }
+  ]
+}
