@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_entry["Entrypoints"]
+  node_apis_main["cmd/kube-apiserver main&#40;&#41;<br/>[apiserver.go]"]
+  node_apis_command["NewAPIServerCommand / RunE<br/>[server.go]"]
+end
+
+subgraph group_apiserver["Control Plane &#40;kube-apiserver&#41;"]
+  node_create_server_chain["CreateServerChain<br/>[server.go]"]
+  node_controlplane_instance["controlplane CompletedConfig.New<br/>[instance.go]"]
+end
+
+subgraph group_registry["API Resources &#40;pkg/registry&#41;"]
+  node_pod_rest["Pod REST storage<br/>[storage.go]"]
+  node_pod_strategy["PodStrategy<br/>[strategy.go]"]
+end
+
+subgraph group_kubelet["Node Agent &#40;kubelet&#41;"]
+  node_new_main_kubelet["NewMainKubelet<br/>[kubelet.go]"]
+  node_kubelet_run["Kubelet.Run<br/>[kubelet.go]"]
+  node_kubelet_sync_loop["syncLoop<br/>[kubelet.go]"]
+  node_pod_source_apiserver["NewSourceApiserver<br/>[apiserver.go]"]
+  node_pod_workers["podWorkers.UpdatePod<br/>[pod_workers.go]"]
+end
+
+subgraph group_runtime["Container Runtime"]
+  node_kuberuntime_manager["kubeGenericRuntimeManager"]
+end
+
+node_apis_main -->|"runs cobra command"| node_apis_command
+node_apis_command -->|"RunE -&gt; Run -&gt; chain"| node_create_server_chain
+node_create_server_chain -->|"config.KubeAPIs.New"| node_controlplane_instance
+node_controlplane_instance -->|"StorageProviders install REST"| node_pod_rest
+node_pod_rest -->|"validate + default"| node_pod_strategy
+node_new_main_kubelet -->|"makePodSourceConfig"| node_pod_source_apiserver
+node_pod_source_apiserver -->|"list-watch pods by nodeName"| node_pod_rest
+node_new_main_kubelet -->|"StartKubelet"| node_kubelet_run
+node_kubelet_run -->|"final blocking loop"| node_kubelet_sync_loop
+node_kubelet_sync_loop -->|"hand off pod updates"| node_pod_workers
+node_pod_workers -->|"SyncPod via SyncHandler"| node_kuberuntime_manager
+node_kubelet_run -->|"PLEG + runtime probes"| node_kuberuntime_manager
+
+click node_apis_main "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/apiserver.go"
+click node_apis_command "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go"
+click node_create_server_chain "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go"
+click node_controlplane_instance "https://github.com/kubernetes/kubernetes/blob/master/pkg/controlplane/instance.go"
+click node_pod_rest "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/storage/storage.go"
+click node_pod_strategy "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/strategy.go"
+click node_new_main_kubelet "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_run "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_sync_loop "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_pod_source_apiserver "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/config/apiserver.go"
+click node_pod_workers "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/pod_workers.go"
+click node_kuberuntime_manager "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kuberuntime/kuberuntime_manager.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_apis_main,node_apis_command toneBlue
+class node_create_server_chain,node_controlplane_instance toneAmber
+class node_pod_rest,node_pod_strategy toneMint
+class node_new_main_kubelet,node_kubelet_run,node_kubelet_sync_loop,node_pod_source_apiserver,node_pod_workers toneRose
+class node_kuberuntime_manager toneIndigo

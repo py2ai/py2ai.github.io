@@ -1,0 +1,129 @@
+flowchart TD
+
+subgraph group_entry["Entrypoints"]
+  node_apis_main["cmd/kube-apiserver main&#40;&#41;<br/>[apiserver.go]"]
+  node_apis_command["NewAPIServerCommand<br/>[server.go]"]
+  node_apis_rune["RunE<br/>[server.go]"]
+end
+
+subgraph group_apiserver["Control Plane &#40;kube-apiserver&#41;"]
+  node_create_server_chain["CreateServerChain<br/>[server.go]"]
+  node_create_kube_conf["CreateKubeAPIServerConfig<br/>[server.go]"]
+  node_controlplane_instance["controlplane CompletedConfig.New<br/>[instance.go]"]
+  node_cp_storage_providers["StorageProviders<br/>[instance.go]"]
+  node_cp_lease_reconciler["createLeaseReconciler<br/>[instance.go]"]
+end
+
+subgraph group_registry["API Resources &#40;pkg/registry&#41;"]
+  node_pod_rest["Pod REST storage<br/>[storage.go]"]
+  node_pod_strategy["PodStrategy<br/>[strategy.go]"]
+  node_pod_log_rest["LogREST<br/>[log.go]"]
+  node_pod_exec_rest["ExecREST<br/>[subresources.go]"]
+  node_pod_portforward_rest["PortForwardREST<br/>[subresources.go]"]
+end
+
+subgraph group_kubelet["Node Agent &#40;kubelet&#41;"]
+  node_new_main_kubelet["NewMainKubelet<br/>[kubelet.go]"]
+  node_kubelet_struct["Kubelet struct<br/>[kubelet.go]"]
+  node_kubelet_pod_source_cfg["makePodSourceConfig<br/>[kubelet.go]"]
+  node_kubelet_pod_config["config.NewPodConfig<br/>[config.go]"]
+  node_kubelet_source_apiserver["config.NewSourceApiserver<br/>[apiserver.go]"]
+  node_kubelet_run["Kubelet.Run<br/>[kubelet.go]"]
+  node_kubelet_sync_loop["syncLoop<br/>[kubelet.go]"]
+  node_kubelet_sync_pod["Kubelet.SyncPod<br/>[kubelet.go]"]
+  node_pod_manager_set_pods["basicManager.SetPods<br/>[pod_manager.go]"]
+  node_pod_workers_update["podWorkers.UpdatePod<br/>[pod_workers.go]"]
+end
+
+subgraph group_nodelife["Node Lifecycle &amp; Managers"]
+  node_kubelet_register_node["registerWithAPIServer"]
+  node_kubelet_sync_node_status["syncNodeStatus"]
+  node_status_manager_new["status.NewManager<br/>[status_manager.go]"]
+  node_pleg_new["pleg.NewGenericPLEG<br/>[generic.go]"]
+  node_volume_manager_new["NewVolumeManager<br/>[volume_manager.go]"]
+  node_container_manager_new["NewContainerManager"]
+end
+
+subgraph group_runtime["Container Runtime &#40;CRI&#41;"]
+  node_runtime_new["NewKubeGenericRuntimeManager"]
+  node_runtime_sync_pod["kubeGenericRuntimeManager.SyncPod"]
+  node_runtime_compute_actions["computePodActions"]
+end
+
+node_apis_main -->|"runs cobra command"| node_apis_command
+node_apis_command -->|"RunE callback"| node_apis_rune
+node_apis_rune -->|"Run -&gt; CreateServerChain"| node_create_server_chain
+node_create_server_chain -->|"builds control-plane config"| node_create_kube_conf
+node_create_server_chain -->|"config.KubeAPIs.New"| node_controlplane_instance
+node_controlplane_instance -->|"collects providers"| node_cp_storage_providers
+node_controlplane_instance -->|"endpoint reconciliation"| node_cp_lease_reconciler
+node_cp_storage_providers -->|"installs pod REST"| node_pod_rest
+node_pod_rest -->|"validate + default"| node_pod_strategy
+node_pod_rest -->|"/log subresource"| node_pod_log_rest
+node_pod_rest -->|"/exec subresource"| node_pod_exec_rest
+node_pod_rest -->|"/portforward subresource"| node_pod_portforward_rest
+node_new_main_kubelet -->|"fills the struct"| node_kubelet_struct
+node_new_main_kubelet -->|"wires pod sources"| node_kubelet_pod_source_cfg
+node_kubelet_pod_source_cfg -->|"PodConfig mux"| node_kubelet_pod_config
+node_kubelet_pod_source_cfg -->|"apiserver source"| node_kubelet_source_apiserver
+node_kubelet_source_apiserver -->|"list-watch spec.nodeName"| node_pod_rest
+node_kubelet_pod_config -->|"podStorage pushes"| node_pod_manager_set_pods
+node_new_main_kubelet -->|"node registration"| node_kubelet_register_node
+node_new_main_kubelet -->|"cgroups + QoS"| node_container_manager_new
+node_new_main_kubelet -->|"attach + mount"| node_volume_manager_new
+node_new_main_kubelet -->|"lifecycle events"| node_pleg_new
+node_new_main_kubelet -->|"CRI runtime handle"| node_runtime_new
+node_kubelet_run -->|"final blocking loop"| node_kubelet_sync_loop
+node_kubelet_run -->|"jittered reporter"| node_kubelet_sync_node_status
+node_kubelet_run -->|"statusManager.Start"| node_status_manager_new
+node_kubelet_sync_loop -->|"per-pod handoff"| node_pod_workers_update
+node_pod_workers_update -->|"SyncHandler.SyncPod"| node_kubelet_sync_pod
+node_kubelet_sync_pod -->|"containerRuntime.SyncPod"| node_runtime_sync_pod
+node_runtime_sync_pod -->|"diff spec vs runtime"| node_runtime_compute_actions
+
+click node_apis_main "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/apiserver.go"
+click node_apis_command "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go"
+click node_apis_rune "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go"
+click node_create_server_chain "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go"
+click node_create_kube_conf "https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go"
+click node_controlplane_instance "https://github.com/kubernetes/kubernetes/blob/master/pkg/controlplane/instance.go"
+click node_cp_storage_providers "https://github.com/kubernetes/kubernetes/blob/master/pkg/controlplane/instance.go"
+click node_cp_lease_reconciler "https://github.com/kubernetes/kubernetes/blob/master/pkg/controlplane/instance.go"
+click node_pod_rest "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/storage/storage.go"
+click node_pod_strategy "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/strategy.go"
+click node_pod_log_rest "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/rest/log.go"
+click node_pod_exec_rest "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/rest/subresources.go"
+click node_pod_portforward_rest "https://github.com/kubernetes/kubernetes/blob/master/pkg/registry/core/pod/rest/subresources.go"
+click node_new_main_kubelet "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_struct "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_pod_source_cfg "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_pod_config "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/config/config.go"
+click node_kubelet_source_apiserver "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/config/apiserver.go"
+click node_kubelet_run "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_sync_loop "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_kubelet_sync_pod "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet.go"
+click node_pod_manager_set_pods "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/pod/pod_manager.go"
+click node_pod_workers_update "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/pod_workers.go"
+click node_kubelet_register_node "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet_node_status.go"
+click node_kubelet_sync_node_status "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kubelet_node_status.go"
+click node_status_manager_new "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/status/status_manager.go"
+click node_pleg_new "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/pleg/generic.go"
+click node_volume_manager_new "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/volumemanager/volume_manager.go"
+click node_container_manager_new "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/cm/container_manager_linux.go"
+click node_runtime_new "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kuberuntime/kuberuntime_manager.go"
+click node_runtime_sync_pod "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kuberuntime/kuberuntime_manager.go"
+click node_runtime_compute_actions "https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/kuberuntime/kuberuntime_manager.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_apis_main,node_apis_command,node_apis_rune toneBlue
+class node_create_server_chain,node_create_kube_conf,node_controlplane_instance,node_cp_storage_providers,node_cp_lease_reconciler toneAmber
+class node_pod_rest,node_pod_strategy,node_pod_log_rest,node_pod_exec_rest,node_pod_portforward_rest toneMint
+class node_new_main_kubelet,node_kubelet_struct,node_kubelet_pod_source_cfg,node_kubelet_pod_config,node_kubelet_source_apiserver,node_kubelet_run,node_kubelet_sync_loop,node_kubelet_sync_pod,node_pod_manager_set_pods,node_pod_workers_update toneRose
+class node_kubelet_register_node,node_kubelet_sync_node_status,node_status_manager_new,node_pleg_new,node_volume_manager_new,node_container_manager_new toneIndigo
+class node_runtime_new,node_runtime_sync_pod,node_runtime_compute_actions toneTeal
