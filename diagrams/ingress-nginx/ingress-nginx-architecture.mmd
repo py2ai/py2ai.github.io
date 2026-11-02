@@ -1,0 +1,134 @@
+flowchart TD
+
+subgraph group_g1["CLI Entry"]
+  node_cmd_main["main<br/>[main.go]"]
+  node_ngx_new["NewNGINXController<br/>[nginx.go]"]
+end
+
+subgraph group_g2["Local Store"]
+  node_store_run["k8sStore.Run<br/>[store.go]"]
+  node_informer_run["Informer.Run<br/>[store.go]"]
+  node_list_ingresses["ListIngresses<br/>[store.go]"]
+end
+
+subgraph group_g3["Sync Loop"]
+  node_ngx_start["Start<br/>[nginx.go]"]
+  node_sync_queue["NewTaskQueue<br/>[nginx.go]"]
+  node_sync_ingress["syncIngress<br/>[controller.go]"]
+  node_get_config["getConfiguration<br/>[controller.go]"]
+  node_get_backend_servers["getBackendServers<br/>[controller.go]"]
+  node_create_upstreams["createUpstreams<br/>[controller.go]"]
+  node_create_servers["createServers<br/>[controller.go]"]
+  node_hash_cfg["config hash<br/>[controller.go]"]
+  node_dyn_enough["IsDynamicConfigurationEnough<br/>[ingress.go]"]
+end
+
+subgraph group_g4["Template Render"]
+  node_on_update["OnUpdate<br/>[nginx.go]"]
+  node_gen_tmpl["generateTemplate<br/>[nginx.go]"]
+  node_tmpl_struct["TemplateConfig<br/>[config.go]"]
+  node_nginx_tmpl["nginx.tmpl<br/>[nginx.tmpl]"]
+  node_test_tmpl["testTemplate<br/>[nginx.go]"]
+  node_lua_cfg["createLuaConfig<br/>[nginx.go]"]
+end
+
+subgraph group_g5["NGINX Runtime"]
+  node_dyn_cfg["configureDynamically<br/>[nginx.go]"]
+  node_check_health["Check<br/>[checker.go]"]
+end
+
+subgraph group_g6["Leader Election"]
+  node_leader_elect["setupLeaderElection<br/>[status.go]"]
+  node_lease_lock["LeaseLock<br/>[status.go]"]
+  node_status_new["NewStatusSyncer<br/>[status.go]"]
+  node_status_run["statusSync.Run<br/>[status.go]"]
+  node_status_update["updateStatus<br/>[status.go]"]
+end
+
+subgraph group_g7["Admission Webhook"]
+  node_webhook["HandleAdmission<br/>[main.go]"]
+  node_serve_http["ServeHTTP<br/>[server.go]"]
+  node_check_ingress["CheckIngress<br/>[controller.go]"]
+  node_check_warning["CheckWarning<br/>[controller.go]"]
+end
+
+node_cmd_main -->|"builds"| node_ngx_new
+node_ngx_new -->|"binds consumer"| node_sync_queue
+node_ngx_new -->|"launches"| node_ngx_start
+node_ngx_start -->|"starts"| node_store_run
+node_ngx_start -->|"elects"| node_leader_elect
+node_ngx_start -->|"runs"| node_sync_queue
+node_store_run -->|"starts"| node_informer_run
+node_informer_run -->|"feeds events"| node_sync_queue
+node_sync_queue -->|"dispatches"| node_sync_ingress
+node_sync_ingress -->|"reads cache"| node_list_ingresses
+node_sync_ingress -->|"builds model"| node_get_config
+node_get_config -->|"splits"| node_get_backend_servers
+node_get_backend_servers -->|"resolves"| node_create_upstreams
+node_get_backend_servers -->|"resolves"| node_create_servers
+node_sync_ingress -->|"fingerprints"| node_hash_cfg
+node_sync_ingress -->|"diff check"| node_dyn_enough
+node_sync_ingress -->|"full reload"| node_on_update
+node_sync_ingress -->|"dynamic path"| node_dyn_cfg
+node_on_update -->|"renders"| node_gen_tmpl
+node_gen_tmpl -->|"assembles"| node_tmpl_struct
+node_tmpl_struct -->|"fills"| node_nginx_tmpl
+node_gen_tmpl -->|"writes"| node_lua_cfg
+node_on_update -->|"validates"| node_test_tmpl
+node_dyn_cfg -->|"reported via healthz"| node_check_health
+node_list_ingresses -->|"status input"| node_status_run
+node_leader_elect -->|"acquires"| node_lease_lock
+node_leader_elect -->|"on started leading"| node_status_new
+node_status_new -->|"creates"| node_status_run
+node_status_run -->|"publishes"| node_status_update
+node_serve_http -->|"decodes"| node_webhook
+node_webhook -->|"validates"| node_check_ingress
+node_webhook -->|"appends warnings"| node_check_warning
+node_check_ingress -->|"dry-run model"| node_get_config
+node_check_ingress -->|"dry-run render"| node_gen_tmpl
+
+click node_cmd_main "https://github.com/kubernetes/ingress-nginx/blob/main/cmd/nginx/main.go"
+click node_ngx_new "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_ngx_start "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_sync_queue "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_store_run "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/store/store.go"
+click node_informer_run "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/store/store.go"
+click node_list_ingresses "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/store/store.go"
+click node_sync_ingress "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_get_config "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_get_backend_servers "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_create_upstreams "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_create_servers "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_hash_cfg "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_dyn_enough "https://github.com/kubernetes/ingress-nginx/blob/main/pkg/util/ingress/ingress.go"
+click node_on_update "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_gen_tmpl "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_tmpl_struct "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/config/config.go"
+click node_nginx_tmpl "https://github.com/kubernetes/ingress-nginx/blob/main/rootfs/etc/nginx/template/nginx.tmpl"
+click node_test_tmpl "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_lua_cfg "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_dyn_cfg "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/nginx.go"
+click node_check_health "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/checker.go"
+click node_leader_elect "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/status.go"
+click node_lease_lock "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/status.go"
+click node_status_new "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/status/status.go"
+click node_status_run "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/status/status.go"
+click node_status_update "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/status/status.go"
+click node_webhook "https://github.com/kubernetes/ingress-nginx/blob/main/internal/admission/controller/main.go"
+click node_serve_http "https://github.com/kubernetes/ingress-nginx/blob/main/internal/admission/controller/server.go"
+click node_check_ingress "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+click node_check_warning "https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/controller/controller.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cmd_main,node_ngx_new,node_webhook,node_serve_http,node_check_ingress,node_check_warning toneBlue
+class node_store_run,node_informer_run,node_list_ingresses toneAmber
+class node_ngx_start,node_sync_queue,node_sync_ingress,node_get_config,node_get_backend_servers,node_create_upstreams,node_create_servers,node_hash_cfg,node_dyn_enough toneMint
+class node_on_update,node_gen_tmpl,node_tmpl_struct,node_nginx_tmpl,node_test_tmpl,node_lua_cfg toneRose
+class node_dyn_cfg,node_check_health toneIndigo
+class node_leader_elect,node_lease_lock,node_status_new,node_status_run,node_status_update toneTeal

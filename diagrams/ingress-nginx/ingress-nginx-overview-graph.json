@@ -1,0 +1,41 @@
+{
+  "owner": "kubernetes",
+  "repo": "ingress-nginx",
+  "branch": "main",
+  "groups": [
+    {"id": "g1", "name": "entry", "label": "CLI Entry"},
+    {"id": "g2", "name": "syncloop", "label": "Sync Loop"},
+    {"id": "g3", "name": "render", "label": "Template Render"},
+    {"id": "g4", "name": "runtime", "label": "NGINX Runtime"},
+    {"id": "g5", "name": "coordination", "label": "Election & Admission"}
+  ],
+  "nodes": [
+    {"id": "cmd_main", "label": "main", "file": "main.go", "path": "cmd/nginx/main.go", "group": "CLI Entry", "groupId": "g1", "desc": "Parses flags, builds the kube client, then launches the NGINXController"},
+    {"id": "ngx_new", "label": "NewNGINXController", "file": "nginx.go", "path": "internal/ingress/controller/nginx.go", "group": "CLI Entry", "groupId": "g1", "desc": "Wires the store, task queue, template writer and admission server into one controller"},
+    {"id": "ngx_start", "label": "Start", "file": "nginx.go", "path": "internal/ingress/controller/nginx.go", "group": "Sync Loop", "groupId": "g2", "desc": "Starts the store, leader election, the nginx process and the select loop that feeds the sync queue"},
+    {"id": "store_run", "label": "k8sStore.Run", "file": "store.go", "path": "internal/ingress/controller/store/store.go", "group": "Sync Loop", "groupId": "g2", "desc": "Runs all informers and keeps a local cache of Ingress, Service, Secret and ConfigMap objects"},
+    {"id": "sync_ingress", "label": "syncIngress", "file": "controller.go", "path": "internal/ingress/controller/controller.go", "group": "Sync Loop", "groupId": "g2", "desc": "Drains queued events, rebuilds the config model and decides between full reload and dynamic update"},
+    {"id": "get_config", "label": "getConfiguration", "file": "controller.go", "path": "internal/ingress/controller/controller.go", "group": "Sync Loop", "groupId": "g2", "desc": "Turns the cached Ingress list into backends, servers and a full ingress.Configuration"},
+    {"id": "on_update", "label": "OnUpdate", "file": "nginx.go", "path": "internal/ingress/controller/nginx.go", "group": "Template Render", "groupId": "g3", "desc": "Renders, tests and writes nginx.conf, then signals nginx to reload workers"},
+    {"id": "gen_tmpl", "label": "generateTemplate", "file": "nginx.go", "path": "internal/ingress/controller/nginx.go", "group": "Template Render", "groupId": "g3", "desc": "Fills the TemplateConfig struct and executes the Go template against it"},
+    {"id": "test_tmpl", "label": "testTemplate", "file": "nginx.go", "path": "internal/ingress/controller/nginx.go", "group": "Template Render", "groupId": "g3", "desc": "Runs nginx -t against the generated config in a temp file before committing it"},
+    {"id": "dyn_cfg", "label": "configureDynamically", "file": "nginx.go", "path": "internal/ingress/controller/nginx.go", "group": "NGINX Runtime", "groupId": "g4", "desc": "POSTs endpoint changes as JSON to the Lua endpoint so upstreams change without a reload"},
+    {"id": "leader_elect", "label": "setupLeaderElection", "file": "status.go", "path": "internal/ingress/controller/status.go", "group": "Election & Admission", "groupId": "g5", "desc": "Contends for a Lease so a single replica publishes Ingress status"},
+    {"id": "webhook", "label": "HandleAdmission", "file": "main.go", "path": "internal/admission/controller/main.go", "group": "Election & Admission", "groupId": "g5", "desc": "Validating webhook handler that reviews Ingress objects before they are stored"}
+  ],
+  "edges": [
+    {"from": "cmd_main", "to": "ngx_new", "label": "builds"},
+    {"from": "ngx_new", "to": "ngx_start", "label": "launches"},
+    {"from": "ngx_start", "to": "store_run", "label": "starts"},
+    {"from": "ngx_start", "to": "leader_elect", "label": "elects"},
+    {"from": "ngx_start", "to": "sync_ingress", "label": "enqueues"},
+    {"from": "store_run", "to": "sync_ingress", "label": "cache events"},
+    {"from": "sync_ingress", "to": "get_config", "label": "builds model"},
+    {"from": "sync_ingress", "to": "on_update", "label": "full reload"},
+    {"from": "sync_ingress", "to": "dyn_cfg", "label": "dynamic path"},
+    {"from": "on_update", "to": "gen_tmpl", "label": "renders"},
+    {"from": "gen_tmpl", "to": "test_tmpl", "label": "validates"},
+    {"from": "on_update", "to": "dyn_cfg", "label": "then streams endpoints"},
+    {"from": "webhook", "to": "sync_ingress", "label": "gates bad objects"}
+  ]
+}
