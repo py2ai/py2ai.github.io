@@ -1,0 +1,44 @@
+{
+  "owner": "istio",
+  "repo": "istio",
+  "branch": "master",
+  "groups": [
+    { "id": "g1", "name": "entry", "label": "Entry" },
+    { "id": "g2", "name": "control_plane", "label": "Control Plane Bootstrap" },
+    { "id": "g3", "name": "registry", "label": "Service and Config Registry" },
+    { "id": "g4", "name": "model", "label": "Mesh Model" },
+    { "id": "g5", "name": "xds", "label": "xDS Server" },
+    { "id": "g6", "name": "generation", "label": "Envoy Config Generation" },
+    { "id": "g7", "name": "injection", "label": "Sidecar Injection" }
+  ],
+  "nodes": [
+    { "id": "main", "label": "pilot-discovery main", "file": "main.go", "path": "pilot/cmd/pilot-discovery/main.go", "group": "Entry", "groupId": "g1", "desc": "istiod entry point that builds and runs the root cobra command" },
+    { "id": "new_server", "label": "bootstrap.NewServer", "file": "server.go", "path": "pilot/pkg/bootstrap/server.go", "group": "Control Plane Bootstrap", "groupId": "g2", "desc": "assembles every istiod subsystem: environment, registries, xDS, CA, webhooks" },
+    { "id": "init_config_controller", "label": "initConfigController", "file": "configcontroller.go", "path": "pilot/pkg/bootstrap/configcontroller.go", "group": "Control Plane Bootstrap", "groupId": "g2", "desc": "wires the aggregated config store that watches Istio CRDs" },
+    { "id": "init_sidecar_injector", "label": "initSidecarInjector", "file": "sidecarinjector.go", "path": "pilot/pkg/bootstrap/sidecarinjector.go", "group": "Control Plane Bootstrap", "groupId": "g2", "desc": "mounts the mutating admission webhook that injects Envoy sidecars" },
+    { "id": "aggregate", "label": "aggregate.Controller", "file": "controller.go", "path": "pilot/pkg/serviceregistry/aggregate/controller.go", "group": "Service and Config Registry", "groupId": "g3", "desc": "fuses multiple service registries into one discovery view" },
+    { "id": "kube_controller", "label": "kube.Controller", "file": "controller.go", "path": "pilot/pkg/serviceregistry/kube/controller/controller.go", "group": "Service and Config Registry", "groupId": "g3", "desc": "watches Services, EndpointSlices and Pods in each cluster" },
+    { "id": "crd_client", "label": "crdclient.Client", "file": "client.go", "path": "pilot/pkg/config/kube/crdclient/client.go", "group": "Service and Config Registry", "groupId": "g3", "desc": "turns Istio CRD objects into config.Config events" },
+    { "id": "push_context", "label": "PushContext", "file": "push_context.go", "path": "pilot/pkg/model/push_context.go", "group": "Mesh Model", "groupId": "g4", "desc": "immutable snapshot of services, endpoints and policies per push" },
+    { "id": "discovery_server", "label": "DiscoveryServer", "file": "discovery.go", "path": "pilot/pkg/xds/discovery.go", "group": "xDS Server", "groupId": "g5", "desc": "gRPC xDS server that debounces updates and fans out pushes" },
+    { "id": "ads", "label": "ADS streaming", "file": "ads.go", "path": "pilot/pkg/xds/ads.go", "group": "xDS Server", "groupId": "g5", "desc": "serves aggregated discovery streams to Envoy sidecars and gateways" },
+    { "id": "configgen", "label": "ConfigGenerator", "file": "configgen.go", "path": "pilot/pkg/networking/core/configgen.go", "group": "Envoy Config Generation", "groupId": "g6", "desc": "translates the mesh model into listeners, clusters and routes" },
+    { "id": "inject", "label": "inject.Webhook", "file": "inject.go", "path": "pkg/kube/inject/inject.go", "group": "Sidecar Injection", "groupId": "g7", "desc": "merges the sidecar template into pod specs at admission time" }
+  ],
+  "edges": [
+    { "from": "main", "to": "new_server", "label": "starts" },
+    { "from": "new_server", "to": "init_config_controller", "label": "calls" },
+    { "from": "new_server", "to": "init_sidecar_injector", "label": "calls" },
+    { "from": "new_server", "to": "discovery_server", "label": "creates" },
+    { "from": "new_server", "to": "aggregate", "label": "wires" },
+    { "from": "aggregate", "to": "kube_controller", "label": "delegates" },
+    { "from": "init_config_controller", "to": "crd_client", "label": "creates" },
+    { "from": "init_sidecar_injector", "to": "inject", "label": "renders with" },
+    { "from": "crd_client", "to": "discovery_server", "label": "config events" },
+    { "from": "kube_controller", "to": "discovery_server", "label": "endpoint events" },
+    { "from": "discovery_server", "to": "push_context", "label": "rebuilds" },
+    { "from": "discovery_server", "to": "ads", "label": "serves" },
+    { "from": "ads", "to": "configgen", "label": "generators apply" },
+    { "from": "configgen", "to": "push_context", "label": "reads snapshot" }
+  ]
+}

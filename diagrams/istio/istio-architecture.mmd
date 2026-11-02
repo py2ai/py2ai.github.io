@@ -1,0 +1,155 @@
+flowchart TD
+
+subgraph group_g1["Binaries"]
+  node_main["pilot-discovery main<br/>[main.go]"]
+  node_root_cmd["app.NewRootCommand<br/>[cmd.go]"]
+  node_agent_main["pilot-agent main<br/>[main.go]"]
+  node_install_cmd["istioctl install<br/>[install.go]"]
+end
+
+subgraph group_g2["istiod Bootstrap"]
+  node_new_server["bootstrap.NewServer<br/>[server.go]"]
+  node_init_config_controller["initConfigController"]
+  node_init_generators["InitGenerators<br/>[discovery.go]"]
+  node_init_sidecar_injector["initSidecarInjector<br/>[sidecarinjector.go]"]
+end
+
+subgraph group_g3["Service Registry"]
+  node_aggregate["aggregate.Controller<br/>[controller.go]"]
+  node_kube_controller["kube.Controller<br/>[controller.go]"]
+  node_endpointslice["EndpointSlice tracking<br/>[endpointslice.go]"]
+end
+
+subgraph group_g4["Config Sources"]
+  node_crd_client["crdclient.Client<br/>[client.go]"]
+  node_config_model["config.Config<br/>[model.go]"]
+  node_gateway_controller["Gateway API controller<br/>[controller.go]"]
+  node_inferencepool["InferencePool collection"]
+end
+
+subgraph group_g5["Mesh Model"]
+  node_environment["Environment<br/>[context.go]"]
+  node_push_context["PushContext<br/>[push_context.go]"]
+  node_service["Service<br/>[service.go]"]
+  node_destination_rule["DestinationRule merge"]
+  node_sidecar_scope["SidecarScope<br/>[sidecar.go]"]
+end
+
+subgraph group_g6["xDS Server"]
+  node_discovery_server["DiscoveryServer<br/>[discovery.go]"]
+  node_ads["ADS streaming<br/>[ads.go]"]
+  node_eds["EDS generator<br/>[eds.go]"]
+  node_push_queue["PushQueue<br/>[pushqueue.go]"]
+  node_xdsgen["pushXds dispatch<br/>[xdsgen.go]"]
+end
+
+subgraph group_g7["Envoy Config Generation"]
+  node_cds["CdsGenerator<br/>[cds.go]"]
+  node_lds["LdsGenerator<br/>[lds.go]"]
+  node_rds["RdsGenerator<br/>[rds.go]"]
+  node_configgen["ConfigGeneratorImpl<br/>[configgen.go]"]
+  node_clusters["BuildClusters<br/>[cluster.go]"]
+  node_listeners["BuildListeners<br/>[listener.go]"]
+  node_httproutes["BuildHTTPRoutes<br/>[httproute.go]"]
+  node_routes["TranslateRoute<br/>[route.go]"]
+end
+
+subgraph group_g8["Sidecar Injection"]
+  node_inject["inject.Webhook<br/>[inject.go]"]
+end
+
+node_main -->|"builds"| node_root_cmd
+node_root_cmd -->|"runs"| node_new_server
+node_install_cmd -->|"provisions istiod"| node_new_server
+node_new_server -->|"creates"| node_environment
+node_new_server -->|"wires"| node_aggregate
+node_new_server -->|"calls"| node_init_config_controller
+node_new_server -->|"calls"| node_init_sidecar_injector
+node_new_server -->|"creates"| node_discovery_server
+node_new_server -->|"calls"| node_init_generators
+node_aggregate -->|"delegates"| node_kube_controller
+node_kube_controller -->|"watches"| node_endpointslice
+node_init_config_controller -->|"creates"| node_crd_client
+node_init_config_controller -->|"starts"| node_gateway_controller
+node_gateway_controller -->|"consumes"| node_inferencepool
+node_crd_client -->|"maps to"| node_config_model
+node_init_sidecar_injector -->|"renders with"| node_inject
+node_agent_main -->|"Envoy dials xDS"| node_ads
+node_environment -->|"backs"| node_discovery_server
+node_crd_client -->|"config events"| node_discovery_server
+node_kube_controller -->|"EDSUpdate"| node_discovery_server
+node_discovery_server -->|"debounces into"| node_push_queue
+node_discovery_server -->|"rebuilds"| node_push_context
+node_push_context -->|"indexes"| node_service
+node_push_context -->|"consolidates"| node_destination_rule
+node_push_context -->|"resolves"| node_sidecar_scope
+node_discovery_server -->|"serves"| node_ads
+node_discovery_server -->|"push per type"| node_xdsgen
+node_init_generators -->|"registers"| node_eds
+node_init_generators -->|"registers"| node_cds
+node_init_generators -->|"registers"| node_lds
+node_init_generators -->|"registers"| node_rds
+node_init_generators -->|"wraps"| node_configgen
+node_xdsgen -->|"dispatches"| node_cds
+node_xdsgen -->|"dispatches"| node_lds
+node_xdsgen -->|"dispatches"| node_rds
+node_xdsgen -->|"dispatches"| node_eds
+node_cds -->|"BuildClusters"| node_configgen
+node_lds -->|"BuildListeners"| node_configgen
+node_rds -->|"BuildHTTPRoutes"| node_configgen
+node_configgen -->|"synthesizes"| node_clusters
+node_configgen -->|"synthesizes"| node_listeners
+node_configgen -->|"synthesizes"| node_httproutes
+node_httproutes -->|"translates"| node_routes
+node_routes -->|"applies subsets"| node_destination_rule
+node_clusters -->|"expands"| node_service
+node_listeners -->|"filters via"| node_sidecar_scope
+
+click node_main "https://github.com/istio/istio/blob/master/pilot/cmd/pilot-discovery/main.go"
+click node_root_cmd "https://github.com/istio/istio/blob/master/pilot/cmd/pilot-discovery/app/cmd.go"
+click node_agent_main "https://github.com/istio/istio/blob/master/pilot/cmd/pilot-agent/main.go"
+click node_install_cmd "https://github.com/istio/istio/blob/master/operator/cmd/mesh/install.go"
+click node_new_server "https://github.com/istio/istio/blob/master/pilot/pkg/bootstrap/server.go"
+click node_init_config_controller "https://github.com/istio/istio/blob/master/pilot/pkg/bootstrap/configcontroller.go"
+click node_init_generators "https://github.com/istio/istio/blob/master/pilot/pkg/bootstrap/discovery.go"
+click node_init_sidecar_injector "https://github.com/istio/istio/blob/master/pilot/pkg/bootstrap/sidecarinjector.go"
+click node_aggregate "https://github.com/istio/istio/blob/master/pilot/pkg/serviceregistry/aggregate/controller.go"
+click node_kube_controller "https://github.com/istio/istio/blob/master/pilot/pkg/serviceregistry/kube/controller/controller.go"
+click node_endpointslice "https://github.com/istio/istio/blob/master/pilot/pkg/serviceregistry/kube/controller/endpointslice.go"
+click node_crd_client "https://github.com/istio/istio/blob/master/pilot/pkg/config/kube/crdclient/client.go"
+click node_config_model "https://github.com/istio/istio/blob/master/pkg/config/model.go"
+click node_gateway_controller "https://github.com/istio/istio/blob/master/pilot/pkg/config/kube/gateway/controller.go"
+click node_inferencepool "https://github.com/istio/istio/blob/master/pilot/pkg/config/kube/gateway/inferencepool_collection.go"
+click node_environment "https://github.com/istio/istio/blob/master/pilot/pkg/model/context.go"
+click node_push_context "https://github.com/istio/istio/blob/master/pilot/pkg/model/push_context.go"
+click node_service "https://github.com/istio/istio/blob/master/pilot/pkg/model/service.go"
+click node_destination_rule "https://github.com/istio/istio/blob/master/pilot/pkg/model/destination_rule.go"
+click node_sidecar_scope "https://github.com/istio/istio/blob/master/pilot/pkg/model/sidecar.go"
+click node_discovery_server "https://github.com/istio/istio/blob/master/pilot/pkg/xds/discovery.go"
+click node_ads "https://github.com/istio/istio/blob/master/pilot/pkg/xds/ads.go"
+click node_eds "https://github.com/istio/istio/blob/master/pilot/pkg/xds/eds.go"
+click node_push_queue "https://github.com/istio/istio/blob/master/pilot/pkg/xds/pushqueue.go"
+click node_xdsgen "https://github.com/istio/istio/blob/master/pilot/pkg/xds/xdsgen.go"
+click node_cds "https://github.com/istio/istio/blob/master/pilot/pkg/xds/cds.go"
+click node_lds "https://github.com/istio/istio/blob/master/pilot/pkg/xds/lds.go"
+click node_rds "https://github.com/istio/istio/blob/master/pilot/pkg/xds/rds.go"
+click node_configgen "https://github.com/istio/istio/blob/master/pilot/pkg/networking/core/configgen.go"
+click node_clusters "https://github.com/istio/istio/blob/master/pilot/pkg/networking/core/cluster.go"
+click node_listeners "https://github.com/istio/istio/blob/master/pilot/pkg/networking/core/listener.go"
+click node_httproutes "https://github.com/istio/istio/blob/master/pilot/pkg/networking/core/httproute.go"
+click node_routes "https://github.com/istio/istio/blob/master/pilot/pkg/networking/core/route/route.go"
+click node_inject "https://github.com/istio/istio/blob/master/pkg/kube/inject/inject.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_root_cmd,node_agent_main,node_install_cmd,node_cds,node_lds,node_rds,node_configgen,node_clusters,node_listeners,node_httproutes,node_routes toneBlue
+class node_new_server,node_init_config_controller,node_init_generators,node_init_sidecar_injector,node_inject toneAmber
+class node_aggregate,node_kube_controller,node_endpointslice toneMint
+class node_crd_client,node_config_model,node_gateway_controller,node_inferencepool toneRose
+class node_environment,node_push_context,node_service,node_destination_rule,node_sidecar_scope toneIndigo
+class node_discovery_server,node_ads,node_eds,node_push_queue,node_xdsgen toneTeal
