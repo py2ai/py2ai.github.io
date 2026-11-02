@@ -1,0 +1,154 @@
+flowchart TD
+
+subgraph group_g1["Entry &amp; Wiring"]
+  node_main["main<br/>[contour.go]"]
+  node_do_serve["Server.doServe<br/>[serve.go]"]
+  node_bootstrap["WriteBootstrap<br/>[bootstrap.go]"]
+  node_status_writer["loadBalancerStatusWriter<br/>[ingressstatus.go]"]
+end
+
+subgraph group_g2["Kubernetes Watch Layer"]
+  node_event_recorder["EventRecorder<br/>[metrics.go]"]
+  node_event_handler["EventHandler<br/>[handler.go]"]
+end
+
+subgraph group_g3["DAG Build"]
+  node_kubernetes_cache["KubernetesCache<br/>[cache.go]"]
+  node_dag_builder["Builder<br/>[builder.go]"]
+  node_httpproxy_processor["HTTPProxyProcessor"]
+  node_ingress_processor["IngressProcessor"]
+  node_gatewayapi_processor["GatewayAPIProcessor"]
+  node_listener_processor["ListenerProcessor"]
+  node_dag["DAG<br/>[dag.go]"]
+  node_dag_route["Route<br/>[dag.go]"]
+  node_dag_virtualhost["VirtualHost<br/>[dag.go]"]
+  node_dag_cluster["Cluster<br/>[dag.go]"]
+  node_dag_secret["Secret<br/>[dag.go]"]
+end
+
+subgraph group_g4["HTTPProxy API Types"]
+  node_httpproxy_type["HTTPProxy<br/>[httpproxy.go]"]
+  node_httpproxy_spec["HTTPProxySpec<br/>[httpproxy.go]"]
+  node_lb_policy["LoadBalancerPolicy<br/>[httpproxy.go]"]
+end
+
+subgraph group_g5["Envoy Resource Caches"]
+  node_snapshot_handler["SnapshotHandler<br/>[snapshot.go]"]
+  node_listener_cache["ListenerCache<br/>[listener.go]"]
+  node_route_cache["RouteCache<br/>[route.go]"]
+  node_cluster_cache["ClusterCache<br/>[cluster.go]"]
+  node_secret_cache["SecretCache<br/>[secret.go]"]
+  node_runtime_cache["RuntimeCache<br/>[runtime.go]"]
+  node_endpoint_translator["EndpointSliceTranslator"]
+end
+
+subgraph group_g6["xDS Serving"]
+  node_grpc_server["NewServer<br/>[server.go]"]
+  node_xds_v3_server["v3 Server<br/>[server.go]"]
+  node_callbacks["NewRequestLoggingCallbacks<br/>[callbacks.go]"]
+  node_constant_hash["ConstantHash<br/>[hash.go]"]
+end
+
+subgraph group_g7["Observability &amp; Status"]
+  node_metrics["Metrics<br/>[metrics.go]"]
+  node_rebuild_observer["RebuildMetricsObserver<br/>[metrics.go]"]
+  node_status_cache["status.Cache<br/>[cache.go]"]
+end
+
+node_main -->|"runs serve"| node_do_serve
+node_main -->|"generates config"| node_bootstrap
+node_do_serve -->|"wires events"| node_event_handler
+node_do_serve -->|"counts ops"| node_event_recorder
+node_do_serve -->|"starts gRPC"| node_grpc_server
+node_do_serve -->|"adds runnable"| node_status_writer
+node_do_serve -->|"registers"| node_metrics
+node_event_recorder -->|"forwards"| node_event_handler
+node_event_recorder -->|"bumps counters"| node_metrics
+node_event_handler -->|"inserts objects"| node_kubernetes_cache
+node_event_handler -->|"rebuilds after holdoff"| node_dag_builder
+node_httpproxy_type -->|"carries"| node_httpproxy_spec
+node_httpproxy_spec -->|"may embed"| node_lb_policy
+node_httpproxy_type -->|"watched into"| node_kubernetes_cache
+node_kubernetes_cache -->|"read during Build"| node_dag_builder
+node_dag_builder -->|"runs"| node_httpproxy_processor
+node_dag_builder -->|"runs"| node_ingress_processor
+node_dag_builder -->|"runs"| node_gatewayapi_processor
+node_listener_processor -->|"seeds listeners"| node_dag
+node_ingress_processor -->|"fills"| node_dag
+node_httpproxy_processor -->|"fills"| node_dag
+node_gatewayapi_processor -->|"fills"| node_dag
+node_httpproxy_processor -->|"reads CRDs"| node_httpproxy_type
+node_dag -->|"holds"| node_dag_route
+node_dag -->|"holds"| node_dag_virtualhost
+node_dag_virtualhost -->|"routes"| node_dag_route
+node_dag_route -->|"points to"| node_dag_cluster
+node_dag_cluster -->|"secured by"| node_dag_secret
+node_dag -->|"OnChange"| node_listener_cache
+node_dag -->|"OnChange"| node_route_cache
+node_dag -->|"OnChange"| node_cluster_cache
+node_dag -->|"OnChange"| node_secret_cache
+node_dag -->|"OnChange"| node_runtime_cache
+node_endpoint_translator -->|"refreshes EDS"| node_snapshot_handler
+node_endpoint_translator -->|"reads backends"| node_dag_cluster
+node_dag_builder -->|"times rebuilds"| node_metrics
+node_dag -->|"carries"| node_status_cache
+node_rebuild_observer -->|"reads proxy updates"| node_status_cache
+node_event_handler -->|"notifies"| node_rebuild_observer
+node_rebuild_observer -->|"reports route counts"| node_metrics
+node_listener_cache -->|"supplies resources"| node_snapshot_handler
+node_route_cache -->|"supplies resources"| node_snapshot_handler
+node_cluster_cache -->|"supplies resources"| node_snapshot_handler
+node_secret_cache -->|"supplies resources"| node_snapshot_handler
+node_runtime_cache -->|"supplies resources"| node_snapshot_handler
+node_snapshot_handler -->|"uses node hash"| node_constant_hash
+node_snapshot_handler -->|"exposes cache"| node_grpc_server
+node_callbacks -->|"hooks streams"| node_xds_v3_server
+
+click node_main "https://github.com/projectcontour/contour/blob/main/cmd/contour/contour.go"
+click node_do_serve "https://github.com/projectcontour/contour/blob/main/cmd/contour/serve.go"
+click node_bootstrap "https://github.com/projectcontour/contour/blob/main/internal/envoy/v3/bootstrap.go"
+click node_status_writer "https://github.com/projectcontour/contour/blob/main/cmd/contour/ingressstatus.go"
+click node_event_recorder "https://github.com/projectcontour/contour/blob/main/internal/contour/metrics.go"
+click node_event_handler "https://github.com/projectcontour/contour/blob/main/internal/contour/handler.go"
+click node_kubernetes_cache "https://github.com/projectcontour/contour/blob/main/internal/dag/cache.go"
+click node_dag_builder "https://github.com/projectcontour/contour/blob/main/internal/dag/builder.go"
+click node_httpproxy_processor "https://github.com/projectcontour/contour/blob/main/internal/dag/httpproxy_processor.go"
+click node_ingress_processor "https://github.com/projectcontour/contour/blob/main/internal/dag/ingress_processor.go"
+click node_gatewayapi_processor "https://github.com/projectcontour/contour/blob/main/internal/dag/gatewayapi_processor.go"
+click node_listener_processor "https://github.com/projectcontour/contour/blob/main/internal/dag/listener_processor.go"
+click node_dag "https://github.com/projectcontour/contour/blob/main/internal/dag/dag.go"
+click node_dag_route "https://github.com/projectcontour/contour/blob/main/internal/dag/dag.go"
+click node_dag_virtualhost "https://github.com/projectcontour/contour/blob/main/internal/dag/dag.go"
+click node_dag_cluster "https://github.com/projectcontour/contour/blob/main/internal/dag/dag.go"
+click node_dag_secret "https://github.com/projectcontour/contour/blob/main/internal/dag/dag.go"
+click node_httpproxy_type "https://github.com/projectcontour/contour/blob/main/apis/projectcontour/v1/httpproxy.go"
+click node_httpproxy_spec "https://github.com/projectcontour/contour/blob/main/apis/projectcontour/v1/httpproxy.go"
+click node_lb_policy "https://github.com/projectcontour/contour/blob/main/apis/projectcontour/v1/httpproxy.go"
+click node_snapshot_handler "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/snapshot.go"
+click node_listener_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/listener.go"
+click node_route_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/route.go"
+click node_cluster_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/cluster.go"
+click node_secret_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/secret.go"
+click node_runtime_cache "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/runtime.go"
+click node_endpoint_translator "https://github.com/projectcontour/contour/blob/main/internal/xdscache/v3/endpointslicetranslator.go"
+click node_grpc_server "https://github.com/projectcontour/contour/blob/main/internal/xds/server.go"
+click node_xds_v3_server "https://github.com/projectcontour/contour/blob/main/internal/xds/v3/server.go"
+click node_callbacks "https://github.com/projectcontour/contour/blob/main/internal/xds/v3/callbacks.go"
+click node_constant_hash "https://github.com/projectcontour/contour/blob/main/internal/xds/v3/hash.go"
+click node_metrics "https://github.com/projectcontour/contour/blob/main/internal/metrics/metrics.go"
+click node_rebuild_observer "https://github.com/projectcontour/contour/blob/main/internal/contour/metrics.go"
+click node_status_cache "https://github.com/projectcontour/contour/blob/main/internal/status/cache.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_do_serve,node_bootstrap,node_status_writer,node_metrics,node_rebuild_observer,node_status_cache toneBlue
+class node_event_recorder,node_event_handler toneAmber
+class node_kubernetes_cache,node_dag_builder,node_httpproxy_processor,node_ingress_processor,node_gatewayapi_processor,node_listener_processor,node_dag,node_dag_route,node_dag_virtualhost,node_dag_cluster,node_dag_secret toneMint
+class node_httpproxy_type,node_httpproxy_spec,node_lb_policy toneRose
+class node_snapshot_handler,node_listener_cache,node_route_cache,node_cluster_cache,node_secret_cache,node_runtime_cache,node_endpoint_translator toneIndigo
+class node_grpc_server,node_xds_v3_server,node_callbacks,node_constant_hash toneTeal
