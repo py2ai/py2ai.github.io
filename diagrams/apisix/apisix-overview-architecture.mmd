@@ -1,0 +1,73 @@
+flowchart TD
+
+subgraph group_g_boot["Bootstrap &amp; request phases"]
+  node_init{{"http_init_worker<br/>[init.lua]"}}
+  node_access["http_access_phase<br/>[init.lua]"]
+end
+
+subgraph group_g_route["HTTP routing engine"]
+  node_router["router.lua<br/>[router.lua]"]
+  node_radixtree{{"radixtree_uri match<br/>[radixtree_uri.lua]"}}
+end
+
+subgraph group_g_plugin["Plugin framework"]
+  node_plugin[("plugin framework<br/>[plugin.lua]")]
+end
+
+subgraph group_g_bal["Upstream &amp; load balancing"]
+  node_upstream["upstream.set_by_route<br/>[upstream.lua]"]
+  node_balancer{{"pick_server<br/>[balancer.lua]"}}
+end
+
+subgraph group_g_config["Config store &#40;etcd / YAML&#41;"]
+  node_config_etcd[("config_etcd<br/>[config_etcd.lua]")]
+  node_config_yaml[("config_yaml &#40;standalone&#41;<br/>[config_yaml.lua]")]
+end
+
+subgraph group_g_admin["Admin API &amp; CLI"]
+  node_cli["apisix start<br/>[ops.lua]"]
+  node_admin["Admin API<br/>[init.lua]"]
+  node_admin_routes["admin/routes<br/>[routes.lua]"]
+end
+
+node_cli -->|"start launches workers, L1087"| node_init
+node_init -->|"watch config, L151"| node_config_etcd
+node_init -->|"standalone provider swap"| node_config_yaml
+node_init -->|"plugin.init_worker, L159"| node_plugin
+node_init -->|"router.http_init_worker, L160"| node_router
+node_router -->|"require radixtree_uri, L91"| node_radixtree
+node_config_etcd -->|"route updates refresh tree"| node_radixtree
+node_config_yaml -->|"yaml routes load"| node_radixtree
+node_admin -->|"resource dispatch, L254"| node_admin_routes
+node_admin_routes -->|"writes routes to etcd"| node_config_etcd
+node_access -->|"router_http.match, L991"| node_radixtree
+node_access -->|"run_plugin rewrite+access, L1071"| node_plugin
+node_access -->|"handle_upstream, L781"| node_upstream
+node_upstream -->|"pick_server, L787"| node_balancer
+
+click node_cli "https://github.com/apache/apisix/blob/master/apisix/cli/ops.lua"
+click node_init "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_access "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_router "https://github.com/apache/apisix/blob/master/apisix/router.lua"
+click node_radixtree "https://github.com/apache/apisix/blob/master/apisix/http/router/radixtree_uri.lua"
+click node_plugin "https://github.com/apache/apisix/blob/master/apisix/plugin.lua"
+click node_upstream "https://github.com/apache/apisix/blob/master/apisix/upstream.lua"
+click node_balancer "https://github.com/apache/apisix/blob/master/apisix/balancer.lua"
+click node_config_etcd "https://github.com/apache/apisix/blob/master/apisix/core/config_etcd.lua"
+click node_config_yaml "https://github.com/apache/apisix/blob/master/apisix/core/config_yaml.lua"
+click node_admin "https://github.com/apache/apisix/blob/master/apisix/admin/init.lua"
+click node_admin_routes "https://github.com/apache/apisix/blob/master/apisix/admin/routes.lua"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init,node_access toneBlue
+class node_router,node_radixtree toneAmber
+class node_plugin toneMint
+class node_upstream,node_balancer toneRose
+class node_config_etcd,node_config_yaml toneIndigo
+class node_cli,node_admin,node_admin_routes toneTeal

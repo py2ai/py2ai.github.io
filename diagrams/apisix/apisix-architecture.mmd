@@ -1,0 +1,149 @@
+flowchart TD
+
+subgraph group_g_boot["Bootstrap &amp; request phases"]
+  node_init{{"http_init_worker<br/>[init.lua]"}}
+  node_access{{"http_access_phase<br/>[init.lua]"}}
+  node_common_phase["common_phase<br/>[init.lua]"]
+  node_handle_upstream["handle_upstream<br/>[init.lua]"]
+  node_balancer_phase["http_balancer_phase<br/>[init.lua]"]
+  node_header_filter["http_header_filter_phase<br/>[init.lua]"]
+  node_body_filter["http_body_filter_phase<br/>[init.lua]"]
+  node_log_phase["http_log_phase<br/>[init.lua]"]
+end
+
+subgraph group_g_router["HTTP router modules"]
+  node_router["router.lua<br/>[router.lua]"]
+  node_radixtree_uri{{"radixtree_uri<br/>[radixtree_uri.lua]"}}
+  node_radixtree_host["radixtree_host_uri"]
+  node_api_router["api_router<br/>[api_router.lua]"]
+end
+
+subgraph group_g_pluginfw["Plugin framework"]
+  node_plugin_load[("plugin.load<br/>[plugin.lua]")]
+  node_plugin_sort["sort_plugin<br/>[plugin.lua]"]
+  node_plugin_merge["merge_service_route<br/>[plugin.lua]"]
+  node_plugin_filter["plugin.filter<br/>[plugin.lua]"]
+  node_plugin_run{{"run_plugin<br/>[plugin.lua]"}}
+end
+
+subgraph group_g_plugins["Built-in plugins"]
+  node_key_auth["key-auth<br/>[key-auth.lua]"]
+  node_proxy_rewrite["proxy-rewrite<br/>[proxy-rewrite.lua]"]
+  node_limit_req["limit-req<br/>[limit-req.lua]"]
+  node_ai_proxy["ai-proxy<br/>[ai-proxy.lua]"]
+  node_ai_rate["ai-rate-limiting"]
+  node_prometheus["prometheus<br/>[prometheus.lua]"]
+end
+
+subgraph group_g_bal["Upstream &amp; balancers"]
+  node_upstream["upstream.set_by_route<br/>[upstream.lua]"]
+  node_balancer{{"pick_server<br/>[balancer.lua]"}}
+  node_roundrobin["roundrobin<br/>[roundrobin.lua]"]
+  node_least_conn["least_conn<br/>[least_conn.lua]"]
+end
+
+subgraph group_g_config["Config centers"]
+  node_core[("core.lua<br/>[core.lua]")]
+  node_config_etcd[("config_etcd<br/>[config_etcd.lua]")]
+  node_config_yaml[("config_yaml<br/>[config_yaml.lua]")]
+end
+
+subgraph group_g_admin["Admin API"]
+  node_admin["admin.run<br/>[init.lua]"]
+  node_admin_resource["admin/resource<br/>[resource.lua]"]
+  node_admin_routes["admin/routes<br/>[routes.lua]"]
+end
+
+subgraph group_g_cli["Command line"]
+  node_cli["ops.start<br/>[ops.lua]"]
+end
+
+node_cli -->|"apisix start boots workers, L1087"| node_init
+node_init -->|"requests enter access phase"| node_access
+node_access -->|"before_proxy shared hooks, L678"| node_common_phase
+node_access -->|"after access plugins, L1109"| node_handle_upstream
+node_init -->|"balancer stage registered"| node_balancer_phase
+node_balancer_phase -->|"load_balancer.run, L1669"| node_balancer
+node_header_filter -->|"response flow"| node_body_filter
+node_body_filter -->|"final stage, L1620"| node_log_phase
+node_init -->|"router.http_init_worker, L160"| node_router
+node_router -->|"require radixtree_uri, L91"| node_radixtree_uri
+node_router -->|"config-selected alt, L87"| node_radixtree_host
+node_router -->|"_M.api control router, L108"| node_api_router
+node_access -->|"router_http.match, L991"| node_radixtree_uri
+node_init -->|"plugin.init_worker, L159"| node_plugin_load
+node_plugin_load -->|"priority order, L142"| node_plugin_sort
+node_access -->|"merge_service_route, L1037"| node_plugin_merge
+node_plugin_merge -->|"merged route conf"| node_plugin_filter
+node_access -->|"filter&#40;api_ctx, route&#41;, L1069"| node_plugin_filter
+node_plugin_filter -->|"rewrite then access, L1071"| node_plugin_run
+node_plugin_run -->|"rewrite: check apikey, L110"| node_key_auth
+node_plugin_run -->|"rewrite: mutate URI/headers, L309"| node_proxy_rewrite
+node_plugin_run -->|"access: leaky bucket, L138"| node_limit_req
+node_plugin_run -->|"access: LLM provider, L56"| node_ai_proxy
+node_plugin_run -->|"access: token window, L295"| node_ai_rate
+node_plugin_run -->|"collect metrics, L105"| node_prometheus
+node_handle_upstream -->|"set_upstream, L781"| node_upstream
+node_handle_upstream -->|"pick_server, L787"| node_balancer
+node_upstream -->|"node/TLS info"| node_balancer
+node_balancer -->|"type=roundrobin, L154"| node_roundrobin
+node_balancer -->|"type=least_conn, L154"| node_least_conn
+node_init -->|"core.config.init_worker, L151"| node_core
+node_core -->|"config_provider=etcd, L34"| node_config_etcd
+node_core -->|"standalone provider, L31"| node_config_yaml
+node_config_etcd -->|"route updates refresh tree"| node_radixtree_uri
+node_config_yaml -->|"yaml routes load"| node_radixtree_uri
+node_config_yaml -->|"standalone plugin list"| node_plugin_load
+node_init -->|"admin.init_worker, L145"| node_admin
+node_admin -->|"dispatch by resource, L254"| node_admin_routes
+node_admin_routes -->|"resource.new instance, L183"| node_admin_resource
+node_admin_routes -->|"persist via core.etcd, L81"| node_config_etcd
+
+click node_cli "https://github.com/apache/apisix/blob/master/apisix/cli/ops.lua"
+click node_init "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_access "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_common_phase "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_handle_upstream "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_balancer_phase "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_header_filter "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_body_filter "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_log_phase "https://github.com/apache/apisix/blob/master/apisix/init.lua"
+click node_router "https://github.com/apache/apisix/blob/master/apisix/router.lua"
+click node_radixtree_uri "https://github.com/apache/apisix/blob/master/apisix/http/router/radixtree_uri.lua"
+click node_radixtree_host "https://github.com/apache/apisix/blob/master/apisix/http/router/radixtree_host_uri.lua"
+click node_api_router "https://github.com/apache/apisix/blob/master/apisix/api_router.lua"
+click node_plugin_load "https://github.com/apache/apisix/blob/master/apisix/plugin.lua"
+click node_plugin_sort "https://github.com/apache/apisix/blob/master/apisix/plugin.lua"
+click node_plugin_merge "https://github.com/apache/apisix/blob/master/apisix/plugin.lua"
+click node_plugin_filter "https://github.com/apache/apisix/blob/master/apisix/plugin.lua"
+click node_plugin_run "https://github.com/apache/apisix/blob/master/apisix/plugin.lua"
+click node_key_auth "https://github.com/apache/apisix/blob/master/apisix/plugins/key-auth.lua"
+click node_proxy_rewrite "https://github.com/apache/apisix/blob/master/apisix/plugins/proxy-rewrite.lua"
+click node_limit_req "https://github.com/apache/apisix/blob/master/apisix/plugins/limit-req.lua"
+click node_ai_proxy "https://github.com/apache/apisix/blob/master/apisix/plugins/ai-proxy.lua"
+click node_ai_rate "https://github.com/apache/apisix/blob/master/apisix/plugins/ai-rate-limiting.lua"
+click node_prometheus "https://github.com/apache/apisix/blob/master/apisix/plugins/prometheus.lua"
+click node_upstream "https://github.com/apache/apisix/blob/master/apisix/upstream.lua"
+click node_balancer "https://github.com/apache/apisix/blob/master/apisix/balancer.lua"
+click node_roundrobin "https://github.com/apache/apisix/blob/master/apisix/balancer/roundrobin.lua"
+click node_least_conn "https://github.com/apache/apisix/blob/master/apisix/balancer/least_conn.lua"
+click node_core "https://github.com/apache/apisix/blob/master/apisix/core.lua"
+click node_config_etcd "https://github.com/apache/apisix/blob/master/apisix/core/config_etcd.lua"
+click node_config_yaml "https://github.com/apache/apisix/blob/master/apisix/core/config_yaml.lua"
+click node_admin "https://github.com/apache/apisix/blob/master/apisix/admin/init.lua"
+click node_admin_resource "https://github.com/apache/apisix/blob/master/apisix/admin/resource.lua"
+click node_admin_routes "https://github.com/apache/apisix/blob/master/apisix/admin/routes.lua"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init,node_access,node_common_phase,node_handle_upstream,node_balancer_phase,node_header_filter,node_body_filter,node_log_phase,node_admin,node_admin_resource,node_admin_routes toneBlue
+class node_router,node_radixtree_uri,node_radixtree_host,node_api_router,node_cli toneAmber
+class node_plugin_load,node_plugin_sort,node_plugin_merge,node_plugin_filter,node_plugin_run toneMint
+class node_key_auth,node_proxy_rewrite,node_limit_req,node_ai_proxy,node_ai_rate,node_prometheus toneRose
+class node_upstream,node_balancer,node_roundrobin,node_least_conn toneIndigo
+class node_core,node_config_etcd,node_config_yaml toneTeal
