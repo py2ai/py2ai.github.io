@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_entry["CLI &amp; Config"]
+  node_crio_main["cmd/crio main&#40;&#41;<br/>[main.go]"]
+  node_criocli["criocli.GetAndMergeConfig<br/>[criocli.go]"]
+  node_config_pkg["libconfig.Config<br/>[config.go]"]
+  node_config_validate["Config.Validate<br/>[config.go]"]
+end
+
+subgraph group_server["CRI Server Methods"]
+  node_server_struct["Server struct<br/>[server.go]"]
+  node_server_new["server.New<br/>[server.go]"]
+  node_sandbox_run["RunPodSandbox<br/>[sandbox_run.go]"]
+  node_run_sandbox_linux["runPodSandbox &#40;linux&#41;"]
+  node_sandbox_net["setupSandboxNetwork"]
+  node_sandbox_storage_l["setupSandboxStorage"]
+  node_sandbox_stop["StopPodSandbox<br/>[sandbox_stop.go]"]
+  node_sandbox_remove["RemovePodSandbox<br/>[sandbox_remove.go]"]
+  node_ctr_create["CreateContainer"]
+  node_ctr_mounts["setupContainerMounts"]
+  node_ctr_start["StartContainer<br/>[container_start.go]"]
+  node_ctr_stop["StopContainer<br/>[container_stop.go]"]
+  node_ctr_remove["RemoveContainer"]
+  node_exec_sync["ExecSync"]
+  node_img_pull["PullImage<br/>[image_pull.go]"]
+  node_img_remove["RemoveImage<br/>[image_remove.go]"]
+end
+
+subgraph group_state["State &amp; Bookkeeping"]
+  node_lib_cs["lib.ContainerServer"]
+  node_sandbox_struct["sandbox.Sandbox<br/>[sandbox.go]"]
+  node_oci_container["oci.Container<br/>[container.go]"]
+end
+
+subgraph group_storage["containers/storage &amp; Image"]
+  node_storage_create_pod["storage CreatePodSandbox<br/>[runtime.go]"]
+  node_storage_create_ctr["storage CreateContainer<br/>[runtime.go]"]
+  node_storage_start["storage StartContainer<br/>[runtime.go]"]
+  node_storage_stop["storage StopContainer<br/>[runtime.go]"]
+  node_image_svc["imageService.PullImage<br/>[image.go]"]
+end
+
+subgraph group_oci["OCI Runtime Dispatch"]
+  node_oci_runtime["oci.Runtime<br/>[oci.go]"]
+  node_oci_impl["RuntimeImpl interface<br/>[oci.go]"]
+  node_oci_dispatch["Runtime.RuntimeImpl&#40;&#41;<br/>[oci.go]"]
+end
+
+subgraph group_impls["Runtime Implementations"]
+  node_runtime_oci["runtimeOCI<br/>[runtime_oci.go]"]
+  node_runtime_vm["runtimeVM<br/>[runtime_vm.go]"]
+  node_shim_daemon["startRuntimeDaemon<br/>[runtime_vm.go]"]
+end
+
+node_crio_main -->|"GetAndMergeConfigFromContext"| node_criocli
+node_criocli -->|"merge flags + files"| node_config_pkg
+node_crio_main -->|"Validate&#40;true&#41;"| node_config_validate
+node_crio_main -->|"server.New&#40;ctx, config&#41;"| node_server_new
+node_server_new -->|"lib.New"| node_lib_cs
+node_server_new -->|"oci.New"| node_oci_runtime
+node_server_struct -->|"embeds *lib.ContainerServer"| node_lib_cs
+node_lib_cs -->|"owns sandbox store"| node_sandbox_struct
+node_lib_cs -->|"owns container store"| node_oci_container
+node_lib_cs -->|"StorageRuntimeServer &#40;L164&#41;"| node_storage_create_pod
+node_lib_cs -->|"StorageImageServer &#40;L140&#41;"| node_image_svc
+node_sandbox_run -->|"platform call"| node_run_sandbox_linux
+node_run_sandbox_linux -->|"CreatePodSandbox &#40;L625&#41;"| node_storage_create_pod
+node_run_sandbox_linux -->|"CNI network &#40;L895&#41;"| node_sandbox_net
+node_run_sandbox_linux -->|"setupSandboxStorage"| node_sandbox_storage_l
+node_run_sandbox_linux -->|"oci.NewContainer &#40;L1674&#41;"| node_oci_container
+node_sandbox_stop -->|"stop containers via RuntimeImpl"| node_oci_runtime
+node_sandbox_remove -->|"RemoveSandbox &#40;L846&#41;"| node_lib_cs
+node_ctr_create -->|"volumes + secrets"| node_ctr_mounts
+node_ctr_create -->|"createContainerOrPodSandbox"| node_storage_create_ctr
+node_ctr_create -->|"NewContainer from specgen"| node_oci_container
+node_ctr_start -->|"Runtime&#40;&#41;.StartContainer &#40;L132&#41;"| node_oci_runtime
+node_ctr_stop -->|"stopContainer &#40;L56&#41;"| node_oci_runtime
+node_ctr_remove -->|"Runtime&#40;&#41;.DeleteContainer"| node_oci_runtime
+node_exec_sync -->|"ExecSyncContainer"| node_oci_runtime
+node_img_pull -->|"is.PullImage &#40;L423&#41;"| node_image_svc
+node_img_remove -->|"UntagImage"| node_image_svc
+node_oci_runtime -->|"exposes interface"| node_oci_impl
+node_oci_impl -->|"handler-keyed selection"| node_oci_dispatch
+node_oci_dispatch -->|"type oci &#40;host processes&#41;"| node_runtime_oci
+node_oci_dispatch -->|"type vm &#40;shim v2&#41;"| node_runtime_vm
+node_runtime_vm -->|"spawn shim, parse ttrpc addr"| node_shim_daemon
+node_storage_create_ctr -->|"mark running"| node_storage_start
+node_ctr_stop -->|"persist stopped state"| node_storage_stop
+
+click node_crio_main "https://github.com/cri-o/cri-o/blob/main/cmd/crio/main.go"
+click node_criocli "https://github.com/cri-o/cri-o/blob/main/internal/criocli/criocli.go"
+click node_config_pkg "https://github.com/cri-o/cri-o/blob/main/pkg/config/config.go"
+click node_config_validate "https://github.com/cri-o/cri-o/blob/main/pkg/config/config.go"
+click node_server_struct "https://github.com/cri-o/cri-o/blob/main/server/server.go"
+click node_server_new "https://github.com/cri-o/cri-o/blob/main/server/server.go"
+click node_sandbox_run "https://github.com/cri-o/cri-o/blob/main/server/sandbox_run.go"
+click node_run_sandbox_linux "https://github.com/cri-o/cri-o/blob/main/server/sandbox_run_linux.go"
+click node_sandbox_net "https://github.com/cri-o/cri-o/blob/main/server/sandbox_run_linux.go"
+click node_sandbox_storage_l "https://github.com/cri-o/cri-o/blob/main/server/sandbox_run_linux.go"
+click node_sandbox_stop "https://github.com/cri-o/cri-o/blob/main/server/sandbox_stop.go"
+click node_sandbox_remove "https://github.com/cri-o/cri-o/blob/main/server/sandbox_remove.go"
+click node_ctr_create "https://github.com/cri-o/cri-o/blob/main/server/container_create.go"
+click node_ctr_mounts "https://github.com/cri-o/cri-o/blob/main/server/container_create.go"
+click node_ctr_start "https://github.com/cri-o/cri-o/blob/main/server/container_start.go"
+click node_ctr_stop "https://github.com/cri-o/cri-o/blob/main/server/container_stop.go"
+click node_ctr_remove "https://github.com/cri-o/cri-o/blob/main/server/container_remove.go"
+click node_exec_sync "https://github.com/cri-o/cri-o/blob/main/server/container_execsync.go"
+click node_img_pull "https://github.com/cri-o/cri-o/blob/main/server/image_pull.go"
+click node_img_remove "https://github.com/cri-o/cri-o/blob/main/server/image_remove.go"
+click node_lib_cs "https://github.com/cri-o/cri-o/blob/main/internal/lib/container_server.go"
+click node_sandbox_struct "https://github.com/cri-o/cri-o/blob/main/internal/lib/sandbox/sandbox.go"
+click node_oci_container "https://github.com/cri-o/cri-o/blob/main/internal/oci/container.go"
+click node_storage_create_pod "https://github.com/cri-o/cri-o/blob/main/internal/storage/runtime.go"
+click node_storage_create_ctr "https://github.com/cri-o/cri-o/blob/main/internal/storage/runtime.go"
+click node_storage_start "https://github.com/cri-o/cri-o/blob/main/internal/storage/runtime.go"
+click node_storage_stop "https://github.com/cri-o/cri-o/blob/main/internal/storage/runtime.go"
+click node_image_svc "https://github.com/cri-o/cri-o/blob/main/internal/storage/image.go"
+click node_oci_runtime "https://github.com/cri-o/cri-o/blob/main/internal/oci/oci.go"
+click node_oci_impl "https://github.com/cri-o/cri-o/blob/main/internal/oci/oci.go"
+click node_oci_dispatch "https://github.com/cri-o/cri-o/blob/main/internal/oci/oci.go"
+click node_runtime_oci "https://github.com/cri-o/cri-o/blob/main/internal/oci/runtime_oci.go"
+click node_runtime_vm "https://github.com/cri-o/cri-o/blob/main/internal/oci/runtime_vm.go"
+click node_shim_daemon "https://github.com/cri-o/cri-o/blob/main/internal/oci/runtime_vm.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_crio_main,node_criocli,node_config_pkg,node_config_validate toneBlue
+class node_server_struct,node_server_new,node_sandbox_run,node_run_sandbox_linux,node_sandbox_net,node_sandbox_storage_l,node_sandbox_stop,node_sandbox_remove,node_ctr_create,node_ctr_mounts,node_ctr_start,node_ctr_stop,node_ctr_remove,node_exec_sync,node_img_pull,node_img_remove toneAmber
+class node_lib_cs,node_sandbox_struct,node_oci_container toneMint
+class node_storage_create_pod,node_storage_create_ctr,node_storage_start,node_storage_stop,node_image_svc toneRose
+class node_oci_runtime,node_oci_impl,node_oci_dispatch toneIndigo
+class node_runtime_oci,node_runtime_vm,node_shim_daemon toneTeal
