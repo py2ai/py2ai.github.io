@@ -1,0 +1,138 @@
+{
+  "owner": "containerd",
+  "repo": "containerd",
+  "branch": "main",
+  "groups": [
+    { "id": "clients", "name": "clients", "label": "Clients" },
+    { "id": "daemon", "name": "daemon", "label": "Daemon" },
+    { "id": "grpc_api", "name": "grpc_api", "label": "gRPC Services" },
+    { "id": "runtime", "name": "runtime", "label": "Runtime v2" },
+    { "id": "storage", "name": "storage", "label": "Storage" },
+    { "id": "events", "name": "events", "label": "Events" }
+  ],
+  "nodes": [
+    {
+      "id": "ctr",
+      "label": "ctr CLI",
+      "file": "run.go",
+      "path": "cmd/ctr/commands/run/run.go",
+      "group": "clients",
+      "groupId": "clients",
+      "desc": "ctr run builds the OCI spec and asks the daemon to create and start a container (var Command, L96)"
+    },
+    {
+      "id": "daemon_main",
+      "label": "containerd main()",
+      "file": "main.go",
+      "path": "cmd/containerd/command/main.go",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "Daemon entrypoint: builds the server, then srv.Start(ctx) and srv.Wait() serve forever (L260, L266)"
+    },
+    {
+      "id": "server",
+      "label": "Server + plugin registry",
+      "file": "server.go",
+      "path": "cmd/containerd/server/server.go",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "Server.New wires config into plugin InitContexts and LoadPlugins (L313) instantiates every registered service plugin"
+    },
+    {
+      "id": "tasks_service",
+      "label": "Tasks gRPC service",
+      "file": "service.go",
+      "path": "plugins/services/tasks/service.go",
+      "group": "grpc_api",
+      "groupId": "grpc_api",
+      "desc": "io.containerd.runtime.v1.tasks plugin registered at L36; Register (L57) exposes Create/Start/Delete/Kill on the gRPC server"
+    },
+    {
+      "id": "content_service",
+      "label": "Content gRPC service",
+      "file": "service.go",
+      "path": "plugins/services/content/service.go",
+      "group": "grpc_api",
+      "groupId": "grpc_api",
+      "desc": "Content service (ID \"content\", L31) wraps the content.Store behind contentserver.New (L40)"
+    },
+    {
+      "id": "snapshots_service",
+      "label": "Snapshots gRPC service",
+      "file": "snapshotters.go",
+      "path": "plugins/services/snapshots/snapshotters.go",
+      "group": "grpc_api",
+      "groupId": "grpc_api",
+      "desc": "Serves every snapshotter registered in the metadata DB via m.(*metadata.DB).Snapshotters() (L40)"
+    },
+    {
+      "id": "events_service",
+      "label": "Events gRPC service",
+      "file": "service.go",
+      "path": "plugins/services/events/service.go",
+      "group": "events",
+      "groupId": "events",
+      "desc": "NewService (L66) binds the event exchange; RegisterTTRPC (L80) also serves it to shims over ttrpc"
+    },
+    {
+      "id": "task_manager",
+      "label": "TaskManager",
+      "file": "task_manager.go",
+      "path": "core/runtime/v2/task_manager.go",
+      "group": "runtime",
+      "groupId": "runtime",
+      "desc": "NewTaskManager (L138) routes task RPCs to the right per-container shim by namespace and container ID"
+    },
+    {
+      "id": "shim_manager",
+      "label": "ShimManager",
+      "file": "shim_manager.go",
+      "path": "core/runtime/v2/shim_manager.go",
+      "group": "runtime",
+      "groupId": "runtime",
+      "desc": "NewShimManager (L157) tracks shim binaries; Start (L205) launches a shim per container and connects to it"
+    },
+    {
+      "id": "shim_binary",
+      "label": "containerd-shim-runc-v2",
+      "file": "main.go",
+      "path": "cmd/containerd-shim-runc-v2/main.go",
+      "group": "runtime",
+      "groupId": "runtime",
+      "desc": "Out-of-process shim: main (L29) calls shim.RunShim with manager.NewShimManager(\"io.containerd.runc.v2\") (L30)"
+    },
+    {
+      "id": "snapshotter_iface",
+      "label": "Snapshotter interface",
+      "file": "snapshotter.go",
+      "path": "core/snapshots/snapshotter.go",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "The Prepare/View/Commit contract (L281) every storage driver implements for container root filesystems"
+    },
+    {
+      "id": "metadata_db",
+      "label": "bolt metadata DB",
+      "file": "db.go",
+      "path": "core/metadata/db.go",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "NewDB (L120) creates the single bolt database holding containers, images, namespaces and snapshot keys"
+    }
+  ],
+  "edges": [
+    { "from": "ctr", "to": "daemon_main", "label": "gRPC on /run/containerd/containerd.sock" },
+    { "from": "daemon_main", "to": "server", "label": "server.New(ctx, config)" },
+    { "from": "server", "to": "tasks_service", "label": "LoadPlugins" },
+    { "from": "server", "to": "content_service", "label": "LoadPlugins" },
+    { "from": "server", "to": "snapshots_service", "label": "LoadPlugins" },
+    { "from": "server", "to": "events_service", "label": "LoadPlugins" },
+    { "from": "tasks_service", "to": "task_manager", "label": "delegates task RPCs" },
+    { "from": "task_manager", "to": "shim_manager", "label": "resolve shim instance" },
+    { "from": "shim_manager", "to": "shim_binary", "label": "spawns per-container shim" },
+    { "from": "shim_binary", "to": "events_service", "label": "publishes task events" },
+    { "from": "snapshots_service", "to": "snapshotter_iface", "label": "Prepare/Commit" },
+    { "from": "snapshotter_iface", "to": "metadata_db", "label": "records snapshot keys" },
+    { "from": "content_service", "to": "metadata_db", "label": "blob GC roots" }
+  ]
+}

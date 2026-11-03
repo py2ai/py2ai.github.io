@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_clients["Clients"]
+  node_ctr["ctr CLI<br/>[run.go]"]
+end
+
+subgraph group_daemon["Daemon"]
+  node_daemon_main["containerd main&#40;&#41;<br/>[main.go]"]
+  node_server["Server + plugin registry<br/>[server.go]"]
+end
+
+subgraph group_grpc_api["gRPC Services"]
+  node_tasks_service["Tasks gRPC service<br/>[service.go]"]
+  node_content_service["Content gRPC service<br/>[service.go]"]
+  node_snapshots_service["Snapshots gRPC service<br/>[snapshotters.go]"]
+end
+
+subgraph group_runtime["Runtime v2"]
+  node_task_manager["TaskManager<br/>[task_manager.go]"]
+  node_shim_manager["ShimManager<br/>[shim_manager.go]"]
+  node_shim_binary["containerd-shim-runc-v2<br/>[main.go]"]
+end
+
+subgraph group_storage["Storage"]
+  node_snapshotter_iface["Snapshotter interface<br/>[snapshotter.go]"]
+  node_metadata_db["bolt metadata DB<br/>[db.go]"]
+end
+
+subgraph group_events["Events"]
+  node_events_service["Events gRPC service<br/>[service.go]"]
+end
+
+node_ctr -->|"gRPC on /run/containerd/containerd.sock"| node_daemon_main
+node_daemon_main -->|"server.New&#40;ctx, config&#41;"| node_server
+node_server -->|"LoadPlugins"| node_tasks_service
+node_server -->|"LoadPlugins"| node_content_service
+node_server -->|"LoadPlugins"| node_snapshots_service
+node_server -->|"LoadPlugins"| node_events_service
+node_tasks_service -->|"delegates task RPCs"| node_task_manager
+node_task_manager -->|"resolve shim instance"| node_shim_manager
+node_shim_manager -->|"spawns per-container shim"| node_shim_binary
+node_shim_binary -->|"publishes task events"| node_events_service
+node_snapshots_service -->|"Prepare/Commit"| node_snapshotter_iface
+node_snapshotter_iface -->|"records snapshot keys"| node_metadata_db
+node_content_service -->|"blob GC roots"| node_metadata_db
+
+click node_ctr "https://github.com/containerd/containerd/blob/main/cmd/ctr/commands/run/run.go"
+click node_daemon_main "https://github.com/containerd/containerd/blob/main/cmd/containerd/command/main.go"
+click node_server "https://github.com/containerd/containerd/blob/main/cmd/containerd/server/server.go"
+click node_tasks_service "https://github.com/containerd/containerd/blob/main/plugins/services/tasks/service.go"
+click node_content_service "https://github.com/containerd/containerd/blob/main/plugins/services/content/service.go"
+click node_snapshots_service "https://github.com/containerd/containerd/blob/main/plugins/services/snapshots/snapshotters.go"
+click node_events_service "https://github.com/containerd/containerd/blob/main/plugins/services/events/service.go"
+click node_task_manager "https://github.com/containerd/containerd/blob/main/core/runtime/v2/task_manager.go"
+click node_shim_manager "https://github.com/containerd/containerd/blob/main/core/runtime/v2/shim_manager.go"
+click node_shim_binary "https://github.com/containerd/containerd/blob/main/cmd/containerd-shim-runc-v2/main.go"
+click node_snapshotter_iface "https://github.com/containerd/containerd/blob/main/core/snapshots/snapshotter.go"
+click node_metadata_db "https://github.com/containerd/containerd/blob/main/core/metadata/db.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ctr toneBlue
+class node_daemon_main,node_server toneAmber
+class node_tasks_service,node_content_service,node_snapshots_service toneMint
+class node_task_manager,node_shim_manager,node_shim_binary toneRose
+class node_snapshotter_iface,node_metadata_db toneIndigo
+class node_events_service toneTeal

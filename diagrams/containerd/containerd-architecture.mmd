@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_clients["Clients &amp; Daemon"]
+  node_ctr["ctr run<br/>[run.go]"]
+  node_daemon_main["containerd main&#40;&#41;<br/>[main.go]"]
+  node_server["Server<br/>[server.go]"]
+end
+
+subgraph group_grpc_api["gRPC Service Plugins"]
+  node_tasks_service["Tasks service<br/>[service.go]"]
+  node_tasks_local["Tasks local backend<br/>[local.go]"]
+  node_content_service["Content service<br/>[service.go]"]
+  node_contentserver["contentserver<br/>[contentserver.go]"]
+  node_images_service["Images service<br/>[service.go]"]
+  node_containers_service["Containers service<br/>[service.go]"]
+  node_snapshots_service["Snapshots service<br/>[snapshotters.go]"]
+  node_transfer_service["Transfer service<br/>[service.go]"]
+  node_events_service["Events service<br/>[service.go]"]
+  node_tasks_proto["api.tasks.v1<br/>[tasks.proto]"]
+  node_content_proto["api.content.v1<br/>[content.proto]"]
+end
+
+subgraph group_runtime["Runtime v2 Core"]
+  node_task_manager["TaskManager<br/>[task_manager.go]"]
+  node_shim_manager["ShimManager<br/>[shim_manager.go]"]
+  node_shim_instance["shim client<br/>[shim.go]"]
+  node_shim_task["shimTask<br/>[shim.go]"]
+  node_bundle["Bundle<br/>[bundle.go]"]
+  node_shim_binary_launcher["shim binary launcher<br/>[binary.go]"]
+  node_bridge["ttrpc v2 bridge<br/>[bridge.go]"]
+end
+
+subgraph group_shim["runc v2 Shim"]
+  node_runc_main["shim main&#40;&#41;<br/>[main.go]"]
+  node_runc_task_service["shim task service<br/>[service.go]"]
+  node_shim_proto["shim ttrpc protocol<br/>[shim.proto]"]
+end
+
+subgraph group_storage["Storage &amp; Snapshots"]
+  node_snapshotter_iface["Snapshotter<br/>[snapshotter.go]"]
+  node_metastore_bolt["bolt metastore<br/>[bolt.go]"]
+  node_metadata_db["metadata DB<br/>[db.go]"]
+  node_content_store["content.Store<br/>[content.go]"]
+  node_mounts["mount.Mount<br/>[mount.go]"]
+end
+
+subgraph group_imaging["Image Pipeline"]
+  node_resolver["docker resolver<br/>[resolver.go]"]
+  node_unpacker["Unpacker<br/>[unpacker.go]"]
+  node_transfer_local["local transfer engine<br/>[transfer.go]"]
+  node_exchange["Event exchange<br/>[exchange.go]"]
+end
+
+node_ctr -->|"invokes over gRPC"| node_daemon_main
+node_daemon_main -->|"server.New&#40;ctx, config&#41;"| node_server
+node_server -->|"LoadPlugins"| node_tasks_service
+node_server -->|"LoadPlugins"| node_content_service
+node_server -->|"LoadPlugins"| node_images_service
+node_server -->|"LoadPlugins"| node_containers_service
+node_server -->|"LoadPlugins"| node_snapshots_service
+node_server -->|"LoadPlugins"| node_transfer_service
+node_server -->|"LoadPlugins"| node_events_service
+node_tasks_service -->|"forwards RPCs"| node_tasks_local
+node_tasks_service -->|"serves api.tasks.v1"| node_tasks_proto
+node_content_service -->|"contentserver.New"| node_contentserver
+node_content_service -->|"serves api.content.v1"| node_content_proto
+node_tasks_local -->|"runtime v2 calls"| node_task_manager
+node_task_manager -->|"resolve shim"| node_shim_manager
+node_shim_manager -->|"NewBundle per container"| node_bundle
+node_shim_manager -->|"exec shim binary"| node_shim_binary_launcher
+node_shim_binary_launcher -->|"spawn + bootstrap"| node_runc_main
+node_shim_manager -->|"connects ttrpc"| node_shim_instance
+node_shim_instance -->|"wrapped as task"| node_shim_task
+node_shim_task -->|"versioned task client"| node_bridge
+node_bridge -->|"api.runtime.task.v2"| node_shim_proto
+node_runc_main -->|"shim.RunShim"| node_runc_task_service
+node_runc_task_service -->|"registers TTRPC"| node_shim_proto
+node_runc_task_service -->|"publishes TaskExit"| node_exchange
+node_events_service -->|"Subscribe/Publish"| node_exchange
+node_snapshots_service -->|"per-name snapshotter"| node_snapshotter_iface
+node_snapshotter_iface -->|"key metadata"| node_metastore_bolt
+node_snapshotter_iface -->|"returns &#91;&#93;Mount"| node_mounts
+node_snapshotter_iface -->|"keys in bolt"| node_metadata_db
+node_content_service -->|"backs the service"| node_content_store
+node_content_store -->|"blob metadata"| node_metadata_db
+node_images_service -->|"resolve image refs"| node_resolver
+node_resolver -->|"ingest blobs"| node_content_store
+node_unpacker -->|"reads layers"| node_content_store
+node_unpacker -->|"Prepare + Commit"| node_snapshotter_iface
+node_transfer_service -->|"streams progress"| node_transfer_local
+node_transfer_local -->|"fetch remote layers"| node_resolver
+node_transfer_local -->|"unpack into snapshotter"| node_unpacker
+node_transfer_local -->|"pull progress events"| node_exchange
+
+click node_ctr "https://github.com/containerd/containerd/blob/main/cmd/ctr/commands/run/run.go"
+click node_daemon_main "https://github.com/containerd/containerd/blob/main/cmd/containerd/command/main.go"
+click node_server "https://github.com/containerd/containerd/blob/main/cmd/containerd/server/server.go"
+click node_tasks_service "https://github.com/containerd/containerd/blob/main/plugins/services/tasks/service.go"
+click node_tasks_local "https://github.com/containerd/containerd/blob/main/plugins/services/tasks/local.go"
+click node_content_service "https://github.com/containerd/containerd/blob/main/plugins/services/content/service.go"
+click node_contentserver "https://github.com/containerd/containerd/blob/main/plugins/services/content/contentserver/contentserver.go"
+click node_images_service "https://github.com/containerd/containerd/blob/main/plugins/services/images/service.go"
+click node_containers_service "https://github.com/containerd/containerd/blob/main/plugins/services/containers/service.go"
+click node_snapshots_service "https://github.com/containerd/containerd/blob/main/plugins/services/snapshots/snapshotters.go"
+click node_transfer_service "https://github.com/containerd/containerd/blob/main/plugins/services/transfer/service.go"
+click node_events_service "https://github.com/containerd/containerd/blob/main/plugins/services/events/service.go"
+click node_tasks_proto "https://github.com/containerd/containerd/blob/main/api/services/tasks/v1/tasks.proto"
+click node_content_proto "https://github.com/containerd/containerd/blob/main/api/services/content/v1/content.proto"
+click node_task_manager "https://github.com/containerd/containerd/blob/main/core/runtime/v2/task_manager.go"
+click node_shim_manager "https://github.com/containerd/containerd/blob/main/core/runtime/v2/shim_manager.go"
+click node_shim_instance "https://github.com/containerd/containerd/blob/main/core/runtime/v2/shim.go"
+click node_shim_task "https://github.com/containerd/containerd/blob/main/core/runtime/v2/shim.go"
+click node_bundle "https://github.com/containerd/containerd/blob/main/core/runtime/v2/bundle.go"
+click node_shim_binary_launcher "https://github.com/containerd/containerd/blob/main/core/runtime/v2/binary.go"
+click node_bridge "https://github.com/containerd/containerd/blob/main/core/runtime/v2/bridge.go"
+click node_runc_main "https://github.com/containerd/containerd/blob/main/cmd/containerd-shim-runc-v2/main.go"
+click node_runc_task_service "https://github.com/containerd/containerd/blob/main/cmd/containerd-shim-runc-v2/task/service.go"
+click node_shim_proto "https://github.com/containerd/containerd/blob/main/api/runtime/task/v2/shim.proto"
+click node_snapshotter_iface "https://github.com/containerd/containerd/blob/main/core/snapshots/snapshotter.go"
+click node_metastore_bolt "https://github.com/containerd/containerd/blob/main/core/snapshots/storage/bolt.go"
+click node_metadata_db "https://github.com/containerd/containerd/blob/main/core/metadata/db.go"
+click node_content_store "https://github.com/containerd/containerd/blob/main/core/content/content.go"
+click node_mounts "https://github.com/containerd/containerd/blob/main/core/mount/mount.go"
+click node_resolver "https://github.com/containerd/containerd/blob/main/core/remotes/docker/resolver.go"
+click node_unpacker "https://github.com/containerd/containerd/blob/main/core/unpack/unpacker.go"
+click node_transfer_local "https://github.com/containerd/containerd/blob/main/core/transfer/local/transfer.go"
+click node_exchange "https://github.com/containerd/containerd/blob/main/core/events/exchange/exchange.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ctr,node_daemon_main,node_server toneBlue
+class node_tasks_service,node_tasks_local,node_content_service,node_contentserver,node_images_service,node_containers_service,node_snapshots_service,node_transfer_service,node_events_service,node_tasks_proto,node_content_proto toneAmber
+class node_task_manager,node_shim_manager,node_shim_instance,node_shim_task,node_bundle,node_shim_binary_launcher,node_bridge toneMint
+class node_runc_main,node_runc_task_service,node_shim_proto toneRose
+class node_snapshotter_iface,node_metastore_bolt,node_metadata_db,node_content_store,node_mounts toneIndigo
+class node_resolver,node_unpacker,node_transfer_local,node_exchange toneTeal
