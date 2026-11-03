@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_entrypoint["dockerd entrypoint"]
+  node_dockerd_main["dockerd main&#40;&#41;<br/>[main.go]"]
+  node_daemon_cli["daemonCLI.start<br/>[daemon.go]"]
+  node_config_new["config.New<br/>[config.go]"]
+  node_build_routers["buildRouters<br/>[daemon.go]"]
+  node_load_listeners["loadListeners<br/>[daemon.go]"]
+end
+
+subgraph group_http_api["HTTP API layer"]
+  node_api_server["HTTP server<br/>[server.go]"]
+  node_api_middleware["middleware chain<br/>[middleware.go]"]
+  node_container_router["container router<br/>[container.go]"]
+  node_container_routes["container routes"]
+  node_exec_routes["exec routes<br/>[exec.go]"]
+  node_image_routes["image routes<br/>[image_routes.go]"]
+  node_system_routes["system routes<br/>[system_routes.go]"]
+end
+
+subgraph group_daemon_core["Daemon core"]
+  node_daemon_struct["Daemon struct<br/>[daemon.go]"]
+  node_new_daemon["NewDaemon<br/>[daemon.go]"]
+  node_container_store["memory store<br/>[memory_store.go]"]
+  node_container_model["Container struct<br/>[container.go]"]
+  node_state_machine["State struct<br/>[state.go]"]
+  node_events_bus["events bus<br/>[events.go]"]
+end
+
+subgraph group_exec_layer["Container execution"]
+  node_container_start["ContainerStart<br/>[start.go]"]
+  node_container_start_internal["containerStart<br/>[start.go]"]
+  node_exec_create["ContainerExecCreate<br/>[exec.go]"]
+  node_exec_start["ContainerExecStart<br/>[exec.go]"]
+  node_monitor["ProcessEvent<br/>[monitor.go]"]
+  node_networking["initializeNetworking"]
+end
+
+subgraph group_image_storage["Image storage"]
+  node_store_choice["determineImageStoreChoice"]
+  node_image_service_iface["ImageService interface<br/>[image_service.go]"]
+  node_c8d_image_service["containerd ImageService<br/>[service.go]"]
+  node_graphdriver_iface["graphdriver.Driver<br/>[driver.go]"]
+  node_snapshotter_mount["refCountMounter<br/>[mount.go]"]
+  node_config_struct["container Config<br/>[config.go]"]
+end
+
+subgraph group_network_volumes["Networks and volumes"]
+  node_network_svc["CreateNetwork<br/>[network.go]"]
+  node_volumes_svc["VolumesService<br/>[volumes.go]"]
+end
+
+node_dockerd_main -->|"runs"| node_daemon_cli
+node_daemon_cli -->|"loads settings"| node_config_new
+node_daemon_cli -->|"bind sockets"| node_load_listeners
+node_daemon_cli -->|"constructs"| node_new_daemon
+node_daemon_cli -->|"wires routes"| node_build_routers
+node_build_routers -->|"attach"| node_api_server
+node_build_routers -->|"attach"| node_container_router
+node_build_routers -->|"attach"| node_image_routes
+node_api_server -->|"wraps handlers"| node_api_middleware
+node_container_router -->|"registers"| node_container_routes
+node_container_router -->|"registers"| node_exec_routes
+node_container_routes -->|"backend calls"| node_daemon_struct
+node_exec_routes -->|"delegates"| node_exec_create
+node_image_routes -->|"pull / push"| node_image_service_iface
+node_system_routes -->|"info and events"| node_daemon_struct
+node_new_daemon -->|"returns"| node_daemon_struct
+node_new_daemon -->|"seeds"| node_container_store
+node_daemon_struct -->|"owns"| node_container_model
+node_daemon_struct -->|"publishes"| node_events_bus
+node_container_model -->|"lifecycle"| node_state_machine
+node_container_routes -->|"POST start"| node_container_start
+node_container_start -->|"validate then run"| node_container_start_internal
+node_container_start_internal -->|"sandbox"| node_networking
+node_container_start_internal -->|"mount rootfs"| node_snapshotter_mount
+node_container_start_internal -->|"set running"| node_state_machine
+node_container_start_internal -->|"mount volumes"| node_volumes_svc
+node_exec_create -->|"lookup"| node_container_model
+node_exec_start -->|"attach"| node_container_model
+node_monitor -->|"exit events"| node_state_machine
+node_monitor -->|"publish"| node_events_bus
+node_container_start_internal -->|"uses services"| node_daemon_struct
+node_image_service_iface -->|"backend selection"| node_store_choice
+node_store_choice -->|"snapshotter path"| node_c8d_image_service
+node_store_choice -->|"classic path"| node_graphdriver_iface
+node_c8d_image_service -->|"implements"| node_image_service_iface
+node_c8d_image_service -->|"provides mounts"| node_snapshotter_mount
+node_config_struct -->|"request body"| node_container_routes
+node_config_struct -->|"embedded"| node_container_model
+node_daemon_struct -->|"create / find"| node_network_svc
+node_daemon_struct -->|"volume ops"| node_volumes_svc
+node_networking -->|"uses"| node_network_svc
+
+click node_dockerd_main "https://github.com/moby/moby/blob/master/cmd/dockerd/main.go"
+click node_daemon_cli "https://github.com/moby/moby/blob/master/daemon/command/daemon.go"
+click node_config_new "https://github.com/moby/moby/blob/master/daemon/config/config.go"
+click node_build_routers "https://github.com/moby/moby/blob/master/daemon/command/daemon.go"
+click node_load_listeners "https://github.com/moby/moby/blob/master/daemon/command/daemon.go"
+click node_api_server "https://github.com/moby/moby/blob/master/daemon/server/server.go"
+click node_api_middleware "https://github.com/moby/moby/blob/master/daemon/server/middleware.go"
+click node_container_router "https://github.com/moby/moby/blob/master/daemon/server/router/container/container.go"
+click node_container_routes "https://github.com/moby/moby/blob/master/daemon/server/router/container/container_routes.go"
+click node_exec_routes "https://github.com/moby/moby/blob/master/daemon/server/router/container/exec.go"
+click node_image_routes "https://github.com/moby/moby/blob/master/daemon/server/router/image/image_routes.go"
+click node_system_routes "https://github.com/moby/moby/blob/master/daemon/server/router/system/system_routes.go"
+click node_daemon_struct "https://github.com/moby/moby/blob/master/daemon/daemon.go"
+click node_new_daemon "https://github.com/moby/moby/blob/master/daemon/daemon.go"
+click node_container_store "https://github.com/moby/moby/blob/master/daemon/container/memory_store.go"
+click node_container_model "https://github.com/moby/moby/blob/master/daemon/container/container.go"
+click node_state_machine "https://github.com/moby/moby/blob/master/daemon/container/state.go"
+click node_events_bus "https://github.com/moby/moby/blob/master/daemon/events/events.go"
+click node_container_start "https://github.com/moby/moby/blob/master/daemon/start.go"
+click node_container_start_internal "https://github.com/moby/moby/blob/master/daemon/start.go"
+click node_exec_create "https://github.com/moby/moby/blob/master/daemon/exec.go"
+click node_exec_start "https://github.com/moby/moby/blob/master/daemon/exec.go"
+click node_monitor "https://github.com/moby/moby/blob/master/daemon/monitor.go"
+click node_networking "https://github.com/moby/moby/blob/master/daemon/container_operations.go"
+click node_store_choice "https://github.com/moby/moby/blob/master/daemon/image_store_choice.go"
+click node_image_service_iface "https://github.com/moby/moby/blob/master/daemon/image_service.go"
+click node_c8d_image_service "https://github.com/moby/moby/blob/master/daemon/containerd/service.go"
+click node_graphdriver_iface "https://github.com/moby/moby/blob/master/daemon/graphdriver/driver.go"
+click node_snapshotter_mount "https://github.com/moby/moby/blob/master/daemon/snapshotter/mount.go"
+click node_config_struct "https://github.com/moby/moby/blob/master/api/types/container/config.go"
+click node_network_svc "https://github.com/moby/moby/blob/master/daemon/network.go"
+click node_volumes_svc "https://github.com/moby/moby/blob/master/daemon/volumes.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_dockerd_main,node_daemon_cli,node_config_new,node_build_routers,node_load_listeners toneBlue
+class node_api_server,node_api_middleware,node_container_router,node_container_routes,node_exec_routes,node_image_routes,node_system_routes toneAmber
+class node_daemon_struct,node_new_daemon,node_container_store,node_container_model,node_state_machine,node_events_bus toneMint
+class node_container_start,node_container_start_internal,node_exec_create,node_exec_start,node_monitor,node_networking toneRose
+class node_store_choice,node_image_service_iface,node_c8d_image_service,node_graphdriver_iface,node_snapshotter_mount,node_config_struct toneIndigo
+class node_network_svc,node_volumes_svc toneTeal

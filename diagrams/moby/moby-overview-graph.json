@@ -1,0 +1,43 @@
+{
+  "owner": "moby",
+  "repo": "moby",
+  "branch": "master",
+  "groups": [
+    { "id": "entrypoint", "name": "entrypoint", "label": "dockerd entrypoint" },
+    { "id": "http_api", "name": "http_api", "label": "HTTP API layer" },
+    { "id": "daemon_core", "name": "daemon_core", "label": "Daemon core" },
+    { "id": "exec_layer", "name": "exec_layer", "label": "Container execution" },
+    { "id": "image_storage", "name": "image_storage", "label": "Image storage" }
+  ],
+  "nodes": [
+    { "id": "dockerd_main", "label": "dockerd main()", "file": "main.go", "path": "cmd/dockerd/main.go", "group": "entrypoint", "groupId": "entrypoint", "desc": "reexec guard then hands off to the daemon runner" },
+    { "id": "daemon_cli", "label": "daemonCLI.start", "file": "daemon.go", "path": "daemon/command/daemon.go", "group": "entrypoint", "groupId": "entrypoint", "desc": "loads config, embedded containerd, listeners" },
+    { "id": "api_server", "label": "HTTP server", "file": "server.go", "path": "daemon/server/server.go", "group": "http_api", "groupId": "http_api", "desc": "CreateMux builds the versioned gorilla mux" },
+    { "id": "container_routes", "label": "container routes", "file": "container_routes.go", "path": "daemon/server/router/container/container_routes.go", "group": "http_api", "groupId": "http_api", "desc": "create, start, stop, list container endpoints" },
+    { "id": "image_routes", "label": "image routes", "file": "image_routes.go", "path": "daemon/server/router/image/image_routes.go", "group": "http_api", "groupId": "http_api", "desc": "pull, push, tag, prune image endpoints" },
+    { "id": "daemon_struct", "label": "Daemon core", "file": "daemon.go", "path": "daemon/daemon.go", "group": "daemon_core", "groupId": "daemon_core", "desc": "NewDaemon wires stores, services, net controller" },
+    { "id": "container_model", "label": "Container model", "file": "container.go", "path": "daemon/container/container.go", "group": "daemon_core", "groupId": "daemon_core", "desc": "in-memory model of one container" },
+    { "id": "state_machine", "label": "State machine", "file": "state.go", "path": "daemon/container/state.go", "group": "daemon_core", "groupId": "daemon_core", "desc": "running/paused/exited plus wait channels" },
+    { "id": "container_start", "label": "containerStart", "file": "start.go", "path": "daemon/start.go", "group": "exec_layer", "groupId": "exec_layer", "desc": "mount rootfs, init, attach, launch" },
+    { "id": "monitor", "label": "event monitor", "file": "monitor.go", "path": "daemon/monitor.go", "group": "exec_layer", "groupId": "exec_layer", "desc": "reacts to containerd events and restart policy" },
+    { "id": "image_service", "label": "containerd image service", "file": "service.go", "path": "daemon/containerd/service.go", "group": "image_storage", "groupId": "image_storage", "desc": "containerd-backed pull, push, snapshot handling" },
+    { "id": "graphdriver", "label": "graphdriver interface", "file": "driver.go", "path": "daemon/graphdriver/driver.go", "group": "image_storage", "groupId": "image_storage", "desc": "classic layered filesystem Get/Put contract" }
+  ],
+  "edges": [
+    { "from": "dockerd_main", "to": "daemon_cli", "label": "runs" },
+    { "from": "daemon_cli", "to": "api_server", "label": "wires listeners" },
+    { "from": "daemon_cli", "to": "daemon_struct", "label": "constructs" },
+    { "from": "api_server", "to": "container_routes", "label": "mounts" },
+    { "from": "api_server", "to": "image_routes", "label": "mounts" },
+    { "from": "container_routes", "to": "daemon_struct", "label": "delegates" },
+    { "from": "container_routes", "to": "container_start", "label": "start request" },
+    { "from": "image_routes", "to": "image_service", "label": "pull / push" },
+    { "from": "daemon_struct", "to": "container_model", "label": "owns" },
+    { "from": "container_model", "to": "state_machine", "label": "lifecycle" },
+    { "from": "container_start", "to": "container_model", "label": "updates state" },
+    { "from": "container_start", "to": "image_service", "label": "rootfs snapshot" },
+    { "from": "monitor", "to": "state_machine", "label": "exit events" },
+    { "from": "daemon_struct", "to": "monitor", "label": "watches" },
+    { "from": "image_service", "to": "graphdriver", "label": "legacy fallback" }
+  ]
+}
