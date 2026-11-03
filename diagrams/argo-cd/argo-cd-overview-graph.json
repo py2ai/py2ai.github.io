@@ -1,0 +1,128 @@
+{
+  "owner": "argoproj",
+  "repo": "argo-cd",
+  "branch": "master",
+  "groups": [
+    { "id": "git_source", "name": "Git Source", "label": "Git Source" },
+    { "id": "repo_server", "name": "Repo Server", "label": "Repo Server (render)" },
+    { "id": "api_server", "name": "API Server", "label": "API Server" },
+    { "id": "controller", "name": "Application Controller", "label": "Application Controller" },
+    { "id": "shared_state", "name": "Shared Infrastructure", "label": "Shared Infrastructure" },
+    { "id": "clusters", "name": "Target Clusters", "label": "Target Clusters" }
+  ],
+  "nodes": [
+    {
+      "id": "git_repo",
+      "label": "Git Repository",
+      "file": "README.md",
+      "path": "README.md",
+      "group": "Git Source",
+      "groupId": "git_source",
+      "shape": "document",
+      "desc": "Source of truth holding declarative manifests, Helm charts and Kustomize overlays"
+    },
+    {
+      "id": "repo_server",
+      "label": "Repo Server",
+      "file": "server.go",
+      "path": "reposerver/server.go",
+      "group": "Repo Server",
+      "groupId": "repo_server",
+      "shape": "box",
+      "desc": "Stateless gRPC service that clones repos and renders manifests on demand"
+    },
+    {
+      "id": "api_server",
+      "label": "API Server",
+      "file": "server.go",
+      "path": "server/server.go",
+      "group": "API Server",
+      "groupId": "api_server",
+      "shape": "box",
+      "desc": "gRPC/REST gateway for the UI, CLI and CI systems: auth, RBAC and Application CRUD"
+    },
+    {
+      "id": "app_controller",
+      "label": "Application Controller",
+      "file": "appcontroller.go",
+      "path": "controller/appcontroller.go",
+      "group": "Application Controller",
+      "groupId": "controller",
+      "shape": "box",
+      "desc": "Reconciliation loop: watches Application CRs, enqueues refreshes and operations"
+    },
+    {
+      "id": "app_state_manager",
+      "label": "App State Manager",
+      "file": "state.go",
+      "path": "controller/state.go",
+      "group": "Application Controller",
+      "groupId": "controller",
+      "shape": "hexagon",
+      "desc": "CompareAppState: diffs rendered Git manifests against live cluster state"
+    },
+    {
+      "id": "sync_engine",
+      "label": "Sync Engine",
+      "file": "sync.go",
+      "path": "controller/sync.go",
+      "group": "Application Controller",
+      "groupId": "controller",
+      "shape": "hexagon",
+      "desc": "SyncAppState: executes sync operations wave by wave with hooks and pruning"
+    },
+    {
+      "id": "git_client",
+      "label": "Git Client",
+      "file": "client.go",
+      "path": "util/git/client.go",
+      "group": "Shared Infrastructure",
+      "groupId": "shared_state",
+      "shape": "box",
+      "desc": "nativeGitClient: fetch, checkout and ls-remote over go-git"
+    },
+    {
+      "id": "kube_db",
+      "label": "Cluster/Repo Store",
+      "file": "db.go",
+      "path": "util/db/db.go",
+      "group": "Shared Infrastructure",
+      "groupId": "shared_state",
+      "shape": "database",
+      "desc": "ArgoDB: persists clusters, repos and certs as Kubernetes secrets"
+    },
+    {
+      "id": "redis_cache",
+      "label": "Redis Cache",
+      "file": "cache.go",
+      "path": "util/cache/cache.go",
+      "group": "Shared Infrastructure",
+      "groupId": "shared_state",
+      "shape": "database",
+      "desc": "Two-level cache shared by components for manifests and app state"
+    },
+    {
+      "id": "target_cluster",
+      "label": "Target Clusters",
+      "file": "kube.go",
+      "path": "util/kube/kube.go",
+      "group": "Target Clusters",
+      "groupId": "clusters",
+      "shape": "database",
+      "desc": "Workload clusters where manifests are applied with app-instance tracking labels"
+    }
+  ],
+  "edges": [
+    { "from": "git_repo", "to": "repo_server", "label": "cloned and rendered on demand" },
+    { "from": "repo_server", "to": "git_client", "label": "fetch + checkout revision" },
+    { "from": "api_server", "to": "repo_server", "label": "manifest preview RPCs" },
+    { "from": "api_server", "to": "kube_db", "label": "read cluster and repo secrets" },
+    { "from": "api_server", "to": "app_controller", "label": "Application CRs watched via informers" },
+    { "from": "app_controller", "to": "app_state_manager", "label": "refresh: compare desired vs live" },
+    { "from": "app_controller", "to": "sync_engine", "label": "operation worker: SyncAppState" },
+    { "from": "app_controller", "to": "repo_server", "label": "GenerateManifest RPC" },
+    { "from": "app_controller", "to": "kube_db", "label": "cluster cache updates" },
+    { "from": "app_state_manager", "to": "redis_cache", "label": "diff and manifest cache" },
+    { "from": "sync_engine", "to": "target_cluster", "label": "apply manifests (kubectl)" }
+  ]
+}

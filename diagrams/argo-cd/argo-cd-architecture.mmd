@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_controller_core["Controller Core"]
+  node_app_controller["ApplicationController<br/>[appcontroller.go]"]
+  node_process_refresh{{"processAppRefreshQueueItem<br/>[appcontroller.go]"}}
+  node_process_operation{{"processAppOperationQueueItem<br/>[appcontroller.go]"}}
+  node_autosync{{"autoSync<br/>[appcontroller.go]"}}
+  node_cluster_updater["ClusterInfoUpdater"]
+  node_set_app_health{{"setApplicationHealth<br/>[health.go]"}}
+end
+
+subgraph group_compare_diff["Compare &amp; Diff"]
+  node_app_state_manager["appStateManager<br/>[state.go]"]
+  node_compare_app_state{{"CompareAppState<br/>[state.go]"}}
+  node_get_repo_objs["GetRepoObjs<br/>[state.go]"]
+  node_normalize_target["NormalizeTargetObjects<br/>[state.go]"]
+  node_persist_history["persistRevisionHistory<br/>[state.go]"]
+end
+
+subgraph group_sync_exec["Sync Execution"]
+  node_sync_app_state{{"SyncAppState<br/>[sync.go]"}}
+  node_sync_op_result["newSyncOperationResult<br/>[sync.go]"]
+  node_sync_window["syncWindowPreventsSync<br/>[sync.go]"]
+end
+
+subgraph group_repo_server["Repo Server"]
+  node_repo_server["ArgoCDRepoServer<br/>[server.go]"]
+  node_gen_manifest{{"GenerateManifest<br/>[repository.go]"}}
+  node_run_manifest_gen["runManifestGen<br/>[repository.go]"]
+  node_checkout_rev["checkoutRevision<br/>[repository.go]"]
+  node_app_details["GetAppDetails<br/>[repository.go]"]
+end
+
+subgraph group_api_layer["API Layer"]
+  node_api_server["ArgoCDServer<br/>[server.go]"]
+  node_api_run{{"ArgoCDServer.Run<br/>[server.go]"}}
+  node_grpc_server["gRPC server<br/>[server.go]"]
+  node_http_server["HTTP server<br/>[server.go]"]
+  node_app_api_sync{{"ApplicationService.Sync<br/>[application.go]"}}
+  node_app_api_get["ApplicationService.Get<br/>[application.go]"]
+  node_app_api_watch["ApplicationService.Watch<br/>[application.go]"]
+end
+
+subgraph group_shared_infra["Shared Infrastructure"]
+  node_git_client["nativeGitClient<br/>[client.go]"]
+  node_kube_db[("ArgoDB<br/>[db.go]")]
+  node_cluster_db[("db cluster secrets<br/>[cluster.go]")]
+  node_app_label["SetAppInstanceLabel<br/>[kube.go]"]
+  node_cache[("util/cache.Cache<br/>[cache.go]")]
+  node_kubectl_apply["kubectl wrapper<br/>[kubectl.go]"]
+end
+
+node_api_run -->|"gRPC listener"| node_grpc_server
+node_api_run -->|"HTTP/gRPC-Web mux"| node_http_server
+node_api_server -->|"settings, RBAC and secrets"| node_kube_db
+node_api_server -->|"manifest and details queries"| node_repo_server
+node_app_api_sync -->|"sync operation on Application CR"| node_app_controller
+node_app_api_watch -->|"streams informer updates"| node_app_controller
+node_app_api_get -->|"served via ApplicationService"| node_grpc_server
+node_app_controller -->|"status workers"| node_process_refresh
+node_app_controller -->|"operation workers"| node_process_operation
+node_process_refresh -->|"refresh app status"| node_compare_app_state
+node_process_refresh -->|"OutOfSync + automated policy"| node_autosync
+node_autosync -->|"create sync operation"| node_process_operation
+node_process_operation -->|"execute operation"| node_sync_app_state
+node_app_controller -->|"cluster cache refresh"| node_cluster_updater
+node_cluster_updater -->|"list and update clusters"| node_cluster_db
+node_app_controller -->|"cluster and app cache"| node_cache
+node_app_state_manager -->|"owns comparison"| node_compare_app_state
+node_compare_app_state -->|"render target state"| node_get_repo_objs
+node_get_repo_objs -->|"GenerateManifest RPC"| node_gen_manifest
+node_compare_app_state -->|"normalize before diff"| node_normalize_target
+node_compare_app_state -->|"aggregate health"| node_set_app_health
+node_app_state_manager -->|"record sync history"| node_persist_history
+node_sync_app_state -->|"per-resource results"| node_sync_op_result
+node_sync_app_state -->|"window guard"| node_sync_window
+node_sync_app_state -->|"tracking labels"| node_app_label
+node_sync_app_state -->|"apply/prune resources"| node_kubectl_apply
+node_repo_server -->|"gRPC surface"| node_gen_manifest
+node_gen_manifest -->|"cache miss path"| node_run_manifest_gen
+node_run_manifest_gen -->|"materialize commit"| node_checkout_rev
+node_checkout_rev -->|"Fetch + Checkout"| node_git_client
+node_repo_server -->|"parameter queries"| node_app_details
+node_gen_manifest -->|"cache rendered manifests"| node_cache
+node_kube_db -->|"cluster secret CRUD"| node_cluster_db
+
+click node_app_controller "https://github.com/argoproj/argo-cd/blob/master/controller/appcontroller.go"
+click node_process_refresh "https://github.com/argoproj/argo-cd/blob/master/controller/appcontroller.go"
+click node_process_operation "https://github.com/argoproj/argo-cd/blob/master/controller/appcontroller.go"
+click node_autosync "https://github.com/argoproj/argo-cd/blob/master/controller/appcontroller.go"
+click node_cluster_updater "https://github.com/argoproj/argo-cd/blob/master/controller/clusterinfoupdater.go"
+click node_set_app_health "https://github.com/argoproj/argo-cd/blob/master/controller/health.go"
+click node_app_state_manager "https://github.com/argoproj/argo-cd/blob/master/controller/state.go"
+click node_compare_app_state "https://github.com/argoproj/argo-cd/blob/master/controller/state.go"
+click node_get_repo_objs "https://github.com/argoproj/argo-cd/blob/master/controller/state.go"
+click node_normalize_target "https://github.com/argoproj/argo-cd/blob/master/controller/state.go"
+click node_persist_history "https://github.com/argoproj/argo-cd/blob/master/controller/state.go"
+click node_sync_app_state "https://github.com/argoproj/argo-cd/blob/master/controller/sync.go"
+click node_sync_op_result "https://github.com/argoproj/argo-cd/blob/master/controller/sync.go"
+click node_sync_window "https://github.com/argoproj/argo-cd/blob/master/controller/sync.go"
+click node_repo_server "https://github.com/argoproj/argo-cd/blob/master/reposerver/server.go"
+click node_gen_manifest "https://github.com/argoproj/argo-cd/blob/master/reposerver/repository/repository.go"
+click node_run_manifest_gen "https://github.com/argoproj/argo-cd/blob/master/reposerver/repository/repository.go"
+click node_checkout_rev "https://github.com/argoproj/argo-cd/blob/master/reposerver/repository/repository.go"
+click node_app_details "https://github.com/argoproj/argo-cd/blob/master/reposerver/repository/repository.go"
+click node_api_server "https://github.com/argoproj/argo-cd/blob/master/server/server.go"
+click node_api_run "https://github.com/argoproj/argo-cd/blob/master/server/server.go"
+click node_grpc_server "https://github.com/argoproj/argo-cd/blob/master/server/server.go"
+click node_http_server "https://github.com/argoproj/argo-cd/blob/master/server/server.go"
+click node_app_api_sync "https://github.com/argoproj/argo-cd/blob/master/server/application/application.go"
+click node_app_api_get "https://github.com/argoproj/argo-cd/blob/master/server/application/application.go"
+click node_app_api_watch "https://github.com/argoproj/argo-cd/blob/master/server/application/application.go"
+click node_git_client "https://github.com/argoproj/argo-cd/blob/master/util/git/client.go"
+click node_kube_db "https://github.com/argoproj/argo-cd/blob/master/util/db/db.go"
+click node_cluster_db "https://github.com/argoproj/argo-cd/blob/master/util/db/cluster.go"
+click node_app_label "https://github.com/argoproj/argo-cd/blob/master/util/kube/kube.go"
+click node_cache "https://github.com/argoproj/argo-cd/blob/master/util/cache/cache.go"
+click node_kubectl_apply "https://github.com/argoproj/argo-cd/blob/master/util/kube/kubectl.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app_controller,node_process_refresh,node_process_operation,node_autosync,node_cluster_updater,node_set_app_health toneBlue
+class node_app_state_manager,node_compare_app_state,node_get_repo_objs,node_normalize_target,node_persist_history toneAmber
+class node_sync_app_state,node_sync_op_result,node_sync_window toneMint
+class node_repo_server,node_gen_manifest,node_run_manifest_gen,node_checkout_rev,node_app_details toneRose
+class node_api_server,node_api_run,node_grpc_server,node_http_server,node_app_api_sync,node_app_api_get,node_app_api_watch toneIndigo
+class node_git_client,node_kube_db,node_cluster_db,node_app_label,node_cache,node_kubectl_apply toneTeal
