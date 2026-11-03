@@ -1,0 +1,128 @@
+flowchart TD
+
+subgraph group_g_cli["CLI"]
+  node_main["main&#40;&#41;<br/>[main.go]"]
+  node_bootstrap_cmd["bootstrapCmd<br/>[bootstrap.go]"]
+  node_bootstrap_github_cmd["bootstrapGitHubCmd"]
+  node_install_cmd["installCmd<br/>[install.go]"]
+  node_create_ks_cmd["createKsCmd"]
+  node_reconcile_cmd["reconcileCmd<br/>[reconcile.go]"]
+  node_build_ks_cmd["buildKsCmd"]
+  node_embedded["embeddedManifests<br/>[manifests.embed.go]"]
+end
+
+subgraph group_g_bootstrap["Bootstrap"]
+  node_bootstrap_run["bootstrap.Run&#40;&#41;<br/>[bootstrap.go]"]
+  node_reconciler["Reconciler iface<br/>[bootstrap.go]"]
+  node_git_provider["GitProviderBootstrapper"]
+  node_repo_reconcile["ReconcileRepository"]
+  node_plain_git["PlainGitBootstrapper"]
+  node_reconcile_components["ReconcileComponents"]
+  node_health["ReportKustomizationHealth"]
+end
+
+subgraph group_g_manifest["Manifestgen"]
+  node_manifest_struct["Manifest<br/>[manifest.go]"]
+  node_install_gen["install.Generate&#40;&#41;<br/>[install.go]"]
+  node_sync_gen["sync.Generate&#40;&#41;<br/>[sync.go]"]
+  node_secret_gen["GenerateGit&#40;&#41;<br/>[sourcesecret.go]"]
+  node_ks_gen["kustomization.Generate&#40;&#41;<br/>[kustomization.go]"]
+end
+
+subgraph group_g_apply["Apply"]
+  node_ssa["utils.Apply&#40;&#41;<br/>[apply.go]"]
+  node_ssa_manager["newManager&#40;&#41;<br/>[apply.go]"]
+  node_builder["build.Builder<br/>[build.go]"]
+  node_status["StatusChecker<br/>[status.go]"]
+end
+
+subgraph group_g_controllers["Bases"]
+  node_install_ks["install overlay<br/>[kustomization.yaml]"]
+  node_source_base["source-controller base<br/>[kustomization.yaml]"]
+  node_helm_base["helm-controller base<br/>[kustomization.yaml]"]
+end
+
+subgraph group_g_git["Git"]
+  node_git_repo["GitOps repo<br/>[README.md]"]
+end
+
+node_main -->|"registers"| node_bootstrap_cmd
+node_main -->|"registers"| node_install_cmd
+node_main -->|"registers"| node_create_ks_cmd
+node_main -->|"registers"| node_reconcile_cmd
+node_main -->|"registers"| node_build_ks_cmd
+node_bootstrap_cmd -->|"GitHub variant"| node_bootstrap_github_cmd
+node_bootstrap_cmd -->|"unembeds bases"| node_embedded
+node_bootstrap_cmd -->|"calls Run&#40;&#41;"| node_bootstrap_run
+node_bootstrap_github_cmd -->|"calls Run&#40;&#41;"| node_bootstrap_run
+node_bootstrap_run -->|"drives"| node_reconciler
+node_bootstrap_run -->|"provider flow"| node_git_provider
+node_bootstrap_run -->|"plain-git flow"| node_plain_git
+node_git_provider -->|"provisions"| node_repo_reconcile
+node_repo_reconcile -->|"creates repo + deploy key"| node_git_repo
+node_plain_git -->|"generate, commit, push"| node_reconcile_components
+node_plain_git -->|"waits for Ready"| node_health
+node_reconcile_components -->|"renders components"| node_install_gen
+node_reconcile_components -->|"renders sync manifests"| node_sync_gen
+node_reconcile_components -->|"applies to cluster"| node_ssa
+node_install_cmd -->|"renders"| node_install_gen
+node_install_cmd -->|"applies"| node_ssa
+node_install_gen -->|"returns"| node_manifest_struct
+node_sync_gen -->|"returns"| node_manifest_struct
+node_secret_gen -->|"returns"| node_manifest_struct
+node_ks_gen -->|"returns"| node_manifest_struct
+node_install_gen -->|"kustomize-builds overlay"| node_ks_gen
+node_install_gen -->|"templates aggregate"| node_install_ks
+node_install_ks -->|"includes"| node_source_base
+node_install_ks -->|"includes"| node_helm_base
+node_source_base -->|"patched &amp; applied"| node_ssa
+node_helm_base -->|"patched &amp; applied"| node_ssa
+node_ssa -->|"uses ResourceManager"| node_ssa_manager
+node_sync_gen -->|"commits sync manifests"| node_git_repo
+node_create_ks_cmd -->|"declares workload path"| node_git_repo
+node_build_ks_cmd -->|"renders locally"| node_builder
+node_builder -->|"builds from checkout"| node_git_repo
+node_health -->|"kstatus polling"| node_status
+
+click node_main "https://github.com/fluxcd/flux2/blob/main/cmd/flux/main.go"
+click node_bootstrap_cmd "https://github.com/fluxcd/flux2/blob/main/cmd/flux/bootstrap.go"
+click node_bootstrap_github_cmd "https://github.com/fluxcd/flux2/blob/main/cmd/flux/bootstrap_github.go"
+click node_install_cmd "https://github.com/fluxcd/flux2/blob/main/cmd/flux/install.go"
+click node_create_ks_cmd "https://github.com/fluxcd/flux2/blob/main/cmd/flux/create_kustomization.go"
+click node_reconcile_cmd "https://github.com/fluxcd/flux2/blob/main/cmd/flux/reconcile.go"
+click node_build_ks_cmd "https://github.com/fluxcd/flux2/blob/main/cmd/flux/build_kustomization.go"
+click node_embedded "https://github.com/fluxcd/flux2/blob/main/cmd/flux/manifests.embed.go"
+click node_bootstrap_run "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap.go"
+click node_reconciler "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap.go"
+click node_git_provider "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap_provider.go"
+click node_repo_reconcile "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap_provider.go"
+click node_plain_git "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap_plain_git.go"
+click node_reconcile_components "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap_plain_git.go"
+click node_health "https://github.com/fluxcd/flux2/blob/main/pkg/bootstrap/bootstrap_plain_git.go"
+click node_manifest_struct "https://github.com/fluxcd/flux2/blob/main/pkg/manifestgen/manifest.go"
+click node_install_gen "https://github.com/fluxcd/flux2/blob/main/pkg/manifestgen/install/install.go"
+click node_sync_gen "https://github.com/fluxcd/flux2/blob/main/pkg/manifestgen/sync/sync.go"
+click node_secret_gen "https://github.com/fluxcd/flux2/blob/main/pkg/manifestgen/sourcesecret/sourcesecret.go"
+click node_ks_gen "https://github.com/fluxcd/flux2/blob/main/pkg/manifestgen/kustomization/kustomization.go"
+click node_ssa "https://github.com/fluxcd/flux2/blob/main/internal/utils/apply.go"
+click node_ssa_manager "https://github.com/fluxcd/flux2/blob/main/internal/utils/apply.go"
+click node_builder "https://github.com/fluxcd/flux2/blob/main/internal/build/build.go"
+click node_status "https://github.com/fluxcd/flux2/blob/main/pkg/status/status.go"
+click node_install_ks "https://github.com/fluxcd/flux2/blob/main/manifests/install/kustomization.yaml"
+click node_source_base "https://github.com/fluxcd/flux2/blob/main/manifests/bases/source-controller/kustomization.yaml"
+click node_helm_base "https://github.com/fluxcd/flux2/blob/main/manifests/bases/helm-controller/kustomization.yaml"
+click node_git_repo "https://github.com/fluxcd/flux2/blob/main/README.md"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_bootstrap_cmd,node_bootstrap_github_cmd,node_install_cmd,node_create_ks_cmd,node_reconcile_cmd,node_build_ks_cmd,node_embedded toneBlue
+class node_bootstrap_run,node_reconciler,node_git_provider,node_repo_reconcile,node_plain_git,node_reconcile_components,node_health toneAmber
+class node_manifest_struct,node_install_gen,node_sync_gen,node_secret_gen,node_ks_gen toneMint
+class node_ssa,node_ssa_manager,node_builder,node_status toneRose
+class node_install_ks,node_source_base,node_helm_base toneIndigo
+class node_git_repo toneTeal
