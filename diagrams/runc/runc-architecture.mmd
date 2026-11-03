@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_cli["runc CLI"]
+  node_cli_create["runc create<br/>[create.go]"]
+  node_cli_run["runc run<br/>[run.go]"]
+  node_cli_start["runc start<br/>[start.go]"]
+  node_start_container["startContainer<br/>[utils_linux.go]"]
+  node_create_container["createContainer<br/>[utils_linux.go]"]
+end
+
+subgraph group_specconv["Spec Conversion"]
+  node_specconv_config["CreateLibcontainerConfig<br/>[spec_linux.go]"]
+  node_specconv_cgroup["CreateCgroupConfig<br/>[spec_linux.go]"]
+  node_specconv_userns["setupUserNamespace<br/>[spec_linux.go]"]
+  node_specconv_seccomp["SetupSeccomp<br/>[spec_linux.go]"]
+end
+
+subgraph group_factory["Factory"]
+  node_factory_create["libcontainer.Create<br/>[factory_linux.go]"]
+  node_cgroup_manager["cgroup manager.New<br/>[factory_linux.go]"]
+end
+
+subgraph group_namespaces["Namespace Entry"]
+  node_clone_flags["Namespaces.CloneFlags"]
+  node_nsenter_entry["nsexec&#40;&#41; constructor<br/>[nsenter.go]"]
+  node_nsexec["clone/setns in C<br/>[nsexec.c]"]
+end
+
+subgraph group_parent["Container &#40;parent&#41;"]
+  node_container_start["Container.Start<br/>[container_linux.go]"]
+  node_container_exec["Container.Exec<br/>[container_linux.go]"]
+  node_container_start_fn["Container.start<br/>[container_linux.go]"]
+  node_new_parent_process["newParentProcess<br/>[container_linux.go]"]
+  node_new_init_process["newInitProcess<br/>[container_linux.go]"]
+  node_new_setns_process["newSetnsProcess<br/>[container_linux.go]"]
+  node_bootstrap_data["bootstrapData<br/>[container_linux.go]"]
+  node_init_process_start["initProcess.start<br/>[process_linux.go]"]
+  node_setns_process_start["setnsProcess.start<br/>[process_linux.go]"]
+end
+
+subgraph group_child["runc init &#40;child&#41;"]
+  node_runc_init["runc init<br/>[init_linux.go]"]
+  node_container_init["containerInit<br/>[init_linux.go]"]
+  node_finalize_namespace["finalizeNamespace<br/>[init_linux.go]"]
+  node_standard_init["linuxStandardInit.Init"]
+  node_setns_init["linuxSetnsInit.Init"]
+end
+
+subgraph group_rootfs["Rootfs Setup"]
+  node_prepare_rootfs["prepareRootfs<br/>[rootfs_linux.go]"]
+  node_prepare_root["prepareRoot<br/>[rootfs_linux.go]"]
+  node_setup_and_mount["setupAndMountToRootfs<br/>[rootfs_linux.go]"]
+  node_pivot_root["pivotRoot<br/>[rootfs_linux.go]"]
+  node_finalize_rootfs["finalizeRootfs<br/>[rootfs_linux.go]"]
+end
+
+node_cli_create -->|"CT_ACT_CREATE"| node_start_container
+node_cli_run -->|"CT_ACT_RUN"| node_start_container
+node_cli_start -->|"container.Exec&#40;&#41;"| node_container_exec
+node_start_container -->|"build container"| node_create_container
+node_create_container -->|"spec -&gt; configs"| node_specconv_config
+node_specconv_config -->|"resources"| node_specconv_cgroup
+node_specconv_config -->|"uid/gid maps"| node_specconv_userns
+node_specconv_config -->|"syscalls"| node_specconv_seccomp
+node_create_container -->|"libcontainer.Create"| node_factory_create
+node_factory_create -->|"manager.New"| node_cgroup_manager
+node_start_container -->|"runner.run -&gt; Start/Run"| node_container_start
+node_container_start -->|"c.start&#40;&#41;"| node_container_start_fn
+node_container_start_fn -->|"build parent"| node_new_parent_process
+node_new_parent_process -->|"fresh container"| node_new_init_process
+node_new_parent_process -->|"exec into running"| node_new_setns_process
+node_new_init_process -->|"encode flags"| node_bootstrap_data
+node_bootstrap_data -->|"netlink payload"| node_clone_flags
+node_clone_flags -->|"CLONE_* bits"| node_nsexec
+node_new_init_process -->|"parent side"| node_init_process_start
+node_init_process_start -->|"manager.Apply&#40;pid&#41;"| node_cgroup_manager
+node_init_process_start -->|"cmd.Start -&gt; runc init"| node_runc_init
+node_new_setns_process -->|"parent side"| node_setns_process_start
+node_setns_process_start -->|"re-exec runc init"| node_runc_init
+node_runc_init -->|"C constructor first"| node_nsenter_entry
+node_nsenter_entry -->|"join namespaces"| node_nsexec
+node_runc_init -->|"startInitialization"| node_container_init
+node_container_init -->|"initStandard"| node_standard_init
+node_container_init -->|"initSetns"| node_setns_init
+node_container_init -->|"drop caps"| node_finalize_namespace
+node_standard_init -->|"mount + jail"| node_prepare_rootfs
+node_prepare_rootfs -->|"private rootfs"| node_prepare_root
+node_prepare_rootfs -->|"per OCI mount"| node_setup_and_mount
+node_setup_and_mount -->|"switch root"| node_pivot_root
+node_standard_init -->|"remount readonly"| node_finalize_rootfs
+
+click node_cli_create "https://github.com/opencontainers/runc/blob/main/create.go"
+click node_cli_run "https://github.com/opencontainers/runc/blob/main/run.go"
+click node_cli_start "https://github.com/opencontainers/runc/blob/main/start.go"
+click node_start_container "https://github.com/opencontainers/runc/blob/main/utils_linux.go"
+click node_create_container "https://github.com/opencontainers/runc/blob/main/utils_linux.go"
+click node_specconv_config "https://github.com/opencontainers/runc/blob/main/libcontainer/specconv/spec_linux.go"
+click node_specconv_cgroup "https://github.com/opencontainers/runc/blob/main/libcontainer/specconv/spec_linux.go"
+click node_specconv_userns "https://github.com/opencontainers/runc/blob/main/libcontainer/specconv/spec_linux.go"
+click node_specconv_seccomp "https://github.com/opencontainers/runc/blob/main/libcontainer/specconv/spec_linux.go"
+click node_factory_create "https://github.com/opencontainers/runc/blob/main/libcontainer/factory_linux.go"
+click node_cgroup_manager "https://github.com/opencontainers/runc/blob/main/libcontainer/factory_linux.go"
+click node_clone_flags "https://github.com/opencontainers/runc/blob/main/libcontainer/configs/namespaces_syscall.go"
+click node_nsenter_entry "https://github.com/opencontainers/runc/blob/main/libcontainer/nsenter/nsenter.go"
+click node_nsexec "https://github.com/opencontainers/runc/blob/main/libcontainer/nsenter/nsexec.c"
+click node_container_start "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_container_exec "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_container_start_fn "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_new_parent_process "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_new_init_process "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_new_setns_process "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_bootstrap_data "https://github.com/opencontainers/runc/blob/main/libcontainer/container_linux.go"
+click node_init_process_start "https://github.com/opencontainers/runc/blob/main/libcontainer/process_linux.go"
+click node_setns_process_start "https://github.com/opencontainers/runc/blob/main/libcontainer/process_linux.go"
+click node_runc_init "https://github.com/opencontainers/runc/blob/main/libcontainer/init_linux.go"
+click node_container_init "https://github.com/opencontainers/runc/blob/main/libcontainer/init_linux.go"
+click node_finalize_namespace "https://github.com/opencontainers/runc/blob/main/libcontainer/init_linux.go"
+click node_standard_init "https://github.com/opencontainers/runc/blob/main/libcontainer/standard_init_linux.go"
+click node_setns_init "https://github.com/opencontainers/runc/blob/main/libcontainer/setns_init_linux.go"
+click node_prepare_rootfs "https://github.com/opencontainers/runc/blob/main/libcontainer/rootfs_linux.go"
+click node_prepare_root "https://github.com/opencontainers/runc/blob/main/libcontainer/rootfs_linux.go"
+click node_setup_and_mount "https://github.com/opencontainers/runc/blob/main/libcontainer/rootfs_linux.go"
+click node_pivot_root "https://github.com/opencontainers/runc/blob/main/libcontainer/rootfs_linux.go"
+click node_finalize_rootfs "https://github.com/opencontainers/runc/blob/main/libcontainer/rootfs_linux.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_create,node_cli_run,node_cli_start,node_start_container,node_create_container,node_prepare_rootfs,node_prepare_root,node_setup_and_mount,node_pivot_root,node_finalize_rootfs toneBlue
+class node_specconv_config,node_specconv_cgroup,node_specconv_userns,node_specconv_seccomp toneAmber
+class node_factory_create,node_cgroup_manager toneMint
+class node_clone_flags,node_nsenter_entry,node_nsexec toneRose
+class node_container_start,node_container_exec,node_container_start_fn,node_new_parent_process,node_new_init_process,node_new_setns_process,node_bootstrap_data,node_init_process_start,node_setns_process_start toneIndigo
+class node_runc_init,node_container_init,node_finalize_namespace,node_standard_init,node_setns_init toneTeal
