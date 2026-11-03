@@ -1,0 +1,151 @@
+flowchart TD
+
+subgraph group_g_cli["CLI &#40;kustomize/&#41;"]
+  node_cli_entry["NewDefaultCommand<br/>[commands.go]"]
+  node_build_cmd["NewCmdBuild<br/>[build.go]"]
+  node_krusty_options["MakeDefaultOptions<br/>[options.go]"]
+  node_output_yaml["AsYaml output<br/>[build.go]"]
+end
+
+subgraph group_g_krusty["Build Engine &#40;api/krusty&#41;"]
+  node_make_kustomizer["MakeKustomizer<br/>[kustomizer.go]"]
+  node_kustomizer_run["Kustomizer.Run<br/>[kustomizer.go]"]
+  node_apply_sort_order["applySortOrder<br/>[kustomizer.go]"]
+end
+
+subgraph group_g_loader["Loader &#40;api/internal/loader&#41;"]
+  node_new_loader["NewLoader<br/>[loader.go]"]
+  node_file_loader["FileLoader<br/>[fileloader.go]"]
+  node_loader_git["newLoaderAtGitClone<br/>[fileloader.go]"]
+  node_load_restrictions["RestrictionRootOnly"]
+end
+
+subgraph group_g_target["KustTarget &#40;api/internal/target&#41;"]
+  node_kust_target["KustTarget<br/>[kusttarget.go]"]
+  node_kt_load["Load<br/>[kusttarget.go]"]
+  node_load_kust_file["LoadKustFile<br/>[kusttarget.go]"]
+  node_make_customized_resmap["MakeCustomizedResMap<br/>[kusttarget.go]"]
+  node_accumulate_target["AccumulateTarget<br/>[kusttarget.go]"]
+  node_accumulate_directory["accumulateDirectory<br/>[kusttarget.go]"]
+  node_accumulate_file["accumulateFile<br/>[kusttarget.go]"]
+  node_run_generators["runGenerators<br/>[kusttarget.go]"]
+  node_run_transformers["runTransformers<br/>[kusttarget.go]"]
+  node_run_validators["runValidators<br/>[kusttarget.go]"]
+  node_add_hashes["addHashesToNames<br/>[kusttarget.go]"]
+  node_multi_transformer["newMultiTransformer"]
+end
+
+subgraph group_g_accum["Accumulator &#40;api/internal/accumulator&#41;"]
+  node_res_accum["ResAccumulator<br/>[resaccumulator.go]"]
+  node_absorb_all["AbsorbAll<br/>[resaccumulator.go]"]
+  node_merge_accum["MergeAccumulator<br/>[resaccumulator.go]"]
+  node_fix_backrefs["FixBackReferences<br/>[resaccumulator.go]"]
+  node_resolve_vars["ResolveVars<br/>[resaccumulator.go]"]
+end
+
+subgraph group_g_resmap["ResMap &#40;api/resmap&#41;"]
+  node_resmap_factory["Factory<br/>[factory.go]"]
+  node_from_file["FromFile<br/>[factory.go]"]
+  node_resmap_iface["ResMap<br/>[resmap.go]"]
+end
+
+subgraph group_g_plugins["Generators &amp; Transformers"]
+  node_transformer_config["MakeTransformerConfig"]
+  node_configmap_gen["MakeConfigMap<br/>[configmap.go]"]
+  node_prefix_transformer["PrefixTransformerPlugin"]
+end
+
+node_cli_entry -->|"serves kustomize build"| node_build_cmd
+node_build_cmd -->|"HonorKustomizeFlags"| node_krusty_options
+node_build_cmd -->|"MakeKustomizer&#40;options&#41;"| node_make_kustomizer
+node_make_kustomizer -->|"returns Kustomizer"| node_kustomizer_run
+node_build_cmd -->|"writes YAML"| node_output_yaml
+node_kustomizer_run -->|"NewLoader&#40;path&#41;"| node_new_loader
+node_new_loader -->|"confirmed local dir"| node_file_loader
+node_new_loader -->|"git URL target"| node_loader_git
+node_new_loader -->|"RestrictionRootOnly default"| node_load_restrictions
+node_kustomizer_run -->|"NewKustTarget"| node_kust_target
+node_kust_target -->|"kt.Load&#40;&#41;"| node_kt_load
+node_kt_load -->|"reads kustomization.yaml"| node_load_kust_file
+node_load_kust_file -->|"ldr.Load"| node_file_loader
+node_kustomizer_run -->|"after MakeCustomizedResMap"| node_apply_sort_order
+node_apply_sort_order -->|"SortOrderTransformerPlugin"| node_resmap_iface
+node_kust_target -->|"entry to pipeline"| node_make_customized_resmap
+node_make_customized_resmap -->|"AccumulateTarget"| node_accumulate_target
+node_accumulate_target -->|"per resource path"| node_accumulate_file
+node_accumulate_file -->|"rFactory.FromFile"| node_resmap_factory
+node_resmap_factory -->|"decode bytes"| node_from_file
+node_from_file -->|"reads file content"| node_file_loader
+node_accumulate_file -->|"AppendAll"| node_res_accum
+node_accumulate_target -->|"resources first"| node_run_generators
+node_run_generators -->|"AbsorbAll"| node_absorb_all
+node_run_generators -->|"builtin generator"| node_configmap_gen
+node_accumulate_target -->|"base/component paths"| node_accumulate_directory
+node_accumulate_directory -->|"recursion: sub-KustTarget"| node_kust_target
+node_accumulate_directory -->|"MergeAccumulator&#40;subRa&#41;"| node_merge_accum
+node_merge_accum -->|"parent accumulates child"| node_res_accum
+node_accumulate_target -->|"MakeTransformerConfig"| node_transformer_config
+node_accumulate_target -->|"after generators/components"| node_run_transformers
+node_run_transformers -->|"wraps transformer list"| node_multi_transformer
+node_multi_transformer -->|"member transformers"| node_prefix_transformer
+node_run_transformers -->|"ra.Transform"| node_res_accum
+node_accumulate_target -->|"after transformers"| node_run_validators
+node_run_validators -->|"no-mutation check"| node_res_accum
+node_accumulate_target -->|"MergeConfig / MergeVars"| node_res_accum
+node_make_customized_resmap -->|"last, after recursion"| node_add_hashes
+node_add_hashes -->|"HashTransformer"| node_res_accum
+node_make_customized_resmap -->|"after name changes"| node_fix_backrefs
+node_fix_backrefs -->|"name reference pass"| node_res_accum
+node_make_customized_resmap -->|"vars last"| node_resolve_vars
+node_resolve_vars -->|"substitution"| node_res_accum
+node_res_accum -->|"ra.ResMap&#40;&#41;"| node_resmap_iface
+node_resmap_iface -->|"m.AsYaml&#40;&#41;"| node_output_yaml
+
+click node_cli_entry "https://github.com/kubernetes-sigs/kustomize/blob/master/kustomize/commands/commands.go"
+click node_build_cmd "https://github.com/kubernetes-sigs/kustomize/blob/master/kustomize/commands/build/build.go"
+click node_krusty_options "https://github.com/kubernetes-sigs/kustomize/blob/master/api/krusty/options.go"
+click node_output_yaml "https://github.com/kubernetes-sigs/kustomize/blob/master/kustomize/commands/build/build.go"
+click node_make_kustomizer "https://github.com/kubernetes-sigs/kustomize/blob/master/api/krusty/kustomizer.go"
+click node_kustomizer_run "https://github.com/kubernetes-sigs/kustomize/blob/master/api/krusty/kustomizer.go"
+click node_apply_sort_order "https://github.com/kubernetes-sigs/kustomize/blob/master/api/krusty/kustomizer.go"
+click node_new_loader "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/loader/loader.go"
+click node_file_loader "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/loader/fileloader.go"
+click node_loader_git "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/loader/fileloader.go"
+click node_load_restrictions "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/loader/loadrestrictions.go"
+click node_kust_target "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_kt_load "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_load_kust_file "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_make_customized_resmap "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_accumulate_target "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_accumulate_directory "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_accumulate_file "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_run_generators "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_run_transformers "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_run_validators "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_add_hashes "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/kusttarget.go"
+click node_multi_transformer "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/target/multitransformer.go"
+click node_res_accum "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/accumulator/resaccumulator.go"
+click node_absorb_all "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/accumulator/resaccumulator.go"
+click node_merge_accum "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/accumulator/resaccumulator.go"
+click node_fix_backrefs "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/accumulator/resaccumulator.go"
+click node_resolve_vars "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/accumulator/resaccumulator.go"
+click node_resmap_factory "https://github.com/kubernetes-sigs/kustomize/blob/master/api/resmap/factory.go"
+click node_from_file "https://github.com/kubernetes-sigs/kustomize/blob/master/api/resmap/factory.go"
+click node_resmap_iface "https://github.com/kubernetes-sigs/kustomize/blob/master/api/resmap/resmap.go"
+click node_transformer_config "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/plugins/builtinconfig/transformerconfig.go"
+click node_configmap_gen "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/generators/configmap.go"
+click node_prefix_transformer "https://github.com/kubernetes-sigs/kustomize/blob/master/api/internal/builtins/PrefixTransformer.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_entry,node_build_cmd,node_krusty_options,node_output_yaml,node_transformer_config,node_configmap_gen,node_prefix_transformer toneBlue
+class node_make_kustomizer,node_kustomizer_run,node_apply_sort_order toneAmber
+class node_new_loader,node_file_loader,node_loader_git,node_load_restrictions toneMint
+class node_kust_target,node_kt_load,node_load_kust_file,node_make_customized_resmap,node_accumulate_target,node_accumulate_directory,node_accumulate_file,node_run_generators,node_run_transformers,node_run_validators,node_add_hashes,node_multi_transformer toneRose
+class node_res_accum,node_absorb_all,node_merge_accum,node_fix_backrefs,node_resolve_vars toneIndigo
+class node_resmap_factory,node_from_file,node_resmap_iface toneTeal
