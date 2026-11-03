@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_cli["CLI Layer"]
+  node_main["main&#40;&#41;<br/>[helm.go]"]
+  node_root["NewRootCmd<br/>[root.go]"]
+  node_install_cmd["newInstallCmd<br/>[install.go]"]
+  node_run_install["runInstall<br/>[install.go]"]
+  node_upgrade_cmd["newUpgradeCmd<br/>[upgrade.go]"]
+end
+
+subgraph group_chart["Chart Loading"]
+  node_loader["loader.LoadDir<br/>[load.go]"]
+  node_chart_struct["chart.Chart<br/>[chart.go]"]
+  node_metadata["chart.Metadata<br/>[metadata.go]"]
+  node_deps["ProcessDependencies<br/>[dependencies.go]"]
+  node_to_render_values["ToRenderValues<br/>[values.go]"]
+  node_downloader["ChartDownloader"]
+  node_manager["Manager.Update<br/>[manager.go]"]
+end
+
+subgraph group_engine["Templating Engine"]
+  node_engine["engine.Engine<br/>[engine.go]"]
+  node_render["Engine.Render<br/>[engine.go]"]
+  node_all_templates["allTemplates<br/>[engine.go]"]
+  node_sort_templates["sortTemplates<br/>[engine.go]"]
+  node_init_fun_map["initFunMap<br/>[engine.go]"]
+end
+
+subgraph group_action["Actions"]
+  node_config["action.Configuration<br/>[action.go]"]
+  node_render_resources["renderResources<br/>[action.go]"]
+  node_install_run["Install.Run<br/>[install.go]"]
+  node_record_release["Install.recordRelease<br/>[install.go]"]
+  node_upgrade_run["Upgrade.Run<br/>[upgrade.go]"]
+  node_prepare_upgrade["prepareUpgrade<br/>[upgrade.go]"]
+  node_reuse_values["reuseValues<br/>[upgrade.go]"]
+  node_exec_hook["execHook<br/>[hooks.go]"]
+end
+
+subgraph group_storage["Release Storage"]
+  node_storage["storage.Storage<br/>[storage.go]"]
+  node_secrets["driver.Secrets<br/>[secrets.go]"]
+  node_secrets_create["Secrets.Create<br/>[secrets.go]"]
+end
+
+subgraph group_kube["Kubernetes Client"]
+  node_kube_client["kube.Client<br/>[client.go]"]
+  node_kube_build["Client.Build<br/>[client.go]"]
+  node_kube_update["Client.Update<br/>[client.go]"]
+end
+
+subgraph group_release["Release Model"]
+  node_release_struct["release.Release<br/>[release.go]"]
+  node_hook_struct["release.Hook<br/>[hook.go]"]
+end
+
+node_main -->|"invokes"| node_root
+node_root -->|"registers"| node_install_cmd
+node_root -->|"registers"| node_upgrade_cmd
+node_install_cmd -->|"runs"| node_run_install
+node_run_install -->|"calls action"| node_install_run
+node_upgrade_cmd -->|"calls action"| node_upgrade_run
+node_run_install -->|"fetch remote chart"| node_downloader
+node_run_install -->|"load chart dir"| node_loader
+node_downloader -->|"same downloader pkg"| node_manager
+node_loader -->|"produces"| node_chart_struct
+node_chart_struct -->|"embeds"| node_metadata
+node_install_run -->|"chartutil.ProcessDependencies"| node_deps
+node_install_run -->|"merge values"| node_to_render_values
+node_install_run -->|"render manifest"| node_render_resources
+node_upgrade_run -->|"prepare"| node_prepare_upgrade
+node_prepare_upgrade -->|"merge old values"| node_reuse_values
+node_prepare_upgrade -->|"render manifest"| node_render_resources
+node_render_resources -->|"engine.New"| node_engine
+node_render_resources -->|"values"| node_to_render_values
+node_engine -->|"renders"| node_render
+node_render -->|"collects"| node_all_templates
+node_render -->|"orders"| node_sort_templates
+node_engine -->|"registers funcs"| node_init_fun_map
+node_install_run -->|"manifest to resources"| node_kube_build
+node_install_run -->|"Create"| node_kube_client
+node_upgrade_run -->|"current + target"| node_kube_build
+node_upgrade_run -->|"three-way update"| node_kube_update
+node_kube_client -->|"uses"| node_kube_build
+node_kube_client -->|"uses"| node_kube_update
+node_install_run -->|"pre/post install"| node_exec_hook
+node_exec_hook -->|"executes"| node_hook_struct
+node_install_run -->|"persist revision"| node_record_release
+node_record_release -->|"storage.Create"| node_storage
+node_storage -->|"driver"| node_secrets
+node_secrets -->|"implements"| node_secrets_create
+node_secrets_create -->|"encodes"| node_release_struct
+node_record_release -->|"stores"| node_release_struct
+
+click node_main "https://github.com/helm/helm/blob/main/cmd/helm/helm.go"
+click node_root "https://github.com/helm/helm/blob/main/pkg/cmd/root.go"
+click node_install_cmd "https://github.com/helm/helm/blob/main/pkg/cmd/install.go"
+click node_run_install "https://github.com/helm/helm/blob/main/pkg/cmd/install.go"
+click node_upgrade_cmd "https://github.com/helm/helm/blob/main/pkg/cmd/upgrade.go"
+click node_loader "https://github.com/helm/helm/blob/main/pkg/chart/loader/load.go"
+click node_chart_struct "https://github.com/helm/helm/blob/main/pkg/chart/v2/chart.go"
+click node_metadata "https://github.com/helm/helm/blob/main/pkg/chart/v2/metadata.go"
+click node_deps "https://github.com/helm/helm/blob/main/pkg/chart/v2/util/dependencies.go"
+click node_to_render_values "https://github.com/helm/helm/blob/main/pkg/chart/common/util/values.go"
+click node_downloader "https://github.com/helm/helm/blob/main/pkg/downloader/chart_downloader.go"
+click node_manager "https://github.com/helm/helm/blob/main/pkg/downloader/manager.go"
+click node_engine "https://github.com/helm/helm/blob/main/pkg/engine/engine.go"
+click node_render "https://github.com/helm/helm/blob/main/pkg/engine/engine.go"
+click node_all_templates "https://github.com/helm/helm/blob/main/pkg/engine/engine.go"
+click node_sort_templates "https://github.com/helm/helm/blob/main/pkg/engine/engine.go"
+click node_init_fun_map "https://github.com/helm/helm/blob/main/pkg/engine/engine.go"
+click node_config "https://github.com/helm/helm/blob/main/pkg/action/action.go"
+click node_render_resources "https://github.com/helm/helm/blob/main/pkg/action/action.go"
+click node_install_run "https://github.com/helm/helm/blob/main/pkg/action/install.go"
+click node_record_release "https://github.com/helm/helm/blob/main/pkg/action/install.go"
+click node_upgrade_run "https://github.com/helm/helm/blob/main/pkg/action/upgrade.go"
+click node_prepare_upgrade "https://github.com/helm/helm/blob/main/pkg/action/upgrade.go"
+click node_reuse_values "https://github.com/helm/helm/blob/main/pkg/action/upgrade.go"
+click node_exec_hook "https://github.com/helm/helm/blob/main/pkg/action/hooks.go"
+click node_storage "https://github.com/helm/helm/blob/main/pkg/storage/storage.go"
+click node_secrets "https://github.com/helm/helm/blob/main/pkg/storage/driver/secrets.go"
+click node_secrets_create "https://github.com/helm/helm/blob/main/pkg/storage/driver/secrets.go"
+click node_kube_client "https://github.com/helm/helm/blob/main/pkg/kube/client.go"
+click node_kube_build "https://github.com/helm/helm/blob/main/pkg/kube/client.go"
+click node_kube_update "https://github.com/helm/helm/blob/main/pkg/kube/client.go"
+click node_release_struct "https://github.com/helm/helm/blob/main/pkg/release/v1/release.go"
+click node_hook_struct "https://github.com/helm/helm/blob/main/pkg/release/v1/hook.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_root,node_install_cmd,node_run_install,node_upgrade_cmd,node_release_struct,node_hook_struct toneBlue
+class node_loader,node_chart_struct,node_metadata,node_deps,node_to_render_values,node_downloader,node_manager toneAmber
+class node_engine,node_render,node_all_templates,node_sort_templates,node_init_fun_map toneMint
+class node_config,node_render_resources,node_install_run,node_record_release,node_upgrade_run,node_prepare_upgrade,node_reuse_values,node_exec_hook toneRose
+class node_storage,node_secrets,node_secrets_create toneIndigo
+class node_kube_client,node_kube_build,node_kube_update toneTeal
