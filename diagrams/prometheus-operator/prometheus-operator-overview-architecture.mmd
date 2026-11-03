@@ -1,0 +1,63 @@
+flowchart TD
+
+subgraph group_entrypoint["cmd/operator"]
+  node_main{{"cmd/operator/main.go<br/>[main.go]"}}
+end
+
+subgraph group_controllers["one loop per kind"]
+  node_prom_server_ctrl["Prometheus controller<br/>[operator.go]"]
+  node_prom_agent_ctrl["PrometheusAgent controller<br/>[operator.go]"]
+  node_alertmanager_ctrl["Alertmanager controller<br/>[operator.go]"]
+end
+
+subgraph group_shared["pkg/operator"]
+  node_event_handler["EventHandler filters<br/>[event_handler.go]"]
+  node_resource_reconciler["ResourceReconciler"]
+end
+
+subgraph group_generators["config, rules, StatefulSets"]
+  node_config_generator["ConfigGenerator<br/>[promcfg.go]"]
+  node_sset_builder["makeStatefulSet<br/>[statefulset.go]"]
+  node_rules_builder["Rule ConfigMaps<br/>[rules.go]"]
+end
+
+subgraph group_api["pkg/apis/monitoring/v1"]
+  node_crd_types["Prometheus CRD type"]
+end
+
+node_main -->|"prometheuscontroller.New"| node_prom_server_ctrl
+node_main -->|"prometheusagentcontroller.New"| node_prom_agent_ctrl
+node_main -->|"alertmanagercontroller.New"| node_alertmanager_ctrl
+node_prom_server_ctrl -->|"watches Prometheus CRs"| node_crd_types
+node_prom_server_ctrl -->|"addHandlers"| node_event_handler
+node_prom_server_ctrl -->|"rr.Run"| node_resource_reconciler
+node_event_handler -->|"enqueue owner key"| node_resource_reconciler
+node_resource_reconciler -->|"Sync&#40;key&#41;"| node_prom_server_ctrl
+node_prom_server_ctrl -->|"createOrUpdateRuleConfigMaps"| node_rules_builder
+node_prom_server_ctrl -->|"NewConfigGenerator"| node_config_generator
+node_prom_server_ctrl -->|"makeStatefulSet per shard"| node_sset_builder
+node_config_generator -->|"buildServerArgs&#40;cg, p&#41;"| node_sset_builder
+
+click node_main "https://github.com/prometheus-operator/prometheus-operator/blob/main/cmd/operator/main.go"
+click node_prom_server_ctrl "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_prom_agent_ctrl "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/agent/operator.go"
+click node_alertmanager_ctrl "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/alertmanager/operator.go"
+click node_crd_types "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/apis/monitoring/v1/prometheus_types.go"
+click node_event_handler "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/event_handler.go"
+click node_resource_reconciler "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/resource_reconciler.go"
+click node_config_generator "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/promcfg.go"
+click node_sset_builder "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/statefulset.go"
+click node_rules_builder "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/rules.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main toneBlue
+class node_prom_server_ctrl,node_prom_agent_ctrl,node_alertmanager_ctrl toneAmber
+class node_event_handler,node_resource_reconciler toneMint
+class node_config_generator,node_sset_builder,node_rules_builder toneRose
+class node_crd_types toneIndigo

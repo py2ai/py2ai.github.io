@@ -1,0 +1,127 @@
+flowchart TD
+
+subgraph group_entrypoint["cmd/"]
+  node_main{{"start&#40;&#41;<br/>[main.go]"}}
+  node_admission_webhook["admission-webhook<br/>[main.go]"]
+end
+
+subgraph group_prometheus_controller["pkg/prometheus/server"]
+  node_server_new["New&#40;&#41;<br/>[operator.go]"]
+  node_server_run["Run&#40;&#41;<br/>[operator.go]"]
+  node_add_handlers["addHandlers&#40;&#41;<br/>[operator.go]"]
+  node_server_sync["sync&#40;&#41;<br/>[operator.go]"]
+  node_select_resources["getSelectedConfigResources&#40;&#41;<br/>[operator.go]"]
+  node_config_secret["createOrUpdateConfigurationSecret&#40;&#41;<br/>[operator.go]"]
+  node_sset_hash["createSSetInputHash&#40;&#41;<br/>[operator.go]"]
+end
+
+subgraph group_shared_kit["pkg/operator, pkg/assets"]
+  node_config_kit["operator.Config<br/>[config.go]"]
+  node_event_handler["EventHandler<br/>[event_handler.go]"]
+  node_resource_reconciler["ResourceReconciler"]
+  node_operator_kit["SanitizeSTS &amp; Metrics<br/>[operator.go]"]
+  node_tls_sharded["ReconcileShardedSecret&#40;&#41;<br/>[sharded_secret.go]"]
+  node_asset_store["StoreBuilder<br/>[store.go]"]
+end
+
+subgraph group_generators["config, rules, selectors"]
+  node_selector["ResourceSelector"]
+  node_promcfg["ConfigGenerator<br/>[promcfg.go]"]
+  node_rules["selectPrometheusRules&#40;&#41;<br/>[rules.go]"]
+  node_server_sset["makeStatefulSet&#40;&#41;<br/>[statefulset.go]"]
+  node_agent_sset["Agent makeStatefulSet&#40;&#41;<br/>[statefulset.go]"]
+  node_am_sset["Alertmanager makeStatefulSet&#40;&#41;<br/>[statefulset.go]"]
+end
+
+subgraph group_agent_alertmanager["sibling controllers"]
+  node_agent_ctrl["Agent controller<br/>[operator.go]"]
+  node_am_ctrl["Alertmanager controller<br/>[operator.go]"]
+end
+
+subgraph group_k8s_objects["what lands in the cluster"]
+  node_shard_names["ExpectedStatefulSetShardNames&#40;&#41;<br/>[common.go]"]
+  node_sset_client[("CreateStatefulSetOrPatchLabels&#40;&#41;<br/>[statefulset.go]")]
+end
+
+subgraph group_crd_types["pkg/apis/monitoring/v1"]
+  node_prometheus_type["Prometheus"]
+  node_servicemonitor_type["ServiceMonitor"]
+  node_prometheusrule_type["PrometheusRule"]
+  node_alertmanager_type["Alertmanager"]
+end
+
+node_main -->|"prometheuscontroller.New"| node_server_new
+node_main -->|"agent New"| node_agent_ctrl
+node_main -->|"alertmanager New"| node_am_ctrl
+node_main -->|"same image, separate binary"| node_admission_webhook
+node_main -->|"operator.DefaultConfig"| node_config_kit
+node_server_new -->|"returns *Operator"| node_server_run
+node_server_run -->|"after cache sync"| node_add_handlers
+node_server_run -->|"go c.rr.Run&#40;ctx&#41;"| node_resource_reconciler
+node_add_handlers -->|"NewEventHandler"| node_event_handler
+node_event_handler -->|"enqueue owner"| node_resource_reconciler
+node_resource_reconciler -->|"Sync&#40;key&#41;"| node_server_sync
+node_server_sync -->|"getSelectedConfigResources"| node_select_resources
+node_server_sync -->|"createOrUpdateRuleConfigMaps"| node_rules
+node_server_sync -->|"NewConfigGenerator"| node_promcfg
+node_server_sync -->|"createOrUpdateConfigurationSecret"| node_config_secret
+node_server_sync -->|"ReconcileShardedSecret"| node_tls_sharded
+node_server_sync -->|"hash inputs"| node_sset_hash
+node_server_sync -->|"loop shards"| node_shard_names
+node_server_sync -->|"makeStatefulSet"| node_server_sset
+node_server_sync -->|"SanitizeSTS"| node_operator_kit
+node_server_sync -->|"reads PrometheusSpec"| node_prometheus_type
+node_config_secret -->|"GenerateServerConfiguration"| node_promcfg
+node_config_secret -->|"resolves refs"| node_asset_store
+node_select_resources -->|"NewResourceSelector"| node_selector
+node_select_resources -->|"matches selectors"| node_servicemonitor_type
+node_rules -->|"selectPrometheusRules"| node_prometheusrule_type
+node_server_sset -->|"create or update"| node_sset_client
+node_server_sset -->|"buildServerArgs&#40;cg, p&#41;"| node_promcfg
+node_agent_ctrl -->|"makeStatefulSet"| node_agent_sset
+node_am_ctrl -->|"makeStatefulSet"| node_am_sset
+node_am_ctrl -->|"watches CRs"| node_alertmanager_type
+
+click node_main "https://github.com/prometheus-operator/prometheus-operator/blob/main/cmd/operator/main.go"
+click node_admission_webhook "https://github.com/prometheus-operator/prometheus-operator/blob/main/cmd/admission-webhook/main.go"
+click node_config_kit "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/config.go"
+click node_server_new "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_server_run "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_add_handlers "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_server_sync "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_select_resources "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_config_secret "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_sset_hash "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/operator.go"
+click node_event_handler "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/event_handler.go"
+click node_resource_reconciler "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/resource_reconciler.go"
+click node_operator_kit "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/operator.go"
+click node_tls_sharded "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/operator/sharded_secret.go"
+click node_asset_store "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/assets/store.go"
+click node_selector "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/resource_selector.go"
+click node_promcfg "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/promcfg.go"
+click node_rules "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/rules.go"
+click node_server_sset "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/server/statefulset.go"
+click node_agent_sset "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/agent/statefulset.go"
+click node_am_sset "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/alertmanager/statefulset.go"
+click node_shard_names "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/common.go"
+click node_sset_client "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/k8s/statefulset.go"
+click node_prometheus_type "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/apis/monitoring/v1/prometheus_types.go"
+click node_servicemonitor_type "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/apis/monitoring/v1/servicemonitor_types.go"
+click node_prometheusrule_type "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/apis/monitoring/v1/prometheusrule_types.go"
+click node_alertmanager_type "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/apis/monitoring/v1/alertmanager_types.go"
+click node_agent_ctrl "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/prometheus/agent/operator.go"
+click node_am_ctrl "https://github.com/prometheus-operator/prometheus-operator/blob/main/pkg/alertmanager/operator.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_admission_webhook,node_prometheus_type,node_servicemonitor_type,node_prometheusrule_type,node_alertmanager_type toneBlue
+class node_server_new,node_server_run,node_add_handlers,node_server_sync,node_select_resources,node_config_secret,node_sset_hash toneAmber
+class node_config_kit,node_event_handler,node_resource_reconciler,node_operator_kit,node_tls_sharded,node_asset_store toneMint
+class node_selector,node_promcfg,node_rules,node_server_sset,node_agent_sset,node_am_sset toneRose
+class node_agent_ctrl,node_am_ctrl toneIndigo
+class node_shard_names,node_sset_client toneTeal
