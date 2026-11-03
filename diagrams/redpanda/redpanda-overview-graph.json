@@ -1,0 +1,180 @@
+{
+  "owner": "redpanda-data",
+  "repo": "redpanda",
+  "branch": "dev",
+  "groups": [
+    {
+      "id": "kafka_api",
+      "name": "Kafka API Server",
+      "label": "Kafka API Server (src/v/kafka)"
+    },
+    {
+      "id": "raft_layer",
+      "name": "Raft Consensus",
+      "label": "Raft Consensus (src/v/raft)"
+    },
+    {
+      "id": "storage_layer",
+      "name": "Storage Engine",
+      "label": "Storage Engine (src/v/storage)"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "kafka_server",
+      "label": "Kafka Server",
+      "file": "server.h",
+      "path": "src/v/kafka/server/server.h",
+      "group": "Kafka API Server (src/v/kafka)",
+      "groupId": "kafka_api",
+      "desc": "TCP front end that speaks the Kafka wire protocol on every core"
+    },
+    {
+      "id": "conn_ctx",
+      "label": "Connection Context",
+      "file": "connection_context.h",
+      "path": "src/v/kafka/server/connection_context.h",
+      "group": "Kafka API Server (src/v/kafka)",
+      "groupId": "kafka_api",
+      "desc": "Per-connection state; process() decodes frames and dispatches handlers"
+    },
+    {
+      "id": "handlers",
+      "label": "Handler Interface",
+      "file": "handler_interface.h",
+      "path": "src/v/kafka/server/handlers/handler_interface.h",
+      "group": "Kafka API Server (src/v/kafka)",
+      "groupId": "kafka_api",
+      "desc": "Type-erased handler table; handler_for_key() maps API keys to handlers"
+    },
+    {
+      "id": "produce",
+      "label": "Produce Handler",
+      "file": "produce.cc",
+      "path": "src/v/kafka/server/handlers/produce.cc",
+      "group": "Kafka API Server (src/v/kafka)",
+      "groupId": "kafka_api",
+      "desc": "Maps Kafka acks to Raft consistency levels and calls partition.replicate()"
+    },
+    {
+      "id": "fetch",
+      "label": "Fetch Handler",
+      "file": "fetch.cc",
+      "path": "src/v/kafka/server/handlers/fetch.cc",
+      "group": "Kafka API Server (src/v/kafka)",
+      "groupId": "kafka_api",
+      "desc": "Consumer read path: plans reads per partition and streams batches back"
+    },
+    {
+      "id": "consensus",
+      "label": "Raft Consensus",
+      "file": "consensus.h",
+      "path": "src/v/raft/consensus.h",
+      "group": "Raft Consensus (src/v/raft)",
+      "groupId": "raft_layer",
+      "desc": "One instance per partition: elections, replication, linearizable barrier"
+    },
+    {
+      "id": "group_manager",
+      "label": "Raft Group Manager",
+      "file": "group_manager.h",
+      "path": "src/v/raft/group_manager.h",
+      "group": "Raft Consensus (src/v/raft)",
+      "groupId": "raft_layer",
+      "desc": "Sharded registry of consensus groups; pumps heartbeats and elections"
+    },
+    {
+      "id": "replicate_batcher",
+      "label": "Replicate Batcher",
+      "file": "replicate_batcher.h",
+      "path": "src/v/raft/replicate_batcher.h",
+      "group": "Raft Consensus (src/v/raft)",
+      "groupId": "raft_layer",
+      "desc": "Coalesces concurrent replicate() calls into one append_entries round"
+    },
+    {
+      "id": "log_manager",
+      "label": "Log Manager",
+      "file": "log_manager.h",
+      "path": "src/v/storage/log_manager.h",
+      "group": "Storage Engine (src/v/storage)",
+      "groupId": "storage_layer",
+      "desc": "Sharded factory that opens and maintains partition logs on disk"
+    },
+    {
+      "id": "disk_log",
+      "label": "Disk Log",
+      "file": "disk_log_impl.h",
+      "path": "src/v/storage/disk_log_impl.h",
+      "group": "Storage Engine (src/v/storage)",
+      "groupId": "storage_layer",
+      "desc": "Kafka-style log: ordered segments, reads, truncation, housekeeping"
+    },
+    {
+      "id": "segment_appender",
+      "label": "Segment Appender",
+      "file": "segment_appender.h",
+      "path": "src/v/storage/segment_appender.h",
+      "group": "Storage Engine (src/v/storage)",
+      "groupId": "storage_layer",
+      "desc": "Sequential writer with chunked DMA-style buffered appends and fsync"
+    }
+  ],
+  "edges": [
+    {
+      "from": "kafka_server",
+      "to": "conn_ctx",
+      "label": "one connection_context per client socket"
+    },
+    {
+      "from": "conn_ctx",
+      "to": "handlers",
+      "label": "handler_for_key(api_key) dispatch"
+    },
+    {
+      "from": "handlers",
+      "to": "produce",
+      "label": "key 0"
+    },
+    {
+      "from": "handlers",
+      "to": "fetch",
+      "label": "key 1"
+    },
+    {
+      "from": "produce",
+      "to": "consensus",
+      "label": "acks=-1/1/0 maps to quorum/leader/no ack"
+    },
+    {
+      "from": "fetch",
+      "to": "disk_log",
+      "label": "make_reader() from fetched offsets"
+    },
+    {
+      "from": "group_manager",
+      "to": "consensus",
+      "label": "heartbeats drive elections"
+    },
+    {
+      "from": "consensus",
+      "to": "replicate_batcher",
+      "label": "leader batches concurrent writes"
+    },
+    {
+      "from": "consensus",
+      "to": "log_manager",
+      "label": "append committed entries"
+    },
+    {
+      "from": "log_manager",
+      "to": "disk_log",
+      "label": "manage(ntp) opens the log"
+    },
+    {
+      "from": "disk_log",
+      "to": "segment_appender",
+      "label": "sequential segment writes"
+    }
+  ]
+}

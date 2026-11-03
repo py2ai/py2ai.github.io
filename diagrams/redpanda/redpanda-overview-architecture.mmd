@@ -1,0 +1,56 @@
+﻿flowchart TD
+
+subgraph group_kafka_api["Kafka API Server &#40;src/v/kafka&#41;"]
+  node_kafka_server["Kafka Server<br/>[server.h]"]
+  node_conn_ctx["Connection Context"]
+  node_handlers["Handler Interface"]
+  node_produce["Produce Handler<br/>[produce.cc]"]
+  node_fetch["Fetch Handler<br/>[fetch.cc]"]
+end
+
+subgraph group_raft_layer["Raft Consensus &#40;src/v/raft&#41;"]
+  node_consensus["Raft Consensus<br/>[consensus.h]"]
+  node_group_manager["Raft Group Manager<br/>[group_manager.h]"]
+  node_replicate_batcher["Replicate Batcher"]
+end
+
+subgraph group_storage_layer["Storage Engine &#40;src/v/storage&#41;"]
+  node_log_manager["Log Manager<br/>[log_manager.h]"]
+  node_disk_log["Disk Log<br/>[disk_log_impl.h]"]
+  node_segment_appender["Segment Appender<br/>[segment_appender.h]"]
+end
+
+node_kafka_server -->|"one connection_context per client socket"| node_conn_ctx
+node_conn_ctx -->|"handler_for_key&#40;api_key&#41; dispatch"| node_handlers
+node_handlers -->|"key 0"| node_produce
+node_handlers -->|"key 1"| node_fetch
+node_produce -->|"acks=-1/1/0 maps to quorum/leader/no ack"| node_consensus
+node_fetch -->|"make_reader&#40;&#41; from fetched offsets"| node_disk_log
+node_group_manager -->|"heartbeats drive elections"| node_consensus
+node_consensus -->|"leader batches concurrent writes"| node_replicate_batcher
+node_consensus -->|"append committed entries"| node_log_manager
+node_log_manager -->|"manage&#40;ntp&#41; opens the log"| node_disk_log
+node_disk_log -->|"sequential segment writes"| node_segment_appender
+
+click node_kafka_server "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/server.h"
+click node_conn_ctx "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/connection_context.h"
+click node_handlers "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/handler_interface.h"
+click node_produce "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/produce.cc"
+click node_fetch "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/fetch.cc"
+click node_consensus "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/consensus.h"
+click node_group_manager "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/group_manager.h"
+click node_replicate_batcher "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/replicate_batcher.h"
+click node_log_manager "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/log_manager.h"
+click node_disk_log "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/disk_log_impl.h"
+click node_segment_appender "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/segment_appender.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_kafka_server,node_conn_ctx,node_handlers,node_produce,node_fetch toneBlue
+class node_consensus,node_group_manager,node_replicate_batcher toneAmber
+class node_log_manager,node_disk_log,node_segment_appender toneMint

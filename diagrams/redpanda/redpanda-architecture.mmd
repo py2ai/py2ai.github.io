@@ -1,0 +1,134 @@
+﻿flowchart TD
+
+subgraph group_kafka_protocol["Kafka Wire Protocol &#40;src/v/kafka/server&#41;"]
+  node_server["Kafka Server<br/>[server.h]"]
+  node_conn_ctx["Connection Context"]
+  node_req_ctx["Request Context<br/>[request_context.h]"]
+  node_handler_iface["Handler Interface"]
+  node_produce["Produce Handler<br/>[produce.cc]"]
+  node_fetch["Fetch Handler<br/>[fetch.cc]"]
+  node_api_versions["ApiVersions<br/>[api_versions.cc]"]
+  node_metadata["Metadata Handler<br/>[metadata.cc]"]
+  node_fetch_session_cache["Fetch Session Cache"]
+end
+
+subgraph group_kafka_groups["Consumer Groups &amp; Quotas &#40;src/v/kafka/server&#41;"]
+  node_kgroup_manager["Consumer Group Manager<br/>[group_manager.h]"]
+  node_group_router["Group Router<br/>[group_router.h]"]
+  node_quota_mgr["Quota Manager<br/>[quota_manager.h]"]
+end
+
+subgraph group_raft_core["Raft Core &#40;src/v/raft&#41;"]
+  node_consensus["Raft Consensus<br/>[consensus.h]"]
+  node_raft_group_manager["Raft Group Manager<br/>[group_manager.h]"]
+  node_heartbeat_manager["Heartbeat Manager"]
+  node_vote_stm["Vote STM<br/>[vote_stm.h]"]
+  node_persisted_stm["Persisted STM<br/>[persisted_stm.h]"]
+end
+
+subgraph group_raft_replication["Raft Replication &amp; Recovery &#40;src/v/raft&#41;"]
+  node_replicate_batcher["Replicate Batcher"]
+  node_replicate_entries_stm["Replicate Entries STM"]
+  node_append_entries_buffer["Append Entries Buffer"]
+  node_recovery_stm["Recovery STM<br/>[recovery_stm.h]"]
+  node_follower_states["Follower States<br/>[follower_states.h]"]
+end
+
+subgraph group_storage_core["Log &amp; Segment Management &#40;src/v/storage&#41;"]
+  node_storage_api["Storage API<br/>[api.h]"]
+  node_log_manager["Log Manager<br/>[log_manager.h]"]
+  node_disk_log["Disk Log<br/>[disk_log_impl.h]"]
+  node_segment_set["Segment Set<br/>[segment_set.h]"]
+  node_segment["Segment<br/>[segment.h]"]
+  node_offset_translator["Offset Translator"]
+end
+
+subgraph group_storage_io["Disk IO, Caching &amp; Compaction &#40;src/v/storage&#41;"]
+  node_segment_appender["Segment Appender<br/>[segment_appender.h]"]
+  node_batch_cache["Batch Cache<br/>[batch_cache.h]"]
+  node_kvstore["KV Store<br/>[kvstore.h]"]
+  node_compacted_index["Compacted Index<br/>[compacted_index.h]"]
+  node_readers_cache["Readers Cache<br/>[readers_cache.h]"]
+end
+
+node_server -->|"accepts client sockets"| node_conn_ctx
+node_conn_ctx -->|"decodes frame into request_context"| node_req_ctx
+node_conn_ctx -->|"handler_for_key&#40;api_key&#41;"| node_handler_iface
+node_conn_ctx -->|"enforce client quotas"| node_quota_mgr
+node_handler_iface -->|"api key 0"| node_produce
+node_handler_iface -->|"api key 1"| node_fetch
+node_handler_iface -->|"api key 18"| node_api_versions
+node_handler_iface -->|"api key 3"| node_metadata
+node_fetch -->|"incremental fetch sessions"| node_fetch_session_cache
+node_group_router -->|"shard-local group lookup"| node_kgroup_manager
+node_kgroup_manager -->|"group state as Raft STM"| node_persisted_stm
+node_produce -->|"partition.replicate&#40;&#41; quorum/leader/no ack"| node_consensus
+node_fetch -->|"make_reader&#40;&#41; read path"| node_disk_log
+node_raft_group_manager -->|"drives elections + heartbeats"| node_consensus
+node_consensus -->|"become_leader&#40;&#41; election"| node_vote_stm
+node_consensus -->|"leader coalescing"| node_replicate_batcher
+node_consensus -->|"per-follower round"| node_replicate_entries_stm
+node_consensus -->|"match index tracking"| node_follower_states
+node_consensus -->|"catch up lagging follower"| node_recovery_stm
+node_consensus -->|"batched heartbeats"| node_heartbeat_manager
+node_replicate_batcher -->|"dispatch batched entries"| node_replicate_entries_stm
+node_replicate_entries_stm -->|"follower enqueues append_entries"| node_append_entries_buffer
+node_consensus -->|"append to partition log"| node_storage_api
+node_storage_api -->|"owns log manager"| node_log_manager
+node_log_manager -->|"manage&#40;ntp&#41;"| node_disk_log
+node_log_manager -->|"shared reader reuse"| node_readers_cache
+node_disk_log -->|"ordered segments"| node_segment_set
+node_segment_set -->|"each segment = base_offset"| node_segment
+node_segment -->|"append&#40;record_batch&#41;"| node_segment_appender
+node_disk_log -->|"hot batch reads"| node_batch_cache
+node_disk_log -->|"kafka offset mapping"| node_offset_translator
+node_disk_log -->|"clean offset bookkeeping"| node_kvstore
+node_disk_log -->|"compaction index build"| node_compacted_index
+
+click node_server "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/server.h"
+click node_conn_ctx "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/connection_context.h"
+click node_req_ctx "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/request_context.h"
+click node_handler_iface "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/handler_interface.h"
+click node_produce "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/produce.cc"
+click node_fetch "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/fetch.cc"
+click node_api_versions "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/api_versions.cc"
+click node_metadata "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/handlers/metadata.cc"
+click node_fetch_session_cache "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/fetch_session_cache.h"
+click node_kgroup_manager "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/group_manager.h"
+click node_group_router "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/group_router.h"
+click node_quota_mgr "https://github.com/redpanda-data/redpanda/blob/dev/src/v/kafka/server/quota_manager.h"
+click node_consensus "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/consensus.h"
+click node_raft_group_manager "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/group_manager.h"
+click node_heartbeat_manager "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/heartbeat_manager.h"
+click node_vote_stm "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/vote_stm.h"
+click node_persisted_stm "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/persisted_stm.h"
+click node_replicate_batcher "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/replicate_batcher.h"
+click node_replicate_entries_stm "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/replicate_entries_stm.h"
+click node_append_entries_buffer "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/append_entries_buffer.h"
+click node_recovery_stm "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/recovery_stm.h"
+click node_follower_states "https://github.com/redpanda-data/redpanda/blob/dev/src/v/raft/follower_states.h"
+click node_storage_api "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/api.h"
+click node_log_manager "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/log_manager.h"
+click node_disk_log "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/disk_log_impl.h"
+click node_segment_set "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/segment_set.h"
+click node_segment "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/segment.h"
+click node_offset_translator "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/offset_translator.h"
+click node_segment_appender "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/segment_appender.h"
+click node_batch_cache "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/batch_cache.h"
+click node_kvstore "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/kvstore.h"
+click node_compacted_index "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/compacted_index.h"
+click node_readers_cache "https://github.com/redpanda-data/redpanda/blob/dev/src/v/storage/readers_cache.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_server,node_conn_ctx,node_req_ctx,node_handler_iface,node_produce,node_fetch,node_api_versions,node_metadata,node_fetch_session_cache toneBlue
+class node_kgroup_manager,node_group_router,node_quota_mgr toneAmber
+class node_consensus,node_raft_group_manager,node_heartbeat_manager,node_vote_stm,node_persisted_stm toneMint
+class node_replicate_batcher,node_replicate_entries_stm,node_append_entries_buffer,node_recovery_stm,node_follower_states toneRose
+class node_storage_api,node_log_manager,node_disk_log,node_segment_set,node_segment,node_offset_translator toneIndigo
+class node_segment_appender,node_batch_cache,node_kvstore,node_compacted_index,node_readers_cache toneTeal
