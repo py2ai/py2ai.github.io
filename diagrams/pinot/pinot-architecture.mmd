@@ -1,0 +1,123 @@
+flowchart TD
+
+subgraph group_g_broker_api["Broker Request Handling"]
+  node_single_connection_handler["SingleConnectionBrokerRequestHandler"]
+  node_base_single_stage["BaseSingleStageBrokerRequestHandler"]
+end
+
+subgraph group_g_broker_routing["Broker Routing &amp; Pruning"]
+  node_routing_manager["BaseBrokerRoutingManager"]
+  node_instance_selector_factory["InstanceSelectorFactory"]
+  node_balanced_instance_selector["BalancedInstanceSelector"]
+  node_segment_pruner_factory["SegmentPrunerFactory"]
+  node_time_segment_pruner["TimeSegmentPruner"]
+  node_time_boundary_manager["TimeBoundaryManager"]
+end
+
+subgraph group_g_server_query["Server Query Path"]
+  node_helix_server_starter["HelixServerStarter"]
+  node_server_instance["ServerInstance"]
+  node_worker_query_server["WorkerQueryServer"]
+  node_helix_instance_data_manager["HelixInstanceDataManager"]
+  node_query_scheduler["QueryScheduler"]
+  node_query_executor["ServerQueryExecutorV1Impl"]
+  node_plan_maker["PlanMaker<br/>[PlanMaker.java]"]
+  node_segment_pruner_service["SegmentPrunerService"]
+end
+
+subgraph group_g_realtime_ingest["Realtime Consumption &#40;LLC&#41;"]
+  node_realtime_table_dm["RealtimeTableDataManager"]
+  node_realtime_segment_dm["RealtimeSegmentDataManager"]
+  node_consumer_coordinator["ConsumerCoordinator"]
+  node_segment_build_lease_extender["SegmentBuildTimeLeaseExtender"]
+end
+
+subgraph group_g_segment_commit["Commit &amp; Upload"]
+  node_segment_committer_factory["SegmentCommitterFactory"]
+  node_server2controller_uploader["Server2ControllerSegmentUploader"]
+  node_pinot_fs_uploader["PinotFSSegmentUploader"]
+end
+
+subgraph group_g_segment_store["Segment Build &amp; Store"]
+  node_mutable_segment_impl["MutableSegmentImpl"]
+  node_segment_creation_driver["SegmentIndexCreationDriverImpl"]
+  node_segment_columnar_creator["SegmentColumnarIndexCreator"]
+  node_segment_dictionary_creator["SegmentDictionaryCreator"]
+  node_single_file_index_directory["SingleFileIndexDirectory"]
+  node_segment_local_fs_directory["SegmentLocalFSDirectory"]
+end
+
+node_single_connection_handler -->|"extends"| node_base_single_stage
+node_base_single_stage -->|"getRoutingTable&#40;&#41;"| node_routing_manager
+node_base_single_stage -->|"dispatch query"| node_worker_query_server
+node_routing_manager -->|"create pruners"| node_segment_pruner_factory
+node_routing_manager -->|"create selector"| node_instance_selector_factory
+node_instance_selector_factory -->|"default selector"| node_balanced_instance_selector
+node_segment_pruner_factory -->|"time pruner"| node_time_segment_pruner
+node_time_segment_pruner -->|"time boundary info"| node_time_boundary_manager
+node_helix_server_starter -->|"starts"| node_server_instance
+node_server_instance -->|"wires query server"| node_worker_query_server
+node_worker_query_server -->|"table data managers"| node_helix_instance_data_manager
+node_worker_query_server -->|"submit query"| node_query_scheduler
+node_query_scheduler -->|"execute"| node_query_executor
+node_query_executor -->|"make plan"| node_plan_maker
+node_query_executor -->|"prune segments"| node_segment_pruner_service
+node_helix_instance_data_manager -->|"hosts realtime tables"| node_realtime_table_dm
+node_realtime_table_dm -->|"spawn per-partition consumer"| node_realtime_segment_dm
+node_realtime_segment_dm -->|"acquire/release"| node_consumer_coordinator
+node_realtime_segment_dm -->|"extend build lease"| node_segment_build_lease_extender
+node_realtime_segment_dm -->|"createSegmentCommitter&#40;&#41;"| node_segment_committer_factory
+node_segment_committer_factory -->|"upload via controller"| node_server2controller_uploader
+node_segment_committer_factory -->|"upload via deep store"| node_pinot_fs_uploader
+node_realtime_segment_dm -->|"index live rows"| node_mutable_segment_impl
+node_mutable_segment_impl -->|"seal to immutable"| node_segment_creation_driver
+node_segment_creation_driver -->|"build columnar indexes"| node_segment_columnar_creator
+node_segment_columnar_creator -->|"build dictionaries"| node_segment_dictionary_creator
+node_segment_creation_driver -->|"persist indexes"| node_single_file_index_directory
+node_query_executor -->|"scan consuming segment"| node_mutable_segment_impl
+node_pinot_fs_uploader -->|"segment ONLINE"| node_routing_manager
+node_single_file_index_directory -->|"index layout variant"| node_segment_local_fs_directory
+
+click node_single_connection_handler "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/requesthandler/SingleConnectionBrokerRequestHandler.java"
+click node_base_single_stage "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/requesthandler/BaseSingleStageBrokerRequestHandler.java"
+click node_routing_manager "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/manager/BaseBrokerRoutingManager.java"
+click node_instance_selector_factory "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/instanceselector/InstanceSelectorFactory.java"
+click node_balanced_instance_selector "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/instanceselector/BalancedInstanceSelector.java"
+click node_segment_pruner_factory "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/segmentpruner/SegmentPrunerFactory.java"
+click node_time_segment_pruner "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/segmentpruner/TimeSegmentPruner.java"
+click node_time_boundary_manager "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/timeboundary/TimeBoundaryManager.java"
+click node_helix_server_starter "https://github.com/apache/pinot/blob/master/pinot-server/src/main/java/org/apache/pinot/server/starter/helix/HelixServerStarter.java"
+click node_server_instance "https://github.com/apache/pinot/blob/master/pinot-server/src/main/java/org/apache/pinot/server/starter/ServerInstance.java"
+click node_worker_query_server "https://github.com/apache/pinot/blob/master/pinot-server/src/main/java/org/apache/pinot/server/worker/WorkerQueryServer.java"
+click node_helix_instance_data_manager "https://github.com/apache/pinot/blob/master/pinot-server/src/main/java/org/apache/pinot/server/starter/helix/HelixInstanceDataManager.java"
+click node_query_scheduler "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/query/scheduler/QueryScheduler.java"
+click node_query_executor "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/query/executor/ServerQueryExecutorV1Impl.java"
+click node_plan_maker "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/plan/maker/PlanMaker.java"
+click node_segment_pruner_service "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/query/pruner/SegmentPrunerService.java"
+click node_realtime_table_dm "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/RealtimeTableDataManager.java"
+click node_realtime_segment_dm "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/RealtimeSegmentDataManager.java"
+click node_consumer_coordinator "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/ConsumerCoordinator.java"
+click node_segment_build_lease_extender "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/SegmentBuildTimeLeaseExtender.java"
+click node_segment_committer_factory "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/SegmentCommitterFactory.java"
+click node_server2controller_uploader "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/Server2ControllerSegmentUploader.java"
+click node_pinot_fs_uploader "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/PinotFSSegmentUploader.java"
+click node_mutable_segment_impl "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/indexsegment/mutable/MutableSegmentImpl.java"
+click node_segment_creation_driver "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/creator/impl/SegmentIndexCreationDriverImpl.java"
+click node_segment_columnar_creator "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/creator/impl/SegmentColumnarIndexCreator.java"
+click node_segment_dictionary_creator "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/creator/impl/SegmentDictionaryCreator.java"
+click node_single_file_index_directory "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/store/SingleFileIndexDirectory.java"
+click node_segment_local_fs_directory "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/store/SegmentLocalFSDirectory.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_single_connection_handler,node_base_single_stage toneBlue
+class node_routing_manager,node_instance_selector_factory,node_balanced_instance_selector,node_segment_pruner_factory,node_time_segment_pruner,node_time_boundary_manager toneAmber
+class node_helix_server_starter,node_server_instance,node_worker_query_server,node_helix_instance_data_manager,node_query_scheduler,node_query_executor,node_plan_maker,node_segment_pruner_service toneMint
+class node_realtime_table_dm,node_realtime_segment_dm,node_consumer_coordinator,node_segment_build_lease_extender toneRose
+class node_segment_committer_factory,node_server2controller_uploader,node_pinot_fs_uploader toneIndigo
+class node_mutable_segment_impl,node_segment_creation_driver,node_segment_columnar_creator,node_segment_dictionary_creator,node_single_file_index_directory,node_segment_local_fs_directory toneTeal
