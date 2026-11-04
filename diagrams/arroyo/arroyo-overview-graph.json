@@ -1,0 +1,138 @@
+{
+  "owner": "ArroyoSystems",
+  "repo": "arroyo",
+  "branch": "master",
+  "groups": [
+    { "id": "sql_frontend", "name": "SQL Frontend", "label": "SQL Frontend" },
+    { "id": "graph_model", "name": "Dataflow Graph", "label": "Dataflow Graph" },
+    { "id": "runtime", "name": "Arrow Runtime", "label": "Arrow Runtime" },
+    { "id": "fault_tol", "name": "Checkpoints & State", "label": "Checkpoints & State" },
+    { "id": "io", "name": "Connectors", "label": "Connectors" },
+    { "id": "udf", "name": "UDF Runtime", "label": "UDF Runtime" }
+  ],
+  "nodes": [
+    {
+      "id": "arroyo_cli",
+      "label": "arroyo CLI",
+      "file": "main.rs",
+      "path": "crates/arroyo/src/main.rs",
+      "group": "SQL Frontend",
+      "groupId": "sql_frontend",
+      "desc": "Single binary: run, api, controller, cluster, worker, node subcommands (Commands, L82)"
+    },
+    {
+      "id": "planner_entry",
+      "label": "parse_and_get_program",
+      "file": "lib.rs",
+      "path": "crates/arroyo-planner/src/lib.rs",
+      "group": "SQL Frontend",
+      "groupId": "sql_frontend",
+      "desc": "Parses SQL and plans it through DataFusion into a logical program (L614)"
+    },
+    {
+      "id": "plan_visitor",
+      "label": "PlanToGraphVisitor",
+      "file": "builder.rs",
+      "path": "crates/arroyo-planner/src/builder.rs",
+      "group": "SQL Frontend",
+      "groupId": "sql_frontend",
+      "desc": "Walks the DataFusion plan and collects operators and edges (L47)"
+    },
+    {
+      "id": "logical_program",
+      "label": "LogicalProgram",
+      "file": "logical.rs",
+      "path": "crates/arroyo-datastream/src/logical.rs",
+      "group": "Dataflow Graph",
+      "groupId": "graph_model",
+      "desc": "Serializable DAG of nodes, edges and window specs (L300)"
+    },
+    {
+      "id": "chaining_optimizer",
+      "label": "ChainingOptimizer",
+      "file": "optimizers.rs",
+      "path": "crates/arroyo-datastream/src/optimizers.rs",
+      "group": "Dataflow Graph",
+      "groupId": "graph_model",
+      "desc": "Fuses compatible stages to cut network serialization (L18)"
+    },
+    {
+      "id": "engine",
+      "label": "Engine",
+      "file": "engine.rs",
+      "path": "crates/arroyo-worker/src/engine.rs",
+      "group": "Arrow Runtime",
+      "groupId": "runtime",
+      "desc": "Builds the physical graph; Engine::start spawns subtasks (L373, L528)"
+    },
+    {
+      "id": "arrow_operator",
+      "label": "ArrowOperator trait",
+      "file": "operator.rs",
+      "path": "crates/arroyo-operator/src/operator.rs",
+      "group": "Arrow Runtime",
+      "groupId": "runtime",
+      "desc": "Every stage processes Arrow RecordBatch streams (L1153)"
+    },
+    {
+      "id": "job_controller",
+      "label": "WorkerJobController",
+      "file": "controller.rs",
+      "path": "crates/arroyo-worker/src/job_controller/controller.rs",
+      "group": "Arrow Runtime",
+      "groupId": "runtime",
+      "desc": "Drives job lifecycle, watermarks and checkpoint timing (L46)"
+    },
+    {
+      "id": "table_manager",
+      "label": "TableManager",
+      "file": "table_manager.rs",
+      "path": "crates/arroyo-state/src/tables/table_manager.rs",
+      "group": "Checkpoints & State",
+      "groupId": "fault_tol",
+      "desc": "Snapshots keyed state tables once per epoch (L37)"
+    },
+    {
+      "id": "storage_provider",
+      "label": "StorageProvider",
+      "file": "lib.rs",
+      "path": "crates/arroyo-storage/src/lib.rs",
+      "group": "Checkpoints & State",
+      "groupId": "fault_tol",
+      "desc": "Object storage for checkpoints: S3, R2, GCS, Azure, local (L56)"
+    },
+    {
+      "id": "kafka_connector",
+      "label": "KafkaConnector",
+      "file": "mod.rs",
+      "path": "crates/arroyo-connectors/src/kafka/mod.rs",
+      "group": "Connectors",
+      "groupId": "io",
+      "desc": "Connector impl for Kafka sources and sinks (L71, L170)"
+    },
+    {
+      "id": "udf_dylib",
+      "label": "UdfDylib host",
+      "file": "lib.rs",
+      "path": "crates/arroyo-udf/arroyo-udf-host/src/lib.rs",
+      "group": "UDF Runtime",
+      "groupId": "udf",
+      "desc": "Loads user functions compiled to dynamic libraries (L168)"
+    }
+  ],
+  "edges": [
+    { "from": "arroyo_cli", "to": "planner_entry", "label": "SQL text via run / visualize" },
+    { "from": "planner_entry", "to": "plan_visitor", "label": "DataFusion LogicalPlan" },
+    { "from": "plan_visitor", "to": "logical_program", "label": "collects nodes & edges" },
+    { "from": "logical_program", "to": "chaining_optimizer", "label": "optimize graph" },
+    { "from": "chaining_optimizer", "to": "engine", "label": "hand over to runtime" },
+    { "from": "engine", "to": "arrow_operator", "label": "construct_operator (L903)" },
+    { "from": "engine", "to": "job_controller", "label": "supervises subtasks" },
+    { "from": "job_controller", "to": "table_manager", "label": "checkpoint barriers" },
+    { "from": "table_manager", "to": "storage_provider", "label": "parquet state files" },
+    { "from": "planner_entry", "to": "kafka_connector", "label": "connector tables registered" },
+    { "from": "kafka_connector", "to": "arrow_operator", "label": "source/sink tasks" },
+    { "from": "planner_entry", "to": "udf_dylib", "label": "parse & compile functions" },
+    { "from": "udf_dylib", "to": "arrow_operator", "label": "invoked inside stages" }
+  ]
+}
