@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_bootstrap["Bootstrap"]
+  node_server_main["ServerMain<br/>[ServerMain.java]"]
+end
+
+subgraph group_job_runtime["Job Runtime &#40;mp&#41;"]
+  node_worker_pool["WorkerPool<br/>[WorkerPool.java]"]
+  node_message_bus["MessageBus<br/>[MessageBus.java]"]
+  node_job["Job<br/>[Job.java]"]
+  node_abstract_queue_consumer_job["AbstractQueueConsumerJob"]
+end
+
+subgraph group_ilp_tcp["ILP over TCP"]
+  node_line_tcp_receiver["LineTcpReceiver"]
+  node_line_tcp_parser["LineTcpParser<br/>[LineTcpParser.java]"]
+  node_line_tcp_network_io_job["LineTcpNetworkIOJob"]
+  node_line_tcp_measurement_scheduler["LineTcpMeasurementScheduler"]
+  node_line_tcp_writer_job["LineTcpWriterJob"]
+  node_line_wal_appender["LineWalAppender"]
+end
+
+subgraph group_ilp_http["HTTP: ILP and REST"]
+  node_http_server["HttpServer<br/>[HttpServer.java]"]
+  node_line_http_processor["LineHttpProcessorImpl"]
+  node_json_query_processor["JsonQueryProcessor"]
+end
+
+subgraph group_pgwire["Postgres Wire"]
+  node_pg_server["PGServer<br/>[PGServer.java]"]
+end
+
+subgraph group_sql_engine["Griffin SQL Engine"]
+  node_sql_compiler_impl["SqlCompilerImpl"]
+  node_sql_parser["SqlParser<br/>[SqlParser.java]"]
+  node_sql_optimiser["SqlOptimiser<br/>[SqlOptimiser.java]"]
+  node_sql_code_generator["SqlCodeGenerator"]
+  node_compiled_query["CompiledQuery<br/>[CompiledQuery.java]"]
+  node_sql_execution_context_impl["SqlExecutionContextImpl"]
+end
+
+subgraph group_cairo_storage["Cairo Column Store"]
+  node_cairo_engine["CairoEngine<br/>[CairoEngine.java]"]
+  node_table_writer["TableWriter<br/>[TableWriter.java]"]
+  node_table_reader["TableReader<br/>[TableReader.java]"]
+  node_column_type["ColumnType<br/>[ColumnType.java]"]
+  node_symbol_map_writer["SymbolMapWriter"]
+end
+
+subgraph group_wal["Write Ahead Log"]
+  node_wal_writer["WalWriter<br/>[WalWriter.java]"]
+  node_wal_event_writer["WalEventWriter"]
+  node_apply_wal2_table_job["ApplyWal2TableJob"]
+end
+
+node_server_main -->|"creates and assigns jobs"| node_worker_pool
+node_server_main -->|"wires queues"| node_message_bus
+node_worker_pool -->|"loops run&#40;&#41;"| node_job
+node_abstract_queue_consumer_job -->|"implements"| node_job
+node_server_main -->|"starts"| node_line_tcp_receiver
+node_line_tcp_receiver -->|"IO jobs"| node_line_tcp_network_io_job
+node_line_tcp_network_io_job -->|"parses bytes"| node_line_tcp_parser
+node_line_tcp_network_io_job -->|"publishes events"| node_line_tcp_measurement_scheduler
+node_line_tcp_measurement_scheduler -->|"per-table routing"| node_line_tcp_writer_job
+node_line_tcp_writer_job -->|"drains appender"| node_line_wal_appender
+node_line_wal_appender -->|"appendToWal via TableWriterAPI"| node_table_writer
+node_server_main -->|"starts"| node_http_server
+node_http_server -->|"routes /write"| node_line_http_processor
+node_line_http_processor -->|"LineHttpProcessorState L311"| node_line_wal_appender
+node_http_server -->|"routes /exp"| node_json_query_processor
+node_json_query_processor -->|"compile L512"| node_sql_compiler_impl
+node_json_query_processor -->|"request context"| node_sql_execution_context_impl
+node_server_main -->|"starts"| node_pg_server
+node_pg_server -->|"compile"| node_sql_compiler_impl
+node_sql_compiler_impl -->|"parse"| node_sql_parser
+node_sql_compiler_impl -->|"optimise"| node_sql_optimiser
+node_sql_compiler_impl -->|"generate plan"| node_sql_code_generator
+node_sql_code_generator -->|"factory inside"| node_compiled_query
+node_sql_compiler_impl -->|"returns L410"| node_compiled_query
+node_sql_compiler_impl -->|"reads and writes"| node_cairo_engine
+node_server_main -->|"creates"| node_cairo_engine
+node_cairo_engine -->|"getWriter L2885"| node_table_writer
+node_cairo_engine -->|"getReader L2451"| node_table_reader
+node_table_writer -->|"layout"| node_column_type
+node_table_writer -->|"symbol columns"| node_symbol_map_writer
+node_table_reader -->|"decode"| node_column_type
+node_worker_pool -->|"runs apply job"| node_apply_wal2_table_job
+node_apply_wal2_table_job -->|"replays txns"| node_cairo_engine
+node_table_writer -->|"WAL tables log txns"| node_wal_writer
+node_wal_writer -->|"encodes events"| node_wal_event_writer
+node_sql_code_generator -->|"scan factories"| node_table_reader
+
+click node_server_main "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/ServerMain.java"
+click node_worker_pool "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/mp/WorkerPool.java"
+click node_message_bus "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/MessageBus.java"
+click node_job "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/mp/Job.java"
+click node_abstract_queue_consumer_job "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/mp/AbstractQueueConsumerJob.java"
+click node_line_tcp_receiver "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/line/tcp/LineTcpReceiver.java"
+click node_line_tcp_parser "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/line/tcp/LineTcpParser.java"
+click node_line_tcp_network_io_job "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/line/tcp/LineTcpNetworkIOJob.java"
+click node_line_tcp_measurement_scheduler "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/line/tcp/LineTcpMeasurementScheduler.java"
+click node_line_tcp_writer_job "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/line/tcp/LineTcpWriterJob.java"
+click node_line_wal_appender "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/line/tcp/LineWalAppender.java"
+click node_http_server "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/http/HttpServer.java"
+click node_line_http_processor "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/http/processors/LineHttpProcessorImpl.java"
+click node_json_query_processor "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/http/processors/JsonQueryProcessor.java"
+click node_pg_server "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cutlass/pgwire/PGServer.java"
+click node_sql_compiler_impl "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/griffin/SqlCompilerImpl.java"
+click node_sql_parser "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/griffin/SqlParser.java"
+click node_sql_optimiser "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/griffin/SqlOptimiser.java"
+click node_sql_code_generator "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/griffin/SqlCodeGenerator.java"
+click node_compiled_query "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/griffin/CompiledQuery.java"
+click node_sql_execution_context_impl "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/griffin/SqlExecutionContextImpl.java"
+click node_cairo_engine "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/CairoEngine.java"
+click node_table_writer "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/TableWriter.java"
+click node_table_reader "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/TableReader.java"
+click node_column_type "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/ColumnType.java"
+click node_symbol_map_writer "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/SymbolMapWriter.java"
+click node_wal_writer "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/wal/WalWriter.java"
+click node_wal_event_writer "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/wal/WalEventWriter.java"
+click node_apply_wal2_table_job "https://github.com/questdb/questdb/blob/master/core/src/main/java/io/questdb/cairo/wal/ApplyWal2TableJob.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_server_main,node_cairo_engine,node_table_writer,node_table_reader,node_column_type,node_symbol_map_writer toneBlue
+class node_worker_pool,node_message_bus,node_job,node_abstract_queue_consumer_job,node_wal_writer,node_wal_event_writer,node_apply_wal2_table_job toneAmber
+class node_line_tcp_receiver,node_line_tcp_parser,node_line_tcp_network_io_job,node_line_tcp_measurement_scheduler,node_line_tcp_writer_job,node_line_wal_appender toneMint
+class node_http_server,node_line_http_processor,node_json_query_processor toneRose
+class node_pg_server toneIndigo
+class node_sql_compiler_impl,node_sql_parser,node_sql_optimiser,node_sql_code_generator,node_compiled_query,node_sql_execution_context_impl toneTeal
