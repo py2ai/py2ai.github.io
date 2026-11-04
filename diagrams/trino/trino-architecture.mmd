@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_g_entry["Coordinator entry"]
+  node_query_manager["QueryManager<br/>[QueryManager.java]"]
+  node_sql_query_execution["SqlQueryExecution"]
+end
+
+subgraph group_g_plan["Planning &amp; optimization"]
+  node_logical_planner["LogicalPlanner"]
+  node_query_planner["QueryPlanner<br/>[QueryPlanner.java]"]
+  node_plan_optimizers["PlanOptimizers"]
+  node_plan_fragmenter["PlanFragmenter"]
+end
+
+subgraph group_g_schedule["Stage &amp; split scheduling"]
+  node_query_scheduler["QueryScheduler"]
+  node_stage_scheduler["StageScheduler"]
+  node_node_scheduler["NodeScheduler<br/>[NodeScheduler.java]"]
+  node_node_selector["NodeSelector<br/>[NodeSelector.java]"]
+  node_uniform_node_selector["UniformNodeSelector"]
+  node_source_partitioned_scheduler["SourcePartitionedScheduler"]
+  node_dynamic_split_placement_policy["DynamicSplitPlacementPolicy"]
+end
+
+subgraph group_g_task["Worker task layer"]
+  node_sql_task["SqlTask<br/>[SqlTask.java]"]
+  node_sql_task_execution["SqlTaskExecution"]
+  node_task_executor["TaskExecutor<br/>[TaskExecutor.java]"]
+  node_time_sharing_task_executor["TimeSharingTaskExecutor"]
+  node_local_execution_planner["LocalExecutionPlanner"]
+end
+
+subgraph group_g_operators["Driver &amp; operators"]
+  node_driver["Driver<br/>[Driver.java]"]
+  node_operator["Operator<br/>[Operator.java]"]
+  node_scan_filter_and_project_operator["ScanFilterAndProjectOperator"]
+  node_table_scan_operator["TableScanOperator"]
+  node_hash_aggregation_operator["HashAggregationOperator"]
+  node_exchange_operator["ExchangeOperator"]
+  node_local_exchange["LocalExchange<br/>[LocalExchange.java]"]
+  node_http_page_buffer_client["HttpPageBufferClient"]
+end
+
+subgraph group_g_spi["Connector SPI"]
+  node_connector["Connector<br/>[Connector.java]"]
+  node_connector_metadata["ConnectorMetadata"]
+  node_connector_split_manager["ConnectorSplitManager"]
+  node_connector_page_source_provider["ConnectorPageSourceProvider"]
+  node_connector_page_source["ConnectorPageSource"]
+  node_connector_page_sink["ConnectorPageSink"]
+end
+
+subgraph group_g_data["Columnar data model"]
+  node_page["Page<br/>[Page.java]"]
+  node_block["Block<br/>[Block.java]"]
+end
+
+node_query_manager -->|"runs lifecycle"| node_sql_query_execution
+node_sql_query_execution -->|"plans analyzed SQL"| node_logical_planner
+node_logical_planner -->|"applies rule suite"| node_plan_optimizers
+node_sql_query_execution -->|"fragments into stages"| node_plan_fragmenter
+node_sql_query_execution -->|"starts scheduling"| node_query_scheduler
+node_query_scheduler -->|"schedules each stage"| node_stage_scheduler
+node_source_partitioned_scheduler -->|"factory returns"| node_stage_scheduler
+node_node_scheduler -->|"createNodeSelector"| node_node_selector
+node_uniform_node_selector -->|"implements"| node_node_selector
+node_source_partitioned_scheduler -->|"places splits"| node_dynamic_split_placement_policy
+node_dynamic_split_placement_policy -->|"computeAssignments"| node_node_selector
+node_source_partitioned_scheduler -->|"assigns splits to tasks"| node_sql_task
+node_sql_query_execution -->|"submits stage tasks"| node_sql_task
+node_sql_task -->|"delegates updates"| node_sql_task_execution
+node_sql_task_execution -->|"enqueues splits"| node_task_executor
+node_time_sharing_task_executor -->|"implements"| node_task_executor
+node_sql_task_execution -->|"plans local execution"| node_local_execution_planner
+node_local_execution_planner -->|"produces drivers"| node_driver
+node_task_executor -->|"runs driver loops"| node_driver
+node_driver -->|"advances chain"| node_operator
+node_operator -->|"implemented by"| node_scan_filter_and_project_operator
+node_operator -->|"implemented by"| node_hash_aggregation_operator
+node_operator -->|"implemented by"| node_exchange_operator
+node_table_scan_operator -->|"reads source pages"| node_connector_page_source
+node_hash_aggregation_operator -->|"aggregates input pages"| node_page
+node_exchange_operator -->|"fetches remote pages"| node_http_page_buffer_client
+node_http_page_buffer_client -->|"receives page buffers"| node_page
+node_driver -->|"streams between operators"| node_page
+node_local_exchange -->|"buffers local pages"| node_operator
+node_connector -->|"getMetadata"| node_connector_metadata
+node_connector -->|"getSplitManager"| node_connector_split_manager
+node_connector -->|"getPageSourceProvider"| node_connector_page_source_provider
+node_connector -->|"provides page sinks"| node_connector_page_sink
+node_connector_page_source_provider -->|"creates page sources"| node_connector_page_source
+node_connector_page_source -->|"returns pages"| node_page
+node_connector_page_sink -->|"appends pages"| node_page
+node_page -->|"holds column blocks"| node_block
+node_table_scan_operator -->|"emits pages"| node_page
+
+click node_query_manager "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/QueryManager.java"
+click node_sql_query_execution "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/SqlQueryExecution.java"
+click node_logical_planner "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/sql/planner/LogicalPlanner.java"
+click node_query_planner "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/sql/planner/QueryPlanner.java"
+click node_plan_optimizers "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/sql/planner/PlanOptimizers.java"
+click node_plan_fragmenter "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/sql/planner/PlanFragmenter.java"
+click node_query_scheduler "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/QueryScheduler.java"
+click node_stage_scheduler "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/StageScheduler.java"
+click node_node_scheduler "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/NodeScheduler.java"
+click node_node_selector "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/NodeSelector.java"
+click node_uniform_node_selector "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/UniformNodeSelector.java"
+click node_source_partitioned_scheduler "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/SourcePartitionedScheduler.java"
+click node_dynamic_split_placement_policy "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/scheduler/DynamicSplitPlacementPolicy.java"
+click node_sql_task "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/SqlTask.java"
+click node_sql_task_execution "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/SqlTaskExecution.java"
+click node_task_executor "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/executor/TaskExecutor.java"
+click node_time_sharing_task_executor "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/execution/executor/timesharing/TimeSharingTaskExecutor.java"
+click node_local_execution_planner "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/sql/planner/LocalExecutionPlanner.java"
+click node_driver "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/Driver.java"
+click node_operator "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/Operator.java"
+click node_scan_filter_and_project_operator "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/ScanFilterAndProjectOperator.java"
+click node_table_scan_operator "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/TableScanOperator.java"
+click node_hash_aggregation_operator "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/HashAggregationOperator.java"
+click node_exchange_operator "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/ExchangeOperator.java"
+click node_local_exchange "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/exchange/LocalExchange.java"
+click node_http_page_buffer_client "https://github.com/trinodb/trino/blob/master/core/trino-main/src/main/java/io/trino/operator/HttpPageBufferClient.java"
+click node_connector "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/connector/Connector.java"
+click node_connector_metadata "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/connector/ConnectorMetadata.java"
+click node_connector_split_manager "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/connector/ConnectorSplitManager.java"
+click node_connector_page_source_provider "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/connector/ConnectorPageSourceProvider.java"
+click node_connector_page_source "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/connector/ConnectorPageSource.java"
+click node_connector_page_sink "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/connector/ConnectorPageSink.java"
+click node_page "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/Page.java"
+click node_block "https://github.com/trinodb/trino/blob/master/core/trino-spi/src/main/java/io/trino/spi/block/Block.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_query_manager,node_sql_query_execution,node_page,node_block toneBlue
+class node_logical_planner,node_query_planner,node_plan_optimizers,node_plan_fragmenter toneAmber
+class node_query_scheduler,node_stage_scheduler,node_node_scheduler,node_node_selector,node_uniform_node_selector,node_source_partitioned_scheduler,node_dynamic_split_placement_policy toneMint
+class node_sql_task,node_sql_task_execution,node_task_executor,node_time_sharing_task_executor,node_local_execution_planner toneRose
+class node_driver,node_operator,node_scan_filter_and_project_operator,node_table_scan_operator,node_hash_aggregation_operator,node_exchange_operator,node_local_exchange,node_http_page_buffer_client toneIndigo
+class node_connector,node_connector_metadata,node_connector_split_manager,node_connector_page_source_provider,node_connector_page_source,node_connector_page_sink toneTeal
