@@ -1,0 +1,121 @@
+flowchart TD
+
+subgraph group_adapter["adapter"]
+  node_coordinator["Coordinator<br/>[coord.rs]"]
+  node_sequencer["Statement sequencer<br/>[inner.rs]"]
+  node_create_mv["CREATE MATERIALIZED VIEW path"]
+  node_cluster_controller["Cluster controller"]
+  node_timestamping["Timestamp selection"]
+  node_peek_client["Peek client<br/>[peek_client.rs]"]
+end
+
+subgraph group_storage["storage"]
+  node_storage_server["storage serve&#40;&#41;<br/>[server.rs]"]
+  node_storage_state["StorageState<br/>[storage_state.rs]"]
+  node_render_sources["render_source<br/>[sources.rs]"]
+  node_reclock["Reclock operator<br/>[reclock.rs]"]
+  node_kafka_source["Kafka source reader<br/>[kafka.rs]"]
+  node_pg_source["Postgres CDC source<br/>[postgres.rs]"]
+  node_avro_decode["Avro decoder<br/>[avro.rs]"]
+  node_upsert_rocksdb["Upsert RocksDB<br/>[rocksdb.rs]"]
+  node_kafka_sink["Kafka sink progress<br/>[kafka.rs]"]
+end
+
+subgraph group_compute["compute"]
+  node_compute_server["compute serve&#40;&#41;<br/>[server.rs]"]
+  node_compute_state["ComputeState<br/>[compute_state.rs]"]
+  node_render["Dataflow renderer<br/>[render.rs]"]
+  node_render_plan["Per-operator render<br/>[render.rs]"]
+  node_arrangement["TraceManager<br/>[manager.rs]"]
+  node_peek_exec["serve_index_peek<br/>[compute_state.rs]"]
+  node_memory_limiter["Memory limiter<br/>[memory_limiter.rs]"]
+  node_mv_sink["MV persist sink"]
+  node_subscribe["SUBSCRIBE sink<br/>[subscribe.rs]"]
+end
+
+subgraph group_persist["persist"]
+  node_location["Blob + Consensus<br/>[location.rs]"]
+  node_consensus["Consensus trait<br/>[location.rs]"]
+  node_file_blob["FileBlob<br/>[file.rs]"]
+  node_hedge["Hedged reads<br/>[hedge.rs]"]
+  node_parquet["Parquet encoding<br/>[parquet.rs]"]
+end
+
+node_coordinator -->|"sequences statements"| node_sequencer
+node_sequencer -->|"MV lifecycle stages"| node_create_mv
+node_coordinator -->|"catalog commit"| node_create_mv
+node_coordinator -->|"determine query time"| node_timestamping
+node_timestamping -->|"pinned as-of"| node_peek_client
+node_coordinator -->|"issues peeks"| node_peek_client
+node_coordinator -->|"drives clusters"| node_cluster_controller
+node_sequencer -->|"provisions collections"| node_cluster_controller
+node_cluster_controller -->|"runs storaged"| node_storage_server
+node_cluster_controller -->|"runs clusterd"| node_compute_server
+node_storage_server -->|"builds state"| node_storage_state
+node_storage_state -->|"per-worker wiring"| node_render_sources
+node_render_sources -->|"partition readers"| node_kafka_source
+node_render_sources -->|"replication stream"| node_pg_source
+node_kafka_source -->|"raw payloads"| node_avro_decode
+node_kafka_source -->|"keyed backfill"| node_upsert_rocksdb
+node_kafka_source -->|"offsets"| node_reclock
+node_pg_source -->|"LSNs"| node_reclock
+node_avro_decode -->|"decoded updates"| node_reclock
+node_storage_state -->|"sink writes"| node_kafka_sink
+node_compute_server -->|"worker state"| node_compute_state
+node_compute_state -->|"installs plans"| node_render
+node_render -->|"operator dispatch"| node_render_plan
+node_compute_state -->|"traces"| node_arrangement
+node_compute_state -->|"one-shot reads"| node_peek_exec
+node_peek_client -->|"peek RPCs"| node_compute_server
+node_compute_state -->|"budget checks"| node_memory_limiter
+node_render -->|"materialized views"| node_mv_sink
+node_render -->|"tails"| node_subscribe
+node_reclock -->|"durable collections"| node_location
+node_mv_sink -->|"writes shards"| node_location
+node_compute_state -->|"reads shards"| node_location
+node_location -->|"upper + state"| node_consensus
+node_file_blob -->|"impl Blob"| node_location
+node_hedge -->|"tail-latency hiding"| node_location
+node_parquet -->|"columnar batches"| node_location
+
+click node_coordinator "https://github.com/MaterializeInc/materialize/blob/main/src/adapter/src/coord.rs"
+click node_sequencer "https://github.com/MaterializeInc/materialize/blob/main/src/adapter/src/coord/sequencer/inner.rs"
+click node_create_mv "https://github.com/MaterializeInc/materialize/blob/main/src/adapter/src/coord/sequencer/inner/create_materialized_view.rs"
+click node_cluster_controller "https://github.com/MaterializeInc/materialize/blob/main/src/adapter/src/coord/cluster_controller.rs"
+click node_timestamping "https://github.com/MaterializeInc/materialize/blob/main/src/adapter/src/coord/timestamp_selection.rs"
+click node_peek_client "https://github.com/MaterializeInc/materialize/blob/main/src/adapter/src/peek_client.rs"
+click node_storage_server "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/server.rs"
+click node_storage_state "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/storage_state.rs"
+click node_render_sources "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/render/sources.rs"
+click node_reclock "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/source/reclock.rs"
+click node_kafka_source "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/source/kafka.rs"
+click node_pg_source "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/source/postgres.rs"
+click node_avro_decode "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/decode/avro.rs"
+click node_upsert_rocksdb "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/upsert/rocksdb.rs"
+click node_kafka_sink "https://github.com/MaterializeInc/materialize/blob/main/src/storage/src/sink/kafka.rs"
+click node_compute_server "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/server.rs"
+click node_compute_state "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/compute_state.rs"
+click node_render "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/render.rs"
+click node_render_plan "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/render.rs"
+click node_arrangement "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/arrangement/manager.rs"
+click node_peek_exec "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/compute_state.rs"
+click node_memory_limiter "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/memory_limiter.rs"
+click node_mv_sink "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/sink/materialized_view.rs"
+click node_subscribe "https://github.com/MaterializeInc/materialize/blob/main/src/compute/src/sink/subscribe.rs"
+click node_location "https://github.com/MaterializeInc/materialize/blob/main/src/persist/src/location.rs"
+click node_consensus "https://github.com/MaterializeInc/materialize/blob/main/src/persist/src/location.rs"
+click node_file_blob "https://github.com/MaterializeInc/materialize/blob/main/src/persist/src/file.rs"
+click node_hedge "https://github.com/MaterializeInc/materialize/blob/main/src/persist/src/hedge.rs"
+click node_parquet "https://github.com/MaterializeInc/materialize/blob/main/src/persist/src/indexed/columnar/parquet.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_coordinator,node_sequencer,node_create_mv,node_cluster_controller,node_timestamping,node_peek_client toneBlue
+class node_storage_server,node_storage_state,node_render_sources,node_reclock,node_kafka_source,node_pg_source,node_avro_decode,node_upsert_rocksdb,node_kafka_sink toneAmber
+class node_compute_server,node_compute_state,node_render,node_render_plan,node_arrangement,node_peek_exec,node_memory_limiter,node_mv_sink,node_subscribe toneMint
+class node_location,node_consensus,node_file_blob,node_hedge,node_parquet toneRose
