@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_sql_frontend["SQL Frontend"]
+  node_arroyo_cli["arroyo CLI<br/>[main.rs]"]
+  node_parse_sql["parse_sql<br/>[lib.rs]"]
+  node_schema_provider["ArroyoSchemaProvider<br/>[lib.rs]"]
+  node_planner_entry["parse_and_get_program<br/>[lib.rs]"]
+  node_plan_visitor["PlanToGraphVisitor<br/>[builder.rs]"]
+end
+
+subgraph group_graph_model["Dataflow Graph"]
+  node_logical_node["LogicalNode<br/>[logical.rs]"]
+  node_logical_program["LogicalProgram<br/>[logical.rs]"]
+  node_chaining_optimizer["ChainingOptimizer<br/>[optimizers.rs]"]
+  node_window_type["WindowType<br/>[lib.rs]"]
+end
+
+subgraph group_runtime["Runtime Engine"]
+  node_engine["Engine<br/>[engine.rs]"]
+  node_program_from_logical["Program::from_logical<br/>[engine.rs]"]
+  node_construct_operator["construct_operator<br/>[engine.rs]"]
+  node_network_quads["Quad network links<br/>[network_manager.rs]"]
+  node_job_controller["WorkerJobController<br/>[controller.rs]"]
+end
+
+subgraph group_operators["Operator Library"]
+  node_arrow_operator["ArrowOperator trait<br/>[operator.rs]"]
+  node_source_operator["SourceOperator trait<br/>[operator.rs]"]
+  node_tumbling_window["TumblingAggregatingWindowFunc"]
+  node_sliding_window["SlidingAggregatingWindowFunc"]
+  node_incremental_agg["IncrementalAggregatingFunc"]
+  node_watermark_generator["WatermarkGenerator"]
+  node_lookup_join["LookupJoin<br/>[lookup_join.rs]"]
+end
+
+subgraph group_fault_tol["Checkpoints &amp; State"]
+  node_checkpoint_barrier["CheckpointBarrier<br/>[lib.rs]"]
+  node_run_checkpoint["run_checkpoint<br/>[operator.rs]"]
+  node_checkpoint_state["CheckpointState"]
+  node_committing_state["CommittingState"]
+  node_table_manager["TableManager<br/>[table_manager.rs]"]
+  node_parquet_backend["ParquetBackend<br/>[parquet.rs]"]
+  node_storage_provider["StorageProvider<br/>[lib.rs]"]
+end
+
+subgraph group_io["Connectors"]
+  node_connector_trait["Connector / Connection<br/>[connector.rs]"]
+  node_kafka_connector["KafkaConnector<br/>[mod.rs]"]
+  node_kafka_source["KafkaSourceFunc<br/>[mod.rs]"]
+end
+
+subgraph group_udf["UDF Runtime"]
+  node_udf_macro["&#35;&#91;udf&#93; proc macro<br/>[lib.rs]"]
+  node_udf_host_parse["ParsedUdfFile<br/>[lib.rs]"]
+  node_udf_dylib["UdfDylib<br/>[lib.rs]"]
+end
+
+node_arroyo_cli -->|"query file / stdin &#40;run.rs L400&#41;"| node_parse_sql
+node_parse_sql -->|"statements"| node_planner_entry
+node_schema_provider -->|"tables &amp; functions"| node_planner_entry
+node_planner_entry -->|"DataFusion LogicalPlan"| node_plan_visitor
+node_plan_visitor -->|"creates per extension"| node_logical_node
+node_logical_node -->|"wired via edges"| node_logical_program
+node_window_type -->|"window spec on nodes"| node_logical_program
+node_logical_program -->|"rewrite"| node_chaining_optimizer
+node_chaining_optimizer -->|"Engine::start &#40;L528&#41;"| node_engine
+node_engine -->|"expand to subtasks"| node_program_from_logical
+node_program_from_logical -->|"per subtask"| node_construct_operator
+node_construct_operator -->|"constructor registry"| node_arrow_operator
+node_engine -->|"quad addressing"| node_network_quads
+node_network_quads -->|"deliver batches"| node_arrow_operator
+node_engine -->|"control messages"| node_job_controller
+node_job_controller -->|"checkpoint&#40;&#41; &#40;L774&#41;"| node_checkpoint_barrier
+node_checkpoint_barrier -->|"sweeps each subtask"| node_run_checkpoint
+node_source_operator -->|"sources feed arrow stages"| node_arrow_operator
+node_arrow_operator -->|"window impl"| node_tumbling_window
+node_arrow_operator -->|"window impl"| node_sliding_window
+node_arrow_operator -->|"agg impl"| node_incremental_agg
+node_arrow_operator -->|"join impl"| node_lookup_join
+node_arrow_operator -->|"tracks event time"| node_watermark_generator
+node_run_checkpoint -->|"snapshot &#40;L368&#41;"| node_table_manager
+node_run_checkpoint -->|"ack events &#40;L217&#41;"| node_checkpoint_state
+node_checkpoint_state -->|"into_commit &#40;L475&#41;"| node_committing_state
+node_committing_state -->|"send_commit_messages &#40;L794&#41;"| node_job_controller
+node_table_manager -->|"row groups per epoch"| node_parquet_backend
+node_parquet_backend -->|"object store writes"| node_storage_provider
+node_planner_entry -->|"profiles &amp; tables"| node_connector_trait
+node_connector_trait -->|"KafkaConnector impl &#40;L170&#41;"| node_kafka_connector
+node_kafka_connector -->|"builds source tasks"| node_kafka_source
+node_kafka_source -->|"impl SourceOperator &#40;L298&#41;"| node_source_operator
+node_kafka_source -->|"KafkaState offsets saved &#40;L49&#41;"| node_checkpoint_state
+node_schema_provider -->|"add_rust_udf &#40;L329&#41;"| node_udf_host_parse
+node_udf_macro -->|"&#35;&#91;udf&#93; glue"| node_udf_host_parse
+node_udf_host_parse -->|"compile &amp; load"| node_udf_dylib
+node_udf_dylib -->|"called per batch"| node_arrow_operator
+
+click node_arroyo_cli "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo/src/main.rs"
+click node_parse_sql "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-planner/src/lib.rs"
+click node_schema_provider "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-planner/src/lib.rs"
+click node_planner_entry "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-planner/src/lib.rs"
+click node_plan_visitor "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-planner/src/builder.rs"
+click node_logical_node "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-datastream/src/logical.rs"
+click node_logical_program "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-datastream/src/logical.rs"
+click node_chaining_optimizer "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-datastream/src/optimizers.rs"
+click node_window_type "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-datastream/src/lib.rs"
+click node_engine "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/engine.rs"
+click node_program_from_logical "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/engine.rs"
+click node_construct_operator "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/engine.rs"
+click node_network_quads "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/network_manager.rs"
+click node_job_controller "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/job_controller/controller.rs"
+click node_arrow_operator "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-operator/src/operator.rs"
+click node_source_operator "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-operator/src/operator.rs"
+click node_tumbling_window "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/arrow/tumbling_aggregating_window.rs"
+click node_sliding_window "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/arrow/sliding_aggregating_window.rs"
+click node_incremental_agg "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/arrow/incremental_aggregator.rs"
+click node_watermark_generator "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/arrow/watermark_generator.rs"
+click node_lookup_join "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/arrow/lookup_join.rs"
+click node_checkpoint_barrier "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-types/src/lib.rs"
+click node_run_checkpoint "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-operator/src/operator.rs"
+click node_checkpoint_state "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/job_controller/checkpoint_state.rs"
+click node_committing_state "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-worker/src/job_controller/committing_state.rs"
+click node_table_manager "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-state/src/tables/table_manager.rs"
+click node_parquet_backend "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-state/src/parquet.rs"
+click node_storage_provider "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-storage/src/lib.rs"
+click node_connector_trait "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-operator/src/connector.rs"
+click node_kafka_connector "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-connectors/src/kafka/mod.rs"
+click node_kafka_source "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-connectors/src/kafka/source/mod.rs"
+click node_udf_macro "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-udf/arroyo-udf-macros/src/lib.rs"
+click node_udf_host_parse "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-udf/arroyo-udf-host/src/lib.rs"
+click node_udf_dylib "https://github.com/ArroyoSystems/arroyo/blob/master/crates/arroyo-udf/arroyo-udf-host/src/lib.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_arroyo_cli,node_parse_sql,node_schema_provider,node_planner_entry,node_plan_visitor,node_udf_macro,node_udf_host_parse,node_udf_dylib toneBlue
+class node_logical_node,node_logical_program,node_chaining_optimizer,node_window_type toneAmber
+class node_engine,node_program_from_logical,node_construct_operator,node_network_quads,node_job_controller toneMint
+class node_arrow_operator,node_source_operator,node_tumbling_window,node_sliding_window,node_incremental_agg,node_watermark_generator,node_lookup_join toneRose
+class node_checkpoint_barrier,node_run_checkpoint,node_checkpoint_state,node_committing_state,node_table_manager,node_parquet_backend,node_storage_provider toneIndigo
+class node_connector_trait,node_kafka_connector,node_kafka_source toneTeal
