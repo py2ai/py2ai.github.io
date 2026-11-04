@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_g_broker["Broker"]
+  node_broker_request_handler["BaseSingleStageBrokerRequestHandler"]
+  node_routing_manager["BaseBrokerRoutingManager"]
+end
+
+subgraph group_g_server_query["Server Query Path"]
+  node_worker_query_server["WorkerQueryServer"]
+  node_query_scheduler["QueryScheduler"]
+  node_query_executor["ServerQueryExecutorV1Impl"]
+end
+
+subgraph group_g_realtime_ingest["Realtime Consumption &#40;LLC&#41;"]
+  node_realtime_table_dm["RealtimeTableDataManager"]
+  node_realtime_segment_dm["RealtimeSegmentDataManager"]
+  node_consumer_coordinator["ConsumerCoordinator"]
+end
+
+subgraph group_g_segment_commit["Commit &amp; Upload"]
+  node_segment_committer_factory["SegmentCommitterFactory"]
+  node_segment_uploader["Server2ControllerSegmentUploader"]
+end
+
+subgraph group_g_segment_store["Segment Store"]
+  node_mutable_segment["MutableSegmentImpl"]
+  node_segment_creator["SegmentIndexCreationDriverImpl"]
+end
+
+node_broker_request_handler -->|"getRoutingTable&#40;&#41;"| node_routing_manager
+node_broker_request_handler -->|"dispatch query"| node_worker_query_server
+node_worker_query_server -->|"submit query"| node_query_scheduler
+node_query_scheduler -->|"execute"| node_query_executor
+node_query_executor -->|"scan + index lookup"| node_mutable_segment
+node_realtime_table_dm -->|"spawn per-partition consumer"| node_realtime_segment_dm
+node_realtime_segment_dm -->|"acquire/release partition"| node_consumer_coordinator
+node_realtime_segment_dm -->|"index live rows"| node_mutable_segment
+node_realtime_segment_dm -->|"commit sealed segment"| node_segment_committer_factory
+node_segment_committer_factory -->|"upload segment"| node_segment_uploader
+node_segment_uploader -->|"segment ONLINE, rebuild routing"| node_routing_manager
+node_mutable_segment -->|"same index creators seal segment"| node_segment_creator
+
+click node_broker_request_handler "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/requesthandler/BaseSingleStageBrokerRequestHandler.java"
+click node_routing_manager "https://github.com/apache/pinot/blob/master/pinot-broker/src/main/java/org/apache/pinot/broker/routing/manager/BaseBrokerRoutingManager.java"
+click node_worker_query_server "https://github.com/apache/pinot/blob/master/pinot-server/src/main/java/org/apache/pinot/server/worker/WorkerQueryServer.java"
+click node_query_scheduler "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/query/scheduler/QueryScheduler.java"
+click node_query_executor "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/query/executor/ServerQueryExecutorV1Impl.java"
+click node_realtime_table_dm "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/RealtimeTableDataManager.java"
+click node_realtime_segment_dm "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/RealtimeSegmentDataManager.java"
+click node_consumer_coordinator "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/ConsumerCoordinator.java"
+click node_segment_committer_factory "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/SegmentCommitterFactory.java"
+click node_segment_uploader "https://github.com/apache/pinot/blob/master/pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/Server2ControllerSegmentUploader.java"
+click node_mutable_segment "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/indexsegment/mutable/MutableSegmentImpl.java"
+click node_segment_creator "https://github.com/apache/pinot/blob/master/pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/creator/impl/SegmentIndexCreationDriverImpl.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_broker_request_handler,node_routing_manager toneBlue
+class node_worker_query_server,node_query_scheduler,node_query_executor toneAmber
+class node_realtime_table_dm,node_realtime_segment_dm,node_consumer_coordinator toneMint
+class node_segment_committer_factory,node_segment_uploader toneRose
+class node_mutable_segment,node_segment_creator toneIndigo

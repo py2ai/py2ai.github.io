@@ -1,0 +1,40 @@
+{
+  "owner": "apache",
+  "repo": "pinot",
+  "branch": "master",
+  "groups": [
+    {"id": "g_broker", "name": "Broker", "label": "Broker"},
+    {"id": "g_server_query", "name": "ServerQuery", "label": "Server Query Path"},
+    {"id": "g_realtime_ingest", "name": "RealtimeIngest", "label": "Realtime Consumption (LLC)"},
+    {"id": "g_segment_commit", "name": "SegmentCommit", "label": "Commit & Upload"},
+    {"id": "g_segment_store", "name": "SegmentStore", "label": "Segment Store"}
+  ],
+  "nodes": [
+    {"id": "broker_request_handler", "label": "BaseSingleStageBrokerRequestHandler", "file": "BaseSingleStageBrokerRequestHandler.java", "path": "pinot-broker/src/main/java/org/apache/pinot/broker/requesthandler/BaseSingleStageBrokerRequestHandler.java", "group": "Broker", "groupId": "g_broker", "desc": "Compiles SQL, prunes and routes segments, fans queries out to servers and reduces responses"},
+    {"id": "routing_manager", "label": "BaseBrokerRoutingManager", "file": "BaseBrokerRoutingManager.java", "path": "pinot-broker/src/main/java/org/apache/pinot/broker/routing/manager/BaseBrokerRoutingManager.java", "group": "Broker", "groupId": "g_broker", "desc": "buildRouting()/getRoutingTable(): maintains per-table routing entries, pruners and instance selectors"},
+    {"id": "worker_query_server", "label": "WorkerQueryServer", "file": "WorkerQueryServer.java", "path": "pinot-server/src/main/java/org/apache/pinot/server/worker/WorkerQueryServer.java", "group": "ServerQuery", "groupId": "g_server_query", "desc": "Grpc/netty endpoint on each server that accepts broker queries and hands them to the scheduler"},
+    {"id": "query_scheduler", "label": "QueryScheduler", "file": "QueryScheduler.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/query/scheduler/QueryScheduler.java", "group": "ServerQuery", "groupId": "g_server_query", "desc": "Queues and admits server queries (FCFS/priority/token bucket) via processQueryAndSerializeResponse"},
+    {"id": "query_executor", "label": "ServerQueryExecutorV1Impl", "file": "ServerQueryExecutorV1Impl.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/query/executor/ServerQueryExecutorV1Impl.java", "group": "ServerQuery", "groupId": "g_server_query", "desc": "Prunes segments, asks PlanMaker for a Plan and runs the operator tree per segment"},
+    {"id": "realtime_table_dm", "label": "RealtimeTableDataManager", "file": "RealtimeTableDataManager.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/RealtimeTableDataManager.java", "group": "RealtimeIngest", "groupId": "g_realtime_ingest", "desc": "Per-table manager that spawns one RealtimeSegmentDataManager per consuming partition"},
+    {"id": "realtime_segment_dm", "label": "RealtimeSegmentDataManager", "file": "RealtimeSegmentDataManager.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/RealtimeSegmentDataManager.java", "group": "RealtimeIngest", "groupId": "g_realtime_ingest", "desc": "The LLC consuming loop: PartitionConsumer.run() consumes, indexes rows, seals and commits segments"},
+    {"id": "consumer_coordinator", "label": "ConsumerCoordinator", "file": "ConsumerCoordinator.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/ConsumerCoordinator.java", "group": "RealtimeIngest", "groupId": "g_realtime_ingest", "desc": "Enforces one consumer per stream partition: acquire()/release() of the consumer semaphore"},
+    {"id": "segment_committer_factory", "label": "SegmentCommitterFactory", "file": "SegmentCommitterFactory.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/SegmentCommitterFactory.java", "group": "SegmentCommit", "groupId": "g_segment_commit", "desc": "createSegmentCommitter(): picks the commit path (segment build) for a sealed realtime segment"},
+    {"id": "segment_uploader", "label": "Server2ControllerSegmentUploader", "file": "Server2ControllerSegmentUploader.java", "path": "pinot-core/src/main/java/org/apache/pinot/core/data/manager/realtime/Server2ControllerSegmentUploader.java", "group": "SegmentCommit", "groupId": "g_segment_commit", "desc": "Streams the built segment from server to controller, which writes it to the deep store"},
+    {"id": "mutable_segment", "label": "MutableSegmentImpl", "file": "MutableSegmentImpl.java", "path": "pinot-segment-local/src/main/java/org/apache/pinot/segment/local/indexsegment/mutable/MutableSegmentImpl.java", "group": "SegmentStore", "groupId": "g_segment_store", "desc": "In-memory indexable segment for consuming data; index(GenericRow) appends dictionary/fwd/inverted indexes"},
+    {"id": "segment_creator", "label": "SegmentIndexCreationDriverImpl", "file": "SegmentIndexCreationDriverImpl.java", "path": "pinot-segment-local/src/main/java/org/apache/pinot/segment/local/segment/creator/impl/SegmentIndexCreationDriverImpl.java", "group": "SegmentStore", "groupId": "g_segment_store", "desc": "Drives immutable segment creation: dictionaries, forward/inverted indexes, then persist to disk"}
+  ],
+  "edges": [
+    {"from": "broker_request_handler", "to": "routing_manager", "label": "getRoutingTable()"},
+    {"from": "broker_request_handler", "to": "worker_query_server", "label": "dispatch query"},
+    {"from": "worker_query_server", "to": "query_scheduler", "label": "submit query"},
+    {"from": "query_scheduler", "to": "query_executor", "label": "execute"},
+    {"from": "query_executor", "to": "mutable_segment", "label": "scan + index lookup"},
+    {"from": "realtime_table_dm", "to": "realtime_segment_dm", "label": "spawn per-partition consumer"},
+    {"from": "realtime_segment_dm", "to": "consumer_coordinator", "label": "acquire/release partition"},
+    {"from": "realtime_segment_dm", "to": "mutable_segment", "label": "index live rows"},
+    {"from": "realtime_segment_dm", "to": "segment_committer_factory", "label": "commit sealed segment"},
+    {"from": "segment_committer_factory", "to": "segment_uploader", "label": "upload segment"},
+    {"from": "segment_uploader", "to": "routing_manager", "label": "segment ONLINE, rebuild routing"},
+    {"from": "mutable_segment", "to": "segment_creator", "label": "same index creators seal segment"}
+  ]
+}
