@@ -1,0 +1,153 @@
+{
+  "owner": "grafana",
+  "repo": "tempo",
+  "branch": "main",
+  "groups": [
+    { "id": "g_entry", "name": "Entrypoint", "label": "Entrypoint" },
+    { "id": "g_ingest", "name": "Ingestion", "label": "Ingestion" },
+    { "id": "g_write", "name": "Write Path", "label": "Write Path" },
+    { "id": "g_storage", "name": "Object Storage", "label": "Object Storage" },
+    { "id": "g_compact", "name": "Compaction", "label": "Compaction" },
+    { "id": "g_query", "name": "Query Path", "label": "Query Path" }
+  ],
+  "nodes": [
+    {
+      "id": "main",
+      "label": "cmd/tempo",
+      "file": "main.go",
+      "path": "cmd/tempo/main.go",
+      "group": "Entrypoint",
+      "groupId": "g_entry",
+      "shape": "hexagon",
+      "desc": "main() (L47) parses config, registers the gogocodec and boots the dskit module manager for the requested targets."
+    },
+    {
+      "id": "distributor",
+      "label": "Distributor",
+      "file": "distributor.go",
+      "path": "modules/distributor/distributor.go",
+      "group": "Ingestion",
+      "groupId": "g_ingest",
+      "shape": "box",
+      "desc": "Distributor (L219) terminates OTLP via PushTraces (L475), rebatches by trace ID and enforces per-tenant limits."
+    },
+    {
+      "id": "kafka_decoder",
+      "label": "Ingest Decoder",
+      "file": "encoding.go",
+      "path": "pkg/ingest/encoding.go",
+      "group": "Ingestion",
+      "groupId": "g_ingest",
+      "shape": "box",
+      "desc": "Decoder (L125) turns Kafka records into tempopb.PushBytesRequest for the write path."
+    },
+    {
+      "id": "blockbuilder",
+      "label": "Block Builder",
+      "file": "blockbuilder.go",
+      "path": "modules/blockbuilder/blockbuilder.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "shape": "box",
+      "desc": "BlockBuilder (L99) consumes Kafka partitions as consumer group block-builder and cuts parquet blocks every 10s."
+    },
+    {
+      "id": "wal",
+      "label": "WAL",
+      "file": "wal.go",
+      "path": "tempodb/wal/wal.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "shape": "database",
+      "desc": "WAL (L24) buffers incoming traces on local disk; RescanBlocks (L79) recovers them after restarts."
+    },
+    {
+      "id": "livestore",
+      "label": "Live Store",
+      "file": "live_store.go",
+      "path": "modules/livestore/live_store.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "shape": "database",
+      "desc": "LiveStore (L127) holds recent traces in memory/local blocks, serving PushBytes (L814) and FindTraceByID (L843)."
+    },
+    {
+      "id": "tempodb",
+      "label": "TempoDB",
+      "file": "tempodb.go",
+      "path": "tempodb/tempodb.go",
+      "group": "Object Storage",
+      "groupId": "g_storage",
+      "shape": "database",
+      "desc": "tempodb.New (L181) wires the Reader/Writer/Compactor trio over the configured backend."
+    },
+    {
+      "id": "backend_iface",
+      "label": "Backend",
+      "file": "backend.go",
+      "path": "tempodb/backend/backend.go",
+      "group": "Object Storage",
+      "groupId": "g_storage",
+      "shape": "database",
+      "desc": "Reader (L68) and Writer (L46) interfaces abstract S3, GCS, Azure and local disk."
+    },
+    {
+      "id": "vparquet_compactor",
+      "label": "vParquet5 Compactor",
+      "file": "compactor.go",
+      "path": "tempodb/encoding/vparquet5/compactor.go",
+      "group": "Compaction",
+      "groupId": "g_compact",
+      "shape": "box",
+      "desc": "Compactor (L26) merges blocks column-wise with Compact (L44), deduping spans and indexes."
+    },
+    {
+      "id": "query_frontend",
+      "label": "Query Frontend",
+      "file": "frontend.go",
+      "path": "modules/frontend/frontend.go",
+      "group": "Query Path",
+      "groupId": "g_query",
+      "shape": "box",
+      "desc": "QueryFrontend (L49) accepts TraceQL HTTP calls, shards and recombines results."
+    },
+    {
+      "id": "querier",
+      "label": "Querier",
+      "file": "querier.go",
+      "path": "modules/querier/querier.go",
+      "group": "Query Path",
+      "groupId": "g_query",
+      "shape": "box",
+      "desc": "Querier (L72) fans FindTraceByID (L200) and SearchRecent (L372) out over live-stores and the block store."
+    },
+    {
+      "id": "traceql_engine",
+      "label": "TraceQL Engine",
+      "file": "engine.go",
+      "path": "pkg/traceql/engine.go",
+      "group": "Query Path",
+      "groupId": "g_query",
+      "shape": "box",
+      "desc": "Engine (L26) compiles TraceQL (Compile, L33) and executes it over spansets (ExecuteSearch, L71)."
+    }
+  ],
+  "edges": [
+    { "from": "main", "to": "distributor", "label": "boots module" },
+    { "from": "main", "to": "query_frontend", "label": "boots module" },
+    { "from": "distributor", "to": "kafka_decoder", "label": "PushBytesRequest on Kafka" },
+    { "from": "kafka_decoder", "to": "blockbuilder", "label": "consume records" },
+    { "from": "blockbuilder", "to": "wal", "label": "AppendTrace" },
+    { "from": "blockbuilder", "to": "tempodb", "label": "write complete blocks" },
+    { "from": "distributor", "to": "livestore", "label": "push live spans" },
+    { "from": "livestore", "to": "tempodb", "label": "blocks on object store" },
+    { "from": "tempodb", "to": "backend_iface", "label": "Reader/Writer" },
+    { "from": "tempodb", "to": "vparquet_compactor", "label": "compactionLoop" },
+    { "from": "vparquet_compactor", "to": "backend_iface", "label": "rewrite blocks" },
+    { "from": "query_frontend", "to": "querier", "label": "shard + fan out" },
+    { "from": "querier", "to": "livestore", "label": "recent traces" },
+    { "from": "querier", "to": "tempodb", "label": "block reads" },
+    { "from": "querier", "to": "traceql_engine", "label": "compile + run TraceQL" },
+    { "from": "traceql_engine", "to": "tempodb", "label": "fetch spansets" }
+  ]
+}

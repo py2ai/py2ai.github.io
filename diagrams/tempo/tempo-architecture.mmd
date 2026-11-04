@@ -1,0 +1,152 @@
+flowchart TD
+
+subgraph group_g_entry["Entrypoint &amp; Wiring"]
+  node_main{{"main&#40;&#41;<br/>[main.go]"}}
+  node_modules_registry["Module Manager<br/>[modules.go]"]
+end
+
+subgraph group_g_distributor["Distributor"]
+  node_distributor["Distributor<br/>[distributor.go]"]
+  node_otel_shim["OTEL Receiver Shim<br/>[shim.go]"]
+  node_conversion["Direct Conversion<br/>[conversion.go]"]
+  node_metrics_gen["Metrics Generator<br/>[generator.go]"]
+end
+
+subgraph group_g_kafka["Kafka Flow"]
+  node_proto["Tempo Protos<br/>[tempo.proto]"]
+  node_kafka_decoder["Ingest Decoder<br/>[encoding.go]"]
+  node_partition_client["Partition Offsets"]
+end
+
+subgraph group_g_write["Block Building"]
+  node_blockbuilder["Block Builder<br/>[blockbuilder.go]"]
+  node_partition_writer["Partition Writer"]
+  node_tenant_store["Tenant Store<br/>[tenant_store.go]"]
+  node_writeable_block["Writeable Block<br/>[writeable_block.go]"]
+  node_wal[("WAL<br/>[wal.go]")]
+end
+
+subgraph group_g_live["Live Store"]
+  node_livestore[("Live Store<br/>[live_store.go]")]
+  node_partition_reader["Partition Reader"]
+  node_live_instance["Live Instance<br/>[instance.go]"]
+  node_local_block["Local Block<br/>[local_block.go]"]
+end
+
+subgraph group_g_store["TempoDB &amp; Backend"]
+  node_tempodb[("TempoDB Store<br/>[tempodb.go]")]
+  node_backend_iface[("Backend Interfaces<br/>[backend.go]")]
+  node_s3_backend[("S3 Backend<br/>[s3.go]")]
+  node_tenant_index["Tenant Index<br/>[tenantindex.go]"]
+end
+
+subgraph group_g_compact["Compaction &amp; Encoding"]
+  node_compactor_loop["Compactor Loop<br/>[compactor.go]"]
+  node_vparquet_compactor["vParquet5 Compactor<br/>[compactor.go]"]
+  node_schema["vParquet5 Schema<br/>[schema.go]"]
+  node_block_traceql["Block TraceQL<br/>[block_traceql.go]"]
+end
+
+subgraph group_g_query["Query Path"]
+  node_query_frontend["Query Frontend<br/>[frontend.go]"]
+  node_frontend_processor["Frontend Processor"]
+  node_querier["Querier<br/>[querier.go]"]
+  node_traceql_engine["TraceQL Engine<br/>[engine.go]"]
+  node_traceql_parser["TraceQL Parser<br/>[parse.go]"]
+  node_spanset["Spansets<br/>[storage.go]"]
+  node_backend_scheduler["Backend Scheduler"]
+  node_backend_worker["Backend Worker<br/>[backendworker.go]"]
+end
+
+node_main -->|"boots module manager"| node_modules_registry
+node_modules_registry -->|"distributor target"| node_distributor
+node_modules_registry -->|"block-builder target"| node_blockbuilder
+node_modules_registry -->|"live-store target"| node_livestore
+node_modules_registry -->|"querier target"| node_querier
+node_modules_registry -->|"query-frontend target"| node_query_frontend
+node_modules_registry -->|"metrics-generator target"| node_metrics_gen
+node_otel_shim -->|"ConsumeTraces"| node_distributor
+node_distributor -->|"directTraces"| node_conversion
+node_distributor -->|"serializes batches"| node_proto
+node_proto -->|"via Kafka partitions"| node_kafka_decoder
+node_kafka_decoder -->|"Decoder.Decode"| node_blockbuilder
+node_blockbuilder -->|"commit offsets"| node_partition_client
+node_blockbuilder -->|"partition cycles"| node_partition_writer
+node_partition_writer -->|"route per tenant"| node_tenant_store
+node_tenant_store -->|"AppendTrace"| node_wal
+node_wal -->|"RescanBlocks on boot"| node_blockbuilder
+node_tenant_store -->|"cut complete block"| node_writeable_block
+node_writeable_block -->|"WriteBlock"| node_tempodb
+node_distributor -->|"pushTracesToLiveStore"| node_livestore
+node_distributor -->|"sendToGenerators"| node_metrics_gen
+node_partition_reader -->|"replay records"| node_livestore
+node_livestore -->|"per-tenant state"| node_live_instance
+node_livestore -->|"recent blocks"| node_local_block
+node_tempodb -->|"Reader/Writer/Compactor"| node_backend_iface
+node_backend_iface -->|"pluggable stores"| node_s3_backend
+node_tempodb -->|"blocklists"| node_tenant_index
+node_tempodb -->|"compactionLoop"| node_compactor_loop
+node_compactor_loop -->|"CompactWithConfig"| node_vparquet_compactor
+node_vparquet_compactor -->|"column-aware rewrite"| node_schema
+node_vparquet_compactor -->|"write compacted blocks"| node_backend_iface
+node_backend_scheduler -->|"dispatch jobs"| node_backend_worker
+node_backend_worker -->|"run block jobs"| node_tempodb
+node_query_frontend -->|"shard queries"| node_frontend_processor
+node_frontend_processor -->|"execute subqueries"| node_querier
+node_querier -->|"live-store ring"| node_livestore
+node_querier -->|"block reads"| node_tempodb
+node_tempodb -->|"TraceQL on blocks"| node_block_traceql
+node_block_traceql -->|"typed columns"| node_schema
+node_querier -->|"ExecuteSearch"| node_traceql_engine
+node_traceql_engine -->|"Compile&#40;&#41;"| node_traceql_parser
+node_traceql_engine -->|"filter spansets"| node_spanset
+node_querier -->|"TraceByIDRequest"| node_proto
+
+click node_main "https://github.com/grafana/tempo/blob/main/cmd/tempo/main.go"
+click node_modules_registry "https://github.com/grafana/tempo/blob/main/cmd/tempo/app/modules.go"
+click node_distributor "https://github.com/grafana/tempo/blob/main/modules/distributor/distributor.go"
+click node_otel_shim "https://github.com/grafana/tempo/blob/main/modules/distributor/receiver/shim.go"
+click node_conversion "https://github.com/grafana/tempo/blob/main/modules/distributor/conversion.go"
+click node_metrics_gen "https://github.com/grafana/tempo/blob/main/modules/generator/generator.go"
+click node_proto "https://github.com/grafana/tempo/blob/main/pkg/tempopb/tempo.proto"
+click node_kafka_decoder "https://github.com/grafana/tempo/blob/main/pkg/ingest/encoding.go"
+click node_partition_client "https://github.com/grafana/tempo/blob/main/pkg/ingest/partition_offset_client.go"
+click node_blockbuilder "https://github.com/grafana/tempo/blob/main/modules/blockbuilder/blockbuilder.go"
+click node_partition_writer "https://github.com/grafana/tempo/blob/main/modules/blockbuilder/partition_writer.go"
+click node_tenant_store "https://github.com/grafana/tempo/blob/main/modules/blockbuilder/tenant_store.go"
+click node_writeable_block "https://github.com/grafana/tempo/blob/main/modules/blockbuilder/writeable_block.go"
+click node_wal "https://github.com/grafana/tempo/blob/main/tempodb/wal/wal.go"
+click node_livestore "https://github.com/grafana/tempo/blob/main/modules/livestore/live_store.go"
+click node_partition_reader "https://github.com/grafana/tempo/blob/main/modules/livestore/partition_reader.go"
+click node_live_instance "https://github.com/grafana/tempo/blob/main/modules/livestore/instance.go"
+click node_local_block "https://github.com/grafana/tempo/blob/main/modules/livestore/local_block.go"
+click node_tempodb "https://github.com/grafana/tempo/blob/main/tempodb/tempodb.go"
+click node_backend_iface "https://github.com/grafana/tempo/blob/main/tempodb/backend/backend.go"
+click node_s3_backend "https://github.com/grafana/tempo/blob/main/tempodb/backend/s3/s3.go"
+click node_tenant_index "https://github.com/grafana/tempo/blob/main/tempodb/backend/tenantindex.go"
+click node_compactor_loop "https://github.com/grafana/tempo/blob/main/tempodb/compactor.go"
+click node_vparquet_compactor "https://github.com/grafana/tempo/blob/main/tempodb/encoding/vparquet5/compactor.go"
+click node_schema "https://github.com/grafana/tempo/blob/main/tempodb/encoding/vparquet5/schema.go"
+click node_block_traceql "https://github.com/grafana/tempo/blob/main/tempodb/encoding/vparquet5/block_traceql.go"
+click node_query_frontend "https://github.com/grafana/tempo/blob/main/modules/frontend/frontend.go"
+click node_frontend_processor "https://github.com/grafana/tempo/blob/main/modules/querier/worker/frontend_processor.go"
+click node_querier "https://github.com/grafana/tempo/blob/main/modules/querier/querier.go"
+click node_traceql_engine "https://github.com/grafana/tempo/blob/main/pkg/traceql/engine.go"
+click node_traceql_parser "https://github.com/grafana/tempo/blob/main/pkg/traceql/parse.go"
+click node_spanset "https://github.com/grafana/tempo/blob/main/pkg/traceql/storage.go"
+click node_backend_scheduler "https://github.com/grafana/tempo/blob/main/modules/backendscheduler/backendscheduler.go"
+click node_backend_worker "https://github.com/grafana/tempo/blob/main/modules/backendworker/backendworker.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_modules_registry,node_compactor_loop,node_vparquet_compactor,node_schema,node_block_traceql toneBlue
+class node_distributor,node_otel_shim,node_conversion,node_metrics_gen,node_query_frontend,node_frontend_processor,node_querier,node_traceql_engine,node_traceql_parser,node_spanset,node_backend_scheduler,node_backend_worker toneAmber
+class node_proto,node_kafka_decoder,node_partition_client toneMint
+class node_blockbuilder,node_partition_writer,node_tenant_store,node_writeable_block,node_wal toneRose
+class node_livestore,node_partition_reader,node_live_instance,node_local_block toneIndigo
+class node_tempodb,node_backend_iface,node_s3_backend,node_tenant_index toneTeal

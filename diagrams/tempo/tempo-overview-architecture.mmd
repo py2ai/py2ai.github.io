@@ -1,0 +1,75 @@
+flowchart TD
+
+subgraph group_g_entry["Entrypoint"]
+  node_main{{"cmd/tempo<br/>[main.go]"}}
+end
+
+subgraph group_g_ingest["Ingestion"]
+  node_distributor["Distributor<br/>[distributor.go]"]
+  node_kafka_decoder["Ingest Decoder<br/>[encoding.go]"]
+end
+
+subgraph group_g_write["Write Path"]
+  node_blockbuilder["Block Builder<br/>[blockbuilder.go]"]
+  node_wal[("WAL<br/>[wal.go]")]
+  node_livestore[("Live Store<br/>[live_store.go]")]
+end
+
+subgraph group_g_storage["Object Storage"]
+  node_tempodb[("TempoDB<br/>[tempodb.go]")]
+  node_backend_iface[("Backend<br/>[backend.go]")]
+end
+
+subgraph group_g_compact["Compaction"]
+  node_vparquet_compactor["vParquet5 Compactor<br/>[compactor.go]"]
+end
+
+subgraph group_g_query["Query Path"]
+  node_query_frontend["Query Frontend<br/>[frontend.go]"]
+  node_querier["Querier<br/>[querier.go]"]
+  node_traceql_engine["TraceQL Engine<br/>[engine.go]"]
+end
+
+node_main -->|"boots module"| node_distributor
+node_main -->|"boots module"| node_query_frontend
+node_distributor -->|"PushBytesRequest on Kafka"| node_kafka_decoder
+node_kafka_decoder -->|"consume records"| node_blockbuilder
+node_blockbuilder -->|"AppendTrace"| node_wal
+node_blockbuilder -->|"write complete blocks"| node_tempodb
+node_distributor -->|"push live spans"| node_livestore
+node_livestore -->|"blocks on object store"| node_tempodb
+node_tempodb -->|"Reader/Writer"| node_backend_iface
+node_tempodb -->|"compactionLoop"| node_vparquet_compactor
+node_vparquet_compactor -->|"rewrite blocks"| node_backend_iface
+node_query_frontend -->|"shard + fan out"| node_querier
+node_querier -->|"recent traces"| node_livestore
+node_querier -->|"block reads"| node_tempodb
+node_querier -->|"compile + run TraceQL"| node_traceql_engine
+node_traceql_engine -->|"fetch spansets"| node_tempodb
+
+click node_main "https://github.com/grafana/tempo/blob/main/cmd/tempo/main.go"
+click node_distributor "https://github.com/grafana/tempo/blob/main/modules/distributor/distributor.go"
+click node_kafka_decoder "https://github.com/grafana/tempo/blob/main/pkg/ingest/encoding.go"
+click node_blockbuilder "https://github.com/grafana/tempo/blob/main/modules/blockbuilder/blockbuilder.go"
+click node_wal "https://github.com/grafana/tempo/blob/main/tempodb/wal/wal.go"
+click node_livestore "https://github.com/grafana/tempo/blob/main/modules/livestore/live_store.go"
+click node_tempodb "https://github.com/grafana/tempo/blob/main/tempodb/tempodb.go"
+click node_backend_iface "https://github.com/grafana/tempo/blob/main/tempodb/backend/backend.go"
+click node_vparquet_compactor "https://github.com/grafana/tempo/blob/main/tempodb/encoding/vparquet5/compactor.go"
+click node_query_frontend "https://github.com/grafana/tempo/blob/main/modules/frontend/frontend.go"
+click node_querier "https://github.com/grafana/tempo/blob/main/modules/querier/querier.go"
+click node_traceql_engine "https://github.com/grafana/tempo/blob/main/pkg/traceql/engine.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main toneBlue
+class node_distributor,node_kafka_decoder toneAmber
+class node_blockbuilder,node_wal,node_livestore toneMint
+class node_tempodb,node_backend_iface toneRose
+class node_vparquet_compactor toneIndigo
+class node_query_frontend,node_querier,node_traceql_engine toneTeal
