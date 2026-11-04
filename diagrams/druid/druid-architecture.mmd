@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_overlord["overlord"]
+  node_overlord_resource["OverlordResource"]
+  node_task_master["TaskMaster<br/>[TaskMaster.java]"]
+  node_task_queue["TaskQueue<br/>[TaskQueue.java]"]
+  node_task_if["Task<br/>[Task.java]"]
+  node_task_lockbox["TaskLockbox<br/>[TaskLockbox.java]"]
+  node_supervisor_manager["SupervisorManager"]
+end
+
+subgraph group_runner["runner"]
+  node_task_runner_if["TaskRunner<br/>[TaskRunner.java]"]
+  node_threading_runner["ThreadingTaskRunner"]
+  node_forking_runner["ForkingTaskRunner"]
+  node_worker_manager["WorkerTaskManager"]
+end
+
+subgraph group_stream["stream"]
+  node_ss_task["SeekableStreamIndexTask"]
+  node_ss_runner["SeekableStreamIndexTaskRunner"]
+  node_ss_supervisor["SeekableStreamSupervisor"]
+end
+
+subgraph group_storage["storage"]
+  node_incremental_index["IncrementalIndex"]
+  node_segment_if["Segment<br/>[Segment.java]"]
+  node_queryable_index_segment["QueryableIndexSegment"]
+  node_queryable_index["QueryableIndex"]
+  node_data_segment["DataSegment<br/>[DataSegment.java]"]
+  node_timeline["VersionedIntervalTimeline"]
+  node_segment_manager["SegmentManager"]
+  node_segment_loader["SegmentLoadDropHandler"]
+  node_server_manager["ServerManager<br/>[ServerManager.java]"]
+end
+
+subgraph group_query["query"]
+  node_query_resource["QueryResource<br/>[QueryResource.java]"]
+  node_query_lifecycle["QueryLifecycle"]
+  node_broker_walker["ClientQuerySegmentWalker"]
+  node_runner_factory["QueryRunnerFactory"]
+  node_toolchest["QueryToolChest"]
+  node_timeseries["TimeseriesQuery"]
+  node_groupby["GroupByQuery<br/>[GroupByQuery.java]"]
+  node_topn["TopNQuery<br/>[TopNQuery.java]"]
+end
+
+subgraph group_coord["coord"]
+  node_coordinator["DruidCoordinator"]
+  node_balance_duty["BalanceSegments"]
+  node_balancer_if["BalancerStrategy"]
+  node_cost_balancer["CostBalancerStrategy"]
+end
+
+node_overlord_resource -->|"submit &amp; inspect tasks"| node_task_master
+node_task_master -->|"leader owns queue"| node_task_queue
+node_task_queue -->|"dispatches"| node_task_if
+node_task_queue -->|"acquires locks"| node_task_lockbox
+node_supervisor_manager -->|"manages supervisors"| node_ss_supervisor
+node_task_queue -->|"runs via runner"| node_task_runner_if
+node_task_runner_if -->|"in-process"| node_threading_runner
+node_task_runner_if -->|"forked JVM"| node_forking_runner
+node_worker_manager -->|"runs local tasks"| node_threading_runner
+node_worker_manager -->|"forks task JVM"| node_forking_runner
+node_ss_supervisor -->|"creates partition tasks"| node_ss_task
+node_ss_task -->|"drives lifecycle"| node_ss_runner
+node_ss_runner -->|"ingest rows"| node_incremental_index
+node_ss_runner -->|"publishes segments"| node_overlord_resource
+node_incremental_index -->|"row store backs Segment"| node_segment_if
+node_queryable_index_segment -->|"implements"| node_segment_if
+node_queryable_index_segment -->|"reads columns"| node_queryable_index
+node_data_segment -->|"descriptor for load"| node_queryable_index
+node_segment_manager -->|"loads from deep storage"| node_data_segment
+node_segment_loader -->|"fetch &amp; open files"| node_segment_manager
+node_server_manager -->|"serves loaded segments"| node_queryable_index_segment
+node_timeline -->|"shards per interval"| node_data_segment
+node_server_manager -->|"resolves descriptors"| node_timeline
+node_query_resource -->|"execute"| node_query_lifecycle
+node_query_lifecycle -->|"walk query tree"| node_broker_walker
+node_broker_walker -->|"fan-out segments"| node_server_manager
+node_broker_walker -->|"per-type chain"| node_runner_factory
+node_runner_factory -->|"merge semantics"| node_toolchest
+node_toolchest -->|"handles"| node_timeseries
+node_toolchest -->|"handles"| node_groupby
+node_toolchest -->|"handles"| node_topn
+node_coordinator -->|"duty loop"| node_balance_duty
+node_balance_duty -->|"picks moves"| node_balancer_if
+node_balancer_if -->|"cost model"| node_cost_balancer
+node_cost_balancer -->|"costs placement"| node_data_segment
+node_coordinator -->|"load/drop commands"| node_segment_loader
+
+click node_overlord_resource "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/http/OverlordResource.java"
+click node_task_master "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/TaskMaster.java"
+click node_task_queue "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/TaskQueue.java"
+click node_task_if "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/common/task/Task.java"
+click node_task_lockbox "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/TaskLockbox.java"
+click node_supervisor_manager "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/supervisor/SupervisorManager.java"
+click node_task_runner_if "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/TaskRunner.java"
+click node_threading_runner "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/ThreadingTaskRunner.java"
+click node_forking_runner "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/overlord/ForkingTaskRunner.java"
+click node_worker_manager "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/worker/WorkerTaskManager.java"
+click node_ss_task "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/seekablestream/SeekableStreamIndexTask.java"
+click node_ss_runner "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/seekablestream/SeekableStreamIndexTaskRunner.java"
+click node_ss_supervisor "https://github.com/apache/druid/blob/master/indexing-service/src/main/java/org/apache/druid/indexing/seekablestream/supervisor/SeekableStreamSupervisor.java"
+click node_incremental_index "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/segment/incremental/IncrementalIndex.java"
+click node_segment_if "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/segment/Segment.java"
+click node_queryable_index_segment "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/segment/QueryableIndexSegment.java"
+click node_queryable_index "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/segment/QueryableIndex.java"
+click node_data_segment "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/timeline/DataSegment.java"
+click node_timeline "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/timeline/VersionedIntervalTimeline.java"
+click node_segment_manager "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/SegmentManager.java"
+click node_segment_loader "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/coordination/SegmentLoadDropHandler.java"
+click node_server_manager "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/ServerManager.java"
+click node_query_resource "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/QueryResource.java"
+click node_query_lifecycle "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/QueryLifecycle.java"
+click node_broker_walker "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/ClientQuerySegmentWalker.java"
+click node_runner_factory "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/query/QueryRunnerFactory.java"
+click node_toolchest "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/query/QueryToolChest.java"
+click node_timeseries "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/query/timeseries/TimeseriesQuery.java"
+click node_groupby "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/query/groupby/GroupByQuery.java"
+click node_topn "https://github.com/apache/druid/blob/master/processing/src/main/java/org/apache/druid/query/topn/TopNQuery.java"
+click node_coordinator "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/coordinator/DruidCoordinator.java"
+click node_balance_duty "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/coordinator/duty/BalanceSegments.java"
+click node_balancer_if "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/coordinator/balancer/BalancerStrategy.java"
+click node_cost_balancer "https://github.com/apache/druid/blob/master/server/src/main/java/org/apache/druid/server/coordinator/balancer/CostBalancerStrategy.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_overlord_resource,node_task_master,node_task_queue,node_task_if,node_task_lockbox,node_supervisor_manager toneBlue
+class node_task_runner_if,node_threading_runner,node_forking_runner,node_worker_manager toneAmber
+class node_ss_task,node_ss_runner,node_ss_supervisor toneMint
+class node_incremental_index,node_segment_if,node_queryable_index_segment,node_queryable_index,node_data_segment,node_timeline,node_segment_manager,node_segment_loader,node_server_manager toneRose
+class node_query_resource,node_query_lifecycle,node_broker_walker,node_runner_factory,node_toolchest,node_timeseries,node_groupby,node_topn toneIndigo
+class node_coordinator,node_balance_duty,node_balancer_if,node_cost_balancer toneTeal
