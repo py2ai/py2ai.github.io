@@ -1,0 +1,103 @@
+flowchart TD
+
+subgraph group_runtime["Runtime &amp; Lifecycle &#40;pulsar-broker&#41;"]
+  node_starter["PulsarBrokerStarter"]
+  node_pulsar_service["PulsarService<br/>[PulsarService.java]"]
+end
+
+subgraph group_naming["Naming &amp; Ownership &#40;pulsar-common / broker&#41;"]
+  node_topic_name["TopicName<br/>[TopicName.java]"]
+  node_namespace_service["NamespaceService"]
+  node_namespace_bundle["NamespaceBundle"]
+end
+
+subgraph group_serving["Topic Serving &#40;pulsar-broker service&#41;"]
+  node_broker_service["BrokerService<br/>[BrokerService.java]"]
+  node_persistent_topic["PersistentTopic"]
+  node_persistent_subscription["PersistentSubscription"]
+  node_message_dedup["MessageDeduplication"]
+  node_expiry_monitor["PersistentMessageExpiryMonitor"]
+  node_replicator["GeoPersistentReplicator"]
+end
+
+subgraph group_dispatch["Dispatch &amp; Rate Control &#40;pulsar-broker&#41;"]
+  node_dispatcher_shared["DispatcherMultipleConsumers"]
+  node_dispatcher_sac["DispatcherSingleActiveConsumer"]
+  node_dispatcher_sticky["StickyKeyDispatcherMultipleConsumers"]
+  node_rate_limiter["DispatchRateLimiter"]
+end
+
+subgraph group_storage["Ledger &amp; Cursor Engine &#40;managed-ledger&#41;"]
+  node_managed_ledger["ManagedLedgerImpl"]
+  node_op_add["OpAddEntry<br/>[OpAddEntry.java]"]
+  node_managed_cursor["ManagedCursorImpl"]
+  node_meta_store["MetaStoreImpl<br/>[MetaStoreImpl.java]"]
+  node_ledger_offloader["LedgerOffloader"]
+end
+
+subgraph group_policy["Persistence Policies &#40;pulsar-client-admin-api&#41;"]
+  node_persistence_policies["PersistencePolicies"]
+end
+
+node_starter -->|"main&#40;&#41; boots the service"| node_pulsar_service
+node_pulsar_service -->|"start&#40;&#41; creates BrokerService"| node_broker_service
+node_pulsar_service -->|"start&#40;&#41; creates NamespaceService"| node_namespace_service
+node_topic_name -->|"topic parsed into namespace"| node_namespace_service
+node_namespace_service -->|"getBundleAsync resolves"| node_namespace_bundle
+node_broker_service -->|"ownership check per topic"| node_namespace_service
+node_broker_service -->|"getTopic&#40;&#41; registry"| node_persistent_topic
+node_persistent_topic -->|"getSubscriptions&#40;&#41; map"| node_persistent_subscription
+node_persistent_subscription -->|"Shared subscription"| node_dispatcher_shared
+node_persistent_subscription -->|"Exclusive / Failover"| node_dispatcher_sac
+node_persistent_subscription -->|"Key_Shared subscription"| node_dispatcher_sticky
+node_dispatcher_shared -->|"dispatch throttled"| node_rate_limiter
+node_persistent_topic -->|"dedup check on publish"| node_message_dedup
+node_persistent_topic -->|"checkMessageExpiry&#40;&#41;"| node_expiry_monitor
+node_persistent_topic -->|"per-cluster replication"| node_replicator
+node_persistent_topic -->|"publishMessage → asyncAddEntry"| node_managed_ledger
+node_persistent_topic -->|"reads namespace policy"| node_persistence_policies
+node_managed_ledger -->|"ManagedLedgerConfig ensemble/quorum"| node_persistence_policies
+node_persistent_subscription -->|"one cursor per subscription"| node_managed_cursor
+node_managed_cursor -->|"markDelete gates trimming"| node_managed_ledger
+node_dispatcher_shared -->|"asyncReadEntries"| node_managed_ledger
+node_dispatcher_sac -->|"asyncReadEntries"| node_managed_ledger
+node_managed_ledger -->|"creates per-append op"| node_op_add
+node_managed_ledger -->|"ledger list metadata"| node_meta_store
+node_managed_cursor -->|"persist mark-delete"| node_meta_store
+node_managed_ledger -->|"offload cold ledgers"| node_ledger_offloader
+
+click node_starter "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/PulsarBrokerStarter.java"
+click node_pulsar_service "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/PulsarService.java"
+click node_topic_name "https://github.com/apache/pulsar/blob/master/pulsar-common/src/main/java/org/apache/pulsar/common/naming/TopicName.java"
+click node_namespace_service "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/namespace/NamespaceService.java"
+click node_namespace_bundle "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/common/naming/NamespaceBundle.java"
+click node_broker_service "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/BrokerService.java"
+click node_persistent_topic "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/PersistentTopic.java"
+click node_persistent_subscription "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/PersistentSubscription.java"
+click node_message_dedup "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/MessageDeduplication.java"
+click node_expiry_monitor "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/PersistentMessageExpiryMonitor.java"
+click node_replicator "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/GeoPersistentReplicator.java"
+click node_dispatcher_shared "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/PersistentDispatcherMultipleConsumers.java"
+click node_dispatcher_sac "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/PersistentDispatcherSingleActiveConsumer.java"
+click node_dispatcher_sticky "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/PersistentStickyKeyDispatcherMultipleConsumers.java"
+click node_rate_limiter "https://github.com/apache/pulsar/blob/master/pulsar-broker/src/main/java/org/apache/pulsar/broker/service/persistent/DispatchRateLimiter.java"
+click node_persistence_policies "https://github.com/apache/pulsar/blob/master/pulsar-client-admin-api/src/main/java/org/apache/pulsar/common/policies/data/PersistencePolicies.java"
+click node_managed_ledger "https://github.com/apache/pulsar/blob/master/managed-ledger/src/main/java/org/apache/bookkeeper/mledger/impl/ManagedLedgerImpl.java"
+click node_op_add "https://github.com/apache/pulsar/blob/master/managed-ledger/src/main/java/org/apache/bookkeeper/mledger/impl/OpAddEntry.java"
+click node_managed_cursor "https://github.com/apache/pulsar/blob/master/managed-ledger/src/main/java/org/apache/bookkeeper/mledger/impl/ManagedCursorImpl.java"
+click node_meta_store "https://github.com/apache/pulsar/blob/master/managed-ledger/src/main/java/org/apache/bookkeeper/mledger/impl/MetaStoreImpl.java"
+click node_ledger_offloader "https://github.com/apache/pulsar/blob/master/managed-ledger/src/main/java/org/apache/bookkeeper/mledger/LedgerOffloader.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_starter,node_pulsar_service toneBlue
+class node_topic_name,node_namespace_service,node_namespace_bundle toneAmber
+class node_broker_service,node_persistent_topic,node_persistent_subscription,node_message_dedup,node_expiry_monitor,node_replicator toneMint
+class node_dispatcher_shared,node_dispatcher_sac,node_dispatcher_sticky,node_rate_limiter toneRose
+class node_managed_ledger,node_op_add,node_managed_cursor,node_meta_store,node_ledger_offloader toneIndigo
+class node_persistence_policies toneTeal
