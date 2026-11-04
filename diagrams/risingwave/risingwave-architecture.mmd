@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_control["Meta control plane"]
+  node_meta_serve["rpc_serve<br/>[server.rs]"]
+  node_ddl_controller["DdlController<br/>[ddl_controller.rs]"]
+  node_actor_graph_builder["ActorGraphBuilder<br/>[actor.rs]"]
+  node_global_stream_manager["GlobalStreamManager<br/>[stream_manager.rs]"]
+  node_global_barrier_manager["GlobalBarrierManager<br/>[manager.rs]"]
+  node_barrier_worker["GlobalBarrierWorker<br/>[worker.rs]"]
+  node_barrier_command["Command<br/>[command.rs]"]
+  node_hummock_manager["HummockManager<br/>[mod.rs]"]
+  node_compactor_manager["CompactorManager"]
+end
+
+subgraph group_runtime["Compute runtime"]
+  node_compute_serve["compute_node_serve<br/>[server.rs]"]
+  node_local_stream_manager["LocalStreamManager<br/>[stream_manager.rs]"]
+  node_local_barrier_manager["LocalBarrierManager<br/>[mod.rs]"]
+end
+
+subgraph group_dag["Streaming DAG"]
+  node_actor["Actor<br/>[actor.rs]"]
+  node_execute_trait["Execute<br/>[mod.rs]"]
+  node_barrier_type["Barrier<br/>[mod.rs]"]
+  node_source_executor["SourceExecutor<br/>[source_executor.rs]"]
+  node_hash_agg["HashAggExecutor<br/>[hash_agg.rs]"]
+  node_hash_join["HashJoinExecutor<br/>[hash_join.rs]"]
+  node_materialize["MaterializeExecutor<br/>[materialize.rs]"]
+  node_sink_executor["SinkExecutor<br/>[sink.rs]"]
+  node_dispatch["DispatchExecutor<br/>[dispatch.rs]"]
+  node_state_table["StateTable<br/>[state_table.rs]"]
+end
+
+subgraph group_exchange["Actor exchange"]
+  node_local_input["LocalInput<br/>[input.rs]"]
+  node_remote_input["RemoteInput<br/>[input.rs]"]
+  node_output["Output<br/>[output.rs]"]
+end
+
+subgraph group_hummock["Hummock state store"]
+  node_local_hummock["LocalHummockStorage"]
+  node_hummock_storage["HummockStorage<br/>[hummock_storage.rs]"]
+  node_shared_buffer_batch["SharedBufferBatch"]
+  node_event_handler["HummockEventSender"]
+  node_sstable_builder["SstableBuilder<br/>[builder.rs]"]
+  node_sstable_store["SstableStore<br/>[sstable_store.rs]"]
+  node_merge_iterator["MergeIterator<br/>[merge_inner.rs]"]
+  node_hummock_version["HummockVersion<br/>[version.rs]"]
+  node_compactor_runner["CompactorRunner"]
+end
+
+node_meta_serve -->|"DDL API"| node_ddl_controller
+node_ddl_controller -->|"create job"| node_global_stream_manager
+node_global_stream_manager -->|"fragmentize"| node_actor_graph_builder
+node_ddl_controller -->|"register tables"| node_hummock_manager
+node_global_barrier_manager -->|"leader runs"| node_barrier_worker
+node_barrier_worker -->|"applies"| node_barrier_command
+node_hummock_manager -->|"assign tasks"| node_compactor_manager
+node_compute_serve -->|"starts"| node_local_stream_manager
+node_compute_serve -->|"starts"| node_local_barrier_manager
+node_global_stream_manager -->|"broadcast fragments"| node_local_stream_manager
+node_barrier_worker -->|"barrier RPC"| node_local_barrier_manager
+node_local_barrier_manager -->|"dispatch barriers"| node_local_stream_manager
+node_local_stream_manager -->|"spawn actors"| node_actor
+node_actor -->|"runs chain"| node_execute_trait
+node_execute_trait -->|"control flow"| node_barrier_type
+node_local_barrier_manager -->|"injects"| node_barrier_type
+node_source_executor -->|"source input"| node_actor
+node_hash_agg -->|"agg state"| node_state_table
+node_hash_join -->|"join state"| node_state_table
+node_materialize -->|"write MV rows"| node_state_table
+node_dispatch -->|"fan out"| node_output
+node_output -->|"gRPC exchange"| node_remote_input
+node_output -->|"same node"| node_local_input
+node_remote_input -->|"upstream chunks"| node_actor
+node_state_table -->|"read / write"| node_local_hummock
+node_local_hummock -->|"recent writes"| node_shared_buffer_batch
+node_local_hummock -->|"flush events"| node_event_handler
+node_event_handler -->|"encode"| node_sstable_builder
+node_sstable_builder -->|"upload SST"| node_sstable_store
+node_local_hummock -->|"scan / get"| node_merge_iterator
+node_merge_iterator -->|"read blocks"| node_sstable_store
+node_hummock_storage -->|"batch reads"| node_sstable_store
+node_local_hummock -->|"pin epoch"| node_hummock_version
+node_event_handler -->|"commit epoch"| node_hummock_manager
+node_compactor_manager -->|"run task"| node_compactor_runner
+node_compactor_runner -->|"rewrite levels"| node_sstable_builder
+
+click node_meta_serve "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/node/src/server.rs"
+click node_ddl_controller "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/rpc/ddl_controller.rs"
+click node_actor_graph_builder "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/stream/stream_graph/actor.rs"
+click node_global_stream_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/stream/stream_manager.rs"
+click node_global_barrier_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/barrier/manager.rs"
+click node_barrier_worker "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/barrier/worker.rs"
+click node_barrier_command "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/barrier/command.rs"
+click node_hummock_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/hummock/manager/mod.rs"
+click node_compactor_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/hummock/compactor_manager.rs"
+click node_compute_serve "https://github.com/risingwavelabs/risingwave/blob/main/src/compute/src/server.rs"
+click node_local_stream_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/task/stream_manager.rs"
+click node_local_barrier_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/task/barrier_manager/mod.rs"
+click node_actor "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/actor.rs"
+click node_execute_trait "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/mod.rs"
+click node_barrier_type "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/mod.rs"
+click node_source_executor "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/source/source_executor.rs"
+click node_hash_agg "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/aggregate/hash_agg.rs"
+click node_hash_join "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/hash_join.rs"
+click node_materialize "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/mview/materialize.rs"
+click node_sink_executor "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/sink.rs"
+click node_dispatch "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/dispatch.rs"
+click node_state_table "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/common/table/state_table.rs"
+click node_local_input "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/exchange/input.rs"
+click node_remote_input "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/exchange/input.rs"
+click node_output "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/exchange/output.rs"
+click node_local_hummock "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/store/local_hummock_storage.rs"
+click node_hummock_storage "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/store/hummock_storage.rs"
+click node_shared_buffer_batch "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/shared_buffer/shared_buffer_batch.rs"
+click node_event_handler "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/event_handler/hummock_event_handler.rs"
+click node_sstable_builder "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/sstable/builder.rs"
+click node_sstable_store "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/sstable_store.rs"
+click node_merge_iterator "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/iterator/merge_inner.rs"
+click node_hummock_version "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/hummock_sdk/src/version.rs"
+click node_compactor_runner "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/compactor/compactor_runner.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_meta_serve,node_ddl_controller,node_actor_graph_builder,node_global_stream_manager,node_global_barrier_manager,node_barrier_worker,node_barrier_command,node_hummock_manager,node_compactor_manager toneBlue
+class node_compute_serve,node_local_stream_manager,node_local_barrier_manager toneAmber
+class node_actor,node_execute_trait,node_barrier_type,node_source_executor,node_hash_agg,node_hash_join,node_materialize,node_sink_executor,node_dispatch,node_state_table toneMint
+class node_local_input,node_remote_input,node_output toneRose
+class node_local_hummock,node_hummock_storage,node_shared_buffer_batch,node_event_handler,node_sstable_builder,node_sstable_store,node_merge_iterator,node_hummock_version,node_compactor_runner toneIndigo

@@ -1,0 +1,41 @@
+{
+  "owner": "risingwavelabs",
+  "repo": "risingwave",
+  "branch": "main",
+  "groups": [
+    { "id": "meta", "name": "Meta control plane", "label": "Meta control plane" },
+    { "id": "compute", "name": "Compute runtime", "label": "Compute runtime" },
+    { "id": "dag", "name": "Streaming DAG", "label": "Streaming DAG" },
+    { "id": "storage", "name": "Hummock state store", "label": "Hummock state store" }
+  ],
+  "nodes": [
+    { "id": "meta_serve", "label": "MetaNode rpc_serve", "file": "server.rs", "path": "src/meta/node/src/server.rs", "group": "meta", "groupId": "meta", "desc": "gRPC services for the meta node, with leader election" },
+    { "id": "ddl_controller", "label": "DdlController", "file": "ddl_controller.rs", "path": "src/meta/src/rpc/ddl_controller.rs", "group": "meta", "groupId": "meta", "desc": "Coordinates CREATE MVIEW, sinks, and schema changes" },
+    { "id": "global_stream_manager", "label": "GlobalStreamManager", "file": "stream_manager.rs", "path": "src/meta/src/stream/stream_manager.rs", "group": "meta", "groupId": "meta", "desc": "Broadcasts stream fragments to compute nodes" },
+    { "id": "global_barrier_manager", "label": "GlobalBarrierManager", "file": "manager.rs", "path": "src/meta/src/barrier/manager.rs", "group": "meta", "groupId": "meta", "desc": "Drives epoch barriers and checkpoint collection" },
+    { "id": "hummock_manager", "label": "HummockManager", "file": "mod.rs", "path": "src/meta/src/hummock/manager/mod.rs", "group": "meta", "groupId": "meta", "desc": "Versions the shared state store and assigns compaction" },
+    { "id": "compute_serve", "label": "compute_node_serve", "file": "server.rs", "path": "src/compute/src/server.rs", "group": "compute", "groupId": "compute", "desc": "Boots one compute node: stream, batch, and barrier workers" },
+    { "id": "local_stream_manager", "label": "LocalStreamManager", "file": "stream_manager.rs", "path": "src/stream/src/task/stream_manager.rs", "group": "compute", "groupId": "compute", "desc": "Builds and runs actors on one node" },
+    { "id": "local_barrier_manager", "label": "LocalBarrierManager", "file": "mod.rs", "path": "src/stream/src/task/barrier_manager/mod.rs", "group": "compute", "groupId": "compute", "desc": "Aligns barriers flowing through local actors" },
+    { "id": "actor", "label": "Actor", "file": "actor.rs", "path": "src/stream/src/executor/actor.rs", "group": "dag", "groupId": "dag", "desc": "One shard of a fragment: pumps a chain of executors" },
+    { "id": "source_executor", "label": "SourceExecutor", "file": "source_executor.rs", "path": "src/stream/src/executor/source/source_executor.rs", "group": "dag", "groupId": "dag", "desc": "Ingests Kafka/CDC/file splits into the DAG" },
+    { "id": "local_hummock", "label": "LocalHummockStorage", "file": "local_hummock_storage.rs", "path": "src/storage/src/hummock/store/local_hummock_storage.rs", "group": "storage", "groupId": "storage", "desc": "Per-node view of Hummock: memtable, cache, pinned version" },
+    { "id": "compactor_runner", "label": "CompactorRunner", "file": "compactor_runner.rs", "path": "src/storage/src/hummock/compactor/compactor_runner.rs", "group": "storage", "groupId": "storage", "desc": "Merges SSTables to reclaim deletes and old versions" }
+  ],
+  "edges": [
+    { "from": "compute_serve", "to": "meta_serve", "label": "gRPC client" },
+    { "from": "ddl_controller", "to": "global_stream_manager", "label": "create MV / sink" },
+    { "from": "ddl_controller", "to": "hummock_manager", "label": "register tables" },
+    { "from": "compute_serve", "to": "local_stream_manager", "label": "starts" },
+    { "from": "compute_serve", "to": "local_barrier_manager", "label": "starts" },
+    { "from": "global_stream_manager", "to": "local_stream_manager", "label": "deploys fragments" },
+    { "from": "local_stream_manager", "to": "actor", "label": "spawns" },
+    { "from": "global_barrier_manager", "to": "local_barrier_manager", "label": "flush barriers" },
+    { "from": "local_barrier_manager", "to": "actor", "label": "epoch alignment" },
+    { "from": "source_executor", "to": "actor", "label": "yields chunks" },
+    { "from": "actor", "to": "local_hummock", "label": "state table IO" },
+    { "from": "local_hummock", "to": "hummock_manager", "label": "pin / commit" },
+    { "from": "local_barrier_manager", "to": "local_hummock", "label": "seal memtables" },
+    { "from": "hummock_manager", "to": "compactor_runner", "label": "compaction tasks" }
+  ]
+}

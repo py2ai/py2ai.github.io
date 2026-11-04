@@ -1,0 +1,65 @@
+flowchart TD
+
+subgraph group_meta["Meta control plane"]
+  node_meta_serve["MetaNode rpc_serve<br/>[server.rs]"]
+  node_ddl_controller["DdlController<br/>[ddl_controller.rs]"]
+  node_global_stream_manager["GlobalStreamManager<br/>[stream_manager.rs]"]
+  node_global_barrier_manager["GlobalBarrierManager<br/>[manager.rs]"]
+  node_hummock_manager["HummockManager<br/>[mod.rs]"]
+end
+
+subgraph group_compute["Compute runtime"]
+  node_compute_serve["compute_node_serve<br/>[server.rs]"]
+  node_local_stream_manager["LocalStreamManager<br/>[stream_manager.rs]"]
+  node_local_barrier_manager["LocalBarrierManager<br/>[mod.rs]"]
+end
+
+subgraph group_dag["Streaming DAG"]
+  node_actor["Actor<br/>[actor.rs]"]
+  node_source_executor["SourceExecutor<br/>[source_executor.rs]"]
+end
+
+subgraph group_storage["Hummock state store"]
+  node_local_hummock["LocalHummockStorage"]
+  node_compactor_runner["CompactorRunner"]
+end
+
+node_compute_serve -->|"gRPC client"| node_meta_serve
+node_ddl_controller -->|"create MV / sink"| node_global_stream_manager
+node_ddl_controller -->|"register tables"| node_hummock_manager
+node_compute_serve -->|"starts"| node_local_stream_manager
+node_compute_serve -->|"starts"| node_local_barrier_manager
+node_global_stream_manager -->|"deploys fragments"| node_local_stream_manager
+node_local_stream_manager -->|"spawns"| node_actor
+node_global_barrier_manager -->|"flush barriers"| node_local_barrier_manager
+node_local_barrier_manager -->|"epoch alignment"| node_actor
+node_source_executor -->|"yields chunks"| node_actor
+node_actor -->|"state table IO"| node_local_hummock
+node_local_hummock -->|"pin / commit"| node_hummock_manager
+node_local_barrier_manager -->|"seal memtables"| node_local_hummock
+node_hummock_manager -->|"compaction tasks"| node_compactor_runner
+
+click node_meta_serve "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/node/src/server.rs"
+click node_ddl_controller "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/rpc/ddl_controller.rs"
+click node_global_stream_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/stream/stream_manager.rs"
+click node_global_barrier_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/barrier/manager.rs"
+click node_hummock_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/meta/src/hummock/manager/mod.rs"
+click node_compute_serve "https://github.com/risingwavelabs/risingwave/blob/main/src/compute/src/server.rs"
+click node_local_stream_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/task/stream_manager.rs"
+click node_local_barrier_manager "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/task/barrier_manager/mod.rs"
+click node_actor "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/actor.rs"
+click node_source_executor "https://github.com/risingwavelabs/risingwave/blob/main/src/stream/src/executor/source/source_executor.rs"
+click node_local_hummock "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/store/local_hummock_storage.rs"
+click node_compactor_runner "https://github.com/risingwavelabs/risingwave/blob/main/src/storage/src/hummock/compactor/compactor_runner.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_meta_serve,node_ddl_controller,node_global_stream_manager,node_global_barrier_manager,node_hummock_manager toneBlue
+class node_compute_serve,node_local_stream_manager,node_local_barrier_manager toneAmber
+class node_actor,node_source_executor toneMint
+class node_local_hummock,node_compactor_runner toneRose
