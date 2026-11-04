@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_dataflow_model["Dataflow Model"]
+  node_dataflow_cls["Dataflow<br/>[dataflow.py]"]
+  node_stream_cls["Stream<br/>[dataflow.py]"]
+  node_then_chain["Stream.then<br/>[dataflow.py]"]
+  node_op_base["Operator base<br/>[dataflow.py]"]
+end
+
+subgraph group_operator_api["Operator API"]
+  node_op_input["op.input<br/>[__init__.py]"]
+  node_op_map["op.map<br/>[__init__.py]"]
+  node_op_flat_map["op.flat_map<br/>[__init__.py]"]
+  node_op_stateful["op.stateful<br/>[__init__.py]"]
+  node_stateful_logic["StatefulLogic ABC<br/>[__init__.py]"]
+  node_stateful_batch_op["op.stateful_batch<br/>[__init__.py]"]
+  node_op_join["op.join<br/>[__init__.py]"]
+  node_op_output["op.output<br/>[__init__.py]"]
+end
+
+subgraph group_windowing["Windowing"]
+  node_window_op["window<br/>[windowing.py]"]
+  node_event_clock["EventClock<br/>[windowing.py]"]
+  node_windower["TumblingWindower<br/>[windowing.py]"]
+  node_window_out["WindowOut<br/>[windowing.py]"]
+end
+
+subgraph group_connectors["Connectors"]
+  node_fixed_source["FixedPartitionedSource<br/>[inputs.py]"]
+  node_dynamic_source["DynamicSource<br/>[inputs.py]"]
+  node_kafka_source["KafkaSource<br/>[__init__.py]"]
+  node_kafka_sink["KafkaSink<br/>[__init__.py]"]
+  node_kafka_ops["kafka.input / output<br/>[operators.py]"]
+  node_dynamic_sink["DynamicSink<br/>[outputs.py]"]
+end
+
+subgraph group_rust_bridge["Entry &amp; PyO3 Bridge"]
+  node_run_py_cli["bytewax.run CLI<br/>[run.py]"]
+  node_recovery_py["RecoveryConfig re-export<br/>[recovery.py]"]
+  node_pyo3_mod["_bytewax pymodule<br/>[lib.rs]"]
+  node_run_main_rs["run_main<br/>[run.rs]"]
+  node_cluster_main_rs["cluster_main<br/>[run.rs]"]
+end
+
+subgraph group_timely_core["Timely Core"]
+  node_worker_struct["Worker<br/>[worker.rs]"]
+  node_build_production["build_production_dataflow<br/>[worker.rs]"]
+  node_dispatch["core op dispatch<br/>[worker.rs]"]
+  node_timely_stateful["stateful_batch &#40;Timely&#41;<br/>[operators.rs]"]
+end
+
+subgraph group_recovery["Recovery Journal"]
+  node_recovery_config["RecoveryConfig<br/>[recovery.rs]"]
+  node_write_recovery_rs["write_recovery<br/>[recovery.rs]"]
+  node_load_snaps_rs["load_snaps<br/>[recovery.rs]"]
+end
+
+node_run_py_cli -->|"builds RecoveryConfig"| node_recovery_py
+node_recovery_py -->|"re-exports Rust type"| node_recovery_config
+node_run_py_cli -->|"calls cli_main"| node_pyo3_mod
+node_pyo3_mod -->|"registers pyfunctions"| node_run_main_rs
+node_run_main_rs -->|"spawns workers"| node_cluster_main_rs
+node_run_main_rs -->|"extracts Dataflow"| node_build_production
+node_cluster_main_rs -->|"per-process entry"| node_worker_struct
+node_worker_struct -->|"probe loop"| node_build_production
+node_build_production -->|"matches core op name"| node_dispatch
+node_dispatch -->|"stateful_batch"| node_timely_stateful
+node_timely_stateful -->|"epoch snapshots"| node_write_recovery_rs
+node_write_recovery_rs -->|"persists to SQLite"| node_recovery_config
+node_load_snaps_rs -->|"replays on resume"| node_build_production
+node_dataflow_cls -->|"emits Streams"| node_stream_cls
+node_stream_cls -->|"fluent chaining"| node_then_chain
+node_dataflow_cls -->|"step tree"| node_op_base
+node_op_input -->|"attaches input step"| node_dataflow_cls
+node_op_input -->|"feeds transforms"| node_op_map
+node_op_map -->|"chained transforms"| node_op_flat_map
+node_op_flat_map -->|"final results"| node_op_output
+node_op_stateful -->|"user implements ABC"| node_stateful_logic
+node_stateful_logic -->|"wrapped by"| node_stateful_batch_op
+node_op_stateful -->|"compiles down to"| node_stateful_batch_op
+node_op_join -->|"state-based join"| node_stateful_batch_op
+node_window_op -->|"window state on core"| node_stateful_batch_op
+node_event_clock -->|"event-time clock"| node_window_op
+node_windower -->|"window assignment"| node_window_op
+node_window_out -->|"DOWN LATE META ports"| node_window_op
+node_kafka_ops -->|"wraps source"| node_kafka_source
+node_kafka_ops -->|"wraps sink"| node_kafka_sink
+node_kafka_source -->|"extends ABC"| node_fixed_source
+node_kafka_sink -->|"extends ABC"| node_dynamic_sink
+node_fixed_source -->|"passed as Source"| node_op_input
+node_dynamic_sink -->|"passed as Sink"| node_op_output
+
+click node_dataflow_cls "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/dataflow.py"
+click node_stream_cls "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/dataflow.py"
+click node_then_chain "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/dataflow.py"
+click node_op_base "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/dataflow.py"
+click node_op_input "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_op_map "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_op_flat_map "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_op_stateful "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_stateful_logic "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_stateful_batch_op "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_op_join "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_op_output "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/__init__.py"
+click node_window_op "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/windowing.py"
+click node_event_clock "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/windowing.py"
+click node_windower "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/windowing.py"
+click node_window_out "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/operators/windowing.py"
+click node_fixed_source "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/inputs.py"
+click node_dynamic_source "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/inputs.py"
+click node_kafka_source "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/connectors/kafka/__init__.py"
+click node_kafka_sink "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/connectors/kafka/__init__.py"
+click node_kafka_ops "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/connectors/kafka/operators.py"
+click node_dynamic_sink "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/outputs.py"
+click node_run_py_cli "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/run.py"
+click node_recovery_py "https://github.com/bytewax/bytewax/blob/main/pysrc/bytewax/recovery.py"
+click node_pyo3_mod "https://github.com/bytewax/bytewax/blob/main/src/lib.rs"
+click node_run_main_rs "https://github.com/bytewax/bytewax/blob/main/src/run.rs"
+click node_cluster_main_rs "https://github.com/bytewax/bytewax/blob/main/src/run.rs"
+click node_worker_struct "https://github.com/bytewax/bytewax/blob/main/src/worker.rs"
+click node_build_production "https://github.com/bytewax/bytewax/blob/main/src/worker.rs"
+click node_dispatch "https://github.com/bytewax/bytewax/blob/main/src/worker.rs"
+click node_timely_stateful "https://github.com/bytewax/bytewax/blob/main/src/operators.rs"
+click node_recovery_config "https://github.com/bytewax/bytewax/blob/main/src/recovery.rs"
+click node_write_recovery_rs "https://github.com/bytewax/bytewax/blob/main/src/recovery.rs"
+click node_load_snaps_rs "https://github.com/bytewax/bytewax/blob/main/src/recovery.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_dataflow_cls,node_stream_cls,node_then_chain,node_op_base,node_recovery_config,node_write_recovery_rs,node_load_snaps_rs toneBlue
+class node_op_input,node_op_map,node_op_flat_map,node_op_stateful,node_stateful_logic,node_stateful_batch_op,node_op_join,node_op_output toneAmber
+class node_window_op,node_event_clock,node_windower,node_window_out toneMint
+class node_fixed_source,node_dynamic_source,node_kafka_source,node_kafka_sink,node_kafka_ops,node_dynamic_sink toneRose
+class node_run_py_cli,node_recovery_py,node_pyo3_mod,node_run_main_rs,node_cluster_main_rs toneIndigo
+class node_worker_struct,node_build_production,node_dispatch,node_timely_stateful toneTeal
