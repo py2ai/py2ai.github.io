@@ -1,0 +1,66 @@
+flowchart TD
+
+subgraph group_receivers["Telemetry Receivers"]
+  node_trace_receiver["Trace gRPC Receiver"]
+  node_otel_receiver["OTLP Metrics Receiver"]
+end
+
+subgraph group_analysis["Analysis Core"]
+  node_dispatcher["DispatcherManager"]
+  node_metrics_base["Metrics<br/>[Metrics.java]"]
+  node_metrics_stream["MetricsStreamProcessor"]
+  node_ai_session["AIAgentSessionFlowRecord"]
+end
+
+subgraph group_aggregation["L1/L2 Aggregation"]
+  node_agg_worker["MetricsAggregateWorker &#40;L1&#41;"]
+  node_persist_worker["MetricsPersistentWorker &#40;L2&#41;"]
+end
+
+subgraph group_storage["Persistence"]
+  node_batch_dao["IBatchDAO<br/>[IBatchDAO.java]"]
+  node_model_registry["ModelRegistry<br/>[ModelRegistry.java]"]
+end
+
+subgraph group_query["Query &amp; GraphQL"]
+  node_graphql["GraphQLQueryProvider"]
+  node_trace_query["TraceQueryService"]
+end
+
+node_trace_receiver -->|"parsed Segment sources forwarded"| node_dispatcher
+node_otel_receiver -->|"OTLP metrics become MAL meter streams"| node_metrics_stream
+node_dispatcher -->|"OAL dispatchers build Metrics"| node_metrics_base
+node_metrics_base -->|"in&#40;Metrics&#41; hot path"| node_metrics_stream
+node_metrics_stream -->|"routes per metric class"| node_agg_worker
+node_agg_worker -->|"merged L1 buckets feed L2 sessions"| node_persist_worker
+node_persist_worker -->|"buildBatchRequests then flush"| node_batch_dao
+node_persist_worker -->|"registers a Model per stream"| node_model_registry
+node_dispatcher -->|"AI-agent session records"| node_ai_session
+node_graphql -->|"resolvers call query services"| node_trace_query
+node_trace_query -->|"reads through storage module"| node_batch_dao
+
+click node_trace_receiver "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/skywalking-trace-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/trace/provider/handler/v8/grpc/TraceSegmentReportServiceHandler.java"
+click node_otel_receiver "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/otel-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/otel/otlp/OpenTelemetryMetricHandler.java"
+click node_dispatcher "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/DispatcherManager.java"
+click node_metrics_base "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/metrics/Metrics.java"
+click node_metrics_stream "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsStreamProcessor.java"
+click node_ai_session "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/manual/aiagent/AIAgentSessionFlowRecord.java"
+click node_agg_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsAggregateWorker.java"
+click node_persist_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsPersistentWorker.java"
+click node_batch_dao "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/storage/IBatchDAO.java"
+click node_model_registry "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/storage/model/ModelRegistry.java"
+click node_graphql "https://github.com/apache/skywalking/blob/master/oap-server/server-query-plugin/query-graphql-plugin/src/main/java/org/apache/skywalking/oap/query/graphql/GraphQLQueryProvider.java"
+click node_trace_query "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/query/TraceQueryService.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_trace_receiver,node_otel_receiver toneBlue
+class node_dispatcher,node_metrics_base,node_metrics_stream,node_ai_session toneAmber
+class node_agg_worker,node_persist_worker toneMint
+class node_batch_dao,node_model_registry toneRose
+class node_graphql,node_trace_query toneIndigo
