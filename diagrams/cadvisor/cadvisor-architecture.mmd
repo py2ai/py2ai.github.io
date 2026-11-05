@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_daemon["Entrypoint &amp; HTTP"]
+  node_main["cadvisor main&#40;&#41;<br/>[cadvisor.go]"]
+  node_http_mux["HTTP mux wiring<br/>[handlers.go]"]
+  node_api_handler["REST API handler<br/>[handler.go]"]
+  node_api_versions["API v1/v2 codecs<br/>[versions.go]"]
+  node_oom_watcher["OOM watcher<br/>[oom.go]"]
+  node_pages["Web UI pages<br/>[containers.go]"]
+end
+
+subgraph group_runtimes["Runtime Handlers"]
+  node_docker_factory["Docker factory<br/>[factory.go]"]
+  node_docker_handler["Docker handler<br/>[handler.go]"]
+  node_containerd_handler["containerd handler<br/>[handler.go]"]
+  node_crio_handler["CRI-O handler<br/>[handler.go]"]
+  node_podman_handler["Podman handler<br/>[handler.go]"]
+  node_systemd_factory["systemd factory<br/>[factory.go]"]
+  node_raw_handler["Raw cgroup handler<br/>[handler.go]"]
+  node_libcontainer["libcontainer stats<br/>[handler.go]"]
+end
+
+subgraph group_discovery["Factories &amp; Watchers"]
+  node_factory["Factory registry<br/>[factory.go]"]
+  node_raw_watcher["Raw cgroup watcher<br/>[watcher.go]"]
+  node_watcher_iface["ContainerWatcher<br/>[watcher.go]"]
+end
+
+subgraph group_core["Manager Core"]
+  node_manager["Manager<br/>[manager.go]"]
+  node_container_data["Container housekeeping<br/>[container.go]"]
+  node_events["Event plumbing<br/>[events.go]"]
+end
+
+subgraph group_stats["Stats Collection &amp; Store"]
+  node_memory_cache["In-memory cache<br/>[memory.go]"]
+  node_model["Stats model<br/>[container.go]"]
+  node_collector_mgr["Custom collectors"]
+  node_app_prom["Prometheus scraper"]
+  node_machine_info["Machine info<br/>[info.go]"]
+end
+
+subgraph group_metrics["Prometheus Export"]
+  node_prometheus["/metrics collector<br/>[prometheus.go]"]
+  node_machine_metrics["Machine metrics"]
+end
+
+subgraph group_storage["Storage Layer"]
+  node_storage_iface["StorageDriver<br/>[storage.go]"]
+  node_storagedriver["Memory driver setup<br/>[storagedriver.go]"]
+end
+
+node_main -->|"NewMemoryStorage"| node_storagedriver
+node_storagedriver -->|"returns cache"| node_memory_cache
+node_memory_cache -->|"implements"| node_storage_iface
+node_main -->|"New + Start"| node_manager
+node_main -->|"RegisterHandlers"| node_http_mux
+node_main -->|"RegisterPrometheusHandler"| node_prometheus
+node_http_mux -->|"api.RegisterHandlers"| node_api_handler
+node_http_mux -->|"UI handlers"| node_pages
+node_api_handler -->|"getAPIVersions"| node_api_versions
+node_api_handler -->|"SetEventSink"| node_events
+node_api_handler -->|"startOOMWatcher"| node_oom_watcher
+node_api_handler -->|"info + event queries"| node_manager
+node_pages -->|"container info"| node_manager
+node_manager -->|"machine.Info refresh"| node_machine_info
+node_manager -->|"InitializePlugins"| node_factory
+node_manager -->|"NewRawContainerWatcher"| node_raw_watcher
+node_raw_watcher -->|"implements"| node_watcher_iface
+node_raw_watcher -->|"container events"| node_manager
+node_manager -->|"createContainer"| node_container_data
+node_manager -->|"addEvent"| node_events
+node_factory -->|"dispatch"| node_docker_factory
+node_factory -->|"dispatch"| node_containerd_handler
+node_factory -->|"dispatch"| node_crio_handler
+node_factory -->|"dispatch"| node_podman_handler
+node_factory -->|"dispatch"| node_systemd_factory
+node_factory -->|"dispatch"| node_raw_handler
+node_docker_factory -->|"builds"| node_docker_handler
+node_docker_handler -->|"GetStats delegate"| node_libcontainer
+node_containerd_handler -->|"GetStats delegate"| node_libcontainer
+node_crio_handler -->|"GetStats delegate"| node_libcontainer
+node_container_data -->|"AddStats + RecentStats"| node_memory_cache
+node_container_data -->|"fills ContainerStats"| node_model
+node_container_data -->|"Collect"| node_collector_mgr
+node_collector_mgr -->|"registered collector"| node_app_prom
+node_prometheus -->|"GetRequestedContainersInfo"| node_manager
+node_machine_metrics -->|"GetMachineInfo"| node_manager
+
+click node_main "https://github.com/google/cadvisor/blob/master/cmd/cadvisor.go"
+click node_http_mux "https://github.com/google/cadvisor/blob/master/cmd/internal/http/handlers.go"
+click node_api_handler "https://github.com/google/cadvisor/blob/master/cmd/internal/api/handler.go"
+click node_api_versions "https://github.com/google/cadvisor/blob/master/cmd/internal/api/versions.go"
+click node_oom_watcher "https://github.com/google/cadvisor/blob/master/cmd/internal/api/oom.go"
+click node_pages "https://github.com/google/cadvisor/blob/master/cmd/internal/pages/containers.go"
+click node_docker_factory "https://github.com/google/cadvisor/blob/master/container/docker/factory.go"
+click node_docker_handler "https://github.com/google/cadvisor/blob/master/container/docker/handler.go"
+click node_containerd_handler "https://github.com/google/cadvisor/blob/master/lib/container/containerd/handler.go"
+click node_crio_handler "https://github.com/google/cadvisor/blob/master/lib/container/crio/handler.go"
+click node_podman_handler "https://github.com/google/cadvisor/blob/master/container/podman/handler.go"
+click node_systemd_factory "https://github.com/google/cadvisor/blob/master/lib/container/systemd/factory.go"
+click node_raw_handler "https://github.com/google/cadvisor/blob/master/lib/container/raw/handler.go"
+click node_libcontainer "https://github.com/google/cadvisor/blob/master/lib/container/libcontainer/handler.go"
+click node_factory "https://github.com/google/cadvisor/blob/master/lib/container/factory.go"
+click node_raw_watcher "https://github.com/google/cadvisor/blob/master/lib/container/raw/watcher.go"
+click node_watcher_iface "https://github.com/google/cadvisor/blob/master/lib/watcher/watcher.go"
+click node_manager "https://github.com/google/cadvisor/blob/master/lib/manager/manager.go"
+click node_container_data "https://github.com/google/cadvisor/blob/master/lib/manager/container.go"
+click node_events "https://github.com/google/cadvisor/blob/master/lib/manager/events.go"
+click node_memory_cache "https://github.com/google/cadvisor/blob/master/lib/cache/memory/memory.go"
+click node_model "https://github.com/google/cadvisor/blob/master/lib/model/container.go"
+click node_collector_mgr "https://github.com/google/cadvisor/blob/master/collector/collector_manager.go"
+click node_app_prom "https://github.com/google/cadvisor/blob/master/collector/prometheus_collector.go"
+click node_machine_info "https://github.com/google/cadvisor/blob/master/lib/machine/info.go"
+click node_prometheus "https://github.com/google/cadvisor/blob/master/lib/metrics/prometheus.go"
+click node_machine_metrics "https://github.com/google/cadvisor/blob/master/lib/metrics/prometheus_machine.go"
+click node_storage_iface "https://github.com/google/cadvisor/blob/master/lib/storage/storage.go"
+click node_storagedriver "https://github.com/google/cadvisor/blob/master/cmd/storagedriver.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_http_mux,node_api_handler,node_api_versions,node_oom_watcher,node_pages,node_storage_iface,node_storagedriver toneBlue
+class node_docker_factory,node_docker_handler,node_containerd_handler,node_crio_handler,node_podman_handler,node_systemd_factory,node_raw_handler,node_libcontainer toneAmber
+class node_factory,node_raw_watcher,node_watcher_iface toneMint
+class node_manager,node_container_data,node_events toneRose
+class node_memory_cache,node_model,node_collector_mgr,node_app_prom,node_machine_info toneIndigo
+class node_prometheus,node_machine_metrics toneTeal
