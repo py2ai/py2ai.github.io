@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_g_cli["CLI and Bootstrap"]
+  node_cli["CLI Opts<br/>[cli.rs]"]
+  node_app["Application<br/>[app.rs]"]
+end
+
+subgraph group_g_load["Config Loading"]
+  node_loader["Config Loader<br/>[mod.rs]"]
+  node_config_builder["ConfigBuilderLoader<br/>[config_builder.rs]"]
+  node_secret["SecretBackendLoader<br/>[secret.rs]"]
+  node_config["Config<br/>[mod.rs]"]
+end
+
+subgraph group_g_validate["Validation and Schema"]
+  node_validation["Validation<br/>[validation.rs]"]
+  node_diff["ConfigDiff<br/>[diff.rs]"]
+  node_schema["Schema Merger<br/>[schema.rs]"]
+  node_unit_test["Unit Tests<br/>[mod.rs]"]
+end
+
+subgraph group_g_runtime["Topology Runtime"]
+  node_builder["TopologyPiecesBuilder<br/>[builder.rs]"]
+  node_running["RunningTopology<br/>[running.rs]"]
+  node_controller["TopologyController<br/>[controller.rs]"]
+  node_task["Task<br/>[task.rs]"]
+  node_watcher["Config Watcher<br/>[watcher.rs]"]
+end
+
+subgraph group_g_control["Control Plane"]
+  node_api_server["GrpcServer<br/>[grpc_server.rs]"]
+  node_tap_cmd["Tap Command<br/>[cmd.rs]"]
+  node_internal_metrics["Internal Metrics<br/>[mod.rs]"]
+end
+
+subgraph group_g_sources["Sources"]
+  node_file["File Source<br/>[file.rs]"]
+  node_otel["OpenTelemetry Source<br/>[config.rs]"]
+  node_k8s["Kubernetes Logs<br/>[mod.rs]"]
+  node_demo_logs["Demo Logs Source<br/>[demo_logs.rs]"]
+end
+
+subgraph group_g_transforms["Transforms"]
+  node_remap["Remap Transform<br/>[remap.rs]"]
+  node_route["Route Transform<br/>[route.rs]"]
+  node_filter["Filter Transform<br/>[filter.rs]"]
+  node_reduce["Reduce Transform<br/>[transform.rs]"]
+end
+
+subgraph group_g_sinks["Sinks"]
+  node_console["Console Sink<br/>[config.rs]"]
+  node_http["HTTP Sink<br/>[config.rs]"]
+  node_kafka["Kafka Sink<br/>[config.rs]"]
+  node_buffer["Payload Buffer<br/>[mod.rs]"]
+  node_loki_healthcheck["Sink Healthcheck<br/>[healthcheck.rs]"]
+end
+
+node_cli -->|"get_matches"| node_app
+node_app -->|"start_init_validated"| node_running
+node_app -->|"setup_api"| node_api_server
+node_cli -->|"SubCommand::Tap"| node_tap_cmd
+node_cli -->|"SubCommand::Test"| node_unit_test
+node_loader -->|"load_from_paths"| node_config_builder
+node_config_builder -->|"interpolate secrets"| node_secret
+node_loader -->|"freeze into Config"| node_config
+node_config -->|"ConfigDiff::new"| node_diff
+node_config -->|"check_*"| node_validation
+node_validation -->|"validated config"| node_builder
+node_schema -->|"possible_definitions"| node_builder
+node_diff -->|"new config, old diff"| node_builder
+node_builder -->|"TopologyPieces"| node_running
+node_running -->|"shared handle"| node_controller
+node_running -->|"spawn components"| node_task
+node_watcher -->|"file change, reload"| node_running
+node_controller -->|"reload and stop"| node_running
+node_file -->|"log lines"| node_remap
+node_k8s -->|"container logs"| node_remap
+node_demo_logs -->|"syslog events"| node_remap
+node_otel -->|"OTLP events"| node_remap
+node_remap -->|"fan-out"| node_route
+node_remap -->|"aggregate"| node_reduce
+node_route -->|"matched port"| node_http
+node_route -->|"matched port"| node_kafka
+node_route -->|"matched port"| node_console
+node_filter -->|"kept events"| node_console
+node_reduce -->|"merged events"| node_http
+node_buffer -->|"batched payloads"| node_http
+node_buffer -->|"batched payloads"| node_kafka
+node_internal_metrics -->|"self telemetry"| node_console
+node_builder -->|"probe at build"| node_loki_healthcheck
+
+click node_cli "https://github.com/vectordotdev/vector/blob/master/src/cli.rs"
+click node_app "https://github.com/vectordotdev/vector/blob/master/src/app.rs"
+click node_loader "https://github.com/vectordotdev/vector/blob/master/src/config/loading/mod.rs"
+click node_config_builder "https://github.com/vectordotdev/vector/blob/master/src/config/loading/config_builder.rs"
+click node_secret "https://github.com/vectordotdev/vector/blob/master/src/config/loading/secret.rs"
+click node_config "https://github.com/vectordotdev/vector/blob/master/src/config/mod.rs"
+click node_validation "https://github.com/vectordotdev/vector/blob/master/src/config/validation.rs"
+click node_diff "https://github.com/vectordotdev/vector/blob/master/src/config/diff.rs"
+click node_schema "https://github.com/vectordotdev/vector/blob/master/src/topology/schema.rs"
+click node_unit_test "https://github.com/vectordotdev/vector/blob/master/src/config/unit_test/mod.rs"
+click node_builder "https://github.com/vectordotdev/vector/blob/master/src/topology/builder.rs"
+click node_running "https://github.com/vectordotdev/vector/blob/master/src/topology/running.rs"
+click node_controller "https://github.com/vectordotdev/vector/blob/master/src/topology/controller.rs"
+click node_task "https://github.com/vectordotdev/vector/blob/master/src/topology/task.rs"
+click node_watcher "https://github.com/vectordotdev/vector/blob/master/src/config/watcher.rs"
+click node_api_server "https://github.com/vectordotdev/vector/blob/master/src/api/grpc_server.rs"
+click node_tap_cmd "https://github.com/vectordotdev/vector/blob/master/src/tap/cmd.rs"
+click node_internal_metrics "https://github.com/vectordotdev/vector/blob/master/src/sources/internal_metrics/mod.rs"
+click node_file "https://github.com/vectordotdev/vector/blob/master/src/sources/file.rs"
+click node_otel "https://github.com/vectordotdev/vector/blob/master/src/sources/opentelemetry/config.rs"
+click node_k8s "https://github.com/vectordotdev/vector/blob/master/src/sources/kubernetes_logs/mod.rs"
+click node_demo_logs "https://github.com/vectordotdev/vector/blob/master/src/sources/demo_logs.rs"
+click node_remap "https://github.com/vectordotdev/vector/blob/master/src/transforms/remap.rs"
+click node_route "https://github.com/vectordotdev/vector/blob/master/src/transforms/route.rs"
+click node_filter "https://github.com/vectordotdev/vector/blob/master/src/transforms/filter.rs"
+click node_reduce "https://github.com/vectordotdev/vector/blob/master/src/transforms/reduce/transform.rs"
+click node_console "https://github.com/vectordotdev/vector/blob/master/src/sinks/console/config.rs"
+click node_http "https://github.com/vectordotdev/vector/blob/master/src/sinks/http/config.rs"
+click node_kafka "https://github.com/vectordotdev/vector/blob/master/src/sinks/kafka/config.rs"
+click node_buffer "https://github.com/vectordotdev/vector/blob/master/src/sinks/util/buffer/mod.rs"
+click node_loki_healthcheck "https://github.com/vectordotdev/vector/blob/master/src/sinks/loki/healthcheck.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli,node_app,node_remap,node_route,node_filter,node_reduce toneBlue
+class node_loader,node_config_builder,node_secret,node_config,node_console,node_http,node_kafka,node_buffer,node_loki_healthcheck toneAmber
+class node_validation,node_diff,node_schema,node_unit_test toneMint
+class node_builder,node_running,node_controller,node_task,node_watcher toneRose
+class node_api_server,node_tap_cmd,node_internal_metrics toneIndigo
+class node_file,node_otel,node_k8s,node_demo_logs toneTeal
