@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_boot["Spring Boot wiring"]
+  node_zipkin_server["ZipkinServer<br/>[ZipkinServer.java]"]
+  node_enable_zipkin_server["EnableZipkinServer"]
+  node_http_config["ZipkinHttpConfiguration"]
+end
+
+subgraph group_http["HTTP collector endpoints"]
+  node_http_collector["ZipkinHttpCollector"]
+  node_upload_spans_v2["uploadSpans"]
+  node_validate_and_store["validateAndStoreSpans"]
+  node_unzipping_converter["UnzippingBytesRequestConverter"]
+  node_completable_callback["CompletableCallback"]
+end
+
+subgraph group_mq["Kafka collector"]
+  node_kafka_collector["KafkaCollector"]
+  node_kafka_worker["KafkaCollectorWorker"]
+end
+
+subgraph group_collector["Decode, sample, store"]
+  node_collector_component["CollectorComponent"]
+  node_collector["Collector<br/>[Collector.java]"]
+  node_collector_sampler["CollectorSampler"]
+  node_store_spans["Collector.StoreSpans<br/>[Collector.java]"]
+end
+
+subgraph group_codec["Encoders &amp; decoders"]
+  node_decoder_detector["SpanBytesDecoderDetector"]
+  node_span_decoder["SpanBytesDecoder"]
+  node_span_encoder["SpanBytesEncoder"]
+  node_json_codec["JsonCodec<br/>[JsonCodec.java]"]
+  node_proto3_codec["Proto3Codec<br/>[Proto3Codec.java]"]
+  node_v2_span_writer["V2SpanWriter<br/>[V2SpanWriter.java]"]
+end
+
+subgraph group_model["zipkin2 domain model"]
+  node_span["Span<br/>[Span.java]"]
+  node_endpoint["Endpoint<br/>[Endpoint.java]"]
+  node_call["Call<br/>[Call.java]"]
+end
+
+subgraph group_storage["Storage SPI"]
+  node_storage_component["StorageComponent"]
+  node_span_consumer["SpanConsumer<br/>[SpanConsumer.java]"]
+  node_span_store["SpanStore<br/>[SpanStore.java]"]
+  node_query_request["QueryRequest<br/>[QueryRequest.java]"]
+  node_service_and_span_names["ServiceAndSpanNames"]
+  node_in_memory_storage["InMemoryStorage"]
+end
+
+subgraph group_query["Query API v2"]
+  node_query_api["ZipkinQueryApiV2"]
+  node_get_traces["getTraces"]
+end
+
+node_zipkin_server -->|"@EnableZipkinServer"| node_enable_zipkin_server
+node_enable_zipkin_server -->|"@Import activates"| node_http_collector
+node_enable_zipkin_server -->|"@Import activates"| node_kafka_collector
+node_enable_zipkin_server -->|"@Import activates"| node_query_api
+node_enable_zipkin_server -->|"@Import activates"| node_http_config
+node_http_config -->|"registers Armeria routes"| node_http_collector
+node_http_collector -->|"@Post /api/v2/spans"| node_upload_spans_v2
+node_upload_spans_v2 -->|"delegates"| node_validate_and_store
+node_validate_and_store -->|"gunzip body"| node_unzipping_converter
+node_validate_and_store -->|"decoderForListMessage"| node_decoder_detector
+node_validate_and_store -->|"acceptSpans&#40;buffer, decoder&#41;"| node_collector
+node_validate_and_store -->|"result future"| node_completable_callback
+node_completable_callback -->|"202 Accepted"| node_http_collector
+node_kafka_collector -->|"spawns per stream"| node_kafka_worker
+node_kafka_collector -->|"extends"| node_collector_component
+node_kafka_worker -->|"thrift vs proto3 sniff"| node_decoder_detector
+node_kafka_worker -->|"acceptSpans&#40;bytes&#41;"| node_collector
+node_collector_component -->|"builds delegate"| node_collector
+node_collector -->|"sample&#40;traceId&#41;"| node_collector_sampler
+node_collector -->|"decodeList"| node_span_decoder
+node_collector -->|"executor.execute"| node_store_spans
+node_store_spans -->|"accept&#40;spans&#41;"| node_span_consumer
+node_span_decoder -->|"produces"| node_span
+node_span_decoder -->|"json paths"| node_json_codec
+node_span_decoder -->|"proto3 paths"| node_proto3_codec
+node_span_encoder -->|"JSON encodes"| node_json_codec
+node_span_encoder -->|"JSON_V2 writer"| node_v2_span_writer
+node_span -->|"local/remote endpoint"| node_endpoint
+node_span_consumer -->|"provided by"| node_storage_component
+node_span_store -->|"provided by"| node_storage_component
+node_in_memory_storage -->|"default impl"| node_storage_component
+node_in_memory_storage -->|"implements"| node_span_store
+node_service_and_span_names -->|"name index SPI"| node_storage_component
+node_query_request -->|"getTraces input"| node_span_store
+node_query_api -->|"@Get /api/v2/traces"| node_get_traces
+node_get_traces -->|"newBuilder from params"| node_query_request
+node_get_traces -->|"getTraces&#40;queryRequest&#41;"| node_span_store
+node_get_traces -->|"JSON_V2 reply"| node_span_encoder
+node_get_traces -->|"execute&#40;&#41;"| node_call
+
+click node_zipkin_server "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin/server/ZipkinServer.java"
+click node_enable_zipkin_server "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/EnableZipkinServer.java"
+click node_http_config "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinHttpConfiguration.java"
+click node_http_collector "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinHttpCollector.java"
+click node_upload_spans_v2 "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinHttpCollector.java"
+click node_validate_and_store "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinHttpCollector.java"
+click node_unzipping_converter "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinHttpCollector.java"
+click node_completable_callback "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinHttpCollector.java"
+click node_kafka_collector "https://github.com/openzipkin/zipkin/blob/master/zipkin-collector/kafka/src/main/java/zipkin2/collector/kafka/KafkaCollector.java"
+click node_kafka_worker "https://github.com/openzipkin/zipkin/blob/master/zipkin-collector/kafka/src/main/java/zipkin2/collector/kafka/KafkaCollectorWorker.java"
+click node_collector_component "https://github.com/openzipkin/zipkin/blob/master/zipkin-collector/core/src/main/java/zipkin2/collector/CollectorComponent.java"
+click node_collector "https://github.com/openzipkin/zipkin/blob/master/zipkin-collector/core/src/main/java/zipkin2/collector/Collector.java"
+click node_collector_sampler "https://github.com/openzipkin/zipkin/blob/master/zipkin-collector/core/src/main/java/zipkin2/collector/CollectorSampler.java"
+click node_store_spans "https://github.com/openzipkin/zipkin/blob/master/zipkin-collector/core/src/main/java/zipkin2/collector/Collector.java"
+click node_decoder_detector "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/SpanBytesDecoderDetector.java"
+click node_span_decoder "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/codec/SpanBytesDecoder.java"
+click node_span_encoder "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/codec/SpanBytesEncoder.java"
+click node_json_codec "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/internal/JsonCodec.java"
+click node_proto3_codec "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/internal/Proto3Codec.java"
+click node_v2_span_writer "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/internal/V2SpanWriter.java"
+click node_span "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/Span.java"
+click node_endpoint "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/Endpoint.java"
+click node_call "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/Call.java"
+click node_storage_component "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/storage/StorageComponent.java"
+click node_span_consumer "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/storage/SpanConsumer.java"
+click node_span_store "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/storage/SpanStore.java"
+click node_query_request "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/storage/QueryRequest.java"
+click node_service_and_span_names "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/storage/ServiceAndSpanNames.java"
+click node_in_memory_storage "https://github.com/openzipkin/zipkin/blob/master/zipkin/src/main/java/zipkin2/storage/InMemoryStorage.java"
+click node_query_api "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinQueryApiV2.java"
+click node_get_traces "https://github.com/openzipkin/zipkin/blob/master/zipkin-server/src/main/java/zipkin2/server/internal/ZipkinQueryApiV2.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_zipkin_server,node_enable_zipkin_server,node_http_config,node_storage_component,node_span_consumer,node_span_store,node_query_request,node_service_and_span_names,node_in_memory_storage toneBlue
+class node_http_collector,node_upload_spans_v2,node_validate_and_store,node_unzipping_converter,node_completable_callback,node_query_api,node_get_traces toneAmber
+class node_kafka_collector,node_kafka_worker toneMint
+class node_collector_component,node_collector,node_collector_sampler,node_store_spans toneRose
+class node_decoder_detector,node_span_decoder,node_span_encoder,node_json_codec,node_proto3_codec,node_v2_span_writer toneIndigo
+class node_span,node_endpoint,node_call toneTeal
