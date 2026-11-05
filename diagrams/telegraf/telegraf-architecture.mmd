@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_g1["CLI"]
+  node_runagent["runAgent<br/>[telegraf.go]"]
+end
+
+subgraph group_g2["Config Loading"]
+  node_config["NewConfig<br/>[config.go]"]
+  node_loadall["LoadAll<br/>[config.go]"]
+  node_addinput["addInput<br/>[config.go]"]
+  node_addoutput["addOutput<br/>[config.go]"]
+  node_addprocessor["addProcessor<br/>[config.go]"]
+  node_addaggregator["addAggregator<br/>[config.go]"]
+end
+
+subgraph group_g3["Agent Runtime"]
+  node_agentrun["Agent.Run<br/>[agent.go]"]
+  node_initplugins["InitPlugins<br/>[agent.go]"]
+  node_startoutputs["startOutputs<br/>[agent.go]"]
+  node_startaggregators["startAggregators<br/>[agent.go]"]
+  node_startprocessors["startProcessors<br/>[agent.go]"]
+  node_startinputs["startInputs<br/>[agent.go]"]
+  node_runinputs["runInputs<br/>[agent.go]"]
+  node_gatherloop["gatherLoop<br/>[agent.go]"]
+  node_gatheronce["gatherOnce<br/>[agent.go]"]
+  node_runaggregators["runAggregators<br/>[agent.go]"]
+  node_runprocessors["runProcessors<br/>[agent.go]"]
+  node_runoutputs["runOutputs<br/>[agent.go]"]
+  node_flushloop["flushLoop<br/>[agent.go]"]
+  node_flushonce["flushOnce<br/>[agent.go]"]
+end
+
+subgraph group_g4["Running Plugins"]
+  node_runninginput["RunningInput<br/>[running_input.go]"]
+  node_runningoutput["RunningOutput<br/>[running_output.go]"]
+  node_runningaggregator["RunningAggregator"]
+  node_buffer["Buffer<br/>[buffer.go]"]
+end
+
+subgraph group_g5["Metric Contracts"]
+  node_accumulator["Accumulator iface<br/>[accumulator.go]"]
+  node_agentaccumulator["accumulator impl<br/>[accumulator.go]"]
+  node_metric["Metric iface<br/>[metric.go]"]
+  node_parser["Parser iface<br/>[parser.go]"]
+  node_serializer["Serializer iface<br/>[serializer.go]"]
+end
+
+subgraph group_g6["Example Plugins"]
+  node_cpu["inputs.cpu<br/>[cpu.go]"]
+  node_listener["inputs.http_listener_v2"]
+  node_nvidia["inputs.nvidia_smi<br/>[nvidia_smi.go]"]
+  node_influxout["outputs.influxdb_v2<br/>[influxdb_v2.go]"]
+end
+
+node_runagent -->|"NewConfig"| node_config
+node_runagent -->|"LoadAll"| node_loadall
+node_loadall -->|"inputs tables"| node_addinput
+node_loadall -->|"outputs tables"| node_addoutput
+node_loadall -->|"processors"| node_addprocessor
+node_loadall -->|"aggregators"| node_addaggregator
+node_addinput -->|"wraps"| node_runninginput
+node_addoutput -->|"wraps + buffer limit"| node_runningoutput
+node_addaggregator -->|"wraps"| node_runningaggregator
+node_runagent -->|"Agent.Run"| node_agentrun
+node_agentrun -->|"first"| node_initplugins
+node_agentrun -->|"connect first"| node_startoutputs
+node_startoutputs -->|"Connect&#40;&#41;"| node_runningoutput
+node_agentrun -->|"agg unit"| node_startaggregators
+node_agentrun -->|"chain"| node_startprocessors
+node_agentrun -->|"service inputs"| node_startinputs
+node_startinputs -->|"Start&#40;acc&#41;"| node_runninginput
+node_startinputs -->|"service Start"| node_listener
+node_agentrun -->|"goroutine"| node_runoutputs
+node_agentrun -->|"goroutine"| node_runinputs
+node_agentrun -->|"goroutine"| node_runaggregators
+node_agentrun -->|"goroutine"| node_runprocessors
+node_runinputs -->|"per-input ticker"| node_gatherloop
+node_gatherloop -->|"on tick"| node_gatheronce
+node_gatheronce -->|"Gather&#40;acc&#41;"| node_runninginput
+node_runninginput -->|"Gather&#40;&#41;"| node_cpu
+node_runninginput -->|"Gather&#40;&#41;"| node_nvidia
+node_cpu -->|"AddFields"| node_agentaccumulator
+node_nvidia -->|"AddFields"| node_agentaccumulator
+node_listener -->|"AddMetric"| node_agentaccumulator
+node_agentaccumulator -->|"implements"| node_accumulator
+node_accumulator -->|"AddMetric&#40;Metric&#41;"| node_metric
+node_agentaccumulator -->|"metric.New"| node_metric
+node_agentaccumulator -->|"dst channel"| node_runprocessors
+node_runprocessors -->|"agg src channel"| node_runaggregators
+node_runaggregators -->|"Push&#40;acc&#41;"| node_runningaggregator
+node_runaggregators -->|"outputC"| node_runoutputs
+node_runoutputs -->|"AddMetric fan-out"| node_runningoutput
+node_runoutputs -->|"per-output goroutine"| node_flushloop
+node_flushloop -->|"timer / signal"| node_flushonce
+node_flushonce -->|"Write&#40;&#41;"| node_runningoutput
+node_runningoutput -->|"BeginTransaction"| node_buffer
+node_runningoutput -->|"Write&#40;metrics&#41;"| node_influxout
+node_runningoutput -->|"SerializeBatch"| node_serializer
+node_runninginput -->|"Parse&#40;&#41;"| node_parser
+
+click node_runagent "https://github.com/influxdata/telegraf/blob/master/cmd/telegraf/telegraf.go"
+click node_config "https://github.com/influxdata/telegraf/blob/master/config/config.go"
+click node_loadall "https://github.com/influxdata/telegraf/blob/master/config/config.go"
+click node_addinput "https://github.com/influxdata/telegraf/blob/master/config/config.go"
+click node_addoutput "https://github.com/influxdata/telegraf/blob/master/config/config.go"
+click node_addprocessor "https://github.com/influxdata/telegraf/blob/master/config/config.go"
+click node_addaggregator "https://github.com/influxdata/telegraf/blob/master/config/config.go"
+click node_agentrun "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_initplugins "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_startoutputs "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_startaggregators "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_startprocessors "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_startinputs "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_runinputs "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_gatherloop "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_gatheronce "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_runaggregators "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_runprocessors "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_runoutputs "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_flushloop "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_flushonce "https://github.com/influxdata/telegraf/blob/master/agent/agent.go"
+click node_runninginput "https://github.com/influxdata/telegraf/blob/master/models/running_input.go"
+click node_runningoutput "https://github.com/influxdata/telegraf/blob/master/models/running_output.go"
+click node_runningaggregator "https://github.com/influxdata/telegraf/blob/master/models/running_aggregator.go"
+click node_buffer "https://github.com/influxdata/telegraf/blob/master/models/buffer.go"
+click node_accumulator "https://github.com/influxdata/telegraf/blob/master/accumulator.go"
+click node_agentaccumulator "https://github.com/influxdata/telegraf/blob/master/agent/accumulator.go"
+click node_metric "https://github.com/influxdata/telegraf/blob/master/metric.go"
+click node_parser "https://github.com/influxdata/telegraf/blob/master/parser.go"
+click node_serializer "https://github.com/influxdata/telegraf/blob/master/serializer.go"
+click node_cpu "https://github.com/influxdata/telegraf/blob/master/plugins/inputs/cpu/cpu.go"
+click node_listener "https://github.com/influxdata/telegraf/blob/master/plugins/inputs/http_listener_v2/http_listener_v2.go"
+click node_nvidia "https://github.com/influxdata/telegraf/blob/master/plugins/inputs/nvidia_smi/nvidia_smi.go"
+click node_influxout "https://github.com/influxdata/telegraf/blob/master/plugins/outputs/influxdb_v2/influxdb_v2.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_runagent toneBlue
+class node_config,node_loadall,node_addinput,node_addoutput,node_addprocessor,node_addaggregator toneAmber
+class node_agentrun,node_initplugins,node_startoutputs,node_startaggregators,node_startprocessors,node_startinputs,node_runinputs,node_gatherloop,node_gatheronce,node_runaggregators,node_runprocessors,node_runoutputs,node_flushloop,node_flushonce toneMint
+class node_runninginput,node_runningoutput,node_runningaggregator,node_buffer toneRose
+class node_accumulator,node_agentaccumulator,node_metric,node_parser,node_serializer toneIndigo
+class node_cpu,node_listener,node_nvidia,node_influxout toneTeal
