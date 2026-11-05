@@ -1,0 +1,71 @@
+flowchart TD
+
+subgraph group_g1["Ingestion"]
+  node_distributor["Distributor<br/>[distributor.go]"]
+  node_writepath["Write Path Router<br/>[router.go]"]
+end
+
+subgraph group_g2["Write Path"]
+  node_segwriter["Segment Writer<br/>[segment.go]"]
+  node_ingester["Ingester &#40;legacy v1&#41;<br/>[ingester.go]"]
+end
+
+subgraph group_g3["Storage &amp; Compaction"]
+  node_objstore["Object Storage<br/>[objstore.go]"]
+  node_metastore["Metastore<br/>[index_service.go]"]
+  node_compactor["Compactor<br/>[compactor.go]"]
+end
+
+subgraph group_g4["Query Path &#40;v2&#41;"]
+  node_readpath["Read Path Router<br/>[router.go]"]
+  node_queryfrontend["Query Frontend &#40;v2&#41;<br/>[query_frontend.go]"]
+  node_querybackend["Query Backend<br/>[backend.go]"]
+end
+
+subgraph group_g5["Legacy Query Path &#40;v1&#41;"]
+  node_querier["Querier &#40;legacy&#41;<br/>[querier.go]"]
+  node_storegateway["Store Gateway<br/>[gateway.go]"]
+end
+
+node_distributor -->|"route each profile series"| node_writepath
+node_writepath -->|"v2 write path"| node_segwriter
+node_writepath -->|"legacy v1 write path"| node_ingester
+node_segwriter -->|"uploadBlock"| node_objstore
+node_segwriter -->|"register block metadata"| node_metastore
+node_ingester -->|"shipper uploads blocks"| node_objstore
+node_metastore -->|"plan compaction jobs"| node_compactor
+node_compactor -->|"rewrite merged blocks"| node_objstore
+node_compactor -->|"update block metas"| node_metastore
+node_readpath -->|"new read path"| node_queryfrontend
+node_readpath -->|"legacy read path"| node_querier
+node_queryfrontend -->|"fetch block metadata"| node_metastore
+node_queryfrontend -->|"invoke query plan"| node_querybackend
+node_querybackend -->|"read profile blocks"| node_objstore
+node_querier -->|"query recent data"| node_ingester
+node_querier -->|"query stored blocks"| node_storegateway
+
+click node_distributor "https://github.com/grafana/pyroscope/blob/main/pkg/distributor/distributor.go"
+click node_writepath "https://github.com/grafana/pyroscope/blob/main/pkg/distributor/writepath/router.go"
+click node_segwriter "https://github.com/grafana/pyroscope/blob/main/pkg/segmentwriter/segment.go"
+click node_ingester "https://github.com/grafana/pyroscope/blob/main/pkg/ingester/ingester.go"
+click node_objstore "https://github.com/grafana/pyroscope/blob/main/pkg/objstore/objstore.go"
+click node_metastore "https://github.com/grafana/pyroscope/blob/main/pkg/metastore/index_service.go"
+click node_compactor "https://github.com/grafana/pyroscope/blob/main/pkg/compactor/compactor.go"
+click node_readpath "https://github.com/grafana/pyroscope/blob/main/pkg/frontend/readpath/router.go"
+click node_queryfrontend "https://github.com/grafana/pyroscope/blob/main/pkg/frontend/readpath/queryfrontend/query_frontend.go"
+click node_querybackend "https://github.com/grafana/pyroscope/blob/main/pkg/querybackend/backend.go"
+click node_querier "https://github.com/grafana/pyroscope/blob/main/pkg/querier/querier.go"
+click node_storegateway "https://github.com/grafana/pyroscope/blob/main/pkg/storegateway/gateway.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_distributor,node_writepath toneBlue
+class node_segwriter,node_ingester toneAmber
+class node_objstore,node_metastore,node_compactor toneMint
+class node_readpath,node_queryfrontend,node_querybackend toneRose
+class node_querier,node_storegateway toneIndigo

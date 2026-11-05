@@ -1,0 +1,140 @@
+{
+  "owner": "grafana",
+  "repo": "pyroscope",
+  "branch": "main",
+  "groups": [
+    { "id": "g1", "name": "ingest", "label": "Ingestion" },
+    { "id": "g2", "name": "write", "label": "Write Path" },
+    { "id": "g3", "name": "storage", "label": "Storage & Compaction" },
+    { "id": "g4", "name": "query", "label": "Query Path (v2)" },
+    { "id": "g5", "name": "legacyquery", "label": "Legacy Query Path (v1)" }
+  ],
+  "nodes": [
+    {
+      "id": "distributor",
+      "label": "Distributor",
+      "file": "distributor.go",
+      "path": "pkg/distributor/distributor.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Validates pushed pprof profiles against per-tenant limits, then routes every series to the configured write path."
+    },
+    {
+      "id": "writepath",
+      "label": "Write Path Router",
+      "file": "router.go",
+      "path": "pkg/distributor/writepath/router.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Chooses between the v2 segment-writer path, the legacy ingester path, or both, per tenant configuration."
+    },
+    {
+      "id": "segwriter",
+      "label": "Segment Writer",
+      "file": "segment.go",
+      "path": "pkg/segmentwriter/segment.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "v2 component that shards profiles in memory and periodically flushes compact segments straight to object storage."
+    },
+    {
+      "id": "ingester",
+      "label": "Ingester (legacy v1)",
+      "file": "ingester.go",
+      "path": "pkg/ingester/ingester.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "Legacy ingester that keeps recent profiles in per-tenant PhlareDB heads on local disk before shipping blocks."
+    },
+    {
+      "id": "objstore",
+      "label": "Object Storage",
+      "file": "objstore.go",
+      "path": "pkg/objstore/objstore.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Bucket abstraction over S3, GCS, Azure and other object stores that durably holds every profile block."
+    },
+    {
+      "id": "metastore",
+      "label": "Metastore",
+      "file": "index_service.go",
+      "path": "pkg/metastore/index_service.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Raft-replicated index that records block metadata and serves block listings to readers."
+    },
+    {
+      "id": "compactor",
+      "label": "Compactor",
+      "file": "compactor.go",
+      "path": "pkg/compactor/compactor.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Multitenant compactor that plans and manages background merging of small segments into larger blocks."
+    },
+    {
+      "id": "readpath",
+      "label": "Read Path Router",
+      "file": "router.go",
+      "path": "pkg/frontend/readpath/router.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Splits queries by time between the legacy frontend and the v2 query frontend based on the oldest stored profile."
+    },
+    {
+      "id": "queryfrontend",
+      "label": "Query Frontend (v2)",
+      "file": "query_frontend.go",
+      "path": "pkg/frontend/readpath/queryfrontend/query_frontend.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Fetches block metadata from the metastore, builds a distributed query plan and dispatches it to query backends."
+    },
+    {
+      "id": "querybackend",
+      "label": "Query Backend",
+      "file": "backend.go",
+      "path": "pkg/querybackend/backend.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Executes MERGE and READ nodes of a query plan by reading blocks from object storage and merging results."
+    },
+    {
+      "id": "querier",
+      "label": "Querier (legacy)",
+      "file": "querier.go",
+      "path": "pkg/querier/querier.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "Legacy querier that fans out to ingesters and store-gateways over bidi streaming clients and merges series."
+    },
+    {
+      "id": "storegateway",
+      "label": "Store Gateway",
+      "file": "gateway.go",
+      "path": "pkg/storegateway/gateway.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "Serves queries against blocks in object storage, sharded across instances by a ring."
+    }
+  ],
+  "edges": [
+    { "from": "distributor", "to": "writepath", "label": "route each profile series" },
+    { "from": "writepath", "to": "segwriter", "label": "v2 write path" },
+    { "from": "writepath", "to": "ingester", "label": "legacy v1 write path" },
+    { "from": "segwriter", "to": "objstore", "label": "uploadBlock" },
+    { "from": "segwriter", "to": "metastore", "label": "register block metadata" },
+    { "from": "ingester", "to": "objstore", "label": "shipper uploads blocks" },
+    { "from": "metastore", "to": "compactor", "label": "plan compaction jobs" },
+    { "from": "compactor", "to": "objstore", "label": "rewrite merged blocks" },
+    { "from": "compactor", "to": "metastore", "label": "update block metas" },
+    { "from": "readpath", "to": "queryfrontend", "label": "new read path" },
+    { "from": "readpath", "to": "querier", "label": "legacy read path" },
+    { "from": "queryfrontend", "to": "metastore", "label": "fetch block metadata" },
+    { "from": "queryfrontend", "to": "querybackend", "label": "invoke query plan" },
+    { "from": "querybackend", "to": "objstore", "label": "read profile blocks" },
+    { "from": "querier", "to": "ingester", "label": "query recent data" },
+    { "from": "querier", "to": "storegateway", "label": "query stored blocks" }
+  ]
+}
