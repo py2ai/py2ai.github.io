@@ -1,0 +1,130 @@
+flowchart TD
+
+subgraph group_g_boot["Bootstrap"]
+  node_runner["Runner<br/>[runner.rb]"]
+  node_settings["Settings<br/>[settings.rb]"]
+end
+
+subgraph group_g_conf["Config Compilation"]
+  node_compiler["LSCL Compiler<br/>[compiler.rb]"]
+  node_lscl_grammar["LSCL Grammar"]
+  node_lscl_parser["LSCL Parser<br/>[lscl_grammar.rb]"]
+  node_config_compiler_java["Java IR Compiler"]
+end
+
+subgraph group_g_sched["Convergence"]
+  node_agent{{"Agent<br/>[agent.rb]"}}
+  node_state_resolver["State Resolver<br/>[state_resolver.rb]"]
+  node_worker_loop_thread["Worker Thread"]
+end
+
+subgraph group_g_exec["Java Execution"]
+  node_worker_loop{{"Worker Loop<br/>[WorkerLoop.java]"}}
+  node_queue_read_client["Queue Read Client"]
+  node_jruby_acked_read["Acked Read Client"]
+  node_memory_read_batch["Memory Read Batch"]
+  node_periodic_flush["Periodic Flush<br/>[PeriodicFlush.java]"]
+  node_jruby_sync_queue[("In-Memory Queue")]
+end
+
+subgraph group_g_queue["Queues"]
+  node_queue_factory["Queue Factory"]
+  node_queue[("Persisted Queue<br/>[Queue.java]")]
+  node_checkpoint[("Checkpoint<br/>[Checkpoint.java]")]
+end
+
+subgraph group_g_plugin["Plugin DSL"]
+  node_inputs_base["Inputs Base<br/>[base.rb]"]
+  node_filters_base["Filters Base<br/>[base.rb]"]
+  node_outputs_base["Outputs Base<br/>[base.rb]"]
+end
+
+subgraph group_g_dlq["Dead Letter Queue"]
+  node_dlq_writer[("DLQ Writer")]
+  node_dlq_factory["DLQ Factory"]
+end
+
+subgraph group_g_obs["Observability"]
+  node_collector["Metrics Collector<br/>[collector.rb]"]
+  node_metric_store[("Metric Store<br/>[metric_store.rb]")]
+  node_pq_poller["PQ Poller<br/>[pq.rb]"]
+  node_dlq_poller["DLQ Poller<br/>[dlq.rb]"]
+  node_webserver["Web Server<br/>[webserver.rb]"]
+  node_node_stats["Node Stats API<br/>[node_stats.rb]"]
+end
+
+node_runner -->|"registers settings"| node_settings
+node_runner -->|"boots"| node_agent
+node_agent -->|"resolves configs"| node_compiler
+node_agent -->|"converge diff"| node_state_resolver
+node_agent -->|"spawns chain thread"| node_worker_loop_thread
+node_agent -->|"scopes metrics"| node_collector
+node_agent -->|"starts HTTP API"| node_webserver
+node_lscl_grammar -->|"generates parser"| node_lscl_parser
+node_compiler -->|"parses DSL via"| node_lscl_parser
+node_config_compiler_java -->|"supplies compiled IR"| node_worker_loop
+node_worker_loop_thread -->|"drives run&#40;&#41;"| node_worker_loop
+node_worker_loop -->|"pulls batches"| node_queue_read_client
+node_jruby_acked_read -->|"extends base"| node_queue_read_client
+node_queue_read_client -->|"yields QueueBatch"| node_memory_read_batch
+node_periodic_flush -->|"requests flush"| node_worker_loop
+node_settings -->|"selects queue.type"| node_queue_factory
+node_queue_factory -->|"returns memory queue"| node_jruby_sync_queue
+node_queue_factory -->|"builds persisted queue"| node_queue
+node_queue -->|"checkpoints pages"| node_checkpoint
+node_queue -->|"backs reads"| node_jruby_acked_read
+node_worker_loop -->|"invokes filter&#40;event&#41;"| node_filters_base
+node_worker_loop -->|"executes outputs"| node_outputs_base
+node_inputs_base -->|"writes through queue clients"| node_queue_factory
+node_outputs_base -->|"persists failures"| node_dlq_writer
+node_dlq_factory -->|"getWriter&#40;&#41;"| node_dlq_writer
+node_dlq_writer -->|"usage polled"| node_dlq_poller
+node_collector -->|"stores counters"| node_metric_store
+node_pq_poller -->|"samples disk stats"| node_queue
+node_webserver -->|"mounts API modules"| node_node_stats
+node_node_stats -->|"reads metrics"| node_metric_store
+node_worker_loop -->|"increments counters"| node_collector
+
+click node_runner "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/runner.rb"
+click node_settings "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/settings.rb"
+click node_agent "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/agent.rb"
+click node_state_resolver "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/state_resolver.rb"
+click node_worker_loop_thread "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/worker_loop_thread.rb"
+click node_compiler "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/compiler.rb"
+click node_lscl_grammar "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/compiler/lscl/lscl_grammar.treetop"
+click node_lscl_parser "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/compiler/lscl/lscl_grammar.rb"
+click node_config_compiler_java "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/config/ir/ConfigCompiler.java"
+click node_worker_loop "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/execution/WorkerLoop.java"
+click node_queue_read_client "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/execution/QueueReadClientBase.java"
+click node_jruby_acked_read "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/ext/JrubyAckedReadClientExt.java"
+click node_memory_read_batch "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/execution/MemoryReadBatch.java"
+click node_periodic_flush "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/execution/PeriodicFlush.java"
+click node_jruby_sync_queue "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/ext/JrubyWrappedSynchronousQueueExt.java"
+click node_queue_factory "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/ackedqueue/QueueFactoryExt.java"
+click node_queue "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/ackedqueue/Queue.java"
+click node_checkpoint "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/ackedqueue/Checkpoint.java"
+click node_inputs_base "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/inputs/base.rb"
+click node_filters_base "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/filters/base.rb"
+click node_outputs_base "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/outputs/base.rb"
+click node_dlq_writer "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java"
+click node_dlq_factory "https://github.com/elastic/logstash/blob/main/logstash-core/src/main/java/org/logstash/common/DeadLetterQueueFactory.java"
+click node_collector "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/instrument/collector.rb"
+click node_metric_store "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/instrument/metric_store.rb"
+click node_pq_poller "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/instrument/periodic_poller/pq.rb"
+click node_dlq_poller "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/instrument/periodic_poller/dlq.rb"
+click node_webserver "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/webserver.rb"
+click node_node_stats "https://github.com/elastic/logstash/blob/main/logstash-core/lib/logstash/api/modules/node_stats.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_runner,node_settings,node_dlq_writer,node_dlq_factory toneBlue
+class node_compiler,node_lscl_grammar,node_lscl_parser,node_config_compiler_java,node_collector,node_metric_store,node_pq_poller,node_dlq_poller,node_webserver,node_node_stats toneAmber
+class node_agent,node_state_resolver,node_worker_loop_thread toneMint
+class node_worker_loop,node_queue_read_client,node_jruby_acked_read,node_memory_read_batch,node_periodic_flush,node_jruby_sync_queue toneRose
+class node_queue_factory,node_queue,node_checkpoint toneIndigo
+class node_inputs_base,node_filters_base,node_outputs_base toneTeal
