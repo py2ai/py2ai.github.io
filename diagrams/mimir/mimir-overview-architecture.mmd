@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_g_entry["Single binary / monolithic"]
+  node_cmd_main["mimir main&#40;&#41;<br/>[main.go]"]
+end
+
+subgraph group_g_dist["Distributor &#40;HA dedup&#41;"]
+  node_dist_push["Distributor.Push<br/>[distributor.go]"]
+  node_dist_ha["HA dedup middleware<br/>[ha_dedupe.go]"]
+end
+
+subgraph group_g_ing["Ingester &#40;TSDB + WAL&#41;"]
+  node_ing_push["Ingester.PushWithCleanup<br/>[ingester_push.go]"]
+  node_ing_tsdb["userTSDB<br/>[user_tsdb.go]"]
+  node_ing_ship["shipper.Sync<br/>[shipper.go]"]
+end
+
+subgraph group_g_sgw["Store-Gateway &#40;sharded reads&#41;"]
+  node_sgw_gateway["StoreGateway<br/>[gateway.go]"]
+  node_sgw_bucket["BucketStore<br/>[bucket.go]"]
+end
+
+subgraph group_g_comp["Compactor"]
+  node_comp_svc["MultitenantCompactor<br/>[compactor.go]"]
+  node_comp_job["BucketCompactor"]
+  node_comp_clean["BlocksCleaner<br/>[blocks_cleaner.go]"]
+end
+
+subgraph group_g_store["Object storage bucket"]
+  node_blocks_bucket["TSDB blocks<br/>[README.md]"]
+end
+
+node_cmd_main -->|"accepts remote-write"| node_dist_push
+node_cmd_main -->|"runs in-process"| node_comp_svc
+node_dist_push -->|"HA dedup middleware"| node_dist_ha
+node_dist_ha -->|"hash-ring route"| node_ing_push
+node_ing_push -->|"append to head"| node_ing_tsdb
+node_ing_tsdb -->|"cut &amp; compact blocks"| node_ing_ship
+node_ing_ship -->|"upload blocks"| node_blocks_bucket
+node_blocks_bucket -->|"sync block metas"| node_sgw_gateway
+node_sgw_gateway -->|"serve Series"| node_sgw_bucket
+node_blocks_bucket -->|"sync block metas"| node_comp_svc
+node_comp_svc -->|"plan compactions"| node_comp_job
+node_comp_job -->|"upload merged blocks"| node_blocks_bucket
+node_comp_svc -->|"prune obsolete"| node_comp_clean
+
+click node_cmd_main "https://github.com/grafana/mimir/blob/main/cmd/mimir/main.go"
+click node_dist_push "https://github.com/grafana/mimir/blob/main/pkg/distributor/distributor.go"
+click node_dist_ha "https://github.com/grafana/mimir/blob/main/pkg/distributor/ha_dedupe.go"
+click node_ing_push "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_push.go"
+click node_ing_tsdb "https://github.com/grafana/mimir/blob/main/pkg/ingester/user_tsdb.go"
+click node_ing_ship "https://github.com/grafana/mimir/blob/main/pkg/ingester/shipper.go"
+click node_sgw_gateway "https://github.com/grafana/mimir/blob/main/pkg/storegateway/gateway.go"
+click node_sgw_bucket "https://github.com/grafana/mimir/blob/main/pkg/storegateway/bucket.go"
+click node_comp_svc "https://github.com/grafana/mimir/blob/main/pkg/compactor/compactor.go"
+click node_comp_job "https://github.com/grafana/mimir/blob/main/pkg/compactor/bucket_compactor.go"
+click node_comp_clean "https://github.com/grafana/mimir/blob/main/pkg/compactor/blocks_cleaner.go"
+click node_blocks_bucket "https://github.com/grafana/mimir/blob/main/README.md"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cmd_main toneBlue
+class node_dist_push,node_dist_ha toneAmber
+class node_ing_push,node_ing_tsdb,node_ing_ship toneMint
+class node_sgw_gateway,node_sgw_bucket toneRose
+class node_comp_svc,node_comp_job,node_comp_clean toneIndigo
+class node_blocks_bucket toneTeal

@@ -1,0 +1,42 @@
+{
+  "owner": "grafana",
+  "repo": "mimir",
+  "branch": "main",
+  "groups": [
+    { "id": "g_entry", "name": "Entry", "label": "Single binary / monolithic" },
+    { "id": "g_dist", "name": "Distributor", "label": "Distributor (HA dedup)" },
+    { "id": "g_ing", "name": "Ingester", "label": "Ingester (TSDB + WAL)" },
+    { "id": "g_sgw", "name": "Store-Gateway", "label": "Store-Gateway (sharded reads)" },
+    { "id": "g_comp", "name": "Compactor", "label": "Compactor" },
+    { "id": "g_store", "name": "Object Storage", "label": "Object storage bucket" }
+  ],
+  "nodes": [
+    { "id": "cmd_main", "label": "mimir main()", "file": "main.go", "path": "cmd/mimir/main.go", "group": "Entry", "groupId": "g_entry", "desc": "Binary entrypoint (main, L82) that assembles all components; monolithic mode runs them in one process." },
+    { "id": "dist_push", "label": "Distributor.Push", "file": "distributor.go", "path": "pkg/distributor/distributor.go", "group": "Distributor", "groupId": "g_dist", "desc": "Stateless write front-end (Push, L2284) validating and forwarding remote-write requests to ingesters." },
+    { "id": "dist_ha", "label": "HA dedup middleware", "file": "ha_dedupe.go", "path": "pkg/distributor/ha_dedupe.go", "group": "Distributor", "groupId": "g_dist", "desc": "prePushHaDedupeMiddleware (L28) picks a dedupe strategy so replicated Prometheus replicas collapse into one sample stream." },
+    { "id": "ing_push", "label": "Ingester.PushWithCleanup", "file": "ingester_push.go", "path": "pkg/ingester/ingester_push.go", "group": "Ingester", "groupId": "g_ing", "desc": "Per-tenant write path (PushWithCleanup, L217) that batches samples into TSDB appenders." },
+    { "id": "ing_tsdb", "label": "userTSDB", "file": "user_tsdb.go", "path": "pkg/ingester/user_tsdb.go", "group": "Ingester", "groupId": "g_ing", "desc": "One TSDB per tenant (Appender, L205; Compact, L238) with WAL and in-memory head." },
+    { "id": "ing_ship", "label": "shipper.Sync", "file": "shipper.go", "path": "pkg/ingester/shipper.go", "group": "Ingester", "groupId": "g_ing", "desc": "Uploads compacted block directories to the bucket (Sync, L108)." },
+    { "id": "sgw_gateway", "label": "StoreGateway", "file": "gateway.go", "path": "pkg/storegateway/gateway.go", "group": "Store-Gateway", "groupId": "g_sgw", "desc": "Ring-sharded read service (syncStores, L396; Series, L408) owning a subset of tenants' blocks." },
+    { "id": "sgw_bucket", "label": "BucketStore", "file": "bucket.go", "path": "pkg/storegateway/bucket.go", "group": "Store-Gateway", "groupId": "g_sgw", "desc": "Reads blocks straight from object storage (NewBucketStore, L203; Series, L577)." },
+    { "id": "comp_svc", "label": "MultitenantCompactor", "file": "compactor.go", "path": "pkg/compactor/compactor.go", "group": "Compactor", "groupId": "g_comp", "desc": "Sharded service (NewMultitenantCompactor, L380) that plans and runs per-tenant compactions." },
+    { "id": "comp_job", "label": "BucketCompactor", "file": "bucket_compactor.go", "path": "pkg/compactor/bucket_compactor.go", "group": "Compactor", "groupId": "g_comp", "desc": "Executes compaction jobs against the bucket (runCompactionJob, L257)." },
+    { "id": "comp_clean", "label": "BlocksCleaner", "file": "blocks_cleaner.go", "path": "pkg/compactor/blocks_cleaner.go", "group": "Compactor", "groupId": "g_comp", "desc": "Prunes deleted tenants and obsolete blocks (cleanUser, L452)." },
+    { "id": "blocks_bucket", "label": "TSDB blocks", "file": "README.md", "path": "README.md", "group": "Object Storage", "groupId": "g_store", "desc": "Parquet-free TSDB block directories (chunks, index, meta.json) persisted in S3/GCS/Azure for long-term storage." }
+  ],
+  "edges": [
+    { "from": "cmd_main", "to": "dist_push", "label": "accepts remote-write" },
+    { "from": "cmd_main", "to": "comp_svc", "label": "runs in-process" },
+    { "from": "dist_push", "to": "dist_ha", "label": "HA dedup middleware" },
+    { "from": "dist_ha", "to": "ing_push", "label": "hash-ring route" },
+    { "from": "ing_push", "to": "ing_tsdb", "label": "append to head" },
+    { "from": "ing_tsdb", "to": "ing_ship", "label": "cut & compact blocks" },
+    { "from": "ing_ship", "to": "blocks_bucket", "label": "upload blocks" },
+    { "from": "blocks_bucket", "to": "sgw_gateway", "label": "sync block metas" },
+    { "from": "sgw_gateway", "to": "sgw_bucket", "label": "serve Series" },
+    { "from": "blocks_bucket", "to": "comp_svc", "label": "sync block metas" },
+    { "from": "comp_svc", "to": "comp_job", "label": "plan compactions" },
+    { "from": "comp_job", "to": "blocks_bucket", "label": "upload merged blocks" },
+    { "from": "comp_svc", "to": "comp_clean", "label": "prune obsolete" }
+  ]
+}
