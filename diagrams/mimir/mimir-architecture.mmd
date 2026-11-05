@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_g_entry["Binary entrypoint"]
+  node_cmd_main["main&#40;&#41;<br/>[main.go]"]
+end
+
+subgraph group_g_dist["Distributor write path"]
+  node_dist_new["Distributor.New<br/>[distributor.go]"]
+  node_dist_push["Distributor.Push<br/>[distributor.go]"]
+  node_dist_ring["RingConfig"]
+end
+
+subgraph group_g_ha["HA replica dedup"]
+  node_ha_mw["prePushHaDedupeMiddleware<br/>[ha_dedupe.go]"]
+  node_ha_sample["perSampleDedupe.dedupe"]
+  node_ha_tracker["haTracker.checkReplica<br/>[ha_tracker.go]"]
+  node_ha_checksample["checkSample<br/>[ha_tracker.go]"]
+  node_ha_labels["findHALabels<br/>[ha_tracker.go]"]
+end
+
+subgraph group_g_ing["Ingester TSDB lifecycle"]
+  node_ing_new["newIngester<br/>[ingester.go]"]
+  node_ing_ring["ingester ring<br/>[ingester_ring.go]"]
+  node_ing_push["Ingester.PushWithCleanup<br/>[ingester_push.go]"]
+  node_ing_limits["checkInstanceLimits<br/>[ingester_push.go]"]
+  node_ing_appender["pushSamplesToAppender<br/>[ingester_push.go]"]
+  node_ing_tsdb["userTSDB<br/>[user_tsdb.go]"]
+  node_ing_compact["Ingester.compactBlocks"]
+  node_ing_ship_blocks["Ingester.shipBlocks"]
+  node_ing_shipper["shipper.Sync<br/>[shipper.go]"]
+end
+
+subgraph group_g_sgw["Store-Gateway sharded reads"]
+  node_sgw_new["NewStoreGateway<br/>[gateway.go]"]
+  node_sgw_sync["StoreGateway.syncStores<br/>[gateway.go]"]
+  node_sgw_series["StoreGateway.Series<br/>[gateway.go]"]
+  node_sgw_bucket["NewBucketStore<br/>[bucket.go]"]
+  node_sgw_bucketsync["BucketStore.syncBlocks<br/>[bucket.go]"]
+  node_sgw_bucketseries["BucketStore.Series<br/>[bucket.go]"]
+  node_sgw_index["bucketIndexReader"]
+end
+
+subgraph group_g_comp["Compactor flow"]
+  node_comp_new["NewMultitenantCompactor<br/>[compactor.go]"]
+  node_comp_metas["metaSyncer.SyncMetas"]
+  node_comp_gc["metaSyncer.GarbageCollect"]
+  node_comp_run["runCompactionJob"]
+  node_comp_health["block health gate"]
+  node_comp_cleaner["BlocksCleaner.cleanUser<br/>[blocks_cleaner.go]"]
+end
+
+subgraph group_g_store["Block storage"]
+  node_blocks_bucket["TSDB blocks bucket<br/>[README.md]"]
+end
+
+node_cmd_main -->|"wires write path"| node_dist_new
+node_cmd_main -->|"wires ingesters"| node_ing_new
+node_cmd_main -->|"wires store-gateway"| node_sgw_new
+node_cmd_main -->|"wires compactor"| node_comp_new
+node_dist_new -->|"ring for ingester clients"| node_dist_ring
+node_dist_push -->|"look up owned ingesters"| node_dist_ring
+node_dist_push -->|"HA dedup middleware"| node_ha_mw
+node_ha_mw -->|"extract cluster/replica"| node_ha_labels
+node_ha_labels -->|"elect accepting replica"| node_ha_tracker
+node_ha_tracker -->|"accept or reject"| node_ha_checksample
+node_ha_mw -->|"per-sample strategy"| node_ha_sample
+node_ha_sample -->|"observe replicas"| node_ha_tracker
+node_dist_push -->|"send WriteRequest"| node_ing_push
+node_ing_new -->|"push flow"| node_ing_push
+node_ing_new -->|"join &amp; own tokens"| node_ing_ring
+node_ing_push -->|"instance limits"| node_ing_limits
+node_ing_push -->|"batch samples"| node_ing_appender
+node_ing_appender -->|"head appender + WAL"| node_ing_tsdb
+node_ing_tsdb -->|"cut head blocks"| node_ing_compact
+node_ing_compact -->|"blocks ready to ship"| node_ing_ship_blocks
+node_ing_ship_blocks -->|"run shipper"| node_ing_shipper
+node_ing_shipper -->|"upload block dirs"| node_blocks_bucket
+node_sgw_new -->|"BucketStore per tenant"| node_sgw_bucket
+node_sgw_sync -->|"refresh owned blocks"| node_sgw_bucketsync
+node_sgw_bucketsync -->|"fetch block metas"| node_blocks_bucket
+node_sgw_series -->|"fan-out Series"| node_sgw_bucketseries
+node_sgw_bucketseries -->|"expanded postings"| node_sgw_index
+node_sgw_index -->|"lazy index/chunk reads"| node_blocks_bucket
+node_comp_new -->|"sync block metas"| node_comp_metas
+node_comp_metas -->|"deduplicate blocks"| node_comp_gc
+node_comp_gc -->|"mark for deletion"| node_blocks_bucket
+node_comp_new -->|"run compaction jobs"| node_comp_run
+node_comp_run -->|"health-gate downloads"| node_comp_health
+node_comp_run -->|"upload compacted blocks"| node_blocks_bucket
+node_comp_new -->|"blocks cleaner"| node_comp_cleaner
+node_comp_cleaner -->|"delete obsolete blocks"| node_blocks_bucket
+
+click node_cmd_main "https://github.com/grafana/mimir/blob/main/cmd/mimir/main.go"
+click node_dist_new "https://github.com/grafana/mimir/blob/main/pkg/distributor/distributor.go"
+click node_dist_push "https://github.com/grafana/mimir/blob/main/pkg/distributor/distributor.go"
+click node_dist_ring "https://github.com/grafana/mimir/blob/main/pkg/distributor/distributor_ring.go"
+click node_ha_mw "https://github.com/grafana/mimir/blob/main/pkg/distributor/ha_dedupe.go"
+click node_ha_sample "https://github.com/grafana/mimir/blob/main/pkg/distributor/ha_dedupe_per_sample.go"
+click node_ha_tracker "https://github.com/grafana/mimir/blob/main/pkg/distributor/ha_tracker.go"
+click node_ha_checksample "https://github.com/grafana/mimir/blob/main/pkg/distributor/ha_tracker.go"
+click node_ha_labels "https://github.com/grafana/mimir/blob/main/pkg/distributor/ha_tracker.go"
+click node_ing_new "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester.go"
+click node_ing_ring "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_ring.go"
+click node_ing_push "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_push.go"
+click node_ing_limits "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_push.go"
+click node_ing_appender "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_push.go"
+click node_ing_tsdb "https://github.com/grafana/mimir/blob/main/pkg/ingester/user_tsdb.go"
+click node_ing_compact "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_compaction.go"
+click node_ing_ship_blocks "https://github.com/grafana/mimir/blob/main/pkg/ingester/ingester_compaction.go"
+click node_ing_shipper "https://github.com/grafana/mimir/blob/main/pkg/ingester/shipper.go"
+click node_sgw_new "https://github.com/grafana/mimir/blob/main/pkg/storegateway/gateway.go"
+click node_sgw_sync "https://github.com/grafana/mimir/blob/main/pkg/storegateway/gateway.go"
+click node_sgw_series "https://github.com/grafana/mimir/blob/main/pkg/storegateway/gateway.go"
+click node_sgw_bucket "https://github.com/grafana/mimir/blob/main/pkg/storegateway/bucket.go"
+click node_sgw_bucketsync "https://github.com/grafana/mimir/blob/main/pkg/storegateway/bucket.go"
+click node_sgw_bucketseries "https://github.com/grafana/mimir/blob/main/pkg/storegateway/bucket.go"
+click node_sgw_index "https://github.com/grafana/mimir/blob/main/pkg/storegateway/bucket_index_reader.go"
+click node_comp_new "https://github.com/grafana/mimir/blob/main/pkg/compactor/compactor.go"
+click node_comp_metas "https://github.com/grafana/mimir/blob/main/pkg/compactor/bucket_compactor.go"
+click node_comp_gc "https://github.com/grafana/mimir/blob/main/pkg/compactor/bucket_compactor.go"
+click node_comp_run "https://github.com/grafana/mimir/blob/main/pkg/compactor/bucket_compactor.go"
+click node_comp_health "https://github.com/grafana/mimir/blob/main/pkg/compactor/bucket_compactor.go"
+click node_comp_cleaner "https://github.com/grafana/mimir/blob/main/pkg/compactor/blocks_cleaner.go"
+click node_blocks_bucket "https://github.com/grafana/mimir/blob/main/README.md"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cmd_main,node_blocks_bucket toneBlue
+class node_dist_new,node_dist_push,node_dist_ring toneAmber
+class node_ha_mw,node_ha_sample,node_ha_tracker,node_ha_checksample,node_ha_labels toneMint
+class node_ing_new,node_ing_ring,node_ing_push,node_ing_limits,node_ing_appender,node_ing_tsdb,node_ing_compact,node_ing_ship_blocks,node_ing_shipper toneRose
+class node_sgw_new,node_sgw_sync,node_sgw_series,node_sgw_bucket,node_sgw_bucketsync,node_sgw_bucketseries,node_sgw_index toneIndigo
+class node_comp_new,node_comp_metas,node_comp_gc,node_comp_run,node_comp_health,node_comp_cleaner toneTeal
