@@ -1,0 +1,333 @@
+{
+  "owner": "grafana",
+  "repo": "pyroscope",
+  "branch": "main",
+  "groups": [
+    { "id": "g1", "name": "ingest", "label": "Ingestion" },
+    { "id": "g2", "name": "v2write", "label": "v2 Write Path" },
+    { "id": "g3", "name": "storage", "label": "Object Storage & Compaction" },
+    { "id": "g4", "name": "v1write", "label": "Legacy v1 Ingester" },
+    { "id": "g5", "name": "query", "label": "v2 Query Path" },
+    { "id": "g6", "name": "legacyquery", "label": "Legacy Query Path" }
+  ],
+  "nodes": [
+    {
+      "id": "push_api",
+      "label": "Push API",
+      "file": "api.go",
+      "path": "pkg/api/api.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Registers the distributor push endpoints and wraps them with authentication and per-tenant limits."
+    },
+    {
+      "id": "push_capture",
+      "label": "Push Capture",
+      "file": "push_capture.go",
+      "path": "pkg/api/push_capture.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Wraps the external push service so the profile-dump recorder can sample incoming profiles for debugging."
+    },
+    {
+      "id": "distributor",
+      "label": "Distributor",
+      "file": "distributor.go",
+      "path": "pkg/distributor/distributor.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Parses every pushed sample, enforces ingestion rate limits, and hands each series to the write-path router."
+    },
+    {
+      "id": "pprof",
+      "label": "pprof Parser",
+      "file": "pprof.go",
+      "path": "pkg/pprof/pprof.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Decompresses and parses raw pprof protobuf payloads with a hard cap on decompressed size."
+    },
+    {
+      "id": "writepath",
+      "label": "Write Path Router",
+      "file": "router.go",
+      "path": "pkg/distributor/writepath/router.go",
+      "group": "g1",
+      "groupId": "g1",
+      "desc": "Routes each series to the segment-writer path, the legacy ingester path, or both, honoring tenant overrides."
+    },
+    {
+      "id": "shard",
+      "label": "Writer Shard",
+      "file": "segment.go",
+      "path": "pkg/segmentwriter/segment.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "Ordered write shards keyed by tenant and service so each segment has a single writer goroutine."
+    },
+    {
+      "id": "memdb",
+      "label": "In-Memory Head",
+      "file": "head.go",
+      "path": "pkg/segmentwriter/memdb/head.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "In-memory head that ingests samples per dataset until the owning segment is flushed."
+    },
+    {
+      "id": "segment",
+      "label": "Segment Flush",
+      "file": "segment.go",
+      "path": "pkg/segmentwriter/segment.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "Flushes dataset heads into one block file, uploads it to the bucket, and stores its metadata."
+    },
+    {
+      "id": "block_index",
+      "label": "Dataset Index Writer",
+      "file": "dataset_index.go",
+      "path": "pkg/block/dataset_index.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "Builds the per-tenant dataset index embedded in each flushed segment block."
+    },
+    {
+      "id": "metastore_raft",
+      "label": "Index Raft Handler",
+      "file": "index_raft_handler.go",
+      "path": "pkg/metastore/index_raft_handler.go",
+      "group": "g2",
+      "groupId": "g2",
+      "desc": "Raft command handler that applies block metadata to the replicated metastore index."
+    },
+    {
+      "id": "objstore",
+      "label": "Object Storage",
+      "file": "objstore.go",
+      "path": "pkg/objstore/objstore.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Bucket interface that every write and read of block data goes through."
+    },
+    {
+      "id": "objstore_factory",
+      "label": "Bucket Client Factory",
+      "file": "factory.go",
+      "path": "pkg/objstore/client/factory.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Creates bucket clients for S3, GCS, Azure, Swift and filesystem-backed storage."
+    },
+    {
+      "id": "metastore",
+      "label": "Metastore Index Service",
+      "file": "index_service.go",
+      "path": "pkg/metastore/index_service.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Registers new blocks and serves block metadata listings to writers and readers."
+    },
+    {
+      "id": "compactor",
+      "label": "Multitenant Compactor",
+      "file": "compactor.go",
+      "path": "pkg/compactor/compactor.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Ring-sharded compactor that plans compaction work per tenant and manages ownership."
+    },
+    {
+      "id": "compaction_worker",
+      "label": "Compaction Worker",
+      "file": "worker.go",
+      "path": "pkg/compactionworker/worker.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Claims compaction jobs and merges low-compaction-level blocks into larger ones."
+    },
+    {
+      "id": "compaction_service",
+      "label": "Compaction Service",
+      "file": "compaction_service.go",
+      "path": "pkg/metastore/compaction_service.go",
+      "group": "g3",
+      "groupId": "g3",
+      "desc": "Coordinates compaction job assignment and completion through the metastore."
+    },
+    {
+      "id": "ingester",
+      "label": "Ingester (v1)",
+      "file": "ingester.go",
+      "path": "pkg/ingester/ingester.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Legacy ingester that routes pushes to per-tenant instances behind a ring."
+    },
+    {
+      "id": "ingester_instance",
+      "label": "Tenant Instance",
+      "file": "instance.go",
+      "path": "pkg/ingester/instance.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Per-tenant instance that wraps a local PhlareDB database with a prefixed bucket."
+    },
+    {
+      "id": "phlaredb",
+      "label": "PhlareDB",
+      "file": "phlaredb.go",
+      "path": "pkg/phlaredb/phlaredb.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Local block store that ingests into a head and periodically flushes parquet-based blocks."
+    },
+    {
+      "id": "phlaredb_head",
+      "label": "PhlareDB Head",
+      "file": "head.go",
+      "path": "pkg/phlaredb/head.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "In-memory head holding recent profiles per tenant before block flush."
+    },
+    {
+      "id": "shipper",
+      "label": "Block Shipper",
+      "file": "shipper.go",
+      "path": "pkg/phlaredb/shipper/shipper.go",
+      "group": "g4",
+      "groupId": "g4",
+      "desc": "Uploads flushed local blocks to the shared object-storage bucket."
+    },
+    {
+      "id": "readpath",
+      "label": "Read Path Router",
+      "file": "router.go",
+      "path": "pkg/frontend/readpath/router.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "Splits query ranges between the legacy frontend and the v2 query frontend."
+    },
+    {
+      "id": "queryfrontend",
+      "label": "Query Frontend",
+      "file": "query_frontend.go",
+      "path": "pkg/frontend/readpath/queryfrontend/query_frontend.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "Fetches block metadata, builds a query plan, and invokes query backends with retry and pushback."
+    },
+    {
+      "id": "queryplan",
+      "label": "Query Plan Builder",
+      "file": "query_plan.go",
+      "path": "pkg/querybackend/queryplan/query_plan.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "Builds balanced MERGE/READ trees over block metadata to bound merges per query."
+    },
+    {
+      "id": "querybackend",
+      "label": "Query Backend",
+      "file": "backend.go",
+      "path": "pkg/querybackend/backend.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "Executes query-plan nodes, merging child results and collecting execution diagnostics."
+    },
+    {
+      "id": "block_reader",
+      "label": "Block Reader",
+      "file": "block_reader.go",
+      "path": "pkg/querybackend/block_reader.go",
+      "group": "g5",
+      "groupId": "g5",
+      "desc": "READ-node executor that fetches only the datasets a query needs from object storage."
+    },
+    {
+      "id": "querier",
+      "label": "Querier (legacy)",
+      "file": "querier.go",
+      "path": "pkg/querier/querier.go",
+      "group": "g6",
+      "groupId": "g6",
+      "desc": "Plans queries across ingesters and store-gateways and merges the returned series."
+    },
+    {
+      "id": "clientpool",
+      "label": "Ingester Client Pool",
+      "file": "ingester_client_pool.go",
+      "path": "pkg/clientpool/ingester_client_pool.go",
+      "group": "g6",
+      "groupId": "g6",
+      "desc": "Ring-backed pool of bidi streaming clients used to query ingester replicas."
+    },
+    {
+      "id": "storegateway",
+      "label": "Store Gateway",
+      "file": "gateway.go",
+      "path": "pkg/storegateway/gateway.go",
+      "group": "g6",
+      "groupId": "g6",
+      "desc": "Shuffles block ownership across a ring and serves metadata and queries for its blocks."
+    },
+    {
+      "id": "bucket_store",
+      "label": "Bucket Store",
+      "file": "query.go",
+      "path": "pkg/storegateway/query.go",
+      "group": "g6",
+      "groupId": "g6",
+      "desc": "Answers block-metadata requests and streams series from blocks assigned to this gateway."
+    },
+    {
+      "id": "block_querier",
+      "label": "Block Querier",
+      "file": "block_querier.go",
+      "path": "pkg/phlaredb/block_querier.go",
+      "group": "g6",
+      "groupId": "g6",
+      "desc": "Opens a single block and resolves parquet dataset tables and symbol tables for queries."
+    }
+  ],
+  "edges": [
+    { "from": "push_api", "to": "push_capture", "label": "wraps external push service" },
+    { "from": "push_capture", "to": "distributor", "label": "Push RPC" },
+    { "from": "distributor", "to": "pprof", "label": "parse pprof payloads" },
+    { "from": "distributor", "to": "writepath", "label": "route series by WritePath" },
+    { "from": "writepath", "to": "shard", "label": "v2: ingest by shard key" },
+    { "from": "shard", "to": "memdb", "label": "ingest into heads" },
+    { "from": "memdb", "to": "segment", "label": "flush heads" },
+    { "from": "segment", "to": "block_index", "label": "write tenant dataset index" },
+    { "from": "segment", "to": "objstore", "label": "uploadBlock" },
+    { "from": "segment", "to": "metastore_raft", "label": "storeMetadata / AddBlock" },
+    { "from": "metastore_raft", "to": "metastore", "label": "applied FSM state" },
+    { "from": "metastore", "to": "compactor", "label": "compaction planning input" },
+    { "from": "compactor", "to": "compaction_service", "label": "assign jobs" },
+    { "from": "compaction_service", "to": "compaction_worker", "label": "lease compaction jobs" },
+    { "from": "compaction_worker", "to": "objstore", "label": "merge and rewrite blocks" },
+    { "from": "compaction_worker", "to": "metastore", "label": "update compaction level" },
+    { "from": "writepath", "to": "ingester", "label": "v1: Push" },
+    { "from": "ingester", "to": "ingester_instance", "label": "per-tenant instance" },
+    { "from": "ingester_instance", "to": "phlaredb", "label": "newInstance wraps PhlareDB" },
+    { "from": "phlaredb", "to": "phlaredb_head", "label": "ingest into head" },
+    { "from": "phlaredb_head", "to": "shipper", "label": "ship flushed blocks" },
+    { "from": "shipper", "to": "objstore", "label": "upload blocks" },
+    { "from": "readpath", "to": "queryfrontend", "label": "route to v2 frontend" },
+    { "from": "readpath", "to": "querier", "label": "route to legacy querier" },
+    { "from": "queryfrontend", "to": "metastore", "label": "fetch block metadata" },
+    { "from": "queryfrontend", "to": "queryplan", "label": "build plan" },
+    { "from": "queryfrontend", "to": "querybackend", "label": "Invoke query plan" },
+    { "from": "queryplan", "to": "querybackend", "label": "MERGE / READ nodes" },
+    { "from": "querybackend", "to": "block_reader", "label": "execute READ nodes" },
+    { "from": "block_reader", "to": "objstore", "label": "fetch datasets" },
+    { "from": "querier", "to": "clientpool", "label": "bidi merge clients" },
+    { "from": "clientpool", "to": "ingester", "label": "query ingester heads" },
+    { "from": "querier", "to": "storegateway", "label": "query stored blocks" },
+    { "from": "storegateway", "to": "bucket_store", "label": "sharded bucket stores" },
+    { "from": "bucket_store", "to": "block_querier", "label": "open single-block querier" },
+    { "from": "bucket_store", "to": "objstore", "label": "read block data" },
+    { "from": "block_querier", "to": "objstore", "label": "read parquet and symbols" }
+  ]
+}
