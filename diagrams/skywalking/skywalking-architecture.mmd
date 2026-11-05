@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_sharing_server["Shared gRPC/HTTP Servers"]
+  node_grpc_register["GRPCHandlerRegister"]
+  node_http_register["HTTPHandlerRegister"]
+end
+
+subgraph group_trace_receiver["SkyWalking Trace Receiver"]
+  node_trace_provider["TraceModuleProvider"]
+  node_trace_grpc["TraceSegmentReportServiceHandler"]
+  node_trace_rest["TraceSegmentReportHandler"]
+end
+
+subgraph group_otel_receiver["OpenTelemetry Receiver"]
+  node_otel_provider["OtelMetricReceiverProvider"]
+  node_otel_handler["OpenTelemetryMetricHandler"]
+  node_otel_processor["OpenTelemetryMetricRequestProcessor"]
+end
+
+subgraph group_analysis_core["Core Analysis"]
+  node_dispatcher["DispatcherManager"]
+  node_segment_dispatcher["SegmentDispatcher"]
+  node_segment_record["SegmentRecord<br/>[SegmentRecord.java]"]
+  node_metrics_base["Metrics<br/>[Metrics.java]"]
+  node_metrics_stream["MetricsStreamProcessor"]
+  node_ai_flow["AIAgentSessionFlowRecord"]
+  node_genai_eval["GenAIEvaluationRecord"]
+end
+
+subgraph group_aggregation["L1 Aggregation Workers"]
+  node_agg_worker["MetricsAggregateWorker &#40;L1&#41;"]
+  node_merge_cache["MergableBufferedData"]
+  node_remote_worker["MetricsRemoteWorker"]
+  node_trans_worker["MetricsTransWorker"]
+end
+
+subgraph group_persistence["L2 Persistence &amp; Storage"]
+  node_persist_worker["MetricsPersistentWorker &#40;L2&#41;"]
+  node_min_worker["MetricsPersistentMinWorker"]
+  node_record_persist["RecordPersistentWorker"]
+  node_batch_dao["IBatchDAO<br/>[IBatchDAO.java]"]
+  node_model_registry["ModelRegistry<br/>[ModelRegistry.java]"]
+end
+
+subgraph group_query["Query Module &amp; GraphQL"]
+  node_query_module["QueryModule<br/>[QueryModule.java]"]
+  node_trace_query["TraceQueryService"]
+  node_topo_query["TopologyQueryService"]
+  node_metrics_query["MetricsQueryService"]
+  node_graphql_provider["GraphQLQueryProvider"]
+  node_graphql_handler["GraphQLQueryHandler"]
+  node_mqe_exec["MQEExecutor<br/>[MQEExecutor.java]"]
+end
+
+node_trace_provider -->|"start&#40;&#41; registers gRPC handlers"| node_grpc_register
+node_trace_provider -->|"creates the streaming collector"| node_trace_grpc
+node_trace_provider -->|"binds REST collector"| node_http_register
+node_trace_grpc -->|"parsed Segment sources forwarded"| node_dispatcher
+node_trace_rest -->|"REST segments forwarded"| node_dispatcher
+node_otel_provider -->|"activates otlp-metrics handler"| node_otel_handler
+node_otel_handler -->|"addHandler on shared server"| node_grpc_register
+node_otel_handler -->|"export calls processMetricsRequest"| node_otel_processor
+node_otel_processor -->|"converted meters enter MAL streams"| node_metrics_stream
+node_dispatcher -->|"SEGMENT scope routing"| node_segment_dispatcher
+node_segment_dispatcher -->|"forwards to RecordStreamProcessor"| node_segment_record
+node_segment_record -->|"segments persisted as records"| node_record_persist
+node_dispatcher -->|"OAL dispatchers emit Metrics"| node_metrics_stream
+node_dispatcher -->|"AI_AGENT_SESSION_FLOW scope"| node_ai_flow
+node_ai_flow -->|"session flows persisted"| node_record_persist
+node_genai_eval -->|"evaluation records persisted"| node_record_persist
+node_metrics_stream -->|"entryWorkers.get&#40;class&#41;.in&#40;&#41;"| node_agg_worker
+node_agg_worker -->|"MergableBufferedData.accept"| node_merge_cache
+node_agg_worker -->|"flush pushes to next worker"| node_remote_worker
+node_remote_worker -->|"remote _rec channel to L2"| node_min_worker
+node_min_worker -->|"extends the L2 worker"| node_persist_worker
+node_metrics_base -->|"toHour&#40;&#41;/toDay&#40;&#41; clones"| node_trans_worker
+node_trans_worker -->|"hour/day workers persist"| node_persist_worker
+node_persist_worker -->|"buildBatchRequests then flush"| node_batch_dao
+node_persist_worker -->|"Model registered per stream"| node_model_registry
+node_query_module -->|"'query' module provider"| node_graphql_provider
+node_graphql_provider -->|"POST /graphql handler"| node_http_register
+node_graphql_provider -->|"builds executable schema"| node_graphql_handler
+node_graphql_handler -->|"resolvers call services"| node_trace_query
+node_graphql_handler -->|"resolvers call services"| node_topo_query
+node_graphql_handler -->|"resolvers call services"| node_metrics_query
+node_metrics_query -->|"MQE expressions evaluated"| node_mqe_exec
+
+click node_grpc_register "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/server/GRPCHandlerRegister.java"
+click node_http_register "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/server/HTTPHandlerRegister.java"
+click node_trace_provider "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/skywalking-trace-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/trace/provider/TraceModuleProvider.java"
+click node_trace_grpc "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/skywalking-trace-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/trace/provider/handler/v8/grpc/TraceSegmentReportServiceHandler.java"
+click node_trace_rest "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/skywalking-trace-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/trace/provider/handler/v8/rest/TraceSegmentReportHandler.java"
+click node_otel_provider "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/otel-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/otel/OtelMetricReceiverProvider.java"
+click node_otel_handler "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/otel-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/otel/otlp/OpenTelemetryMetricHandler.java"
+click node_otel_processor "https://github.com/apache/skywalking/blob/master/oap-server/server-receiver-plugin/otel-receiver-plugin/src/main/java/org/apache/skywalking/oap/server/receiver/otel/otlp/OpenTelemetryMetricRequestProcessor.java"
+click node_dispatcher "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/DispatcherManager.java"
+click node_segment_dispatcher "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/manual/segment/SegmentDispatcher.java"
+click node_segment_record "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/manual/segment/SegmentRecord.java"
+click node_metrics_base "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/metrics/Metrics.java"
+click node_metrics_stream "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsStreamProcessor.java"
+click node_ai_flow "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/manual/aiagent/AIAgentSessionFlowRecord.java"
+click node_genai_eval "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/manual/genai/GenAIEvaluationRecord.java"
+click node_agg_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsAggregateWorker.java"
+click node_merge_cache "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/data/MergableBufferedData.java"
+click node_remote_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsRemoteWorker.java"
+click node_trans_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsTransWorker.java"
+click node_persist_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsPersistentWorker.java"
+click node_min_worker "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/MetricsPersistentMinWorker.java"
+click node_record_persist "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/analysis/worker/RecordPersistentWorker.java"
+click node_batch_dao "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/storage/IBatchDAO.java"
+click node_model_registry "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/storage/model/ModelRegistry.java"
+click node_query_module "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/query/QueryModule.java"
+click node_trace_query "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/query/TraceQueryService.java"
+click node_topo_query "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/query/TopologyQueryService.java"
+click node_metrics_query "https://github.com/apache/skywalking/blob/master/oap-server/server-core/src/main/java/org/apache/skywalking/oap/server/core/query/MetricsQueryService.java"
+click node_graphql_provider "https://github.com/apache/skywalking/blob/master/oap-server/server-query-plugin/query-graphql-plugin/src/main/java/org/apache/skywalking/oap/query/graphql/GraphQLQueryProvider.java"
+click node_graphql_handler "https://github.com/apache/skywalking/blob/master/oap-server/server-query-plugin/query-graphql-plugin/src/main/java/org/apache/skywalking/oap/query/graphql/GraphQLQueryHandler.java"
+click node_mqe_exec "https://github.com/apache/skywalking/blob/master/oap-server/server-query-plugin/query-graphql-plugin/src/main/java/org/apache/skywalking/oap/query/graphql/mqe/rt/MQEExecutor.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_grpc_register,node_http_register,node_query_module,node_trace_query,node_topo_query,node_metrics_query,node_graphql_provider,node_graphql_handler,node_mqe_exec toneBlue
+class node_trace_provider,node_trace_grpc,node_trace_rest toneAmber
+class node_otel_provider,node_otel_handler,node_otel_processor toneMint
+class node_dispatcher,node_segment_dispatcher,node_segment_record,node_metrics_base,node_metrics_stream,node_ai_flow,node_genai_eval toneRose
+class node_agg_worker,node_merge_cache,node_remote_worker,node_trans_worker toneIndigo
+class node_persist_worker,node_min_worker,node_record_persist,node_batch_dao,node_model_registry toneTeal
