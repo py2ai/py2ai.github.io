@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_g1["Bootstrap &amp; Config"]
+  node_main["main&#40;&#41;<br/>[fluent-bit.c]"]
+  node_config["flb_config_init&#40;&#41;<br/>[flb_config.c]"]
+  node_lib_api["flb_start&#40;&#41;<br/>[flb_lib.c]"]
+  node_coro["flb_coro_init&#40;&#41;<br/>[flb_coro.c]"]
+end
+
+subgraph group_g2["Ingestion Path"]
+  node_engine["flb_engine_start&#40;&#41;<br/>[flb_engine.c]"]
+  node_engine_flush["flb_engine_flush&#40;&#41;<br/>[flb_engine.c]"]
+  node_dispatch["flb_engine_dispatch&#40;&#41;"]
+  node_input_new["flb_input_new&#40;&#41;<br/>[flb_input.c]"]
+  node_collectors["flb_input_collectors_start&#40;&#41;<br/>[flb_input.c]"]
+  node_collector_fd["flb_input_collector_fd&#40;&#41;<br/>[flb_input.c]"]
+  node_in_tail["in_tail_collect_event&#40;&#41;<br/>[tail.c]"]
+  node_chunk_create["flb_input_chunk_create&#40;&#41;<br/>[flb_input_chunk.c]"]
+  node_chunk_write["flb_input_chunk_write&#40;&#41;<br/>[flb_input_chunk.c]"]
+end
+
+subgraph group_g3["Parsing &amp; Filtering"]
+  node_parser["flb_parser_create&#40;&#41;<br/>[flb_parser.c]"]
+  node_parser_regex["Regex Backend<br/>[flb_parser_regex.c]"]
+  node_parser_json["JSON Backend<br/>[flb_parser_json.c]"]
+  node_ml["flb_ml_append_text&#40;&#41;<br/>[flb_ml.c]"]
+  node_decoder["flb_log_event_decoder_next&#40;&#41;"]
+  node_filter["flb_filter_do&#40;&#41;<br/>[flb_filter.c]"]
+  node_grep_filter["cb_grep_filter&#40;&#41;<br/>[grep.c]"]
+  node_lua_filter["cb_lua_filter&#40;&#41;<br/>[lua.c]"]
+  node_ra["flb_ra_create&#40;&#41;"]
+end
+
+subgraph group_g4["Routing &amp; Tasks"]
+  node_router["flb_router_match&#40;&#41;<br/>[flb_router.c]"]
+  node_router_connect["flb_router_connect&#40;&#41;<br/>[flb_router.c]"]
+  node_event_chunk["flb_event_chunk_create&#40;&#41;<br/>[flb_event.c]"]
+  node_task["flb_task_create&#40;&#41;<br/>[flb_task.c]"]
+  node_retry["flb_task_retry_reschedule&#40;&#41;<br/>[flb_task.c]"]
+  node_sched["flb_sched_timer_create&#40;&#41;<br/>[flb_scheduler.c]"]
+end
+
+subgraph group_g5["Delivery &amp; Networking"]
+  node_out_flush["flb_output_thread_pool_flush&#40;&#41;"]
+  node_out_forward["cb_forward_flush&#40;&#41;<br/>[forward.c]"]
+  node_upstream["flb_upstream_create&#40;&#41;<br/>[flb_upstream.c]"]
+  node_http["flb_http_do&#40;&#41;<br/>[flb_http_client.c]"]
+end
+
+subgraph group_g6["Observability &amp; Storage"]
+  node_storage["flb_storage_create&#40;&#41;<br/>[flb_storage.c]"]
+  node_metrics_exporter["flb_me_create&#40;&#41;"]
+end
+
+node_main -->|"build service context"| node_config
+node_main -->|"or embed engine"| node_lib_api
+node_config -->|"init coroutines"| node_coro
+node_config -->|"instantiate inputs"| node_input_new
+node_config -->|"register parsers"| node_parser
+node_config -->|"read match rules"| node_router_connect
+node_config -->|"storage.type setup"| node_storage
+node_lib_api -->|"in-process start"| node_engine
+node_engine -->|"start collectors"| node_collectors
+node_input_new -->|"registered callbacks"| node_collectors
+node_collectors -->|"fd event routing"| node_collector_fd
+node_collector_fd -->|"wake tail input"| node_in_tail
+node_in_tail -->|"append new lines"| node_chunk_write
+node_in_tail -->|"apply configured parser"| node_parser
+node_chunk_write -->|"buffer per tag"| node_chunk_create
+node_storage -->|"filesystem chunks"| node_chunk_create
+node_chunk_create -->|"ready for flush"| node_engine_flush
+node_engine_flush -->|"dispatch inputs"| node_dispatch
+node_engine_flush -->|"adaptive flush timer"| node_sched
+node_dispatch -->|"wrap tagged data"| node_event_chunk
+node_event_chunk -->|"decode records"| node_decoder
+node_parser -->|"regex format"| node_parser_regex
+node_parser -->|"json format"| node_parser_json
+node_parser -->|"multiline folding"| node_ml
+node_decoder -->|"records to chain"| node_filter
+node_filter -->|"keep/drop rules"| node_grep_filter
+node_filter -->|"lua scripting"| node_lua_filter
+node_ra -->|"nested key access"| node_filter
+node_dispatch -->|"match tag routes"| node_router
+node_router -->|"input-output links"| node_router_connect
+node_router -->|"create per-output tasks"| node_task
+node_task -->|"on failure"| node_retry
+node_retry -->|"backoff timers"| node_sched
+node_task -->|"thread-pool flush"| node_out_flush
+node_out_flush -->|"plugin callback"| node_out_forward
+node_out_forward -->|"pooled connection"| node_upstream
+node_upstream -->|"async request"| node_http
+node_engine -->|"start metrics server"| node_metrics_exporter
+
+click node_main "https://github.com/fluent/fluent-bit/blob/master/src/fluent-bit.c"
+click node_config "https://github.com/fluent/fluent-bit/blob/master/src/flb_config.c"
+click node_lib_api "https://github.com/fluent/fluent-bit/blob/master/src/flb_lib.c"
+click node_coro "https://github.com/fluent/fluent-bit/blob/master/src/flb_coro.c"
+click node_engine "https://github.com/fluent/fluent-bit/blob/master/src/flb_engine.c"
+click node_engine_flush "https://github.com/fluent/fluent-bit/blob/master/src/flb_engine.c"
+click node_dispatch "https://github.com/fluent/fluent-bit/blob/master/src/flb_engine_dispatch.c"
+click node_input_new "https://github.com/fluent/fluent-bit/blob/master/src/flb_input.c"
+click node_collectors "https://github.com/fluent/fluent-bit/blob/master/src/flb_input.c"
+click node_collector_fd "https://github.com/fluent/fluent-bit/blob/master/src/flb_input.c"
+click node_in_tail "https://github.com/fluent/fluent-bit/blob/master/plugins/in_tail/tail.c"
+click node_chunk_create "https://github.com/fluent/fluent-bit/blob/master/src/flb_input_chunk.c"
+click node_chunk_write "https://github.com/fluent/fluent-bit/blob/master/src/flb_input_chunk.c"
+click node_storage "https://github.com/fluent/fluent-bit/blob/master/src/flb_storage.c"
+click node_parser "https://github.com/fluent/fluent-bit/blob/master/src/flb_parser.c"
+click node_parser_regex "https://github.com/fluent/fluent-bit/blob/master/src/flb_parser_regex.c"
+click node_parser_json "https://github.com/fluent/fluent-bit/blob/master/src/flb_parser_json.c"
+click node_ml "https://github.com/fluent/fluent-bit/blob/master/src/multiline/flb_ml.c"
+click node_decoder "https://github.com/fluent/fluent-bit/blob/master/src/flb_log_event_decoder.c"
+click node_filter "https://github.com/fluent/fluent-bit/blob/master/src/flb_filter.c"
+click node_grep_filter "https://github.com/fluent/fluent-bit/blob/master/plugins/filter_grep/grep.c"
+click node_lua_filter "https://github.com/fluent/fluent-bit/blob/master/plugins/filter_lua/lua.c"
+click node_ra "https://github.com/fluent/fluent-bit/blob/master/src/flb_record_accessor.c"
+click node_router "https://github.com/fluent/fluent-bit/blob/master/src/flb_router.c"
+click node_router_connect "https://github.com/fluent/fluent-bit/blob/master/src/flb_router.c"
+click node_event_chunk "https://github.com/fluent/fluent-bit/blob/master/src/flb_event.c"
+click node_task "https://github.com/fluent/fluent-bit/blob/master/src/flb_task.c"
+click node_retry "https://github.com/fluent/fluent-bit/blob/master/src/flb_task.c"
+click node_sched "https://github.com/fluent/fluent-bit/blob/master/src/flb_scheduler.c"
+click node_out_flush "https://github.com/fluent/fluent-bit/blob/master/src/flb_output_thread.c"
+click node_out_forward "https://github.com/fluent/fluent-bit/blob/master/plugins/out_forward/forward.c"
+click node_upstream "https://github.com/fluent/fluent-bit/blob/master/src/flb_upstream.c"
+click node_http "https://github.com/fluent/fluent-bit/blob/master/src/flb_http_client.c"
+click node_metrics_exporter "https://github.com/fluent/fluent-bit/blob/master/src/flb_metrics_exporter.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_config,node_lib_api,node_coro toneBlue
+class node_engine,node_engine_flush,node_dispatch,node_input_new,node_collectors,node_collector_fd,node_in_tail,node_chunk_create,node_chunk_write toneAmber
+class node_parser,node_parser_regex,node_parser_json,node_ml,node_decoder,node_filter,node_grep_filter,node_lua_filter,node_ra toneMint
+class node_router,node_router_connect,node_event_chunk,node_task,node_retry,node_sched toneRose
+class node_out_flush,node_out_forward,node_upstream,node_http toneIndigo
+class node_storage,node_metrics_exporter toneTeal
