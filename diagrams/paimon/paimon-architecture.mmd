@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_g1["Engine Integration"]
+  node_flinksink["FlinkSink<br/>[FlinkSink.java]"]
+  node_storesinkwrite["StoreSinkWrite"]
+  node_flinkcatalog["FlinkCatalog<br/>[FlinkCatalog.java]"]
+  node_sparkcatalog["SparkCatalog<br/>[SparkCatalog.java]"]
+end
+
+subgraph group_g2["Catalog Layer"]
+  node_catalog["Catalog<br/>[Catalog.java]"]
+  node_restcatalog["RESTCatalog<br/>[RESTCatalog.java]"]
+end
+
+subgraph group_g3["Table &amp; Scan"]
+  node_storetable["FileStoreTable"]
+  node_appendtable["AppendOnlyFileStoreTable"]
+  node_tablescan["TableScan<br/>[TableScan.java]"]
+  node_streamscan["StreamTableScan"]
+end
+
+subgraph group_g4["Snapshots, Tags &amp; Branches"]
+  node_snapshot["Snapshot<br/>[Snapshot.java]"]
+  node_tag["Tag<br/>[Tag.java]"]
+  node_snapshotmanager["SnapshotManager"]
+  node_branchmanager["BranchManager<br/>[BranchManager.java]"]
+end
+
+subgraph group_g5["Commit Protocol"]
+  node_manifestentry["ManifestEntry<br/>[ManifestEntry.java]"]
+  node_manifestfile["ManifestFile<br/>[ManifestFile.java]"]
+  node_manifestlist["ManifestList<br/>[ManifestList.java]"]
+  node_commit["FileStoreCommitImpl"]
+end
+
+subgraph group_g6["LSM &amp; Merge Engines"]
+  node_kvstore["KeyValueFileStore"]
+  node_appendstore["AppendOnlyFileStore"]
+  node_kvwrite["KeyValueFileStoreWrite"]
+  node_mergetreewriter["MergeTreeWriter"]
+  node_levels["Levels<br/>[Levels.java]"]
+  node_compaction["MergeTreeCompactManager"]
+  node_mergefunc["MergeFunctionFactory"]
+  node_partialupdate["PartialUpdateMergeFunction"]
+  node_firstrow["FirstRowMergeFunction"]
+  node_datafilemeta["DataFileMeta<br/>[DataFileMeta.java]"]
+end
+
+subgraph group_g7["Index &amp; Deletion Vectors"]
+  node_indexfile["IndexFile<br/>[IndexFile.java]"]
+  node_hashindex["HashIndexFile<br/>[HashIndexFile.java]"]
+  node_dvmaintainer["BucketedDvMaintainer"]
+  node_dvindex["DeletionVectorsIndexFile"]
+end
+
+subgraph group_g8["Expiration &amp; Consumers"]
+  node_expire["ExpireSnapshotsImpl"]
+  node_consumer["ConsumerManager"]
+end
+
+node_flinkcatalog -->|"wraps"| node_catalog
+node_sparkcatalog -->|"wraps"| node_catalog
+node_restcatalog -->|"implements"| node_catalog
+node_catalog -->|"get table"| node_storetable
+node_catalog -->|"get table"| node_appendtable
+node_storetable -->|"new scan"| node_tablescan
+node_storetable -->|"streaming read"| node_streamscan
+node_appendtable -->|"new scan"| node_tablescan
+node_tablescan -->|"prune entries"| node_manifestfile
+node_streamscan -->|"resume from"| node_snapshot
+node_snapshotmanager -->|"latest / earliest"| node_snapshot
+node_branchmanager -->|"branch views"| node_snapshotmanager
+node_tag -->|"extends"| node_snapshot
+node_snapshot -->|"references"| node_manifestlist
+node_manifestlist -->|"lists"| node_manifestfile
+node_manifestfile -->|"contains"| node_manifestentry
+node_commit -->|"atomic swap"| node_manifestlist
+node_commit -->|"merge changes"| node_manifestentry
+node_commit -->|"publish next"| node_snapshot
+node_kvstore -->|"write path"| node_kvwrite
+node_kvstore -->|"PK to bucket"| node_hashindex
+node_kvstore -->|"maintain DVs"| node_dvmaintainer
+node_appendstore -->|"immutable files"| node_datafilemeta
+node_kvwrite -->|"creates"| node_mergetreewriter
+node_kvwrite -->|"schedules"| node_compaction
+node_mergetreewriter -->|"flushes runs"| node_levels
+node_mergetreewriter -->|"emits SST"| node_datafilemeta
+node_compaction -->|"compacts"| node_levels
+node_compaction -->|"fold records"| node_mergefunc
+node_mergefunc -->|"creates"| node_partialupdate
+node_mergefunc -->|"creates"| node_firstrow
+node_datafilemeta -->|"lives in"| node_levels
+node_dvmaintainer -->|"writes"| node_dvindex
+node_hashindex -->|"extends"| node_indexfile
+node_dvindex -->|"hides rows"| node_datafilemeta
+node_expire -->|"expires"| node_snapshot
+node_consumer -->|"pins"| node_snapshot
+node_flinksink -->|"drives"| node_storesinkwrite
+node_storesinkwrite -->|"writes rows"| node_kvwrite
+
+click node_flinksink "https://github.com/apache/paimon/blob/master/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java"
+click node_storesinkwrite "https://github.com/apache/paimon/blob/master/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWrite.java"
+click node_flinkcatalog "https://github.com/apache/paimon/blob/master/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/FlinkCatalog.java"
+click node_sparkcatalog "https://github.com/apache/paimon/blob/master/paimon-spark/paimon-spark-common/src/main/java/org/apache/paimon/spark/SparkCatalog.java"
+click node_catalog "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/catalog/Catalog.java"
+click node_restcatalog "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/rest/RESTCatalog.java"
+click node_storetable "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/table/FileStoreTable.java"
+click node_appendtable "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/table/AppendOnlyFileStoreTable.java"
+click node_tablescan "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/table/source/TableScan.java"
+click node_streamscan "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/table/source/StreamTableScan.java"
+click node_snapshot "https://github.com/apache/paimon/blob/master/paimon-api/src/main/java/org/apache/paimon/Snapshot.java"
+click node_tag "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/tag/Tag.java"
+click node_snapshotmanager "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/utils/SnapshotManager.java"
+click node_branchmanager "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/utils/BranchManager.java"
+click node_manifestentry "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/manifest/ManifestEntry.java"
+click node_manifestfile "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/manifest/ManifestFile.java"
+click node_manifestlist "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/manifest/ManifestList.java"
+click node_commit "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java"
+click node_kvstore "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/KeyValueFileStore.java"
+click node_appendstore "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/AppendOnlyFileStore.java"
+click node_kvwrite "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/operation/KeyValueFileStoreWrite.java"
+click node_mergetreewriter "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeWriter.java"
+click node_levels "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/mergetree/Levels.java"
+click node_compaction "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactManager.java"
+click node_mergefunc "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeFunctionFactory.java"
+click node_partialupdate "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/PartialUpdateMergeFunction.java"
+click node_firstrow "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/FirstRowMergeFunction.java"
+click node_datafilemeta "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/io/DataFileMeta.java"
+click node_indexfile "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/index/IndexFile.java"
+click node_hashindex "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/index/HashIndexFile.java"
+click node_dvmaintainer "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/deletionvectors/BucketedDvMaintainer.java"
+click node_dvindex "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/deletionvectors/DeletionVectorsIndexFile.java"
+click node_expire "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/table/ExpireSnapshotsImpl.java"
+click node_consumer "https://github.com/apache/paimon/blob/master/paimon-core/src/main/java/org/apache/paimon/consumer/ConsumerManager.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_flinksink,node_storesinkwrite,node_flinkcatalog,node_sparkcatalog,node_indexfile,node_hashindex,node_dvmaintainer,node_dvindex toneBlue
+class node_catalog,node_restcatalog,node_expire,node_consumer toneAmber
+class node_storetable,node_appendtable,node_tablescan,node_streamscan toneMint
+class node_snapshot,node_tag,node_snapshotmanager,node_branchmanager toneRose
+class node_manifestentry,node_manifestfile,node_manifestlist,node_commit toneIndigo
+class node_kvstore,node_appendstore,node_kvwrite,node_mergetreewriter,node_levels,node_compaction,node_mergefunc,node_partialupdate,node_firstrow,node_datafilemeta toneTeal
