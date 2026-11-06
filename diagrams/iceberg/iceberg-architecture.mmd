@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_g1["Catalog Implementations"]
+  node_restcatalog["RESTCatalog<br/>[RESTCatalog.java]"]
+  node_jdbc["JdbcCatalog<br/>[JdbcCatalog.java]"]
+  node_hadoop["HadoopCatalog<br/>[HadoopCatalog.java]"]
+  node_metastore["BaseMetastoreCatalog"]
+  node_hadooptables["HadoopTables<br/>[HadoopTables.java]"]
+end
+
+subgraph group_g2["Table API Core"]
+  node_table["Table<br/>[Table.java]"]
+  node_basetable["BaseTable<br/>[BaseTable.java]"]
+  node_tableops["TableOperations"]
+  node_transaction["BaseTransaction"]
+  node_snapshot["Snapshot<br/>[Snapshot.java]"]
+  node_snapshotref["SnapshotRef<br/>[SnapshotRef.java]"]
+end
+
+subgraph group_g3["Metadata Engine"]
+  node_tablemetadata["TableMetadata<br/>[TableMetadata.java]"]
+  node_parser["TableMetadataParser"]
+  node_schemaupdate["SchemaUpdate<br/>[SchemaUpdate.java]"]
+  node_summary["SnapshotSummary"]
+end
+
+subgraph group_g4["Commit Producers"]
+  node_producer["SnapshotProducer"]
+  node_merging["MergingSnapshotProducer"]
+  node_fastappend["FastAppend<br/>[FastAppend.java]"]
+  node_overwrite["BaseOverwriteFiles"]
+  node_replace["BaseReplacePartitions"]
+  node_rewrite["BaseRewriteManifests"]
+  node_filtermanager["ManifestFilterManager"]
+end
+
+subgraph group_g5["Manifest Layer"]
+  node_files["ManifestFiles<br/>[ManifestFiles.java]"]
+  node_mwriter["ManifestWriter"]
+  node_mreader["ManifestReader"]
+  node_listwriter["ManifestListWriter"]
+  node_group["ManifestGroup<br/>[ManifestGroup.java]"]
+  node_deleteindex["DeleteFileIndex"]
+end
+
+subgraph group_g6["Scans &amp; Parquet Files"]
+  node_scan["DataTableScan<br/>[DataTableScan.java]"]
+  node_metrics["InclusiveMetricsEvaluator"]
+  node_parquetreader["ParquetReader<br/>[ParquetReader.java]"]
+  node_readconf["ReadConf<br/>[ReadConf.java]"]
+  node_prunecolumns["PruneColumns<br/>[PruneColumns.java]"]
+  node_sparkread["SparkReadConf<br/>[SparkReadConf.java]"]
+end
+
+node_hadoop -->|"extends"| node_metastore
+node_metastore -->|"loads tables via"| node_tableops
+node_metastore -->|"wraps ops in"| node_basetable
+node_hadooptables -->|"reads metadata.json directly"| node_parser
+node_table -->|"backed by"| node_tableops
+node_tableops -->|"current&#40;&#41; / refresh&#40;&#41;"| node_tablemetadata
+node_basetable -->|"newTransaction&#40;&#41;"| node_transaction
+node_transaction -->|"queues producers, one commit"| node_producer
+node_table -->|"currentSnapshot&#40;&#41;"| node_snapshot
+node_snapshotref -->|"pins branch or tag"| node_snapshot
+node_table -->|"exposes state"| node_tablemetadata
+node_schemaupdate -->|"evolves schema in place"| node_tablemetadata
+node_tablemetadata -->|"persisted as JSON"| node_parser
+node_producer -->|"atomic commit with retries"| node_tableops
+node_fastappend -->|"extends"| node_producer
+node_merging -->|"extends"| node_producer
+node_overwrite -->|"extends"| node_merging
+node_replace -->|"extends"| node_merging
+node_rewrite -->|"extends"| node_producer
+node_merging -->|"tracks file deletions"| node_filtermanager
+node_filtermanager -->|"rewrites surviving entries"| node_mreader
+node_fastappend -->|"counts added files"| node_summary
+node_producer -->|"writes manifests"| node_files
+node_files -->|"write&#40;&#41;"| node_mwriter
+node_files -->|"read&#40;&#41;"| node_mreader
+node_producer -->|"one list per attempt"| node_listwriter
+node_snapshot -->|"snapshot output"| node_listwriter
+node_scan -->|"planFiles&#40;&#41;"| node_group
+node_group -->|"reads entries"| node_mreader
+node_deleteindex -->|"indexes delete files"| node_mreader
+node_scan -->|"correlates deletes"| node_deleteindex
+node_mreader -->|"skips files by stats"| node_metrics
+node_scan -->|"opens task files"| node_parquetreader
+node_parquetreader -->|"configured by"| node_readconf
+node_parquetreader -->|"projects columns"| node_prunecolumns
+node_sparkread -->|"engine tuning"| node_scan
+
+click node_restcatalog "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/rest/RESTCatalog.java"
+click node_jdbc "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/jdbc/JdbcCatalog.java"
+click node_hadoop "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/hadoop/HadoopCatalog.java"
+click node_metastore "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/BaseMetastoreCatalog.java"
+click node_hadooptables "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/hadoop/HadoopTables.java"
+click node_table "https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/Table.java"
+click node_basetable "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/BaseTable.java"
+click node_tableops "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/TableOperations.java"
+click node_transaction "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/BaseTransaction.java"
+click node_snapshot "https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/Snapshot.java"
+click node_snapshotref "https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/SnapshotRef.java"
+click node_tablemetadata "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/TableMetadata.java"
+click node_parser "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/TableMetadataParser.java"
+click node_schemaupdate "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/SchemaUpdate.java"
+click node_producer "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/SnapshotProducer.java"
+click node_merging "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/MergingSnapshotProducer.java"
+click node_fastappend "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/FastAppend.java"
+click node_overwrite "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/BaseOverwriteFiles.java"
+click node_replace "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/BaseReplacePartitions.java"
+click node_rewrite "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/BaseRewriteManifests.java"
+click node_filtermanager "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestFilterManager.java"
+click node_summary "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/SnapshotSummary.java"
+click node_files "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestFiles.java"
+click node_mwriter "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestWriter.java"
+click node_mreader "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestReader.java"
+click node_listwriter "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestListWriter.java"
+click node_group "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/ManifestGroup.java"
+click node_deleteindex "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/DeleteFileIndex.java"
+click node_scan "https://github.com/apache/iceberg/blob/main/core/src/main/java/org/apache/iceberg/DataTableScan.java"
+click node_metrics "https://github.com/apache/iceberg/blob/main/api/src/main/java/org/apache/iceberg/expressions/InclusiveMetricsEvaluator.java"
+click node_parquetreader "https://github.com/apache/iceberg/blob/main/parquet/src/main/java/org/apache/iceberg/parquet/ParquetReader.java"
+click node_readconf "https://github.com/apache/iceberg/blob/main/parquet/src/main/java/org/apache/iceberg/parquet/ReadConf.java"
+click node_prunecolumns "https://github.com/apache/iceberg/blob/main/parquet/src/main/java/org/apache/iceberg/parquet/PruneColumns.java"
+click node_sparkread "https://github.com/apache/iceberg/blob/main/spark/v4.1/spark/src/main/java/org/apache/iceberg/spark/SparkReadConf.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_restcatalog,node_jdbc,node_hadoop,node_metastore,node_hadooptables toneBlue
+class node_table,node_basetable,node_tableops,node_transaction,node_snapshot,node_snapshotref toneAmber
+class node_tablemetadata,node_parser,node_schemaupdate,node_summary toneMint
+class node_producer,node_merging,node_fastappend,node_overwrite,node_replace,node_rewrite,node_filtermanager toneRose
+class node_files,node_mwriter,node_mreader,node_listwriter,node_group,node_deleteindex toneIndigo
+class node_scan,node_metrics,node_parquetreader,node_readconf,node_prunecolumns,node_sparkread toneTeal
