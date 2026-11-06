@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_g1["Server Bootstrap"]
+  node_prestoserver["PrestoServer<br/>[PrestoServer.java]"]
+  node_nodemanager["DiscoveryNodeManager"]
+  node_catalogmanager["CatalogManager"]
+end
+
+subgraph group_g2["REST Protocol"]
+  node_queuedstatement["QueuedStatementResource"]
+  node_executingstatement["ExecutingStatementResource"]
+  node_queryresource["QueryResource<br/>[QueryResource.java]"]
+end
+
+subgraph group_g3["Dispatch &amp; Query Management"]
+  node_dispatchmanager["DispatchManager"]
+  node_sqlquerymanager["SqlQueryManager"]
+  node_querystatemachine["QueryStateMachine"]
+end
+
+subgraph group_g4["Analysis &amp; Planning"]
+  node_sqlparser["SqlParser<br/>[SqlParser.java]"]
+  node_analyzer["Analyzer<br/>[Analyzer.java]"]
+  node_logicalplanner["LogicalPlanner"]
+  node_queryplanner["QueryPlanner<br/>[QueryPlanner.java]"]
+  node_planfragmenter["PlanFragmenter"]
+  node_nodepartitioning["NodePartitioningManager"]
+end
+
+subgraph group_g5["Stage &amp; Split Scheduling"]
+  node_sqlqueryexecution["SqlQueryExecution"]
+  node_sqlqueryscheduler["SqlQueryScheduler"]
+  node_stagescheduler["StageScheduler"]
+  node_nodescheduler["NodeScheduler<br/>[NodeScheduler.java]"]
+  node_splitmanager["SplitManager<br/>[SplitManager.java]"]
+end
+
+subgraph group_g6["Worker Execution"]
+  node_remotetask["HttpRemoteTaskFactory"]
+  node_sqltaskmanager["SqlTaskManager"]
+  node_localexecutionplanner["LocalExecutionPlanner"]
+  node_exchangeclient["ExchangeClient"]
+  node_pagebufferclient["PageBufferClient"]
+end
+
+subgraph group_g7["Memory Management"]
+  node_memorymanager["ClusterMemoryManager"]
+  node_memorypool["MemoryPool<br/>[MemoryPool.java]"]
+end
+
+subgraph group_g8["Connector SPI"]
+  node_connectorfactory["ConnectorFactory"]
+  node_connectormetadata["ConnectorMetadata"]
+  node_connectorsplitmanager["ConnectorSplitManager"]
+  node_splitsource["ConnectorSplitSource"]
+  node_pagesource["ConnectorPageSourceProvider"]
+end
+
+node_prestoserver -->|"loads catalogs"| node_catalogmanager
+node_prestoserver -->|"worker discovery"| node_nodemanager
+node_queuedstatement -->|"POST /v1/statement"| node_dispatchmanager
+node_executingstatement -->|"poll query state"| node_dispatchmanager
+node_dispatchmanager -->|"begin&#40;&#41; query"| node_querystatemachine
+node_dispatchmanager -->|"dispatch query"| node_sqlqueryexecution
+node_queryresource -->|"query admin"| node_sqlquerymanager
+node_sqlquerymanager -->|"track + enforce limits"| node_sqlqueryexecution
+node_sqlquerymanager -->|"memory limit checks"| node_memorymanager
+node_sqlqueryexecution -->|"state transitions"| node_querystatemachine
+node_sqlqueryexecution -->|"parse SQL"| node_sqlparser
+node_sqlqueryexecution -->|"semantic analysis"| node_analyzer
+node_analyzer -->|"Analysis to plan"| node_logicalplanner
+node_logicalplanner -->|"plan relations"| node_queryplanner
+node_sqlqueryexecution -->|"createSubPlans"| node_planfragmenter
+node_planfragmenter -->|"resolve partitioning"| node_nodepartitioning
+node_sqlqueryexecution -->|"start scheduling"| node_sqlqueryscheduler
+node_sqlqueryscheduler -->|"schedule&#40;&#41;"| node_stagescheduler
+node_sqlqueryscheduler -->|"place splits"| node_nodescheduler
+node_sqlqueryscheduler -->|"split discovery"| node_splitmanager
+node_sqlqueryscheduler -->|"createRemoteTask"| node_remotetask
+node_remotetask -->|"task lifecycle over HTTP"| node_sqltaskmanager
+node_sqltaskmanager -->|"build local plan"| node_localexecutionplanner
+node_localexecutionplanner -->|"createPageSource"| node_pagesource
+node_exchangeclient -->|"fetch page batches"| node_pagebufferclient
+node_memorymanager -->|"pool assignment"| node_memorypool
+node_splitmanager -->|"connector.getSplits"| node_connectorsplitmanager
+node_connectorsplitmanager -->|"getNextBatch"| node_splitsource
+node_catalogmanager -->|"create Connector"| node_connectorfactory
+node_connectorfactory -->|"metadata API"| node_connectormetadata
+node_connectormetadata -->|"table data access"| node_pagesource
+
+click node_prestoserver "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/server/PrestoServer.java"
+click node_nodemanager "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/metadata/DiscoveryNodeManager.java"
+click node_catalogmanager "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/metadata/CatalogManager.java"
+click node_queuedstatement "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/server/protocol/QueuedStatementResource.java"
+click node_executingstatement "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/server/protocol/ExecutingStatementResource.java"
+click node_queryresource "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/server/QueryResource.java"
+click node_dispatchmanager "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/dispatcher/DispatchManager.java"
+click node_sqlquerymanager "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/execution/SqlQueryManager.java"
+click node_querystatemachine "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/execution/QueryStateMachine.java"
+click node_sqlparser "https://github.com/prestodb/presto/blob/master/presto-parser/src/main/java/com/facebook/presto/sql/parser/SqlParser.java"
+click node_analyzer "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/sql/analyzer/Analyzer.java"
+click node_logicalplanner "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/sql/planner/LogicalPlanner.java"
+click node_queryplanner "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/sql/planner/QueryPlanner.java"
+click node_planfragmenter "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/sql/planner/PlanFragmenter.java"
+click node_nodepartitioning "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/sql/planner/NodePartitioningManager.java"
+click node_sqlqueryexecution "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/execution/SqlQueryExecution.java"
+click node_sqlqueryscheduler "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/execution/scheduler/SqlQueryScheduler.java"
+click node_stagescheduler "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/execution/scheduler/StageScheduler.java"
+click node_nodescheduler "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/execution/scheduler/NodeScheduler.java"
+click node_splitmanager "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/split/SplitManager.java"
+click node_remotetask "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/server/remotetask/HttpRemoteTaskFactory.java"
+click node_sqltaskmanager "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/execution/SqlTaskManager.java"
+click node_localexecutionplanner "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/sql/planner/LocalExecutionPlanner.java"
+click node_exchangeclient "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/operator/ExchangeClient.java"
+click node_pagebufferclient "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/operator/PageBufferClient.java"
+click node_memorymanager "https://github.com/prestodb/presto/blob/master/presto-main/src/main/java/com/facebook/presto/memory/ClusterMemoryManager.java"
+click node_memorypool "https://github.com/prestodb/presto/blob/master/presto-main-base/src/main/java/com/facebook/presto/memory/MemoryPool.java"
+click node_connectorfactory "https://github.com/prestodb/presto/blob/master/presto-spi/src/main/java/com/facebook/presto/spi/connector/ConnectorFactory.java"
+click node_connectormetadata "https://github.com/prestodb/presto/blob/master/presto-spi/src/main/java/com/facebook/presto/spi/connector/ConnectorMetadata.java"
+click node_connectorsplitmanager "https://github.com/prestodb/presto/blob/master/presto-spi/src/main/java/com/facebook/presto/spi/connector/ConnectorSplitManager.java"
+click node_splitsource "https://github.com/prestodb/presto/blob/master/presto-spi/src/main/java/com/facebook/presto/spi/ConnectorSplitSource.java"
+click node_pagesource "https://github.com/prestodb/presto/blob/master/presto-spi/src/main/java/com/facebook/presto/spi/connector/ConnectorPageSourceProvider.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_prestoserver,node_nodemanager,node_catalogmanager,node_memorymanager,node_memorypool toneBlue
+class node_queuedstatement,node_executingstatement,node_queryresource,node_connectorfactory,node_connectormetadata,node_connectorsplitmanager,node_splitsource,node_pagesource toneAmber
+class node_dispatchmanager,node_sqlquerymanager,node_querystatemachine toneMint
+class node_sqlparser,node_analyzer,node_logicalplanner,node_queryplanner,node_planfragmenter,node_nodepartitioning toneRose
+class node_sqlqueryexecution,node_sqlqueryscheduler,node_stagescheduler,node_nodescheduler,node_splitmanager toneIndigo
+class node_remotetask,node_sqltaskmanager,node_localexecutionplanner,node_exchangeclient,node_pagebufferclient toneTeal
