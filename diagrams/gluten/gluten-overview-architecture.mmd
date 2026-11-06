@@ -1,0 +1,71 @@
+flowchart TD
+
+subgraph group_g1["Spark Entry"]
+  node_plugin["GlutenPlugin<br/>[GlutenPlugin.scala]"]
+end
+
+subgraph group_g2["JVM Extension"]
+  node_rule["GlutenColumnarRule"]
+  node_policy["ExpandFallbackPolicy"]
+  node_offload["OffloadSingleNodeRules"]
+  node_wst["WholeStageTransformer"]
+end
+
+subgraph group_g3["Substrait Plan"]
+  node_planbuilder["PlanBuilder<br/>[PlanBuilder.java]"]
+end
+
+subgraph group_g4["Velox Backend"]
+  node_backend["VeloxBackend<br/>[VeloxBackend.scala]"]
+  node_iteratorapi["VeloxIteratorApi"]
+  node_evaluator["NativePlanEvaluator"]
+end
+
+subgraph group_g5["Native Execution"]
+  node_planconv["VeloxPlanConverter"]
+  node_resultiter["WholeStageResultIterator"]
+end
+
+subgraph group_g6["Columnar Results"]
+  node_batches["ColumnarBatches"]
+end
+
+node_plugin -->|"injects extensions"| node_rule
+node_rule -->|"scores offload cost"| node_policy
+node_policy -.->|"fallback keeps vanilla Spark"| node_rule
+node_rule -->|"replaces operators"| node_offload
+node_offload -->|"columnar transformers"| node_wst
+node_wst -->|"plan to Substrait"| node_planbuilder
+node_planbuilder -->|"plan bytes"| node_iteratorapi
+node_backend -->|"provides IteratorApi"| node_iteratorapi
+node_iteratorapi -->|"create kernel"| node_evaluator
+node_evaluator -->|"JNI call"| node_planconv
+node_planconv -->|"Velox operator tree"| node_resultiter
+node_resultiter -->|"columnar batches"| node_batches
+
+click node_plugin "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/GlutenPlugin.scala"
+click node_rule "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/extension/GlutenColumnarRule.scala"
+click node_policy "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/heuristic/ExpandFallbackPolicy.scala"
+click node_offload "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/offload/OffloadSingleNodeRules.scala"
+click node_wst "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/execution/WholeStageTransformer.scala"
+click node_planbuilder "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/java/org/apache/gluten/substrait/plan/PlanBuilder.java"
+click node_backend "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxBackend.scala"
+click node_iteratorapi "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxIteratorApi.scala"
+click node_evaluator "https://github.com/apache/incubator-gluten/blob/main/gluten-arrow/src/main/java/org/apache/gluten/vectorized/NativePlanEvaluator.java"
+click node_planconv "https://github.com/apache/incubator-gluten/blob/main/cpp/velox/compute/VeloxPlanConverter.cc"
+click node_resultiter "https://github.com/apache/incubator-gluten/blob/main/cpp/velox/compute/WholeStageResultIterator.cc"
+click node_batches "https://github.com/apache/incubator-gluten/blob/main/gluten-arrow/src/main/java/org/apache/gluten/columnarbatch/ColumnarBatches.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_plugin toneBlue
+class node_rule,node_policy,node_offload,node_wst toneAmber
+class node_planbuilder toneMint
+class node_backend,node_iteratorapi,node_evaluator toneRose
+class node_planconv,node_resultiter toneIndigo
+class node_batches toneTeal

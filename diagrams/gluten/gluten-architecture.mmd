@@ -1,0 +1,129 @@
+flowchart TD
+
+subgraph group_g1["Plugin &amp; Session"]
+  node_plugin["GlutenPlugin<br/>[GlutenPlugin.scala]"]
+  node_extensions["GlutenSessionExtensions"]
+  node_coreconfig["GlutenCoreConfig"]
+end
+
+subgraph group_g2["Columnar Rules"]
+  node_columnarrule["GlutenColumnarRule"]
+  node_backendsapi["BackendsApiManager"]
+  node_offload["OffloadSingleNodeRules"]
+  node_policy["ExpandFallbackPolicy"]
+  node_fallbackrules["FallbackRules"]
+  node_fallbacktag["FallbackTag<br/>[FallbackTag.scala]"]
+  node_partialfallback["PartialFallbackRules"]
+  node_c2r["ColumnarToRowExecBase"]
+  node_r2c["RowToColumnarExecBase"]
+  node_shuffle["ColumnarShuffleManager"]
+end
+
+subgraph group_g3["Substrait Builders"]
+  node_wst["WholeStageTransformer"]
+  node_planbuilder["PlanBuilder<br/>[PlanBuilder.java]"]
+  node_planrel["RelBuilder<br/>[RelBuilder.java]"]
+  node_exprbuilder["ExpressionBuilder"]
+end
+
+subgraph group_g4["JNI Bridge"]
+  node_evaluator["NativePlanEvaluator"]
+  node_batches["ColumnarBatches"]
+  node_batchjni["ColumnarBatchJniWrapper"]
+  node_r2cjni["NativeRowToColumnarJniWrapper"]
+end
+
+subgraph group_g5["Velox Backend"]
+  node_iteratorapi["VeloxIteratorApi"]
+  node_backend["VeloxBackend<br/>[VeloxBackend.scala]"]
+  node_validatorapi["VeloxValidatorApi"]
+  node_veloxbatches["VeloxColumnarBatches"]
+  node_metricsjni["IteratorMetricsJniWrapper"]
+end
+
+subgraph group_g6["Native Runtime &amp; Memory"]
+  node_backendcc["VeloxBackend.cc<br/>[VeloxBackend.cc]"]
+  node_planconv["VeloxPlanConverter"]
+  node_resultiter["WholeStageResultIterator"]
+  node_runtimecc["VeloxRuntime<br/>[VeloxRuntime.cc]"]
+  node_memtarget["TreeMemoryTarget"]
+end
+
+node_plugin -->|"appends extension name"| node_extensions
+node_plugin -->|"checks off-heap settings"| node_coreconfig
+node_plugin -.->|"off-heap budget"| node_memtarget
+node_extensions -->|"registers columnar rule"| node_columnarrule
+node_columnarrule -->|"applies offload rules"| node_offload
+node_columnarrule -->|"evaluates fallback"| node_policy
+node_policy -->|"tags unsupported plans"| node_fallbackrules
+node_fallbackrules -->|"sets fallback tag"| node_fallbacktag
+node_policy -.->|"velox partial offload"| node_partialfallback
+node_policy -.->|"fallback exits columnar"| node_c2r
+node_columnarrule -.->|"inserts R2C transition"| node_r2c
+node_offload -->|"produces transformers"| node_wst
+node_wst -->|"resolves backend"| node_backendsapi
+node_wst -->|"makePlan"| node_planbuilder
+node_wst -->|"columnar exchange"| node_shuffle
+node_planbuilder -->|"rel nodes"| node_planrel
+node_planrel -->|"expressions"| node_exprbuilder
+node_backendsapi -->|"active backend"| node_backend
+node_backend -->|"supplies IteratorApi"| node_iteratorapi
+node_backend -->|"supplies ValidatorApi"| node_validatorapi
+node_iteratorapi -->|"NativePlanEvaluator.create"| node_evaluator
+node_validatorapi -->|"native plan validation"| node_evaluator
+node_evaluator -->|"JNI plan bytes"| node_planconv
+node_evaluator -->|"row-to-columnar JNI"| node_r2cjni
+node_planconv -->|"Velox PlanNode tree"| node_resultiter
+node_resultiter -->|"wraps RowVectors"| node_veloxbatches
+node_veloxbatches -->|"Spark ColumnarBatch"| node_batches
+node_batches -->|"load/offload via JNI"| node_batchjni
+node_iteratorapi -->|"attaches metrics"| node_metricsjni
+node_metricsjni -.->|"native metrics reported"| node_wst
+node_backendcc -->|"per-task runtime"| node_runtimecc
+node_runtimecc -->|"drives execution"| node_resultiter
+
+click node_plugin "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/GlutenPlugin.scala"
+click node_extensions "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/extension/GlutenSessionExtensions.scala"
+click node_coreconfig "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/config/GlutenCoreConfig.scala"
+click node_columnarrule "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/extension/GlutenColumnarRule.scala"
+click node_backendsapi "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/backendsapi/BackendsApiManager.scala"
+click node_offload "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/offload/OffloadSingleNodeRules.scala"
+click node_policy "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/heuristic/ExpandFallbackPolicy.scala"
+click node_fallbackrules "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/FallbackRules.scala"
+click node_fallbacktag "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/scala/org/apache/gluten/extension/columnar/FallbackTag.scala"
+click node_partialfallback "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/scala/org/apache/gluten/extension/PartialFallback.scala"
+click node_c2r "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/execution/ColumnarToRowExecBase.scala"
+click node_r2c "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/execution/RowToColumnarExecBase.scala"
+click node_shuffle "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/spark/shuffle/sort/ColumnarShuffleManager.scala"
+click node_wst "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/scala/org/apache/gluten/execution/WholeStageTransformer.scala"
+click node_planbuilder "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/java/org/apache/gluten/substrait/plan/PlanBuilder.java"
+click node_planrel "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/java/org/apache/gluten/substrait/rel/RelBuilder.java"
+click node_exprbuilder "https://github.com/apache/incubator-gluten/blob/main/gluten-substrait/src/main/java/org/apache/gluten/substrait/expression/ExpressionBuilder.java"
+click node_iteratorapi "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxIteratorApi.scala"
+click node_backend "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxBackend.scala"
+click node_validatorapi "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxValidatorApi.scala"
+click node_evaluator "https://github.com/apache/incubator-gluten/blob/main/gluten-arrow/src/main/java/org/apache/gluten/vectorized/NativePlanEvaluator.java"
+click node_batches "https://github.com/apache/incubator-gluten/blob/main/gluten-arrow/src/main/java/org/apache/gluten/columnarbatch/ColumnarBatches.java"
+click node_batchjni "https://github.com/apache/incubator-gluten/blob/main/gluten-arrow/src/main/java/org/apache/gluten/columnarbatch/ColumnarBatchJniWrapper.java"
+click node_r2cjni "https://github.com/apache/incubator-gluten/blob/main/gluten-arrow/src/main/java/org/apache/gluten/vectorized/NativeRowToColumnarJniWrapper.java"
+click node_veloxbatches "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/java/org/apache/gluten/columnarbatch/VeloxColumnarBatches.java"
+click node_metricsjni "https://github.com/apache/incubator-gluten/blob/main/backends-velox/src/main/java/org/apache/gluten/metrics/IteratorMetricsJniWrapper.java"
+click node_backendcc "https://github.com/apache/incubator-gluten/blob/main/cpp/velox/compute/VeloxBackend.cc"
+click node_planconv "https://github.com/apache/incubator-gluten/blob/main/cpp/velox/compute/VeloxPlanConverter.cc"
+click node_resultiter "https://github.com/apache/incubator-gluten/blob/main/cpp/velox/compute/WholeStageResultIterator.cc"
+click node_runtimecc "https://github.com/apache/incubator-gluten/blob/main/cpp/velox/compute/VeloxRuntime.cc"
+click node_memtarget "https://github.com/apache/incubator-gluten/blob/main/gluten-core/src/main/java/org/apache/gluten/memory/memtarget/TreeMemoryTarget.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_plugin,node_extensions,node_coreconfig toneBlue
+class node_columnarrule,node_backendsapi,node_offload,node_policy,node_fallbackrules,node_fallbacktag,node_partialfallback,node_c2r,node_r2c,node_shuffle toneAmber
+class node_wst,node_planbuilder,node_planrel,node_exprbuilder toneMint
+class node_evaluator,node_batches,node_batchjni,node_r2cjni toneRose
+class node_iteratorapi,node_backend,node_validatorapi,node_veloxbatches,node_metricsjni toneIndigo
+class node_backendcc,node_planconv,node_resultiter,node_runtimecc,node_memtarget toneTeal
