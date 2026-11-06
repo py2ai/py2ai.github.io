@@ -1,0 +1,41 @@
+{
+  "owner": "apache",
+  "repo": "incubator-gluten",
+  "branch": "main",
+  "groups": [
+    {"id": "g1", "name": "entry", "label": "Spark Entry"},
+    {"id": "g2", "name": "extension", "label": "JVM Extension"},
+    {"id": "g3", "name": "substrait", "label": "Substrait Plan"},
+    {"id": "g4", "name": "backend", "label": "Velox Backend"},
+    {"id": "g5", "name": "native", "label": "Native Execution"},
+    {"id": "g6", "name": "columnar", "label": "Columnar Results"}
+  ],
+  "nodes": [
+    {"id": "plugin", "label": "GlutenPlugin", "file": "GlutenPlugin", "path": "gluten-core/src/main/scala/org/apache/gluten/GlutenPlugin.scala", "group": "entry", "groupId": "g1", "desc": "Spark plugin that injects Gluten's columnar extensions into driver and executor."},
+    {"id": "rule", "label": "GlutenColumnarRule", "file": "GlutenColumnarRule", "path": "gluten-core/src/main/scala/org/apache/gluten/extension/GlutenColumnarRule.scala", "group": "extension", "groupId": "g2", "desc": "ColumnarRule hook that intercepts the physical plan after Spark's columnar transitions."},
+    {"id": "policy", "label": "ExpandFallbackPolicy", "file": "ExpandFallbackPolicy", "path": "gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/heuristic/ExpandFallbackPolicy.scala", "group": "extension", "groupId": "g2", "desc": "Heuristic that scores each plan segment for offload versus fallback to vanilla Spark."},
+    {"id": "offload", "label": "OffloadSingleNodeRules", "file": "OffloadSingleNodeRules", "path": "gluten-substrait/src/main/scala/org/apache/gluten/extension/columnar/offload/OffloadSingleNodeRules.scala", "group": "extension", "groupId": "g2", "desc": "Replaces supported Spark operators such as exchanges and joins with columnar transformers."},
+    {"id": "wst", "label": "WholeStageTransformer", "file": "WholeStageTransformer", "path": "gluten-substrait/src/main/scala/org/apache/gluten/execution/WholeStageTransformer.scala", "group": "extension", "groupId": "g2", "desc": "Runs one whole stage natively instead of Spark JVM codegen."},
+    {"id": "planbuilder", "label": "PlanBuilder", "file": "PlanBuilder", "path": "gluten-substrait/src/main/java/org/apache/gluten/substrait/plan/PlanBuilder.java", "group": "substrait", "groupId": "g3", "desc": "Assembles transformer outputs into a protobuf Substrait plan."},
+    {"id": "backend", "label": "VeloxBackend", "file": "VeloxBackend", "path": "backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxBackend.scala", "group": "backend", "groupId": "g4", "desc": "Velox backend wiring that supplies iterator, validator, and metrics APIs."},
+    {"id": "iteratorapi", "label": "VeloxIteratorApi", "file": "VeloxIteratorApi", "path": "backends-velox/src/main/scala/org/apache/gluten/backendsapi/velox/VeloxIteratorApi.scala", "group": "backend", "groupId": "g4", "desc": "genFirstStageIterator hands the serialized plan to the native kernel."},
+    {"id": "evaluator", "label": "NativePlanEvaluator", "file": "NativePlanEvaluator", "path": "gluten-arrow/src/main/java/org/apache/gluten/vectorized/NativePlanEvaluator.java", "group": "backend", "groupId": "g4", "desc": "JNI entry point that creates the native compute kernel with an input iterator."},
+    {"id": "planconv", "label": "VeloxPlanConverter", "file": "VeloxPlanConverter", "path": "cpp/velox/compute/VeloxPlanConverter.cc", "group": "native", "groupId": "g5", "desc": "C++ converter that turns the Substrait plan into a Velox PlanNode tree."},
+    {"id": "resultiter", "label": "WholeStageResultIterator", "file": "WholeStageResultIterator", "path": "cpp/velox/compute/WholeStageResultIterator.cc", "group": "native", "groupId": "g5", "desc": "Drives the Velox plan and yields result batches per partition."},
+    {"id": "batches", "label": "ColumnarBatches", "file": "ColumnarBatches", "path": "gluten-arrow/src/main/java/org/apache/gluten/columnarbatch/ColumnarBatches.java", "group": "columnar", "groupId": "g6", "desc": "Bridges Spark's ColumnarBatch API to native-owned Arrow-style memory."}
+  ],
+  "edges": [
+    {"from": "plugin", "to": "rule", "label": "injects extensions"},
+    {"from": "rule", "to": "policy", "label": "scores offload cost"},
+    {"from": "policy", "to": "rule", "label": "fallback keeps vanilla Spark", "style": "dashed"},
+    {"from": "rule", "to": "offload", "label": "replaces operators"},
+    {"from": "offload", "to": "wst", "label": "columnar transformers"},
+    {"from": "wst", "to": "planbuilder", "label": "plan to Substrait"},
+    {"from": "planbuilder", "to": "iteratorapi", "label": "plan bytes"},
+    {"from": "backend", "to": "iteratorapi", "label": "provides IteratorApi"},
+    {"from": "iteratorapi", "to": "evaluator", "label": "create kernel"},
+    {"from": "evaluator", "to": "planconv", "label": "JNI call"},
+    {"from": "planconv", "to": "resultiter", "label": "Velox operator tree"},
+    {"from": "resultiter", "to": "batches", "label": "columnar batches"}
+  ]
+}
