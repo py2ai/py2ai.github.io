@@ -1,0 +1,74 @@
+flowchart TD
+
+subgraph group_g_api["Public API &#40;main.c / legacy.c / prepare.c&#41;"]
+  node_exec["sqlite3_exec<br/>[legacy.c]"]
+  node_prepare["sqlite3_prepare_v2<br/>[prepare.c]"]
+end
+
+subgraph group_g_compile["Tokenizer &amp; Lemon Parser"]
+  node_tokenize["sqlite3RunParser<br/>[tokenize.c]"]
+  node_grammar["sqlite3Parser<br/>[parse.y]"]
+end
+
+subgraph group_g_codegen["Code Generation &amp; Planning"]
+  node_build["sqlite3StartTable<br/>[build.c]"]
+  node_planner["sqlite3WhereBegin<br/>[where.c]"]
+end
+
+subgraph group_g_vm["VDBE Virtual Machine"]
+  node_vdbe{{"sqlite3VdbeExec<br/>[vdbe.c]"}}
+end
+
+subgraph group_g_storage["B-Tree · Pager · WAL · VFS"]
+  node_btree[("sqlite3BtreeBeginTrans<br/>[btree.c]")]
+  node_pager[("sqlite3PagerSharedLock<br/>[pager.c]")]
+  node_wal[("sqlite3WalFrames<br/>[wal.c]")]
+  node_vfs[("unixRead<br/>[os_unix.c]")]
+end
+
+subgraph group_g_mem["Memory &amp; Allocation"]
+  node_mem["sqlite3_malloc64<br/>[malloc.c]"]
+end
+
+node_exec -->|"prepare_v2 per statement"| node_prepare
+node_prepare -->|"SQL text in, tokens out"| node_tokenize
+node_tokenize -->|"tokens drive the LALR parser"| node_grammar
+node_grammar -->|"DDL actions build schema objects"| node_build
+node_grammar -->|"query statements are planned here"| node_planner
+node_build -->|"DDL emits opcodes"| node_vdbe
+node_planner -->|"plan lowered to VDBE program"| node_vdbe
+node_prepare -->|"sqlite3VdbeMakeReady"| node_vdbe
+node_vdbe -->|"cursor &amp; transaction opcodes"| node_btree
+node_vdbe -.->|"registers, cursors, scratch"| node_mem
+node_btree -->|"page fetch/dirty via pager"| node_pager
+node_btree -.->|"page cache allocations"| node_mem
+node_pager -->|"WAL mode: append frames"| node_wal
+node_pager -->|"unixRead/unixWrite"| node_vfs
+node_wal -->|"-wal file I/O"| node_vfs
+
+click node_exec "https://github.com/sqlite/sqlite/blob/master/src/legacy.c"
+click node_prepare "https://github.com/sqlite/sqlite/blob/master/src/prepare.c"
+click node_tokenize "https://github.com/sqlite/sqlite/blob/master/src/tokenize.c"
+click node_grammar "https://github.com/sqlite/sqlite/blob/master/src/parse.y"
+click node_build "https://github.com/sqlite/sqlite/blob/master/src/build.c"
+click node_planner "https://github.com/sqlite/sqlite/blob/master/src/where.c"
+click node_vdbe "https://github.com/sqlite/sqlite/blob/master/src/vdbe.c"
+click node_btree "https://github.com/sqlite/sqlite/blob/master/src/btree.c"
+click node_pager "https://github.com/sqlite/sqlite/blob/master/src/pager.c"
+click node_wal "https://github.com/sqlite/sqlite/blob/master/src/wal.c"
+click node_mem "https://github.com/sqlite/sqlite/blob/master/src/malloc.c"
+click node_vfs "https://github.com/sqlite/sqlite/blob/master/src/os_unix.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_exec,node_prepare toneBlue
+class node_tokenize,node_grammar toneAmber
+class node_build,node_planner toneMint
+class node_vdbe toneRose
+class node_btree,node_pager,node_wal,node_vfs toneIndigo
+class node_mem toneTeal
