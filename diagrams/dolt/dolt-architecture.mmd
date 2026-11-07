@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_cli["CLI Commands"]
+  node_sql_cmd["SqlCmd<br/>[sql.go]"]
+  node_add_cmd["AddCmd<br/>[add.go]"]
+  node_commit_cmd["CommitCmd<br/>[commit.go]"]
+  node_diff_cmd["DiffCmd<br/>[diff.go]"]
+  node_server_cmd["SqlServerCmd<br/>[sqlserver.go]"]
+end
+
+subgraph group_sqle["SQL Engine"]
+  node_dolt_session["DoltSession<br/>[session.go]"]
+  node_db_provider["doltDatabase provider<br/>[database.go]"]
+  node_prolly_index["prollyIndexIter"]
+end
+
+subgraph group_core["Dolt Version Core"]
+  node_stage_tables["StageTables<br/>[staged.go]"]
+  node_commit_staged["GetCommitStaged<br/>[commit.go]"]
+  node_commit_spec["CommitSpec<br/>[commit_spec.go]"]
+  node_ancestor_spec["AncestorSpec<br/>[ancestor_spec.go]"]
+  node_dolt_db["DoltDB<br/>[doltdb.go]"]
+  node_doltdb_commit["Commit<br/>[commit.go]"]
+  node_root_val["RootValue<br/>[root_val.go]"]
+  node_dolt_table["Table<br/>[table.go]"]
+  node_working_set["WorkingSet<br/>[workingset.go]"]
+  node_schema["Schema<br/>[schema.go]"]
+end
+
+subgraph group_prolly["Prolly Trees"]
+  node_prolly_map["prolly.Map<br/>[tuple_map.go]"]
+  node_mutable_map["MutableMap"]
+  node_tree_mutator["ApplyMutations<br/>[mutator.go]"]
+  node_node["tree.Node<br/>[node.go]"]
+  node_node_store["NodeStore<br/>[node_store.go]"]
+  node_serializer["ProllyMapSerializer<br/>[prolly_map.go]"]
+end
+
+subgraph group_chunks["Chunks, NBS &amp; Datas"]
+  node_chunk["Chunk<br/>[chunk.go]"]
+  node_chunk_store["ChunkStore<br/>[chunk_store.go]"]
+  node_hash["hash.Hash<br/>[hash.go]"]
+  node_nbs_store["NomsBlockStore<br/>[store.go]"]
+  node_file_manifest["fileManifest<br/>[file_manifest.go]"]
+  node_chunk_source["chunkSource<br/>[table.go]"]
+  node_journal["journalWriter<br/>[journal_writer.go]"]
+  node_datas_db["datas.Database<br/>[database.go]"]
+  node_dataset["Dataset<br/>[dataset.go]"]
+  node_commit_meta["CommitMeta<br/>[commit_meta.go]"]
+end
+
+node_sql_cmd -->|"runs queries"| node_dolt_session
+node_server_cmd -->|"wire connections"| node_dolt_session
+node_dolt_session -->|"resolves databases"| node_db_provider
+node_db_provider -->|"reads/writes roots"| node_root_val
+node_db_provider -->|"index scans"| node_prolly_index
+node_prolly_index -->|"indexes as maps"| node_prolly_map
+node_add_cmd -->|"stage changes"| node_stage_tables
+node_commit_cmd -->|"commit flow"| node_commit_staged
+node_diff_cmd -->|"working vs HEAD"| node_working_set
+node_stage_tables -->|"updates staged root"| node_working_set
+node_commit_staged -->|"reads working+staged"| node_working_set
+node_commit_staged -->|"NewCommitMeta"| node_commit_meta
+node_commit_cmd -->|"NewCommitSpec"| node_commit_spec
+node_commit_spec -->|"~ and ^ suffixes"| node_ancestor_spec
+node_commit_spec -->|"Resolve"| node_dolt_db
+node_dolt_db -->|"returns Commit"| node_doltdb_commit
+node_commit_staged -->|"DoltDB.Commit"| node_dolt_db
+node_doltdb_commit -->|"points at root"| node_root_val
+node_root_val -->|"GetTable"| node_dolt_table
+node_dolt_table -->|"column metadata"| node_schema
+node_working_set -->|"holds roots"| node_root_val
+node_root_val -->|"row data maps"| node_prolly_map
+node_prolly_map -->|"Mutate&#40;&#41;"| node_mutable_map
+node_mutable_map -->|"flush edits"| node_tree_mutator
+node_tree_mutator -->|"builds nodes"| node_node
+node_tree_mutator -->|"serialize messages"| node_serializer
+node_node -->|"cached nodes"| node_node_store
+node_node_store -->|"backed by chunks"| node_chunk_store
+node_serializer -->|"bytes -&gt; Chunks"| node_chunk
+node_chunk -->|"HashOf"| node_hash
+node_chunk_store -->|"NBS implements"| node_nbs_store
+node_nbs_store -->|"append chunks"| node_journal
+node_nbs_store -->|"table file registry"| node_file_manifest
+node_nbs_store -->|"read table files"| node_chunk_source
+node_dolt_db -->|"wraps Database"| node_datas_db
+node_datas_db -->|"heads &amp; refs"| node_dataset
+node_dataset -->|"workingSets refs"| node_working_set
+
+click node_sql_cmd "https://github.com/dolthub/dolt/blob/main/go/cmd/dolt/commands/sql.go"
+click node_add_cmd "https://github.com/dolthub/dolt/blob/main/go/cmd/dolt/commands/add.go"
+click node_commit_cmd "https://github.com/dolthub/dolt/blob/main/go/cmd/dolt/commands/commit.go"
+click node_diff_cmd "https://github.com/dolthub/dolt/blob/main/go/cmd/dolt/commands/diff.go"
+click node_server_cmd "https://github.com/dolthub/dolt/blob/main/go/cmd/dolt/commands/sqlserver/sqlserver.go"
+click node_dolt_session "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/sqle/dsess/session.go"
+click node_db_provider "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/sqle/database.go"
+click node_prolly_index "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/sqle/index/prolly_index_iter.go"
+click node_stage_tables "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/env/actions/staged.go"
+click node_commit_staged "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/env/actions/commit.go"
+click node_commit_spec "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/commit_spec.go"
+click node_ancestor_spec "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/ancestor_spec.go"
+click node_dolt_db "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/doltdb.go"
+click node_doltdb_commit "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/commit.go"
+click node_root_val "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/root_val.go"
+click node_dolt_table "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/table.go"
+click node_working_set "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/doltdb/workingset.go"
+click node_schema "https://github.com/dolthub/dolt/blob/main/go/libraries/doltcore/schema/schema.go"
+click node_prolly_map "https://github.com/dolthub/dolt/blob/main/go/store/prolly/tuple_map.go"
+click node_mutable_map "https://github.com/dolthub/dolt/blob/main/go/store/prolly/tuple_mutable_map.go"
+click node_tree_mutator "https://github.com/dolthub/dolt/blob/main/go/store/prolly/tree/mutator.go"
+click node_node "https://github.com/dolthub/dolt/blob/main/go/store/prolly/tree/node.go"
+click node_node_store "https://github.com/dolthub/dolt/blob/main/go/store/prolly/tree/node_store.go"
+click node_serializer "https://github.com/dolthub/dolt/blob/main/go/store/prolly/message/prolly_map.go"
+click node_chunk "https://github.com/dolthub/dolt/blob/main/go/store/chunks/chunk.go"
+click node_chunk_store "https://github.com/dolthub/dolt/blob/main/go/store/chunks/chunk_store.go"
+click node_hash "https://github.com/dolthub/dolt/blob/main/go/store/hash/hash.go"
+click node_nbs_store "https://github.com/dolthub/dolt/blob/main/go/store/nbs/store.go"
+click node_file_manifest "https://github.com/dolthub/dolt/blob/main/go/store/nbs/file_manifest.go"
+click node_chunk_source "https://github.com/dolthub/dolt/blob/main/go/store/nbs/table.go"
+click node_journal "https://github.com/dolthub/dolt/blob/main/go/store/nbs/journal_writer.go"
+click node_datas_db "https://github.com/dolthub/dolt/blob/main/go/store/datas/database.go"
+click node_dataset "https://github.com/dolthub/dolt/blob/main/go/store/datas/dataset.go"
+click node_commit_meta "https://github.com/dolthub/dolt/blob/main/go/store/datas/commit_meta.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_sql_cmd,node_add_cmd,node_commit_cmd,node_diff_cmd,node_server_cmd toneBlue
+class node_dolt_session,node_db_provider,node_prolly_index toneAmber
+class node_stage_tables,node_commit_staged,node_commit_spec,node_ancestor_spec,node_dolt_db,node_doltdb_commit,node_root_val,node_dolt_table,node_working_set,node_schema toneMint
+class node_prolly_map,node_mutable_map,node_tree_mutator,node_node,node_node_store,node_serializer toneRose
+class node_chunk,node_chunk_store,node_hash,node_nbs_store,node_file_manifest,node_chunk_source,node_journal,node_datas_db,node_dataset,node_commit_meta toneIndigo
