@@ -1,0 +1,141 @@
+{
+  "owner": "dgraph-io",
+  "repo": "badger",
+  "branch": "main",
+  "groups": [
+    { "id": "g_api", "name": "Client API", "label": "Client API & Transactions" },
+    { "id": "g_write", "name": "Write Path", "label": "Write Path (WAL, Skiplist, Value Log)" },
+    { "id": "g_flush", "name": "Flush", "label": "Flush & SST Building" },
+    { "id": "g_lsm", "name": "LSM", "label": "LSM Levels & Manifest" },
+    { "id": "g_read", "name": "Read Path", "label": "Read Path & Value Fetch" }
+  ],
+  "nodes": [
+    {
+      "id": "api_txn",
+      "label": "DB.NewTransaction / Txn",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Client API",
+      "groupId": "g_api",
+      "desc": "Users open ACID transactions with serializable snapshot isolation; keys are versioned with a commit timestamp."
+    },
+    {
+      "id": "oracle",
+      "label": "oracle (SSI conflict detection)",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Client API",
+      "groupId": "g_api",
+      "desc": "Tracks read/commit timestamps and committed key sets to detect read-write conflicts between transactions."
+    },
+    {
+      "id": "writech",
+      "label": "DB.doWrites worker",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Committed entries are batched into requests and funneled through a single write channel with throttling."
+    },
+    {
+      "id": "vlog",
+      "label": "valueLog.write (WiscKey value log)",
+      "file": "value.go",
+      "path": "value.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Values are appended sequentially to append-only value log files; the LSM only stores a valuePointer."
+    },
+    {
+      "id": "memtable",
+      "label": "memTable.Put + WAL logFile",
+      "file": "memtable.go",
+      "path": "memtable.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Each write goes into the active memtable and its write-ahead log (logFile) for crash recovery."
+    },
+    {
+      "id": "skl",
+      "label": "Skiplist.Put on Arena",
+      "file": "skl/skl.go",
+      "path": "skl/skl.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "The memtable is a lock-free skiplist backed by a pre-allocated arena buffer."
+    },
+    {
+      "id": "flusher",
+      "label": "DB.flushMemtable",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Flush",
+      "groupId": "g_flush",
+      "desc": "A dedicated goroutine drains flushChan, rotating full memtables into immutable ones and flushing them."
+    },
+    {
+      "id": "builder",
+      "label": "table.Builder (SST format)",
+      "file": "table/builder.go",
+      "path": "table/builder.go",
+      "group": "Flush",
+      "groupId": "g_flush",
+      "desc": "Builds sorted-string-tables: blocks with prefix compression, per-block checksums, index and bloom filter."
+    },
+    {
+      "id": "levels",
+      "label": "levelsController (L0 + compaction)",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Manages the level hierarchy: registers L0 tables, picks compaction priorities and runs compactors."
+    },
+    {
+      "id": "manifest",
+      "label": "Manifest changes",
+      "file": "manifest.go",
+      "path": "manifest.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Every table create/delete is journaled as a ManifestChangeSet so the LSM tree can be rebuilt on restart."
+    },
+    {
+      "id": "reader",
+      "label": "DB.get / Txn.Get",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Reads probe memtables newest-first, then descend the levels; values are fetched from the value log."
+    },
+    {
+      "id": "mergeiter",
+      "label": "MergeIterator",
+      "file": "table/merge_iterator.go",
+      "path": "table/merge_iterator.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Heap-merges iterators from memtables and every level, exposing the newest version of each key."
+    }
+  ],
+  "edges": [
+    { "from": "api_txn", "to": "oracle", "label": "readTs / commitTs" },
+    { "from": "api_txn", "to": "writech", "label": "Txn.commitAndSend" },
+    { "from": "writech", "to": "vlog", "label": "vlog.write appends values" },
+    { "from": "writech", "to": "memtable", "label": "writeToLSM" },
+    { "from": "memtable", "to": "skl", "label": "arena-backed skiplist" },
+    { "from": "memtable", "to": "flusher", "label": "full memtable -> flushChan" },
+    { "from": "flusher", "to": "builder", "label": "iterate skiplist, build L0 table" },
+    { "from": "builder", "to": "levels", "label": "levelsController.addLevel0Table" },
+    { "from": "levels", "to": "builder", "label": "compaction rebuilds tables" },
+    { "from": "levels", "to": "manifest", "label": "buildChangeSet" },
+    { "from": "flusher", "to": "manifest", "label": "table create change" },
+    { "from": "api_txn", "to": "reader", "label": "Txn.Get" },
+    { "from": "reader", "to": "memtable", "label": "memtable lookup first" },
+    { "from": "reader", "to": "vlog", "label": "vlog.Read via valuePointer" },
+    { "from": "reader", "to": "levels", "label": "levelsController.get" },
+    { "from": "levels", "to": "mergeiter", "label": "appendIterators" },
+    { "from": "mergeiter", "to": "reader", "label": "newest version wins" }
+  ]
+}

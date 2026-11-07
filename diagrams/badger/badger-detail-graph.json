@@ -1,0 +1,357 @@
+{
+  "owner": "dgraph-io",
+  "repo": "badger",
+  "branch": "main",
+  "groups": [
+    { "id": "g_txn", "name": "Transactions", "label": "Transactions & SSI" },
+    { "id": "g_write", "name": "Write Path", "label": "Write Path: WAL, Skiplist, Value Log" },
+    { "id": "g_sst", "name": "Flush", "label": "Flush & SST Building" },
+    { "id": "g_lsm", "name": "LSM", "label": "Levels, Compaction & Manifest" },
+    { "id": "g_read", "name": "Read Path", "label": "Read Path & Value Fetch" }
+  ],
+  "nodes": [
+    {
+      "id": "new_txn",
+      "label": "DB.NewTransaction",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Transactions",
+      "groupId": "g_txn",
+      "desc": "Starts a pending transaction and grabs a read timestamp (readTs) from the oracle."
+    },
+    {
+      "id": "oracle",
+      "label": "oracle struct",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Transactions",
+      "groupId": "g_txn",
+      "desc": "Central SSI authority: hands out readTs, assigns commitTs, and remembers recently committed keys."
+    },
+    {
+      "id": "new_commit_ts",
+      "label": "oracle.newCommitTs",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Transactions",
+      "groupId": "g_txn",
+      "desc": "Assigns the commit timestamp and the next readTs after a transaction passes conflict checks."
+    },
+    {
+      "id": "has_conflict",
+      "label": "oracle.hasConflict",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Transactions",
+      "groupId": "g_txn",
+      "desc": "Compares a transaction's read keys against keys committed since its readTs to reject conflicts."
+    },
+    {
+      "id": "commit_and_send",
+      "label": "Txn.commitAndSend",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Transactions",
+      "groupId": "g_txn",
+      "desc": "Serializes conflict detection, stamps entries with the commit version and hands them to the write path."
+    },
+    {
+      "id": "batch_set",
+      "label": "DB.batchSet",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Collects entries into a pooled request and enqueues it on the write channel."
+    },
+    {
+      "id": "do_writes",
+      "label": "DB.doWrites",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Goroutine that pulls requests from writeCh and applies them with throttling."
+    },
+    {
+      "id": "write_requests",
+      "label": "DB.writeRequests",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Writes each request to the value log and the LSM, then applies backpressure when memtables pile up."
+    },
+    {
+      "id": "vlog_write",
+      "label": "valueLog.write",
+      "file": "value.go",
+      "path": "value.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Appends entries to the head value-log file, rolling to a new file past ValueLogFileSize (~1GB default)."
+    },
+    {
+      "id": "value_pointer",
+      "label": "valuePointer struct",
+      "file": "structs.go",
+      "path": "structs.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Tiny {fid, offset, len} handle written into the LSM in place of large values (WiscKey separation)."
+    },
+    {
+      "id": "write_to_lsm",
+      "label": "DB.writeToLSM",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Puts every entry (key versioned with KeyWithTs) into the active memtable, storing vptrs for spilled values."
+    },
+    {
+      "id": "mt_put",
+      "label": "memTable.Put",
+      "file": "memtable.go",
+      "path": "memtable.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Encodes the entry into the WAL, then inserts key+value (or vptr) into the skiplist."
+    },
+    {
+      "id": "wal_encode",
+      "label": "logFile.encodeEntry (WAL)",
+      "file": "memtable.go",
+      "path": "memtable.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Memtable WAL is itself a logFile: length-prefixed, CRC-checked records replayed on startup."
+    },
+    {
+      "id": "skl_put",
+      "label": "Skiplist.Put",
+      "file": "skl/skl.go",
+      "path": "skl/skl.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Lock-free skiplist insert using findSpliceForLevel across tower levels."
+    },
+    {
+      "id": "arena_put_node",
+      "label": "Arena.putNode",
+      "file": "skl/arena.go",
+      "path": "skl/arena.go",
+      "group": "Write Path",
+      "groupId": "g_write",
+      "desc": "Bump-allocator arena: nodes, keys and values live in one big buffer; offsets replace pointers."
+    },
+    {
+      "id": "flush_memtable",
+      "label": "DB.flushMemtable",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Flush",
+      "groupId": "g_sst",
+      "desc": "Serial flush goroutine: takes full memtables from flushChan and streams them into level-0 tables."
+    },
+    {
+      "id": "replay",
+      "label": "memTable.replayFunction",
+      "file": "memtable.go",
+      "path": "memtable.go",
+      "group": "Flush",
+      "groupId": "g_sst",
+      "desc": "Replays WAL entries on open so unflushed writes survive crashes."
+    },
+    {
+      "id": "builder_add",
+      "label": "Builder.Add",
+      "file": "table/builder.go",
+      "path": "table/builder.go",
+      "group": "Flush",
+      "groupId": "g_sst",
+      "desc": "Adds keys with prefix compression; closes blocks when shouldFinishBlock says they are full."
+    },
+    {
+      "id": "build_index",
+      "label": "Builder.buildIndex",
+      "file": "table/builder.go",
+      "path": "table/builder.go",
+      "group": "Flush",
+      "groupId": "g_sst",
+      "desc": "Emits a flatbuffer TableIndex: block offsets, max versions, bloom filter length."
+    },
+    {
+      "id": "open_table",
+      "label": "OpenTable",
+      "file": "table/table.go",
+      "path": "table/table.go",
+      "group": "Flush",
+      "groupId": "g_sst",
+      "desc": "Memory-maps an SST, parses the index and registers block/index caches."
+    },
+    {
+      "id": "add_l0",
+      "label": "levelsController.addLevel0Table",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Installs a flushed table into L0; signals the flush throttle when L0 is drained."
+    },
+    {
+      "id": "pick_compact",
+      "label": "pickCompactLevels",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Ranks compaction priorities from L0 backlog and level-size overshoot (levelTargets)."
+    },
+    {
+      "id": "subcompact",
+      "label": "subcompact",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Streams one key range of a compactDef through iterators, dropping stale versions and tombstones."
+    },
+    {
+      "id": "compact_build",
+      "label": "compactBuildTables",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Merges overlapping inputs into new tables with addSplits boundaries."
+    },
+    {
+      "id": "build_changeset",
+      "label": "buildChangeSet",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Produces the ManifestChangeSet describing created and deleted tables."
+    },
+    {
+      "id": "manifest",
+      "label": "Manifest",
+      "file": "manifest.go",
+      "path": "manifest.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Append-only journal of the LSM tree layout; ReplayManifestFile rebuilds it at startup."
+    },
+    {
+      "id": "apply_changeset",
+      "label": "applyChangeSet",
+      "file": "manifest.go",
+      "path": "manifest.go",
+      "group": "LSM",
+      "groupId": "g_lsm",
+      "desc": "Validates and applies each ManifestChange, then journals it to disk."
+    },
+    {
+      "id": "txn_get",
+      "label": "Txn.Get",
+      "file": "txn.go",
+      "path": "txn.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Looks up uncommitted pending writes first, then resolves the versioned key against the DB."
+    },
+    {
+      "id": "db_get",
+      "label": "DB.get",
+      "file": "db.go",
+      "path": "db.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Probes all memtables for the key version, then falls through to levelsController.get."
+    },
+    {
+      "id": "lc_get",
+      "label": "levelsController.get",
+      "file": "levels.go",
+      "path": "levels.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Descends levels newest to oldest; each levelHandler.get consults per-table bloom filters."
+    },
+    {
+      "id": "table_block",
+      "label": "Table.block",
+      "file": "table/table.go",
+      "path": "table/table.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Fetches (and caches) an SST block, then binary-searches it for the versioned key."
+    },
+    {
+      "id": "merge_iterator",
+      "label": "NewMergeIterator",
+      "file": "table/merge_iterator.go",
+      "path": "table/merge_iterator.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Heap over memtable and per-level iterators feeding the user-facing Iterator."
+    },
+    {
+      "id": "yield_value",
+      "label": "Item.yieldItemValue",
+      "file": "iterator.go",
+      "path": "iterator.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Resolves an Item's value: inline bytes, cached value, or a value-log read."
+    },
+    {
+      "id": "vlog_read",
+      "label": "valueLog.Read",
+      "file": "value.go",
+      "path": "value.go",
+      "group": "Read Path",
+      "groupId": "g_read",
+      "desc": "Reads value bytes at a valuePointer from the mmap-backed log file, verifying CRC."
+    }
+  ],
+  "edges": [
+    { "from": "new_txn", "to": "oracle", "label": "acquire readTs" },
+    { "from": "new_txn", "to": "commit_and_send", "label": "Set/Get then Commit" },
+    { "from": "commit_and_send", "to": "has_conflict", "label": "SSI check" },
+    { "from": "commit_and_send", "to": "new_commit_ts", "label": "assign commitTs" },
+    { "from": "commit_and_send", "to": "batch_set", "label": "entries -> writeCh" },
+    { "from": "batch_set", "to": "do_writes", "label": "pooled requests" },
+    { "from": "do_writes", "to": "write_requests", "label": "apply requests" },
+    { "from": "write_requests", "to": "vlog_write", "label": "append values first" },
+    { "from": "vlog_write", "to": "value_pointer", "label": "emit {fid, offset, len}" },
+    { "from": "value_pointer", "to": "vlog_read", "label": "locate value bytes" },
+    { "from": "write_requests", "to": "write_to_lsm", "label": "then LSM" },
+    { "from": "write_to_lsm", "to": "mt_put", "label": "KeyWithTs entries" },
+    { "from": "mt_put", "to": "wal_encode", "label": "CRC record to WAL" },
+    { "from": "mt_put", "to": "skl_put", "label": "skiplist insert" },
+    { "from": "skl_put", "to": "arena_put_node", "label": "bump-allocate node" },
+    { "from": "mt_put", "to": "flush_memtable", "label": "full -> flushChan" },
+    { "from": "flush_memtable", "to": "replay", "label": "WAL recovery on open" },
+    { "from": "flush_memtable", "to": "builder_add", "label": "iterate skiplist" },
+    { "from": "builder_add", "to": "build_index", "label": "block offsets + index" },
+    { "from": "flush_memtable", "to": "open_table", "label": "mmap finished SST" },
+    { "from": "open_table", "to": "add_l0", "label": "register in L0" },
+    { "from": "add_l0", "to": "pick_compact", "label": "compaction priority" },
+    { "from": "pick_compact", "to": "subcompact", "label": "compactDef ranges" },
+    { "from": "subcompact", "to": "compact_build", "label": "merge stream" },
+    { "from": "compact_build", "to": "builder_add", "label": "write new SSTs" },
+    { "from": "compact_build", "to": "build_changeset", "label": "table create/delete" },
+    { "from": "build_changeset", "to": "apply_changeset", "label": "journal change" },
+    { "from": "apply_changeset", "to": "manifest", "label": "persist layout" },
+    { "from": "flush_memtable", "to": "apply_changeset", "label": "L0 table change" },
+    { "from": "txn_get", "to": "db_get", "label": "versioned key" },
+    { "from": "db_get", "to": "lc_get", "label": "after memtables" },
+    { "from": "lc_get", "to": "table_block", "label": "bloom -> block read" },
+    { "from": "txn_get", "to": "merge_iterator", "label": "range scans" },
+    { "from": "merge_iterator", "to": "yield_value", "label": "newest Item" },
+    { "from": "yield_value", "to": "vlog_read", "label": "fetch via vptr" }
+  ]
+}

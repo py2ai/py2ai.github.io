@@ -1,0 +1,134 @@
+flowchart TD
+
+subgraph group_g_txn["Transactions &amp; SSI"]
+  node_new_txn["DB.NewTransaction<br/>[txn.go]"]
+  node_oracle["oracle struct<br/>[txn.go]"]
+  node_new_commit_ts["oracle.newCommitTs<br/>[txn.go]"]
+  node_has_conflict["oracle.hasConflict<br/>[txn.go]"]
+  node_commit_and_send["Txn.commitAndSend<br/>[txn.go]"]
+end
+
+subgraph group_g_write["Write Path: WAL, Skiplist, Value Log"]
+  node_batch_set["DB.batchSet<br/>[db.go]"]
+  node_do_writes["DB.doWrites<br/>[db.go]"]
+  node_write_requests["DB.writeRequests<br/>[db.go]"]
+  node_vlog_write["valueLog.write<br/>[value.go]"]
+  node_value_pointer["valuePointer struct<br/>[structs.go]"]
+  node_write_to_lsm["DB.writeToLSM<br/>[db.go]"]
+  node_mt_put["memTable.Put<br/>[memtable.go]"]
+  node_wal_encode["logFile.encodeEntry &#40;WAL&#41;<br/>[memtable.go]"]
+  node_skl_put["Skiplist.Put<br/>[skl.go]"]
+  node_arena_put_node["Arena.putNode<br/>[arena.go]"]
+end
+
+subgraph group_g_sst["Flush &amp; SST Building"]
+  node_flush_memtable["DB.flushMemtable<br/>[db.go]"]
+  node_replay["memTable.replayFunction<br/>[memtable.go]"]
+  node_builder_add["Builder.Add<br/>[builder.go]"]
+  node_build_index["Builder.buildIndex<br/>[builder.go]"]
+  node_open_table["OpenTable<br/>[table.go]"]
+end
+
+subgraph group_g_lsm["Levels, Compaction &amp; Manifest"]
+  node_add_l0["levelsController.addLevel0Table<br/>[levels.go]"]
+  node_pick_compact["pickCompactLevels<br/>[levels.go]"]
+  node_subcompact["subcompact<br/>[levels.go]"]
+  node_compact_build["compactBuildTables<br/>[levels.go]"]
+  node_build_changeset["buildChangeSet<br/>[levels.go]"]
+  node_manifest["Manifest<br/>[manifest.go]"]
+  node_apply_changeset["applyChangeSet<br/>[manifest.go]"]
+end
+
+subgraph group_g_read["Read Path &amp; Value Fetch"]
+  node_txn_get["Txn.Get<br/>[txn.go]"]
+  node_db_get["DB.get<br/>[db.go]"]
+  node_lc_get["levelsController.get<br/>[levels.go]"]
+  node_table_block["Table.block<br/>[table.go]"]
+  node_merge_iterator["NewMergeIterator<br/>[merge_iterator.go]"]
+  node_yield_value["Item.yieldItemValue<br/>[iterator.go]"]
+  node_vlog_read["valueLog.Read<br/>[value.go]"]
+end
+
+node_new_txn -->|"acquire readTs"| node_oracle
+node_new_txn -->|"Set/Get then Commit"| node_commit_and_send
+node_commit_and_send -->|"SSI check"| node_has_conflict
+node_commit_and_send -->|"assign commitTs"| node_new_commit_ts
+node_commit_and_send -->|"entries -&gt; writeCh"| node_batch_set
+node_batch_set -->|"pooled requests"| node_do_writes
+node_do_writes -->|"apply requests"| node_write_requests
+node_write_requests -->|"append values first"| node_vlog_write
+node_vlog_write -->|"emit &#123;fid, offset, len&#125;"| node_value_pointer
+node_value_pointer -->|"locate value bytes"| node_vlog_read
+node_write_requests -->|"then LSM"| node_write_to_lsm
+node_write_to_lsm -->|"KeyWithTs entries"| node_mt_put
+node_mt_put -->|"CRC record to WAL"| node_wal_encode
+node_mt_put -->|"skiplist insert"| node_skl_put
+node_skl_put -->|"bump-allocate node"| node_arena_put_node
+node_mt_put -->|"full -&gt; flushChan"| node_flush_memtable
+node_flush_memtable -->|"WAL recovery on open"| node_replay
+node_flush_memtable -->|"iterate skiplist"| node_builder_add
+node_builder_add -->|"block offsets + index"| node_build_index
+node_flush_memtable -->|"mmap finished SST"| node_open_table
+node_open_table -->|"register in L0"| node_add_l0
+node_add_l0 -->|"compaction priority"| node_pick_compact
+node_pick_compact -->|"compactDef ranges"| node_subcompact
+node_subcompact -->|"merge stream"| node_compact_build
+node_compact_build -->|"write new SSTs"| node_builder_add
+node_compact_build -->|"table create/delete"| node_build_changeset
+node_build_changeset -->|"journal change"| node_apply_changeset
+node_apply_changeset -->|"persist layout"| node_manifest
+node_flush_memtable -->|"L0 table change"| node_apply_changeset
+node_txn_get -->|"versioned key"| node_db_get
+node_db_get -->|"after memtables"| node_lc_get
+node_lc_get -->|"bloom -&gt; block read"| node_table_block
+node_txn_get -->|"range scans"| node_merge_iterator
+node_merge_iterator -->|"newest Item"| node_yield_value
+node_yield_value -->|"fetch via vptr"| node_vlog_read
+
+click node_new_txn "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_oracle "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_new_commit_ts "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_has_conflict "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_commit_and_send "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_batch_set "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_do_writes "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_write_requests "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_vlog_write "https://github.com/dgraph-io/badger/blob/main/value.go"
+click node_value_pointer "https://github.com/dgraph-io/badger/blob/main/structs.go"
+click node_write_to_lsm "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_mt_put "https://github.com/dgraph-io/badger/blob/main/memtable.go"
+click node_wal_encode "https://github.com/dgraph-io/badger/blob/main/memtable.go"
+click node_skl_put "https://github.com/dgraph-io/badger/blob/main/skl/skl.go"
+click node_arena_put_node "https://github.com/dgraph-io/badger/blob/main/skl/arena.go"
+click node_flush_memtable "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_replay "https://github.com/dgraph-io/badger/blob/main/memtable.go"
+click node_builder_add "https://github.com/dgraph-io/badger/blob/main/table/builder.go"
+click node_build_index "https://github.com/dgraph-io/badger/blob/main/table/builder.go"
+click node_open_table "https://github.com/dgraph-io/badger/blob/main/table/table.go"
+click node_add_l0 "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_pick_compact "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_subcompact "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_compact_build "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_build_changeset "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_manifest "https://github.com/dgraph-io/badger/blob/main/manifest.go"
+click node_apply_changeset "https://github.com/dgraph-io/badger/blob/main/manifest.go"
+click node_txn_get "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_db_get "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_lc_get "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_table_block "https://github.com/dgraph-io/badger/blob/main/table/table.go"
+click node_merge_iterator "https://github.com/dgraph-io/badger/blob/main/table/merge_iterator.go"
+click node_yield_value "https://github.com/dgraph-io/badger/blob/main/iterator.go"
+click node_vlog_read "https://github.com/dgraph-io/badger/blob/main/value.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_new_txn,node_oracle,node_new_commit_ts,node_has_conflict,node_commit_and_send toneBlue
+class node_batch_set,node_do_writes,node_write_requests,node_vlog_write,node_value_pointer,node_write_to_lsm,node_mt_put,node_wal_encode,node_skl_put,node_arena_put_node toneAmber
+class node_flush_memtable,node_replay,node_builder_add,node_build_index,node_open_table toneMint
+class node_add_l0,node_pick_compact,node_subcompact,node_compact_build,node_build_changeset,node_manifest,node_apply_changeset toneRose
+class node_txn_get,node_db_get,node_lc_get,node_table_block,node_merge_iterator,node_yield_value,node_vlog_read toneIndigo
