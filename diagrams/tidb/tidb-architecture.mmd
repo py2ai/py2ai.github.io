@@ -1,0 +1,119 @@
+flowchart TD
+
+subgraph group_proto["MySQL Protocol Layer"]
+  node_server_run["Server.Run<br/>[server.go]"]
+  node_conn_run["clientConn.Run<br/>[conn.go]"]
+  node_conn_dispatch["dispatch<br/>[conn.go]"]
+  node_exec_stmt["ExecStmt.Exec<br/>[adapter.go]"]
+end
+
+subgraph group_session["Session &amp; Txn Control"]
+  node_session_exec["session.ExecuteStmt<br/>[session.go]"]
+  node_session_commit["doCommit / doCommitWithRetry<br/>[session.go]"]
+  node_tikv_txn["tikvTxn — 2PC commit<br/>[txn_driver.go]"]
+end
+
+subgraph group_plan["SQL Planner"]
+  node_optimize["Optimize<br/>[optimize.go]"]
+  node_plan_build["PlanBuilder.Build<br/>[planbuilder.go]"]
+  node_logical_build["buildSelect"]
+  node_find_best["findBestTask<br/>[find_best_task.go]"]
+end
+
+subgraph group_stats["Table Statistics"]
+  node_histogram["Histogram / Bucket<br/>[histogram.go]"]
+end
+
+subgraph group_exec["Volcano Executor Tree"]
+  node_exec_builder["executorBuilder<br/>[builder.go]"]
+  node_exec_iface["Executor interface<br/>[executor.go]"]
+  node_point_get["PointGetExecutor<br/>[point_get.go]"]
+  node_table_reader["TableReaderExecutor<br/>[table_reader.go]"]
+  node_index_reader["IndexReader / IndexLookUp<br/>[distsql.go]"]
+  node_selection["SelectionExec<br/>[select.go]"]
+  node_projection["ProjectionExec<br/>[projection.go]"]
+end
+
+subgraph group_dist["DistSQL Request Layer"]
+  node_req_builder["RequestBuilder<br/>[request_builder.go]"]
+  node_distsql_select["distsql.Select<br/>[distsql.go]"]
+end
+
+subgraph group_store["TiKV Client / Coprocessor"]
+  node_cop_task["buildCopTasks<br/>[coprocessor.go]"]
+  node_cop_iter["copIterator<br/>[coprocessor.go]"]
+  node_mpp_client["MPPClient — TiFlash<br/>[mpp.go]"]
+  node_tikv_store["tikvStore<br/>[tikv_driver.go]"]
+  node_kv_iface["kv.Transaction / Snapshot / Storage<br/>[kv.go]"]
+end
+
+node_server_run -->|"newConn &#40;L294&#41;"| node_conn_run
+node_conn_run -->|"packet loop"| node_conn_dispatch
+node_conn_dispatch -->|"COM_QUERY → ExecStmt"| node_exec_stmt
+node_exec_stmt -->|"session.ExecuteStmt"| node_session_exec
+node_exec_stmt -->|"buildExecutor &#40;L1592&#41;"| node_optimize
+node_optimize -->|"cache miss"| node_plan_build
+node_plan_build -->|"buildSelect &#40;L4349&#41;"| node_logical_build
+node_logical_build -->|"logical → physical"| node_find_best
+node_histogram -.->|"row estimates"| node_find_best
+node_find_best -->|"best physical plan"| node_exec_builder
+node_exec_builder -->|"build &#40;L195&#41;"| node_exec_iface
+node_exec_builder -->|"PointGet plan"| node_point_get
+node_exec_builder -->|"TableScan plan"| node_table_reader
+node_exec_builder -->|"IndexScan plan"| node_index_reader
+node_exec_builder -->|"Selection plan"| node_selection
+node_exec_builder -->|"Projection plan"| node_projection
+node_selection -.->|"pulls chunks"| node_table_reader
+node_point_get -->|"snapshot Get"| node_kv_iface
+node_table_reader -->|"ranges + DAG"| node_req_builder
+node_index_reader -->|"index ranges"| node_req_builder
+node_req_builder -->|"kv.Request"| node_distsql_select
+node_distsql_select -->|"split by region"| node_cop_task
+node_cop_task -->|"schedule tasks"| node_cop_iter
+node_cop_task -.->|"MPP fragments &#40;TiFlash&#41;"| node_mpp_client
+node_cop_iter -->|"gRPC to TiKV"| node_tikv_store
+node_tikv_store -.->|"implements Storage"| node_kv_iface
+node_session_exec -->|"commit phase"| node_session_commit
+node_session_commit -->|"doCommit &#40;L540&#41;"| node_tikv_txn
+node_tikv_txn -.->|"implements Transaction"| node_kv_iface
+
+click node_server_run "https://github.com/pingcap/tidb/blob/master/pkg/server/server.go"
+click node_conn_run "https://github.com/pingcap/tidb/blob/master/pkg/server/conn.go"
+click node_conn_dispatch "https://github.com/pingcap/tidb/blob/master/pkg/server/conn.go"
+click node_exec_stmt "https://github.com/pingcap/tidb/blob/master/pkg/executor/adapter.go"
+click node_session_exec "https://github.com/pingcap/tidb/blob/master/pkg/session/session.go"
+click node_session_commit "https://github.com/pingcap/tidb/blob/master/pkg/session/session.go"
+click node_tikv_txn "https://github.com/pingcap/tidb/blob/master/pkg/store/driver/txn/txn_driver.go"
+click node_optimize "https://github.com/pingcap/tidb/blob/master/pkg/planner/optimize.go"
+click node_plan_build "https://github.com/pingcap/tidb/blob/master/pkg/planner/core/planbuilder.go"
+click node_logical_build "https://github.com/pingcap/tidb/blob/master/pkg/planner/core/logical_plan_builder.go"
+click node_find_best "https://github.com/pingcap/tidb/blob/master/pkg/planner/core/find_best_task.go"
+click node_histogram "https://github.com/pingcap/tidb/blob/master/pkg/statistics/histogram.go"
+click node_exec_builder "https://github.com/pingcap/tidb/blob/master/pkg/executor/builder.go"
+click node_exec_iface "https://github.com/pingcap/tidb/blob/master/pkg/executor/internal/exec/executor.go"
+click node_point_get "https://github.com/pingcap/tidb/blob/master/pkg/executor/point_get.go"
+click node_table_reader "https://github.com/pingcap/tidb/blob/master/pkg/executor/table_reader.go"
+click node_index_reader "https://github.com/pingcap/tidb/blob/master/pkg/executor/distsql.go"
+click node_selection "https://github.com/pingcap/tidb/blob/master/pkg/executor/select.go"
+click node_projection "https://github.com/pingcap/tidb/blob/master/pkg/executor/projection.go"
+click node_req_builder "https://github.com/pingcap/tidb/blob/master/pkg/distsql/request_builder.go"
+click node_distsql_select "https://github.com/pingcap/tidb/blob/master/pkg/distsql/distsql.go"
+click node_cop_task "https://github.com/pingcap/tidb/blob/master/pkg/store/copr/coprocessor.go"
+click node_cop_iter "https://github.com/pingcap/tidb/blob/master/pkg/store/copr/coprocessor.go"
+click node_mpp_client "https://github.com/pingcap/tidb/blob/master/pkg/store/copr/mpp.go"
+click node_tikv_store "https://github.com/pingcap/tidb/blob/master/pkg/store/driver/tikv_driver.go"
+click node_kv_iface "https://github.com/pingcap/tidb/blob/master/pkg/kv/kv.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_server_run,node_conn_run,node_conn_dispatch,node_exec_stmt,node_cop_task,node_cop_iter,node_mpp_client,node_tikv_store,node_kv_iface toneBlue
+class node_session_exec,node_session_commit,node_tikv_txn toneAmber
+class node_optimize,node_plan_build,node_logical_build,node_find_best toneMint
+class node_histogram toneRose
+class node_exec_builder,node_exec_iface,node_point_get,node_table_reader,node_index_reader,node_selection,node_projection toneIndigo
+class node_req_builder,node_distsql_select toneTeal

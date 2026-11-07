@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_proto["MySQL Protocol Layer"]
+  node_server_run["Server.Run — listener<br/>[server.go]"]
+  node_mysql_client{{"clientConn — MySQL wire<br/>[conn.go]"}}
+end
+
+subgraph group_session["Session &amp; Txn Control"]
+  node_session_exec["session.ExecuteStmt<br/>[session.go]"]
+end
+
+subgraph group_plan["SQL Planner"]
+  node_optimizer["Optimize — plan cache + costing<br/>[optimize.go]"]
+  node_plan_builder["PlanBuilder.Build<br/>[planbuilder.go]"]
+end
+
+subgraph group_exec["Volcano Executor Tree"]
+  node_exec_builder["executorBuilder.build<br/>[builder.go]"]
+  node_exec_next["Executor.Next tree<br/>[executor.go]"]
+end
+
+subgraph group_dist["DistSQL Request Layer"]
+  node_req_builder["RequestBuilder — kv.Request<br/>[request_builder.go]"]
+  node_distsql_select["distsql.Select<br/>[distsql.go]"]
+end
+
+subgraph group_store["TiKV Client / Coprocessor"]
+  node_coprocessor["copIterator — region tasks<br/>[coprocessor.go]"]
+  node_tikv_driver[("tikvStore / tikvTxn → TiKV<br/>[tikv_driver.go]")]
+end
+
+node_server_run -->|"accept → clientConn.Run"| node_mysql_client
+node_mysql_client -->|"dispatch → handleQuery"| node_session_exec
+node_session_exec -->|"ExecuteStmt → Optimize"| node_optimizer
+node_optimizer -->|"PlanBuilder.Build"| node_plan_builder
+node_plan_builder -->|"physical plan"| node_exec_builder
+node_exec_builder -->|"build&#40;&#41; → Executor.Next"| node_exec_next
+node_exec_next -->|"ranges + operators"| node_req_builder
+node_req_builder -->|"kv.Request &#40;DAG&#41;"| node_distsql_select
+node_distsql_select -->|"copIterator.Next"| node_coprocessor
+node_coprocessor -->|"gRPC coprocessor RPC"| node_tikv_driver
+node_exec_next -.->|"chunks → RecordSet"| node_session_exec
+node_session_exec -.->|"doCommitWithRetry &#40;2PC&#41;"| node_tikv_driver
+
+click node_server_run "https://github.com/pingcap/tidb/blob/master/pkg/server/server.go"
+click node_mysql_client "https://github.com/pingcap/tidb/blob/master/pkg/server/conn.go"
+click node_session_exec "https://github.com/pingcap/tidb/blob/master/pkg/session/session.go"
+click node_optimizer "https://github.com/pingcap/tidb/blob/master/pkg/planner/optimize.go"
+click node_plan_builder "https://github.com/pingcap/tidb/blob/master/pkg/planner/core/planbuilder.go"
+click node_exec_builder "https://github.com/pingcap/tidb/blob/master/pkg/executor/builder.go"
+click node_exec_next "https://github.com/pingcap/tidb/blob/master/pkg/executor/internal/exec/executor.go"
+click node_req_builder "https://github.com/pingcap/tidb/blob/master/pkg/distsql/request_builder.go"
+click node_distsql_select "https://github.com/pingcap/tidb/blob/master/pkg/distsql/distsql.go"
+click node_coprocessor "https://github.com/pingcap/tidb/blob/master/pkg/store/copr/coprocessor.go"
+click node_tikv_driver "https://github.com/pingcap/tidb/blob/master/pkg/store/driver/tikv_driver.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_server_run,node_mysql_client toneBlue
+class node_session_exec toneAmber
+class node_optimizer,node_plan_builder toneMint
+class node_exec_builder,node_exec_next toneRose
+class node_req_builder,node_distsql_select toneIndigo
+class node_coprocessor,node_tikv_driver toneTeal
