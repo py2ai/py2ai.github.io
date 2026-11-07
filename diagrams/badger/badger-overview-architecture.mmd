@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_g_api["Client API &amp; Transactions"]
+  node_api_txn["DB.NewTransaction / Txn<br/>[txn.go]"]
+  node_oracle["oracle &#40;SSI conflict detection&#41;<br/>[txn.go]"]
+end
+
+subgraph group_g_write["Write Path &#40;WAL, Skiplist, Value Log&#41;"]
+  node_writech["DB.doWrites worker<br/>[db.go]"]
+  node_vlog["valueLog.write &#40;WiscKey value log&#41;<br/>[value.go]"]
+  node_memtable["memTable.Put + WAL logFile<br/>[memtable.go]"]
+  node_skl["Skiplist.Put on Arena<br/>[skl.go]"]
+end
+
+subgraph group_g_flush["Flush &amp; SST Building"]
+  node_flusher["DB.flushMemtable<br/>[db.go]"]
+  node_builder["table.Builder &#40;SST format&#41;<br/>[builder.go]"]
+end
+
+subgraph group_g_lsm["LSM Levels &amp; Manifest"]
+  node_levels["levelsController &#40;L0 + compaction&#41;<br/>[levels.go]"]
+  node_manifest["Manifest changes<br/>[manifest.go]"]
+end
+
+subgraph group_g_read["Read Path &amp; Value Fetch"]
+  node_reader["DB.get / Txn.Get<br/>[db.go]"]
+  node_mergeiter["MergeIterator<br/>[merge_iterator.go]"]
+end
+
+node_api_txn -->|"readTs / commitTs"| node_oracle
+node_api_txn -->|"Txn.commitAndSend"| node_writech
+node_writech -->|"vlog.write appends values"| node_vlog
+node_writech -->|"writeToLSM"| node_memtable
+node_memtable -->|"arena-backed skiplist"| node_skl
+node_memtable -->|"full memtable -&gt; flushChan"| node_flusher
+node_flusher -->|"iterate skiplist, build L0 table"| node_builder
+node_builder -->|"levelsController.addLevel0Table"| node_levels
+node_levels -->|"compaction rebuilds tables"| node_builder
+node_levels -->|"buildChangeSet"| node_manifest
+node_flusher -->|"table create change"| node_manifest
+node_api_txn -->|"Txn.Get"| node_reader
+node_reader -->|"memtable lookup first"| node_memtable
+node_reader -->|"vlog.Read via valuePointer"| node_vlog
+node_reader -->|"levelsController.get"| node_levels
+node_levels -->|"appendIterators"| node_mergeiter
+node_mergeiter -->|"newest version wins"| node_reader
+
+click node_api_txn "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_oracle "https://github.com/dgraph-io/badger/blob/main/txn.go"
+click node_writech "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_vlog "https://github.com/dgraph-io/badger/blob/main/value.go"
+click node_memtable "https://github.com/dgraph-io/badger/blob/main/memtable.go"
+click node_skl "https://github.com/dgraph-io/badger/blob/main/skl/skl.go"
+click node_flusher "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_builder "https://github.com/dgraph-io/badger/blob/main/table/builder.go"
+click node_levels "https://github.com/dgraph-io/badger/blob/main/levels.go"
+click node_manifest "https://github.com/dgraph-io/badger/blob/main/manifest.go"
+click node_reader "https://github.com/dgraph-io/badger/blob/main/db.go"
+click node_mergeiter "https://github.com/dgraph-io/badger/blob/main/table/merge_iterator.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_txn,node_oracle toneBlue
+class node_writech,node_vlog,node_memtable,node_skl toneAmber
+class node_flusher,node_builder toneMint
+class node_levels,node_manifest toneRose
+class node_reader,node_mergeiter toneIndigo
