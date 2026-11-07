@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_g1["Client &amp; Supervisor"]
+  node_libpq["libpq PQconnectdb<br/>[fe-connect.c]"]
+  node_postmaster["PostmasterMain<br/>[postmaster.c]"]
+end
+
+subgraph group_g2["Backend Session"]
+  node_backend["exec_simple_query<br/>[postgres.c]"]
+  node_pgparse["pg_parse_query<br/>[postgres.c]"]
+end
+
+subgraph group_g3["Parse &amp; Rewrite"]
+  node_parser["raw_parser<br/>[parser.c]"]
+  node_analyzer["transformTopLevelStmt<br/>[analyze.c]"]
+  node_rewriter["QueryRewrite<br/>[rewriteHandler.c]"]
+end
+
+subgraph group_g4["Optimizer"]
+  node_planner["standard_planner<br/>[planner.c]"]
+  node_allpaths["make_one_rel<br/>[allpaths.c]"]
+  node_joinrels["make_join_rel<br/>[joinrels.c]"]
+  node_createplan["create_plan<br/>[createplan.c]"]
+end
+
+subgraph group_g5["Executor"]
+  node_execmain["ExecutorRun<br/>[execMain.c]"]
+  node_execproc["ExecProcNode dispatch<br/>[execProcnode.c]"]
+  node_seqscan["SeqNext<br/>[nodeSeqscan.c]"]
+  node_indexscan["IndexNext<br/>[nodeIndexscan.c]"]
+  node_hashjoin["ExecHashJoin<br/>[nodeHashjoin.c]"]
+  node_hashbuild["ExecHashTableCreate<br/>[nodeHash.c]"]
+  node_aggnode["agg_fill_hash_table<br/>[nodeAgg.c]"]
+  node_sortnode["ExecSort<br/>[nodeSort.c]"]
+  node_snapmgr["GetTransactionSnapshot<br/>[snapmgr.c]"]
+end
+
+subgraph group_g6["Buffers &amp; Heap &#40;MVCC&#41;"]
+  node_bufmgr["BufferAlloc<br/>[bufmgr.c]"]
+  node_buftable["BufTableLookup<br/>[buf_table.c]"]
+  node_freelist["StrategyGetBuffer<br/>[freelist.c]"]
+  node_heapam["heap_insert / heapgettup<br/>[heapam.c]"]
+  node_heapvis["HeapTupleSatisfiesMVCC"]
+end
+
+subgraph group_g7["WAL &amp; Recovery"]
+  node_xloginsert["XLogInsert<br/>[xloginsert.c]"]
+  node_xlog["CreateCheckPoint<br/>[xlog.c]"]
+  node_recovery["ApplyWalRecord<br/>[xlogrecovery.c]"]
+  node_clog["TransactionIdSetStatusBit<br/>[clog.c]"]
+end
+
+subgraph group_g8["Checkpoint &amp; Vacuum"]
+  node_checkpointer["CheckpointerMain<br/>[checkpointer.c]"]
+  node_autovac["AutoVacWorkerMain<br/>[autovacuum.c]"]
+  node_vacuum["heap_vacuum_rel<br/>[vacuumlazy.c]"]
+end
+
+node_libpq -->|"startup packet"| node_postmaster
+node_postmaster -->|"forks backend"| node_backend
+node_postmaster -->|"launches workers"| node_autovac
+node_backend -->|"raw SQL text"| node_pgparse
+node_pgparse -->|"invoke grammar"| node_parser
+node_parser -->|"raw parse tree"| node_analyzer
+node_analyzer -->|"Query tree"| node_rewriter
+node_rewriter -->|"rewritten Query"| node_planner
+node_planner -->|"build access paths"| node_allpaths
+node_allpaths -->|"join order search"| node_joinrels
+node_joinrels -->|"cheapest Path"| node_createplan
+node_createplan -->|"Plan tree"| node_execmain
+node_execmain -->|"query snapshot"| node_snapmgr
+node_snapmgr -->|"snapshot"| node_heapvis
+node_execmain -->|"pull tuples"| node_execproc
+node_execproc -->|"next tuple"| node_seqscan
+node_execproc -->|"next tuple"| node_indexscan
+node_execproc -->|"next tuple"| node_hashjoin
+node_execproc -->|"grouped input"| node_aggnode
+node_execproc -->|"ordered output"| node_sortnode
+node_hashjoin -->|"build hash table"| node_hashbuild
+node_seqscan -->|"heapgettup fetch"| node_heapam
+node_indexscan -->|"heap tuple fetch"| node_heapam
+node_heapam -->|"visibility check"| node_heapvis
+node_heapvis -->|"commit status"| node_clog
+node_heapam -->|"page access"| node_bufmgr
+node_bufmgr -->|"tag lookup"| node_buftable
+node_bufmgr -->|"victim buffer"| node_freelist
+node_heapam -->|"WAL before change"| node_xloginsert
+node_xloginsert -->|"records into WAL"| node_xlog
+node_checkpointer -->|"checkpoint record"| node_xlog
+node_xlog -->|"sync dirty pages"| node_bufmgr
+node_xlog -->|"replay on restart"| node_recovery
+node_autovac -->|"trigger vacuum"| node_vacuum
+node_vacuum -->|"scan dead tuples"| node_heapam
+node_vacuum -->|"WAL-logged cleanup"| node_xloginsert
+
+click node_libpq "https://github.com/postgres/postgres/blob/master/src/interfaces/libpq/fe-connect.c"
+click node_postmaster "https://github.com/postgres/postgres/blob/master/src/backend/postmaster/postmaster.c"
+click node_backend "https://github.com/postgres/postgres/blob/master/src/backend/tcop/postgres.c"
+click node_pgparse "https://github.com/postgres/postgres/blob/master/src/backend/tcop/postgres.c"
+click node_parser "https://github.com/postgres/postgres/blob/master/src/backend/parser/parser.c"
+click node_analyzer "https://github.com/postgres/postgres/blob/master/src/backend/parser/analyze.c"
+click node_rewriter "https://github.com/postgres/postgres/blob/master/src/backend/rewrite/rewriteHandler.c"
+click node_planner "https://github.com/postgres/postgres/blob/master/src/backend/optimizer/plan/planner.c"
+click node_allpaths "https://github.com/postgres/postgres/blob/master/src/backend/optimizer/path/allpaths.c"
+click node_joinrels "https://github.com/postgres/postgres/blob/master/src/backend/optimizer/path/joinrels.c"
+click node_createplan "https://github.com/postgres/postgres/blob/master/src/backend/optimizer/plan/createplan.c"
+click node_execmain "https://github.com/postgres/postgres/blob/master/src/backend/executor/execMain.c"
+click node_execproc "https://github.com/postgres/postgres/blob/master/src/backend/executor/execProcnode.c"
+click node_seqscan "https://github.com/postgres/postgres/blob/master/src/backend/executor/nodeSeqscan.c"
+click node_indexscan "https://github.com/postgres/postgres/blob/master/src/backend/executor/nodeIndexscan.c"
+click node_hashjoin "https://github.com/postgres/postgres/blob/master/src/backend/executor/nodeHashjoin.c"
+click node_hashbuild "https://github.com/postgres/postgres/blob/master/src/backend/executor/nodeHash.c"
+click node_aggnode "https://github.com/postgres/postgres/blob/master/src/backend/executor/nodeAgg.c"
+click node_sortnode "https://github.com/postgres/postgres/blob/master/src/backend/executor/nodeSort.c"
+click node_snapmgr "https://github.com/postgres/postgres/blob/master/src/backend/utils/time/snapmgr.c"
+click node_bufmgr "https://github.com/postgres/postgres/blob/master/src/backend/storage/buffer/bufmgr.c"
+click node_buftable "https://github.com/postgres/postgres/blob/master/src/backend/storage/buffer/buf_table.c"
+click node_freelist "https://github.com/postgres/postgres/blob/master/src/backend/storage/buffer/freelist.c"
+click node_heapam "https://github.com/postgres/postgres/blob/master/src/backend/access/heap/heapam.c"
+click node_heapvis "https://github.com/postgres/postgres/blob/master/src/backend/access/heap/heapam_visibility.c"
+click node_xloginsert "https://github.com/postgres/postgres/blob/master/src/backend/access/transam/xloginsert.c"
+click node_xlog "https://github.com/postgres/postgres/blob/master/src/backend/access/transam/xlog.c"
+click node_recovery "https://github.com/postgres/postgres/blob/master/src/backend/access/transam/xlogrecovery.c"
+click node_clog "https://github.com/postgres/postgres/blob/master/src/backend/access/transam/clog.c"
+click node_checkpointer "https://github.com/postgres/postgres/blob/master/src/backend/postmaster/checkpointer.c"
+click node_autovac "https://github.com/postgres/postgres/blob/master/src/backend/postmaster/autovacuum.c"
+click node_vacuum "https://github.com/postgres/postgres/blob/master/src/backend/access/heap/vacuumlazy.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_libpq,node_postmaster,node_xloginsert,node_xlog,node_recovery,node_clog toneBlue
+class node_backend,node_pgparse,node_checkpointer,node_autovac,node_vacuum toneAmber
+class node_parser,node_analyzer,node_rewriter toneMint
+class node_planner,node_allpaths,node_joinrels,node_createplan toneRose
+class node_execmain,node_execproc,node_seqscan,node_indexscan,node_hashjoin,node_hashbuild,node_aggnode,node_sortnode,node_snapmgr toneIndigo
+class node_bufmgr,node_buftable,node_freelist,node_heapam,node_heapvis toneTeal
