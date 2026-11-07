@@ -1,0 +1,138 @@
+﻿flowchart TD
+
+subgraph group_bolt["Bolt server"]
+  node_bolt_client["Bolt Client &#40;driver&#41;"]
+  node_bolt_handshake["ModernProtocolHandshakeHandler"]
+  node_bolt_protocol["BoltProtocol<br/>[BoltProtocol.java]"]
+  node_bolt_fsm["StateMachineImpl"]
+end
+
+subgraph group_cypher["Cypher: parse, plan, run"]
+  node_cypher_preparser["CachingPreParser"]
+  node_cypher_parser["Cypher5AstParser"]
+  node_idp_solver["IDPQueryGraphSolver"]
+  node_cost_model["CardinalityCostModel"]
+  node_cypher_runtime_api["CypherRuntime"]
+  node_interpreted_runtime["InterpretedRuntime"]
+  node_all_nodes_scan["AllNodesScanPipe"]
+  node_produce_results["ProduceResultsPipe"]
+end
+
+subgraph group_kernel["Kernel &amp; transaction core"]
+  node_kernel_tx["KernelTransactionImplementation"]
+  node_tx_state["TxState<br/>[TxState.java]"]
+  node_tx_append["BatchingTransactionAppender"]
+  node_command_batch["CommandBatch<br/>[CommandBatch.java]"]
+  node_storage_reader["StorageReader<br/>[StorageReader.java]"]
+  node_node_cursor["StorageNodeCursor"]
+  node_range_index["RangeIndexProvider"]
+end
+
+subgraph group_record_storage["Record storage engine"]
+  node_record_storage["RecordStorageEngine"]
+  node_record_state["TransactionRecordState"]
+  node_record_reader["RecordStorageReader"]
+  node_record_node_cursor["RecordNodeCursor"]
+  node_neo_stores["NeoStores<br/>[NeoStores.java]"]
+  node_node_store["NodeStore<br/>[NodeStore.java]"]
+  node_rel_store["RelationshipStore"]
+  node_prop_store["PropertyStore<br/>[PropertyStore.java]"]
+  node_node_record["NodeRecord<br/>[NodeRecord.java]"]
+  node_rel_record["RelationshipRecord"]
+  node_prop_record["PropertyRecord"]
+  node_format_selector["RecordFormatSelector"]
+  node_node_record_format["NodeRecordFormat"]
+end
+
+subgraph group_io_wal["Page cache &amp; WAL"]
+  node_page_cache["PageCache<br/>[PageCache.java]"]
+  node_wal_service["EnvelopedWALService"]
+end
+
+node_bolt_client -->|"TCP connect + handshake"| node_bolt_handshake
+node_bolt_handshake -->|"negotiates version"| node_bolt_protocol
+node_bolt_protocol -->|"drives messages"| node_bolt_fsm
+node_bolt_fsm -->|"accepts Cypher"| node_cypher_preparser
+node_cypher_preparser -->|"cache miss: full parse"| node_cypher_parser
+node_cypher_parser -->|"AST to logical plan"| node_idp_solver
+node_idp_solver -->|"scores candidates"| node_cost_model
+node_idp_solver -->|"executable plan"| node_cypher_runtime_api
+node_cypher_runtime_api -->|"selects runtime"| node_interpreted_runtime
+node_interpreted_runtime -->|"builds operator"| node_all_nodes_scan
+node_interpreted_runtime -->|"builds operator"| node_produce_results
+node_interpreted_runtime -->|"kernel API calls"| node_kernel_tx
+node_all_nodes_scan -->|"scan via cursor"| node_node_cursor
+node_produce_results -->|"streams results back"| node_bolt_fsm
+node_kernel_tx -->|"buffers writes"| node_tx_state
+node_tx_state -->|"visitor applies changes"| node_record_state
+node_record_state -->|"stages records"| node_node_record
+node_record_state -->|"stages records"| node_rel_record
+node_record_state -->|"stages records"| node_prop_record
+node_kernel_tx -->|"serializes commands"| node_command_batch
+node_command_batch -->|"batch to log"| node_tx_append
+node_kernel_tx -->|"commit process"| node_tx_append
+node_tx_append -->|"writes log envelopes"| node_wal_service
+node_kernel_tx -->|"read API"| node_storage_reader
+node_storage_reader -->|"exposes cursors"| node_node_cursor
+node_record_storage -->|"creates StorageReader"| node_record_reader
+node_record_reader -->|"creates cursors"| node_record_node_cursor
+node_record_node_cursor -->|"implements"| node_node_cursor
+node_record_node_cursor -->|"reads node records"| node_node_store
+node_node_store -->|"materializes"| node_node_record
+node_node_store -->|"fixed-size decode"| node_node_record_format
+node_format_selector -->|"default format"| node_node_record_format
+node_record_storage -->|"owns store files"| node_neo_stores
+node_neo_stores -->|"opens"| node_node_store
+node_neo_stores -->|"opens"| node_rel_store
+node_neo_stores -->|"opens"| node_prop_store
+node_node_store -->|"page I/O"| node_page_cache
+node_rel_store -->|"page I/O"| node_page_cache
+node_prop_store -->|"page I/O"| node_page_cache
+node_record_storage -->|"feeds schema indexes"| node_range_index
+
+click node_bolt_handshake "https://github.com/neo4j/neo4j/blob/2026.10/community/bolt/src/main/java/org/neo4j/bolt/negotiation/handler/ModernProtocolHandshakeHandler.java"
+click node_bolt_protocol "https://github.com/neo4j/neo4j/blob/2026.10/community/bolt/src/main/java/org/neo4j/bolt/protocol/common/BoltProtocol.java"
+click node_bolt_fsm "https://github.com/neo4j/neo4j/blob/2026.10/community/bolt/src/main/java/org/neo4j/bolt/fsm/StateMachineImpl.java"
+click node_cypher_preparser "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/cypher/src/main/scala/org/neo4j/cypher/internal/CachingPreParser.scala"
+click node_cypher_parser "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/front-end/parser/v5/ast-factory/src/main/scala/org/neo4j/cypher/internal/parser/v5/ast/factory/Cypher5AstParser.scala"
+click node_idp_solver "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/cypher-planner/src/main/scala/org/neo4j/cypher/internal/compiler/planner/logical/idp/IDPQueryGraphSolver.scala"
+click node_cost_model "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/cypher-planner/src/main/scala/org/neo4j/cypher/internal/compiler/planner/logical/CardinalityCostModel.scala"
+click node_cypher_runtime_api "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/cypher/src/main/scala/org/neo4j/cypher/internal/CypherRuntime.scala"
+click node_interpreted_runtime "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/cypher/src/main/scala/org/neo4j/cypher/internal/InterpretedRuntime.scala"
+click node_all_nodes_scan "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/interpreted-runtime/src/main/scala/org/neo4j/cypher/internal/runtime/interpreted/pipes/AllNodesScanPipe.scala"
+click node_produce_results "https://github.com/neo4j/neo4j/blob/2026.10/community/cypher/interpreted-runtime/src/main/scala/org/neo4j/cypher/internal/runtime/interpreted/pipes/ProduceResultsPipe.scala"
+click node_kernel_tx "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel/src/main/java/org/neo4j/kernel/impl/api/KernelTransactionImplementation.java"
+click node_tx_state "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel/src/main/java/org/neo4j/kernel/impl/api/state/TxState.java"
+click node_tx_append "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel/src/main/java/org/neo4j/wal/BatchingTransactionAppender.java"
+click node_command_batch "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel-api/src/main/java/org/neo4j/storageengine/api/CommandBatch.java"
+click node_storage_reader "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel-api/src/main/java/org/neo4j/storageengine/api/StorageReader.java"
+click node_node_cursor "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel-api/src/main/java/org/neo4j/storageengine/api/StorageNodeCursor.java"
+click node_range_index "https://github.com/neo4j/neo4j/blob/2026.10/community/kernel/src/main/java/org/neo4j/kernel/impl/index/schema/RangeIndexProvider.java"
+click node_record_storage "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/internal/recordstorage/RecordStorageEngine.java"
+click node_record_state "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/internal/recordstorage/TransactionRecordState.java"
+click node_record_reader "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/internal/recordstorage/RecordStorageReader.java"
+click node_record_node_cursor "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/internal/recordstorage/RecordNodeCursor.java"
+click node_neo_stores "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/NeoStores.java"
+click node_node_store "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/NodeStore.java"
+click node_rel_store "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/RelationshipStore.java"
+click node_prop_store "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/PropertyStore.java"
+click node_node_record "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/record/NodeRecord.java"
+click node_rel_record "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/record/RelationshipRecord.java"
+click node_prop_record "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/record/PropertyRecord.java"
+click node_format_selector "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/format/RecordFormatSelector.java"
+click node_node_record_format "https://github.com/neo4j/neo4j/blob/2026.10/community/record-storage-engine/src/main/java/org/neo4j/kernel/impl/store/format/standard/NodeRecordFormat.java"
+click node_page_cache "https://github.com/neo4j/neo4j/blob/2026.10/community/io/src/main/java/org/neo4j/io/pagecache/PageCache.java"
+click node_wal_service "https://github.com/neo4j/neo4j/blob/2026.10/community/wal/src/main/java/org/neo4j/wal/enveloped/EnvelopedWALService.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_bolt_client,node_bolt_handshake,node_bolt_protocol,node_bolt_fsm toneBlue
+class node_cypher_preparser,node_cypher_parser,node_idp_solver,node_cost_model,node_cypher_runtime_api,node_interpreted_runtime,node_all_nodes_scan,node_produce_results toneAmber
+class node_kernel_tx,node_tx_state,node_tx_append,node_command_batch,node_storage_reader,node_node_cursor,node_range_index toneMint
+class node_record_storage,node_record_state,node_record_reader,node_record_node_cursor,node_neo_stores,node_node_store,node_rel_store,node_prop_store,node_node_record,node_rel_record,node_prop_record,node_format_selector,node_node_record_format toneRose
+class node_page_cache,node_wal_service toneIndigo
