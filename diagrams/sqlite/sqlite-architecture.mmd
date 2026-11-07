@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_g_api["Public API"]
+  node_api_open["sqlite3_open_v2<br/>[main.c]"]
+  node_api_exec["sqlite3_exec<br/>[legacy.c]"]
+  node_api_prepare["sqlite3_prepare_v2<br/>[prepare.c]"]
+  node_api_step["sqlite3_step<br/>[vdbeapi.c]"]
+end
+
+subgraph group_g_compile["Tokenizer &amp; Parser"]
+  node_compile_prepare["sqlite3Prepare<br/>[prepare.c]"]
+  node_compile_runparser["sqlite3RunParser<br/>[tokenize.c]"]
+  node_compile_grammar["sqlite3Parser<br/>[parse.y]"]
+end
+
+subgraph group_g_codegen["Code Generation &amp; Query Planning"]
+  node_build_start["sqlite3StartTable<br/>[build.c]"]
+  node_build_end["sqlite3EndTable<br/>[build.c]"]
+  node_select["sqlite3Select<br/>[select.c]"]
+  node_expr["sqlite3ExprCodeTarget<br/>[expr.c]"]
+  node_where_begin["sqlite3WhereBegin<br/>[where.c]"]
+  node_where_end["sqlite3WhereEnd<br/>[where.c]"]
+end
+
+subgraph group_g_vm["VDBE Virtual Machine"]
+  node_vm_exec{{"sqlite3VdbeExec<br/>[vdbe.c]"}}
+  node_vm_addop["sqlite3VdbeAddOp3<br/>[vdbeaux.c]"]
+end
+
+subgraph group_g_storage["B-Tree · Pager · WAL · VFS"]
+  node_bt_begin[("sqlite3BtreeBeginTrans<br/>[btree.c]")]
+  node_bt_cursor[("sqlite3BtreeCursor<br/>[btree.c]")]
+  node_bt_payload[("accessPayload<br/>[btree.c]")]
+  node_bt_insert[("sqlite3BtreeInsert<br/>[btree.c]")]
+  node_bt_commit[("sqlite3BtreeCommit<br/>[btree.c]")]
+  node_pg_sharedlock[("sqlite3PagerSharedLock<br/>[pager.c]")]
+  node_pg_get[("sqlite3PagerGet<br/>[pager.c]")]
+  node_pg_writepagelist[("pager_write_pagelist<br/>[pager.c]")]
+  node_pg_commit1[("sqlite3PagerCommitPhaseOne<br/>[pager.c]")]
+  node_pg_commit2[("sqlite3PagerCommitPhaseTwo<br/>[pager.c]")]
+  node_wal_recover[("walIndexRecover<br/>[wal.c]")]
+  node_wal_findframe[("sqlite3WalFindFrame<br/>[wal.c]")]
+  node_wal_readframe[("sqlite3WalReadFrame<br/>[wal.c]")]
+  node_wal_writetx[("sqlite3WalBeginWriteTransaction<br/>[wal.c]")]
+  node_wal_frames[("sqlite3WalFrames<br/>[wal.c]")]
+  node_vfs_oswrite[("sqlite3OsWrite<br/>[os.c]")]
+  node_vfs_unixread[("unixRead<br/>[os_unix.c]")]
+  node_vfs_unixwrite[("unixWrite<br/>[os_unix.c]")]
+end
+
+subgraph group_g_mem["Memory &amp; Allocation"]
+  node_mem_malloc64["sqlite3_malloc64<br/>[malloc.c]"]
+end
+
+node_api_open -->|"connection handle in hand"| node_api_exec
+node_api_exec -->|"prepare each SQL string"| node_api_prepare
+node_api_exec -->|"step for each result row"| node_api_step
+node_api_prepare -->|"internal compile driver"| node_compile_prepare
+node_compile_prepare -->|"tokenize zSql"| node_compile_runparser
+node_compile_runparser -->|"tokens drive LALR actions"| node_compile_grammar
+node_compile_grammar -->|"CREATE TABLE action"| node_build_start
+node_build_start -->|"schema row + OP_ParseSchema"| node_build_end
+node_build_end -->|"emit schema bootstrap opcodes"| node_vm_addop
+node_compile_grammar -->|"SELECT builds a Select object"| node_select
+node_select -->|"plan WHERE + joins"| node_where_begin
+node_select -->|"lower expressions"| node_expr
+node_expr -->|"append opcodes"| node_vm_addop
+node_where_begin -->|"emit join-loop opcodes"| node_vm_addop
+node_where_begin -.->|"close loops, free plan"| node_where_end
+node_api_step -->|"execute the program"| node_vm_exec
+node_vm_addop -->|"opcode stream ready"| node_vm_exec
+node_vm_exec -->|"OP_Transaction"| node_bt_begin
+node_vm_exec -->|"OP_Column / OP_Seek*"| node_bt_cursor
+node_vm_exec -.->|"registers &amp; scratch"| node_mem_malloc64
+node_bt_begin -->|"locking via the pager"| node_pg_sharedlock
+node_bt_cursor -->|"decode record bytes"| node_bt_payload
+node_bt_cursor -->|"fetch b-tree pages"| node_pg_get
+node_bt_insert -->|"dirty pages for writes"| node_pg_get
+node_bt_commit -->|"flush strategy"| node_pg_commit1
+node_pg_sharedlock -.->|"rebuild wal-index if stale"| node_wal_recover
+node_pg_get -->|"WAL mode: check log first"| node_wal_findframe
+node_wal_findframe -->|"copy page image"| node_wal_readframe
+node_wal_readframe -->|"read -wal via VFS"| node_vfs_unixread
+node_pg_get -->|"page miss: read db file"| node_vfs_unixread
+node_pg_commit1 -->|"rollback mode: journal, then write"| node_pg_writepagelist
+node_pg_commit1 -->|"WAL mode: begin write txn"| node_wal_writetx
+node_wal_writetx -->|"append frames to -wal"| node_wal_frames
+node_wal_frames -->|"VFS dispatch"| node_vfs_oswrite
+node_pg_writepagelist -->|"VFS dispatch"| node_vfs_oswrite
+node_vfs_oswrite -->|"unix VFS implementation"| node_vfs_unixwrite
+
+click node_api_open "https://github.com/sqlite/sqlite/blob/master/src/main.c"
+click node_api_exec "https://github.com/sqlite/sqlite/blob/master/src/legacy.c"
+click node_api_prepare "https://github.com/sqlite/sqlite/blob/master/src/prepare.c"
+click node_api_step "https://github.com/sqlite/sqlite/blob/master/src/vdbeapi.c"
+click node_compile_prepare "https://github.com/sqlite/sqlite/blob/master/src/prepare.c"
+click node_compile_runparser "https://github.com/sqlite/sqlite/blob/master/src/tokenize.c"
+click node_compile_grammar "https://github.com/sqlite/sqlite/blob/master/src/parse.y"
+click node_build_start "https://github.com/sqlite/sqlite/blob/master/src/build.c"
+click node_build_end "https://github.com/sqlite/sqlite/blob/master/src/build.c"
+click node_select "https://github.com/sqlite/sqlite/blob/master/src/select.c"
+click node_expr "https://github.com/sqlite/sqlite/blob/master/src/expr.c"
+click node_where_begin "https://github.com/sqlite/sqlite/blob/master/src/where.c"
+click node_where_end "https://github.com/sqlite/sqlite/blob/master/src/where.c"
+click node_vm_exec "https://github.com/sqlite/sqlite/blob/master/src/vdbe.c"
+click node_vm_addop "https://github.com/sqlite/sqlite/blob/master/src/vdbeaux.c"
+click node_bt_begin "https://github.com/sqlite/sqlite/blob/master/src/btree.c"
+click node_bt_cursor "https://github.com/sqlite/sqlite/blob/master/src/btree.c"
+click node_bt_payload "https://github.com/sqlite/sqlite/blob/master/src/btree.c"
+click node_bt_insert "https://github.com/sqlite/sqlite/blob/master/src/btree.c"
+click node_bt_commit "https://github.com/sqlite/sqlite/blob/master/src/btree.c"
+click node_pg_sharedlock "https://github.com/sqlite/sqlite/blob/master/src/pager.c"
+click node_pg_get "https://github.com/sqlite/sqlite/blob/master/src/pager.c"
+click node_pg_writepagelist "https://github.com/sqlite/sqlite/blob/master/src/pager.c"
+click node_pg_commit1 "https://github.com/sqlite/sqlite/blob/master/src/pager.c"
+click node_pg_commit2 "https://github.com/sqlite/sqlite/blob/master/src/pager.c"
+click node_wal_recover "https://github.com/sqlite/sqlite/blob/master/src/wal.c"
+click node_wal_findframe "https://github.com/sqlite/sqlite/blob/master/src/wal.c"
+click node_wal_readframe "https://github.com/sqlite/sqlite/blob/master/src/wal.c"
+click node_wal_writetx "https://github.com/sqlite/sqlite/blob/master/src/wal.c"
+click node_wal_frames "https://github.com/sqlite/sqlite/blob/master/src/wal.c"
+click node_vfs_oswrite "https://github.com/sqlite/sqlite/blob/master/src/os.c"
+click node_vfs_unixread "https://github.com/sqlite/sqlite/blob/master/src/os_unix.c"
+click node_vfs_unixwrite "https://github.com/sqlite/sqlite/blob/master/src/os_unix.c"
+click node_mem_malloc64 "https://github.com/sqlite/sqlite/blob/master/src/malloc.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_open,node_api_exec,node_api_prepare,node_api_step toneBlue
+class node_compile_prepare,node_compile_runparser,node_compile_grammar toneAmber
+class node_build_start,node_build_end,node_select,node_expr,node_where_begin,node_where_end toneMint
+class node_vm_exec,node_vm_addop toneRose
+class node_bt_begin,node_bt_cursor,node_bt_payload,node_bt_insert,node_bt_commit,node_pg_sharedlock,node_pg_get,node_pg_writepagelist,node_pg_commit1,node_pg_commit2,node_wal_recover,node_wal_findframe,node_wal_readframe,node_wal_writetx,node_wal_frames,node_vfs_oswrite,node_vfs_unixread,node_vfs_unixwrite toneIndigo
+class node_mem_malloc64 toneTeal
