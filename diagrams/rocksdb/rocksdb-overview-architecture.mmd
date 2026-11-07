@@ -1,0 +1,74 @@
+flowchart TD
+
+subgraph group_client_api["Client API"]
+  node_api_write{{"DB::Put / DB::Write<br/>[db.h]"}}
+  node_api_read{{"DB::Get / GetImpl"}}
+end
+
+subgraph group_cf_opts["Options &amp; Column Families"]
+  node_cf_options["ColumnFamilyOptions / DBOptions<br/>[options.h]"]
+end
+
+subgraph group_write_path["Write Path"]
+  node_impl_write["DBImpl::Write / WriteImpl<br/>[db_impl_write.cc]"]
+  node_wal_writer["Writer::AddRecord &#40;WAL&#41;<br/>[log_writer.cc]"]
+  node_memtable_add["MemTable::Add<br/>[memtable.cc]"]
+end
+
+subgraph group_flush["Flush to L0"]
+  node_bg_flush["DBImpl::BackgroundCallFlush"]
+  node_flush_job["FlushJob::Run<br/>[flush_job.cc]"]
+  node_sst_builder[("BlockBasedTableBuilder")]
+end
+
+subgraph group_compaction["Background Compaction"]
+  node_bg_compaction["DBImpl::BackgroundCallCompaction"]
+  node_compaction_job["CompactionJob::Run<br/>[compaction_job.cc]"]
+end
+
+subgraph group_metadata["Versions &amp; Manifest"]
+  node_version_set["VersionSet::LogAndApply<br/>[version_set.cc]"]
+end
+
+node_api_write -->|"submit WriteBatch"| node_impl_write
+node_impl_write -->|"group commit"| node_wal_writer
+node_impl_write -->|"apply after WAL durable"| node_memtable_add
+node_memtable_add -.->|"immutable memtable ready"| node_bg_flush
+node_bg_flush -->|"pick memtables"| node_flush_job
+node_flush_job -->|"stream entries"| node_sst_builder
+node_flush_job -->|"publish L0 file"| node_version_set
+node_sst_builder -.->|"L0 fills up, trigger"| node_bg_compaction
+node_bg_compaction -->|"execute picked compaction"| node_compaction_job
+node_compaction_job -->|"emit merged SSTs"| node_sst_builder
+node_compaction_job -->|"install new Version"| node_version_set
+node_api_read -->|"check live + immutable memtables"| node_memtable_add
+node_api_read -->|"locate files via Version::Get"| node_version_set
+node_cf_options -.->|"WAL &amp; write buffer policy"| node_impl_write
+node_cf_options -.->|"levels &amp; trigger thresholds"| node_compaction_job
+
+click node_api_write "https://github.com/facebook/rocksdb/blob/main/include/rocksdb/db.h"
+click node_api_read "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_sync_and_async.h"
+click node_cf_options "https://github.com/facebook/rocksdb/blob/main/include/rocksdb/options.h"
+click node_impl_write "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_write.cc"
+click node_wal_writer "https://github.com/facebook/rocksdb/blob/main/db/log_writer.cc"
+click node_memtable_add "https://github.com/facebook/rocksdb/blob/main/db/memtable.cc"
+click node_bg_flush "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_compaction_flush.cc"
+click node_flush_job "https://github.com/facebook/rocksdb/blob/main/db/flush_job.cc"
+click node_sst_builder "https://github.com/facebook/rocksdb/blob/main/table/block_based/block_based_table_builder.cc"
+click node_bg_compaction "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_compaction_flush.cc"
+click node_compaction_job "https://github.com/facebook/rocksdb/blob/main/db/compaction/compaction_job.cc"
+click node_version_set "https://github.com/facebook/rocksdb/blob/main/db/version_set.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_write,node_api_read toneBlue
+class node_cf_options toneAmber
+class node_impl_write,node_wal_writer,node_memtable_add toneMint
+class node_bg_flush,node_flush_job,node_sst_builder toneRose
+class node_bg_compaction,node_compaction_job toneIndigo
+class node_version_set toneTeal

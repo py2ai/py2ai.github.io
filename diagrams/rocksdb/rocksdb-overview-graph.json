@@ -1,0 +1,44 @@
+{
+  "owner": "facebook",
+  "repo": "rocksdb",
+  "branch": "main",
+  "groups": [
+    {"id": "client_api", "name": "Client API", "label": "Client API"},
+    {"id": "cf_opts", "name": "Options & Column Families", "label": "Options & Column Families"},
+    {"id": "write_path", "name": "Write Path", "label": "Write Path"},
+    {"id": "flush", "name": "Flush to L0", "label": "Flush to L0"},
+    {"id": "compaction", "name": "Background Compaction", "label": "Background Compaction"},
+    {"id": "metadata", "name": "Versions & Manifest", "label": "Versions & Manifest"}
+  ],
+  "nodes": [
+    {"id": "api_write", "label": "DB::Put / DB::Write", "file": "db.h", "path": "include/rocksdb/db.h", "group": "Client API", "groupId": "client_api", "shape": "hexagon", "desc": "Public write entry point: user builds a WriteBatch and submits it to the DB."},
+    {"id": "api_read", "label": "DB::Get / GetImpl", "file": "db_impl_sync_and_async.h", "path": "db/db_impl/db_impl_sync_and_async.h", "group": "Client API", "groupId": "client_api", "shape": "hexagon", "desc": "Point-read entry point: walks live memtables, immutable memtables, then the current Version's SST levels."},
+    {"id": "cf_options", "label": "ColumnFamilyOptions / DBOptions", "file": "options.h", "path": "include/rocksdb/options.h", "group": "Options & Column Families", "groupId": "cf_opts", "shape": "box", "desc": "Tuning surface: write buffer sizes, compaction style, WAL policy, block size, compression."},
+    {"id": "impl_write", "label": "DBImpl::Write / WriteImpl", "file": "db_impl_write.cc", "path": "db/db_impl/db_impl_write.cc", "group": "Write Path", "groupId": "write_path", "shape": "box", "desc": "Admits writers, batches concurrent writers under one leader, writes the WAL, then applies the batch to memtables."},
+    {"id": "wal_writer", "label": "Writer::AddRecord (WAL)", "file": "log_writer.cc", "path": "db/log_writer.cc", "group": "Write Path", "groupId": "write_path", "shape": "box", "desc": "CRC-framed append-only WAL records; the same Writer class also frames MANIFEST records."},
+    {"id": "memtable_add", "label": "MemTable::Add", "file": "memtable.cc", "path": "db/memtable.cc", "group": "Write Path", "groupId": "write_path", "shape": "box", "desc": "Encodes internal key/value pairs into the active memtable, which is backed by a concurrent skip list."},
+    {"id": "bg_flush", "label": "DBImpl::BackgroundCallFlush", "file": "db_impl_compaction_flush.cc", "path": "db/db_impl/db_impl_compaction_flush.cc", "group": "Flush to L0", "groupId": "flush", "shape": "box", "desc": "Background flush thread entry point: hands immutable memtables to a flush job."},
+    {"id": "flush_job", "label": "FlushJob::Run", "file": "flush_job.cc", "path": "db/flush_job.cc", "group": "Flush to L0", "groupId": "flush", "shape": "box", "desc": "Streams memtable entries into a new L0 SST file and records sequence-number boundaries."},
+    {"id": "sst_builder", "label": "BlockBasedTableBuilder", "file": "block_based_table_builder.cc", "path": "table/block_based/block_based_table_builder.cc", "group": "Flush to L0", "groupId": "flush", "shape": "database", "desc": "Writes sorted key/value runs into block-based SST files with data blocks, index blocks, and filter blocks."},
+    {"id": "bg_compaction", "label": "DBImpl::BackgroundCallCompaction", "file": "db_impl_compaction_flush.cc", "path": "db/db_impl/db_impl_compaction_flush.cc", "group": "Background Compaction", "groupId": "compaction", "shape": "box", "desc": "Background compaction thread entry point: picks and executes level compactions continuously."},
+    {"id": "compaction_job", "label": "CompactionJob::Run", "file": "compaction_job.cc", "path": "db/compaction/compaction_job.cc", "group": "Background Compaction", "groupId": "compaction", "shape": "box", "desc": "Merges overlapping runs into lower levels, dropping shadowed, deleted, and expired entries."},
+    {"id": "version_set", "label": "VersionSet::LogAndApply", "file": "version_set.cc", "path": "db/version_set.cc", "group": "Versions & Manifest", "groupId": "metadata", "shape": "document", "desc": "Single serialized install point for new Versions; appends VersionEdits to the MANIFEST."}
+  ],
+  "edges": [
+    {"from": "api_write", "to": "impl_write", "label": "submit WriteBatch"},
+    {"from": "impl_write", "to": "wal_writer", "label": "group commit"},
+    {"from": "impl_write", "to": "memtable_add", "label": "apply after WAL durable"},
+    {"from": "memtable_add", "to": "bg_flush", "label": "immutable memtable ready", "style": "dashed"},
+    {"from": "bg_flush", "to": "flush_job", "label": "pick memtables"},
+    {"from": "flush_job", "to": "sst_builder", "label": "stream entries"},
+    {"from": "flush_job", "to": "version_set", "label": "publish L0 file"},
+    {"from": "sst_builder", "to": "bg_compaction", "label": "L0 fills up, trigger", "style": "dashed"},
+    {"from": "bg_compaction", "to": "compaction_job", "label": "execute picked compaction"},
+    {"from": "compaction_job", "to": "sst_builder", "label": "emit merged SSTs"},
+    {"from": "compaction_job", "to": "version_set", "label": "install new Version"},
+    {"from": "api_read", "to": "memtable_add", "label": "check live + immutable memtables"},
+    {"from": "api_read", "to": "version_set", "label": "locate files via Version::Get"},
+    {"from": "cf_options", "to": "impl_write", "label": "WAL & write buffer policy", "style": "dashed"},
+    {"from": "cf_options", "to": "compaction_job", "label": "levels & trigger thresholds", "style": "dashed"}
+  ]
+}
