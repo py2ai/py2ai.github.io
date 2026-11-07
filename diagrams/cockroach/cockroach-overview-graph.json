@@ -1,0 +1,43 @@
+{
+  "owner": "cockroachdb",
+  "repo": "cockroach",
+  "branch": "master",
+  "groups": [
+    { "id": "sql", "name": "SQL Layer", "label": "SQL Layer (Postgres Wire)" },
+    { "id": "exec", "name": "Execution", "label": "Plan Execution" },
+    { "id": "kv", "name": "KV Transactions", "label": "KV / Transaction Layer" },
+    { "id": "cluster", "name": "Cluster Node", "label": "Node & Ranges" },
+    { "id": "repl", "name": "Replication", "label": "Raft Replication" },
+    { "id": "storage", "name": "Storage", "label": "Pebble LSM Engine" }
+  ],
+  "nodes": [
+    { "id": "sql_client", "label": "Postgres-Wire Client Session", "file": "conn.go", "path": "pkg/sql/pgwire/conn.go", "group": "sql", "groupId": "sql", "shape": "hexagon", "desc": "pgwire conn (conn.go L59) speaks the PostgreSQL wire protocol; pgwire Server.ServeConn (server.go L991) hands each session to the SQL layer." },
+    { "id": "conn_executor", "label": "connExecutor — Session State Machine", "file": "conn_executor.go", "path": "pkg/sql/conn_executor.go", "group": "sql", "groupId": "sql", "desc": "connExecutor struct (conn_executor.go L1609); execStmt (conn_executor_exec.go L123) and execStmtInOpenState (L417) drive statement execution." },
+    { "id": "optimizer", "label": "Cost-Based Optimizer (opt)", "file": "coster.go", "path": "pkg/sql/opt/xform/coster.go", "group": "sql", "groupId": "sql", "desc": "planner.makeOptimizerPlan (plan_opt.go L298) builds a memo; coster.ComputeCost (coster.go L526) prices alternatives." },
+    { "id": "physical_plan", "label": "Physical Plan", "file": "physical_plan.go", "path": "pkg/sql/physicalplan/physical_plan.go", "group": "exec", "groupId": "exec", "desc": "PhysicalPlan struct (physical_plan.go L125) maps relational operators onto distributed processors." },
+    { "id": "exec_processors", "label": "Processors / Flows (execinfra)", "file": "processorsbase.go", "path": "pkg/sql/execinfra/processorsbase.go", "group": "exec", "groupId": "exec", "desc": "ProcessorBase (processorsbase.go L345) and flowinfra Flow (flow.go L72) run local and distributed data flows." },
+    { "id": "txn", "label": "Txn — Client Transactions", "file": "txn.go", "path": "pkg/kv/txn.go", "group": "kv", "groupId": "kv", "desc": "Txn struct (txn.go L74); Txn.Send (L1386) and Txn.Commit (L926) route operations through TxnCoordSender." },
+    { "id": "dist_sender", "label": "DistSender — Range Routing", "file": "dist_sender.go", "path": "pkg/kv/kvclient/kvcoord/dist_sender.go", "group": "kv", "groupId": "kv", "desc": "DistSender (dist_sender.go L726); DistSender.Send (L1310) splits BatchRequests by range and sendToReplicas (L2669) picks the leaseholder." },
+    { "id": "node", "label": "Node — KV RPC Front Door", "file": "node.go", "path": "pkg/server/node.go", "group": "cluster", "groupId": "cluster", "desc": "Node struct (node.go L366); batchInternal (node.go L1648) receives KVBatch RPCs from any node." },
+    { "id": "store", "label": "Store — Ranges & Replicas", "file": "store.go", "path": "pkg/kv/kvserver/store.go", "group": "cluster", "groupId": "cluster", "desc": "Store struct (store.go L909) owns replicas; Store.SendWithWorkStats (store_send.go L101) routes batches to the local replica." },
+    { "id": "replica", "label": "Replica — Leaseholder / Follower", "file": "replica.go", "path": "pkg/kv/kvserver/replica.go", "group": "repl", "groupId": "repl", "desc": "Replica struct (replica.go L365) evaluates batches for one key range with MVCC and lease checks." },
+    { "id": "raft", "label": "Raft Consensus", "file": "replica_raft.go", "path": "pkg/kv/kvserver/replica_raft.go", "group": "repl", "groupId": "repl", "desc": "evalAndPropose (replica_raft.go L116), propose (L411), handleRaftReady (L867) replicate commands via pkg/raft (raft.go L305)." },
+    { "id": "pebble", "label": "Pebble LSM Store", "file": "pebble.go", "path": "pkg/storage/pebble.go", "group": "storage", "groupId": "storage", "shape": "database", "desc": "Pebble struct (pebble.go L884) implements the Engine interface (pkg/storage/engine.go L932): MVCCGet/MVCCPut (mvcc.go L1401/L1923) over an LSM tree." }
+  ],
+  "edges": [
+    { "from": "sql_client", "to": "conn_executor", "label": "SQL over pgwire" },
+    { "from": "conn_executor", "to": "optimizer", "label": "makeOptimizerPlan" },
+    { "from": "optimizer", "to": "physical_plan", "label": "costed memo → plan" },
+    { "from": "conn_executor", "to": "physical_plan", "label": "dispatch to engine" },
+    { "from": "physical_plan", "to": "exec_processors", "label": "flows of processors" },
+    { "from": "conn_executor", "to": "exec_processors", "label": "execWithDistSQLEngine" },
+    { "from": "exec_processors", "to": "txn", "label": "KV reads / writes" },
+    { "from": "txn", "to": "dist_sender", "label": "TxnCoordSender" },
+    { "from": "dist_sender", "to": "node", "label": "route BatchRequest (gRPC)" },
+    { "from": "node", "to": "store", "label": "batchInternal" },
+    { "from": "store", "to": "replica", "label": "range → Replica" },
+    { "from": "replica", "to": "raft", "label": "eval + propose" },
+    { "from": "raft", "to": "pebble", "label": "raft log + apply" },
+    { "from": "replica", "to": "pebble", "label": "MVCC state", "style": "dashed" }
+  ]
+}
