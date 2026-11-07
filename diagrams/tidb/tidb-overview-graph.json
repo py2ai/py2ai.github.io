@@ -1,0 +1,40 @@
+{
+  "owner": "pingcap",
+  "repo": "tidb",
+  "branch": "master",
+  "groups": [
+    { "id": "proto", "name": "MySQL Protocol", "label": "MySQL Protocol Layer" },
+    { "id": "session", "name": "Session", "label": "Session & Txn Control" },
+    { "id": "plan", "name": "Planner", "label": "SQL Planner" },
+    { "id": "exec", "name": "Executor", "label": "Volcano Executor Tree" },
+    { "id": "dist", "name": "DistSQL", "label": "DistSQL Request Layer" },
+    { "id": "store", "name": "TiKV Store", "label": "TiKV Client / Coprocessor" }
+  ],
+  "nodes": [
+    { "id": "server_run", "label": "Server.Run — listener", "file": "server.go", "path": "pkg/server/server.go", "group": "proto", "groupId": "proto", "desc": "Server.Run (server.go L506) accepts TCP connections; newConn (L294) wraps each one as a clientConn with a TiDBContext session." },
+    { "id": "mysql_client", "label": "clientConn — MySQL wire", "file": "conn.go", "path": "pkg/server/conn.go", "group": "proto", "groupId": "proto", "shape": "hexagon", "desc": "clientConn.Run (conn.go L1157) reads packet loop; dispatch (L1444) routes commands; handleQuery (L1864) runs COM_QUERY SQL text." },
+    { "id": "session_exec", "label": "session.ExecuteStmt", "file": "session.go", "path": "pkg/session/session.go", "group": "session", "groupId": "session", "desc": "session.ExecuteStmt (session.go L2489) and Execute (L1947) drive one statement: parse, plan, execute, commit via doCommitWithRetry (L817)." },
+    { "id": "optimizer", "label": "Optimize — plan cache + costing", "file": "optimize.go", "path": "pkg/planner/optimize.go", "group": "plan", "groupId": "plan", "desc": "Optimize (optimize.go L148) checks the plan cache, then builds and cost-optimizes a logical/physical plan for each statement." },
+    { "id": "plan_builder", "label": "PlanBuilder.Build", "file": "planbuilder.go", "path": "pkg/planner/core/planbuilder.go", "group": "plan", "groupId": "plan", "desc": "PlanBuilder.Build (planbuilder.go L601) turns the AST into logical plans; buildSelect (logical_plan_builder.go L4349) handles SELECT." },
+    { "id": "exec_builder", "label": "executorBuilder.build", "file": "builder.go", "path": "pkg/executor/builder.go", "group": "exec", "groupId": "exec", "desc": "newExecutorBuilder (builder.go L154) and build (L195) translate the physical plan into a tree of Executor objects." },
+    { "id": "exec_next", "label": "Executor.Next tree", "file": "executor.go", "path": "pkg/executor/internal/exec/executor.go", "group": "exec", "groupId": "exec", "desc": "Executor interface (executor.go L51) with Next (L63) pulls chunk.Row batches up the volcano-style tree." },
+    { "id": "req_builder", "label": "RequestBuilder — kv.Request", "file": "request_builder.go", "path": "pkg/distsql/request_builder.go", "group": "dist", "groupId": "dist", "desc": "RequestBuilder.Build (request_builder.go L61) with SetDAGRequest (L203) and SetHandleRanges (L156) packages key ranges + DAG operators into kv.Request." },
+    { "id": "distsql_select", "label": "distsql.Select", "file": "distsql.go", "path": "pkg/distsql/distsql.go", "group": "dist", "groupId": "dist", "desc": "Select (distsql.go L62) and SelectWithRuntimeStats (L174) launch parallel coprocessor requests and stream results back." },
+    { "id": "coprocessor", "label": "copIterator — region tasks", "file": "coprocessor.go", "path": "pkg/store/copr/coprocessor.go", "group": "store", "groupId": "store", "desc": "buildCopTasks (coprocessor.go L529) splits ranges per region; copIterator (L990) Next (L1441) runs them concurrently." },
+    { "id": "tikv_driver", "label": "tikvStore / tikvTxn → TiKV", "file": "tikv_driver.go", "path": "pkg/store/driver/tikv_driver.go", "group": "store", "groupId": "store", "shape": "database", "desc": "tikvStore (tikv_driver.go L327) implements kv.Storage; tikvTxn (txn_driver.go L47) commits through the tikv/client-go two-phase commit protocol." }
+  ],
+  "edges": [
+    { "from": "server_run", "to": "mysql_client", "label": "accept → clientConn.Run" },
+    { "from": "mysql_client", "to": "session_exec", "label": "dispatch → handleQuery" },
+    { "from": "session_exec", "to": "optimizer", "label": "ExecuteStmt → Optimize" },
+    { "from": "optimizer", "to": "plan_builder", "label": "PlanBuilder.Build" },
+    { "from": "plan_builder", "to": "exec_builder", "label": "physical plan" },
+    { "from": "exec_builder", "to": "exec_next", "label": "build() → Executor.Next" },
+    { "from": "exec_next", "to": "req_builder", "label": "ranges + operators" },
+    { "from": "req_builder", "to": "distsql_select", "label": "kv.Request (DAG)" },
+    { "from": "distsql_select", "to": "coprocessor", "label": "copIterator.Next" },
+    { "from": "coprocessor", "to": "tikv_driver", "label": "gRPC coprocessor RPC" },
+    { "from": "exec_next", "to": "session_exec", "label": "chunks → RecordSet", "style": "dashed" },
+    { "from": "session_exec", "to": "tikv_driver", "label": "doCommitWithRetry (2PC)", "style": "dashed" }
+  ]
+}
