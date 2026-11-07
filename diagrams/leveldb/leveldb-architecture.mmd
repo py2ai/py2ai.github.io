@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_api["API Layer"]
+  node_impl_write["DBImpl::Write<br/>[db_impl.cc]"]
+  node_impl_get["DBImpl::Get<br/>[db_impl.cc]"]
+  node_approx_sizes["DBImpl::GetApproximateSizes<br/>[db_impl.cc]"]
+end
+
+subgraph group_write["Write Path"]
+  node_batch_group["DBImpl::BuildBatchGroup<br/>[db_impl.cc]"]
+  node_make_room["DBImpl::MakeRoomForWrite<br/>[db_impl.cc]"]
+  node_wb_iterate["WriteBatch::Iterate<br/>[write_batch.cc]"]
+  node_wb_insert["WriteBatchInternal::InsertInto<br/>[write_batch.cc]"]
+end
+
+subgraph group_mem["Memory Structures"]
+  node_mem_add["MemTable::Add<br/>[memtable.cc]"]
+  node_mem_get["MemTable::Get<br/>[memtable.cc]"]
+  node_mem_iter["MemTableIterator<br/>[memtable.cc]"]
+  node_skiplist["SkipList<br/>[skiplist.h]"]
+  node_arena["Arena::AllocateAligned<br/>[arena.cc]"]
+end
+
+subgraph group_wal["Log &amp; Recovery"]
+  node_wal_add["log::Writer::AddRecord<br/>[log_writer.cc]"]
+  node_recover_log["DBImpl::RecoverLogFile<br/>[db_impl.cc]"]
+end
+
+subgraph group_sst["Table Format"]
+  node_builder["BuildTable<br/>[builder.cc]"]
+  node_tb_add["TableBuilder::Add<br/>[table_builder.cc]"]
+  node_tbl_open["Table::Open<br/>[table.cc]"]
+  node_block_reader["Table::BlockReader<br/>[table.cc]"]
+  node_tbl_get["Table::InternalGet<br/>[table.cc]"]
+  node_block_iter["Block::NewIterator<br/>[block.cc]"]
+  node_fmt_read["ReadBlock<br/>[format.cc]"]
+end
+
+subgraph group_read["Read Path"]
+  node_ver_get["Version::Get<br/>[version_set.cc]"]
+  node_cache_get["TableCache::Get<br/>[table_cache.cc]"]
+  node_merging["NewMergingIterator<br/>[merger.cc]"]
+  node_dbiter["DBIter<br/>[db_iter.cc]"]
+end
+
+subgraph group_compaction["Compaction &amp; Versions"]
+  node_l0_table["DBImpl::WriteLevel0Table<br/>[db_impl.cc]"]
+  node_bg_compact["DBImpl::BackgroundCompaction<br/>[db_impl.cc]"]
+  node_do_compact["DBImpl::DoCompactionWork<br/>[db_impl.cc]"]
+  node_pick["VersionSet::PickCompaction<br/>[version_set.cc]"]
+  node_log_apply["VersionSet::LogAndApply<br/>[version_set.cc]"]
+  node_save_to["VersionSet::Builder::SaveTo<br/>[version_set.cc]"]
+end
+
+subgraph group_filters["Filters &amp; Cache"]
+  node_bloom["BloomFilterPolicy<br/>[bloom.cc]"]
+  node_filter_reader["FilterBlockReader::KeyMayMatch<br/>[filter_block.cc]"]
+  node_lru["ShardedLRUCache<br/>[cache.cc]"]
+end
+
+node_impl_write -->|"group pending writers"| node_batch_group
+node_impl_write -->|"durable log first"| node_wal_add
+node_batch_group -->|"batched payload"| node_wal_add
+node_wb_insert -->|"drive handler"| node_wb_iterate
+node_wb_iterate -->|"apply records"| node_mem_add
+node_mem_add -->|"keyed insert"| node_skiplist
+node_mem_add -->|"allocate nodes"| node_arena
+node_mem_get -->|"seek"| node_skiplist
+node_mem_iter -->|"iterate"| node_skiplist
+node_make_room -->|"memtable full"| node_l0_table
+node_l0_table -->|"flush"| node_builder
+node_builder -->|"encode entries"| node_tb_add
+node_tb_add -->|"produces .ldb file"| node_tbl_open
+node_pick -->|"scored level"| node_bg_compact
+node_bg_compact -->|"execute"| node_do_compact
+node_do_compact -->|"merged outputs"| node_builder
+node_do_compact -->|"publish edit"| node_log_apply
+node_save_to -->|"build successor version"| node_log_apply
+node_log_apply -->|"visible to reads"| node_ver_get
+node_recover_log -->|"replay WAL"| node_mem_add
+node_impl_get -->|"step 1"| node_mem_get
+node_impl_get -->|"probe levels"| node_ver_get
+node_ver_get -->|"table cache"| node_cache_get
+node_cache_get -->|"open .ldb"| node_tbl_open
+node_ver_get -->|"binary search"| node_tbl_get
+node_ver_get -->|"bloom prefilter"| node_filter_reader
+node_filter_reader -->|"policy"| node_bloom
+node_cache_get -->|"sharded LRU"| node_lru
+node_tbl_get -->|"locate block"| node_block_reader
+node_block_reader -->|"seek entries"| node_block_iter
+node_block_iter -->|"decompress on miss"| node_fmt_read
+node_mem_iter -->|"memtable source"| node_merging
+node_ver_get -->|"level sources"| node_merging
+node_merging -->|"user view"| node_dbiter
+node_approx_sizes -->|"aggregate file sizes"| node_ver_get
+
+click node_impl_write "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_impl_get "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_approx_sizes "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_batch_group "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_make_room "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_wb_iterate "https://github.com/google/leveldb/blob/main/db/write_batch.cc"
+click node_wb_insert "https://github.com/google/leveldb/blob/main/db/write_batch.cc"
+click node_mem_add "https://github.com/google/leveldb/blob/main/db/memtable.cc"
+click node_mem_get "https://github.com/google/leveldb/blob/main/db/memtable.cc"
+click node_mem_iter "https://github.com/google/leveldb/blob/main/db/memtable.cc"
+click node_skiplist "https://github.com/google/leveldb/blob/main/db/skiplist.h"
+click node_arena "https://github.com/google/leveldb/blob/main/util/arena.cc"
+click node_wal_add "https://github.com/google/leveldb/blob/main/db/log_writer.cc"
+click node_recover_log "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_builder "https://github.com/google/leveldb/blob/main/db/builder.cc"
+click node_tb_add "https://github.com/google/leveldb/blob/main/table/table_builder.cc"
+click node_tbl_open "https://github.com/google/leveldb/blob/main/table/table.cc"
+click node_block_reader "https://github.com/google/leveldb/blob/main/table/table.cc"
+click node_tbl_get "https://github.com/google/leveldb/blob/main/table/table.cc"
+click node_block_iter "https://github.com/google/leveldb/blob/main/table/block.cc"
+click node_fmt_read "https://github.com/google/leveldb/blob/main/table/format.cc"
+click node_ver_get "https://github.com/google/leveldb/blob/main/db/version_set.cc"
+click node_cache_get "https://github.com/google/leveldb/blob/main/db/table_cache.cc"
+click node_merging "https://github.com/google/leveldb/blob/main/table/merger.cc"
+click node_dbiter "https://github.com/google/leveldb/blob/main/db/db_iter.cc"
+click node_l0_table "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_bg_compact "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_do_compact "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_pick "https://github.com/google/leveldb/blob/main/db/version_set.cc"
+click node_log_apply "https://github.com/google/leveldb/blob/main/db/version_set.cc"
+click node_save_to "https://github.com/google/leveldb/blob/main/db/version_set.cc"
+click node_bloom "https://github.com/google/leveldb/blob/main/util/bloom.cc"
+click node_filter_reader "https://github.com/google/leveldb/blob/main/table/filter_block.cc"
+click node_lru "https://github.com/google/leveldb/blob/main/util/cache.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_impl_write,node_impl_get,node_approx_sizes,node_l0_table,node_bg_compact,node_do_compact,node_pick,node_log_apply,node_save_to toneBlue
+class node_batch_group,node_make_room,node_wb_iterate,node_wb_insert,node_bloom,node_filter_reader,node_lru toneAmber
+class node_mem_add,node_mem_get,node_mem_iter,node_skiplist,node_arena toneMint
+class node_wal_add,node_recover_log toneRose
+class node_builder,node_tb_add,node_tbl_open,node_block_reader,node_tbl_get,node_block_iter,node_fmt_read toneIndigo
+class node_ver_get,node_cache_get,node_merging,node_dbiter toneTeal

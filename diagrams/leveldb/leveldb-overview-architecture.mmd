@@ -1,0 +1,74 @@
+flowchart TD
+
+subgraph group_api["Public API"]
+  node_write_api["DBImpl::Write<br/>[db_impl.cc]"]
+  node_batch["WriteBatch<br/>[write_batch.cc]"]
+  node_read_api["DBImpl::Get<br/>[db_impl.cc]"]
+end
+
+subgraph group_mem["In-Memory State"]
+  node_memtable["MemTable<br/>[memtable.cc]"]
+  node_imm["Immutable MemTable<br/>[db_impl.cc]"]
+end
+
+subgraph group_wal["Write-Ahead Log"]
+  node_wal["log::Writer::AddRecord<br/>[log_writer.cc]"]
+end
+
+subgraph group_sst["SSTables"]
+  node_flush["BuildTable<br/>[builder.cc]"]
+  node_tablebuilder["TableBuilder<br/>[table_builder.cc]"]
+  node_sst["SSTable<br/>[table.cc]"]
+end
+
+subgraph group_compaction["Compaction"]
+  node_compaction["BackgroundCompaction<br/>[db_impl.cc]"]
+end
+
+subgraph group_metadata["Versions &amp; Manifest"]
+  node_version["VersionSet / MANIFEST<br/>[version_set.cc]"]
+  node_verget["Version::Get<br/>[version_set.cc]"]
+end
+
+node_write_api -->|"encode atomic batch"| node_batch
+node_write_api -->|"log record first"| node_wal
+node_batch -->|"AddRecord"| node_wal
+node_batch -->|"WriteBatchInternal::InsertInto"| node_memtable
+node_wal -->|"recovery replay"| node_memtable
+node_memtable -->|"switch when full"| node_imm
+node_imm -->|"CompactMemTable"| node_flush
+node_flush -->|"encode SSTable"| node_tablebuilder
+node_tablebuilder -->|"L0 file"| node_sst
+node_flush -->|"WriteLevel0Table edit"| node_version
+node_sst -->|"L0 trigger &#40;4 files&#41;"| node_compaction
+node_compaction -->|"LogAndApply"| node_version
+node_read_api -->|"newest first"| node_memtable
+node_read_api -->|"probe levels"| node_verget
+node_verget -->|"block read"| node_sst
+
+click node_write_api "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_batch "https://github.com/google/leveldb/blob/main/db/write_batch.cc"
+click node_wal "https://github.com/google/leveldb/blob/main/db/log_writer.cc"
+click node_memtable "https://github.com/google/leveldb/blob/main/db/memtable.cc"
+click node_imm "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_flush "https://github.com/google/leveldb/blob/main/db/builder.cc"
+click node_tablebuilder "https://github.com/google/leveldb/blob/main/table/table_builder.cc"
+click node_sst "https://github.com/google/leveldb/blob/main/table/table.cc"
+click node_compaction "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_version "https://github.com/google/leveldb/blob/main/db/version_set.cc"
+click node_read_api "https://github.com/google/leveldb/blob/main/db/db_impl.cc"
+click node_verget "https://github.com/google/leveldb/blob/main/db/version_set.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_write_api,node_batch,node_read_api toneBlue
+class node_memtable,node_imm toneAmber
+class node_wal toneMint
+class node_flush,node_tablebuilder,node_sst toneRose
+class node_compaction toneIndigo
+class node_version,node_verget toneTeal
