@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_client_api["Client API"]
+  node_api_put{{"DB::Put / DB::Write<br/>[db.h]"}}
+  node_api_get{{"DB::Get / DBImpl::GetImpl"}}
+  node_api_iter["DB::NewIterator &#40;DBIter&#41;<br/>[db_iter.cc]"]
+  node_api_compact["DBImpl::CompactRange"]
+  node_cf_options["ColumnFamilyOptions / DBOptions<br/>[options.h]"]
+end
+
+subgraph group_write_path["Write Path"]
+  node_impl_write["DBImpl::Write<br/>[db_impl_write.cc]"]
+  node_write_group["WriteThread::EnterAsMemTableWriter<br/>[write_thread.cc]"]
+  node_write_to_wal["DBImpl::WriteToWAL<br/>[db_impl_write.cc]"]
+  node_wal_writer["Writer::AddRecord &#40;WAL&#41;<br/>[log_writer.cc]"]
+  node_batch_insert["WriteBatchInternal::InsertInto<br/>[write_batch.cc]"]
+  node_memtable_inserter["MemTableInserter<br/>[write_batch.cc]"]
+end
+
+subgraph group_memtable["Memtable &amp; Skip List"]
+  node_memtable_add["MemTable::Add<br/>[memtable.cc]"]
+  node_skiplist_insert["SkipListRep::Insert<br/>[skiplistrep.cc]"]
+  node_inline_skiplist["InlineSkipList::Insert<br/>[inlineskiplist.h]"]
+  node_memtable_list_get["MemTableListVersion::Get<br/>[memtable_list.cc]"]
+  node_memtable_list_pick["MemTableList::PickMemtablesToFlush<br/>[memtable_list.cc]"]
+end
+
+subgraph group_flush["Flush"]
+  node_bg_flush["DBImpl::BackgroundCallFlush"]
+  node_flush_to_file["DBImpl::FlushMemTableToOutputFile"]
+  node_flush_job["FlushJob::Run<br/>[flush_job.cc]"]
+  node_build_table["BuildTable<br/>[builder.cc]"]
+end
+
+subgraph group_sst_format["SST File Format"]
+  node_table_builder[("BlockBasedTableBuilder::Add")]
+  node_table_finish[("BlockBasedTableBuilder::Finish")]
+  node_filter_builder["FullFilterBlockBuilder::Add"]
+  node_table_open["BlockBasedTable::Open"]
+  node_table_get["BlockBasedTable::Get"]
+end
+
+subgraph group_compaction["Compaction"]
+  node_bg_compaction["DBImpl::BackgroundCallCompaction"]
+  node_pick_compaction["LevelCompactionPicker::PickCompaction"]
+  node_compaction_job["CompactionJob::Run<br/>[compaction_job.cc]"]
+  node_compaction_iter["CompactionIterator::NextFromInput"]
+  node_merge_helper["MergeHelper::MergeUntil<br/>[merge_helper.cc]"]
+end
+
+subgraph group_version_meta["Versions &amp; Metadata"]
+  node_log_and_apply["VersionSet::LogAndApply<br/>[version_set.cc]"]
+  node_version_get["Version::Get"]
+  node_cfd["ColumnFamilyData<br/>[column_family.cc]"]
+  node_table_cache["TableCache::Get"]
+end
+
+node_api_put -->|"submit WriteBatch"| node_impl_write
+node_impl_write -->|"join write queue"| node_write_group
+node_write_group -->|"leader merges group"| node_write_to_wal
+node_write_to_wal -->|"AddRecord"| node_wal_writer
+node_write_to_wal -->|"after WAL durable"| node_batch_insert
+node_batch_insert -->|"per-record handler"| node_memtable_inserter
+node_memtable_inserter -->|"Put / Delete / Merge"| node_memtable_add
+node_memtable_add -->|"arena-allocated entry"| node_skiplist_insert
+node_skiplist_insert -->|"lock-free insert"| node_inline_skiplist
+node_memtable_list_get -.->|"scan active memtable"| node_memtable_add
+node_api_get -->|"check immutable memtables"| node_memtable_list_get
+node_api_get -->|"then SST levels"| node_version_get
+node_api_get -.->|"open readers on demand"| node_table_cache
+node_version_get -->|"TableCache::Get"| node_table_cache
+node_table_cache -->|"per-SST lookup"| node_table_get
+node_table_cache -.->|"lazy reader creation"| node_table_open
+node_api_iter -->|"unify memtable + SST iterators"| node_memtable_list_get
+node_api_iter -->|"per-level file iterators"| node_version_get
+node_memtable_add -.->|"frozen memtable queued"| node_memtable_list_pick
+node_bg_flush -->|"next flush job"| node_flush_to_file
+node_flush_to_file -->|"construct FlushJob"| node_flush_job
+node_flush_job -->|"pick memtables to flush"| node_memtable_list_pick
+node_flush_job -->|"write L0 file"| node_build_table
+node_build_table -->|"BlockBasedTableBuilder"| node_table_builder
+node_table_builder -->|"index + footer"| node_table_finish
+node_table_builder -->|"bloom / Ribbon bits"| node_filter_builder
+node_build_table -->|"publish file metadata"| node_log_and_apply
+node_api_compact -->|"manual range compaction"| node_pick_compaction
+node_bg_compaction -->|"pick next compaction"| node_pick_compaction
+node_pick_compaction -->|"execute"| node_compaction_job
+node_compaction_job -->|"merge overlapping runs"| node_compaction_iter
+node_compaction_iter -->|"fold merge operands"| node_merge_helper
+node_compaction_job -->|"emit compacted SSTs"| node_table_builder
+node_compaction_job -->|"install new Version"| node_log_and_apply
+node_log_and_apply -->|"swap SuperVersion"| node_cfd
+node_cfd -->|"supplies current Version"| node_version_get
+node_cf_options -.->|"WAL &amp; write buffer policy"| node_impl_write
+node_cf_options -.->|"levels &amp; triggers"| node_compaction_job
+node_cf_options -.->|"block size &amp; compression"| node_table_builder
+
+click node_api_put "https://github.com/facebook/rocksdb/blob/main/include/rocksdb/db.h"
+click node_api_get "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_sync_and_async.h"
+click node_api_iter "https://github.com/facebook/rocksdb/blob/main/db/db_iter.cc"
+click node_api_compact "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_compaction_flush.cc"
+click node_cf_options "https://github.com/facebook/rocksdb/blob/main/include/rocksdb/options.h"
+click node_impl_write "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_write.cc"
+click node_write_group "https://github.com/facebook/rocksdb/blob/main/db/write_thread.cc"
+click node_write_to_wal "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_write.cc"
+click node_wal_writer "https://github.com/facebook/rocksdb/blob/main/db/log_writer.cc"
+click node_batch_insert "https://github.com/facebook/rocksdb/blob/main/db/write_batch.cc"
+click node_memtable_inserter "https://github.com/facebook/rocksdb/blob/main/db/write_batch.cc"
+click node_memtable_add "https://github.com/facebook/rocksdb/blob/main/db/memtable.cc"
+click node_skiplist_insert "https://github.com/facebook/rocksdb/blob/main/memtable/skiplistrep.cc"
+click node_inline_skiplist "https://github.com/facebook/rocksdb/blob/main/memtable/inlineskiplist.h"
+click node_memtable_list_get "https://github.com/facebook/rocksdb/blob/main/db/memtable_list.cc"
+click node_memtable_list_pick "https://github.com/facebook/rocksdb/blob/main/db/memtable_list.cc"
+click node_bg_flush "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_compaction_flush.cc"
+click node_flush_to_file "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_compaction_flush.cc"
+click node_flush_job "https://github.com/facebook/rocksdb/blob/main/db/flush_job.cc"
+click node_build_table "https://github.com/facebook/rocksdb/blob/main/db/builder.cc"
+click node_table_builder "https://github.com/facebook/rocksdb/blob/main/table/block_based/block_based_table_builder.cc"
+click node_table_finish "https://github.com/facebook/rocksdb/blob/main/table/block_based/block_based_table_builder.cc"
+click node_filter_builder "https://github.com/facebook/rocksdb/blob/main/table/block_based/full_filter_block.cc"
+click node_table_open "https://github.com/facebook/rocksdb/blob/main/table/block_based/block_based_table_reader.cc"
+click node_table_get "https://github.com/facebook/rocksdb/blob/main/table/block_based/block_based_table_reader_sync_and_async.h"
+click node_bg_compaction "https://github.com/facebook/rocksdb/blob/main/db/db_impl/db_impl_compaction_flush.cc"
+click node_pick_compaction "https://github.com/facebook/rocksdb/blob/main/db/compaction/compaction_picker_level.cc"
+click node_compaction_job "https://github.com/facebook/rocksdb/blob/main/db/compaction/compaction_job.cc"
+click node_compaction_iter "https://github.com/facebook/rocksdb/blob/main/db/compaction/compaction_iterator.cc"
+click node_merge_helper "https://github.com/facebook/rocksdb/blob/main/db/merge_helper.cc"
+click node_log_and_apply "https://github.com/facebook/rocksdb/blob/main/db/version_set.cc"
+click node_version_get "https://github.com/facebook/rocksdb/blob/main/db/version_set_sync_and_async.h"
+click node_cfd "https://github.com/facebook/rocksdb/blob/main/db/column_family.cc"
+click node_table_cache "https://github.com/facebook/rocksdb/blob/main/db/table_cache_sync_and_async.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_api_put,node_api_get,node_api_iter,node_api_compact,node_cf_options,node_log_and_apply,node_version_get,node_cfd,node_table_cache toneBlue
+class node_impl_write,node_write_group,node_write_to_wal,node_wal_writer,node_batch_insert,node_memtable_inserter toneAmber
+class node_memtable_add,node_skiplist_insert,node_inline_skiplist,node_memtable_list_get,node_memtable_list_pick toneMint
+class node_bg_flush,node_flush_to_file,node_flush_job,node_build_table toneRose
+class node_table_builder,node_table_finish,node_filter_builder,node_table_open,node_table_get toneIndigo
+class node_bg_compaction,node_pick_compaction,node_compaction_job,node_compaction_iter,node_merge_helper toneTeal
