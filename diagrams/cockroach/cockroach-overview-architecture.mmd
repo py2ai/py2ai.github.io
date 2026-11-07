@@ -1,0 +1,73 @@
+flowchart TD
+
+subgraph group_sql["SQL Layer &#40;Postgres Wire&#41;"]
+  node_sql_client{{"Postgres-Wire Client Session<br/>[conn.go]"}}
+  node_conn_executor["connExecutor — Session State Machine<br/>[conn_executor.go]"]
+  node_optimizer["Cost-Based Optimizer &#40;opt&#41;<br/>[coster.go]"]
+end
+
+subgraph group_exec["Plan Execution"]
+  node_physical_plan["Physical Plan<br/>[physical_plan.go]"]
+  node_exec_processors["Processors / Flows &#40;execinfra&#41;<br/>[processorsbase.go]"]
+end
+
+subgraph group_kv["KV / Transaction Layer"]
+  node_txn["Txn — Client Transactions<br/>[txn.go]"]
+  node_dist_sender["DistSender — Range Routing<br/>[dist_sender.go]"]
+end
+
+subgraph group_cluster["Node &amp; Ranges"]
+  node_node["Node — KV RPC Front Door<br/>[node.go]"]
+  node_store["Store — Ranges &amp; Replicas<br/>[store.go]"]
+end
+
+subgraph group_repl["Raft Replication"]
+  node_replica["Replica — Leaseholder / Follower<br/>[replica.go]"]
+  node_raft["Raft Consensus<br/>[replica_raft.go]"]
+end
+
+subgraph group_storage["Pebble LSM Engine"]
+  node_pebble[("Pebble LSM Store<br/>[pebble.go]")]
+end
+
+node_sql_client -->|"SQL over pgwire"| node_conn_executor
+node_conn_executor -->|"makeOptimizerPlan"| node_optimizer
+node_optimizer -->|"costed memo → plan"| node_physical_plan
+node_conn_executor -->|"dispatch to engine"| node_physical_plan
+node_physical_plan -->|"flows of processors"| node_exec_processors
+node_conn_executor -->|"execWithDistSQLEngine"| node_exec_processors
+node_exec_processors -->|"KV reads / writes"| node_txn
+node_txn -->|"TxnCoordSender"| node_dist_sender
+node_dist_sender -->|"route BatchRequest &#40;gRPC&#41;"| node_node
+node_node -->|"batchInternal"| node_store
+node_store -->|"range → Replica"| node_replica
+node_replica -->|"eval + propose"| node_raft
+node_raft -->|"raft log + apply"| node_pebble
+node_replica -.->|"MVCC state"| node_pebble
+
+click node_sql_client "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/pgwire/conn.go"
+click node_conn_executor "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/conn_executor.go"
+click node_optimizer "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/opt/xform/coster.go"
+click node_physical_plan "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/physicalplan/physical_plan.go"
+click node_exec_processors "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/execinfra/processorsbase.go"
+click node_txn "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/txn.go"
+click node_dist_sender "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvclient/kvcoord/dist_sender.go"
+click node_node "https://github.com/cockroachdb/cockroach/blob/master/pkg/server/node.go"
+click node_store "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/store.go"
+click node_replica "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica.go"
+click node_raft "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica_raft.go"
+click node_pebble "https://github.com/cockroachdb/cockroach/blob/master/pkg/storage/pebble.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_sql_client,node_conn_executor,node_optimizer toneBlue
+class node_physical_plan,node_exec_processors toneAmber
+class node_txn,node_dist_sender toneMint
+class node_node,node_store toneRose
+class node_replica,node_raft toneIndigo
+class node_pebble toneTeal

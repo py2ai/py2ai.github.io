@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_wire["Postgres Wire Protocol"]
+  node_pg_server["pgwire Server<br/>[server.go]"]
+  node_pg_conn["Wire conn<br/>[conn.go]"]
+end
+
+subgraph group_sql["SQL Planning &amp; Optimization"]
+  node_conn_executor["connExecutor<br/>[conn_executor.go]"]
+  node_exec_stmt["execStmt / execStmtInOpenState"]
+  node_planner["planner.makeOptimizerPlan<br/>[plan_opt.go]"]
+  node_opt_builder["optbuilder.Builder<br/>[builder.go]"]
+  node_memo["Memo &#40;opt/memo&#41;<br/>[memo.go]"]
+  node_coster["xform Coster<br/>[coster.go]"]
+  node_explorer["xform explorer<br/>[explorer.go]"]
+end
+
+subgraph group_exec["Distributed Execution"]
+  node_physical_plan["PhysicalPlan<br/>[physical_plan.go]"]
+  node_flow["Flow / FlowBase &#40;flowinfra&#41;<br/>[flow.go]"]
+  node_processors["ProcessorBase &#40;execinfra&#41;<br/>[processorsbase.go]"]
+end
+
+subgraph group_txn["Transactions &amp; KV Routing"]
+  node_kv_db["kv.DB<br/>[db.go]"]
+  node_kv_batch["kv.Batch<br/>[batch.go]"]
+  node_txn["Txn<br/>[txn.go]"]
+  node_txn_coord["TxnCoordSender"]
+  node_dist_sender["DistSender<br/>[dist_sender.go]"]
+  node_kvpb["kvpb.BatchRequest<br/>[batch.go]"]
+end
+
+subgraph group_cluster["Node &amp; Cluster Services"]
+  node_server["Server &#40;pkg/server&#41;<br/>[server.go]"]
+  node_node["Node<br/>[node.go]"]
+  node_gossip["Gossip Network<br/>[gossip.go]"]
+end
+
+subgraph group_repl["Replica &amp; Raft"]
+  node_store_send["Store.SendWithWorkStats<br/>[store_send.go]"]
+  node_store["Store<br/>[store.go]"]
+  node_replica["Replica<br/>[replica.go]"]
+  node_lease["pendingLeaseRequest"]
+  node_evaluate["evaluateBatch"]
+  node_eval_propose["evalAndPropose<br/>[replica_raft.go]"]
+  node_propose["propose &#40;proposal buffer&#41;<br/>[replica_raft.go]"]
+  node_raft_ready["handleRaftReady<br/>[replica_raft.go]"]
+  node_raft_lib["pkg/raft &#40;etcd-derived&#41;<br/>[raft.go]"]
+end
+
+subgraph group_storage["MVCC &amp; Pebble LSM"]
+  node_engine[("Engine interface<br/>[engine.go]")]
+  node_mvcc[("MVCC layer<br/>[mvcc.go]")]
+  node_pebble[("Pebble engine<br/>[pebble.go]")]
+  node_pebble_scanner["pebbleMVCCScanner"]
+end
+
+node_pg_server -->|"ServeConn"| node_pg_conn
+node_pg_conn -->|"session driver"| node_conn_executor
+node_conn_executor -->|"execStmt"| node_exec_stmt
+node_conn_executor -->|"makeOptimizerPlan"| node_planner
+node_planner -->|"build AST → memo"| node_opt_builder
+node_opt_builder -->|"relational expressions"| node_memo
+node_memo -->|"candidates"| node_coster
+node_coster -->|"exploreGroup rules"| node_explorer
+node_planner -->|"costed plan"| node_physical_plan
+node_conn_executor -->|"execWithDistSQLEngine"| node_flow
+node_physical_plan -->|"plan fragment"| node_flow
+node_flow -->|"run processors"| node_processors
+node_exec_stmt -->|"session Txn"| node_txn
+node_processors -->|"KV reads / writes"| node_txn
+node_kv_db -->|"stage ops"| node_kv_batch
+node_txn -->|"Txn.Send"| node_txn_coord
+node_txn_coord -->|"BatchRequest"| node_kvpb
+node_txn_coord -->|"fan-out"| node_dist_sender
+node_dist_sender -->|"split by range"| node_kvpb
+node_dist_sender -->|"gRPC KVBatch"| node_node
+node_server -->|"starts node"| node_node
+node_node -->|"cluster metadata"| node_gossip
+node_node -.->|"local delivery"| node_store_send
+node_store_send -->|"SendWithWorkStats"| node_store
+node_store -->|"range lookup"| node_replica
+node_replica -->|"ensure lease"| node_lease
+node_replica -->|"evaluateBatch"| node_evaluate
+node_evaluate -.->|"MVCCGet / MVCCPut"| node_mvcc
+node_evaluate -->|"result → proposal"| node_eval_propose
+node_eval_propose -->|"proposal buffer"| node_propose
+node_propose -->|"raft Step"| node_raft_lib
+node_raft_lib -->|"Ready"| node_raft_ready
+node_raft_ready -.->|"raft log append + apply"| node_pebble
+node_store -->|"store engine"| node_pebble
+node_engine -->|"Engine impl"| node_pebble
+node_pebble -->|"merged MVCC iter"| node_pebble_scanner
+node_raft_ready -.->|"ack client"| node_store_send
+
+click node_pg_server "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/pgwire/server.go"
+click node_pg_conn "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/pgwire/conn.go"
+click node_conn_executor "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/conn_executor.go"
+click node_exec_stmt "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/conn_executor_exec.go"
+click node_planner "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/plan_opt.go"
+click node_opt_builder "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/opt/optbuilder/builder.go"
+click node_memo "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/opt/memo/memo.go"
+click node_coster "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/opt/xform/coster.go"
+click node_explorer "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/opt/xform/explorer.go"
+click node_physical_plan "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/physicalplan/physical_plan.go"
+click node_flow "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/flowinfra/flow.go"
+click node_processors "https://github.com/cockroachdb/cockroach/blob/master/pkg/sql/execinfra/processorsbase.go"
+click node_kv_db "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/db.go"
+click node_kv_batch "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/batch.go"
+click node_txn "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/txn.go"
+click node_txn_coord "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvclient/kvcoord/txn_coord_sender.go"
+click node_dist_sender "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvclient/kvcoord/dist_sender.go"
+click node_kvpb "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvpb/batch.go"
+click node_server "https://github.com/cockroachdb/cockroach/blob/master/pkg/server/server.go"
+click node_node "https://github.com/cockroachdb/cockroach/blob/master/pkg/server/node.go"
+click node_gossip "https://github.com/cockroachdb/cockroach/blob/master/pkg/gossip/gossip.go"
+click node_store_send "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/store_send.go"
+click node_store "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/store.go"
+click node_replica "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica.go"
+click node_lease "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica_range_lease.go"
+click node_evaluate "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica_evaluate.go"
+click node_eval_propose "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica_raft.go"
+click node_propose "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica_raft.go"
+click node_raft_ready "https://github.com/cockroachdb/cockroach/blob/master/pkg/kv/kvserver/replica_raft.go"
+click node_raft_lib "https://github.com/cockroachdb/cockroach/blob/master/pkg/raft/raft.go"
+click node_engine "https://github.com/cockroachdb/cockroach/blob/master/pkg/storage/engine.go"
+click node_mvcc "https://github.com/cockroachdb/cockroach/blob/master/pkg/storage/mvcc.go"
+click node_pebble "https://github.com/cockroachdb/cockroach/blob/master/pkg/storage/pebble.go"
+click node_pebble_scanner "https://github.com/cockroachdb/cockroach/blob/master/pkg/storage/pebble_mvcc_scanner.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_pg_server,node_pg_conn,node_engine,node_mvcc,node_pebble,node_pebble_scanner toneBlue
+class node_conn_executor,node_exec_stmt,node_planner,node_opt_builder,node_memo,node_coster,node_explorer toneAmber
+class node_physical_plan,node_flow,node_processors toneMint
+class node_kv_db,node_kv_batch,node_txn,node_txn_coord,node_dist_sender,node_kvpb toneRose
+class node_server,node_node,node_gossip toneIndigo
+class node_store_send,node_store,node_replica,node_lease,node_evaluate,node_eval_propose,node_propose,node_raft_ready,node_raft_lib toneTeal
