@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_g1["Connection &amp; Dispatch"]
+  node_mysqld["mysqld_main<br/>[mysqld.cc]"]
+  node_connmgr["Connection_handler_manager"]
+  node_protocol["Protocol_classic::get_command"]
+  node_dispatch["dispatch_command<br/>[sql_parse.cc]"]
+end
+
+subgraph group_g2["Parse &amp; Optimize"]
+  node_lex["lex_one_token<br/>[sql_lex.cc]"]
+  node_optimizer["JOIN::optimize<br/>[sql_optimizer.cc]"]
+  node_accesspath["CreateIteratorFromAccessPath<br/>[access_path.cc]"]
+end
+
+subgraph group_g3["Iterator Executor"]
+  node_rootiter["Query_expression::ExecuteIteratorQuery<br/>[sql_union.cc]"]
+  node_scaniter["TableScanIterator::DoRead"]
+  node_aggiter["AggregateIterator::DoRead"]
+  node_handread["handler::ha_index_read_map<br/>[handler.cc]"]
+  node_handwrite["handler::ha_write_row<br/>[handler.cc]"]
+  node_handcommit["ha_commit_trans<br/>[handler.cc]"]
+end
+
+subgraph group_g4["InnoDB B-tree &amp; Buffer Pool"]
+  node_innoread["ha_innobase::general_fetch<br/>[ha_innodb.cc]"]
+  node_innowrite["ha_innobase::write_row<br/>[ha_innodb.cc]"]
+  node_rowsearch["row_search_mvcc<br/>[row0sel.cc]"]
+  node_btrsearch["btr_cur_search_to_nth_level<br/>[btr0cur.cc]"]
+  node_btrsplit["btr_page_split_and_insert<br/>[btr0btr.cc]"]
+  node_rowinsert["row_ins_clust_index_entry_low<br/>[row0ins.cc]"]
+  node_bufpool["buf_page_get_gen<br/>[buf0buf.cc]"]
+  node_lru["buf_LRU_free_page<br/>[buf0lru.cc]"]
+  node_flushing["buf_flush_page_and_try_neighbors<br/>[buf0flu.cc]"]
+end
+
+subgraph group_g5["Mini-Transaction &amp; Redo"]
+  node_mtrcommit["mtr_t::commit<br/>[mtr0mtr.cc]"]
+  node_logwriter["log_writer_write_buffer<br/>[log0write.cc]"]
+  node_chkp["Log_checkpointing::log_checkpointer<br/>[log0chkp.cc]"]
+end
+
+subgraph group_g6["Transactions &amp; MVCC"]
+  node_trxcommit["trx_commit<br/>[trx0trx.cc]"]
+  node_readview["MVCC::view_open<br/>[read0read.cc]"]
+  node_lockrec["lock_rec_lock<br/>[lock0lock.cc]"]
+  node_deadlock["Deadlock_notifier::notify<br/>[lock0lock.cc]"]
+end
+
+subgraph group_g7["Binlog Group Commit &amp; Replication"]
+  node_binlogcommit["MYSQL_BIN_LOG::commit<br/>[binlog.cc]"]
+  node_orderedcommit["MYSQL_BIN_LOG::ordered_commit<br/>[binlog.cc]"]
+  node_binlogsender["Binlog_sender::run"]
+  node_ioreplica["handle_slave_io<br/>[rpl_replica.cc]"]
+  node_sqlreplica["handle_slave_sql<br/>[rpl_replica.cc]"]
+end
+
+node_mysqld -->|"spawns connection threads"| node_connmgr
+node_connmgr -->|"binds per-connection protocol"| node_protocol
+node_protocol -->|"delivers decoded commands"| node_dispatch
+node_dispatch -->|"tokenizes SQL text"| node_lex
+node_dispatch -->|"executes resolved statement"| node_optimizer
+node_optimizer -->|"emits access-path tree"| node_accesspath
+node_accesspath -->|"drives root iterator"| node_rootiter
+node_accesspath -->|"builds scan iterators"| node_scaniter
+node_accesspath -->|"builds grouping iterators"| node_aggiter
+node_rootiter -->|"pulls rows"| node_scaniter
+node_aggiter -->|"pulls child rows"| node_scaniter
+node_scaniter -->|"row reads"| node_handread
+node_handread -->|"engine read callback"| node_innoread
+node_handwrite -->|"engine write callback"| node_innowrite
+node_handcommit -->|"TC log commit"| node_binlogcommit
+node_innoread -->|"fetch path"| node_rowsearch
+node_rowsearch -->|"positions cursor"| node_btrsearch
+node_rowsearch -->|"visibility checks"| node_readview
+node_rowsearch -->|"locks matched rows"| node_lockrec
+node_btrsearch -->|"latches leaf pages"| node_bufpool
+node_innowrite -->|"insert path"| node_rowinsert
+node_rowinsert -->|"splits full pages"| node_btrsplit
+node_rowinsert -->|"latches leaf page"| node_bufpool
+node_rowinsert -->|"logs row changes"| node_mtrcommit
+node_btrsplit -->|"logs structural changes"| node_mtrcommit
+node_bufpool -->|"evicts cold pages"| node_lru
+node_bufpool -->|"write-behind dirty pages"| node_flushing
+node_mtrcommit -->|"appends redo records"| node_logwriter
+node_flushing -->|"WAL-before-data wait"| node_logwriter
+node_logwriter -->|"advances checkpoint age"| node_chkp
+node_trxcommit -->|"writes commit record"| node_mtrcommit
+node_lockrec -->|"victim selection"| node_deadlock
+node_binlogcommit -->|"three-stage group commit"| node_orderedcommit
+node_orderedcommit -->|"engine commit stage"| node_trxcommit
+node_orderedcommit -->|"events visible after sync"| node_binlogsender
+node_binlogsender -->|"streams events"| node_ioreplica
+node_ioreplica -->|"queues relay events"| node_sqlreplica
+
+click node_mysqld "https://github.com/mysql/mysql-server/blob/trunk/sql/mysqld.cc"
+click node_connmgr "https://github.com/mysql/mysql-server/blob/trunk/sql/conn_handler/connection_handler_manager.cc"
+click node_protocol "https://github.com/mysql/mysql-server/blob/trunk/sql/protocol_classic.cc"
+click node_dispatch "https://github.com/mysql/mysql-server/blob/trunk/sql/sql_parse.cc"
+click node_lex "https://github.com/mysql/mysql-server/blob/trunk/sql/sql_lex.cc"
+click node_optimizer "https://github.com/mysql/mysql-server/blob/trunk/sql/sql_optimizer.cc"
+click node_accesspath "https://github.com/mysql/mysql-server/blob/trunk/sql/join_optimizer/access_path.cc"
+click node_rootiter "https://github.com/mysql/mysql-server/blob/trunk/sql/sql_union.cc"
+click node_scaniter "https://github.com/mysql/mysql-server/blob/trunk/sql/iterators/basic_row_iterators.cc"
+click node_aggiter "https://github.com/mysql/mysql-server/blob/trunk/sql/iterators/composite_iterators.cc"
+click node_handread "https://github.com/mysql/mysql-server/blob/trunk/sql/handler.cc"
+click node_handwrite "https://github.com/mysql/mysql-server/blob/trunk/sql/handler.cc"
+click node_handcommit "https://github.com/mysql/mysql-server/blob/trunk/sql/handler.cc"
+click node_innoread "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/handler/ha_innodb.cc"
+click node_innowrite "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/handler/ha_innodb.cc"
+click node_rowsearch "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/row/row0sel.cc"
+click node_btrsearch "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/btr/btr0cur.cc"
+click node_btrsplit "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/btr/btr0btr.cc"
+click node_rowinsert "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/row/row0ins.cc"
+click node_bufpool "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/buf/buf0buf.cc"
+click node_lru "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/buf/buf0lru.cc"
+click node_flushing "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/buf/buf0flu.cc"
+click node_mtrcommit "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/mtr/mtr0mtr.cc"
+click node_logwriter "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/log/log0write.cc"
+click node_chkp "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/log/log0chkp.cc"
+click node_trxcommit "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/trx/trx0trx.cc"
+click node_readview "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/read/read0read.cc"
+click node_lockrec "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/lock/lock0lock.cc"
+click node_deadlock "https://github.com/mysql/mysql-server/blob/trunk/storage/innobase/lock/lock0lock.cc"
+click node_binlogcommit "https://github.com/mysql/mysql-server/blob/trunk/sql/binlog.cc"
+click node_orderedcommit "https://github.com/mysql/mysql-server/blob/trunk/sql/binlog.cc"
+click node_binlogsender "https://github.com/mysql/mysql-server/blob/trunk/sql/rpl_binlog_sender.cc"
+click node_ioreplica "https://github.com/mysql/mysql-server/blob/trunk/sql/rpl_replica.cc"
+click node_sqlreplica "https://github.com/mysql/mysql-server/blob/trunk/sql/rpl_replica.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_mysqld,node_connmgr,node_protocol,node_dispatch,node_binlogcommit,node_orderedcommit,node_binlogsender,node_ioreplica,node_sqlreplica toneBlue
+class node_lex,node_optimizer,node_accesspath toneAmber
+class node_rootiter,node_scaniter,node_aggiter,node_handread,node_handwrite,node_handcommit toneMint
+class node_innoread,node_innowrite,node_rowsearch,node_btrsearch,node_btrsplit,node_rowinsert,node_bufpool,node_lru,node_flushing toneRose
+class node_mtrcommit,node_logwriter,node_chkp toneIndigo
+class node_trxcommit,node_readview,node_lockrec,node_deadlock toneTeal
