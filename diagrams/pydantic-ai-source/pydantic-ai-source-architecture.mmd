@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_g_api["Agent surface"]
+  node_agent["Agent<br/>[__init__.py]"]
+  node_abstract["AbstractAgent.run / iter<br/>[abstract.py]"]
+  node_runctx["RunContext<br/>[_run_context.py]"]
+end
+
+subgraph group_g_graph["pydantic-graph run loop"]
+  node_buildgraph["build_agent_graph<br/>[_agent_graph.py]"]
+  node_userprompt["UserPromptNode<br/>[_agent_graph.py]"]
+  node_reqnode["ModelRequestNode<br/>[_agent_graph.py]"]
+  node_calltools["CallToolsNode<br/>[_agent_graph.py]"]
+  node_setfinal["SetFinalResult<br/>[_agent_graph.py]"]
+  node_end["BaseNode / End<br/>[basenode.py]"]
+end
+
+subgraph group_g_model["Model and providers"]
+  node_model["Model ABC<br/>[__init__.py]"]
+  node_provider["Provider<br/>[__init__.py]"]
+  node_openaiprovider["OpenAIProvider<br/>[openai.py]"]
+  node_openai["OpenAIChatModel<br/>[openai.py]"]
+  node_profile["ModelProfile<br/>[__init__.py]"]
+  node_settings["ModelSettings<br/>[settings.py]"]
+  node_instr["InstrumentedModel<br/>[instrumented.py]"]
+  node_fallback["FallbackModel<br/>[fallback.py]"]
+  node_testmodel["TestModel<br/>[test.py]"]
+end
+
+subgraph group_g_tools["Tool execution"]
+  node_tools["Tool / ToolDefinition<br/>[tools.py]"]
+  node_toolexec["process_tool_calls<br/>[_tool_execution.py]"]
+end
+
+subgraph group_g_output["Output validation"]
+  node_output["ToolOutput / NativeOutput / TextOutput<br/>[output.py]"]
+  node_outschema["OutputSchema / OutputToolset<br/>[_output.py]"]
+  node_outval["OutputValidator + retry signal<br/>[_output.py]"]
+  node_finalres["FinalResult<br/>[result.py]"]
+  node_usage["RunUsage / UsageLimits<br/>[usage.py]"]
+end
+
+subgraph group_g_msgs["Message types"]
+  node_messages["ModelRequest / ModelResponse<br/>[messages.py]"]
+  node_toolcall["ToolCallPart<br/>[messages.py]"]
+  node_toolreturn["ToolReturnPart<br/>[messages.py]"]
+  node_retrypart["RetryPromptPart / RetryFeedbackPart<br/>[messages.py]"]
+end
+
+subgraph group_g_x["Integrations"]
+  node_mcp["MCPToolset<br/>[mcp.py]"]
+end
+
+node_app{{"Your application<br/>[README.md]"}}
+
+node_app -->|"Agent&#40;model, output_type, toolsets&#41;"| node_agent
+node_agent -->|"inherits run/iter/run_sync"| node_abstract
+node_abstract -->|"iter&#40;&#41; -&gt; graph.run&#40;&#41;"| node_buildgraph
+node_buildgraph -->|"build_run_context L4409"| node_runctx
+node_buildgraph -->|"entry node"| node_userprompt
+node_userprompt -->|"prompt in history"| node_reqnode
+node_userprompt -->|"appends UserPromptPart"| node_messages
+node_reqnode -->|"applies ModelSettings"| node_settings
+node_reqnode -->|"Model.request&#40;&#41;"| node_model
+node_reqnode -->|"check_before_request"| node_usage
+node_model -->|"needs SDK client"| node_provider
+node_provider -->|"infer_provider&#40;'openai'&#41;"| node_openaiprovider
+node_openaiprovider -->|"AsyncOpenAI client"| node_openai
+node_model -->|"infer_model_profile"| node_profile
+node_model -.->|"wrapped when instrumentation on"| node_instr
+node_fallback -.->|"try next model on error"| node_model
+node_testmodel -.->|"CI stand-in"| node_model
+node_reqnode -->|"sends ModelRequest"| node_messages
+node_openai -->|"stream parts -&gt; ModelResponse"| node_messages
+node_messages -->|"response parts"| node_toolcall
+node_reqnode -->|"hand-off on response"| node_calltools
+node_calltools -->|"read ToolCallPart args"| node_toolcall
+node_calltools -->|"_handle_tool_calls L4066"| node_toolexec
+node_calltools -->|"MCPToolset in toolsets"| node_mcp
+node_toolcall -->|"args validated against schema"| node_tools
+node_tools -->|"takes_ctx injects RunContext"| node_runctx
+node_toolexec -->|"execute function"| node_tools
+node_toolexec -->|"result -&gt; ToolReturnPart"| node_toolreturn
+node_toolexec -->|"bad args -&gt; retry"| node_retrypart
+node_toolreturn -->|"loop: next model request"| node_reqnode
+node_retrypart -->|"model corrects and retries"| node_reqnode
+node_calltools -->|"final-output detection"| node_output
+node_output -->|"mode resolved"| node_outschema
+node_outschema -->|"validators + processors"| node_outval
+node_outval -->|"_make_retry_signal L213"| node_retrypart
+node_outval -->|"validated output"| node_setfinal
+node_setfinal -->|"wraps in FinalResult"| node_finalres
+node_setfinal -->|"returns End&#40;result&#41;"| node_end
+node_reqnode -->|"_enforce_usage_limits L3743"| node_usage
+node_calltools -->|"accumulate RequestUsage"| node_usage
+node_usage -->|"RunUsage in AgentRunResult"| node_finalres
+node_finalres -->|"await run&#40;&#41; returns"| node_abstract
+node_abstract -->|"typed result.output"| node_app
+
+click node_app "https://github.com/pydantic/pydantic-ai/blob/main/README.md"
+click node_agent "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/agent/__init__.py"
+click node_abstract "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/agent/abstract.py"
+click node_buildgraph "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_agent_graph.py"
+click node_userprompt "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_agent_graph.py"
+click node_reqnode "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_agent_graph.py"
+click node_calltools "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_agent_graph.py"
+click node_setfinal "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_agent_graph.py"
+click node_end "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_graph/pydantic_graph/basenode.py"
+click node_runctx "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_run_context.py"
+click node_model "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/models/__init__.py"
+click node_provider "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/providers/__init__.py"
+click node_openaiprovider "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/providers/openai.py"
+click node_openai "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/models/openai.py"
+click node_profile "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/profiles/__init__.py"
+click node_settings "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/settings.py"
+click node_instr "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/models/instrumented.py"
+click node_fallback "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/models/fallback.py"
+click node_testmodel "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/models/test.py"
+click node_messages "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/messages.py"
+click node_toolcall "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/messages.py"
+click node_toolreturn "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/messages.py"
+click node_retrypart "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/messages.py"
+click node_tools "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/tools.py"
+click node_toolexec "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_tool_execution.py"
+click node_output "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/output.py"
+click node_outschema "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_output.py"
+click node_outval "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/_output.py"
+click node_finalres "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/result.py"
+click node_usage "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/usage.py"
+click node_mcp "https://github.com/pydantic/pydantic-ai/blob/main/pydantic_ai_slim/pydantic_ai/mcp.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_agent,node_abstract,node_runctx,node_mcp toneBlue
+class node_buildgraph,node_userprompt,node_reqnode,node_calltools,node_setfinal,node_end toneAmber
+class node_model,node_provider,node_openaiprovider,node_openai,node_profile,node_settings,node_instr,node_fallback,node_testmodel toneMint
+class node_tools,node_toolexec toneRose
+class node_output,node_outschema,node_outval,node_finalres,node_usage toneIndigo
+class node_messages,node_toolcall,node_toolreturn,node_retrypart,node_app toneTeal
