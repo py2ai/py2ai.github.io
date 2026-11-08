@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_crew_api["Crew Orchestration"]
+  node_crew["Crew<br/>[crew.py]"]
+  node_kickoff["Crew.kickoff&#40;&#41;<br/>[crew.py]"]
+  node_run_hier["_run_hierarchical_process&#40;&#41;<br/>[crew.py]"]
+  node_manager["_create_manager_agent&#40;&#41;<br/>[crew.py]"]
+  node_exec_tasks["_execute_tasks&#40;&#41;<br/>[crew.py]"]
+  node_get_context["_get_context&#40;&#41;<br/>[crew.py]"]
+end
+
+subgraph group_task_layer["Task Execution"]
+  node_task["Task<br/>[task.py]"]
+  node_exec_sync["Task.execute_sync&#40;&#41;<br/>[task.py]"]
+  node_exec_core["Task._execute_core&#40;&#41;<br/>[task.py]"]
+  node_task_output["TaskOutput<br/>[task_output.py]"]
+end
+
+subgraph group_agent_layer["Agent &amp; Executor Loop"]
+  node_agent["Agent<br/>[core.py]"]
+  node_execute_task["Agent.execute_task&#40;&#41;<br/>[core.py]"]
+  node_prepare_task["_prepare_task_execution&#40;&#41;<br/>[core.py]"]
+  node_finalize_prompt["_finalize_task_prompt&#40;&#41;<br/>[core.py]"]
+  node_exec_no_timeout["_execute_without_timeout&#40;&#41;<br/>[core.py]"]
+  node_agent_executor["AgentExecutor<br/>[agent_executor.py]"]
+end
+
+subgraph group_llm_layer["LLM Providers"]
+  node_llm_class["LLM<br/>[llm.py]"]
+  node_ensure_litellm["_ensure_litellm&#40;&#41;<br/>[llm.py]"]
+  node_base_call["BaseLLM.call&#40;&#41;<br/>[base_llm.py]"]
+end
+
+subgraph group_tools_layer["Tool Execution &amp; Delegation"]
+  node_tool_usage["ToolUsage<br/>[tool_usage.py]"]
+  node_base_tool["BaseTool<br/>[base_tool.py]"]
+  node_agent_tools["AgentTools<br/>[agent_tools.py]"]
+  node_delegate_work["DelegateWorkTool"]
+  node_ask_q["AskQuestionTool"]
+  node_del_exec["BaseAgentTools._execute&#40;&#41;"]
+end
+
+subgraph group_flow_layer["Flow Orchestration"]
+  node_flow["Flow<br/>[flow.py]"]
+  node_runtime_flow["RuntimeFlow<br/>[__init__.py]"]
+  node_start_dec["@start<br/>[_start.py]"]
+  node_listen_dec["@listen<br/>[_listen.py]"]
+end
+
+subgraph group_memory_layer["Memory, Knowledge &amp; Events"]
+  node_memory["Memory<br/>[unified_memory.py]"]
+  node_recall["Memory.recall&#40;&#41;<br/>[unified_memory.py]"]
+  node_remember["Memory.remember&#40;&#41;<br/>[unified_memory.py]"]
+  node_knowledge["Knowledge<br/>[knowledge.py]"]
+  node_event_bus["CrewAIEventsBus<br/>[event_bus.py]"]
+end
+
+node_crew -->|"declares team; kickoff&#40;inputs&#41; runs it"| node_kickoff
+node_kickoff -->|"Process.hierarchical branch"| node_run_hier
+node_kickoff -->|"Process.sequential default"| node_exec_tasks
+node_run_hier -->|"creates manager first"| node_manager
+node_manager -->|"delegation-enabled loop"| node_exec_tasks
+node_manager -->|"wired with AgentTools&#40;agents&#41;.tools&#40;&#41;"| node_agent_tools
+node_exec_tasks -->|"prior outputs become context"| node_get_context
+node_exec_tasks -->|"per task: execute_sync / execute_async"| node_exec_sync
+node_task -->|"sync entry"| node_exec_sync
+node_exec_sync -->|"delegates to core logic"| node_exec_core
+node_exec_core -->|"emits TaskStartedEvent"| node_event_bus
+node_exec_core -->|"hands off to assigned agent"| node_execute_task
+node_exec_core -->|"wraps raw / Pydantic / JSON output"| node_task_output
+node_execute_task -->|"builds base task prompt"| node_prepare_task
+node_prepare_task -->|"adds tools, context, i18n slices"| node_finalize_prompt
+node_execute_task -->|"handle_knowledge_retrieval&#40;&#41; injects sources"| node_knowledge
+node_execute_task -->|"runs executor, timeout optional"| node_exec_no_timeout
+node_exec_no_timeout -->|"executor.invoke&#40;&#123;input, tools&#125;&#41;"| node_agent_executor
+node_agent_executor -->|"asks LLM for next action or answer"| node_base_call
+node_agent_executor -->|"model requested a tool"| node_tool_usage
+node_agent_executor -->|"emits LLM / agent events"| node_event_bus
+node_llm_class -->|"imports LiteLLM lazily"| node_ensure_litellm
+node_llm_class -->|"implements the call&#40;&#41; contract"| node_base_call
+node_tool_usage -->|"run&#40;&#41; validates args, dispatches _run&#40;&#41;"| node_base_tool
+node_tool_usage -->|"emits tool usage events"| node_event_bus
+node_agent_tools -->|"builds DelegateWorkTool"| node_delegate_work
+node_agent_tools -->|"builds AskQuestionTool"| node_ask_q
+node_delegate_work -->|"_run&#40;coworker, task, context&#41;"| node_del_exec
+node_del_exec -->|"on-the-fly Task re-enters the loop"| node_execute_task
+node_crew -->|"memory=True scopes a Memory"| node_memory
+node_memory -->|"similarity search of records"| node_recall
+node_memory -->|"encodes outputs and interactions"| node_remember
+node_flow -->|"public facade over runtime engine"| node_runtime_flow
+node_flow -->|"marks entry methods"| node_start_dec
+node_flow -->|"fires listeners on state updates"| node_listen_dec
+node_flow -->|"flow methods kick off embedded crews"| node_kickoff
+
+click node_crew "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/crew.py"
+click node_kickoff "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/crew.py"
+click node_run_hier "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/crew.py"
+click node_manager "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/crew.py"
+click node_exec_tasks "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/crew.py"
+click node_get_context "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/crew.py"
+click node_task "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/task.py"
+click node_exec_sync "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/task.py"
+click node_exec_core "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/task.py"
+click node_task_output "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tasks/task_output.py"
+click node_agent "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/agent/core.py"
+click node_execute_task "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/agent/core.py"
+click node_prepare_task "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/agent/core.py"
+click node_finalize_prompt "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/agent/core.py"
+click node_exec_no_timeout "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/agent/core.py"
+click node_agent_executor "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/agents/agent_executor.py"
+click node_llm_class "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/llm.py"
+click node_ensure_litellm "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/llm.py"
+click node_base_call "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/llms/base_llm.py"
+click node_tool_usage "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tools/tool_usage.py"
+click node_base_tool "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tools/base_tool.py"
+click node_agent_tools "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tools/agent_tools/agent_tools.py"
+click node_delegate_work "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tools/agent_tools/delegate_work_tool.py"
+click node_ask_q "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tools/agent_tools/ask_question_tool.py"
+click node_del_exec "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/tools/agent_tools/base_agent_tools.py"
+click node_flow "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/flow/flow.py"
+click node_runtime_flow "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/flow/runtime/__init__.py"
+click node_start_dec "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/flow/dsl/_start.py"
+click node_listen_dec "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/flow/dsl/_listen.py"
+click node_memory "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/memory/unified_memory.py"
+click node_recall "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/memory/unified_memory.py"
+click node_remember "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/memory/unified_memory.py"
+click node_knowledge "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/knowledge/knowledge.py"
+click node_event_bus "https://github.com/crewAIInc/crewAI/blob/main/lib/crewai/src/crewai/events/event_bus.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_crew,node_kickoff,node_run_hier,node_manager,node_exec_tasks,node_get_context,node_memory,node_recall,node_remember,node_knowledge,node_event_bus toneBlue
+class node_task,node_exec_sync,node_exec_core,node_task_output toneAmber
+class node_agent,node_execute_task,node_prepare_task,node_finalize_prompt,node_exec_no_timeout,node_agent_executor toneMint
+class node_llm_class,node_ensure_litellm,node_base_call toneRose
+class node_tool_usage,node_base_tool,node_agent_tools,node_delegate_work,node_ask_q,node_del_exec toneIndigo
+class node_flow,node_runtime_flow,node_start_dec,node_listen_dec toneTeal
