@@ -1,0 +1,138 @@
+{
+  "owner": "langchain-ai",
+  "repo": "langgraph",
+  "branch": "main",
+  "groups": [
+    { "id": "builder", "name": "Graph Builder", "label": "Graph Builder (graph/)" },
+    { "id": "engine", "name": "Pregel Engine", "label": "Pregel Engine (pregel/)" },
+    { "id": "state", "name": "State Channels", "label": "State Channels (channels/)" },
+    { "id": "runtime", "name": "Durability & Control", "label": "Durability & Control" },
+    { "id": "prebuilt", "name": "Prebuilt Agents", "label": "Prebuilt Agents (libs/prebuilt)" }
+  ],
+  "nodes": [
+    {
+      "id": "stategraph",
+      "label": "StateGraph.add_node / add_conditional_edges",
+      "file": "graph/state.py",
+      "path": "libs/langgraph/langgraph/graph/state.py",
+      "group": "builder",
+      "groupId": "builder",
+      "desc": "Declarative builder: register node functions, fixed edges, and router functions; state fields map to channels"
+    },
+    {
+      "id": "compile",
+      "label": "StateGraph.compile()",
+      "file": "graph/state.py",
+      "path": "libs/langgraph/langgraph/graph/state.py",
+      "group": "builder",
+      "groupId": "builder",
+      "desc": "Validates the graph, materializes channels, and returns a CompiledStateGraph wired for execution"
+    },
+    {
+      "id": "pregel",
+      "label": "Pregel engine",
+      "file": "pregel/main.py",
+      "path": "libs/langgraph/langgraph/pregel/main.py",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "The runnable engine every compiled graph becomes; executes nodes in Pregel-style supersteps"
+    },
+    {
+      "id": "loop",
+      "label": "PregelLoop (superstep tick)",
+      "file": "pregel/_loop.py",
+      "path": "libs/langgraph/langgraph/pregel/_loop.py",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "One loop iteration: plan tasks from pending channel updates, tick the runner, apply writes, snapshot a checkpoint"
+    },
+    {
+      "id": "runner",
+      "label": "PregelRunner.tick",
+      "file": "pregel/_runner.py",
+      "path": "libs/langgraph/langgraph/pregel/_runner.py",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "Executes the node functions of a superstep concurrently and collects their channel writes"
+    },
+    {
+      "id": "algo",
+      "label": "apply_writes / prepare_single_task",
+      "file": "pregel/_algo.py",
+      "path": "libs/langgraph/langgraph/pregel/_algo.py",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "Core algorithm: resolves task inputs from channels and applies node writes with version tracking"
+    },
+    {
+      "id": "channels",
+      "label": "Channels: LastValue / Topic / EphemeralValue",
+      "file": "channels/last_value.py",
+      "path": "libs/langgraph/langgraph/channels/last_value.py",
+      "group": "state",
+      "groupId": "state",
+      "desc": "Typed state slots with reducers: last-write-wins, append-only, or cleared-each-step"
+    },
+    {
+      "id": "add_messages",
+      "label": "add_messages reducer",
+      "file": "graph/message.py",
+      "path": "libs/langgraph/langgraph/graph/message.py",
+      "group": "state",
+      "groupId": "state",
+      "desc": "The default reducer for message lists: merges, dedupes, and upserts messages by ID"
+    },
+    {
+      "id": "checkpointer",
+      "label": "BaseCheckpointSaver.put / get_tuple",
+      "file": "checkpoint/base/__init__.py",
+      "path": "libs/checkpoint/langgraph/checkpoint/base/__init__.py",
+      "group": "runtime",
+      "groupId": "runtime",
+      "desc": "Persistence contract: save a versioned checkpoint per superstep, load a thread's state for resume"
+    },
+    {
+      "id": "memory",
+      "label": "InMemorySaver",
+      "file": "checkpoint/memory/__init__.py",
+      "path": "libs/checkpoint/langgraph/checkpoint/memory/__init__.py",
+      "group": "runtime",
+      "groupId": "runtime",
+      "desc": "In-memory saver for prototyping; swap for Postgres/SQLite savers without touching graph code"
+    },
+    {
+      "id": "interrupt",
+      "label": "interrupt() / Command(resume=...)",
+      "file": "types.py",
+      "path": "libs/langgraph/langgraph/types.py",
+      "group": "runtime",
+      "groupId": "runtime",
+      "desc": "Human-in-the-loop: raise a resumable GraphInterrupt from a node, resume with a Command carrying the answer"
+    },
+    {
+      "id": "react_agent",
+      "label": "create_react_agent + ToolNode",
+      "file": "prebuilt/chat_agent_executor.py",
+      "path": "libs/prebuilt/langgraph/prebuilt/chat_agent_executor.py",
+      "group": "prebuilt",
+      "groupId": "prebuilt",
+      "desc": "The 'agent' preset: just a StateGraph cycling model-call and tool nodes, compiled like any other graph"
+    }
+  ],
+  "edges": [
+    { "from": "stategraph", "to": "compile", "label": "add_node / add_conditional_edges" },
+    { "from": "compile", "to": "pregel", "label": "returns CompiledStateGraph (a Pregel)" },
+    { "from": "compile", "to": "checkpointer", "label": "checkpointer= argument" },
+    { "from": "pregel", "to": "loop", "label": "drives supersteps" },
+    { "from": "loop", "to": "algo", "label": "plan tasks / apply writes" },
+    { "from": "loop", "to": "runner", "label": "submit node tasks" },
+    { "from": "runner", "to": "channels", "label": "reads inputs, returns writes" },
+    { "from": "algo", "to": "channels", "label": "updates + version bumps" },
+    { "from": "channels", "to": "add_messages", "label": "messages state reducer" },
+    { "from": "loop", "to": "checkpointer", "label": "checkpoint per superstep" },
+    { "from": "checkpointer", "to": "memory", "label": "development default" },
+    { "from": "loop", "to": "interrupt", "label": "pause on GraphInterrupt" },
+    { "from": "interrupt", "to": "pregel", "label": "Command resume restarts loop" },
+    { "from": "react_agent", "to": "stategraph", "label": "agent = graph pattern" }
+  ]
+}

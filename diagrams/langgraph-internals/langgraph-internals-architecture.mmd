@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_builder["Graph Builder &#40;graph/&#41;"]
+  node_stategraph["StateGraph<br/>[state.py]"]
+  node_add_node["add_node&#40;&#41;<br/>[state.py]"]
+  node_add_conditional_edges["add_conditional_edges&#40;&#41;<br/>[state.py]"]
+  node_add_messages["add_messages&#40;&#41;<br/>[message.py]"]
+  node_compile["StateGraph.compile&#40;&#41;<br/>[state.py]"]
+  node_compiled["CompiledStateGraph<br/>[state.py]"]
+  node_attach_node["CompiledStateGraph.attach_node&#40;&#41;<br/>[state.py]"]
+end
+
+subgraph group_pregel["Pregel Core &#40;pregel/&#41;"]
+  node_pregel["Pregel<br/>[main.py]"]
+  node_stream["Pregel.stream&#40;&#41;<br/>[main.py]"]
+  node_astream["Pregel.astream&#40;&#41;<br/>[main.py]"]
+  node_loop["PregelLoop<br/>[_loop.py]"]
+  node_loop_tick["PregelLoop.tick&#40;&#41;<br/>[_loop.py]"]
+  node_runner["PregelRunner<br/>[_runner.py]"]
+  node_runner_tick["PregelRunner.tick&#40;&#41; / atick&#40;&#41;<br/>[_runner.py]"]
+  node_apply_writes["apply_writes&#40;&#41;<br/>[_algo.py]"]
+  node_prepare_single["prepare_single_task&#40;&#41;<br/>[_algo.py]"]
+  node_should_interrupt["should_interrupt&#40;&#41;<br/>[_algo.py]"]
+  node_map_command["map_command&#40;&#41;<br/>[_io.py]"]
+end
+
+subgraph group_channels["Channels &#40;channels/&#41;"]
+  node_lastvalue["LastValue<br/>[last_value.py]"]
+  node_topic["Topic<br/>[topic.py]"]
+  node_binop["BinaryOperatorAggregate<br/>[binop.py]"]
+  node_ephemeral["EphemeralValue<br/>[ephemeral_value.py]"]
+end
+
+subgraph group_checkpoint["Checkpointing &#40;libs/checkpoint&#41;"]
+  node_saver["BaseCheckpointSaver<br/>[__init__.py]"]
+  node_saver_put["BaseCheckpointSaver.put&#40;&#41;<br/>[__init__.py]"]
+  node_get_tuple["BaseCheckpointSaver.get_tuple&#40;&#41;<br/>[__init__.py]"]
+  node_memsaver["InMemorySaver<br/>[__init__.py]"]
+end
+
+subgraph group_types["Interrupt &amp; Control Types &#40;types.py&#41;"]
+  node_send["Send<br/>[types.py]"]
+  node_command["Command<br/>[types.py]"]
+  node_interrupt_fn["interrupt&#40;&#41;<br/>[types.py]"]
+  node_graph_interrupt["GraphInterrupt<br/>[errors.py]"]
+end
+
+subgraph group_prebuilt["Prebuilt Agent &#40;libs/prebuilt&#41;"]
+  node_react_agent["create_react_agent&#40;&#41;"]
+  node_should_continue["should_continue&#40;&#41;"]
+  node_toolnode["ToolNode<br/>[tool_node.py]"]
+end
+
+subgraph group_func["Functional API &#40;func/&#41;"]
+  node_entrypoint["entrypoint<br/>[__init__.py]"]
+end
+
+node_stategraph -->|"register node"| node_add_node
+node_stategraph -->|"register router"| node_add_conditional_edges
+node_stategraph -->|"default messages reducer"| node_add_messages
+node_compile -->|"constructs"| node_compiled
+node_compile -->|"copies node specs"| node_attach_node
+node_compile -->|"checkpointer= arg"| node_saver
+node_compiled -->|"subclasses"| node_pregel
+node_compiled -->|"Runnable surface"| node_stream
+node_stream -->|"creates SyncPregelLoop"| node_loop
+node_astream -->|"creates AsyncPregelLoop"| node_loop
+node_loop -->|"once per superstep"| node_loop_tick
+node_loop_tick -->|"plan next tasks"| node_prepare_single
+node_loop_tick -->|"interrupt_before/after"| node_should_interrupt
+node_loop -->|"submit task batch"| node_runner
+node_prepare_single -->|"executable tasks"| node_runner
+node_runner -->|"run concurrently"| node_runner_tick
+node_runner_tick -->|"node writes"| node_apply_writes
+node_apply_writes -->|"last write wins"| node_lastvalue
+node_apply_writes -->|"append updates"| node_topic
+node_apply_writes -->|"fold with operator"| node_binop
+node_apply_writes -->|"clear after step"| node_ephemeral
+node_loop -->|"checkpoint each step"| node_saver
+node_saver -->|"persist"| node_saver_put
+node_saver -->|"load thread"| node_get_tuple
+node_saver -->|"dev default"| node_memsaver
+node_loop -->|"resume from history"| node_get_tuple
+node_should_interrupt -->|"pause boundary"| node_graph_interrupt
+node_interrupt_fn -->|"raises"| node_graph_interrupt
+node_interrupt_fn -->|"requires checkpointer"| node_saver
+node_command -->|"resume/goto input"| node_map_command
+node_map_command -->|"inject as writes"| node_apply_writes
+node_send -->|"fan-out per item"| node_prepare_single
+node_react_agent -->|"agent + tools nodes"| node_add_node
+node_react_agent -->|"route after model"| node_should_continue
+node_should_continue -->|"parallel tool dispatch"| node_send
+node_react_agent -->|"tools node"| node_toolnode
+node_toolnode -->|"returns Command updates"| node_command
+node_entrypoint -->|"returns a Pregel"| node_pregel
+
+click node_stategraph "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py"
+click node_add_node "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py"
+click node_add_conditional_edges "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py"
+click node_add_messages "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/message.py"
+click node_compile "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py"
+click node_compiled "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py"
+click node_attach_node "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py"
+click node_pregel "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/main.py"
+click node_stream "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/main.py"
+click node_astream "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/main.py"
+click node_loop "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_loop.py"
+click node_loop_tick "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_loop.py"
+click node_runner "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_runner.py"
+click node_runner_tick "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_runner.py"
+click node_apply_writes "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_algo.py"
+click node_prepare_single "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_algo.py"
+click node_should_interrupt "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_algo.py"
+click node_map_command "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/_io.py"
+click node_lastvalue "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/channels/last_value.py"
+click node_topic "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/channels/topic.py"
+click node_binop "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/channels/binop.py"
+click node_ephemeral "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/channels/ephemeral_value.py"
+click node_saver "https://github.com/langchain-ai/langgraph/blob/main/libs/checkpoint/langgraph/checkpoint/base/__init__.py"
+click node_saver_put "https://github.com/langchain-ai/langgraph/blob/main/libs/checkpoint/langgraph/checkpoint/base/__init__.py"
+click node_get_tuple "https://github.com/langchain-ai/langgraph/blob/main/libs/checkpoint/langgraph/checkpoint/base/__init__.py"
+click node_memsaver "https://github.com/langchain-ai/langgraph/blob/main/libs/checkpoint/langgraph/checkpoint/memory/__init__.py"
+click node_send "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/types.py"
+click node_command "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/types.py"
+click node_interrupt_fn "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/types.py"
+click node_graph_interrupt "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/errors.py"
+click node_react_agent "https://github.com/langchain-ai/langgraph/blob/main/libs/prebuilt/langgraph/prebuilt/chat_agent_executor.py"
+click node_should_continue "https://github.com/langchain-ai/langgraph/blob/main/libs/prebuilt/langgraph/prebuilt/chat_agent_executor.py"
+click node_toolnode "https://github.com/langchain-ai/langgraph/blob/main/libs/prebuilt/langgraph/prebuilt/tool_node.py"
+click node_entrypoint "https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/func/__init__.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_stategraph,node_add_node,node_add_conditional_edges,node_add_messages,node_compile,node_compiled,node_attach_node,node_entrypoint toneBlue
+class node_pregel,node_stream,node_astream,node_loop,node_loop_tick,node_runner,node_runner_tick,node_apply_writes,node_prepare_single,node_should_interrupt,node_map_command toneAmber
+class node_lastvalue,node_topic,node_binop,node_ephemeral toneMint
+class node_saver,node_saver_put,node_get_tuple,node_memsaver toneRose
+class node_send,node_command,node_interrupt_fn,node_graph_interrupt toneIndigo
+class node_react_agent,node_should_continue,node_toolnode toneTeal
