@@ -1,58 +1,62 @@
 flowchart TD
 
-subgraph group_g_ingest["Ingestion"]
-  node_reader["SimpleDirectoryReader<br/>[base.py]"]
-  node_text_node["TextNode / Document<br/>[schema.py]"]
+subgraph group_data["Ingestion &amp; Data Model"]
+  node_docs["Document<br/>[schema.py]"]
   node_splitter["SentenceSplitter<br/>[sentence.py]"]
+  node_ingestflow["Ingestion flow<br/>[transformations.py]"]
 end
 
-subgraph group_g_models["Model Abstractions"]
-  node_settings{{"Settings<br/>[settings.py]"}}
-  node_base_llm["BaseLLM<br/>[base.py]"]
-  node_base_embedding["BaseEmbedding<br/>[base.py]"]
+subgraph group_model["Embedding Models"]
+  node_embedding["BaseEmbedding<br/>[base.py]"]
 end
 
-subgraph group_g_index["Indices"]
-  node_base_index["BaseIndex<br/>[base.py]"]
-  node_vector_index["VectorStoreIndex<br/>[base.py]"]
+subgraph group_store["Vector Stores"]
+  node_vquery["VectorStoreQuery<br/>[types.py]"]
+  node_vstore["SimpleVectorStore<br/>[simple.py]"]
 end
 
-subgraph group_g_query["Query Flow"]
-  node_retriever["BaseRetriever<br/>[base_retriever.py]"]
-  node_query_engine{{"RetrieverQueryEngine"}}
-  node_synth["CompactAndRefine"]
+subgraph group_index["Index"]
+  node_index["VectorStoreIndex<br/>[base.py]"]
 end
 
-subgraph group_g_storage["Storage"]
-  node_storage[("StorageContext<br/>[storage_context.py]")]
+subgraph group_query["Retrieval &amp; Synthesis"]
+  node_retriever["VectorIndexRetriever<br/>[retriever.py]"]
+  node_qengine["RetrieverQueryEngine"]
+  node_synth["TreeSummarize<br/>[tree_summarize.py]"]
 end
 
-node_reader -->|"load_data&#40;&#41; yields"| node_text_node
-node_text_node -->|"chunked by"| node_splitter
-node_splitter -->|"insert_nodes&#40;&#41;"| node_vector_index
-node_base_embedding -->|"embeds chunks"| node_vector_index
-node_settings -->|"Settings.llm"| node_base_llm
-node_settings -->|"Settings.embed_model"| node_base_embedding
-node_settings -->|"resolves defaults"| node_vector_index
-node_base_index -->|"extends"| node_vector_index
-node_vector_index -->|"as_retriever&#40;&#41;"| node_retriever
-node_retriever -->|"retrieved nodes"| node_query_engine
-node_base_llm -->|"drafts answer"| node_synth
-node_synth -->|"synthesize&#40;&#41;"| node_query_engine
-node_vector_index -->|"persist&#40;&#41;"| node_storage
+subgraph group_runtime["Runtime: Callbacks &amp; Agents"]
+  node_callbacks["CallbackManager<br/>[base.py]"]
+  node_agent["FunctionAgent<br/>[function_agent.py]"]
+end
 
-click node_reader "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/readers/file/base.py"
-click node_text_node "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/schema.py"
+node_docs -->|"split_text&#40;&#41;"| node_splitter
+node_splitter -->|"runs as transformation"| node_ingestflow
+node_ingestflow -->|"embed nodes"| node_embedding
+node_embedding -->|"vectors upserted"| node_vstore
+node_vquery -->|"query fields"| node_vstore
+node_vstore -->|"storage backend"| node_index
+node_index -->|"as_retriever&#40;&#41;"| node_retriever
+node_index -->|"as_query_engine&#40;&#41;"| node_qengine
+node_retriever -->|"builds query"| node_vquery
+node_retriever -->|"nodes with scores"| node_qengine
+node_qengine -->|"get_response&#40;&#41;"| node_synth
+node_callbacks -->|"event trace"| node_qengine
+node_agent -->|"query engine as tool"| node_qengine
+node_callbacks -.->|"step events"| node_agent
+
+click node_docs "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/schema.py"
 click node_splitter "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/node_parser/text/sentence.py"
-click node_settings "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/settings.py"
-click node_base_llm "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/base/llms/base.py"
-click node_base_embedding "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/base/embeddings/base.py"
-click node_base_index "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/indices/base.py"
-click node_vector_index "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/indices/vector_store/base.py"
-click node_retriever "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/base/base_retriever.py"
-click node_query_engine "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/query_engine/retriever_query_engine.py"
-click node_synth "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/response_synthesizers/compact_and_refine.py"
-click node_storage "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/storage/storage_context.py"
+click node_ingestflow "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/ingestion/transformations.py"
+click node_embedding "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/base/embeddings/base.py"
+click node_vquery "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/vector_stores/types.py"
+click node_vstore "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/vector_stores/simple.py"
+click node_index "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/indices/vector_store/base.py"
+click node_retriever "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/indices/vector_store/retrievers/retriever.py"
+click node_qengine "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/query_engine/retriever_query_engine.py"
+click node_synth "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/response_synthesizers/tree_summarize.py"
+click node_callbacks "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/callbacks/base.py"
+click node_agent "https://github.com/run-llama/llama_index/blob/main/llama-index-core/llama_index/core/agent/workflow/function_agent.py"
 
 classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
 classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
@@ -61,8 +65,9 @@ classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
 classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
 classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
 classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
-class node_reader,node_text_node,node_splitter toneBlue
-class node_settings,node_base_llm,node_base_embedding toneAmber
-class node_base_index,node_vector_index toneMint
-class node_retriever,node_query_engine,node_synth toneRose
-class node_storage toneIndigo
+class node_docs,node_splitter,node_ingestflow toneBlue
+class node_embedding toneAmber
+class node_vquery,node_vstore toneMint
+class node_index toneRose
+class node_retriever,node_qengine,node_synth toneIndigo
+class node_callbacks,node_agent toneTeal
