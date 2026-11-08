@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_msgs["Message Primitives"]
+  node_base_message["BaseMessage<br/>[base.py]"]
+  node_human_message["HumanMessage<br/>[human.py]"]
+  node_ai_message["AIMessage<br/>[ai.py]"]
+  node_ai_chunk["AIMessageChunk<br/>[ai.py]"]
+end
+
+subgraph group_models["Chat Model Internals"]
+  node_base_chat_model["BaseChatModel<br/>[chat_models.py]"]
+  node_invoke["invoke&#40;&#41;<br/>[chat_models.py]"]
+  node_generate["generate&#40;&#41;<br/>[chat_models.py]"]
+  node_generate_hook["_generate&#40;&#41;<br/>[chat_models.py]"]
+  node_stream["stream&#40;&#41;<br/>[chat_models.py]"]
+  node_init_chat_model["init_chat_model&#40;&#41;<br/>[base.py]"]
+  node_parse_model["_parse_model&#40;&#41;<br/>[base.py]"]
+end
+
+subgraph group_lcel["Runnable Internals"]
+  node_runnable["Runnable<br/>[base.py]"]
+  node_runnable_seq["RunnableSequence<br/>[base.py]"]
+  node_seq_invoke["RunnableSequence.invoke<br/>[base.py]"]
+  node_runnable_lambda["RunnableLambda<br/>[base.py]"]
+  node_with_retry["with_retry&#40;&#41;<br/>[base.py]"]
+  node_with_fallbacks["with_fallbacks&#40;&#41;<br/>[base.py]"]
+  node_str_parser["StrOutputParser<br/>[string.py]"]
+end
+
+subgraph group_tools["Tool Internals"]
+  node_base_tool["BaseTool<br/>[base.py]"]
+  node_tool_run["BaseTool.run&#40;&#41;<br/>[base.py]"]
+  node_structured_tool["StructuredTool<br/>[structured.py]"]
+end
+
+subgraph group_agent["Agent Factory Internals"]
+  node_create_agent["create_agent&#40;&#41;<br/>[factory.py]"]
+  node_model_resolve["init_chat_model&#40;model&#41;<br/>[factory.py]"]
+  node_state_graph["StateGraph&#40;AgentState&#41;<br/>[factory.py]"]
+  node_model_node["model_node&#40;&#41;<br/>[factory.py]"]
+  node_add_tool_node["add_node&#40;'tools'&#41;<br/>[factory.py]"]
+  node_toolnode_shim["ToolNode re-export<br/>[tool_node.py]"]
+  node_send_tools["Send&#40;'tools', ...&#41;<br/>[factory.py]"]
+end
+
+subgraph group_mw["Middleware Hooks"]
+  node_agent_middleware["AgentMiddleware<br/>[types.py]"]
+  node_before_model["before_model&#40;&#41;<br/>[types.py]"]
+  node_after_model["after_model&#40;&#41;<br/>[types.py]"]
+  node_wrap_model_call["wrap_model_call&#40;&#41;<br/>[types.py]"]
+  node_summarization["SummarizationMiddleware<br/>[summarization.py]"]
+  node_hitl["HumanInTheLoopMiddleware"]
+end
+
+node_human_message -->|"subclass"| node_base_message
+node_ai_message -->|"subclass"| node_base_message
+node_ai_chunk -->|"streaming delta"| node_ai_message
+node_human_message -->|"list&#91;BaseMessage&#93;"| node_invoke
+node_invoke -->|"wraps"| node_generate
+node_generate -->|"calls provider impl"| node_generate_hook
+node_generate_hook -->|"returns ChatResult"| node_ai_message
+node_stream -->|"yields chunks"| node_ai_chunk
+node_init_chat_model -->|"split 'provider:model'"| node_parse_model
+node_parse_model -->|"import + instantiate"| node_base_chat_model
+node_runnable -->|"&#124; composes"| node_runnable_seq
+node_runnable_seq -->|"steps loop"| node_seq_invoke
+node_runnable -->|"wraps callables"| node_runnable_lambda
+node_runnable -->|".with_retry&#40;&#41;"| node_with_retry
+node_runnable -->|".with_fallbacks&#40;&#41;"| node_with_fallbacks
+node_str_parser -->|"is a Runnable"| node_runnable
+node_seq_invoke -->|"model step"| node_base_chat_model
+node_str_parser -->|"reads .content"| node_ai_message
+node_structured_tool -->|"subclass"| node_base_tool
+node_base_tool -->|"validate + dispatch"| node_tool_run
+node_base_tool -->|"tools= arg"| node_create_agent
+node_create_agent -->|"string model id"| node_model_resolve
+node_model_resolve -->|"resolves provider"| node_init_chat_model
+node_create_agent -->|"builds loop graph"| node_state_graph
+node_create_agent -->|"defines model step"| node_model_node
+node_model_node -->|"model.invoke&#40;messages&#41;"| node_invoke
+node_create_agent -->|"add_node&#40;'tools'&#41;"| node_add_tool_node
+node_add_tool_node -->|"ToolNode from langgraph.prebuilt"| node_toolnode_shim
+node_toolnode_shim -->|"executes tool calls"| node_tool_run
+node_ai_message -->|"trigger: tool_calls"| node_send_tools
+node_create_agent -->|"conditional edges"| node_send_tools
+node_send_tools -->|"Send&#40;'tools'&#41;"| node_add_tool_node
+node_send_tools -->|"loop back / END"| node_model_node
+node_create_agent -->|"middleware= list"| node_agent_middleware
+node_agent_middleware -->|"hook"| node_before_model
+node_agent_middleware -->|"hook"| node_after_model
+node_agent_middleware -->|"hook"| node_wrap_model_call
+node_before_model -->|"pre-process state"| node_model_node
+node_model_node -->|"post-process response"| node_after_model
+node_wrap_model_call -->|"intercepts call"| node_invoke
+node_summarization -->|"built-in instance"| node_agent_middleware
+node_hitl -->|"built-in instance"| node_agent_middleware
+
+click node_base_message "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/messages/base.py"
+click node_human_message "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/messages/human.py"
+click node_ai_message "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/messages/ai.py"
+click node_ai_chunk "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/messages/ai.py"
+click node_base_chat_model "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/language_models/chat_models.py"
+click node_invoke "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/language_models/chat_models.py"
+click node_generate "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/language_models/chat_models.py"
+click node_generate_hook "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/language_models/chat_models.py"
+click node_stream "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/language_models/chat_models.py"
+click node_init_chat_model "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/chat_models/base.py"
+click node_parse_model "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/chat_models/base.py"
+click node_runnable "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py"
+click node_runnable_seq "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py"
+click node_seq_invoke "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py"
+click node_runnable_lambda "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py"
+click node_with_retry "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py"
+click node_with_fallbacks "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py"
+click node_str_parser "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/output_parsers/string.py"
+click node_base_tool "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/tools/base.py"
+click node_tool_run "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/tools/base.py"
+click node_structured_tool "https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/tools/structured.py"
+click node_create_agent "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/factory.py"
+click node_model_resolve "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/factory.py"
+click node_state_graph "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/factory.py"
+click node_model_node "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/factory.py"
+click node_add_tool_node "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/factory.py"
+click node_toolnode_shim "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/tools/tool_node.py"
+click node_send_tools "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/factory.py"
+click node_agent_middleware "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/middleware/types.py"
+click node_before_model "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/middleware/types.py"
+click node_after_model "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/middleware/types.py"
+click node_wrap_model_call "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/middleware/types.py"
+click node_summarization "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/middleware/summarization.py"
+click node_hitl "https://github.com/langchain-ai/langchain/blob/master/libs/langchain_v1/langchain/agents/middleware/human_in_the_loop.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_base_message,node_human_message,node_ai_message,node_ai_chunk toneBlue
+class node_base_chat_model,node_invoke,node_generate,node_generate_hook,node_stream,node_init_chat_model,node_parse_model toneAmber
+class node_runnable,node_runnable_seq,node_seq_invoke,node_runnable_lambda,node_with_retry,node_with_fallbacks,node_str_parser toneMint
+class node_base_tool,node_tool_run,node_structured_tool toneRose
+class node_create_agent,node_model_resolve,node_state_graph,node_model_node,node_add_tool_node,node_toolnode_shim,node_send_tools toneIndigo
+class node_agent_middleware,node_before_model,node_after_model,node_wrap_model_call,node_summarization,node_hitl toneTeal
