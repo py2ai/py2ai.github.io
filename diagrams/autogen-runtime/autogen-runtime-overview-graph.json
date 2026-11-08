@@ -1,0 +1,45 @@
+{
+  "owner": "microsoft",
+  "repo": "autogen",
+  "branch": "main",
+  "groups": [
+    {"id": "teams", "name": "AgentChat Teams", "label": "AgentChat Teams (user-facing)"},
+    {"id": "runtime", "name": "Core Agent Runtime", "label": "Core Agent Runtime"},
+    {"id": "agents", "name": "Agents and Model I/O", "label": "Agents and Model I/O"},
+    {"id": "tools_mem", "name": "Tools and Memory", "label": "Tools and Memory"},
+    {"id": "control", "name": "Termination Control", "label": "Termination Control"}
+  ],
+  "nodes": [
+    {"id": "task_input", "label": "Team.run(task)", "file": "_base_group_chat.py", "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat.py", "group": "AgentChat Teams (user-facing)", "groupId": "teams", "desc": "run_stream spins up an embedded SingleThreadedAgentRuntime, registers participants plus a group chat manager, and sends GroupChatStart to the manager."},
+    {"id": "round_robin", "label": "RoundRobinGroupChat / SelectorGroupChat / Swarm", "file": "_round_robin_group_chat.py", "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py", "group": "AgentChat Teams (user-facing)", "groupId": "teams", "desc": "User-facing team classes that only differ in their manager's select_speaker policy: cyclic index, model-based vote, or handoff following."},
+    {"id": "group_manager", "label": "BaseGroupChatManager", "file": "_base_group_chat_manager.py", "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py", "group": "AgentChat Teams (user-facing)", "groupId": "teams", "desc": "A dedicated manager actor: applies the termination condition after every turn, then requests the next speaker via GroupChatRequestPublish."},
+    {"id": "agent_runtime", "label": "SingleThreadedAgentRuntime", "file": "_single_threaded_agent_runtime.py", "path": "python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py", "group": "Core Agent Runtime", "groupId": "runtime", "desc": "The actor runtime: one asyncio.Queue of message envelopes, an intervention gate, lazy agent factories, and publish/subscribe plus RPC delivery."},
+    {"id": "type_subscription", "label": "TypeSubscription", "file": "_type_subscription.py", "path": "python/packages/autogen-core/src/autogen_core/_type_subscription.py", "group": "Core Agent Runtime", "groupId": "runtime", "desc": "Binds a topic type to an agent type; get_subscribed_recipients(topic_id) uses it to fan publishes out to matching agents."},
+    {"id": "chat_container", "label": "ChatAgentContainer", "file": "_chat_agent_container.py", "path": "python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py", "group": "Agents and Model I/O", "groupId": "agents", "desc": "Actor shell wrapped around every chat agent: buffers the shared thread, runs agent.on_messages_stream on request, publishes the Response back."},
+    {"id": "assistant", "label": "AssistantAgent", "file": "_assistant_agent.py", "path": "python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py", "group": "Agents and Model I/O", "groupId": "agents", "desc": "The workhorse agent: builds model context, streams LLM output, executes tool calls in a bounded loop, and can reflect on tool use."},
+    {"id": "model_client", "label": "ChatCompletionClient", "file": "_model_client.py", "path": "python/packages/autogen-core/src/autogen_core/models/_model_client.py", "group": "Agents and Model I/O", "groupId": "agents", "desc": "Provider-agnostic create/create_stream contract over LLMMessage sequences, returning CreateResult with usage stats."},
+    {"id": "openai_client", "label": "OpenAIChatCompletionClient", "file": "_openai_client.py", "path": "python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py", "group": "Agents and Model I/O", "groupId": "agents", "desc": "Concrete client from the Extensions package; anthropic, ollama, azure and cached variants live beside it in autogen-ext.models."},
+    {"id": "tools", "label": "BaseTool / Workbench", "file": "_base.py", "path": "python/packages/autogen-core/src/autogen_core/tools/_base.py", "group": "Tools and Memory", "groupId": "tools_mem", "desc": "BaseTool exposes name, description and a pydantic args schema; Workbench generalizes execution to MCP-style tool services."},
+    {"id": "memory", "label": "Memory protocol", "file": "_base_memory.py", "path": "python/packages/autogen-core/src/autogen_core/memory/_base_memory.py", "group": "Tools and Memory", "groupId": "tools_mem", "desc": "update_context() lets pluggable memory stores inject retrieved MemoryContent into the model context before each call."},
+    {"id": "termination", "label": "TerminationCondition", "file": "_termination.py", "path": "python/packages/autogen-agentchat/src/autogen_agentchat/base/_termination.py", "group": "Termination Control", "groupId": "control", "desc": "Composable stop checks: MaxMessageTermination, TextMentionTermination, TokenUsageTermination combine with & and | into one StopMessage decision."}
+  ],
+  "edges": [
+    {"from": "task_input", "to": "round_robin", "label": "configured team"},
+    {"from": "task_input", "to": "agent_runtime", "label": "send_message(GroupChatStart)"},
+    {"from": "round_robin", "to": "agent_runtime", "label": "register factories + subscriptions"},
+    {"from": "round_robin", "to": "group_manager", "label": "manager factory"},
+    {"from": "round_robin", "to": "chat_container", "label": "participant factory"},
+    {"from": "agent_runtime", "to": "group_manager", "label": "RPC envelope"},
+    {"from": "agent_runtime", "to": "type_subscription", "label": "match topic to agent"},
+    {"from": "agent_runtime", "to": "chat_container", "label": "topic fan-out"},
+    {"from": "group_manager", "to": "agent_runtime", "label": "publish request"},
+    {"from": "group_manager", "to": "termination", "label": "check after each turn"},
+    {"from": "chat_container", "to": "assistant", "label": "on_messages_stream"},
+    {"from": "assistant", "to": "model_client", "label": "create / create_stream"},
+    {"from": "model_client", "to": "openai_client", "label": "implemented by"},
+    {"from": "assistant", "to": "tools", "label": "execute FunctionCalls"},
+    {"from": "assistant", "to": "memory", "label": "update_context"},
+    {"from": "chat_container", "to": "agent_runtime", "label": "publish response"},
+    {"from": "termination", "to": "task_input", "label": "TaskResult + stop_reason"}
+  ]
+}
