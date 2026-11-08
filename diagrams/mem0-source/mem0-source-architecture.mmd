@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_api["Memory API surface"]
+  node_memory_init["Memory.__init__<br/>[main.py]"]
+  node_add["Memory.add&#40;&#41;<br/>[main.py]"]
+  node_search["Memory.search&#40;&#41;<br/>[main.py]"]
+  node_get_all["get / get_all<br/>[main.py]"]
+  node_update["update&#40;&#41; / _update_memory<br/>[main.py]"]
+  node_delete["delete&#40;&#41; / delete_all<br/>[main.py]"]
+  node_history_op["history&#40;&#41;<br/>[main.py]"]
+  node_reset["reset&#40;&#41;<br/>[main.py]"]
+end
+
+subgraph group_extraction["Add Phases &#40;V3&#41;"]
+  node_infer_raw["infer=False raw path<br/>[main.py]"]
+  node_phase0["Phase 0: context gathering<br/>[main.py]"]
+  node_phase1["Phase 1: existing memory retrieval<br/>[main.py]"]
+  node_phase2["Phase 2: LLM extraction<br/>[main.py]"]
+  node_phase3["Phase 3: batch embed facts<br/>[main.py]"]
+  node_phase45["Phase 4/5: hash dedup<br/>[main.py]"]
+  node_phase6["Phase 6: batch persist<br/>[main.py]"]
+  node_phase7["Phase 7: entity linking<br/>[main.py]"]
+end
+
+subgraph group_storage["SQLite Storage &#40;history + messages&#41;"]
+  node_sqlite["SQLiteManager<br/>[storage.py]"]
+  node_hist_write["add_history / batch_add_history<br/>[storage.py]"]
+  node_hist_read["get_history<br/>[storage.py]"]
+  node_messages["save_messages / get_last_messages<br/>[storage.py]"]
+end
+
+subgraph group_retrieval["Hybrid Retrieval and Ranking"]
+  node_search_vs["_search_vector_store<br/>[main.py]"]
+  node_lemmatize["lemmatize_for_bm25<br/>[lemmatization.py]"]
+  node_extract_entities["extract_entities"]
+  node_embed_query["embedding_model.embed&#40;query&#41;<br/>[main.py]"]
+  node_semantic["vector_store.search &#40;dense&#41;<br/>[main.py]"]
+  node_keyword["vector_store.keyword_search &#40;BM25&#41;<br/>[main.py]"]
+  node_entity_boost["_compute_entity_boosts<br/>[main.py]"]
+  node_score_rank["score_and_rank<br/>[scoring.py]"]
+  node_reranker["reranker.rerank<br/>[main.py]"]
+  node_memory_item["MemoryItem formatting<br/>[main.py]"]
+end
+
+subgraph group_providers["Provider Factories and Backends"]
+  node_factory["Llm/Embedder/VectorStore/RerankerFactory<br/>[factory.py]"]
+  node_qdrant["Qdrant backend<br/>[qdrant.py]"]
+  node_openai_llm["OpenAILLM.generate_response<br/>[openai.py]"]
+  node_openai_embed["OpenAIEmbedding<br/>[openai.py]"]
+end
+
+node_memory_init -->|"factory.create&#40;provider&#41;"| node_factory
+node_memory_init -->|"SQLiteManager&#40;history_db_path&#41;"| node_sqlite
+node_add -->|"infer=False"| node_infer_raw
+node_add -->|"infer=True"| node_phase0
+node_infer_raw -->|"embed raw text"| node_openai_embed
+node_infer_raw -->|"ADD via _create_memory"| node_hist_write
+node_phase0 -->|"get_last_messages&#40;10&#41;"| node_messages
+node_phase1 -->|"embed conversation"| node_embed_query
+node_phase1 -->|"search top-10 similar"| node_qdrant
+node_phase2 -->|"json_object response"| node_openai_llm
+node_phase2 -->|"facts JSON parsed"| node_phase3
+node_phase3 -->|"embed_batch&#40;facts&#41;"| node_openai_embed
+node_phase3 -->|"embed_map"| node_phase45
+node_phase45 -->|"deduped records"| node_phase6
+node_phase6 -->|"batch insert"| node_qdrant
+node_phase6 -->|"batch ADD history"| node_hist_write
+node_phase6 -->|"link entities"| node_phase7
+node_phase7 -->|"extract_entities_batch"| node_extract_entities
+node_phase7 -->|"entity insert/update"| node_qdrant
+node_search -->|"validated filters"| node_search_vs
+node_search -->|"rerank=True"| node_reranker
+node_search_vs -->|"normalize query"| node_lemmatize
+node_search_vs -->|"query entities"| node_extract_entities
+node_search_vs -->|"embed&#40;query&#41;"| node_embed_query
+node_search_vs -->|"over-fetch pool"| node_semantic
+node_search_vs -->|"BM25 pass"| node_keyword
+node_search_vs -->|"boost lookup"| node_entity_boost
+node_search_vs -->|"candidates + signals"| node_score_rank
+node_semantic -->|"query_points"| node_qdrant
+node_keyword -->|"sparse bm25 vector"| node_qdrant
+node_entity_boost -->|"entity_store.search"| node_qdrant
+node_score_rank -->|"top-k scored"| node_memory_item
+node_reranker -->|"reordered results"| node_memory_item
+node_get_all -->|"list&#40;filters&#41;"| node_qdrant
+node_update -->|"vector_store.update"| node_qdrant
+node_update -->|"UPDATE history"| node_hist_write
+node_update -->|"re-link entities"| node_extract_entities
+node_delete -->|"vector_store.delete"| node_qdrant
+node_delete -->|"DELETE is_deleted=1"| node_hist_write
+node_history_op -->|"db.get_history"| node_hist_read
+node_reset -->|"VectorStoreFactory.reset"| node_factory
+node_reset -->|"db.reset&#40;&#41;"| node_sqlite
+node_factory -->|"instantiate store"| node_qdrant
+node_factory -->|"instantiate llm"| node_openai_llm
+node_factory -->|"instantiate embedder"| node_openai_embed
+
+click node_memory_init "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_add "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_search "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_get_all "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_update "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_delete "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_history_op "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_reset "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_infer_raw "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase0 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase1 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase2 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase3 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase45 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase6 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_phase7 "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_sqlite "https://github.com/mem0ai/mem0/blob/main/mem0/memory/storage.py"
+click node_hist_write "https://github.com/mem0ai/mem0/blob/main/mem0/memory/storage.py"
+click node_hist_read "https://github.com/mem0ai/mem0/blob/main/mem0/memory/storage.py"
+click node_messages "https://github.com/mem0ai/mem0/blob/main/mem0/memory/storage.py"
+click node_search_vs "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_lemmatize "https://github.com/mem0ai/mem0/blob/main/mem0/utils/lemmatization.py"
+click node_extract_entities "https://github.com/mem0ai/mem0/blob/main/mem0/utils/entity_extraction.py"
+click node_embed_query "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_semantic "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_keyword "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_entity_boost "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_score_rank "https://github.com/mem0ai/mem0/blob/main/mem0/utils/scoring.py"
+click node_reranker "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_memory_item "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py"
+click node_factory "https://github.com/mem0ai/mem0/blob/main/mem0/utils/factory.py"
+click node_qdrant "https://github.com/mem0ai/mem0/blob/main/mem0/vector_stores/qdrant.py"
+click node_openai_llm "https://github.com/mem0ai/mem0/blob/main/mem0/llms/openai.py"
+click node_openai_embed "https://github.com/mem0ai/mem0/blob/main/mem0/embeddings/openai.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_memory_init,node_add,node_search,node_get_all,node_update,node_delete,node_history_op,node_reset toneBlue
+class node_infer_raw,node_phase0,node_phase1,node_phase2,node_phase3,node_phase45,node_phase6,node_phase7 toneAmber
+class node_sqlite,node_hist_write,node_hist_read,node_messages toneMint
+class node_search_vs,node_lemmatize,node_extract_entities,node_embed_query,node_semantic,node_keyword,node_entity_boost,node_score_rank,node_reranker,node_memory_item toneRose
+class node_factory,node_qdrant,node_openai_llm,node_openai_embed toneIndigo

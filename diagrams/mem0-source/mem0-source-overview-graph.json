@@ -1,0 +1,44 @@
+{
+  "owner": "mem0ai",
+  "repo": "mem0",
+  "branch": "main",
+  "groups": [
+    {"id": "api", "name": "Memory API", "label": "Memory API (what your agent calls)"},
+    {"id": "extraction", "name": "Extraction Phases", "label": "Extraction Phases (V3 batch)"},
+    {"id": "backends", "name": "Pluggable Backends", "label": "Pluggable Backends"},
+    {"id": "persistence", "name": "History and Messages", "label": "History and Messages (SQLite)"},
+    {"id": "retrieval", "name": "Retrieval and Ranking", "label": "Retrieval and Ranking"}
+  ],
+  "nodes": [
+    {"id": "app", "label": "Your agent app", "file": "main.py", "path": "mem0/memory/main.py", "group": "Memory API (what your agent calls)", "groupId": "api", "desc": "Any LLM agent loop: after each turn it calls memory.add(messages, user_id=...) and before each turn memory.search(query, filters={...})."},
+    {"id": "add", "label": "Memory.add()", "file": "main.py", "path": "mem0/memory/main.py", "group": "Memory API (what your agent calls)", "groupId": "api", "desc": "add() normalizes messages into entity-scoped filters (user_id/agent_id/run_id) and delegates to _add_to_vector_store; infer=False stores raw text, infer=True (default) runs the extraction flow."},
+    {"id": "crud", "label": "get / update / delete / history", "file": "main.py", "path": "mem0/memory/main.py", "group": "Memory API (what your agent calls)", "groupId": "api", "desc": "The maintenance surface: get/get_all read payloads, update re-embeds and rewrites a vector, delete removes it, history() replays the audit trail, reset() drops everything."},
+    {"id": "search", "label": "Memory.search()", "file": "main.py", "path": "mem0/memory/main.py", "group": "Memory API (what your agent calls)", "groupId": "api", "desc": "search() validates top_k/threshold and mandatory filters, then hands off to _search_vector_store for hybrid scoring and optionally to a reranker."},
+    {"id": "add_flow", "label": "_add_to_vector_store (V3 batch flow)", "file": "main.py", "path": "mem0/memory/main.py", "group": "Extraction Phases (V3 batch)", "groupId": "extraction", "desc": "Eight phases: gather recent context, retrieve similar existing memories, one LLM extraction call, batch embed, MD5 hash dedup, batch persist, entity linking, save messages."},
+    {"id": "llm", "label": "Extraction LLM", "file": "openai.py", "path": "mem0/llms/openai.py", "group": "Extraction Phases (V3 batch)", "groupId": "extraction", "desc": "generate_response() is called once per add() with ADDITIVE_EXTRACTION_PROMPT and response_format json_object to turn the conversation into candidate fact records."},
+    {"id": "entity", "label": "Entity store linking", "file": "main.py", "path": "mem0/memory/main.py", "group": "Extraction Phases (V3 batch)", "groupId": "extraction", "desc": "extract_entities_batch() finds entities in each fact; they are embedded, deduped against the entity collection (exact or >=0.95 similarity) and linked via linked_memory_ids."},
+    {"id": "embed", "label": "Embedder (embed / embed_batch)", "file": "openai.py", "path": "mem0/embeddings/openai.py", "group": "Pluggable Backends", "groupId": "backends", "desc": "OpenAIEmbedding.embed() embeds one text; embed_batch() chunks 100 inputs per call and is used for facts and entities in one shot."},
+    {"id": "vector_store", "label": "Vector store (Qdrant, Chroma, FAISS...)", "file": "qdrant.py", "path": "mem0/vector_stores/qdrant.py", "group": "Pluggable Backends", "groupId": "backends", "desc": "VectorStoreFactory instantiates one of ~26 backends behind VectorStoreBase; Qdrant adds dense query_points search plus BM25 sparse keyword_search."},
+    {"id": "history", "label": "SQLiteManager (history + messages)", "file": "storage.py", "path": "mem0/memory/storage.py", "group": "History and Messages (SQLite)", "groupId": "persistence", "desc": "Local SQLite at config.history_db_path: history table records every ADD/UPDATE/DELETE, messages table caches the last 10 turns per session scope for extraction context."},
+    {"id": "hybrid", "label": "_search_vector_store (hybrid)", "file": "main.py", "path": "mem0/memory/main.py", "group": "Retrieval and Ranking", "groupId": "retrieval", "desc": "Over-fetches 4x the limit, runs semantic + BM25 keyword search, extracts query entities for boosts, then scores candidates additively."},
+    {"id": "rank", "label": "score_and_rank + reranker", "file": "scoring.py", "path": "mem0/utils/scoring.py", "group": "Retrieval and Ranking", "groupId": "retrieval", "desc": "score_and_rank() combines semantic + normalized BM25 + entity boost over an adaptive max_possible; an optional reranker can reorder the survivors."}
+  ],
+  "edges": [
+    {"from": "app", "to": "add", "label": "memory.add(messages)"},
+    {"from": "app", "to": "search", "label": "memory.search(query)"},
+    {"from": "app", "to": "crud", "label": "maintenance calls"},
+    {"from": "add", "to": "add_flow", "label": "infer=True"},
+    {"from": "add_flow", "to": "llm", "label": "1 extraction call, facts JSON"},
+    {"from": "add_flow", "to": "embed", "label": "embed_batch(facts)"},
+    {"from": "add_flow", "to": "vector_store", "label": "fetch top-10, insert new"},
+    {"from": "add_flow", "to": "entity", "label": "link facts to entities"},
+    {"from": "add_flow", "to": "history", "label": "batch_add_history ADD"},
+    {"from": "search", "to": "hybrid", "label": "filters + threshold"},
+    {"from": "hybrid", "to": "embed", "label": "embed(query)"},
+    {"from": "hybrid", "to": "vector_store", "label": "dense + BM25 search"},
+    {"from": "hybrid", "to": "rank", "label": "candidates"},
+    {"from": "rank", "to": "search", "label": "results (optional rerank)"},
+    {"from": "crud", "to": "vector_store", "label": "get/update/delete vectors"},
+    {"from": "crud", "to": "history", "label": "audit trail"}
+  ]
+}
