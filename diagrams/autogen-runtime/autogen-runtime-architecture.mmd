@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_runloop["Runtime Message Loop"]
+  node_runtime["SingleThreadedAgentRuntime"]
+  node_send_message["send_message&#40;&#41;"]
+  node_publish_message["publish_message&#40;&#41;"]
+  node_msg_queue["_message_queue &#40;asyncio.Queue&#41;"]
+  node_process_next["_process_next&#40;&#41; dispatch"]
+  node_intervention["InterventionHandler<br/>[_intervention.py]"]
+  node_process_send["_process_send&#40;&#41;"]
+  node_process_publish["_process_publish&#40;&#41;"]
+  node_process_response["_process_response&#40;&#41;"]
+  node_register_factory["register_factory&#40;&#41;"]
+  node_invoke_factory["_invoke_agent_factory&#40;&#41;"]
+  node_stop_idle["stop_when_idle&#40;&#41;"]
+end
+
+subgraph group_routing["Topics and Subscriptions"]
+  node_topic_id["TopicId<br/>[_topic.py]"]
+  node_type_subscription["TypeSubscription"]
+  node_message_ctx["MessageContext"]
+end
+
+subgraph group_teamflow["Group Chat Protocol"]
+  node_base_group_chat["BaseGroupChat"]
+  node_run_stream["run_stream&#40;&#41;"]
+  node_group_start["GroupChatStart<br/>[_events.py]"]
+  node_request_publish["GroupChatRequestPublish<br/>[_events.py]"]
+  node_container["ChatAgentContainer"]
+  node_agent_response["GroupChatAgentResponse<br/>[_events.py]"]
+  node_manager["BaseGroupChatManager"]
+  node_termination["TerminationCondition<br/>[_termination.py]"]
+end
+
+subgraph group_select["Speaker Selection Policies"]
+  node_round_robin_mgr["RoundRobinGroupChatManager"]
+  node_selector_mgr["SelectorGroupChatManager"]
+  node_swarm_mgr["SwarmGroupChatManager"]
+  node_magentic_one["MagenticOneOrchestrator"]
+end
+
+subgraph group_agentexec["AssistantAgent Execution"]
+  node_assistant["AssistantAgent"]
+  node_process_result["_process_model_result&#40;&#41;"]
+  node_tool_exec["_execute_tool_call&#40;&#41;"]
+end
+
+subgraph group_providers["Providers and Tools"]
+  node_chat_client["ChatCompletionClient<br/>[_model_client.py]"]
+  node_openai["OpenAIChatCompletionClient<br/>[_openai_client.py]"]
+  node_base_tool["BaseTool<br/>[_base.py]"]
+  node_workbench["Workbench<br/>[_workbench.py]"]
+end
+
+node_send_message -->|"enqueue SendMessageEnvelope"| node_msg_queue
+node_publish_message -->|"enqueue PublishMessageEnvelope"| node_msg_queue
+node_msg_queue -->|"await get&#40;&#41;"| node_process_next
+node_process_next -->|"intercept before delivery"| node_intervention
+node_intervention -.->|"DropMessage aborts fan-out"| node_process_publish
+node_process_next -->|"create_task &#40;RPC&#41;"| node_process_send
+node_process_next -->|"create_task &#40;event&#41;"| node_process_publish
+node_process_next -->|"create_task &#40;ack&#41;"| node_process_response
+node_register_factory -->|"lazy factory call"| node_invoke_factory
+node_process_send -->|"instantiate on first message"| node_invoke_factory
+node_process_send -->|"sender + is_rpc=True"| node_message_ctx
+node_process_publish -->|"get_subscribed_recipients"| node_type_subscription
+node_type_subscription -->|"is_match&#40;&#41; filter"| node_topic_id
+node_type_subscription -->|"map_to_agent&#40;&#41; AgentId"| node_container
+node_process_publish -->|"sender + topic_id"| node_message_ctx
+node_process_send -->|"await on_message&#40;&#41;"| node_container
+node_process_publish -->|"await on_message&#40;&#41;"| node_container
+node_process_response -->|"future.set_result resolves"| node_run_stream
+node_base_group_chat -->|"run&#40;&#41; drains stream"| node_run_stream
+node_run_stream -->|"send_message to manager"| node_group_start
+node_run_stream -->|"shutdown after stream"| node_stop_idle
+node_group_start -->|"@rpc handle_start"| node_manager
+node_manager -->|"next speaker request"| node_request_publish
+node_request_publish -->|"@event handle_request"| node_container
+node_container -->|"buffered thread"| node_assistant
+node_assistant -->|"create / create_stream"| node_chat_client
+node_chat_client -->|"concrete client"| node_openai
+node_assistant -->|"CreateResult"| node_process_result
+node_process_result -->|"FunctionCall batch"| node_tool_exec
+node_tool_exec -->|"run_json&#40;&#41;"| node_base_tool
+node_tool_exec -->|"execute&#40;&#41; via MCP"| node_workbench
+node_container -->|"publish to group topic"| node_agent_response
+node_agent_response -->|"@event handle_agent_response"| node_manager
+node_manager -->|"check after every turn"| node_termination
+node_round_robin_mgr -->|"cyclic next speaker"| node_manager
+node_selector_mgr -->|"model-based selection"| node_manager
+node_selector_mgr -->|"selector prompt + vote"| node_chat_client
+node_swarm_mgr -->|"follows HandoffMessage"| node_manager
+node_magentic_one -->|"ledger + progress loop"| node_manager
+node_magentic_one -->|"progress ledger check"| node_chat_client
+
+click node_runtime "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_send_message "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_publish_message "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_msg_queue "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_process_next "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_intervention "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_intervention.py"
+click node_process_send "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_process_publish "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_process_response "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_register_factory "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_invoke_factory "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_stop_idle "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_topic_id "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_topic.py"
+click node_type_subscription "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_type_subscription.py"
+click node_message_ctx "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_message_context.py"
+click node_base_group_chat "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat.py"
+click node_run_stream "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat.py"
+click node_group_start "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_events.py"
+click node_request_publish "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_events.py"
+click node_container "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py"
+click node_agent_response "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_events.py"
+click node_manager "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py"
+click node_termination "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/base/_termination.py"
+click node_round_robin_mgr "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py"
+click node_selector_mgr "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_selector_group_chat.py"
+click node_swarm_mgr "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_swarm_group_chat.py"
+click node_magentic_one "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_magentic_one/_magentic_one_orchestrator.py"
+click node_assistant "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py"
+click node_process_result "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py"
+click node_tool_exec "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py"
+click node_chat_client "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/models/_model_client.py"
+click node_openai "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py"
+click node_base_tool "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/tools/_base.py"
+click node_workbench "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/tools/_workbench.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_runtime,node_send_message,node_publish_message,node_msg_queue,node_process_next,node_intervention,node_process_send,node_process_publish,node_process_response,node_register_factory,node_invoke_factory,node_stop_idle toneBlue
+class node_topic_id,node_type_subscription,node_message_ctx toneAmber
+class node_base_group_chat,node_run_stream,node_group_start,node_request_publish,node_container,node_agent_response,node_manager,node_termination toneMint
+class node_round_robin_mgr,node_selector_mgr,node_swarm_mgr,node_magentic_one toneRose
+class node_assistant,node_process_result,node_tool_exec toneIndigo
+class node_chat_client,node_openai,node_base_tool,node_workbench toneTeal

@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_teams["AgentChat Teams &#40;user-facing&#41;"]
+  node_task_input["Team.run&#40;task&#41;"]
+  node_round_robin["RoundRobinGroupChat / SelectorGroupChat / Swarm"]
+  node_group_manager["BaseGroupChatManager"]
+end
+
+subgraph group_runtime["Core Agent Runtime"]
+  node_agent_runtime["SingleThreadedAgentRuntime"]
+  node_type_subscription["TypeSubscription"]
+end
+
+subgraph group_agents["Agents and Model I/O"]
+  node_chat_container["ChatAgentContainer"]
+  node_assistant["AssistantAgent"]
+  node_model_client["ChatCompletionClient<br/>[_model_client.py]"]
+  node_openai_client["OpenAIChatCompletionClient<br/>[_openai_client.py]"]
+end
+
+subgraph group_tools_mem["Tools and Memory"]
+  node_tools["BaseTool / Workbench<br/>[_base.py]"]
+  node_memory["Memory protocol<br/>[_base_memory.py]"]
+end
+
+subgraph group_control["Termination Control"]
+  node_termination["TerminationCondition<br/>[_termination.py]"]
+end
+
+node_task_input -->|"configured team"| node_round_robin
+node_task_input -->|"send_message&#40;GroupChatStart&#41;"| node_agent_runtime
+node_round_robin -->|"register factories + subscriptions"| node_agent_runtime
+node_round_robin -->|"manager factory"| node_group_manager
+node_round_robin -->|"participant factory"| node_chat_container
+node_agent_runtime -->|"RPC envelope"| node_group_manager
+node_agent_runtime -->|"match topic to agent"| node_type_subscription
+node_agent_runtime -->|"topic fan-out"| node_chat_container
+node_group_manager -->|"publish request"| node_agent_runtime
+node_group_manager -->|"check after each turn"| node_termination
+node_chat_container -->|"on_messages_stream"| node_assistant
+node_assistant -->|"create / create_stream"| node_model_client
+node_model_client -->|"implemented by"| node_openai_client
+node_assistant -->|"execute FunctionCalls"| node_tools
+node_assistant -->|"update_context"| node_memory
+node_chat_container -->|"publish response"| node_agent_runtime
+node_termination -->|"TaskResult + stop_reason"| node_task_input
+
+click node_task_input "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat.py"
+click node_round_robin "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py"
+click node_group_manager "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py"
+click node_agent_runtime "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_single_threaded_agent_runtime.py"
+click node_type_subscription "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/_type_subscription.py"
+click node_chat_container "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py"
+click node_assistant "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/agents/_assistant_agent.py"
+click node_model_client "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/models/_model_client.py"
+click node_openai_client "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-ext/src/autogen_ext/models/openai/_openai_client.py"
+click node_tools "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/tools/_base.py"
+click node_memory "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-core/src/autogen_core/memory/_base_memory.py"
+click node_termination "https://github.com/microsoft/autogen/blob/main/python/packages/autogen-agentchat/src/autogen_agentchat/base/_termination.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_task_input,node_round_robin,node_group_manager toneBlue
+class node_agent_runtime,node_type_subscription toneAmber
+class node_chat_container,node_assistant,node_model_client,node_openai_client toneMint
+class node_tools,node_memory toneRose
+class node_termination toneIndigo
