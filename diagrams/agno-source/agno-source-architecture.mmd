@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_entry["Public entrypoints"]
+  node_agent_run["Agent.run / arun<br/>[agent.py]"]
+  node_team_run["Team.run<br/>[team.py]"]
+  node_workflow["Workflow<br/>[workflow.py]"]
+end
+
+subgraph group_assembly["Context assembly"]
+  node_run_dispatch["_run.run_dispatch<br/>[_run.py]"]
+  node_a_run["_arun<br/>[_run.py]"]
+  node_get_run_messages["get_run_messages<br/>[_messages.py]"]
+  node_get_system_message["get_system_message<br/>[_messages.py]"]
+  node_get_user_message["get_user_message<br/>[_messages.py]"]
+  node_knowledge_ctx["knowledge context<br/>[_messages.py]"]
+  node_kb_tool["search_knowledge_base<br/>[knowledge.py]"]
+  node_knowledge_search["Knowledge.search<br/>[knowledge.py]"]
+  node_rerank["reranker<br/>[knowledge.py]"]
+  node_vectordb_search["PgVector.search<br/>[pgvector.py]"]
+  node_memory_recall["search_user_memories<br/>[manager.py]"]
+end
+
+subgraph group_model["Model &amp; tool loop"]
+  node_determine_tools["determine_tools_for_model<br/>[_tools.py]"]
+  node_get_tools["get_tools<br/>[_tools.py]"]
+  node_toolkit["Toolkit<br/>[toolkit.py]"]
+  node_a_response["ahandle_model_response_stream<br/>[_response.py]"]
+  node_fallback["acall_model_stream_with_fallback<br/>[fallback.py]"]
+  node_model_response["Model.response<br/>[base.py]"]
+  node_tool_updates["handle_tool_call_updates<br/>[_tools.py]"]
+  node_run_tool["run_tool<br/>[_tools.py]"]
+  node_function_call["FunctionCall<br/>[function.py]"]
+  node_function_exec["FunctionCall.execute<br/>[function.py]"]
+end
+
+subgraph group_output["Response shaping"]
+  node_response_format["get_response_format<br/>[_response.py]"]
+  node_convert_struct["convert_response_to_structured_format<br/>[_response.py]"]
+  node_run_output["RunOutput<br/>[agent.py]"]
+end
+
+subgraph group_state["Sessions &amp; memory"]
+  node_memory_task["astart_memory_task<br/>[_managers.py]"]
+  node_memory_manager["MemoryManager<br/>[manager.py]"]
+  node_save_session["save_session<br/>[_session.py]"]
+  node_upsert_session["BaseDb.upsert_session<br/>[base.py]"]
+end
+
+subgraph group_orchestration["Teams &amp; workflows"]
+  node_team_dispatch["team run_dispatch<br/>[_run.py]"]
+  node_team_mode["TeamMode<br/>[mode.py]"]
+  node_delegate["delegate_task_to_member<br/>[_default_tools.py]"]
+end
+
+node_agent_run -->|"run&#40;&#41; delegates"| node_run_dispatch
+node_agent_run -->|"arun&#40;&#41; delegates"| node_a_run
+node_run_dispatch -->|"stage 6 messages"| node_get_run_messages
+node_get_run_messages -->|"system prompt"| node_get_system_message
+node_get_run_messages -->|"user input"| node_get_user_message
+node_get_system_message -->|"adds build_context"| node_knowledge_ctx
+node_knowledge_ctx -->|"agentic RAG instructions"| node_kb_tool
+node_kb_tool -->|"tool invokes search"| node_knowledge_search
+node_knowledge_search -->|"vector_db.search"| node_vectordb_search
+node_knowledge_search -->|"rescore docs"| node_rerank
+node_get_run_messages -->|"personalization"| node_memory_recall
+node_a_run -->|"async stage 6"| node_get_run_messages
+node_a_run -->|"stage 7 background"| node_memory_task
+node_memory_task -->|"extract memories"| node_memory_manager
+node_memory_recall -->|"reads memories"| node_memory_manager
+node_a_run -->|"stage 5 tools"| node_determine_tools
+node_determine_tools -->|"resolve per model"| node_get_tools
+node_get_tools -->|"collect functions"| node_toolkit
+node_a_run -->|"stage 9 model response"| node_a_response
+node_a_response -->|"stream with fallback"| node_fallback
+node_fallback -->|"provider loop"| node_model_response
+node_model_response -->|"returns tool_calls"| node_function_call
+node_function_call -->|"execute entrypoint"| node_function_exec
+node_a_response -->|"tool-call events"| node_tool_updates
+node_tool_updates -->|"dequeues execution"| node_run_tool
+node_run_tool -->|"runs FunctionCall"| node_function_exec
+node_a_run -->|"stage 4 response_model"| node_response_format
+node_response_format -->|"json schema"| node_model_response
+node_a_response -->|"structured post-parse"| node_convert_struct
+node_a_response -->|"accumulates events"| node_run_output
+node_convert_struct -->|"typed content"| node_run_output
+node_team_run -->|"run&#40;&#41; delegates"| node_team_dispatch
+node_team_dispatch -->|"switch on mode"| node_team_mode
+node_team_dispatch -->|"coordinate-mode tool"| node_delegate
+node_delegate -->|"member agent run"| node_agent_run
+node_team_dispatch -->|"runs members"| node_agent_run
+node_workflow -->|"steps wrap agents"| node_agent_run
+node_workflow -->|"teams inside steps"| node_team_run
+node_run_dispatch -->|"persist AgentSession"| node_save_session
+node_a_run -->|"persist AgentSession"| node_save_session
+node_save_session -->|"db.upsert_session"| node_upsert_session
+node_team_dispatch -->|"persist TeamSession"| node_save_session
+
+click node_agent_run "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/agent.py"
+click node_team_run "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/team/team.py"
+click node_workflow "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/workflow/workflow.py"
+click node_run_dispatch "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_run.py"
+click node_a_run "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_run.py"
+click node_get_run_messages "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_messages.py"
+click node_get_system_message "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_messages.py"
+click node_get_user_message "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_messages.py"
+click node_knowledge_ctx "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_messages.py"
+click node_kb_tool "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/knowledge/knowledge.py"
+click node_knowledge_search "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/knowledge/knowledge.py"
+click node_rerank "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/knowledge/knowledge.py"
+click node_vectordb_search "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/vectordb/pgvector/pgvector.py"
+click node_memory_recall "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/memory/manager.py"
+click node_determine_tools "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_tools.py"
+click node_get_tools "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_tools.py"
+click node_toolkit "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/tools/toolkit.py"
+click node_a_response "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_response.py"
+click node_fallback "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/models/fallback.py"
+click node_model_response "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/models/base.py"
+click node_tool_updates "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_tools.py"
+click node_run_tool "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_tools.py"
+click node_function_call "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/tools/function.py"
+click node_function_exec "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/tools/function.py"
+click node_response_format "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_response.py"
+click node_convert_struct "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_response.py"
+click node_run_output "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/run/agent.py"
+click node_memory_task "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_managers.py"
+click node_memory_manager "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/memory/manager.py"
+click node_save_session "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/agent/_session.py"
+click node_upsert_session "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/db/base.py"
+click node_team_dispatch "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/team/_run.py"
+click node_team_mode "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/team/mode.py"
+click node_delegate "https://github.com/agno-agi/agno/blob/main/libs/agno/agno/team/_default_tools.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_agent_run,node_team_run,node_workflow toneBlue
+class node_run_dispatch,node_a_run,node_get_run_messages,node_get_system_message,node_get_user_message,node_knowledge_ctx,node_kb_tool,node_knowledge_search,node_rerank,node_vectordb_search,node_memory_recall toneAmber
+class node_determine_tools,node_get_tools,node_toolkit,node_a_response,node_fallback,node_model_response,node_tool_updates,node_run_tool,node_function_call,node_function_exec toneMint
+class node_response_format,node_convert_struct,node_run_output toneRose
+class node_memory_task,node_memory_manager,node_save_session,node_upsert_session toneIndigo
+class node_team_dispatch,node_team_mode,node_delegate toneTeal
