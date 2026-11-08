@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_g_signatures["Signatures"]
+  node_dflds["InputField / OutputField<br/>[field.py]"]
+  node_dsig{{"Signature<br/>[signature.py]"}}
+  node_dmk["make_signature<br/>[signature.py]"]
+end
+
+subgraph group_g_program["Program execution"]
+  node_dmod["Module<br/>[module.py]"]
+  node_dpred["Predict<br/>[predict.py]"]
+  node_dpre["_forward_preprocess<br/>[predict.py]"]
+  node_dpost["_forward_postprocess<br/>[predict.py]"]
+  node_dcot["ChainOfThought"]
+  node_dparam[("Parameter<br/>[parameter.py]")]
+end
+
+subgraph group_g_primitives["Primitives &#40;Example / Prediction&#41;"]
+  node_dex["Example<br/>[example.py]"]
+  node_dpredout["Prediction<br/>[prediction.py]"]
+end
+
+subgraph group_g_adapters["Adapters"]
+  node_dadapter{{"Adapter<br/>[base.py]"}}
+  node_dacall["Adapter.__call__<br/>[base.py]"]
+  node_dparse["Adapter.parse<br/>[base.py]"]
+  node_dchat["ChatAdapter<br/>[chat_adapter.py]"]
+  node_djson["JSONAdapter<br/>[json_adapter.py]"]
+end
+
+subgraph group_g_clients["LM Clients"]
+  node_dbase{{"BaseLM<br/>[base_lm.py]"}}
+  node_dcall["BaseLM.__call__<br/>[base_lm.py]"]
+  node_dprep["prepare<br/>[execution.py]"]
+  node_dkey["PreparedCall.key<br/>[execution.py]"]
+  node_dcached["_cached / _store<br/>[execution.py]"]
+  node_dexec["execute<br/>[execution.py]"]
+end
+
+subgraph group_g_teleprompt["Optimizers &#40;Teleprompters&#41;"]
+  node_dtp{{"Teleprompter.compile<br/>[teleprompt.py]"}}
+  node_dbfs["BootstrapFewShot.compile<br/>[bootstrap.py]"]
+  node_dboot["_bootstrap_one_example<br/>[bootstrap.py]"]
+  node_dtrain["_train<br/>[bootstrap.py]"]
+  node_dmipro["MIPROv2.compile"]
+  node_dcands["create_n_fewshot_demo_sets<br/>[utils.py]"]
+  node_dprop["_propose_instructions"]
+  node_dgp["GroundedProposer"]
+  node_dbayes["_optimize_prompt_parameters"]
+end
+
+subgraph group_g_eval["Evaluation"]
+  node_dev["Evaluate<br/>[evaluate.py]"]
+  node_devcall["Evaluate.__call__<br/>[evaluate.py]"]
+  node_dpitem["process_item<br/>[evaluate.py]"]
+end
+
+node_dflds -->|"fields become model_fields with prefixes"| node_dsig
+node_dmk -->|"string 'in -&gt; out' -&gt; typed subclass"| node_dsig
+node_dsig -->|"ensure_signature binds the contract"| node_dpred
+node_dsig -->|"prepend&#40;'reasoning'&#41; extends fields"| node_dcot
+node_dmod -->|"forward&#40;&#41; composes predictors"| node_dpred
+node_dpred -->|"kwargs -&gt; &#40;lm, config, signature, demos&#41;"| node_dpre
+node_dpre -->|"resolve_adapter -&gt; adapter&#40;lm, ...&#41;"| node_dacall
+node_dcot -->|"wraps a Predict"| node_dpred
+node_dparam -->|"self.demos feed the prompt"| node_dpre
+node_dpost -->|"trace entry &#40;self, inputs, pred&#41;"| node_dparam
+node_dpost -->|"from_completions per signature"| node_dpredout
+node_dex -->|"example.inputs&#40;&#41; supplies kwargs"| node_dpre
+node_dacall -->|"parse each Response"| node_dparse
+node_dchat -->|"field-tag parser + JSON fallback"| node_dparse
+node_djson -->|"subclass; adds response_format"| node_dchat
+node_dacall -->|"lm&#40;Request&#41; once per candidate"| node_dcall
+node_dcall -->|"build PreparedCall"| node_dprep
+node_dprep -->|"request + options -&gt; cache key"| node_dkey
+node_dprep -->|"execute&#40;call&#41;"| node_dexec
+node_dexec -->|"get before, put after"| node_dcached
+node_dbfs -->|"up to max_rounds per example"| node_dboot
+node_dboot -->|"teacher&#40;**example.inputs&#40;&#41;&#41; under trace ctx"| node_dmod
+node_dbfs -->|"metric-passing traces kept"| node_dtrain
+node_dtrain -->|"student predictor.demos = traces"| node_dparam
+node_dtp -->|"subclass"| node_dbfs
+node_dtp -->|"subclass"| node_dmipro
+node_dmipro -->|"STEP 1: N demo candidate sets"| node_dcands
+node_dcands -->|"bootstraps via BootstrapFewShot"| node_dbfs
+node_dmipro -->|"STEP 2: propose instructions"| node_dprop
+node_dprop -->|"GroundedProposer per predictor"| node_dgp
+node_dmipro -->|"STEP 3: Optuna TPE study"| node_dbayes
+node_dmipro -->|"Evaluate&#40;devset, metric&#41;"| node_dev
+node_dbayes -->|"minibatch score per trial"| node_devcall
+node_devcall -->|"ParallelExecutor.execute"| node_dpitem
+node_dpitem -->|"program&#40;**example.inputs&#40;&#41;&#41;"| node_dmod
+node_dpitem -->|"metric&#40;example, prediction&#41;"| node_dpredout
+node_dbayes -->|"insert winning demos + instructions"| node_dparam
+
+click node_dflds "https://github.com/stanfordnlp/dspy/blob/main/dspy/signatures/field.py"
+click node_dsig "https://github.com/stanfordnlp/dspy/blob/main/dspy/signatures/signature.py"
+click node_dmk "https://github.com/stanfordnlp/dspy/blob/main/dspy/signatures/signature.py"
+click node_dmod "https://github.com/stanfordnlp/dspy/blob/main/dspy/primitives/module.py"
+click node_dpred "https://github.com/stanfordnlp/dspy/blob/main/dspy/predict/predict.py"
+click node_dpre "https://github.com/stanfordnlp/dspy/blob/main/dspy/predict/predict.py"
+click node_dpost "https://github.com/stanfordnlp/dspy/blob/main/dspy/predict/predict.py"
+click node_dcot "https://github.com/stanfordnlp/dspy/blob/main/dspy/predict/chain_of_thought.py"
+click node_dparam "https://github.com/stanfordnlp/dspy/blob/main/dspy/predict/parameter.py"
+click node_dex "https://github.com/stanfordnlp/dspy/blob/main/dspy/primitives/example.py"
+click node_dpredout "https://github.com/stanfordnlp/dspy/blob/main/dspy/primitives/prediction.py"
+click node_dadapter "https://github.com/stanfordnlp/dspy/blob/main/dspy/adapters/base.py"
+click node_dacall "https://github.com/stanfordnlp/dspy/blob/main/dspy/adapters/base.py"
+click node_dparse "https://github.com/stanfordnlp/dspy/blob/main/dspy/adapters/base.py"
+click node_dchat "https://github.com/stanfordnlp/dspy/blob/main/dspy/adapters/chat_adapter.py"
+click node_djson "https://github.com/stanfordnlp/dspy/blob/main/dspy/adapters/json_adapter.py"
+click node_dbase "https://github.com/stanfordnlp/dspy/blob/main/dspy/clients/base_lm.py"
+click node_dcall "https://github.com/stanfordnlp/dspy/blob/main/dspy/clients/base_lm.py"
+click node_dprep "https://github.com/stanfordnlp/dspy/blob/main/dspy/clients/execution.py"
+click node_dkey "https://github.com/stanfordnlp/dspy/blob/main/dspy/clients/execution.py"
+click node_dcached "https://github.com/stanfordnlp/dspy/blob/main/dspy/clients/execution.py"
+click node_dexec "https://github.com/stanfordnlp/dspy/blob/main/dspy/clients/execution.py"
+click node_dtp "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/teleprompt.py"
+click node_dbfs "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/bootstrap.py"
+click node_dboot "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/bootstrap.py"
+click node_dtrain "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/bootstrap.py"
+click node_dmipro "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/mipro_optimizer_v2.py"
+click node_dcands "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/utils.py"
+click node_dprop "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/mipro_optimizer_v2.py"
+click node_dgp "https://github.com/stanfordnlp/dspy/blob/main/dspy/propose/grounded_proposer.py"
+click node_dbayes "https://github.com/stanfordnlp/dspy/blob/main/dspy/teleprompt/mipro_optimizer_v2.py"
+click node_dev "https://github.com/stanfordnlp/dspy/blob/main/dspy/evaluate/evaluate.py"
+click node_devcall "https://github.com/stanfordnlp/dspy/blob/main/dspy/evaluate/evaluate.py"
+click node_dpitem "https://github.com/stanfordnlp/dspy/blob/main/dspy/evaluate/evaluate.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_dflds,node_dsig,node_dmk,node_dev,node_devcall,node_dpitem toneBlue
+class node_dmod,node_dpred,node_dpre,node_dpost,node_dcot,node_dparam toneAmber
+class node_dex,node_dpredout toneMint
+class node_dadapter,node_dacall,node_dparse,node_dchat,node_djson toneRose
+class node_dbase,node_dcall,node_dprep,node_dkey,node_dcached,node_dexec toneIndigo
+class node_dtp,node_dbfs,node_dboot,node_dtrain,node_dmipro,node_dcands,node_dprop,node_dgp,node_dbayes toneTeal
