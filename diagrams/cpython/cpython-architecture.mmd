@@ -1,0 +1,135 @@
+flowchart TD
+
+subgraph group_entry["C startup"]
+  node_bytes_main{{"Py_BytesMain<br/>[main.c]"}}
+  node_pymain_run_python["pymain_run_python<br/>[main.c]"]
+  node_pymain_run_file["pymain_run_file<br/>[main.c]"]
+end
+
+subgraph group_parser["Tokenizer + PEG parser"]
+  node_run_file["_PyRun_File<br/>[pythonrun.c]"]
+  node_peg_from_file["_PyParser_ASTFromFile<br/>[peg_api.c]"]
+  node_tokenizer_fromfile["_PyTokenizer_FromFile<br/>[pegen.c]"]
+  node_pegen_run["_PyPegen_run_parser<br/>[pegen.c]"]
+end
+
+subgraph group_compiler["AST to bytecode"]
+  node_run_mod["run_mod<br/>[pythonrun.c]"]
+  node_ast_compile["_PyAST_Compile<br/>[compile.c]"]
+  node_symtable_build["_PySymtable_Build<br/>[symtable.c]"]
+  node_compiler_mod["compiler_mod<br/>[compile.c]"]
+end
+
+subgraph group_eval["Tier-1 interpreter + bytecode families"]
+  node_run_eval_code_obj["run_eval_code_obj<br/>[pythonrun.c]"]
+  node_evalcode["PyEval_EvalCode<br/>[ceval.c]"]
+  node_eval_vector["_PyEval_Vector<br/>[ceval.c]"]
+  node_eval_default["_PyEval_EvalFrameDefault<br/>[ceval.c]"]
+  node_resume_family["RESUME family<br/>[bytecodes.c]"]
+  node_check_periodic["_CHECK_PERIODIC<br/>[bytecodes.c]"]
+  node_handle_eval_breaker["handle_eval_breaker<br/>[bytecodes.c]"]
+  node_loadglobal_family["LOAD_GLOBAL family<br/>[bytecodes.c]"]
+  node_binary_op_family["BINARY_OP family<br/>[bytecodes.c]"]
+  node_call_family["CALL family<br/>[bytecodes.c]"]
+  node_return_value["RETURN_VALUE<br/>[bytecodes.c]"]
+  node_optimizer_call["_PyOptimizer_Optimize<br/>[ceval.c]"]
+end
+
+subgraph group_specialize["Adaptive inline caches"]
+  node_spec_loadglobal["_Py_Specialize_LoadGlobal<br/>[specialize.c]"]
+  node_spec_binaryop["_Py_Specialize_BinaryOp<br/>[specialize.c]"]
+  node_spec_call["_Py_Specialize_Call<br/>[specialize.c]"]
+end
+
+subgraph group_objects["Refcounting and containers"]
+  node_incref["Py_INCREF<br/>[refcount.h]"]
+  node_dict_lookup["unicodekeys_lookup_unicode<br/>[dictobject.c]"]
+  node_gc_new["_PyObject_GC_New<br/>[gc.c]"]
+end
+
+subgraph group_sync["GC and GIL"]
+  node_gc_collect_main["gc_collect_main<br/>[gc.c]"]
+  node_take_gil["take_gil<br/>[ceval_gil.c]"]
+  node_drop_gil["drop_gil<br/>[ceval_gil.c]"]
+end
+
+node_bytes_main -->|"argv"| node_pymain_run_python
+node_pymain_run_python -->|"script path"| node_pymain_run_file
+node_pymain_run_file -->|"_PyRun_AnyFile"| node_run_file
+node_run_file -->|"fp + arena"| node_peg_from_file
+node_peg_from_file -->|"lex"| node_tokenizer_fromfile
+node_peg_from_file -->|"parse rules"| node_pegen_run
+node_run_file -->|"mod_ty"| node_run_mod
+node_run_mod -->|"_PyAST_Compile"| node_ast_compile
+node_ast_compile -->|"scopes"| node_symtable_build
+node_ast_compile -->|"emit"| node_compiler_mod
+node_run_mod -->|"PyCodeObject"| node_run_eval_code_obj
+node_run_eval_code_obj -->|"globals ready"| node_evalcode
+node_evalcode -->|"frame"| node_eval_vector
+node_eval_vector -->|"interpret"| node_eval_default
+node_eval_default -->|"first dispatch"| node_resume_family
+node_resume_family -->|"entry check"| node_check_periodic
+node_check_periodic -->|"signal set"| node_handle_eval_breaker
+node_handle_eval_breaker -->|"GIL handoff"| node_drop_gil
+node_drop_gil -->|"next waiter"| node_take_gil
+node_eval_default -->|"globals"| node_loadglobal_family
+node_eval_default -->|"operators"| node_binary_op_family
+node_eval_default -->|"calls"| node_call_family
+node_call_family -->|"returns"| node_return_value
+node_return_value -->|"caller resumes"| node_eval_default
+node_eval_default -->|"hot trace"| node_optimizer_call
+node_loadglobal_family -->|"specialize"| node_spec_loadglobal
+node_binary_op_family -->|"specialize"| node_spec_binaryop
+node_call_family -->|"specialize"| node_spec_call
+node_loadglobal_family -.->|"module dict"| node_dict_lookup
+node_eval_default -.->|"every stack op"| node_incref
+node_incref -.->|"cycles survive"| node_gc_collect_main
+node_eval_default -.->|"container alloc"| node_gc_new
+node_gc_new -.->|"threshold"| node_gc_collect_main
+
+click node_bytes_main "https://github.com/python/cpython/blob/main/Modules/main.c"
+click node_pymain_run_python "https://github.com/python/cpython/blob/main/Modules/main.c"
+click node_pymain_run_file "https://github.com/python/cpython/blob/main/Modules/main.c"
+click node_run_file "https://github.com/python/cpython/blob/main/Python/pythonrun.c"
+click node_peg_from_file "https://github.com/python/cpython/blob/main/Parser/peg_api.c"
+click node_tokenizer_fromfile "https://github.com/python/cpython/blob/main/Parser/pegen.c"
+click node_pegen_run "https://github.com/python/cpython/blob/main/Parser/pegen.c"
+click node_run_mod "https://github.com/python/cpython/blob/main/Python/pythonrun.c"
+click node_ast_compile "https://github.com/python/cpython/blob/main/Python/compile.c"
+click node_symtable_build "https://github.com/python/cpython/blob/main/Python/symtable.c"
+click node_compiler_mod "https://github.com/python/cpython/blob/main/Python/compile.c"
+click node_run_eval_code_obj "https://github.com/python/cpython/blob/main/Python/pythonrun.c"
+click node_evalcode "https://github.com/python/cpython/blob/main/Python/ceval.c"
+click node_eval_vector "https://github.com/python/cpython/blob/main/Python/ceval.c"
+click node_eval_default "https://github.com/python/cpython/blob/main/Python/ceval.c"
+click node_resume_family "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_check_periodic "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_handle_eval_breaker "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_loadglobal_family "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_binary_op_family "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_call_family "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_return_value "https://github.com/python/cpython/blob/main/Python/bytecodes.c"
+click node_optimizer_call "https://github.com/python/cpython/blob/main/Python/ceval.c"
+click node_spec_loadglobal "https://github.com/python/cpython/blob/main/Python/specialize.c"
+click node_spec_binaryop "https://github.com/python/cpython/blob/main/Python/specialize.c"
+click node_spec_call "https://github.com/python/cpython/blob/main/Python/specialize.c"
+click node_incref "https://github.com/python/cpython/blob/main/Include/refcount.h"
+click node_dict_lookup "https://github.com/python/cpython/blob/main/Objects/dictobject.c"
+click node_gc_new "https://github.com/python/cpython/blob/main/Python/gc.c"
+click node_gc_collect_main "https://github.com/python/cpython/blob/main/Python/gc.c"
+click node_take_gil "https://github.com/python/cpython/blob/main/Python/ceval_gil.c"
+click node_drop_gil "https://github.com/python/cpython/blob/main/Python/ceval_gil.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_bytes_main,node_pymain_run_python,node_pymain_run_file,node_gc_collect_main,node_take_gil,node_drop_gil toneBlue
+class node_run_file,node_peg_from_file,node_tokenizer_fromfile,node_pegen_run toneAmber
+class node_run_mod,node_ast_compile,node_symtable_build,node_compiler_mod toneMint
+class node_run_eval_code_obj,node_evalcode,node_eval_vector,node_eval_default,node_resume_family,node_check_periodic,node_handle_eval_breaker,node_loadglobal_family,node_binary_op_family,node_call_family,node_return_value,node_optimizer_call toneRose
+class node_spec_loadglobal,node_spec_binaryop,node_spec_call toneIndigo
+class node_incref,node_dict_lookup,node_gc_new toneTeal
