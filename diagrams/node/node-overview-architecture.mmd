@@ -1,0 +1,68 @@
+flowchart TD
+
+subgraph group_g_cpp["C++ Bootstrap"]
+  node_main_entry["int main&#40;&#41;<br/>[node_main.cc]"]
+  node_node_start["node::Start&#40;&#41;<br/>[node.cc]"]
+  node_main_instance_run["NodeMainInstance::Run&#40;&#41;"]
+end
+
+subgraph group_g_jsb["JS Bootstrap"]
+  node_load_env["LoadEnvironment&#40;&#41;<br/>[environment.cc]"]
+  node_bootstrap_realm["Realm::RunBootstrapping&#40;&#41;<br/>[node_realm.cc]"]
+  node_prepare_main["prepareMainThreadExecution&#40;&#41;<br/>[pre_execution.js]"]
+end
+
+subgraph group_g_mod["Module Loading"]
+  node_run_entry["executeUserEntryPoint&#40;&#41;<br/>[run_main.js]"]
+  node_cjs_load["Module._load&#40;&#41;<br/>[loader.js]"]
+  node_esm_import["ESMLoader.import&#40;&#41;<br/>[loader.js]"]
+end
+
+subgraph group_g_loop["Event Loop"]
+  node_spin_loop["SpinEventLoopInternal&#40;&#41;<br/>[embed_helpers.cc]"]
+  node_uv_run["uv_run&#40;&#41;<br/>[core.c]"]
+end
+
+subgraph group_g_pool["Thread Pool"]
+  node_uv_threadpool["libuv thread pool &#40;4 workers&#41;<br/>[threadpool.c]"]
+end
+
+node_main_entry -->|"returns node::Start&#40;argc, argv&#41;"| node_node_start
+node_node_start -->|"StartInternal&#40;&#41;: uv_loop_configure + NodeMainInstance"| node_main_instance_run
+node_main_instance_run -->|"CreateMainEnvironment + LoadEnvironment"| node_load_env
+node_load_env -->|"Realm::RunBootstrapping"| node_bootstrap_realm
+node_bootstrap_realm -->|"main script under lib/internal/main"| node_prepare_main
+node_prepare_main -->|"Module.runMain&#40;mainEntry&#41;"| node_run_entry
+node_run_entry -->|"wrapModuleLoad&#40;&#41; tries CommonJS first"| node_cjs_load
+node_run_entry -->|"shouldUseESMLoader -&gt; importForEntryPoint&#40;&#41;"| node_esm_import
+node_cjs_load -->|"entry executed synchronously; loop keeps process alive"| node_spin_loop
+node_esm_import -->|"top-level await yields via entry-point promise"| node_spin_loop
+node_spin_loop -->|"uv_run&#40;env-&gt;event_loop&#40;&#41;, UV_RUN_DEFAULT&#41;"| node_uv_run
+node_uv_run -->|"uv_loop_alive / beforeExit re-check"| node_spin_loop
+node_uv_threadpool -->|"uv__work_submit completions wake the loop"| node_uv_run
+
+click node_main_entry "https://github.com/nodejs/node/blob/main/src/node_main.cc"
+click node_node_start "https://github.com/nodejs/node/blob/main/src/node.cc"
+click node_main_instance_run "https://github.com/nodejs/node/blob/main/src/node_main_instance.cc"
+click node_load_env "https://github.com/nodejs/node/blob/main/src/api/environment.cc"
+click node_bootstrap_realm "https://github.com/nodejs/node/blob/main/src/node_realm.cc"
+click node_prepare_main "https://github.com/nodejs/node/blob/main/lib/internal/process/pre_execution.js"
+click node_run_entry "https://github.com/nodejs/node/blob/main/lib/internal/modules/run_main.js"
+click node_cjs_load "https://github.com/nodejs/node/blob/main/lib/internal/modules/cjs/loader.js"
+click node_esm_import "https://github.com/nodejs/node/blob/main/lib/internal/modules/esm/loader.js"
+click node_spin_loop "https://github.com/nodejs/node/blob/main/src/api/embed_helpers.cc"
+click node_uv_run "https://github.com/nodejs/node/blob/main/deps/uv/src/unix/core.c"
+click node_uv_threadpool "https://github.com/nodejs/node/blob/main/deps/uv/src/threadpool.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_node_start,node_main_instance_run toneBlue
+class node_load_env,node_bootstrap_realm,node_prepare_main toneAmber
+class node_run_entry,node_cjs_load,node_esm_import toneMint
+class node_spin_loop,node_uv_run toneRose
+class node_uv_threadpool toneIndigo

@@ -1,0 +1,41 @@
+{
+  "owner": "nodejs",
+  "repo": "node",
+  "branch": "main",
+  "groups": [
+    {"id": "g_cpp", "name": "C++ Bootstrap", "label": "C++ Bootstrap"},
+    {"id": "g_jsb", "name": "JS Bootstrap", "label": "JS Bootstrap"},
+    {"id": "g_mod", "name": "Module Loading", "label": "Module Loading"},
+    {"id": "g_loop", "name": "Event Loop", "label": "Event Loop"},
+    {"id": "g_pool", "name": "Thread Pool", "label": "Thread Pool"}
+  ],
+  "nodes": [
+    {"id": "main_entry", "label": "int main()", "file": "node_main.cc", "path": "src/node_main.cc", "group": "C++ Bootstrap", "groupId": "g_cpp", "desc": "Process entry point; on Unix it simply returns node::Start(argc, argv) at L97."},
+    {"id": "node_start", "label": "node::Start()", "file": "node.cc", "path": "src/node.cc", "group": "C++ Bootstrap", "groupId": "g_cpp", "desc": "Public embedder API (L1848); delegates to StartInternal()."},
+    {"id": "main_instance_run", "label": "NodeMainInstance::Run()", "file": "node_main_instance.cc", "path": "src/node_main_instance.cc", "group": "C++ Bootstrap", "groupId": "g_cpp", "desc": "Creates the main Environment (L99), runs LoadEnvironment (L114), then spins the loop (L118)."},
+    {"id": "load_env", "label": "LoadEnvironment()", "file": "environment.cc", "path": "src/api/environment.cc", "group": "JS Bootstrap", "groupId": "g_jsb", "desc": "Starts execution: bootstrap the realm, then hand control to the chosen main script."},
+    {"id": "bootstrap_realm", "label": "Realm::RunBootstrapping()", "file": "node_realm.cc", "path": "src/node_realm.cc", "group": "JS Bootstrap", "groupId": "g_jsb", "desc": "L190: executes internal/bootstrap/realm then Realm::BootstrapRealm()."},
+    {"id": "prepare_main", "label": "prepareMainThreadExecution()", "file": "pre_execution.js", "path": "lib/internal/process/pre_execution.js", "group": "JS Bootstrap", "groupId": "g_jsb", "desc": "Runtime-state setup (CLI options, stdio, modules) before user code runs."},
+    {"id": "run_entry", "label": "executeUserEntryPoint()", "file": "run_main.js", "path": "lib/internal/modules/run_main.js", "group": "Module Loading", "groupId": "g_mod", "desc": "L146: resolves the main entry and decides CommonJS vs ESM via shouldUseESMLoader() (L53)."},
+    {"id": "cjs_load", "label": "Module._load()", "file": "loader.js", "path": "lib/internal/modules/cjs/loader.js", "group": "Module Loading", "groupId": "g_mod", "desc": "CommonJS load: resolve, cache lookup (L1355), wrap and compile."},
+    {"id": "esm_import", "label": "ESMLoader.import()", "file": "loader.js", "path": "lib/internal/modules/esm/loader.js", "group": "Module Loading", "groupId": "g_mod", "desc": "L682: load, instantiate, link and evaluate the ESM graph; top-level await defers via the entry-point promise."},
+    {"id": "spin_loop", "label": "SpinEventLoopInternal()", "file": "embed_helpers.cc", "path": "src/api/embed_helpers.cc", "group": "Event Loop", "groupId": "g_loop", "desc": "L23: do/while over uv_run + platform->DrainTasks (L45) until the loop dies."},
+    {"id": "uv_run", "label": "uv_run()", "file": "core.c", "path": "deps/uv/src/unix/core.c", "group": "Event Loop", "groupId": "g_loop", "desc": "L427: libuv phase machine — pending, idle, prepare, poll, check, closing, timers."},
+    {"id": "uv_threadpool", "label": "libuv thread pool (4 workers)", "file": "threadpool.c", "path": "deps/uv/src/threadpool.c", "group": "Thread Pool", "groupId": "g_pool", "desc": "default_threads[4] (L39); UV_THREADPOOL_SIZE env can grow it to MAX_THREADPOOL_SIZE 1024 (L30). Completions wake the loop."}
+  ],
+  "edges": [
+    {"from": "main_entry", "to": "node_start", "label": "returns node::Start(argc, argv)"},
+    {"from": "node_start", "to": "main_instance_run", "label": "StartInternal(): uv_loop_configure + NodeMainInstance"},
+    {"from": "main_instance_run", "to": "load_env", "label": "CreateMainEnvironment + LoadEnvironment"},
+    {"from": "load_env", "to": "bootstrap_realm", "label": "Realm::RunBootstrapping"},
+    {"from": "bootstrap_realm", "to": "prepare_main", "label": "main script under lib/internal/main"},
+    {"from": "prepare_main", "to": "run_entry", "label": "Module.runMain(mainEntry)"},
+    {"from": "run_entry", "to": "cjs_load", "label": "wrapModuleLoad() tries CommonJS first"},
+    {"from": "run_entry", "to": "esm_import", "label": "shouldUseESMLoader -> importForEntryPoint()"},
+    {"from": "cjs_load", "to": "spin_loop", "label": "entry executed synchronously; loop keeps process alive"},
+    {"from": "esm_import", "to": "spin_loop", "label": "top-level await yields via entry-point promise"},
+    {"from": "spin_loop", "to": "uv_run", "label": "uv_run(env->event_loop(), UV_RUN_DEFAULT)"},
+    {"from": "uv_run", "to": "spin_loop", "label": "uv_loop_alive / beforeExit re-check"},
+    {"from": "uv_threadpool", "to": "uv_run", "label": "uv__work_submit completions wake the loop"}
+  ]
+}
