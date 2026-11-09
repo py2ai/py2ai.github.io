@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_entry["HttpServer"]
+  node_http_server["HttpServer<br/>[server.rs]"]
+end
+
+subgraph group_dispatch["actix-http h1"]
+  node_h1_service{{"H1Service<br/>[service.rs]"}}
+  node_dispatcher{{"Dispatcher<br/>[dispatcher.rs]"}}
+  node_codec["Codec<br/>[codec.rs]"]
+  node_read_available["Dispatcher::read_available<br/>[dispatcher.rs]"]
+  node_poll_request["Dispatcher::poll_request<br/>[dispatcher.rs]"]
+  node_handle_request["Dispatcher::handle_request<br/>[dispatcher.rs]"]
+  node_poll_response["Dispatcher::poll_response<br/>[dispatcher.rs]"]
+  node_payload["Payload<br/>[payload.rs]"]
+end
+
+subgraph group_app["App"]
+  node_app["App<br/>[app.rs]"]
+  node_app_entry["AppEntry<br/>[app_service.rs]"]
+  node_app_routing_factory["AppRoutingFactory<br/>[app_service.rs]"]
+  node_app_init_service["AppInitService<br/>[app_service.rs]"]
+end
+
+subgraph group_routing["Router"]
+  node_app_routing{{"AppRouting<br/>[app_service.rs]"}}
+  node_resource["Resource<br/>[resource.rs]"]
+  node_resource_factory["ResourceFactory<br/>[resource.rs]"]
+  node_resource_service["ResourceService<br/>[resource.rs]"]
+  node_resource_endpoint["ResourceEndpoint<br/>[resource.rs]"]
+  node_route["Route<br/>[route.rs]"]
+  node_route_service["RouteService<br/>[route.rs]"]
+  node_guard["Guard<br/>[mod.rs]"]
+end
+
+subgraph group_handler["Handlers"]
+  node_handler_service["handler_service<br/>[handler.rs]"]
+  node_handler_trait["Handler trait<br/>[handler.rs]"]
+  node_responder["Responder<br/>[responder.rs]"]
+  node_service_response["ServiceResponse<br/>[service.rs]"]
+end
+
+subgraph group_extractors["FromRequest"]
+  node_from_request{{"FromRequest<br/>[extract.rs]"}}
+  node_path["web::Path<br/>[path.rs]"]
+  node_json["web::Json<br/>[json.rs]"]
+  node_data["web::Data<br/>[data.rs]"]
+end
+
+subgraph group_middleware["Transform"]
+  node_from_fn_mw["middleware::from_fn<br/>[from_fn.rs]"]
+end
+
+subgraph group_runtime["actix-rt"]
+  node_rt[("rt module<br/>[rt.rs]")]
+end
+
+node_http_server -->|"run&#40;&#41; L1407: workers accept sockets"| node_h1_service
+node_h1_service -->|"frame the io stream"| node_codec
+node_h1_service -->|"build Dispatcher with app service"| node_dispatcher
+node_dispatcher -->|"pull socket bytes"| node_read_available
+node_read_available -->|"buffered bytes"| node_poll_request
+node_poll_request -->|"decode loop"| node_codec
+node_poll_request -->|"Payload::create per bodied request"| node_payload
+node_poll_request -->|"decoded Request &#40;16-queue cap&#41;"| node_handle_request
+node_poll_response -->|"state loop drives messages"| node_handle_request
+node_handle_request -->|"flow.service.call&#40;req&#41;"| node_app_entry
+node_http_server -->|"factory closure instantiated per worker"| node_app_entry
+node_app -->|"App::new L40 installs endpoint"| node_app_entry
+node_app_entry -->|"new_service L390"| node_app_routing_factory
+node_app_routing_factory -->|"join_all L303 builds router"| node_app_routing
+node_app_init_service -->|"pooled ServiceRequest"| node_app_routing
+node_app -->|"service&#40;&#41; L243 registration"| node_resource
+node_resource -->|"into factory"| node_resource_factory
+node_resource_factory -->|"one endpoint per resource"| node_resource_endpoint
+node_resource_endpoint -->|"registered as &#40;ResourceDef, factory&#41;"| node_app_routing_factory
+node_app_routing -->|"Router::recognize_fn L350"| node_resource_endpoint
+node_app_routing -->|"matched resource service"| node_resource_service
+node_resource -->|"route list"| node_route
+node_route -->|"method&#40;&#41; L161 / guard&#40;&#41; L182"| node_guard
+node_route -->|"new_service"| node_route_service
+node_route_service -->|"check&#40;&#41; L122"| node_guard
+node_resource_service -->|"first passing route wins"| node_route_service
+node_route_service -->|"boxed handler service"| node_handler_service
+node_handler_service -->|"Args::from_request L108"| node_from_request
+node_from_request -->|"impl for Path"| node_path
+node_from_request -->|"impl for Json"| node_json
+node_from_request -->|"impl for Data"| node_data
+node_payload -->|"body source for extractors"| node_from_request
+node_handler_service -->|"handler.call&#40;data&#41; L111"| node_handler_trait
+node_handler_trait -->|"Output: Responder L114"| node_responder
+node_handler_service -->|"ServiceResponse::new L118"| node_service_response
+node_app -->|"wrap&#40;&#41; L345 stacks Transform"| node_from_fn_mw
+node_from_fn_mw -->|"next.call&#40;req&#41; invokes wrapped app"| node_app_entry
+node_http_server -->|"worker = single-threaded runtime"| node_rt
+
+click node_http_server "https://github.com/actix/actix-web/blob/main/actix-web/src/server.rs"
+click node_h1_service "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/service.rs"
+click node_dispatcher "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/dispatcher.rs"
+click node_codec "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/codec.rs"
+click node_read_available "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/dispatcher.rs"
+click node_poll_request "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/dispatcher.rs"
+click node_handle_request "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/dispatcher.rs"
+click node_poll_response "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/dispatcher.rs"
+click node_payload "https://github.com/actix/actix-web/blob/main/actix-http/src/h1/payload.rs"
+click node_app "https://github.com/actix/actix-web/blob/main/actix-web/src/app.rs"
+click node_app_entry "https://github.com/actix/actix-web/blob/main/actix-web/src/app_service.rs"
+click node_app_routing_factory "https://github.com/actix/actix-web/blob/main/actix-web/src/app_service.rs"
+click node_app_init_service "https://github.com/actix/actix-web/blob/main/actix-web/src/app_service.rs"
+click node_app_routing "https://github.com/actix/actix-web/blob/main/actix-web/src/app_service.rs"
+click node_resource "https://github.com/actix/actix-web/blob/main/actix-web/src/resource.rs"
+click node_resource_factory "https://github.com/actix/actix-web/blob/main/actix-web/src/resource.rs"
+click node_resource_service "https://github.com/actix/actix-web/blob/main/actix-web/src/resource.rs"
+click node_resource_endpoint "https://github.com/actix/actix-web/blob/main/actix-web/src/resource.rs"
+click node_route "https://github.com/actix/actix-web/blob/main/actix-web/src/route.rs"
+click node_route_service "https://github.com/actix/actix-web/blob/main/actix-web/src/route.rs"
+click node_guard "https://github.com/actix/actix-web/blob/main/actix-web/src/guard/mod.rs"
+click node_handler_service "https://github.com/actix/actix-web/blob/main/actix-web/src/handler.rs"
+click node_handler_trait "https://github.com/actix/actix-web/blob/main/actix-web/src/handler.rs"
+click node_responder "https://github.com/actix/actix-web/blob/main/actix-web/src/response/responder.rs"
+click node_service_response "https://github.com/actix/actix-web/blob/main/actix-web/src/service.rs"
+click node_from_request "https://github.com/actix/actix-web/blob/main/actix-web/src/extract.rs"
+click node_path "https://github.com/actix/actix-web/blob/main/actix-web/src/types/path.rs"
+click node_json "https://github.com/actix/actix-web/blob/main/actix-web/src/types/json.rs"
+click node_data "https://github.com/actix/actix-web/blob/main/actix-web/src/data.rs"
+click node_from_fn_mw "https://github.com/actix/actix-web/blob/main/actix-web/src/middleware/from_fn.rs"
+click node_rt "https://github.com/actix/actix-web/blob/main/actix-web/src/rt.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_http_server,node_from_fn_mw toneBlue
+class node_h1_service,node_dispatcher,node_codec,node_read_available,node_poll_request,node_handle_request,node_poll_response,node_payload,node_rt toneAmber
+class node_app,node_app_entry,node_app_routing_factory,node_app_init_service toneMint
+class node_app_routing,node_resource,node_resource_factory,node_resource_service,node_resource_endpoint,node_route,node_route_service,node_guard toneRose
+class node_handler_service,node_handler_trait,node_responder,node_service_response toneIndigo
+class node_from_request,node_path,node_json,node_data toneTeal
