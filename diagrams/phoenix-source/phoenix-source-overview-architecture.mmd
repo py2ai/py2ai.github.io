@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_boot["boot"]
+  node_ep_supervisor["Phoenix.Endpoint.Supervisor init/1<br/>[supervisor.ex]"]
+  node_adapter["Cowboy2Adapter child_specs<br/>[cowboy2_adapter.ex]"]
+end
+
+subgraph group_http_entry["entry"]
+  node_endpoint_call["Endpoint call/2<br/>[endpoint.ex]"]
+  node_socket_dispatch["socket_dispatch/2<br/>[endpoint.ex]"]
+end
+
+subgraph group_routing["route"]
+  node_router_call["Router call/2<br/>[router.ex]"]
+  node_match_route["__match_route__/3<br/>[router.ex]"]
+  node_route_prepare["Route.prepare/3<br/>[route.ex]"]
+end
+
+subgraph group_plug_dispatch["dispatch"]
+  node_router_dispatch["Router __call__/5<br/>[router.ex]"]
+  node_pipe_chain["Compiled pipe function<br/>[router.ex]"]
+  node_endpoint_plug["plug.call&#40;conn, opts&#41;<br/>[router.ex]"]
+end
+
+subgraph group_realtime["realtime"]
+  node_ws_transport["Transports.WebSocket call/2<br/>[websocket.ex]"]
+  node_channel_server["Channel.Server &#40;GenServer per channel&#41;<br/>[server.ex]"]
+end
+
+node_ep_supervisor -->|"server_children: adapter.child_specs"| node_adapter
+node_adapter -->|"adapter process invokes the endpoint plug"| node_endpoint_call
+node_endpoint_call -->|"plug :socket_dispatch &#40;declared first&#41;"| node_socket_dispatch
+node_endpoint_call -->|"router is the final plug the app declares"| node_router_call
+node_socket_dispatch -->|"socket path match dispatches transport"| node_ws_transport
+node_ws_transport -->|"upgraded socket spawns channels on join"| node_channel_server
+node_ep_supervisor -->|"socket children start PoolSupervisor trees"| node_channel_server
+node_router_call -->|"case __match_route__&#40;method, decoded, host&#41;"| node_match_route
+node_match_route -->|"match clause returns metadata, prepare, chain, dispatch"| node_route_prepare
+node_route_prepare -->|"Phoenix.Router.__call__/5"| node_router_dispatch
+node_router_dispatch -->|"runs the compiled pipe function"| node_pipe_chain
+node_pipe_chain -->|"plug.call&#40;conn, plug.init&#40;opts&#41;&#41;"| node_endpoint_plug
+
+click node_ep_supervisor "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/supervisor.ex"
+click node_adapter "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/cowboy2_adapter.ex"
+click node_endpoint_call "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint.ex"
+click node_socket_dispatch "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint.ex"
+click node_router_call "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_match_route "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_route_prepare "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router/route.ex"
+click node_router_dispatch "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_pipe_chain "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_endpoint_plug "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_ws_transport "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/transports/websocket.ex"
+click node_channel_server "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel/server.ex"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ep_supervisor,node_adapter toneBlue
+class node_endpoint_call,node_socket_dispatch toneAmber
+class node_router_call,node_match_route,node_route_prepare toneMint
+class node_router_dispatch,node_pipe_chain,node_endpoint_plug toneRose
+class node_ws_transport,node_channel_server toneIndigo

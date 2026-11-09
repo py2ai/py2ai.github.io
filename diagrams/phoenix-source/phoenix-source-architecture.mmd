@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_boot["boot"]
+  node_ep_supervisor["Endpoint.Supervisor init/1<br/>[supervisor.ex]"]
+  node_config_ets["Phoenix.Config &#40;ETS&#41;<br/>[config.ex]"]
+  node_pubsub_children["pubsub_children/2<br/>[supervisor.ex]"]
+  node_socket_children["socket_children/3<br/>[supervisor.ex]"]
+  node_server_children["server_children/3<br/>[supervisor.ex]"]
+  node_adapter["Cowboy2Adapter<br/>[cowboy2_adapter.ex]"]
+  node_pool_supervisor["Phoenix.Socket.PoolSupervisor<br/>[pool_supervisor.ex]"]
+end
+
+subgraph group_http_entry["entry"]
+  node_ep_before_compile["Endpoint.__before_compile__/1<br/>[endpoint.ex]"]
+  node_endpoint_call["Endpoint call/2<br/>[endpoint.ex]"]
+  node_render_errors["RenderErrors.__catch__/5<br/>[render_errors.ex]"]
+  node_socket_dispatch["socket_dispatch/2<br/>[endpoint.ex]"]
+end
+
+subgraph group_routing["route"]
+  node_router_before_compile["Router.__before_compile__/1<br/>[router.ex]"]
+  node_route_exprs["Route.exprs/1<br/>[route.ex]"]
+  node_build_match_path["build_match_path/5<br/>[router.ex]"]
+  node_match_route["__match_route__/3<br/>[router.ex]"]
+  node_router_call["Router call/2<br/>[router.ex]"]
+  node_prepare_conn["prepare/1 &#40;router&#41;<br/>[router.ex]"]
+  node_route_prepare["Route.prepare/3<br/>[route.ex]"]
+end
+
+subgraph group_plug_dispatch["dispatch"]
+  node_router_dispatch["Router __call__/5<br/>[router.ex]"]
+  node_pipe_macro["Router pipe-group macro<br/>[router.ex]"]
+  node_plug_macro["Router.plug/2 macro<br/>[router.ex]"]
+  node_pipe_chain["Compiled pipe function<br/>[router.ex]"]
+  node_endpoint_plug["Matched plug.call/2<br/>[router.ex]"]
+end
+
+subgraph group_devtools["dev"]
+  node_code_reloader_call["CodeReloader call/2<br/>[code_reloader.ex]"]
+  node_code_reloader_reload["CodeReloader.reload/2<br/>[code_reloader.ex]"]
+  node_transport_code_reload["Socket.Transport.code_reload/3<br/>[transport.ex]"]
+end
+
+subgraph group_realtime["realtime"]
+  node_ws_call["Transports.WebSocket call/2<br/>[websocket.ex]"]
+  node_ws_upgrade["WebSockAdapter.upgrade/4<br/>[websocket.ex]"]
+  node_channel_join["Channel.Server.join/4<br/>[server.ex]"]
+  node_channel_handle_in["handle_info dispatch to handle_in/3<br/>[server.ex]"]
+  node_channel_push["Channel.push/3<br/>[channel.ex]"]
+  node_channel_reply["Channel.reply/2<br/>[channel.ex]"]
+  node_channel_broadcast["Channel.broadcast/3<br/>[channel.ex]"]
+  node_pubsub_broadcast["Server.broadcast/4<br/>[server.ex]"]
+end
+
+node_ep_supervisor -->|"config_children starts Phoenix.Config"| node_config_ets
+node_ep_supervisor -->|"legacy :pubsub key"| node_pubsub_children
+node_ep_supervisor -->|"one child per __sockets__ entry"| node_socket_children
+node_ep_supervisor -->|"children list assembly"| node_server_children
+node_server_children -->|"adapter.child_specs&#40;mod, config&#41;"| node_adapter
+node_socket_children -->|"Phoenix.Socket child_spec starts PoolSupervisor"| node_pool_supervisor
+node_adapter -->|"HTTP process invokes the endpoint plug"| node_endpoint_call
+node_ep_before_compile -->|"defoverridable call: 2 + override"| node_endpoint_call
+node_endpoint_call -->|"rescue/catch -&gt; RenderErrors.__catch__"| node_render_errors
+node_endpoint_call -->|"plug :socket_dispatch runs first"| node_socket_dispatch
+node_socket_dispatch -->|"socket path match halts into transport"| node_ws_call
+node_endpoint_call -->|"dev-only plug declared before the router"| node_code_reloader_call
+node_code_reloader_call -->|"opts&#91;:reloader&#93;.&#40;endpoint, opts&#41;"| node_code_reloader_reload
+node_router_call -->|"prepare&#40;conn&#41; first"| node_prepare_conn
+node_router_call -->|"case __match_route__&#40;method, decoded, host&#41;"| node_match_route
+node_match_route -->|"clause returns metadata, prepare, chain, dispatch"| node_route_prepare
+node_route_prepare -->|"Phoenix.Router.__call__/5"| node_router_dispatch
+node_router_before_compile -->|"Route.exprs per accumulated route"| node_route_exprs
+node_route_exprs -->|"one function clause per route group"| node_build_match_path
+node_build_match_path -->|"compiled dispatch clauses"| node_match_route
+node_plug_macro -->|"module attribute accumulates plugs"| node_pipe_macro
+node_pipe_macro -->|"Plug.Builder.compile emits the function"| node_pipe_chain
+node_build_match_path -->|"deduped __pipe_throughN__ closure"| node_pipe_chain
+node_router_dispatch -->|"runs the compiled pipe function"| node_pipe_chain
+node_pipe_chain -->|"plug.call&#40;conn, plug.init&#40;opts&#41;&#41;"| node_endpoint_plug
+node_ws_call -->|"code_reload if :code_reloader"| node_transport_code_reload
+node_ws_call -->|"WebSockAdapter.upgrade&#40;handler, arg, opts&#41;"| node_ws_upgrade
+node_pool_supervisor -->|"starter = &amp;PoolSupervisor.start_child/3"| node_channel_join
+node_ws_upgrade -->|"transport joins a topic -&gt; channel process"| node_channel_join
+node_channel_join -->|"auth payload delivered as handle_info"| node_channel_handle_in
+node_channel_handle_in -->|"one-to-one event to client"| node_channel_push
+node_channel_handle_in -->|"&#123;:reply, :ok, socket&#125;"| node_channel_reply
+node_channel_handle_in -->|"broadcast!/3"| node_channel_broadcast
+node_channel_broadcast -->|"PubSub.broadcast&#40;pubsub_server, topic, broadcast&#41;"| node_pubsub_broadcast
+node_pubsub_broadcast -->|"delivery arrives as handle_info event"| node_channel_handle_in
+
+click node_ep_supervisor "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/supervisor.ex"
+click node_config_ets "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/config.ex"
+click node_pubsub_children "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/supervisor.ex"
+click node_socket_children "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/supervisor.ex"
+click node_server_children "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/supervisor.ex"
+click node_adapter "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/cowboy2_adapter.ex"
+click node_pool_supervisor "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/socket/pool_supervisor.ex"
+click node_ep_before_compile "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint.ex"
+click node_endpoint_call "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint.ex"
+click node_render_errors "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint/render_errors.ex"
+click node_socket_dispatch "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/endpoint.ex"
+click node_code_reloader_call "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/code_reloader.ex"
+click node_code_reloader_reload "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/code_reloader.ex"
+click node_transport_code_reload "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/socket/transport.ex"
+click node_router_before_compile "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_route_exprs "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router/route.ex"
+click node_build_match_path "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_match_route "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_router_call "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_prepare_conn "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_route_prepare "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router/route.ex"
+click node_router_dispatch "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_pipe_macro "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_plug_macro "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_pipe_chain "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_endpoint_plug "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/router.ex"
+click node_ws_call "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/transports/websocket.ex"
+click node_ws_upgrade "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/transports/websocket.ex"
+click node_channel_join "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel/server.ex"
+click node_channel_handle_in "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel/server.ex"
+click node_channel_push "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel.ex"
+click node_channel_reply "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel.ex"
+click node_channel_broadcast "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel.ex"
+click node_pubsub_broadcast "https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/channel/server.ex"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ep_supervisor,node_config_ets,node_pubsub_children,node_socket_children,node_server_children,node_adapter,node_pool_supervisor toneBlue
+class node_ep_before_compile,node_endpoint_call,node_render_errors,node_socket_dispatch toneAmber
+class node_router_before_compile,node_route_exprs,node_build_match_path,node_match_route,node_router_call,node_prepare_conn,node_route_prepare toneMint
+class node_router_dispatch,node_pipe_macro,node_plug_macro,node_pipe_chain,node_endpoint_plug toneRose
+class node_code_reloader_call,node_code_reloader_reload,node_transport_code_reload toneIndigo
+class node_ws_call,node_ws_upgrade,node_channel_join,node_channel_handle_in,node_channel_push,node_channel_reply,node_channel_broadcast,node_pubsub_broadcast toneTeal
