@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_startup["Bootstrapping the interpreter"]
+  node_ruby_main["main&#40;&#41;<br/>[main.c]"]
+  node_ruby_options["ruby_options<br/>[eval.c]"]
+  node_process_options["process_options<br/>[ruby.c]"]
+end
+
+subgraph group_parser["Prism &#40;default&#41; + parse.y"]
+  node_prism_script["prism_script<br/>[ruby.c]"]
+  node_parser_yylex["parser_yylex<br/>[parse.y]"]
+  node_yycompile["yycompile / yycompile0<br/>[parse.y]"]
+end
+
+subgraph group_compiler["AST to YARV bytecode"]
+  node_rb_iseq_new_top["rb_iseq_new_top<br/>[iseq.c]"]
+  node_rb_iseq_compile_node["rb_iseq_compile_node<br/>[compile.c]"]
+  node_iseq_compile_each0["iseq_compile_each0<br/>[compile.c]"]
+  node_iseq_peephole_optimize["iseq_peephole_optimize<br/>[compile.c]"]
+  node_pm_iseq_compile_node["pm_iseq_compile_node<br/>[prism_compile.c]"]
+end
+
+subgraph group_vm["Bytecode interpreter"]
+  node_rb_iseq_eval_main["rb_iseq_eval_main<br/>[vm.c]"]
+  node_vm_exec["vm_exec &#40;rb_vm_exec&#41;<br/>[vm.c]"]
+  node_vm_exec_core["vm_exec_core<br/>[vm_exec.c]"]
+  node_rb_control_frame_t["rb_control_frame_t<br/>[vm_core.h]"]
+  node_opt_send_without_block["opt_send_without_block<br/>[insns.def]"]
+  node_branchif["branchif<br/>[insns.def]"]
+end
+
+subgraph group_dispatch["Method lookup + call cache"]
+  node_vm_sendish["vm_sendish<br/>[vm_insnhelper.c]"]
+  node_vm_search_method["vm_search_method<br/>[vm_insnhelper.c]"]
+  node_vm_search_method_fastpath["vm_search_method_fastpath<br/>[vm_insnhelper.c]"]
+  node_vm_populate_cc["vm_populate_cc<br/>[vm_insnhelper.c]"]
+  node_vm_call_method["vm_call_method<br/>[vm_insnhelper.c]"]
+  node_rb_callcache["struct rb_callcache<br/>[vm_callinfo.h]"]
+  node_callable_method_entry_or_negative["callable_method_entry_or_negative<br/>[vm_method.c]"]
+end
+
+subgraph group_gc["Heap and incremental GC"]
+  node_gc_start_internal["gc_start_internal<br/>[gc.c]"]
+  node_gc_start["gc_start<br/>[default.c]"]
+  node_gc_marks_step["gc_marks_step<br/>[default.c]"]
+  node_gc_sweep_step["gc_sweep_step<br/>[default.c]"]
+  node_heap_page_allocate["heap_page_allocate<br/>[default.c]"]
+end
+
+subgraph group_concurrency["Threads and fibers"]
+  node_rb_thread_schedule["rb_thread_schedule<br/>[thread.c]"]
+  node_rb_threadptr_execute_interrupts["rb_threadptr_execute_interrupts<br/>[thread.c]"]
+  node_rb_thread_create["rb_thread_create<br/>[thread.c]"]
+  node_fiber_switch["fiber_switch<br/>[cont.c]"]
+  node_rb_fiber_start["rb_fiber_start<br/>[cont.c]"]
+end
+
+node_ruby_main -->|"boot: argv in, iseq out"| node_ruby_options
+node_ruby_options -->|"option table"| node_process_options
+node_process_options -->|"default parser is Prism"| node_prism_script
+node_process_options -->|"--parser=parse.y path"| node_yycompile
+node_yycompile -->|"yyparse token loop"| node_parser_yylex
+node_parser_yylex -->|"rb_ast_t NODE tree"| node_rb_iseq_new_top
+node_prism_script -->|"pm AST / scope node"| node_pm_iseq_compile_node
+node_rb_iseq_new_top -->|"walk NODE"| node_rb_iseq_compile_node
+node_rb_iseq_compile_node -->|"per-NODE emit"| node_iseq_compile_each0
+node_rb_iseq_compile_node -->|"cleanup pass"| node_iseq_peephole_optimize
+node_rb_iseq_new_top -.->|"compiled &lt;main&gt; iseq"| node_rb_iseq_eval_main
+node_pm_iseq_compile_node -.->|"compiled &lt;main&gt; iseq"| node_rb_iseq_eval_main
+node_rb_iseq_eval_main -->|"push &lt;main&gt; frame, run"| node_vm_exec
+node_vm_exec -->|"enter dispatch loop"| node_vm_exec_core
+node_vm_exec_core -->|"frames live on VM stack"| node_rb_control_frame_t
+node_vm_exec_core -->|"direct-threaded jump"| node_opt_send_without_block
+node_vm_exec_core -->|"RTEST + JUMP"| node_branchif
+node_branchif -.->|"RUBY_VM_CHECK_INTS"| node_rb_thread_schedule
+node_opt_send_without_block -->|"CALL_DATA = ci + cc"| node_vm_sendish
+node_vm_sendish -->|"probe inline cache"| node_vm_search_method_fastpath
+node_vm_search_method -->|"entry point"| node_vm_search_method_fastpath
+node_vm_search_method_fastpath -->|"miss: populate under VM lock"| node_vm_populate_cc
+node_vm_populate_cc -->|"via rb_callable_method_entry"| node_callable_method_entry_or_negative
+node_vm_populate_cc -->|"vm_cc_new&#40;klass, cme, handler&#41;"| node_rb_callcache
+node_vm_sendish -->|"vm_cc_call&#40;cc&#41; handler"| node_vm_call_method
+node_vm_call_method -->|"visibility + type from cc"| node_rb_callcache
+node_vm_exec -.->|"allocations + GC.start"| node_gc_start_internal
+node_gc_start_internal -->|"modular GC indirection"| node_gc_start
+node_gc_start -->|"incremental marking"| node_gc_marks_step
+node_gc_start -->|"lazy sweeping"| node_gc_sweep_step
+node_vm_exec -.->|"newobj out of slots"| node_heap_page_allocate
+node_rb_thread_schedule -->|"post-switch CHECK_INTS"| node_rb_threadptr_execute_interrupts
+node_vm_exec -.->|"Thread.new"| node_rb_thread_create
+node_rb_thread_create -->|"joins runnable set"| node_rb_thread_schedule
+node_vm_exec -.->|"Fiber.yield / resume"| node_fiber_switch
+node_fiber_switch -->|"first resume runs body"| node_rb_fiber_start
+
+click node_ruby_main "https://github.com/ruby/ruby/blob/master/main.c"
+click node_ruby_options "https://github.com/ruby/ruby/blob/master/eval.c"
+click node_process_options "https://github.com/ruby/ruby/blob/master/ruby.c"
+click node_prism_script "https://github.com/ruby/ruby/blob/master/ruby.c"
+click node_parser_yylex "https://github.com/ruby/ruby/blob/master/parse.y"
+click node_yycompile "https://github.com/ruby/ruby/blob/master/parse.y"
+click node_rb_iseq_new_top "https://github.com/ruby/ruby/blob/master/iseq.c"
+click node_rb_iseq_compile_node "https://github.com/ruby/ruby/blob/master/compile.c"
+click node_iseq_compile_each0 "https://github.com/ruby/ruby/blob/master/compile.c"
+click node_iseq_peephole_optimize "https://github.com/ruby/ruby/blob/master/compile.c"
+click node_pm_iseq_compile_node "https://github.com/ruby/ruby/blob/master/prism_compile.c"
+click node_rb_iseq_eval_main "https://github.com/ruby/ruby/blob/master/vm.c"
+click node_vm_exec "https://github.com/ruby/ruby/blob/master/vm.c"
+click node_vm_exec_core "https://github.com/ruby/ruby/blob/master/vm_exec.c"
+click node_rb_control_frame_t "https://github.com/ruby/ruby/blob/master/vm_core.h"
+click node_opt_send_without_block "https://github.com/ruby/ruby/blob/master/insns.def"
+click node_branchif "https://github.com/ruby/ruby/blob/master/insns.def"
+click node_vm_sendish "https://github.com/ruby/ruby/blob/master/vm_insnhelper.c"
+click node_vm_search_method "https://github.com/ruby/ruby/blob/master/vm_insnhelper.c"
+click node_vm_search_method_fastpath "https://github.com/ruby/ruby/blob/master/vm_insnhelper.c"
+click node_vm_populate_cc "https://github.com/ruby/ruby/blob/master/vm_insnhelper.c"
+click node_vm_call_method "https://github.com/ruby/ruby/blob/master/vm_insnhelper.c"
+click node_rb_callcache "https://github.com/ruby/ruby/blob/master/vm_callinfo.h"
+click node_callable_method_entry_or_negative "https://github.com/ruby/ruby/blob/master/vm_method.c"
+click node_gc_start_internal "https://github.com/ruby/ruby/blob/master/gc.c"
+click node_gc_start "https://github.com/ruby/ruby/blob/master/gc/default/default.c"
+click node_gc_marks_step "https://github.com/ruby/ruby/blob/master/gc/default/default.c"
+click node_gc_sweep_step "https://github.com/ruby/ruby/blob/master/gc/default/default.c"
+click node_heap_page_allocate "https://github.com/ruby/ruby/blob/master/gc/default/default.c"
+click node_rb_thread_schedule "https://github.com/ruby/ruby/blob/master/thread.c"
+click node_rb_threadptr_execute_interrupts "https://github.com/ruby/ruby/blob/master/thread.c"
+click node_rb_thread_create "https://github.com/ruby/ruby/blob/master/thread.c"
+click node_fiber_switch "https://github.com/ruby/ruby/blob/master/cont.c"
+click node_rb_fiber_start "https://github.com/ruby/ruby/blob/master/cont.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ruby_main,node_ruby_options,node_process_options,node_rb_thread_schedule,node_rb_threadptr_execute_interrupts,node_rb_thread_create,node_fiber_switch,node_rb_fiber_start toneBlue
+class node_prism_script,node_parser_yylex,node_yycompile toneAmber
+class node_rb_iseq_new_top,node_rb_iseq_compile_node,node_iseq_compile_each0,node_iseq_peephole_optimize,node_pm_iseq_compile_node toneMint
+class node_rb_iseq_eval_main,node_vm_exec,node_vm_exec_core,node_rb_control_frame_t,node_opt_send_without_block,node_branchif toneRose
+class node_vm_sendish,node_vm_search_method,node_vm_search_method_fastpath,node_vm_populate_cc,node_vm_call_method,node_rb_callcache,node_callable_method_entry_or_negative toneIndigo
+class node_gc_start_internal,node_gc_start,node_gc_marks_step,node_gc_sweep_step,node_heap_page_allocate toneTeal
