@@ -1,0 +1,39 @@
+{
+  "owner": "actix",
+  "repo": "actix-web",
+  "branch": "main",
+  "groups": [
+    {"id": "entry", "name": "Server Entry", "label": "HttpServer"},
+    {"id": "dispatch", "name": "HTTP/1 Dispatch", "label": "actix-http h1"},
+    {"id": "app", "name": "App Factory", "label": "App"},
+    {"id": "routing", "name": "Route Resolution", "label": "Router"},
+    {"id": "handlers", "name": "Handler Chain", "label": "Handlers"},
+    {"id": "runtime", "name": "Runtime", "label": "actix-rt"}
+  ],
+  "nodes": [
+    {"id": "http_server", "label": "HttpServer", "file": "server.rs", "path": "actix-web/src/server.rs", "group": "entry", "groupId": "entry", "shape": "box", "desc": "Builder holding sockets, keep-alive config and the user's app factory closure; run() spawns one worker thread per physical core and instantiates the factory at least once per worker."},
+    {"id": "h1_service", "label": "H1Service", "file": "h1/service.rs", "path": "actix-http/src/h1/service.rs", "group": "dispatch", "groupId": "dispatch", "shape": "hexagon", "desc": "Protocol service for plaintext HTTP/1.x; its ServiceFactory impl turns an accepted IO stream into a framed, dispatcher-driven connection."},
+    {"id": "dispatcher", "label": "Dispatcher", "file": "h1/dispatcher.rs", "path": "actix-http/src/h1/dispatcher.rs", "group": "dispatch", "groupId": "dispatch", "shape": "hexagon", "desc": "Hand-written poll state machine per connection: reads bytes, decodes back-to-back requests (16-queue cap), calls the app service, and writes responses back onto the socket."},
+    {"id": "app_entry", "label": "AppEntry", "file": "app_service.rs", "path": "actix-web/src/app_service.rs", "group": "app", "groupId": "app", "shape": "box", "desc": "ServiceFactory wrapper installed as App's endpoint; each worker resolves the app factory into a live AppRouting before serving."},
+    {"id": "app_init_service", "label": "AppInitService", "file": "app_service.rs", "path": "actix-web/src/app_service.rs", "group": "app", "groupId": "app", "shape": "box", "desc": "call() splits a raw Request into ServiceRequest + Payload, reusing pooled HttpRequest objects so steady-state traffic allocates almost nothing."},
+    {"id": "app_routing", "label": "AppRouting", "file": "app_service.rs", "path": "actix-web/src/app_service.rs", "group": "routing", "groupId": "routing", "shape": "hexagon", "desc": "The built router: recognize_fn pattern-matches the URL against ResourceDefs and runs per-resource guards, falling back to the default 404 service."},
+    {"id": "resource_service", "label": "ResourceService", "file": "resource.rs", "path": "actix-web/src/resource.rs", "group": "routing", "groupId": "routing", "shape": "box", "desc": "Scans the matched resource's routes; the first RouteService whose guards accept the request takes it, otherwise the default service responds."},
+    {"id": "route_service", "label": "RouteService", "file": "route.rs", "path": "actix-web/src/route.rs", "group": "routing", "groupId": "routing", "shape": "box", "desc": "One per registered (method, guard) combination; check() filters, call() delegates to the boxed handler service."},
+    {"id": "handler_service", "label": "handler_service", "file": "handler.rs", "path": "actix-web/src/handler.rs", "group": "handlers", "groupId": "handlers", "shape": "document", "desc": "Generic glue produced by Route::to: extracts Args::from_request, awaits handler.call, converts output through Responder::respond_to."},
+    {"id": "from_request", "label": "FromRequest", "file": "extract.rs", "path": "actix-web/src/extract.rs", "group": "handlers", "groupId": "handlers", "shape": "hexagon", "desc": "Trait implemented by Path, Json, Data, Query, Form and more; each builds one typed handler argument from request parts and payload."},
+    {"id": "rt", "label": "rt re-exports", "file": "rt.rs", "path": "actix-web/src/rt.rs", "group": "runtime", "groupId": "runtime", "shape": "database", "desc": "actix-rt / tokio re-exports: every worker runs its own single-threaded runtime on a dedicated thread, so no locking is needed for app state."}
+  ],
+  "edges": [
+    {"from": "http_server", "to": "h1_service", "label": "bind() L515 / run() L1407 hand sockets to protocol services"},
+    {"from": "h1_service", "to": "dispatcher", "label": "wrap io stream in Codec"},
+    {"from": "dispatcher", "to": "app_entry", "label": "service.call(Request) per decoded message"},
+    {"from": "app_entry", "to": "app_init_service", "label": "factory resolved per worker"},
+    {"from": "app_init_service", "to": "app_routing", "label": "pooled ServiceRequest"},
+    {"from": "app_routing", "to": "resource_service", "label": "recognize_fn + guards L350"},
+    {"from": "resource_service", "to": "route_service", "label": "route.check wins"},
+    {"from": "route_service", "to": "handler_service", "label": "boxed handler future"},
+    {"from": "handler_service", "to": "from_request", "label": "Args::from_request L108"},
+    {"from": "from_request", "to": "handler_service", "label": "handler.call(data) L111"},
+    {"from": "http_server", "to": "rt", "label": "worker = single-threaded runtime"}
+  ]
+}
