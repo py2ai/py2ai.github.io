@@ -1,0 +1,66 @@
+flowchart TD
+
+subgraph group_intake["HTTP entry"]
+  node_serve_http["Engine.ServeHTTP<br/>[gin.go]"]
+  node_ctx_pool["Engine.pool / allocateContext<br/>[gin.go]"]
+  node_handle_request["handleHTTPRequest<br/>[gin.go]"]
+  node_method_trees["methodTrees &#40;one per HTTP method&#41;<br/>[tree.go]"]
+end
+
+subgraph group_routing["Radix router"]
+  node_get_value["node.getValue<br/>[tree.go]"]
+  node_combine_handlers["RouterGroup.combineHandlers<br/>[routergroup.go]"]
+end
+
+subgraph group_dispatch["Handler chain"]
+  node_ctx_next["Context.Next<br/>[context.go]"]
+  node_ctx_abort["Context.Abort<br/>[context.go]"]
+end
+
+subgraph group_binding["Bind &amp; validate"]
+  node_should_bind["Context.ShouldBind<br/>[context.go]"]
+  node_bind_default["binding.Default<br/>[binding.go]"]
+  node_validator["defaultValidator &#40;go-playground/validator&#41;"]
+end
+
+subgraph group_safety["Built-in middleware"]
+  node_recovery_mw["Recovery middleware<br/>[recovery.go]"]
+end
+
+node_serve_http -->|"pool.Get&#40;&#41; reuses one *Context per request"| node_ctx_pool
+node_serve_http -->|"c.reset&#40;&#41; then handleHTTPRequest&#40;c&#41;"| node_handle_request
+node_handle_request -->|"pick the tree whose method matches"| node_method_trees
+node_method_trees -->|"root.getValue&#40;rPath, c.params, c.skippedNodes&#41;"| node_get_value
+node_get_value -->|"value.handlers stored on Context"| node_combine_handlers
+node_combine_handlers -->|"c.Next&#40;&#41; walks the merged chain"| node_ctx_next
+node_ctx_next -->|"Abort stops pending handlers"| node_ctx_abort
+node_ctx_next -->|"first middleware defers recover&#40;&#41;"| node_recovery_mw
+node_ctx_next -->|"final handler parses the request"| node_should_bind
+node_should_bind -->|"method + Content-Type choose engine"| node_bind_default
+node_bind_default -->|"validate&#40;obj&#41; after decode"| node_validator
+
+click node_serve_http "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_ctx_pool "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_handle_request "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_method_trees "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_get_value "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_combine_handlers "https://github.com/gin-gonic/gin/blob/master/routergroup.go"
+click node_ctx_next "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_ctx_abort "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_should_bind "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_bind_default "https://github.com/gin-gonic/gin/blob/master/binding/binding.go"
+click node_validator "https://github.com/gin-gonic/gin/blob/master/binding/default_validator.go"
+click node_recovery_mw "https://github.com/gin-gonic/gin/blob/master/recovery.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_serve_http,node_ctx_pool,node_handle_request,node_method_trees toneBlue
+class node_get_value,node_combine_handlers toneAmber
+class node_ctx_next,node_ctx_abort toneMint
+class node_should_bind,node_bind_default,node_validator toneRose
+class node_recovery_mw toneIndigo

@@ -1,0 +1,39 @@
+{
+  "owner": "gin-gonic",
+  "repo": "gin",
+  "branch": "master",
+  "groups": [
+    {"id": "intake", "name": "intake", "label": "HTTP entry"},
+    {"id": "routing", "name": "routing", "label": "Radix router"},
+    {"id": "dispatch", "name": "dispatch", "label": "Handler chain"},
+    {"id": "binding", "name": "binding", "label": "Bind & validate"},
+    {"id": "safety", "name": "safety", "label": "Built-in middleware"}
+  ],
+  "nodes": [
+    {"id": "serve_http", "label": "Engine.ServeHTTP", "file": "gin.go", "path": "gin.go", "group": "HTTP entry", "groupId": "intake", "desc": "Implements http.Handler: grabs a pooled Context, resets it, dispatches, returns it to the pool"},
+    {"id": "ctx_pool", "label": "Engine.pool / allocateContext", "file": "gin.go", "path": "gin.go", "group": "HTTP entry", "groupId": "intake", "desc": "sync.Pool of reusable *Context values sized by maxParams and maxSections"},
+    {"id": "handle_request", "label": "handleHTTPRequest", "file": "gin.go", "path": "gin.go", "group": "HTTP entry", "groupId": "intake", "desc": "Selects the per-method tree, runs getValue, falls back to 404/405/redirect paths"},
+    {"id": "method_trees", "label": "methodTrees (one per HTTP method)", "file": "tree.go", "path": "tree.go", "group": "HTTP entry", "groupId": "intake", "desc": "Engine.trees holds one radix tree root per HTTP method"},
+    {"id": "get_value", "label": "node.getValue", "file": "tree.go", "path": "tree.go", "group": "Radix router", "groupId": "routing", "desc": "Zero-allocation iterative walk matching path bytes against node indices"},
+    {"id": "combine_handlers", "label": "RouterGroup.combineHandlers", "file": "routergroup.go", "path": "routergroup.go", "group": "Radix router", "groupId": "routing", "desc": "Merges group middleware with route handlers into one HandlersChain at registration"},
+    {"id": "ctx_next", "label": "Context.Next", "file": "context.go", "path": "context.go", "group": "Handler chain", "groupId": "dispatch", "desc": "Advances c.index and invokes pending handlers in the chain"},
+    {"id": "ctx_abort", "label": "Context.Abort", "file": "context.go", "path": "context.go", "group": "Handler chain", "groupId": "dispatch", "desc": "Pins index at abortIndex so pending handlers never run"},
+    {"id": "should_bind", "label": "Context.ShouldBind", "file": "context.go", "path": "context.go", "group": "Bind & validate", "groupId": "binding", "desc": "Picks a binding engine from method + Content-Type and decodes into a struct"},
+    {"id": "bind_default", "label": "binding.Default", "file": "binding/binding.go", "path": "binding/binding.go", "group": "Bind & validate", "groupId": "binding", "desc": "GET maps to Form binding; body types map by MIME header"},
+    {"id": "validator", "label": "defaultValidator (go-playground/validator)", "file": "binding/default_validator.go", "path": "binding/default_validator.go", "group": "Bind & validate", "groupId": "binding", "desc": "Runs struct validation with tag name 'binding' after decode"},
+    {"id": "recovery_mw", "label": "Recovery middleware", "file": "recovery.go", "path": "recovery.go", "group": "Built-in middleware", "groupId": "safety", "desc": "defer recover() around c.Next() converts panics into a 500"}
+  ],
+  "edges": [
+    {"from": "serve_http", "to": "ctx_pool", "label": "pool.Get() reuses one *Context per request"},
+    {"from": "serve_http", "to": "handle_request", "label": "c.reset() then handleHTTPRequest(c)"},
+    {"from": "handle_request", "to": "method_trees", "label": "pick the tree whose method matches"},
+    {"from": "method_trees", "to": "get_value", "label": "root.getValue(rPath, c.params, c.skippedNodes)"},
+    {"from": "get_value", "to": "combine_handlers", "label": "value.handlers stored on Context"},
+    {"from": "combine_handlers", "to": "ctx_next", "label": "c.Next() walks the merged chain"},
+    {"from": "ctx_next", "to": "ctx_abort", "label": "Abort stops pending handlers"},
+    {"from": "ctx_next", "to": "recovery_mw", "label": "first middleware defers recover()"},
+    {"from": "ctx_next", "to": "should_bind", "label": "final handler parses the request"},
+    {"from": "should_bind", "to": "bind_default", "label": "method + Content-Type choose engine"},
+    {"from": "bind_default", "to": "validator", "label": "validate(obj) after decode"}
+  ]
+}

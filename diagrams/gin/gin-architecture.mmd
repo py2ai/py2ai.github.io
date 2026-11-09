@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_entry["ServeHTTP &amp; pooling"]
+  node_serve_http["Engine.ServeHTTP<br/>[gin.go]"]
+  node_engine_pool["Engine.pool &#40;sync.Pool&#41;<br/>[gin.go]"]
+  node_allocate_context["allocateContext<br/>[gin.go]"]
+  node_ctx_reset["Context.reset<br/>[context.go]"]
+end
+
+subgraph group_routing["Radix tree"]
+  node_handle_request["handleHTTPRequest<br/>[gin.go]"]
+  node_method_trees["methodTrees<br/>[tree.go]"]
+  node_tree_get["methodTrees.get<br/>[tree.go]"]
+  node_add_route["Engine.addRoute<br/>[gin.go]"]
+  node_node_add_route["node.addRoute<br/>[tree.go]"]
+  node_insert_child["node.insertChild<br/>[tree.go]"]
+  node_increment_prio["node.incrementChildPrio<br/>[tree.go]"]
+  node_get_value["node.getValue<br/>[tree.go]"]
+  node_skipped_nodes["skippedNode stack<br/>[tree.go]"]
+end
+
+subgraph group_flow["Middleware flow"]
+  node_handlers_chain["HandlersChain<br/>[gin.go]"]
+  node_combine_handlers["RouterGroup.combineHandlers<br/>[routergroup.go]"]
+  node_group_handle["RouterGroup.handle<br/>[routergroup.go]"]
+  node_ctx_next["Context.Next<br/>[context.go]"]
+  node_abort_index["abortIndex = math.MaxInt8&gt;&gt;1<br/>[context.go]"]
+  node_ctx_abort["Context.Abort<br/>[context.go]"]
+  node_abort_with_status["Context.AbortWithStatus<br/>[context.go]"]
+end
+
+subgraph group_binding["Binding"]
+  node_should_bind["Context.ShouldBind<br/>[context.go]"]
+  node_should_bind_json["Context.ShouldBindJSON<br/>[context.go]"]
+  node_bind_default["binding.Default<br/>[binding.go]"]
+  node_json_binding["jsonBinding.Bind<br/>[json.go]"]
+  node_decode_json["decodeJSON<br/>[json.go]"]
+  node_binding_validate["binding.validate<br/>[binding.go]"]
+end
+
+subgraph group_validation["Validator"]
+  node_default_validator["defaultValidator"]
+  node_validate_struct["ValidateStruct"]
+end
+
+subgraph group_response["Render &amp; writer"]
+  node_ctx_json["Context.JSON<br/>[context.go]"]
+  node_render_json["render.JSON<br/>[json.go]"]
+  node_write_header_now["responseWriter.WriteHeaderNow<br/>[response_writer.go]"]
+end
+
+subgraph group_errors["Fallbacks &amp; recovery"]
+  node_recovery_mw["Recovery middleware<br/>[recovery.go]"]
+  node_serve_error["serveError<br/>[gin.go]"]
+  node_tsr_redirect["redirectTrailingSlash<br/>[gin.go]"]
+end
+
+node_serve_http -->|"pool.Get&#40;&#41;.&#40;*Context&#41;"| node_engine_pool
+node_engine_pool -->|"pool.New builds the first Context"| node_allocate_context
+node_serve_http -->|"writermem.reset + c.reset"| node_ctx_reset
+node_serve_http -->|"dispatch"| node_handle_request
+node_handle_request -->|"find root for c.Request.Method"| node_tree_get
+node_tree_get -->|"linear scan over one tree per method"| node_method_trees
+node_handle_request -->|"root.getValue&#40;rPath, c.params, c.skippedNodes, unescape&#41;"| node_get_value
+node_get_value -->|"push a frame before wildcard descent"| node_skipped_nodes
+node_get_value -->|"value.handlers -&gt; c.handlers, then c.Next&#40;&#41;"| node_handle_request
+node_add_route -->|"append methodTree&#123;method, root&#125; on first route"| node_method_trees
+node_add_route -->|"root.addRoute&#40;path, handlers&#41;"| node_node_add_route
+node_node_add_route -->|"insert terminal node"| node_insert_child
+node_node_add_route -->|"keep hottest children first"| node_increment_prio
+node_group_handle -->|"engine.addRoute&#40;method, absolutePath, handlers&#41;"| node_add_route
+node_group_handle -->|"group middleware + route handler"| node_combine_handlers
+node_combine_handlers -->|"merged HandlersChain, size &lt; abortIndex"| node_handlers_chain
+node_ctx_next -->|"invoke handlers&#91;c.index&#93; in order"| node_handlers_chain
+node_ctx_next -->|"Abort pins the index"| node_ctx_abort
+node_ctx_abort -->|"index = math.MaxInt8 &gt;&gt; 1"| node_abort_index
+node_abort_with_status -->|"Status + WriteHeaderNow + Abort"| node_ctx_abort
+node_ctx_next -->|"final handler reads the request"| node_should_bind
+node_should_bind -->|"Default&#40;method, ContentType&#41;"| node_bind_default
+node_should_bind_json -->|"binding.JSON.Bind&#40;req, obj&#41;"| node_json_binding
+node_bind_default -->|"application/json -&gt; jsonBinding"| node_json_binding
+node_json_binding -->|"decodeJSON&#40;req.Body, obj&#41;"| node_decode_json
+node_decode_json -->|"validate&#40;obj&#41; after successful decode"| node_binding_validate
+node_binding_validate -->|"Validator.ValidateStruct&#40;obj&#41;"| node_default_validator
+node_default_validator -->|"lazyinit once, tag 'binding'"| node_validate_struct
+node_ctx_json -->|"c.Render&#40;code, render.JSON&#41;"| node_render_json
+node_render_json -->|"status + body written through writermem"| node_write_header_now
+node_serve_error -->|"runs engine.allNoRoute chain"| node_ctx_next
+node_serve_error -->|"default '404 page not found' body"| node_write_header_now
+node_handle_request -->|"no route matched"| node_serve_error
+node_handle_request -->|"value.tsr &amp;&amp; RedirectTrailingSlash"| node_tsr_redirect
+node_ctx_next -->|"defer recover&#40;&#41; wraps the chain"| node_recovery_mw
+node_recovery_mw -->|"writes 500 after panic"| node_write_header_now
+
+click node_serve_http "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_engine_pool "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_allocate_context "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_ctx_reset "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_handle_request "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_method_trees "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_tree_get "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_add_route "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_node_add_route "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_insert_child "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_increment_prio "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_get_value "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_skipped_nodes "https://github.com/gin-gonic/gin/blob/master/tree.go"
+click node_handlers_chain "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_combine_handlers "https://github.com/gin-gonic/gin/blob/master/routergroup.go"
+click node_group_handle "https://github.com/gin-gonic/gin/blob/master/routergroup.go"
+click node_ctx_next "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_abort_index "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_ctx_abort "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_abort_with_status "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_should_bind "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_should_bind_json "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_bind_default "https://github.com/gin-gonic/gin/blob/master/binding/binding.go"
+click node_json_binding "https://github.com/gin-gonic/gin/blob/master/binding/json.go"
+click node_decode_json "https://github.com/gin-gonic/gin/blob/master/binding/json.go"
+click node_binding_validate "https://github.com/gin-gonic/gin/blob/master/binding/binding.go"
+click node_default_validator "https://github.com/gin-gonic/gin/blob/master/binding/default_validator.go"
+click node_validate_struct "https://github.com/gin-gonic/gin/blob/master/binding/default_validator.go"
+click node_ctx_json "https://github.com/gin-gonic/gin/blob/master/context.go"
+click node_render_json "https://github.com/gin-gonic/gin/blob/master/render/json.go"
+click node_write_header_now "https://github.com/gin-gonic/gin/blob/master/response_writer.go"
+click node_recovery_mw "https://github.com/gin-gonic/gin/blob/master/recovery.go"
+click node_serve_error "https://github.com/gin-gonic/gin/blob/master/gin.go"
+click node_tsr_redirect "https://github.com/gin-gonic/gin/blob/master/gin.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_serve_http,node_engine_pool,node_allocate_context,node_ctx_reset,node_recovery_mw,node_serve_error,node_tsr_redirect toneBlue
+class node_handle_request,node_method_trees,node_tree_get,node_add_route,node_node_add_route,node_insert_child,node_increment_prio,node_get_value,node_skipped_nodes toneAmber
+class node_handlers_chain,node_combine_handlers,node_group_handle,node_ctx_next,node_abort_index,node_ctx_abort,node_abort_with_status toneMint
+class node_should_bind,node_should_bind_json,node_bind_default,node_json_binding,node_decode_json,node_binding_validate toneRose
+class node_default_validator,node_validate_struct toneIndigo
+class node_ctx_json,node_render_json,node_write_header_now toneTeal
