@@ -1,0 +1,130 @@
+flowchart TD
+
+subgraph group_runtime["Runtime Adapters"]
+  node_adapter_handle["Lambda handle&#40;&#41;<br/>[handler.ts]"]
+  node_processor["EventProcessor<br/>[handler.ts]"]
+  node_adapter_deno["Deno helpers<br/>[index.ts]"]
+  node_adapter_vercel["Vercel handle&#40;&#41;<br/>[handler.ts]"]
+end
+
+subgraph group_core["Hono Core"]
+  node_hono_class["Hono class<br/>[hono.ts]"]
+  node_hono_base["HonoBase<br/>[hono-base.ts]"]
+  node_add_route["&#35;addRoute<br/>[hono-base.ts]"]
+  node_fetch["app.fetch<br/>[hono-base.ts]"]
+  node_dispatch["&#35;dispatch<br/>[hono-base.ts]"]
+  node_head_rewriter["HEAD rewrite<br/>[hono-base.ts]"]
+  node_fastpath["Single-handler path<br/>[hono-base.ts]"]
+  node_notfound["Error / 404 handlers<br/>[hono-base.ts]"]
+  node_getpath_util["getPath<br/>[url.ts]"]
+  node_preset_tiny["hono/tiny preset<br/>[tiny.ts]"]
+end
+
+subgraph group_routing["Router Layer"]
+  node_pattern_router["PatternRouter<br/>[router.ts]"]
+  node_router_iface["Router interface<br/>[router.ts]"]
+  node_smart["SmartRouter<br/>[router.ts]"]
+  node_regexp["RegExpRouter<br/>[router.ts]"]
+  node_regexp_matcher["&#35;buildMatcher<br/>[router.ts]"]
+  node_trie["TrieRouter<br/>[router.ts]"]
+  node_trie_node["Trie Node<br/>[node.ts]"]
+end
+
+subgraph group_context["Context &amp; Request"]
+  node_context["Context<br/>[context.ts]"]
+  node_req["HonoRequest<br/>[request.ts]"]
+  node_req_param["param&#40;&#41;<br/>[request.ts]"]
+  node_res_get["get res<br/>[context.ts]"]
+  node_res_set["set res<br/>[context.ts]"]
+  node_env_exec["env / executionCtx<br/>[context.ts]"]
+end
+
+subgraph group_chain["Middleware Chain"]
+  node_compose["compose&#40;&#41;<br/>[compose.ts]"]
+  node_dispatch_fn["dispatch&#40;i&#41;<br/>[compose.ts]"]
+  node_routeindex["req.routeIndex<br/>[compose.ts]"]
+  node_onerror["onError / onNotFound<br/>[compose.ts]"]
+  node_logger["logger middleware<br/>[index.ts]"]
+end
+
+node_adapter_handle -->|"getProcessor&#40;event&#41;"| node_processor
+node_adapter_handle -->|"app.fetch&#40;req, env&#41;"| node_fetch
+node_adapter_vercel -->|"forwards Request"| node_fetch
+node_adapter_deno -->|"app.use&#40;serveStatic&#40;&#41;&#41;"| node_add_route
+node_hono_class -->|"extends"| node_hono_base
+node_hono_class -->|"default router"| node_smart
+node_preset_tiny -->|"extends"| node_hono_base
+node_preset_tiny -->|"this.router = new PatternRouter&#40;&#41;"| node_pattern_router
+node_add_route -->|"router.add&#40;method, path&#41;"| node_router_iface
+node_fetch -->|"delegates"| node_dispatch
+node_dispatch -->|"method === HEAD"| node_head_rewriter
+node_dispatch -->|"this.getPath&#40;request, env&#41;"| node_getpath_util
+node_dispatch -->|"router.match&#40;method, path&#41;"| node_router_iface
+node_router_iface -->|"Result&lt;T&gt; contract"| node_smart
+node_smart -->|"replay routes, try match"| node_regexp
+node_smart -->|"fallback on UnsupportedPathError"| node_trie
+node_regexp -->|"first match triggers build"| node_regexp_matcher
+node_trie -->|"insert / search"| node_trie_node
+node_dispatch -->|"new Context&#40;request, options&#41;"| node_context
+node_dispatch -->|"matchResult&#91;0&#93;.length === 1"| node_fastpath
+node_fastpath -->|"res &#124;&#124; notFoundHandler"| node_notfound
+node_dispatch -->|"compose&#40;matchResult&#91;0&#93;, errorHandler&#41;"| node_compose
+node_compose -->|"dispatch&#40;0&#41;"| node_dispatch_fn
+node_dispatch_fn -->|"context.req.routeIndex = i"| node_routeindex
+node_dispatch_fn -->|"handler&#40;context, next&#41;"| node_logger
+node_logger -->|"reads c.req"| node_req
+node_logger -->|"c.res after next&#40;&#41;"| node_res_set
+node_dispatch_fn -->|"catch / unfinalized"| node_onerror
+node_dispatch_fn -->|"context.res = res"| node_res_set
+node_context -->|"lazy get req"| node_req
+node_req -->|"param&#40;key&#41;"| node_req_param
+node_req_param -->|"ParamStash lookup"| node_router_iface
+node_context -->|"first read builds Response"| node_res_get
+node_context -->|"bindings &amp; event accessors"| node_env_exec
+node_notfound -->|"c.text&#40;'404 Not Found', 404&#41;"| node_context
+
+click node_adapter_handle "https://github.com/honojs/hono/blob/main/src/adapter/aws-lambda/handler.ts"
+click node_processor "https://github.com/honojs/hono/blob/main/src/adapter/aws-lambda/handler.ts"
+click node_adapter_deno "https://github.com/honojs/hono/blob/main/src/adapter/deno/index.ts"
+click node_adapter_vercel "https://github.com/honojs/hono/blob/main/src/adapter/vercel/handler.ts"
+click node_hono_class "https://github.com/honojs/hono/blob/main/src/hono.ts"
+click node_hono_base "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_add_route "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_fetch "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_dispatch "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_head_rewriter "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_fastpath "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_notfound "https://github.com/honojs/hono/blob/main/src/hono-base.ts"
+click node_getpath_util "https://github.com/honojs/hono/blob/main/src/utils/url.ts"
+click node_preset_tiny "https://github.com/honojs/hono/blob/main/src/preset/tiny.ts"
+click node_pattern_router "https://github.com/honojs/hono/blob/main/src/router/pattern-router/router.ts"
+click node_router_iface "https://github.com/honojs/hono/blob/main/src/router.ts"
+click node_smart "https://github.com/honojs/hono/blob/main/src/router/smart-router/router.ts"
+click node_regexp "https://github.com/honojs/hono/blob/main/src/router/reg-exp-router/router.ts"
+click node_regexp_matcher "https://github.com/honojs/hono/blob/main/src/router/reg-exp-router/router.ts"
+click node_trie "https://github.com/honojs/hono/blob/main/src/router/trie-router/router.ts"
+click node_trie_node "https://github.com/honojs/hono/blob/main/src/router/trie-router/node.ts"
+click node_context "https://github.com/honojs/hono/blob/main/src/context.ts"
+click node_req "https://github.com/honojs/hono/blob/main/src/request.ts"
+click node_req_param "https://github.com/honojs/hono/blob/main/src/request.ts"
+click node_res_get "https://github.com/honojs/hono/blob/main/src/context.ts"
+click node_res_set "https://github.com/honojs/hono/blob/main/src/context.ts"
+click node_env_exec "https://github.com/honojs/hono/blob/main/src/context.ts"
+click node_compose "https://github.com/honojs/hono/blob/main/src/compose.ts"
+click node_dispatch_fn "https://github.com/honojs/hono/blob/main/src/compose.ts"
+click node_routeindex "https://github.com/honojs/hono/blob/main/src/compose.ts"
+click node_onerror "https://github.com/honojs/hono/blob/main/src/compose.ts"
+click node_logger "https://github.com/honojs/hono/blob/main/src/middleware/logger/index.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_adapter_handle,node_processor,node_adapter_deno,node_adapter_vercel toneBlue
+class node_hono_class,node_hono_base,node_add_route,node_fetch,node_dispatch,node_head_rewriter,node_fastpath,node_notfound,node_getpath_util,node_preset_tiny toneAmber
+class node_pattern_router,node_router_iface,node_smart,node_regexp,node_regexp_matcher,node_trie,node_trie_node toneMint
+class node_context,node_req,node_req_param,node_res_get,node_res_set,node_env_exec toneRose
+class node_compose,node_dispatch_fn,node_routeindex,node_onerror,node_logger toneIndigo
