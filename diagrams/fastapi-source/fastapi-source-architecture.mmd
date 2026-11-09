@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_asgi["ASGI and Middleware"]
+  node_fastapi_class["FastAPI<br/>[applications.py]"]
+  node_fastapi_call["FastAPI.__call__<br/>[applications.py]"]
+  node_middleware_stack["build_middleware_stack<br/>[applications.py]"]
+  node_setup["FastAPI.setup<br/>[applications.py]"]
+end
+
+subgraph group_routing["Routing"]
+  node_router["APIRouter<br/>[routing.py]"]
+  node_add_api_route["APIRouter.add_api_route<br/>[routing.py]"]
+  node_api_route_decorator["APIRouter.api_route<br/>[routing.py]"]
+  node_include_router["APIRouter.include_router<br/>[routing.py]"]
+  node_api_route_cls["APIRoute<br/>[routing.py]"]
+  node_populate_state["_populate_api_route_state<br/>[routing.py]"]
+  node_get_route_handler["APIRoute.get_route_handler<br/>[routing.py]"]
+  node_request_handler["get_request_handler<br/>[routing.py]"]
+  node_websocket_route["APIWebSocketRoute<br/>[routing.py]"]
+end
+
+subgraph group_deps["Dependency Injection"]
+  node_dependant_model["Dependant<br/>[models.py]"]
+  node_get_dependant["get_dependant<br/>[utils.py]"]
+  node_analyze_param["analyze_param<br/>[utils.py]"]
+  node_solve_deps["solve_dependencies<br/>[utils.py]"]
+  node_solve_generator["_solve_generator<br/>[utils.py]"]
+  node_depends_param["Depends<br/>[params.py]"]
+  node_security_param["Security<br/>[params.py]"]
+end
+
+subgraph group_params["Parameter Parsing"]
+  node_param_class["Param<br/>[params.py]"]
+  node_query_class["Query<br/>[params.py]"]
+  node_body_class["Body<br/>[params.py]"]
+  node_params_to_args["request_params_to_args<br/>[utils.py]"]
+  node_validate_value["_validate_value_with_model_field<br/>[utils.py]"]
+end
+
+subgraph group_body["Body Handling"]
+  node_get_body_field["_get_body_field<br/>[utils.py]"]
+  node_body_to_args["request_body_to_args<br/>[utils.py]"]
+  node_upload_file["UploadFile<br/>[datastructures.py]"]
+end
+
+subgraph group_resp["Response and Errors"]
+  node_endpoint_fn["run_endpoint_function<br/>[routing.py]"]
+  node_serialize["serialize_response<br/>[routing.py]"]
+  node_validation_error["RequestValidationError<br/>[exceptions.py]"]
+  node_response_validation_error["ResponseValidationError<br/>[exceptions.py]"]
+  node_validation_handler["request_validation_exception_handler"]
+end
+
+node_fastapi_class -->|"uvicorn passes scope/receive/send"| node_fastapi_call
+node_fastapi_class -->|"self.router = APIRouter&#40;&#41; &#40;L981&#41;"| node_router
+node_fastapi_class -->|"self.setup&#40;&#41; at init end &#40;L1030&#41;"| node_setup
+node_setup -->|"adds /openapi.json /docs /redoc"| node_router
+node_fastapi_class -->|"@app.get/post wrappers"| node_api_route_decorator
+node_api_route_decorator -->|"decorated endpoint"| node_add_api_route
+node_fastapi_class -->|"app.include_router&#40;&#41;"| node_include_router
+node_include_router -->|"re-registers prefixed routes"| node_add_api_route
+node_add_api_route -->|"constructs APIRoute"| node_api_route_cls
+node_api_route_cls -->|"init delegates &#40;L1246&#41;"| node_populate_state
+node_populate_state -->|"route.dependant &#40;L1114&#41;"| node_get_dependant
+node_populate_state -->|"route.body_field &#40;L1119&#41;"| node_get_body_field
+node_api_route_cls -->|"self.app = request_response &#40;L1276&#41;"| node_get_route_handler
+node_get_route_handler -->|"returns closure &#40;L1285&#41;"| node_request_handler
+node_fastapi_call -->|"built on first request &#40;L1196&#41;"| node_middleware_stack
+node_middleware_stack -->|"innermost ASGI app"| node_router
+node_router -->|"matched route's self.app&#40;request&#41;"| node_request_handler
+node_request_handler -->|"await solve_dependencies &#40;L511&#41;"| node_solve_deps
+node_request_handler -->|"await request.form&#40;&#41; &#40;L455&#41;"| node_upload_file
+node_websocket_route -->|"websocket signature &#40;L914&#41;"| node_get_dependant
+node_get_dependant -->|"returns Dependant"| node_dependant_model
+node_get_dependant -->|"per signature param &#40;L324&#41;"| node_analyze_param
+node_analyze_param -->|"Depends&#40;&#41; default detected"| node_depends_param
+node_analyze_param -->|"marker picks location"| node_query_class
+node_analyze_param -->|"body params split out"| node_body_class
+node_depends_param -->|"Security extends Depends"| node_security_param
+node_solve_deps -->|"walks dependencies &#40;L676&#41;"| node_dependant_model
+node_solve_deps -->|"generator deps &#40;L725&#41;"| node_solve_generator
+node_solve_deps -->|"query/path/header/cookie"| node_params_to_args
+node_solve_deps -->|"body fields"| node_body_to_args
+node_params_to_args -->|"per field &#40;L948&#41;"| node_validate_value
+node_body_to_args -->|"single-model path &#40;L1190&#41;"| node_validate_value
+node_validate_value -->|"errors accumulate"| node_validation_error
+node_validation_error -->|"422 JSON detail"| node_validation_handler
+node_request_handler -->|"JSON decode error &#40;L476&#41;"| node_validation_error
+node_request_handler -->|"errors empty &#40;L744&#41;"| node_endpoint_fn
+node_endpoint_fn -->|"raw return value &#40;L766&#41;"| node_serialize
+node_serialize -->|"invalid return"| node_response_validation_error
+
+click node_fastapi_class "https://github.com/fastapi/fastapi/blob/master/fastapi/applications.py"
+click node_fastapi_call "https://github.com/fastapi/fastapi/blob/master/fastapi/applications.py"
+click node_middleware_stack "https://github.com/fastapi/fastapi/blob/master/fastapi/applications.py"
+click node_setup "https://github.com/fastapi/fastapi/blob/master/fastapi/applications.py"
+click node_router "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_add_api_route "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_api_route_decorator "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_include_router "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_api_route_cls "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_populate_state "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_get_route_handler "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_request_handler "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_websocket_route "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_dependant_model "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/models.py"
+click node_get_dependant "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_analyze_param "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_solve_deps "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_solve_generator "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_depends_param "https://github.com/fastapi/fastapi/blob/master/fastapi/params.py"
+click node_security_param "https://github.com/fastapi/fastapi/blob/master/fastapi/params.py"
+click node_param_class "https://github.com/fastapi/fastapi/blob/master/fastapi/params.py"
+click node_query_class "https://github.com/fastapi/fastapi/blob/master/fastapi/params.py"
+click node_body_class "https://github.com/fastapi/fastapi/blob/master/fastapi/params.py"
+click node_params_to_args "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_validate_value "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_get_body_field "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_body_to_args "https://github.com/fastapi/fastapi/blob/master/fastapi/dependencies/utils.py"
+click node_upload_file "https://github.com/fastapi/fastapi/blob/master/fastapi/datastructures.py"
+click node_endpoint_fn "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_serialize "https://github.com/fastapi/fastapi/blob/master/fastapi/routing.py"
+click node_validation_error "https://github.com/fastapi/fastapi/blob/master/fastapi/exceptions.py"
+click node_response_validation_error "https://github.com/fastapi/fastapi/blob/master/fastapi/exceptions.py"
+click node_validation_handler "https://github.com/fastapi/fastapi/blob/master/fastapi/exception_handlers.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_fastapi_class,node_fastapi_call,node_middleware_stack,node_setup toneBlue
+class node_router,node_add_api_route,node_api_route_decorator,node_include_router,node_api_route_cls,node_populate_state,node_get_route_handler,node_request_handler,node_websocket_route toneAmber
+class node_dependant_model,node_get_dependant,node_analyze_param,node_solve_deps,node_solve_generator,node_depends_param,node_security_param toneMint
+class node_param_class,node_query_class,node_body_class,node_params_to_args,node_validate_value toneRose
+class node_get_body_field,node_body_to_args,node_upload_file toneIndigo
+class node_endpoint_fn,node_serialize,node_validation_error,node_response_validation_error,node_validation_handler toneTeal
