@@ -1,0 +1,153 @@
+flowchart TD
+
+subgraph group_wsgi["WSGI Entry &amp; Errors"]
+  node_wsgi_app["Flask.wsgi_app<br/>[app.py]"]
+  node_handle_exception["Flask.handle_exception<br/>[app.py]"]
+end
+
+subgraph group_context["AppContext Lifecycle"]
+  node_request_context["Flask.request_context<br/>[app.py]"]
+  node_from_environ["AppContext.from_environ<br/>[ctx.py]"]
+  node_ctx_init["AppContext.__init__<br/>[ctx.py]"]
+  node_create_url_adapter["Flask.create_url_adapter<br/>[app.py]"]
+  node_ctx_push["AppContext.push<br/>[ctx.py]"]
+  node_match_request["AppContext.match_request<br/>[ctx.py]"]
+  node_ctx_pop["AppContext.pop<br/>[ctx.py]"]
+end
+
+subgraph group_proxies["Context Proxies"]
+  node_cv_app["_cv_app ContextVar<br/>[globals.py]"]
+  node_request_proxy["request LocalProxy<br/>[globals.py]"]
+  node_session_proxy["session LocalProxy<br/>[globals.py]"]
+end
+
+subgraph group_routing["URL Map &amp; Blueprints"]
+  node_url_map["url_map<br/>[app.py]"]
+  node_add_url_rule["Flask.add_url_rule<br/>[app.py]"]
+  node_register_blueprint["Flask.register_blueprint<br/>[app.py]"]
+  node_bp_register["Blueprint.register<br/>[blueprints.py]"]
+  node_bp_add_url_rule["Blueprint.add_url_rule<br/>[blueprints.py]"]
+  node_bp_merge["Blueprint._merge_blueprint_funcs<br/>[blueprints.py]"]
+end
+
+subgraph group_dispatch["Dispatch Pipeline"]
+  node_full_dispatch["Flask.full_dispatch_request<br/>[app.py]"]
+  node_preprocess["Flask.preprocess_request<br/>[app.py]"]
+  node_dispatch_request["Flask.dispatch_request<br/>[app.py]"]
+  node_view_functions["view_functions<br/>[scaffold.py]"]
+  node_finalize["Flask.finalize_request<br/>[app.py]"]
+  node_handle_user_exception["Flask.handle_user_exception<br/>[app.py]"]
+end
+
+subgraph group_hooks["Request Hooks"]
+  node_before_request_funcs["before_request_funcs<br/>[scaffold.py]"]
+  node_after_request_funcs["after_request_funcs<br/>[scaffold.py]"]
+  node_process_response["Flask.process_response<br/>[app.py]"]
+  node_after_this_request["after_this_request<br/>[ctx.py]"]
+end
+
+subgraph group_session["Session Layer"]
+  node_session_interface["session_interface<br/>[app.py]"]
+  node_get_session["AppContext._get_session<br/>[ctx.py]"]
+  node_open_session["SecureCookieSessionInterface.open_session<br/>[sessions.py]"]
+  node_save_session["SecureCookieSessionInterface.save_session<br/>[sessions.py]"]
+end
+
+subgraph group_teardown["Teardown"]
+  node_do_teardown_request["Flask.do_teardown_request<br/>[app.py]"]
+  node_do_teardown_appcontext["Flask.do_teardown_appcontext<br/>[app.py]"]
+end
+
+node_wsgi_app -->|"ctx = request_context&#40;environ&#41;"| node_request_context
+node_request_context -->|"AppContext.from_environ&#40;self, environ&#41;"| node_from_environ
+node_from_environ -->|"cls&#40;app, request=request&#41;"| node_ctx_init
+node_ctx_init -->|"binds url_adapter eagerly"| node_create_url_adapter
+node_wsgi_app -->|"ctx.push&#40;&#41; inside try"| node_ctx_push
+node_ctx_push -->|"_cv_app.set&#40;self&#41;"| node_cv_app
+node_ctx_push -->|"opens session on push"| node_get_session
+node_get_session -->|"app.session_interface"| node_session_interface
+node_get_session -->|"si.open_session&#40;app, request&#41;"| node_open_session
+node_ctx_push -->|"after session load"| node_match_request
+node_match_request -->|"url_adapter.match&#40;return_rule=True&#41;"| node_url_map
+node_wsgi_app -->|"response = full_dispatch_request&#40;ctx&#41;"| node_full_dispatch
+node_full_dispatch -->|"rv = preprocess_request&#40;ctx&#41;"| node_preprocess
+node_preprocess -->|"scope order bp -&gt; app"| node_before_request_funcs
+node_preprocess -->|"only if rv is None"| node_dispatch_request
+node_dispatch_request -->|"req.url_rule set during push"| node_url_map
+node_dispatch_request -->|"view_functions&#91;rule.endpoint&#93;&#40;**view_args&#41;"| node_view_functions
+node_full_dispatch -->|"except Exception"| node_handle_user_exception
+node_handle_user_exception -->|"handler return value"| node_finalize
+node_full_dispatch -->|"finalize_request&#40;ctx, rv&#41;"| node_finalize
+node_finalize -->|"process_response&#40;ctx, response&#41;"| node_process_response
+node_process_response -->|"ctx._after_request_functions first"| node_after_this_request
+node_process_response -->|"reversed per blueprint scope"| node_after_request_funcs
+node_process_response -->|"if not is_null_session"| node_save_session
+node_save_session -->|"interface.save_session&#40;app, session, response&#41;"| node_session_interface
+node_process_response -->|"finally: ctx.pop&#40;error&#41;"| node_ctx_pop
+node_ctx_pop -->|"if has_request: teardown&#40;exc&#41;"| node_do_teardown_request
+node_ctx_pop -->|"then app teardown&#40;exc&#41;"| node_do_teardown_appcontext
+node_ctx_pop -->|"_cv_app.reset&#40;token&#41;"| node_cv_app
+node_request_proxy -->|"LocalProxy reads ContextVar"| node_cv_app
+node_session_proxy -->|"property opens session lazily"| node_get_session
+node_register_blueprint -->|"blueprint.register&#40;self, options&#41;"| node_bp_register
+node_bp_register -->|"deferred&#40;state&#41; replay"| node_bp_add_url_rule
+node_bp_add_url_rule -->|"state.add_url_rule with prefix"| node_add_url_rule
+node_bp_register -->|"merge scoped registries"| node_bp_merge
+node_bp_merge -->|"extend dotted scopes"| node_before_request_funcs
+node_bp_merge -->|"app.view_functions&#91;endpoint&#93;"| node_view_functions
+node_add_url_rule -->|"url_map.add&#40;rule_obj&#41;"| node_url_map
+node_add_url_rule -->|"view_functions&#91;endpoint&#93; = view_func"| node_view_functions
+node_wsgi_app -->|"except Exception -&gt; 500 path"| node_handle_exception
+node_handle_exception -->|"InternalServerError handler result"| node_finalize
+node_ctx_push -->|"proxy sees pushed ctx"| node_request_proxy
+node_dispatch_request -->|"endpoint lookup is app-wide"| node_view_functions
+node_ctx_pop -->|"control returns to server"| node_wsgi_app
+
+click node_wsgi_app "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_handle_exception "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_request_context "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_from_environ "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_ctx_init "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_create_url_adapter "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_ctx_push "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_match_request "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_ctx_pop "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_cv_app "https://github.com/pallets/flask/blob/main/src/flask/globals.py"
+click node_request_proxy "https://github.com/pallets/flask/blob/main/src/flask/globals.py"
+click node_session_proxy "https://github.com/pallets/flask/blob/main/src/flask/globals.py"
+click node_url_map "https://github.com/pallets/flask/blob/main/src/flask/sansio/app.py"
+click node_add_url_rule "https://github.com/pallets/flask/blob/main/src/flask/sansio/app.py"
+click node_register_blueprint "https://github.com/pallets/flask/blob/main/src/flask/sansio/app.py"
+click node_bp_register "https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py"
+click node_bp_add_url_rule "https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py"
+click node_bp_merge "https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py"
+click node_full_dispatch "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_preprocess "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_dispatch_request "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_view_functions "https://github.com/pallets/flask/blob/main/src/flask/sansio/scaffold.py"
+click node_finalize "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_handle_user_exception "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_before_request_funcs "https://github.com/pallets/flask/blob/main/src/flask/sansio/scaffold.py"
+click node_after_request_funcs "https://github.com/pallets/flask/blob/main/src/flask/sansio/scaffold.py"
+click node_process_response "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_after_this_request "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_session_interface "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_get_session "https://github.com/pallets/flask/blob/main/src/flask/ctx.py"
+click node_open_session "https://github.com/pallets/flask/blob/main/src/flask/sessions.py"
+click node_save_session "https://github.com/pallets/flask/blob/main/src/flask/sessions.py"
+click node_do_teardown_request "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+click node_do_teardown_appcontext "https://github.com/pallets/flask/blob/main/src/flask/app.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_wsgi_app,node_handle_exception,node_session_interface,node_get_session,node_open_session,node_save_session toneBlue
+class node_request_context,node_from_environ,node_ctx_init,node_create_url_adapter,node_ctx_push,node_match_request,node_ctx_pop,node_do_teardown_request,node_do_teardown_appcontext toneAmber
+class node_cv_app,node_request_proxy,node_session_proxy toneMint
+class node_url_map,node_add_url_rule,node_register_blueprint,node_bp_register,node_bp_add_url_rule,node_bp_merge toneRose
+class node_full_dispatch,node_preprocess,node_dispatch_request,node_view_functions,node_finalize,node_handle_user_exception toneIndigo
+class node_before_request_funcs,node_after_request_funcs,node_process_response,node_after_this_request toneTeal

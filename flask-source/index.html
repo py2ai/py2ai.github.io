@@ -1,0 +1,2155 @@
+
+
+  <!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Theme initialization to prevent flash -->
+  <script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
+
+  <!-- Pinterest & Google verification -->
+  <meta name="p:domain_verify" content="fb68a8459fe32b8b072bcd5cc620d125"/>
+  <meta name="google-site-verification" content="WAkFPi5cvufClnQetgIl0STmvvwHhVf8jfyENFWhsxU" />
+  <meta name="google-site-verification" content="g2pFZlv-92XQD67BPgiVHsvZ4TZH13Ucvmmvvv36kU4" />
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Inside Flask’s Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch | PyShine</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="Inside Flask’s Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch" />
+<meta name="author" content="PyShine" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="A source tour of pallets/flask tracing one request from the WSGI call through the merged app context, URL map dispatch, blueprint routing, and teardown." />
+<meta property="og:description" content="A source tour of pallets/flask tracing one request from the WSGI call through the merged app context, URL map dispatch, blueprint routing, and teardown." />
+<link rel="canonical" href="https://pyshine.com/flask-source/" />
+<meta property="og:url" content="https://pyshine.com/flask-source/" />
+<meta property="og:site_name" content="PyShine" />
+<meta property="og:image" content="https://pyshine.com/assets/img/diagrams/flask-source/pallets-flask-source-overview-architecture.svg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-11-09T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://pyshine.com/assets/img/diagrams/flask-source/pallets-flask-source-overview-architecture.svg" />
+<meta property="twitter:title" content="Inside Flask’s Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"PyShine"},"dateModified":"2026-11-09T00:00:00+00:00","datePublished":"2026-11-09T00:00:00+00:00","description":"A source tour of pallets/flask tracing one request from the WSGI call through the merged app context, URL map dispatch, blueprint routing, and teardown.","headline":"Inside Flask’s Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch","image":"https://pyshine.com/assets/img/diagrams/flask-source/pallets-flask-source-overview-architecture.svg","mainEntityOfPage":{"@type":"WebPage","@id":"https://pyshine.com/flask-source/"},"name":"{{ page.title escape }}","url":"https://pyshine.com/flask-source/"}</script>
+<!-- End Jekyll SEO tag -->
+  <!-- This will generate canonical link automatically -->
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="post">
+  <meta property="og:url" content="https://pyshine.com/flask-source/">
+  <meta property="og:title" content="Inside Flask&#39;s Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch">
+  <meta property="og:description" content="A source tour of pallets/flask tracing one request from the WSGI call through the merged app context, URL map dispatch, blueprint routing, and teardown.">
+  <meta property="og:image" content="https://pyshine.com/assets/img/diagrams/flask-source/pallets-flask-source-overview-architecture.svg">
+  <meta property="og:site_name" content="PyShine">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://pyshine.com/flask-source/">
+  <meta name="twitter:title" content="Inside Flask&#39;s Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch">
+  <meta name="twitter:description" content="A source tour of pallets/flask tracing one request from the WSGI call through the merged app context, URL map dispatch, blueprint routing, and teardown.">
+  <meta name="twitter:image" content="https://pyshine.com/assets/img/diagrams/flask-source/pallets-flask-source-overview-architecture.svg">
+
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="Im0K82YsmEDy08+6wyUIZA" async></script>
+
+  <!-- Favicon & App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icons/apple-touch-icon.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png?v=qA3OXqyw77">
+  <link rel="manifest" href="/assets/img/icons/manifest.json?v=qA3OXqyw77">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+
+  <!-- App & Theme Info -->
+  <meta name="apple-mobile-web-app-title" content="Sleek">
+  <meta name="application-name" content="Sleek">
+  <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77">
+  <meta name="theme-color" content="#ffffff">
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-TCVFBKF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-TCVFBKF');
+</script>
+
+  
+
+  <!-- Critical CSS Inline -->
+  <style class="inlineCSS">
+    /* Critical CSS - inlined by Jekyll at build time */
+    :root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --text-color: #343851;
+  --text-secondary: #5a5f7a;
+  --heading-color: #313237;
+  --link-color: #277cea;
+  --link-hover: #68a4f1;
+  --border-color: #dce6f0;
+  --card-bg: #ffffff;
+  --card-border: #ededed;
+  --code-bg: #f6f8fa;
+  --code-text: #25292e;
+  --header-bg: #ffffff;
+  --header-text: #000000;
+  --header-shadow: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #dbdbdb;
+  --input-text: #343851;
+  --button-bg: #222325;
+  --button-text: #ffffff;
+  --success-color: #8fd896;
+  --error-color: #ff6161;
+  --table-header-bg: #f5f5f5;
+  --table-row-hover: #f9f9f9;
+  --blockquote-bg: #f5f5f5;
+  --blockquote-border: #277cea;
+  --pre-bg: #f6f8fa;
+  --hr-color: #dce6f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --hero-bg: #dde5ea;
+  --hero-overlay: rgba(52, 56, 81, 0.8);
+  /* Syntax highlighting colors - VSCode Light+ theme */
+  --syntax-bg: #ffffff;
+  --syntax-text: #383a42;
+  --syntax-comment: #a0a1a7;
+  --syntax-keyword: #e45649;
+  --syntax-string: #50a14f;
+  --syntax-function: #4078f2;
+  --syntax-number: #986801;
+  --syntax-type: #c18401;
+  --syntax-operator: #0184bc;
+  --syntax-punctuation: #383a42;
+  --syntax-variable: #e06c75;
+  --syntax-constant: #986801;
+  --syntax-class: #c18401;
+  --syntax-regex: #50a14f;
+  --syntax-error: #e45649;
+  --syntax-warning: #c18401;
+  --syntax-diff-add: #50a14f;
+  --syntax-diff-del: #e45649;
+  --syntax-diff-add-bg: #e6ffed;
+  --syntax-diff-del-bg: #ffebe9;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.1);
+  /* Copy button colors - light theme */
+  --copy-btn-bg-start: #4facfe;
+  --copy-btn-bg-end: #00f2fe;
+  --copy-btn-border: #4facfe;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --copy-btn-hover-bg-start: #00f2fe;
+  --copy-btn-hover-bg-end: #4facfe;
+  --copy-btn-hover-border: #00f2fe;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --text-color: #ffffff;
+  --text-secondary: #8b949e;
+  --heading-color: #ffffff;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --border-color: #30363d;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --code-bg: #161b22;
+  --code-text: #ffffff;
+  --header-bg: #0d1117;
+  --header-text: #e6e6e6;
+  --header-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #0d1117;
+  --input-border: #30363d;
+  --input-text: #ffffff;
+  --button-bg: #21262d;
+  --button-text: #ffffff;
+  --success-color: #3fb950;
+  --error-color: #f85149;
+  --table-header-bg: #161b22;
+  --table-row-hover: #21262d;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #58a6ff;
+  --pre-bg: #161b22;
+  --hr-color: #30363d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hero-bg: #161b22;
+  --hero-overlay: rgba(13, 17, 23, 0.85);
+  /* Syntax highlighting colors - Night Owl theme */
+  --syntax-bg: #011627;
+  --syntax-text: #d6deeb;
+  --syntax-comment: #637777;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-function: #82aaff;
+  --syntax-number: #f78c6c;
+  --syntax-type: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-punctuation: #89ddff;
+  --syntax-variable: #f78c6c;
+  --syntax-constant: #f78c6c;
+  --syntax-class: #ffcb6b;
+  --syntax-regex: #c3e88d;
+  --syntax-error: #c792ea;
+  --syntax-warning: #ffcb6b;
+  --syntax-diff-add: #c3e88d;
+  --syntax-diff-del: #c792ea;
+  --syntax-diff-add-bg: #1e3a1e;
+  --syntax-diff-del-bg: #3a1e1e;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.05);
+  /* Copy button colors - dark theme */
+  --copy-btn-bg-start: #1f6feb;
+  --copy-btn-bg-end: #388bfd;
+  --copy-btn-border: #1f6feb;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --copy-btn-hover-bg-start: #388bfd;
+  --copy-btn-hover-bg-end: #1f6feb;
+  --copy-btn-hover-border: #58a6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] body {
+  background-color: #0d1117;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] a {
+  color: #58a6ff;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .post-content p,
+[data-theme="dark"] .post-content li,
+[data-theme="dark"] .post-content td,
+[data-theme="dark"] .post-content th,
+[data-theme="dark"] .post-content figure {
+  color: #ffffff !important;
+}
+
+/* Dark theme table styles */
+[data-theme="dark"] .post-content table {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table thead,
+[data-theme="dark"] .post-content table th {
+  background-color: #21262d;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table td {
+  background-color: #0d1117;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table tr:hover td {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .post-content code:not(.highlight code) {
+  color: #ffffff !important;
+  background-color: #30363d;
+}
+
+/* Ensure syntax tokens inside code blocks have no individual background */
+[data-theme="dark"] .highlight code,
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight span {
+  background-color: transparent;
+}
+
+/* Ensure syntax text color is applied in dark theme */
+[data-theme="dark"] .highlight {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight code {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .site {
+  background-color: #0d1117;
+}
+
+[data-theme="dark"] .blog {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-card {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .footer {
+  background-color: #161b22;
+  color: #8b949e;
+}
+
+/* Header dark theme */
+[data-theme="dark"] .header {
+  background: #0d1117 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__logo {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__logo:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__link,
+[data-theme="dark"] .header__dropdown-toggle {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__toggle span {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .header__links {
+  background: #0d1117;
+}
+
+[data-theme="dark"] .header__dropdown-menu {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__dropdown-item {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__dropdown-item:hover {
+  background: #21262d;
+}
+
+/* YouTube section dark theme */
+[data-theme="dark"] #youtube-video {
+  background: #161b22 !important;
+}
+
+/* Back to top button dark theme */
+[data-theme="dark"] .back-to-top {
+  background: #21262d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .back-to-top:hover {
+  background: #30363d;
+}
+
+/* Related posts dark theme */
+[data-theme="dark"] .related-posts {
+  border-top-color: #30363d;
+}
+
+[data-theme="dark"] .related-post-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .related-posts__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__excerpt {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .related-post-card__date {
+  color: #8b949e;
+}
+
+/* Link preview dark theme */
+[data-theme="dark"] .link-preview-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .link-preview-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .link-preview-description {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .link-preview-domain {
+  color: #8b949e;
+}
+
+/* Code header container for copy button positioning */
+.code-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.code-header .copy-btn {
+  position: relative;
+  z-index: 10;
+}
+
+  </style>
+
+  <!-- Main CSS -->
+  <link rel="preload" href="/assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/css/main.css"></noscript>
+
+  <script type="text/javascript">
+    /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+(function(w){"use strict";if(!w.loadCSS){w.loadCSS=function(){}}
+var rp=loadCSS.relpreload={};rp.support=(function(){var ret;try{ret=w.document.createElement("link").relList.supports("preload")}catch(e){ret=!1}
+return function(){return ret}})();rp.bindMediaToggle=function(link){var finalMedia=link.media||"all";function enableStylesheet(){link.media=finalMedia}
+if(link.addEventListener){link.addEventListener("load",enableStylesheet)}else if(link.attachEvent){link.attachEvent("onload",enableStylesheet)}
+setTimeout(function(){link.rel="stylesheet";link.media="only x"});setTimeout(enableStylesheet,3000)};rp.poly=function(){if(rp.support()){return}
+var links=w.document.getElementsByTagName("link");for(var i=0;i<links.length;i++){var link=links[i];if(link.rel==="preload"&&link.getAttribute("as")==="style"&&!link.getAttribute("data-loadcss")){link.setAttribute("data-loadcss",!0);rp.bindMediaToggle(link)}}};if(!rp.support()){rp.poly();var run=w.setInterval(rp.poly,500);if(w.addEventListener){w.addEventListener("load",function(){rp.poly();w.clearInterval(run)})}else if(w.attachEvent){w.attachEvent("onload",function(){rp.poly();w.clearInterval(run)})}}
+if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}
+else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this))
+
+  </script>
+
+  
+</head>
+
+
+  <!-- Zoomable SVG Viewer CSS -->
+  <link rel="stylesheet" href="/assets/css/svg-viewer.css">
+
+  <body class="site" itemscope itemtype="https://schema.org/WebPage">
+
+    
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCVFBKF"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager -->
+    
+
+    <header class="header"
+  itemscope
+  itemtype="http://schema.org/SiteNavigationElement"
+  aria-label="Main navigation">
+
+  <div class="container">
+    <div class="header__inner">
+
+      <!-- Logo -->
+      <a class="header__logo" href="/">
+        <div class="header__logo--container">
+          <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve">
+<g>
+	<path d="M18.121,9.88l-7.832-7.836c-0.155-0.158-0.428-0.155-0.584,0L1.842,9.913c-0.262,0.263-0.073,0.705,0.292,0.705h2.069v7.042c0,0.227,0.187,0.414,0.414,0.414h3.725c0.228,0,0.414-0.188,0.414-0.414v-3.313h2.483v3.313c0,0.227,0.187,0.414,0.413,0.414h3.726c0.229,0,0.414-0.188,0.414-0.414v-7.042h2.068h0.004C18.331,10.617,18.389,10.146,18.121,9.88 M14.963,17.245h-2.896v-3.313c0-0.229-0.186-0.415-0.414-0.415H8.342c-0.228,0-0.414,0.187-0.414,0.415v3.313H5.032v-6.628h9.931V17.245z M3.133,9.79l6.864-6.868l6.867,6.868H3.133z"></path>
+
+	
+	
+</g>
+</svg>
+
+        </div>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header__links">
+        <div class="header__links-wrapper">
+
+          
+            
+              <a class="header__link" href="/">
+                Home
+              </a>
+            
+          
+            
+              <a class="header__link" href="/categories">
+                Posts
+              </a>
+            
+          
+            
+              <a class="header__link" href="/all-posts/">
+                All Posts
+              </a>
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Tutorials
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/tutorials/">
+                    🔍 View All Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Rust-in-One-Post-Complete-Tutorial-Ownership-Borrow-Async-Quick-Start/">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-JavaScript-TypeScript-in-One-Post-Complete-Tutorial-Async-Types-Quick-Start/">
+                    JavaScript / TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Java-in-One-Post-Complete-Tutorial-OOP-Streams-Virtual-Threads-JVM-Quick-Start/">
+                    Java
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-CPP-in-One-Post-Complete-Tutorial-Modern-Cpp-Quick-Start/">
+                    C++
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-SQL-in-One-Post-Complete-Tutorial-Joins-Window-Functions-Transactions-Quick-Start/">
+                    SQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">
+                    Docker
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">
+                    Kubernetes
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Git-in-One-Post-Complete-Tutorial-Branches-Rebase-Workflows-Quick-Start/">
+                    Git
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/">
+                    Linux CLI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">
+                    REST API
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-GraphQL-in-One-Post-Complete-Tutorial-Schema-Queries-Mutations-Resolvers-Apollo-Quick-Start/">
+                    GraphQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-React-Next-js-in-One-Post-Complete-Tutorial-Components-Hooks-Server-Components-Quick-Start/">
+                    React / Next.js
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">
+                    FastAPI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">
+                    Deep Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">
+                    System Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Bash-in-One-Post-Complete-Tutorial-Pipelines-Functions-Scripts-Quick-Start/">
+                    Bash
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Regex-in-One-Post-Complete-Tutorial-Anchors-Quantifiers-Lookarounds-Quick-Start/">
+                    Regex
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Terraform-in-One-Post-Complete-Tutorial-HCL-State-Modules-Providers-Quick-Start/">
+                    Terraform
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Redis-in-One-Post-Complete-Tutorial-Data-Structures-Caching-Persistence-Quick-Start/">
+                    Redis
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-PostgreSQL-in-One-Post-Complete-Tutorial-Indexes-MVCC-Performance-Quick-Start/">
+                    PostgreSQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-gRPC-Protobuf-in-One-Post-Complete-Tutorial-Proto-Streaming-Interceptors-Quick-Start/">
+                    gRPC / Protobuf
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-WebSocket-in-One-Post-Complete-Tutorial-Handshake-Frames-Scaling-Quick-Start/">
+                    WebSocket
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Categories
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/">
+                    All Categories
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-developertools">
+                    Developer Tools
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-opensource">
+                    Open Source
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aiagents">
+                    AI Agents
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-python">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-machinelearning">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-typescript">
+                    TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-tutorial">
+                    Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-rust">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aidesign">
+                    AI Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-security">
+                    Security
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-devops">
+                    DevOps
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-go">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-webdevelopment">
+                    Web Development
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Applications
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/m3u8-player.html">
+                    Online M3U8 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/dash-player.html">
+                    Online DASH (MPD) Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/mp4-player.html">
+                    Online MP4 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/solar-map/">
+                    Solar Helper
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Clipboard-App-for-Two-PCs/">
+                    Clipboard App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo_correction">
+                    Online Photo Correction
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo">
+                    Online Passport Photo 20KB
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/finger.html">
+                    Online Fingers Scanner
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/avatars">
+                    Online Make Avatars
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/kanban/debounce.html">
+                    Online Reminder App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/converter.html">
+                    Online Image Resize
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/translator.html">
+                    Online Live Translator
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-sv.html">
+                    Procreate Swatch Viewer
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-bv.html">
+                    Procreate Brush Viewer
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Games
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/games/snake/">
+                    Snake Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/flappy-bird/">
+                    Flappy Bird
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/tetris/">
+                    Tetris
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/memory-match/">
+                    Memory Match
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/pong/">
+                    Pong
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/2048/">
+                    2048
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/battleship/">
+                    Battleship
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/go/">
+                    GO Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/chess/">
+                    Chess Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/copter/">
+                    Copter Game
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+              <a class="header__link" href="/about">
+                About
+              </a>
+            
+          
+            
+              <a class="header__link" href="/contact">
+                Contact
+              </a>
+            
+          
+            
+              <a class="header__link" href="/privacy">
+                Privacy Policy
+              </a>
+            
+          
+            
+              <a class="header__link" href="/disclaimer">
+                Disclaimer
+              </a>
+            
+          
+
+        </div>
+      </nav>
+
+      <!-- Language Switcher -->
+      
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <div class="header__toggle">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </div>
+
+<style>
+/* ==================================================
+   🔒 HEADER — ALWAYS VISIBLE, FULL WIDTH COLOR
+================================================== */
+.header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 10000;
+  background: var(--header-bg, #ffffff) !important;
+  box-shadow: 0 1px 3px var(--header-shadow, rgba(0, 0, 0, 0.1));
+  transform: none !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header__inner{
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body{
+  padding-top: 56px;
+}
+
+/* ===============================
+   NAV BASE
+=============================== */
+.header__links-wrapper{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  flex-wrap:nowrap;
+}
+
+.header__link,
+.header__dropdown-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color: var(--header-text);
+  white-space:nowrap;
+  padding:3px 6px;
+}
+
+/* ===============================
+   DROPDOWN
+=============================== */
+.header__dropdown{
+  position:relative;
+}
+
+.dropdown-arrow{
+  font-size:1em;
+  transition:transform .2s ease;
+}
+
+.header__dropdown:hover .dropdown-arrow{
+  transform:rotate(180deg);
+}
+
+.header__dropdown-menu{
+  position:absolute;
+  top:100%;
+  left:0;
+  min-width:200px;
+  background:var(--card-bg, #ffffff);
+  border:1px solid var(--border-color, #dce6f0);
+  border-radius:8px;
+  padding:4px 0;
+  display:none;
+  z-index:9999;
+  box-shadow:0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.header__dropdown:hover .header__dropdown-menu{
+  display:block;
+}
+
+.header__dropdown-item{
+  display:block;
+  padding:8px 14px;
+  color:var(--text-color, #343851);
+  text-decoration:none;
+  font-size:13px;
+  transition:background-color 0.2s ease;
+}
+
+.header__dropdown-item:hover{
+  background:var(--bg-secondary, #f9f9f9);
+}
+
+/* ===============================
+   MOBILE
+=============================== */
+@media (max-width:768px){
+
+  body{
+    padding-top: 56px;
+  }
+
+  .header__inner{
+    min-height: 56px;
+  }
+
+  .header__links-wrapper{
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+  }
+
+  .header__dropdown-toggle{
+    justify-content:space-between;
+    padding:12px 14px;
+  }
+
+  .header__dropdown-menu{
+    position:static;
+    display:none;
+    background:var(--card-bg, #ffffff);
+    border:none;
+  }
+
+  .header__dropdown:hover .header__dropdown-menu{
+    display:block;
+  }
+
+  .header__dropdown-item{
+    padding:12px 18px;
+    background:var(--card-bg, #ffffff);
+    border-top:1px solid var(--border-color, #dce6f0);
+    font-size:14px;
+  }
+}
+
+/* ===============================
+   LANGUAGE SWITCHER
+=============================== */
+.header__lang-switcher{
+  display:inline-flex;
+  gap:.4rem;
+  align-items:center;
+  font-size:1.1rem;
+  margin-left:0.5rem;
+}
+.lang-flag.active{ text-decoration:underline }
+.lang-flag.disabled{ opacity:.5; filter:grayscale(100%) }
+
+/* ===============================
+   THEME TOGGLE BUTTON
+=============================== */
+.theme-toggle {
+  background: rgba(79, 172, 254, 0.15);
+  border: 2px solid #4facfe;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-left: 0.5rem;
+  color: #4facfe;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.3);
+  border-color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(79, 172, 254, 0.2);
+  border: 2px solid #6fc3ff;
+  color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.35);
+  border-color: #8fd4ff;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+</style>
+
+<script>
+(function() {
+  /* Theme toggle - use addEventListener only, no onclick */
+  var themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+  
+  /* Dropdown functionality for mobile */
+  var dropdowns = document.querySelectorAll('.header__dropdown');
+  
+  dropdowns.forEach(function(dropdown) {
+    var toggle = dropdown.querySelector('.header__dropdown-toggle');
+    var menu = dropdown.querySelector('.header__dropdown-menu');
+    
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          var isOpen = menu.style.display === 'block';
+          document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+          menu.style.display = isOpen ? 'none' : 'block';
+          var arrow = toggle.querySelector('.dropdown-arrow');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && !e.target.closest('.header__dropdown')) {
+      document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.querySelectorAll('.dropdown-arrow').forEach(function(a) { a.style.transform = ''; });
+    }
+  });
+})();
+</script>
+</header>
+
+
+    
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="Inside Flask's Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch">
+    
+        <div class="hero__wrap">
+
+          
+            <div class="hero__categories">
+              
+                <a class="label"
+                   href="/categories/#AI Inference"
+                   aria-label="Category: AI Inference">
+                   AI Inference
+                </a>
+                
+              
+            </div>
+          
+
+          <h1 class="hero__title" itemprop="headline">Inside Flask's Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch</h1>
+
+          <p class="hero__meta">
+            <time datetime="2026-11-09T00:00:00+00:00" itemprop="datePublished">
+              09 Nov 2026
+            </time>
+            &nbsp;·&nbsp;
+            
+            <span itemprop="timeRequired">
+              
+                12 mins read
+              
+            </span>
+          </p>
+        </div>
+      </div>
+
+    <main class="site__content" role="main">
+
+      <div class="container post-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="post-toc" id="post-toc">
+          <h3 class="no-toc">Contents</h3>
+          <nav id="toc-list"></nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <article class="post-content"
+                 itemprop="articleBody"
+                 itemscope itemtype="https://schema.org/Article">
+
+          <p>Every Flask developer eventually meets the same wall: a function that works perfectly inside a view blows up with <code class="language-plaintext highlighter-rouge">RuntimeError: Working outside of application context</code> the moment you call it from a background thread, a Celery task, or a plain script. The <code class="language-plaintext highlighter-rouge">g</code> object that held your database connection is suddenly gone, <code class="language-plaintext highlighter-rouge">current_app</code> refuses to resolve, and nothing in your code obviously changed. The error message tells you what to do — wrap the call in <code class="language-plaintext highlighter-rouge">app.app_context()</code> — but not why the context vanished in the first place.</p>
+
+<p>The answer is not magic. It lives in one small method, <code class="language-plaintext highlighter-rouge">Flask.wsgi_app</code>, and in a single <code class="language-plaintext highlighter-rouge">ContextVar</code> that Flask sets and resets around every request. If you have only ever used the decorators, the actual machinery is surprisingly compact: a context is pushed, a URL is matched, a dict of view functions is consulted, hooks run in a carefully ordered loop, and everything is torn down in a <code class="language-plaintext highlighter-rouge">finally</code> block that runs even when your view throws.</p>
+
+<p>This post is a source tour of <a href="https://github.com/pallets/flask">pallets/flask</a> on branch <code class="language-plaintext highlighter-rouge">main</code> — version 3.2.0.dev, the branch where the classic two-stack context design was collapsed into one merged object. We follow one request end to end: the WSGI call, the context lifecycle, URL-map dispatch, blueprint routing, and teardown. Every symbol and line number below was verified against the actual repository tree at the time of writing.</p>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/flask-source/pallets-flask-source-overview-architecture.svg" alt="Flask request flow overview: wsgi_app builds an AppContext, pushes it, dispatches through preprocess and dispatch_request, finalizes a response, and pops the context" style="min-width:900px;width:100%;max-width:1100px;" loading="lazy" /></div>
+
+<p><em>One request through Flask's `main` branch: the server calls `wsgi_app`, which builds and pushes a merged app/request context, dispatches to a view via the URL map, finalizes the response, and always pops the context.</em></p>
+
+<p>Reading the overview from left to right:</p>
+
+<ul>
+  <li><strong>The server never calls your views directly.</strong> WSGI servers invoke <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1627"><code class="language-plaintext highlighter-rouge">Flask.wsgi_app</code>, L1627</a>, which owns the entire lifecycle: build context, dispatch, respond, pop. The <code class="language-plaintext highlighter-rouge">__call__</code> method at <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1679">L1679</a> just delegates, which is exactly why middleware wrapping works.</li>
+  <li><strong>A context is created before anything else happens.</strong> <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1561"><code class="language-plaintext highlighter-rouge">Flask.request_context</code>, L1561</a> converts the raw WSGI environ into an <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L339"><code class="language-plaintext highlighter-rouge">AppContext.from_environ</code>, L339</a> — since 3.2 there is one merged object, not an app-context-plus-request-context pair.</li>
+  <li><strong>Pushing the context is what does routing.</strong> <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L416"><code class="language-plaintext highlighter-rouge">AppContext.push</code>, L416</a> sets the process-wide contextvar, opens the session, then calls <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L405"><code class="language-plaintext highlighter-rouge">AppContext.match_request</code>, L405</a>, which writes the matched <code class="language-plaintext highlighter-rouge">url_rule</code> and <code class="language-plaintext highlighter-rouge">view_args</code> onto the request.</li>
+  <li><strong>The proxies read that one contextvar.</strong> <a href="https://github.com/pallets/flask/blob/main/src/flask/globals.py#L57"><code class="language-plaintext highlighter-rouge">request</code>, L57</a>, <code class="language-plaintext highlighter-rouge">g</code>, <code class="language-plaintext highlighter-rouge">session</code>, and <code class="language-plaintext highlighter-rouge">current_app</code> are Werkzeug <code class="language-plaintext highlighter-rouge">LocalProxy</code> objects over a single <a href="https://github.com/pallets/flask/blob/main/src/flask/globals.py#L40"><code class="language-plaintext highlighter-rouge">_cv_app</code> ContextVar, L40</a> — no thread-local stacks anymore, which is what makes <code class="language-plaintext highlighter-rouge">copy_current_request_context</code> and async code tractable.</li>
+  <li><strong>Dispatch is a three-phase relay.</strong> <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1022"><code class="language-plaintext highlighter-rouge">Flask.full_dispatch_request</code>, L1022</a> runs <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1409"><code class="language-plaintext highlighter-rouge">preprocess_request</code>, L1409</a>, then <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L992"><code class="language-plaintext highlighter-rouge">dispatch_request</code>, L992</a> looks up <code class="language-plaintext highlighter-rouge">view_functions[rule.endpoint]</code> and calls it, then hands the return value to <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1055"><code class="language-plaintext highlighter-rouge">finalize_request</code>, L1055</a>.</li>
+  <li><strong>Blueprints inject at setup, not at request time.</strong> <a href="https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py#L273"><code class="language-plaintext highlighter-rouge">Blueprint.register</code>, L273</a> replays every deferred route callback and merges blueprint-scoped hook lists into the app’s dicts under dotted names.</li>
+  <li><strong>Teardown is guaranteed, not best-effort.</strong> <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L446"><code class="language-plaintext highlighter-rouge">AppContext.pop</code>, L446</a> runs in a <code class="language-plaintext highlighter-rouge">finally</code> clause of <code class="language-plaintext highlighter-rouge">wsgi_app</code>, executing <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1471"><code class="language-plaintext highlighter-rouge">do_teardown_request</code>, L1471</a> and <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1509"><code class="language-plaintext highlighter-rouge">do_teardown_appcontext</code>, L1509</a> with the exception that killed the request, if any.</li>
+</ul>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/flask-source/pallets-flask-source-architecture.svg" alt="Flask detail diagram: AppContext lifecycle, context proxies, URL map and blueprint registration, dispatch flow, request hooks, session layer, and teardown" style="min-width:900px;width:100%;max-width:1100px;" loading="lazy" /></div>
+
+<p><em>The detail view: the AppContext lifecycle on the left feeds the proxies; blueprint registration at setup time feeds the URL map that dispatch consumes; hooks, session, and teardown wrap the view call.</em></p>
+
+<h2 id="the-one-function-the-server-calls">The One Function the Server Calls</h2>
+
+<p>Everything starts in <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1627"><code class="language-plaintext highlighter-rouge">wsgi_app</code>, L1627</a>. It is deliberately not the same method as <code class="language-plaintext highlighter-rouge">__call__</code>: the docstring’s middleware advice — wrap <code class="language-plaintext highlighter-rouge">app.wsgi_app</code>, keep the app object intact — only works because the WSGI entry point is a swappable attribute. The body is eight meaningful lines. First <code class="language-plaintext highlighter-rouge">ctx = self.request_context(environ)</code> builds the merged context. Then <code class="language-plaintext highlighter-rouge">ctx.push()</code> makes it current. Only then does <code class="language-plaintext highlighter-rouge">full_dispatch_request(ctx)</code> run, and its failure path is just as explicit: any <code class="language-plaintext highlighter-rouge">Exception</code> becomes <code class="language-plaintext highlighter-rouge">handle_exception(ctx, e)</code>, which sends the <code class="language-plaintext highlighter-rouge">got_request_exception</code> signal and, unless <code class="language-plaintext highlighter-rouge">PROPAGATE_EXCEPTIONS</code> or debug mode re-raises, produces an <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L916"><code class="language-plaintext highlighter-rouge">InternalServerError</code>, L916</a> — optionally passed through a registered 500 handler.</p>
+
+<p>The subtle part is the <code class="language-plaintext highlighter-rouge">finally</code> block. Whether the view succeeded, raised, or the debugger intervened, the context is popped with <code class="language-plaintext highlighter-rouge">ctx.pop(error)</code> before the function returns. That single design choice is why <code class="language-plaintext highlighter-rouge">teardown_appcontext</code> callbacks — closing database connections, flushing metrics — are trustworthy even on crash paths. Note also what <code class="language-plaintext highlighter-rouge">pop</code> validates: <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L446"><code class="language-plaintext highlighter-rouge">AppContext.pop</code>, L446</a> refuses to pop a context that is not currently active, and a <code class="language-plaintext highlighter-rouge">_push_count</code> supports nested pushes for streaming and testing, running cleanup only when the original push is unwound.</p>
+
+<h2 id="one-context-not-two-the-32-merge">One Context, Not Two: the 3.2 Merge</h2>
+
+<p>Older Flask had two linked stacks: a <code class="language-plaintext highlighter-rouge">RequestContext</code> pushed on top of an <code class="language-plaintext highlighter-rouge">AppContext</code>, each backed by thread-locals. On <code class="language-plaintext highlighter-rouge">main</code> that is gone. <code class="language-plaintext highlighter-rouge">ctx.py</code> now defines a single <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L260"><code class="language-plaintext highlighter-rouge">AppContext</code>, L260</a> that optionally carries a request, and <code class="language-plaintext highlighter-rouge">globals.py</code> keeps one <code class="language-plaintext highlighter-rouge">ContextVar[AppContext]</code> at <a href="https://github.com/pallets/flask/blob/main/src/flask/globals.py#L40">L40</a>. The class docstring states it plainly: the <code class="language-plaintext highlighter-rouge">RequestContext</code> alias exists only for deprecation and will be removed in 4.0. <code class="language-plaintext highlighter-rouge">has_request_context()</code> at <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L209">L209</a> is now just “is there a context, and does it have a request attached.”</p>
+
+<p>Three behavioral consequences follow. First, session loading became lazy: <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L381"><code class="language-plaintext highlighter-rouge">_get_session</code>, L381</a> opens the session on first access (or at push), delegating to the app’s <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L249"><code class="language-plaintext highlighter-rouge">session_interface</code>, L249</a>. Second, a context is pushed for every request <em>and</em> CLI command uniformly. Third, accessing <code class="language-plaintext highlighter-rouge">session</code> through the proxy marks it <code class="language-plaintext highlighter-rouge">accessed</code>, which later decides whether a <code class="language-plaintext highlighter-rouge">Vary: Cookie</code> header is emitted. The merged object also makes per-request extension points simpler: <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L118"><code class="language-plaintext highlighter-rouge">after_this_request</code>, L118</a> appends to the context’s <code class="language-plaintext highlighter-rouge">_after_request_functions</code> list for a one-shot response hook, and <code class="language-plaintext highlighter-rouge">copy_current_request_context</code> hands a background worker a fresh copy of the live context rather than shared mutable state. The context constructor also binds the URL adapter eagerly via <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L507"><code class="language-plaintext highlighter-rouge">create_url_adapter</code>, L507</a>; if binding fails with an HTTP exception it is parked on the request as <code class="language-plaintext highlighter-rouge">routing_exception</code> and re-raised during dispatch — that is why a bad URL still gets a clean 404 instead of a constructor crash.</p>
+
+<h2 id="from-install-to-your-first-model">From Install to Your First Model</h2>
+
+<p>Getting the machinery running takes two minutes. <code class="language-plaintext highlighter-rouge">pip install Flask</code> pulls exactly six runtime dependencies from the project’s own metadata: <code class="language-plaintext highlighter-rouge">blinker&gt;=1.9.0</code>, <code class="language-plaintext highlighter-rouge">click&gt;=8.1.3</code>, <code class="language-plaintext highlighter-rouge">itsdangerous&gt;=2.2.0</code>, <code class="language-plaintext highlighter-rouge">jinja2&gt;=3.1.2</code>, <code class="language-plaintext highlighter-rouge">markupsafe&gt;=2.1.1</code>, and <code class="language-plaintext highlighter-rouge">werkzeug&gt;=3.1.0</code>. Werkzeug supplies routing and the WSGI plumbing, Jinja templating, itsdangerous cookie signing, blinker the signals you saw firing during push and pop. No database, no ORM, no opinion about your storage layer — that is the micro in microframework, and it is why pairing Flask with <a href="/sqlite/">SQLite</a> for a first prototype, or Redis as a custom session backend, is a user-supplied decision rather than a framework mandate.</p>
+
+<p>The canonical first app, straight from the README, is eleven lines: import <code class="language-plaintext highlighter-rouge">Flask</code>, instantiate with <code class="language-plaintext highlighter-rouge">Flask(__name__)</code>, decorate a function with <code class="language-plaintext highlighter-rouge">@app.route("/")</code>, return <code class="language-plaintext highlighter-rouge">"Hello, World!"</code>, then launch with <code class="language-plaintext highlighter-rouge">flask run</code> and the dev server binds <code class="language-plaintext highlighter-rouge">127.0.0.1:5000</code>. Your first “model” here is not a class — it is the route table you are building. Each decorator call resolves to <a href="https://github.com/pallets/flask/blob/main/src/flask/sansio/app.py#L606"><code class="language-plaintext highlighter-rouge">Flask.add_url_rule</code>, L606</a>, which constructs a Werkzeug <code class="language-plaintext highlighter-rouge">Rule</code>, adds it to <code class="language-plaintext highlighter-rouge">url_map</code>, and stores the callable in <code class="language-plaintext highlighter-rouge">view_functions</code> keyed by endpoint name, refusing silent overwrites with an <code class="language-plaintext highlighter-rouge">AssertionError</code>. When you outgrow a flat module, the official tutorial’s <code class="language-plaintext highlighter-rouge">flaskr</code> example shows the idiomatic shape: an application factory, and a <code class="language-plaintext highlighter-rouge">db.py</code> where <code class="language-plaintext highlighter-rouge">get_db()</code> caches a SQLite connection on <code class="language-plaintext highlighter-rouge">g</code> and <code class="language-plaintext highlighter-rouge">close_db</code> is registered with <code class="language-plaintext highlighter-rouge">app.teardown_appcontext</code> — the exact teardown hook this post just traced.</p>
+
+<h2 id="blueprints-routes-on-layaway">Blueprints: Routes on Layaway</h2>
+
+<p>A <code class="language-plaintext highlighter-rouge">Blueprint</code> is deliberately not an application. When you call <code class="language-plaintext highlighter-rouge">@bp.route(...)</code>, <a href="https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py#L413"><code class="language-plaintext highlighter-rouge">Blueprint.add_url_rule</code>, L413</a> does not touch any URL map — it records a closure and returns. Nothing you defined exists until someone calls <code class="language-plaintext highlighter-rouge">app.register_blueprint(bp)</code>, which forwards to <a href="https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py#L273"><code class="language-plaintext highlighter-rouge">Blueprint.register</code>, L273</a>. There, the blueprint gets a dotted name (<code class="language-plaintext highlighter-rouge">name_prefix.name</code>, so nested blueprints compose naturally), duplicate names raise a <code class="language-plaintext highlighter-rouge">ValueError</code>, and a static-file route is added if the blueprint has a static folder. Then every deferred callback is replayed with a setup state that carries the URL prefix, subdomain, and defaults.</p>
+
+<p>The second half of <code class="language-plaintext highlighter-rouge">register</code> is <a href="https://github.com/pallets/flask/blob/main/src/flask/sansio/blueprints.py#L379"><code class="language-plaintext highlighter-rouge">_merge_blueprint_funcs</code>, L379</a>, which copies the blueprint’s error handlers, view functions, and scoped hook lists into the app’s registries under dotted keys. At request time there is no blueprint dispatcher left — just <a href="https://github.com/pallets/flask/blob/main/src/flask/wrappers.py#L181"><code class="language-plaintext highlighter-rouge">Request.blueprints</code>, L181</a>, a property derived from the matched endpoint’s dotted name. That is how the framework knows, without any extra lookup, which blueprint’s <code class="language-plaintext highlighter-rouge">before_request</code> and <code class="language-plaintext highlighter-rouge">after_request</code> functions apply to this URL.</p>
+
+<h2 id="dispatch-hooks-and-the-end-of-the-line">Dispatch, Hooks, and the End of the Line</h2>
+
+<p><a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1022"><code class="language-plaintext highlighter-rouge">full_dispatch_request</code>, L1022</a> marks <code class="language-plaintext highlighter-rouge">_got_first_request</code>, sends <code class="language-plaintext highlighter-rouge">request_started</code>, and runs the phases in order. <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1409"><code class="language-plaintext highlighter-rouge">preprocess_request</code>, L1409</a> iterates <code class="language-plaintext highlighter-rouge">(None, *reversed(req.blueprints))</code> — innermost blueprint first, app last — and the first <code class="language-plaintext highlighter-rouge">before_request</code> handler that returns non-None short-circuits the whole dispatch; its value becomes the response. <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L992"><code class="language-plaintext highlighter-rouge">dispatch_request</code>, L992</a> itself handles two special cases before your view runs: it re-raises any routing exception parked during context construction, and for a rule with automatic options it answers <code class="language-plaintext highlighter-rouge">OPTIONS</code> via <code class="language-plaintext highlighter-rouge">make_default_options_response</code>, asking the URL adapter which methods the path allows. A clean view call then flows through <code class="language-plaintext highlighter-rouge">finalize_request</code>: <code class="language-plaintext highlighter-rouge">make_response</code> coerces strings, tuples, and dicts into a <code class="language-plaintext highlighter-rouge">Response</code>, and <a href="https://github.com/pallets/flask/blob/main/src/flask/app.py#L1441"><code class="language-plaintext highlighter-rouge">process_response</code>, L1441</a> runs <code class="language-plaintext highlighter-rouge">after_this_request</code> callbacks first, then <code class="language-plaintext highlighter-rouge">after_request_funcs</code> in reversed registration order, then saves the session onto the response if it is not a null session.</p>
+
+<p>Errors funnel through <code class="language-plaintext highlighter-rouge">handle_user_exception</code>, which consults scoped error handlers — blueprint-scoped handlers win over app-wide ones. Unhandled exceptions reach <code class="language-plaintext highlighter-rouge">handle_exception</code> and the 500 path described above. Then, always, <a href="https://github.com/pallets/flask/blob/main/src/flask/ctx.py#L446"><code class="language-plaintext highlighter-rouge">AppContext.pop</code>, L446</a> executes request teardown per blueprint scope, closes the request body, runs app teardown, resets the contextvar, and sends <code class="language-plaintext highlighter-rouge">appcontext_popped</code>. If you want to compare this stage model with a framework that routes per-endpoint instead, the <a href="/fastapi-source/">FastAPI</a> source tour covers the ASGI counterpart; <a href="/django/">Django</a>’s middleware-plus-view flow is the other classic reference point.</p>
+
+<h2 id="honest-limits">Honest Limits</h2>
+
+<p>Everything here is verifiable in the repository. Flask on <code class="language-plaintext highlighter-rouge">main</code> is a WSGI framework, not ASGI: async views are supported only by <code class="language-plaintext highlighter-rouge">ensure_sync</code> wrapping each coroutine into a blocking call per request, which trades throughput for compatibility. The default session backend is a signed cookie — <code class="language-plaintext highlighter-rouge">open_session</code> and <code class="language-plaintext highlighter-rouge">save_session</code> in <code class="language-plaintext highlighter-rouge">sessions.py</code> serialize the whole session into an <code class="language-plaintext highlighter-rouge">itsdangerous</code>-signed cookie, so there is no server-side storage, size is bounded by browser cookie limits, and swapping in a Redis-backed interface means replacing one attribute. Without a <code class="language-plaintext highlighter-rouge">SECRET_KEY</code>, the session degrades to <code class="language-plaintext highlighter-rouge">NullSession</code>, whose mutators raise <code class="language-plaintext highlighter-rouge">RuntimeError</code> rather than silently dropping writes. <code class="language-plaintext highlighter-rouge">wsgi_app</code>’s built-in error path handles <code class="language-plaintext highlighter-rouge">Exception</code>; a bare <code class="language-plaintext highlighter-rouge">except:</code> re-raises, so <code class="language-plaintext highlighter-rouge">BaseException</code> cases like <code class="language-plaintext highlighter-rouge">SystemExit</code> skip response finalization by design. Finally, teardown reliability has a documented edge: the interactive debugger and test client can preserve contexts past request end, and teardown functions may then run on the restored context’s pop — the <code class="language-plaintext highlighter-rouge">AppContext</code> docstring warns about this directly.</p>
+
+<p>If you are choosing a backend for your own context-bearing layer, the storage tours of <a href="/redis/">Redis</a> and the <a href="/sqlite/">SQLite</a> internals piece pair well with what you just read: Flask hands you <code class="language-plaintext highlighter-rouge">g</code> and a teardown hook, and what you bind to them is entirely your architecture.</p>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Inside Flask's Request Machine: wsgi_app, the Merged Context, and Blueprint Dispatch",
+  "description": "A source tour of pallets/flask tracing one request from the WSGI call through the merged app context, URL map dispatch, blueprint routing, and teardown.",
+  "datePublished": "2026-11-09",
+  "dateModified": "2026-11-09",
+  "author": {"@type": "Person", "name": "PyShine"},
+  "publisher": {"@type": "Organization", "name": "PyShine"},
+  "mainEntityOfPage": "https://pyshine.com/flask-source/",
+  "keywords": "flask, wsgi, app context, request context, blueprint, url map, teardown, werkzeug, python, contextvars",
+  "about": {"@type": "SoftwareApplication", "name": "Flask", "applicationCategory": "WebApplication", "operatingSystem": "Cross-platform"},
+  "codeRepository": "https://github.com/pallets/flask",
+  "programmingLanguage": "Python"
+}
+</script>
+
+
+
+          <!-- Follow.it CTA -->
+          <section class="follow-cta" aria-label="Follow for updates">
+  <div class="follow-cta-content">
+    <img src="/assets/img/formit.png" alt="Follow.it" class="follow-cta-icon">
+    <p class="follow-cta-text">
+      Enjoyed this post? <a href="https://follow.it/pyshine?leanpub" target="_blank" rel="noopener noreferrer">Never miss out on future posts by following us</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .follow-cta {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--bg-color, #f8f9fa);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .follow-cta:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .follow-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .follow-cta-icon {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  
+  .follow-cta-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
+  
+  .follow-cta-text a {
+    color: var(--link-color, #0066cc);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .follow-cta-text a:hover {
+    color: var(--link-hover-color, #004499);
+    text-decoration: none;
+  }
+  
+  @media (max-width: 480px) {
+    .follow-cta {
+      padding: 1.25rem;
+    }
+    
+    .follow-cta-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .follow-cta-icon {
+      width: 100px;
+      height: auto;
+    }
+    
+    .follow-cta-text {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Dark theme support */
+  [data-theme="dark"] .follow-cta,
+  body.dark-theme .follow-cta {
+    background: var(--bg-color, #1e1e1e);
+    border-color: var(--border-color, #333);
+  }
+  
+  [data-theme="dark"] .follow-cta-text,
+  body.dark-theme .follow-cta-text {
+    color: var(--text-color, #e0e0e0);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a,
+  body.dark-theme .follow-cta-text a {
+    color: var(--link-color, #66b3ff);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a:hover,
+  body.dark-theme .follow-cta-text a:hover {
+    color: var(--link-hover-color, #99ccff);
+  }
+</style>
+
+          <!-- Syntax Highlighting -->
+          <link href="/assets/css/syntax.css" rel="stylesheet">
+          <script src="/assets/scripts/copyCode.js" async></script>
+
+          <!-- Ads -->
+          <section aria-label="Advertisements" class="ads mt-4">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+                    crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2976211678184829"
+                 data-ad-slot="7658460605"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </section>
+
+        </article>
+
+      </div>
+
+      <!-- Post Navigation -->
+      <nav class="post-navigation controls__inner mt-5" aria-label="Post navigation">
+        <div class="controls__item prev">
+          
+            <span>Previous</span>
+            <a href="/fastapi-source/" rel="prev">
+              Inside FastAPI's Request Machine: ASG...
+            </a>
+          
+        </div>
+
+        <div class="controls__item next">
+          
+        </div>
+      </nav>
+
+      <!-- Related Posts -->
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        <section class="related-posts mt-5" aria-label="Related Posts">
+          <div class="container">
+            <h2 class="related-posts__title">Related Posts</h2>
+            <div class="related-posts__grid">
+              
+                <a class="related-post-card" href="/django/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/django/django-django-overview-architecture.svg"
+                           alt="Inside Django's Request Path: From WSGI Environ to SQL Cursor"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside Django's Request Path: From WSGI Environ to SQL Cu...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every Django developer has met the same mystery at 2 a.m.: a view that works...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 09, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/fastapi-source/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/fastapi-source/fastapi-fastapi-source-overview-architecture.svg"
+                           alt="Inside FastAPI's Request Machine: ASGI Handoff, the Dependency Solver, and Pydantic's Fast Path"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside FastAPI's Request Machine: ASGI Handoff, the Depen...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every FastAPI developer eventually hits the same two moments of confusion. The first: a dependency...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 09, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/agno-source/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/agno-source/agno-agi-agno-source-overview-architecture.svg"
+                           alt="Agno Under the Hood: A Source Tour of the Full-Stack Agent Runtime"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Agno Under the Hood: A Source Tour of the Full-Stack Agen...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Ask any team what it takes to ship one production agent, and the answer is...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 08, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/autogen-runtime/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/autogen-runtime/microsoft-autogen-runtime-overview-architecture.svg"
+                           alt="AutoGen Under the Hood: A Source Tour of Microsoft's Multi-Agent Runtime"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">AutoGen Under the Hood: A Source Tour of Microsoft's Mult...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        One agent with one while-loop is fine until the day your task needs a researcher,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 08, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/crew-ai/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/crew-ai/crewaiinc-crew-ai-overview-architecture.svg"
+                           alt="CrewAI Under the Hood: A Source Tour of the Role-Based Multi-Agent Framework"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">CrewAI Under the Hood: A Source Tour of the Role-Based Mu...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Ask a plain chat loop to “research the market, then analyze it, then write the...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 08, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/dspy-source/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/dspy-source/stanfordnlp-dspy-source-overview-architecture.svg"
+                           alt="DSPy Under the Hood: A Source Tour of the Compiler That Optimizes Your Prompts"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">DSPy Under the Hood: A Source Tour of the Compiler That O...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Hand-tuned prompts rot. A wording tweak that squeezed an extra five points out of one...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 08, 2026
+                    </span>
+                  </div>
+                </a>
+              
+            </div>
+          </div>
+        </section>
+      
+
+    </main>
+
+    <!-- YouTube Video Section -->
+    <section id="youtube-video" style="text-align:center; padding:30px 20px; background:var(--bg-secondary, #f8f8f8);">
+      <div class="container">
+        <div style="margin-top:10px;">
+          <a href="https://www.youtube.com/@pyshine_official/shorts"
+            target="_blank"
+            style="background:#ff0000; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 24 24">
+              <path fill="#FFF" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8z"/>
+              <path fill="#FF0000" d="M9.75 15.02v-6l6 3z"/>
+            </svg>
+            Watch PyShine on YouTube
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+  <div class="container">
+    <div class="footer__links" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+      <a href="/" style="color: #00A8E8; text-decoration: none;">Home</a>
+      <a href="/about/" style="color: #00A8E8; text-decoration: none;">About</a>
+      <a href="/contact/" style="color: #00A8E8; text-decoration: none;">Contact</a>
+      <a href="/games/" style="color: #00A8E8; text-decoration: none;">Games</a>
+      <a href="/solar-map/" style="color: #00A8E8; text-decoration: none;">Solar Map</a>
+      <a href="/Clipboard-App-for-Two-PCs/" style="color: #00A8E8; text-decoration: none;">Clipboard App</a>
+      <a href="/privacy/" style="color: #00A8E8; text-decoration: none;">Privacy</a>
+      <a href="/disclaimer/" style="color: #00A8E8; text-decoration: none;">Disclaimer</a>
+    </div>
+    <nav class="social">
+      
+        <a class="social__link" target="_blank" rel="noopener noreferrer" href="https://github.com/pyshine-labs">
+          <svg class="social__icon" viewBox="0 0 20 20" width="20px" height="20px"><path d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+        </a>
+      
+      
+      
+    </nav>
+    <span>&copy; 2026 PyShine. All rights reserved.</span>
+  </div>
+</footer>
+<script async src="/assets/js/bundle.js"></script>
+
+<script async>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function( registration ) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  }
+</script>
+
+
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Button -->
+    <button id="mobile-toc-btn" class="mobile-toc-btn" aria-label="Table of Contents">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Modal -->
+    <div id="mobile-toc-modal" class="mobile-toc-modal">
+      <div class="mobile-toc-content">
+        <div class="mobile-toc-header">
+          <h3>Contents</h3>
+          <button class="mobile-toc-close" aria-label="Close">&times;</button>
+        </div>
+        <ul id="mobile-toc-list" class="mobile-toc-list"></ul>
+      </div>
+    </div>
+
+    <!-- MathJax -->
+    
+
+
+    <!-- Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+            crossorigin="anonymous"></script>
+
+    <!-- SIDEBAR TOC SCRIPT -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toc = document.getElementById("toc-list");
+      const mobileTocList = document.getElementById("mobile-toc-list");
+      const headings = document.querySelectorAll(
+        ".post-content h2:not(.no-toc), .post-content h3:not(.no-toc)"
+      );
+      if ((!toc && !mobileTocList) || headings.length === 0) return;
+
+      const ul = document.createElement("ul");
+      const mobileUl = document.createElement("ul");
+      mobileUl.className = "mobile-toc-list";
+
+      headings.forEach(h => {
+        const id = h.id || h.textContent.trim().toLowerCase().replace(/\s+/g, "-");
+        h.id = id;
+
+        const li = document.createElement("li");
+        const mobileLi = document.createElement("li");
+        
+        if (h.tagName === "H3") {
+          li.style.marginLeft = "1rem";
+          mobileLi.setAttribute("data-level", "3");
+        }
+
+        li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        mobileLi.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        
+        ul.appendChild(li);
+        mobileUl.appendChild(mobileLi);
+      });
+      
+      if (toc) toc.appendChild(ul);
+      if (mobileTocList) mobileTocList.appendChild(mobileUl);
+
+      /* Scroll-spy: highlight active TOC link as user scrolls */
+      const tocLinks = toc ? toc.querySelectorAll("a") : [];
+      const mobileTocLinks = mobileTocList ? mobileTocList.querySelectorAll("a") : [];
+      /* The scrollable container is the aside (#post-toc), not the nav (#toc-list) */
+      const tocScrollContainer = document.getElementById("post-toc");
+
+      function setActiveLink(headingEl) {
+        const id = headingEl.id;
+        let activeDesktopLink = null;
+        tocLinks.forEach(function(link) {
+          const isActive = link.getAttribute("href") === "#" + id;
+          link.classList.toggle("active", isActive);
+          if (isActive) activeDesktopLink = link;
+        });
+        mobileTocLinks.forEach(function(link) {
+          link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+        });
+        /* Auto-scroll the TOC sidebar to keep the active link visible */
+        if (activeDesktopLink && tocScrollContainer) {
+          const linkRect = activeDesktopLink.getBoundingClientRect();
+          const containerRect = tocScrollContainer.getBoundingClientRect();
+          const margin = 40;
+          if (linkRect.top < containerRect.top + margin) {
+            /* Active link is above the visible area — scroll container up */
+            tocScrollContainer.scrollTop -= (containerRect.top + margin - linkRect.top);
+          } else if (linkRect.bottom > containerRect.bottom - margin) {
+            /* Active link is below the visible area — scroll container down */
+            tocScrollContainer.scrollTop += (linkRect.bottom - (containerRect.bottom - margin));
+          }
+        }
+      }
+
+      if (tocLinks.length > 0 && "IntersectionObserver" in window) {
+        const observerOptions = {
+          rootMargin: "-100px 0px -70% 0px",
+          threshold: 0
+        };
+        const headingObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              setActiveLink(entry.target);
+            }
+          });
+        }, observerOptions);
+        headings.forEach(function(h) {
+          headingObserver.observe(h);
+        });
+      }
+
+      /* Mobile TOC Modal */
+      const mobileTocBtn = document.getElementById("mobile-toc-btn");
+      const mobileTocModal = document.getElementById("mobile-toc-modal");
+      const mobileTocClose = mobileTocModal ? mobileTocModal.querySelector(".mobile-toc-close") : null;
+
+      if (mobileTocBtn && mobileTocModal) {
+        mobileTocBtn.addEventListener("click", function() {
+          mobileTocModal.classList.add("active");
+        });
+
+        if (mobileTocClose) {
+          mobileTocClose.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        }
+
+        mobileTocModal.addEventListener("click", function(e) {
+          if (e.target === mobileTocModal) {
+            mobileTocModal.classList.remove("active");
+          }
+        });
+
+        mobileUl.querySelectorAll("a").forEach(function(link) {
+          link.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        });
+      }
+    });
+    </script>
+
+    <!-- Back to Top Button Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const backToTopButton = document.getElementById("back-to-top");
+      if (!backToTopButton) return;
+
+      /* Show button when scrolled down 300px */
+      window.addEventListener("scroll", function() {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("visible");
+        } else {
+          backToTopButton.classList.remove("visible");
+        }
+      });
+
+      /* Smooth scroll to top when clicked */
+      backToTopButton.addEventListener("click", function() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+    </script>
+
+    <style>
+      /* Center post navigation */
+      .post-navigation.controls__inner {
+        justify-content: center !important;
+        gap: 4rem;
+      }
+      /* Related Posts Styles */
+      .related-posts {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+      }
+      .related-posts .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      .related-posts__title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading-color, #000000);
+        text-align: center;
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .related-post-card {
+        display: block;
+        text-decoration: none;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .related-post-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-4px);
+      }
+      .related-post-card__image {
+        width: 100%;
+        height: 100px;
+        background: var(--bg-secondary, #f5f5f5);
+      }
+      .related-post-card__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .related-post-card__content {
+        padding: 0.75rem;
+      }
+      .related-post-card__title {
+        font-size: 0.95rem;
+        margin: 0 0 0.4rem 0;
+        color: var(--heading-color, #000000);
+        line-height: 1.3;
+        font-weight: 600;
+      }
+      .related-post-card__excerpt {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+      }
+      .related-post-card__date {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #999);
+      }
+      @media (max-width: 992px) {
+        .related-posts__grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .related-posts__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Back to Top Button Styles */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg, #000000);
+        color: var(--button-text, #ffffff);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 9999;
+      }
+      .back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .back-to-top:hover {
+        background: var(--text-color, #333333);
+        box-shadow: 0 6px 16px var(--shadow-color, rgba(0, 0, 0, 0.4));
+        transform: translateY(-2px);
+      }
+      .back-to-top:active {
+        transform: translateY(0);
+      }
+      @media (max-width: 768px) {
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
+      }
+      /* Link Preview Styles */
+      .link-preview-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .link-preview-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
+      }
+      .link-preview-link {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        text-decoration: none;
+        width: 100%;
+      }
+      .link-preview-image {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary, #f5f5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .link-preview-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .link-preview-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--heading-color, #000000);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-domain {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #999999);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .link-preview-domain::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--border-color, #e0e0e0);
+        border-radius: 50%;
+      }
+      @media (max-width: 600px) {
+        .link-preview-card {
+          flex-direction: column;
+        }
+        .link-preview-image {
+          width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <!-- Zoomable SVG Viewer JS -->
+    <script src="/assets/js/svg-viewer.js" defer></script>
+  </body>
+</html>
+
+
