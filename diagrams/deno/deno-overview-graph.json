@@ -1,0 +1,45 @@
+{
+  "owner": "denoland",
+  "repo": "deno",
+  "branch": "main",
+  "groups": [
+    { "id": "g_cli", "name": "CLI Front Door", "label": "CLI Front Door" },
+    { "id": "g_modules", "name": "Module Loading", "label": "Module Loading" },
+    { "id": "g_worker", "name": "Worker Layer", "label": "Worker Layer" },
+    { "id": "g_core", "name": "V8 Core", "label": "V8 Core (deno_core)" },
+    { "id": "g_ops", "name": "Op Bridge", "label": "Op Bridge" },
+    { "id": "g_ext", "name": "Extensions", "label": "Extensions (Web APIs)" },
+    { "id": "g_perm", "name": "Permissions", "label": "Permissions" }
+  ],
+  "nodes": [
+    { "id": "cli_main", "label": "cli::main", "file": "main.rs", "path": "cli/main.rs", "group": "CLI Front Door", "groupId": "g_cli", "desc": "Binary entry point; delegates straight to deno::main()" },
+    { "id": "cli_lib_main", "label": "deno::main", "file": "lib.rs", "path": "cli/lib.rs", "group": "CLI Front Door", "groupId": "g_cli", "desc": "Boots logging, fd limits, prompt callbacks and the V8 platform before any isolate exists" },
+    { "id": "main_worker", "label": "MainWorker", "file": "worker.rs", "path": "runtime/worker.rs", "group": "Worker Layer", "groupId": "g_worker", "desc": "User-facing runtime handle wrapping JsRuntime plus op state" },
+    { "id": "bootstrap", "label": "bootstrap_from_options", "file": "worker.rs", "path": "runtime/worker.rs", "group": "Worker Layer", "groupId": "g_worker", "desc": "Builds the JsRuntime, applies BootstrapOptions, wires extensions" },
+    { "id": "ext_wiring", "label": "lazy_init_extensions", "file": "worker.rs", "path": "runtime/worker.rs", "group": "Worker Layer", "groupId": "g_worker", "desc": "Passes per-extension args (fetch, net, kv, fs, os...) into the core extension registry" },
+    { "id": "jsruntime", "label": "JsRuntime", "file": "jsruntime.rs", "path": "libs/core/runtime/jsruntime.rs", "group": "V8 Core", "groupId": "g_core", "desc": "Rust host for one V8 isolate; owns the event loop, module map and op tables" },
+    { "id": "jsrealm", "label": "JsRealm", "file": "jsrealm.rs", "path": "libs/core/runtime/jsrealm.rs", "group": "V8 Core", "groupId": "g_core", "desc": "Per-realm state including pending_ops, the FuturesUnordered op driver" },
+    { "id": "opctx", "label": "OpCtx", "file": "ops.rs", "path": "libs/core/ops.rs", "group": "Op Bridge", "groupId": "g_ops", "desc": "Per-op context handed to every dispatched op: id, decl, shared state" },
+    { "id": "op2", "label": "#[op2]", "file": "lib.rs", "path": "libs/ops/lib.rs", "group": "Op Bridge", "groupId": "g_ops", "desc": "Proc macro that expands plain Rust fns into V8 fast-call capable ops" },
+    { "id": "op_fetch", "label": "op_fetch", "file": "lib.rs", "path": "ext/fetch/lib.rs", "group": "Extensions", "groupId": "g_ext", "desc": "Fetch op: parses URL, checks net permission, builds the HTTP request future" },
+    { "id": "perms_container", "label": "PermissionsContainer", "file": "lib.rs", "path": "runtime/permissions/lib.rs", "group": "Permissions", "groupId": "g_perm", "desc": "Shared, lock-protected permission state every op can borrow from OpState" },
+    { "id": "cli_loader", "label": "CliModuleLoader", "file": "module_loader.rs", "path": "cli/module_loader.rs", "group": "Module Loading", "groupId": "g_modules", "desc": "CLI implementation of deno_core::ModuleLoader: resolution, load hooks, module graph" }
+  ],
+  "edges": [
+    { "from": "cli_main", "to": "cli_lib_main", "label": "pub fn main() -> deno::main()" },
+    { "from": "cli_lib_main", "to": "main_worker", "label": "creates MainWorker" },
+    { "from": "main_worker", "to": "bootstrap", "label": "bootstrap_from_options" },
+    { "from": "bootstrap", "to": "ext_wiring", "label": "lazy_init_extensions" },
+    { "from": "bootstrap", "to": "jsruntime", "label": "JsRuntime::new(RuntimeOptions)" },
+    { "from": "ext_wiring", "to": "jsruntime", "label": "registers extensions in core" },
+    { "from": "ext_wiring", "to": "op_fetch", "label": "deno_fetch args" },
+    { "from": "jsruntime", "to": "jsrealm", "label": "main realm" },
+    { "from": "jsrealm", "to": "opctx", "label": "ops table per realm" },
+    { "from": "op2", "to": "opctx", "label": "generates fast-call dispatchers" },
+    { "from": "opctx", "to": "op_fetch", "label": "dispatches ext ops" },
+    { "from": "op_fetch", "to": "perms_container", "label": "check_net_url(url, \"fetch()\")" },
+    { "from": "main_worker", "to": "perms_container", "label": "owns permission state" },
+    { "from": "main_worker", "to": "cli_loader", "label": "execute_main_module" },
+    { "from": "jsruntime", "to": "cli_loader", "label": "ModuleLoader::load" }
+  ]
+}

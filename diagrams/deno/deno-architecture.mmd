@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_g_cli["CLI Front Door"]
+  node_cli_main["cli::main<br/>[main.rs]"]
+  node_cli_lib_main["deno::main<br/>[lib.rs]"]
+  node_cli_snapshot["CLI_SNAPSHOT<br/>[lib.rs]"]
+end
+
+subgraph group_g_modules["Module Loading"]
+  node_cli_loader["CliModuleLoader<br/>[module_loader.rs]"]
+  node_cli_loader_load["CliModuleLoader::load<br/>[module_loader.rs]"]
+end
+
+subgraph group_g_worker["Worker Layer"]
+  node_snapshot_builder["create_runtime_snapshot<br/>[snapshot.rs]"]
+  node_main_worker["MainWorker<br/>[worker.rs]"]
+  node_bootstrap["bootstrap_from_options<br/>[worker.rs]"]
+  node_ext_wiring["lazy_init_extensions<br/>[worker.rs]"]
+  node_exec_main["execute_main_module<br/>[worker.rs]"]
+  node_eval_module["evaluate_module<br/>[worker.rs]"]
+  node_run_el_worker["MainWorker::run_event_loop<br/>[worker.rs]"]
+  node_js_main["bootstrapMainRuntime<br/>[99_main.js]"]
+end
+
+subgraph group_g_core["V8 Core &#40;deno_core&#41;"]
+  node_jsruntime["JsRuntime<br/>[jsruntime.rs]"]
+  node_exec_script["execute_script<br/>[jsruntime.rs]"]
+  node_run_el_core["run_event_loop<br/>[jsruntime.rs]"]
+  node_store_cbs["store_js_callbacks<br/>[jsruntime.rs]"]
+  node_jsrealm["JsRealm<br/>[jsrealm.rs]"]
+  node_opdriver_impl["OpDriverImpl alias<br/>[jsrealm.rs]"]
+  node_module_loader_trait["ModuleLoader trait<br/>[loaders.rs]"]
+end
+
+subgraph group_g_ops["Op Bridge"]
+  node_opctx["OpCtx<br/>[ops.rs]"]
+  node_opstate["OpState<br/>[ops.rs]"]
+  node_op2["&#35;&#91;op2&#93;<br/>[lib.rs]"]
+  node_op_driver_trait["OpDriver trait<br/>[mod.rs]"]
+  node_futures_driver["FuturesUnorderedDriver"]
+  node_core_js["__eventLoopTick<br/>[01_core.js]"]
+end
+
+subgraph group_g_ext["Extensions &#40;Web APIs&#41;"]
+  node_extension_struct["Extension struct<br/>[extensions.rs]"]
+  node_ext_decl["deno_core::extension!<br/>[lib.rs]"]
+  node_op_fetch["op_fetch<br/>[lib.rs]"]
+  node_op_net_connect["op_net_connect_tcp<br/>[ops.rs]"]
+end
+
+subgraph group_g_perm["Permissions"]
+  node_perms_container["PermissionsContainer<br/>[lib.rs]"]
+  node_check_net_url["check_net_url<br/>[lib.rs]"]
+  node_read_check["UnaryPermission::check<br/>[lib.rs]"]
+  node_permission_prompt["permission_prompt<br/>[prompter.rs]"]
+end
+
+node_cli_main -->|"calls deno::main&#40;&#41;"| node_cli_lib_main
+node_cli_lib_main -->|"spawns main runtime"| node_main_worker
+node_cli_lib_main -->|"static snapshot linked in"| node_cli_snapshot
+node_snapshot_builder -->|"writes blob at build time"| node_cli_snapshot
+node_cli_snapshot -->|"startup_snapshot option"| node_jsruntime
+node_main_worker -->|"bootstrap_from_options"| node_bootstrap
+node_bootstrap -->|"lazy_init_extensions"| node_ext_wiring
+node_bootstrap -->|"JsRuntime::new&#40;RuntimeOptions&#41;"| node_jsruntime
+node_bootstrap -->|"runs bootstrap scripts"| node_exec_script
+node_exec_script -->|"evaluates 99_main.js"| node_js_main
+node_ext_wiring -->|"deno_fetch::args&#40;...&#41; etc"| node_ext_decl
+node_ext_decl -->|"materializes Extension"| node_extension_struct
+node_ext_decl -->|"ops declared via &#35;&#91;op2&#93;"| node_op2
+node_ext_wiring -->|"registers fetch ops"| node_op_fetch
+node_ext_wiring -->|"registers net ops"| node_op_net_connect
+node_main_worker -->|"execute_main_module"| node_exec_main
+node_exec_main -->|"evaluate_module"| node_eval_module
+node_eval_module -->|"tokio::select! branch"| node_run_el_worker
+node_eval_module -->|"load_main_es_module"| node_cli_loader
+node_run_el_worker -->|"polls event loop"| node_jsruntime
+node_cli_loader -->|"load&#40;&#41; impl"| node_cli_loader_load
+node_cli_loader_load -->|"implements ModuleLoader"| node_module_loader_trait
+node_jsruntime -->|"resolve&#40;&#41;/load&#40;&#41; callbacks"| node_module_loader_trait
+node_jsruntime -->|"main realm + realms"| node_jsrealm
+node_jsrealm -->|"pending_ops field"| node_opdriver_impl
+node_opdriver_impl -->|"implements OpDriver"| node_op_driver_trait
+node_opctx -->|"async ops submitted"| node_op_driver_trait
+node_opctx -->|"OpCommonCtx holds OpState"| node_opstate
+node_op2 -->|"generates dispatch wrappers"| node_opctx
+node_op_driver_trait -->|"settles promises in JS"| node_core_js
+node_store_cbs -->|"grabs __eventLoopTick fn"| node_core_js
+node_core_js -->|"JS calls ops via ctx"| node_opctx
+node_opstate -->|"ops borrow permission state"| node_perms_container
+node_op_fetch -->|"check_net_url&#40;url, &quot;fetch&#40;&#41;&quot;&#41;"| node_check_net_url
+node_op_net_connect -->|"check_net&#40;...&#41;"| node_perms_container
+node_perms_container -->|"delegates to UnaryPermission"| node_read_check
+node_perms_container -->|"prompt when ungranted"| node_permission_prompt
+
+click node_cli_main "https://github.com/denoland/deno/blob/main/cli/main.rs"
+click node_cli_lib_main "https://github.com/denoland/deno/blob/main/cli/lib.rs"
+click node_cli_snapshot "https://github.com/denoland/deno/blob/main/cli/snapshot/lib.rs"
+click node_snapshot_builder "https://github.com/denoland/deno/blob/main/runtime/snapshot.rs"
+click node_main_worker "https://github.com/denoland/deno/blob/main/runtime/worker.rs"
+click node_bootstrap "https://github.com/denoland/deno/blob/main/runtime/worker.rs"
+click node_ext_wiring "https://github.com/denoland/deno/blob/main/runtime/worker.rs"
+click node_exec_main "https://github.com/denoland/deno/blob/main/runtime/worker.rs"
+click node_eval_module "https://github.com/denoland/deno/blob/main/runtime/worker.rs"
+click node_run_el_worker "https://github.com/denoland/deno/blob/main/runtime/worker.rs"
+click node_js_main "https://github.com/denoland/deno/blob/main/runtime/js/99_main.js"
+click node_jsruntime "https://github.com/denoland/deno/blob/main/libs/core/runtime/jsruntime.rs"
+click node_exec_script "https://github.com/denoland/deno/blob/main/libs/core/runtime/jsruntime.rs"
+click node_run_el_core "https://github.com/denoland/deno/blob/main/libs/core/runtime/jsruntime.rs"
+click node_store_cbs "https://github.com/denoland/deno/blob/main/libs/core/runtime/jsruntime.rs"
+click node_jsrealm "https://github.com/denoland/deno/blob/main/libs/core/runtime/jsrealm.rs"
+click node_opdriver_impl "https://github.com/denoland/deno/blob/main/libs/core/runtime/jsrealm.rs"
+click node_module_loader_trait "https://github.com/denoland/deno/blob/main/libs/core/modules/loaders.rs"
+click node_cli_loader "https://github.com/denoland/deno/blob/main/cli/module_loader.rs"
+click node_cli_loader_load "https://github.com/denoland/deno/blob/main/cli/module_loader.rs"
+click node_opctx "https://github.com/denoland/deno/blob/main/libs/core/ops.rs"
+click node_opstate "https://github.com/denoland/deno/blob/main/libs/core/ops.rs"
+click node_op2 "https://github.com/denoland/deno/blob/main/libs/ops/lib.rs"
+click node_op_driver_trait "https://github.com/denoland/deno/blob/main/libs/core/runtime/op_driver/mod.rs"
+click node_futures_driver "https://github.com/denoland/deno/blob/main/libs/core/runtime/op_driver/futures_unordered_driver.rs"
+click node_core_js "https://github.com/denoland/deno/blob/main/libs/core/01_core.js"
+click node_extension_struct "https://github.com/denoland/deno/blob/main/libs/core/extensions.rs"
+click node_ext_decl "https://github.com/denoland/deno/blob/main/ext/fetch/lib.rs"
+click node_op_fetch "https://github.com/denoland/deno/blob/main/ext/fetch/lib.rs"
+click node_op_net_connect "https://github.com/denoland/deno/blob/main/ext/net/ops.rs"
+click node_perms_container "https://github.com/denoland/deno/blob/main/runtime/permissions/lib.rs"
+click node_check_net_url "https://github.com/denoland/deno/blob/main/runtime/permissions/lib.rs"
+click node_read_check "https://github.com/denoland/deno/blob/main/runtime/permissions/lib.rs"
+click node_permission_prompt "https://github.com/denoland/deno/blob/main/runtime/permissions/prompter.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_main,node_cli_lib_main,node_cli_snapshot,node_perms_container,node_check_net_url,node_read_check,node_permission_prompt toneBlue
+class node_cli_loader,node_cli_loader_load toneAmber
+class node_snapshot_builder,node_main_worker,node_bootstrap,node_ext_wiring,node_exec_main,node_eval_module,node_run_el_worker,node_js_main toneMint
+class node_jsruntime,node_exec_script,node_run_el_core,node_store_cbs,node_jsrealm,node_opdriver_impl,node_module_loader_trait toneRose
+class node_opctx,node_opstate,node_op2,node_op_driver_trait,node_futures_driver,node_core_js toneIndigo
+class node_extension_struct,node_ext_decl,node_op_fetch,node_op_net_connect toneTeal
