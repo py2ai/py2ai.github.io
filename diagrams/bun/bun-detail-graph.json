@@ -1,0 +1,351 @@
+{
+  "owner": "oven-sh",
+  "repo": "bun",
+  "branch": "main",
+  "groups": [
+    { "id": "process", "name": "process", "label": "Process Entry" },
+    { "id": "vm", "name": "vm", "label": "VM & JavaScriptCore" },
+    { "id": "loader", "name": "loader", "label": "Module Loader & Resolution" },
+    { "id": "transpile", "name": "transpile", "label": "Transpiler" },
+    { "id": "loop", "name": "loop", "label": "Event Loop" },
+    { "id": "ffi", "name": "ffi", "label": "FFI" }
+  ],
+  "nodes": [
+    {
+      "id": "main",
+      "label": "main()",
+      "file": "bin_entry/mod.rs",
+      "path": "src/runtime/bin_entry/mod.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "C-ABI entry: argv capture, crash handler, mimalloc global allocator, stdio, StackCheck, then Cli::start"
+    },
+    {
+      "id": "cli_start",
+      "label": "Cli::start",
+      "file": "cli/mod.rs",
+      "path": "src/runtime/cli/mod.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "inline(never) startup chain head; sets start time, inits Log and CLI arena, dispatches Command::start"
+    },
+    {
+      "id": "run_boot",
+      "label": "Run::boot",
+      "file": "run_command.rs",
+      "path": "src/runtime/cli/run_command.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "Runs bun_jsc::initialize then VirtualMachine::init; wires dotenv, transpiler defines, sql/redis preconnect"
+    },
+    {
+      "id": "jsc_init",
+      "label": "bun_jsc::initialize",
+      "file": "run_command.rs",
+      "path": "src/runtime/cli/run_command.rs",
+      "group": "vm",
+      "groupId": "vm",
+      "desc": "JSCInitialize over bun_sys environ; runtime dispatch hooks were installed earlier by main"
+    },
+    {
+      "id": "vm_init",
+      "label": "VirtualMachine::init",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "vm",
+      "groupId": "vm",
+      "desc": "Builds per-thread VM: transpiler with resolver, ModuleLoader, regular + macro EventLoop, JSC global object"
+    },
+    {
+      "id": "vm_struct",
+      "label": "VirtualMachine",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "vm",
+      "groupId": "vm",
+      "desc": "Value fields: transpiler, module_loader, transpiler_store, regular_event_loop, macro_event_loop, event_loop self-pointer"
+    },
+    {
+      "id": "run_start",
+      "label": "Run::start",
+      "file": "run_command.rs",
+      "path": "src/runtime/cli/run_command.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "Grabs the JSC API lock and never drops it; adds conditional globals, loads entry, then the core run-loop"
+    },
+    {
+      "id": "core_loop",
+      "label": "core run-loop",
+      "file": "run_command.rs",
+      "path": "src/runtime/cli/run_command.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "while vm.is_event_loop_alive() { vm.tick(); vm.auto_tick_active(); } then on_before_exit / on_exit"
+    },
+    {
+      "id": "load_entry",
+      "label": "load_entry_point",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "reload_entry_point + spin: ticks the loop while the entry promise is pending, wait_for_promise otherwise"
+    },
+    {
+      "id": "reload_entry",
+      "label": "reload_entry_point",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "Single funnel for main entry, workers and evals: pre-execution bootstrap, preload scripts, built-in entries"
+    },
+    {
+      "id": "jsml",
+      "label": "JSModuleLoader",
+      "file": "JSModuleLoader.rs",
+      "path": "src/jsc/JSModuleLoader.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "Rust FFI wrapper over JSC's JSModuleLoader: loadAndEvaluateModule, resolveAndLoadAndEvaluateModule, import"
+    },
+    {
+      "id": "cpp_fetch",
+      "label": "fetchESMSourceCode",
+      "file": "ModuleLoader.cpp",
+      "path": "src/jsc/bindings/ModuleLoader.cpp",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "C++ loader fetch: builtin check, CommonJS module objects, plugins, then the Rust transpile hook"
+    },
+    {
+      "id": "fetch_builtin",
+      "label": "Bun__fetchBuiltinModule",
+      "file": "ModuleLoader.rs",
+      "path": "src/jsc/ModuleLoader.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "Serves node:, bun: and internal: builtins from the codegen'd builtin registry; enforce trimmed modules"
+    },
+    {
+      "id": "get_default_loader",
+      "label": "Bun__getDefaultLoader",
+      "file": "ModuleLoader.rs",
+      "path": "src/jsc/ModuleLoader.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "Picks a loader from the import type attribute or the file extension via transpiler.options.loader"
+    },
+    {
+      "id": "transpile_hook",
+      "label": "__bun_transpile_source_code",
+      "file": "jsc_hooks.rs",
+      "path": "src/runtime/jsc_hooks.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Runtime-transpiler entry: read file, Transpiler::parse, js_printer::print, ResolvedSource with is_static"
+    },
+    {
+      "id": "transpile_virtual",
+      "label": "Bun__transpileVirtualModule",
+      "file": "jsc_hooks.rs",
+      "path": "src/runtime/jsc_hooks.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Plugin and virtual module sources go through the same transpiler path"
+    },
+    {
+      "id": "transpiler_struct",
+      "label": "Transpiler",
+      "file": "transpiler.rs",
+      "path": "src/bundler/transpiler.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Formerly the whole transpiler; now per-VM options + resolver + linker, shared with bundle_v2"
+    },
+    {
+      "id": "transpiler_parse",
+      "label": "Transpiler::parse",
+      "file": "transpiler.rs",
+      "path": "src/bundler/transpiler.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "parse_maybe_return_file_only chain down to parse_internal: lexer, parser, lowering, import records"
+    },
+    {
+      "id": "transpiler_print",
+      "label": "Transpiler::print",
+      "file": "transpiler.rs",
+      "path": "src/bundler/transpiler.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Prints the AST back to JS through bun_js_printer with optional source maps"
+    },
+    {
+      "id": "buffer_printer",
+      "label": "BufferPrinter",
+      "file": "lib.rs",
+      "path": "src/js_printer/lib.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Writer<BufferWriter> aliased as BufferPrinter; one per VM shared by the runtime transpiler"
+    },
+    {
+      "id": "transpiler_store",
+      "label": "RuntimeTranspilerStore",
+      "file": "RuntimeTranspilerStore.rs",
+      "path": "src/jsc/RuntimeTranspilerStore.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Caches transpiled outputs; RuntimeTranspilerCache adds a disk-backed entry layer"
+    },
+    {
+      "id": "resolved_source",
+      "label": "ResolvedSource",
+      "file": "ResolvedSource.rs",
+      "path": "src/jsc/ResolvedSource.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "The contract handed back to JSC: printed code, source URL, tag, module type"
+    },
+    {
+      "id": "eventloop_struct",
+      "label": "EventLoop",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "FIFO task queue, two immediate queues, yield_tasks, concurrent queues, deferred tasks, uws loop handle"
+    },
+    {
+      "id": "tick",
+      "label": "EventLoop::tick",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "tick_turn under a top scope; increments entered_event_loop_count, folds task exceptions"
+    },
+    {
+      "id": "tick_turn",
+      "label": "tick_turn",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "Bounded refill loop: tick_with_count, drain_microtasks_with_global, handle_rejected_promises"
+    },
+    {
+      "id": "drain_next_ticks",
+      "label": "drain_microtasks_and_next_ticks",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "One microtask checkpoint via JSC__JSGlobalObject__drainMicrotasks: nextTicks then the JSC microtask queue"
+    },
+    {
+      "id": "auto_tick",
+      "label": "auto_tick",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "Promotes immediates and yield_tasks, polls I/O while the loop stays alive"
+    },
+    {
+      "id": "tick_forever",
+      "label": "tick_possibly_forever",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "Watcher arm driver: uws tick_with_timeout(1s bound), on_after_event_loop, tick"
+    },
+    {
+      "id": "mini_loop",
+      "label": "MiniEventLoop",
+      "file": "MiniEventLoop.rs",
+      "path": "src/event_loop/MiniEventLoop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "Isolated loop for spawnSync and early boot, init_global before the VM exists"
+    },
+    {
+      "id": "any_loop",
+      "label": "AnyEventLoop",
+      "file": "AnyEventLoop.rs",
+      "path": "src/event_loop/AnyEventLoop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "Lower-tier handle over erased *mut jsc::EventLoop via link-time extern Rust, no vtable"
+    },
+    {
+      "id": "ffi_mod",
+      "label": "bun:ffi mod",
+      "file": "mod.rs",
+      "path": "src/runtime/ffi/mod.rs",
+      "group": "ffi",
+      "groupId": "ffi",
+      "desc": "Bun.FFI crate module: ABIType formatters, DOMCall slowpath exports, FFIObject"
+    },
+    {
+      "id": "ffi_body",
+      "label": "Function::compile",
+      "file": "ffi_body.rs",
+      "path": "src/runtime/ffi/ffi_body.rs",
+      "group": "ffi",
+      "groupId": "ffi",
+      "desc": "TinyCC-backed Function::compile and dlopen; callbacks wrap into JSC host functions"
+    },
+    {
+      "id": "ffi_object",
+      "label": "FFIObject",
+      "file": "FFIObject.rs",
+      "path": "src/runtime/ffi/FFIObject.rs",
+      "group": "ffi",
+      "groupId": "ffi",
+      "desc": "FFIObject with lazy Reader/Pointer views; DOMJIT fast paths with Rust slowpath shims"
+    }
+  ],
+  "edges": [
+    { "from": "main", "to": "cli_start", "label": "dispatch" },
+    { "from": "cli_start", "to": "run_boot", "label": "Command::start → run" },
+    { "from": "run_boot", "to": "jsc_init", "label": "InitializeOptions" },
+    { "from": "run_boot", "to": "vm_init", "label": "VmInitOptions" },
+    { "from": "vm_init", "to": "vm_struct", "label": "boxed VM, leaked" },
+    { "from": "vm_struct", "to": "transpiler_struct", "label": "owns Transpiler" },
+    { "from": "vm_struct", "to": "eventloop_struct", "label": "regular + macro loops" },
+    { "from": "run_boot", "to": "run_start", "label": "Run::start(self) -> !" },
+    { "from": "run_start", "to": "load_entry", "label": "loadEntryPoint" },
+    { "from": "load_entry", "to": "reload_entry", "label": "reload + spin" },
+    { "from": "reload_entry", "to": "jsml", "label": "loadAndEvaluateModule" },
+    { "from": "jsml", "to": "cpp_fetch", "label": "JSC internal loader" },
+    { "from": "cpp_fetch", "to": "fetch_builtin", "label": "builtin specifier?" },
+    { "from": "cpp_fetch", "to": "get_default_loader", "label": "loader by ext/type" },
+    { "from": "cpp_fetch", "to": "transpile_hook", "label": "file fetch" },
+    { "from": "cpp_fetch", "to": "transpile_virtual", "label": "plugin/virtual" },
+    { "from": "transpile_hook", "to": "transpiler_parse", "label": "ParseOptions" },
+    { "from": "transpiler_parse", "to": "transpiler_print", "label": "ParseResult AST" },
+    { "from": "transpiler_print", "to": "buffer_printer", "label": "writes printed JS" },
+    { "from": "transpile_hook", "to": "transpiler_store", "label": "cache check" },
+    { "from": "transpiler_store", "to": "resolved_source", "label": "cached entry" },
+    { "from": "transpiler_print", "to": "resolved_source", "label": "ResolvedSource" },
+    { "from": "resolved_source", "to": "cpp_fetch", "label": "back to JSC" },
+    { "from": "run_start", "to": "core_loop", "label": "initial eval done" },
+    { "from": "core_loop", "to": "tick", "label": "vm.tick()" },
+    { "from": "core_loop", "to": "auto_tick", "label": "auto_tick_active" },
+    { "from": "tick", "to": "tick_turn", "label": "one turn" },
+    { "from": "tick_turn", "to": "drain_next_ticks", "label": "microtasks" },
+    { "from": "auto_tick", "to": "eventloop_struct", "label": "promote immediates" },
+    { "from": "tick_forever", "to": "tick", "label": "watcher arm" },
+    { "from": "mini_loop", "to": "any_loop", "label": "non-JS arm" },
+    { "from": "any_loop", "to": "eventloop_struct", "label": "erased *mut EventLoop" },
+    { "from": "vm_struct", "to": "ffi_mod", "label": "Bun.FFI surface" },
+    { "from": "ffi_mod", "to": "ffi_body", "label": "compile/dlopen" },
+    { "from": "ffi_mod", "to": "ffi_object", "label": "FFIObject" },
+    { "from": "ffi_body", "to": "eventloop_struct", "label": "callbacks post tasks" },
+    { "from": "resolved_source", "to": "vm_struct", "label": "module registry caches" }
+  ]
+}

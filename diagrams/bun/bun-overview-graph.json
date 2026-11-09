@@ -1,0 +1,139 @@
+{
+  "owner": "oven-sh",
+  "repo": "bun",
+  "branch": "main",
+  "groups": [
+    { "id": "process", "name": "process", "label": "Process Entry" },
+    { "id": "vm", "name": "vm", "label": "VM & JavaScriptCore" },
+    { "id": "loader", "name": "loader", "label": "Module Loader" },
+    { "id": "transpile", "name": "transpile", "label": "Runtime Transpiler" },
+    { "id": "loop", "name": "loop", "label": "Event Loop" },
+    { "id": "ffi", "name": "ffi", "label": "Native FFI" }
+  ],
+  "nodes": [
+    {
+      "id": "main",
+      "label": "main()",
+      "file": "bin_entry/mod.rs",
+      "path": "src/runtime/bin_entry/mod.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "C-ABI process entry: crash handler, mimalloc wiring, stdio init, then Cli::start"
+    },
+    {
+      "id": "cli_start",
+      "label": "Cli::start",
+      "file": "cli/mod.rs",
+      "path": "src/runtime/cli/mod.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "First Rust call after main; head of the bun run startup chain, dispatches to Command::start"
+    },
+    {
+      "id": "run_boot",
+      "label": "Run::boot",
+      "file": "run_command.rs",
+      "path": "src/runtime/cli/run_command.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "bun run <file> boot path: parse args, init JSC, then VirtualMachine::init"
+    },
+    {
+      "id": "vm_init",
+      "label": "VirtualMachine::init",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "vm",
+      "groupId": "vm",
+      "desc": "Builds the VM: transpiler, module loader, regular + macro event loops, JSC global object"
+    },
+    {
+      "id": "vm_struct",
+      "label": "VirtualMachine",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "vm",
+      "groupId": "vm",
+      "desc": "One VM per thread holding Transpiler, ModuleLoader, two EventLoop values and JSC handles"
+    },
+    {
+      "id": "run_start",
+      "label": "Run::start",
+      "file": "run_command.rs",
+      "path": "src/runtime/cli/run_command.rs",
+      "group": "process",
+      "groupId": "process",
+      "desc": "Takes the JSC API lock, loads the entry point, runs the loop until idle, fires exit hooks"
+    },
+    {
+      "id": "load_entry",
+      "label": "load_entry_point",
+      "file": "VirtualMachine.rs",
+      "path": "src/jsc/VirtualMachine.rs",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "Single funnel for main entry, workers and -e evals; spins the loop until the promise settles"
+    },
+    {
+      "id": "cpp_loader",
+      "label": "ModuleLoader.cpp fetch",
+      "file": "ModuleLoader.cpp",
+      "path": "src/jsc/bindings/ModuleLoader.cpp",
+      "group": "loader",
+      "groupId": "loader",
+      "desc": "JSC C++ loader: fetchESMSourceCode resolves imports, calls into Rust for file reads and transpiling"
+    },
+    {
+      "id": "transpile_hook",
+      "label": "__bun_transpile_source_code",
+      "file": "jsc_hooks.rs",
+      "path": "src/runtime/jsc_hooks.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Runtime-transpiler hook: read file, Transpiler::parse, js_printer::print, return ResolvedSource"
+    },
+    {
+      "id": "transpiler",
+      "label": "Transpiler",
+      "file": "transpiler.rs",
+      "path": "src/bundler/transpiler.rs",
+      "group": "transpile",
+      "groupId": "transpile",
+      "desc": "Per-VM transpiler options + resolver; TS/JSX/JSON loaders parse here on every import"
+    },
+    {
+      "id": "event_loop",
+      "label": "EventLoop::tick",
+      "file": "event_loop.rs",
+      "path": "src/jsc/event_loop.rs",
+      "group": "loop",
+      "groupId": "loop",
+      "desc": "Task queues, immediates, microtask drains and the uws poll loop under them"
+    },
+    {
+      "id": "ffi",
+      "label": "bun:ffi",
+      "file": "mod.rs",
+      "path": "src/runtime/ffi/mod.rs",
+      "group": "ffi",
+      "groupId": "ffi",
+      "desc": "Bun.FFI: dlopen on demand, TinyCC-compiled C stubs, callbacks posted back through the loop"
+    }
+  ],
+  "edges": [
+    { "from": "main", "to": "cli_start", "label": "dispatch argv" },
+    { "from": "cli_start", "to": "run_boot", "label": "bun run <file>" },
+    { "from": "run_boot", "to": "vm_init", "label": "boot" },
+    { "from": "vm_init", "to": "vm_struct", "label": "returns *mut VirtualMachine" },
+    { "from": "run_boot", "to": "run_start", "label": "Run { ctx, vm }" },
+    { "from": "run_start", "to": "load_entry", "label": "loadEntryPoint" },
+    { "from": "load_entry", "to": "cpp_loader", "label": "JSC loadAndEvaluateModule" },
+    { "from": "cpp_loader", "to": "transpile_hook", "label": "unseen file → Rust hook" },
+    { "from": "transpile_hook", "to": "transpiler", "label": "Transpiler::parse" },
+    { "from": "transpiler", "to": "transpile_hook", "label": "print → ResolvedSource" },
+    { "from": "run_start", "to": "event_loop", "label": "while is_event_loop_alive: tick" },
+    { "from": "event_loop", "to": "vm_struct", "label": "drain microtasks, tasks" },
+    { "from": "vm_struct", "to": "ffi", "label": "Bun.FFI globals" },
+    { "from": "ffi", "to": "event_loop", "label": "callback tasks re-enter JS" }
+  ]
+}

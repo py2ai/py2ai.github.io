@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_process["Process Entry"]
+  node_main["main&#40;&#41;<br/>[mod.rs]"]
+  node_cli_start["Cli::start<br/>[mod.rs]"]
+  node_run_boot["Run::boot<br/>[run_command.rs]"]
+  node_run_start["Run::start<br/>[run_command.rs]"]
+end
+
+subgraph group_vm["VM &amp; JavaScriptCore"]
+  node_jsc_init["bun_jsc::initialize<br/>[run_command.rs]"]
+  node_vm_init["VirtualMachine::init<br/>[VirtualMachine.rs]"]
+  node_vm_struct["VirtualMachine<br/>[VirtualMachine.rs]"]
+end
+
+subgraph group_loader["Module Loader &amp; Resolution"]
+  node_load_entry["load_entry_point<br/>[VirtualMachine.rs]"]
+  node_reload_entry["reload_entry_point<br/>[VirtualMachine.rs]"]
+  node_jsml["JSModuleLoader<br/>[JSModuleLoader.rs]"]
+  node_cpp_fetch["fetchESMSourceCode<br/>[ModuleLoader.cpp]"]
+  node_fetch_builtin["Bun__fetchBuiltinModule<br/>[ModuleLoader.rs]"]
+  node_get_default_loader["Bun__getDefaultLoader<br/>[ModuleLoader.rs]"]
+  node_resolved_source["ResolvedSource<br/>[ResolvedSource.rs]"]
+end
+
+subgraph group_transpile["Transpiler"]
+  node_transpile_hook["__bun_transpile_source_code<br/>[jsc_hooks.rs]"]
+  node_transpile_virtual["Bun__transpileVirtualModule<br/>[jsc_hooks.rs]"]
+  node_transpiler_struct["Transpiler<br/>[transpiler.rs]"]
+  node_transpiler_parse["Transpiler::parse<br/>[transpiler.rs]"]
+  node_transpiler_print["Transpiler::print<br/>[transpiler.rs]"]
+  node_buffer_printer["BufferPrinter<br/>[lib.rs]"]
+  node_transpiler_store["RuntimeTranspilerStore"]
+end
+
+subgraph group_loop["Event Loop"]
+  node_core_loop["core run-loop<br/>[run_command.rs]"]
+  node_eventloop_struct["EventLoop<br/>[event_loop.rs]"]
+  node_tick["EventLoop::tick<br/>[event_loop.rs]"]
+  node_tick_turn["tick_turn<br/>[event_loop.rs]"]
+  node_drain_next_ticks["drain_microtasks_and_next_ticks<br/>[event_loop.rs]"]
+  node_auto_tick["auto_tick<br/>[event_loop.rs]"]
+  node_tick_forever["tick_possibly_forever<br/>[event_loop.rs]"]
+  node_mini_loop["MiniEventLoop<br/>[MiniEventLoop.rs]"]
+  node_any_loop["AnyEventLoop<br/>[AnyEventLoop.rs]"]
+end
+
+subgraph group_ffi["FFI"]
+  node_ffi_mod["bun:ffi mod<br/>[mod.rs]"]
+  node_ffi_body["Function::compile<br/>[ffi_body.rs]"]
+  node_ffi_object["FFIObject<br/>[FFIObject.rs]"]
+end
+
+node_main -->|"dispatch"| node_cli_start
+node_cli_start -->|"Command::start → run"| node_run_boot
+node_run_boot -->|"InitializeOptions"| node_jsc_init
+node_run_boot -->|"VmInitOptions"| node_vm_init
+node_vm_init -->|"boxed VM, leaked"| node_vm_struct
+node_vm_struct -->|"owns Transpiler"| node_transpiler_struct
+node_vm_struct -->|"regular + macro loops"| node_eventloop_struct
+node_run_boot -->|"Run::start&#40;self&#41; -&gt; !"| node_run_start
+node_run_start -->|"loadEntryPoint"| node_load_entry
+node_load_entry -->|"reload + spin"| node_reload_entry
+node_reload_entry -->|"loadAndEvaluateModule"| node_jsml
+node_jsml -->|"JSC internal loader"| node_cpp_fetch
+node_cpp_fetch -->|"builtin specifier?"| node_fetch_builtin
+node_cpp_fetch -->|"loader by ext/type"| node_get_default_loader
+node_cpp_fetch -->|"file fetch"| node_transpile_hook
+node_cpp_fetch -->|"plugin/virtual"| node_transpile_virtual
+node_transpile_hook -->|"ParseOptions"| node_transpiler_parse
+node_transpiler_parse -->|"ParseResult AST"| node_transpiler_print
+node_transpiler_print -->|"writes printed JS"| node_buffer_printer
+node_transpile_hook -->|"cache check"| node_transpiler_store
+node_transpiler_store -->|"cached entry"| node_resolved_source
+node_transpiler_print -->|"ResolvedSource"| node_resolved_source
+node_resolved_source -->|"back to JSC"| node_cpp_fetch
+node_run_start -->|"initial eval done"| node_core_loop
+node_core_loop -->|"vm.tick&#40;&#41;"| node_tick
+node_core_loop -->|"auto_tick_active"| node_auto_tick
+node_tick -->|"one turn"| node_tick_turn
+node_tick_turn -->|"microtasks"| node_drain_next_ticks
+node_auto_tick -->|"promote immediates"| node_eventloop_struct
+node_tick_forever -->|"watcher arm"| node_tick
+node_mini_loop -->|"non-JS arm"| node_any_loop
+node_any_loop -->|"erased *mut EventLoop"| node_eventloop_struct
+node_vm_struct -->|"Bun.FFI surface"| node_ffi_mod
+node_ffi_mod -->|"compile/dlopen"| node_ffi_body
+node_ffi_mod -->|"FFIObject"| node_ffi_object
+node_ffi_body -->|"callbacks post tasks"| node_eventloop_struct
+node_resolved_source -->|"module registry caches"| node_vm_struct
+
+click node_main "https://github.com/oven-sh/bun/blob/main/src/runtime/bin_entry/mod.rs"
+click node_cli_start "https://github.com/oven-sh/bun/blob/main/src/runtime/cli/mod.rs"
+click node_run_boot "https://github.com/oven-sh/bun/blob/main/src/runtime/cli/run_command.rs"
+click node_jsc_init "https://github.com/oven-sh/bun/blob/main/src/runtime/cli/run_command.rs"
+click node_vm_init "https://github.com/oven-sh/bun/blob/main/src/jsc/VirtualMachine.rs"
+click node_vm_struct "https://github.com/oven-sh/bun/blob/main/src/jsc/VirtualMachine.rs"
+click node_run_start "https://github.com/oven-sh/bun/blob/main/src/runtime/cli/run_command.rs"
+click node_core_loop "https://github.com/oven-sh/bun/blob/main/src/runtime/cli/run_command.rs"
+click node_load_entry "https://github.com/oven-sh/bun/blob/main/src/jsc/VirtualMachine.rs"
+click node_reload_entry "https://github.com/oven-sh/bun/blob/main/src/jsc/VirtualMachine.rs"
+click node_jsml "https://github.com/oven-sh/bun/blob/main/src/jsc/JSModuleLoader.rs"
+click node_cpp_fetch "https://github.com/oven-sh/bun/blob/main/src/jsc/bindings/ModuleLoader.cpp"
+click node_fetch_builtin "https://github.com/oven-sh/bun/blob/main/src/jsc/ModuleLoader.rs"
+click node_get_default_loader "https://github.com/oven-sh/bun/blob/main/src/jsc/ModuleLoader.rs"
+click node_transpile_hook "https://github.com/oven-sh/bun/blob/main/src/runtime/jsc_hooks.rs"
+click node_transpile_virtual "https://github.com/oven-sh/bun/blob/main/src/runtime/jsc_hooks.rs"
+click node_transpiler_struct "https://github.com/oven-sh/bun/blob/main/src/bundler/transpiler.rs"
+click node_transpiler_parse "https://github.com/oven-sh/bun/blob/main/src/bundler/transpiler.rs"
+click node_transpiler_print "https://github.com/oven-sh/bun/blob/main/src/bundler/transpiler.rs"
+click node_buffer_printer "https://github.com/oven-sh/bun/blob/main/src/js_printer/lib.rs"
+click node_transpiler_store "https://github.com/oven-sh/bun/blob/main/src/jsc/RuntimeTranspilerStore.rs"
+click node_resolved_source "https://github.com/oven-sh/bun/blob/main/src/jsc/ResolvedSource.rs"
+click node_eventloop_struct "https://github.com/oven-sh/bun/blob/main/src/jsc/event_loop.rs"
+click node_tick "https://github.com/oven-sh/bun/blob/main/src/jsc/event_loop.rs"
+click node_tick_turn "https://github.com/oven-sh/bun/blob/main/src/jsc/event_loop.rs"
+click node_drain_next_ticks "https://github.com/oven-sh/bun/blob/main/src/jsc/event_loop.rs"
+click node_auto_tick "https://github.com/oven-sh/bun/blob/main/src/jsc/event_loop.rs"
+click node_tick_forever "https://github.com/oven-sh/bun/blob/main/src/jsc/event_loop.rs"
+click node_mini_loop "https://github.com/oven-sh/bun/blob/main/src/event_loop/MiniEventLoop.rs"
+click node_any_loop "https://github.com/oven-sh/bun/blob/main/src/event_loop/AnyEventLoop.rs"
+click node_ffi_mod "https://github.com/oven-sh/bun/blob/main/src/runtime/ffi/mod.rs"
+click node_ffi_body "https://github.com/oven-sh/bun/blob/main/src/runtime/ffi/ffi_body.rs"
+click node_ffi_object "https://github.com/oven-sh/bun/blob/main/src/runtime/ffi/FFIObject.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_cli_start,node_run_boot,node_run_start toneBlue
+class node_jsc_init,node_vm_init,node_vm_struct toneAmber
+class node_load_entry,node_reload_entry,node_jsml,node_cpp_fetch,node_fetch_builtin,node_get_default_loader,node_resolved_source toneMint
+class node_transpile_hook,node_transpile_virtual,node_transpiler_struct,node_transpiler_parse,node_transpiler_print,node_buffer_printer,node_transpiler_store toneRose
+class node_core_loop,node_eventloop_struct,node_tick,node_tick_turn,node_drain_next_ticks,node_auto_tick,node_tick_forever,node_mini_loop,node_any_loop toneIndigo
+class node_ffi_mod,node_ffi_body,node_ffi_object toneTeal
