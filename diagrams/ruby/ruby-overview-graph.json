@@ -1,0 +1,43 @@
+{
+  "owner": "ruby",
+  "repo": "ruby",
+  "branch": "master",
+  "groups": [
+    { "id": "startup", "name": "Startup", "label": "Bootstrapping the interpreter" },
+    { "id": "parser", "name": "Parser", "label": "Prism (default) + parse.y" },
+    { "id": "compiler", "name": "Compiler", "label": "AST to YARV bytecode" },
+    { "id": "vm", "name": "YARV VM", "label": "Bytecode interpreter" },
+    { "id": "dispatch", "name": "Dispatch", "label": "Method lookup + call cache" },
+    { "id": "gc", "name": "GC", "label": "Heap and incremental GC" },
+    { "id": "concurrency", "name": "Concurrency", "label": "Threads and fibers" }
+  ],
+  "nodes": [
+    { "id": "ruby_main", "label": "main() / ruby_run_node", "file": "main.c", "path": "main.c", "group": "startup", "groupId": "startup", "desc": "C entry point: calls ruby_run_node(ruby_options(argc, argv)) (main.c L42), defined at main.c L52." },
+    { "id": "prism_script", "label": "prism_script", "file": "ruby.c", "path": "ruby.c", "group": "parser", "groupId": "parser", "desc": "Prism is the default parser (RB_DEFAULT_PARSER_PRISM, version.c L194); prism_script parses the script into a Prism AST (ruby.c L2231)." },
+    { "id": "parser_yylex", "label": "parser_yylex", "file": "parse.y", "path": "parse.y", "group": "parser", "groupId": "parser", "desc": "Lexer of the legacy parse.y LALR grammar, still selectable via --parser=parse.y (ruby.c L373); parser_yylex at parse.y L10488." },
+    { "id": "rb_iseq_compile_node", "label": "rb_iseq_compile_node", "file": "compile.c", "path": "compile.c", "group": "compiler", "groupId": "compiler", "desc": "Recursively compiles NODE AST into YARV instruction sequences (compile.c L901); per-node work in iseq_compile_each0 (compile.c L11139)." },
+    { "id": "pm_iseq_compile_node", "label": "pm_iseq_compile_node", "file": "prism_compile.c", "path": "prism_compile.c", "group": "compiler", "groupId": "compiler", "desc": "Compiles the Prism AST into the same YARV instruction sequences (prism_compile.c L10685); pm_compile_node at prism_compile.c L8803." },
+    { "id": "vm_exec", "label": "vm_exec (rb_vm_exec)", "file": "vm.c", "path": "vm.c", "group": "vm", "groupId": "vm", "desc": "The VM loop entry: pushes tags, runs jit_exec or vm_exec_core, then unwinds exceptions in vm_exec_loop (vm.c L2891, L2932); exposed as rb_vm_exec by the macro at vm.c L10." },
+    { "id": "vm_exec_core", "label": "vm_exec_core", "file": "vm_exec.c", "path": "vm_exec.c", "group": "vm", "groupId": "vm", "desc": "The interpreter inner loop: pins pc and cfp to machine registers (x86_64 r14/r15, vm_exec.c L50-52) and jumps through vm.inc tables generated from insns.def (vm_exec.c L92-94)." },
+    { "id": "opt_send_without_block", "label": "opt_send_without_block", "file": "insns.def", "path": "insns.def", "group": "vm", "groupId": "vm", "desc": "The method-call instruction (insns.def L902) that feeds vm_sendish; siblings include putobject (L350) and branchif (L1262)." },
+    { "id": "vm_call_method", "label": "vm_call_method", "file": "vm_insnhelper.c", "path": "vm_insnhelper.c", "group": "dispatch", "groupId": "dispatch", "desc": "Visibility check then type-dispatch for every call (vm_insnhelper.c L5128); vm_call_method_each_type switches on ISEQ/CFUNC/ATTRSET/IVAR/... (vm_insnhelper.c L4989)." },
+    { "id": "callable_method_entry_or_negative", "label": "callable_method_entry_or_negative", "file": "vm_method.c", "path": "vm_method.c", "group": "dispatch", "groupId": "dispatch", "desc": "Per-class call-cache fast path reads RCLASS_WRITABLE_CC_TBL lock-free (vm_method.c L2132, fast path L2151-2165); misses take the VM lock, walk search_method (vm_method.c L1942) and cache negative results too (L2183)." },
+    { "id": "gc_start", "label": "gc_start", "file": "gc/default/default.c", "path": "gc/default/default.c", "group": "gc", "groupId": "gc", "desc": "Entry of the modular default GC (gc/default/default.c L9018): incremental gc_marks_step (L8134) and lazy gc_sweep_step (L5871) over heap pages from heap_page_allocate (L3003)." },
+    { "id": "rb_thread_schedule", "label": "rb_thread_schedule", "file": "thread.c", "path": "thread.c", "group": "concurrency", "groupId": "concurrency", "desc": "Yields the running thread once its time slice runs out (thread.c L1695, limits at L1676-1692), saving machine context and switching via the per-Ractor scheduler." }
+  ],
+  "edges": [
+    { "from": "ruby_main", "to": "prism_script", "label": "options parsed, script handed to parser" },
+    { "from": "ruby_main", "to": "parser_yylex", "label": "--parser=parse.y selects legacy grammar" },
+    { "from": "prism_script", "to": "pm_iseq_compile_node", "label": "Prism AST -> YARV iseq" },
+    { "from": "parser_yylex", "to": "rb_iseq_compile_node", "label": "NODE AST -> YARV iseq" },
+    { "from": "rb_iseq_compile_node", "to": "vm_exec", "label": "compiled <main> iseq starts executing" },
+    { "from": "pm_iseq_compile_node", "to": "vm_exec", "label": "compiled <main> iseq starts executing" },
+    { "from": "vm_exec", "to": "vm_exec_core", "label": "enter instruction dispatch" },
+    { "from": "vm_exec_core", "to": "opt_send_without_block", "label": "direct-threaded jump to send" },
+    { "from": "opt_send_without_block", "to": "vm_call_method", "label": "vm_sendish + cc call handler" },
+    { "from": "vm_call_method", "to": "callable_method_entry_or_negative", "label": "resolve cme for receiver class" },
+    { "from": "callable_method_entry_or_negative", "to": "vm_call_method", "label": "cme cached into call site cc", "style": "dashed" },
+    { "from": "vm_exec", "to": "gc_start", "label": "allocation pressure runs GC", "style": "dashed" },
+    { "from": "vm_exec_core", "to": "rb_thread_schedule", "label": "CHECK_INTS between insns", "style": "dashed" }
+  ]
+}

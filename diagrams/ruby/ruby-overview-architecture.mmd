@@ -1,0 +1,75 @@
+flowchart TD
+
+subgraph group_startup["Bootstrapping the interpreter"]
+  node_ruby_main["main&#40;&#41; / ruby_run_node<br/>[main.c]"]
+end
+
+subgraph group_parser["Prism &#40;default&#41; + parse.y"]
+  node_prism_script["prism_script<br/>[ruby.c]"]
+  node_parser_yylex["parser_yylex<br/>[parse.y]"]
+end
+
+subgraph group_compiler["AST to YARV bytecode"]
+  node_rb_iseq_compile_node["rb_iseq_compile_node<br/>[compile.c]"]
+  node_pm_iseq_compile_node["pm_iseq_compile_node<br/>[prism_compile.c]"]
+end
+
+subgraph group_vm["Bytecode interpreter"]
+  node_vm_exec["vm_exec &#40;rb_vm_exec&#41;<br/>[vm.c]"]
+  node_vm_exec_core["vm_exec_core<br/>[vm_exec.c]"]
+  node_opt_send_without_block["opt_send_without_block<br/>[insns.def]"]
+end
+
+subgraph group_dispatch["Method lookup + call cache"]
+  node_vm_call_method["vm_call_method<br/>[vm_insnhelper.c]"]
+  node_callable_method_entry_or_negative["callable_method_entry_or_negative<br/>[vm_method.c]"]
+end
+
+subgraph group_gc["Heap and incremental GC"]
+  node_gc_start["gc_start<br/>[default.c]"]
+end
+
+subgraph group_concurrency["Threads and fibers"]
+  node_rb_thread_schedule["rb_thread_schedule<br/>[thread.c]"]
+end
+
+node_ruby_main -->|"options parsed, script handed to parser"| node_prism_script
+node_ruby_main -->|"--parser=parse.y selects legacy grammar"| node_parser_yylex
+node_prism_script -->|"Prism AST -&gt; YARV iseq"| node_pm_iseq_compile_node
+node_parser_yylex -->|"NODE AST -&gt; YARV iseq"| node_rb_iseq_compile_node
+node_rb_iseq_compile_node -->|"compiled &lt;main&gt; iseq starts executing"| node_vm_exec
+node_pm_iseq_compile_node -->|"compiled &lt;main&gt; iseq starts executing"| node_vm_exec
+node_vm_exec -->|"enter instruction dispatch"| node_vm_exec_core
+node_vm_exec_core -->|"direct-threaded jump to send"| node_opt_send_without_block
+node_opt_send_without_block -->|"vm_sendish + cc call handler"| node_vm_call_method
+node_vm_call_method -->|"resolve cme for receiver class"| node_callable_method_entry_or_negative
+node_callable_method_entry_or_negative -.->|"cme cached into call site cc"| node_vm_call_method
+node_vm_exec -.->|"allocation pressure runs GC"| node_gc_start
+node_vm_exec_core -.->|"CHECK_INTS between insns"| node_rb_thread_schedule
+
+click node_ruby_main "https://github.com/ruby/ruby/blob/master/main.c"
+click node_prism_script "https://github.com/ruby/ruby/blob/master/ruby.c"
+click node_parser_yylex "https://github.com/ruby/ruby/blob/master/parse.y"
+click node_rb_iseq_compile_node "https://github.com/ruby/ruby/blob/master/compile.c"
+click node_pm_iseq_compile_node "https://github.com/ruby/ruby/blob/master/prism_compile.c"
+click node_vm_exec "https://github.com/ruby/ruby/blob/master/vm.c"
+click node_vm_exec_core "https://github.com/ruby/ruby/blob/master/vm_exec.c"
+click node_opt_send_without_block "https://github.com/ruby/ruby/blob/master/insns.def"
+click node_vm_call_method "https://github.com/ruby/ruby/blob/master/vm_insnhelper.c"
+click node_callable_method_entry_or_negative "https://github.com/ruby/ruby/blob/master/vm_method.c"
+click node_gc_start "https://github.com/ruby/ruby/blob/master/gc/default/default.c"
+click node_rb_thread_schedule "https://github.com/ruby/ruby/blob/master/thread.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ruby_main,node_rb_thread_schedule toneBlue
+class node_prism_script,node_parser_yylex toneAmber
+class node_rb_iseq_compile_node,node_pm_iseq_compile_node toneMint
+class node_vm_exec,node_vm_exec_core,node_opt_send_without_block toneRose
+class node_vm_call_method,node_callable_method_entry_or_negative toneIndigo
+class node_gc_start toneTeal
