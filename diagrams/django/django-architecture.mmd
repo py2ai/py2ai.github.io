@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_entry["Server Entrypoints"]
+  node_wsgi_call["WSGIHandler.__call__<br/>[wsgi.py]"]
+  node_asgi_call["ASGIHandler.__call__<br/>[asgi.py]"]
+end
+
+subgraph group_handler["Base Handler Core"]
+  node_base_handler["BaseHandler<br/>[base.py]"]
+  node_get_response["get_response<br/>[base.py]"]
+  node_get_response_async["get_response_async<br/>[base.py]"]
+  node_dispatch["_get_response<br/>[base.py]"]
+  node_check_response["check_response<br/>[base.py]"]
+  node_make_view_atomic["make_view_atomic<br/>[base.py]"]
+  node_process_exception_mw["process_exception_by_middleware<br/>[base.py]"]
+end
+
+subgraph group_middleware["Chain Assembly"]
+  node_load_middleware["load_middleware<br/>[base.py]"]
+  node_adapt_method_mode["adapt_method_mode<br/>[base.py]"]
+  node_middleware_chain["_middleware_chain<br/>[base.py]"]
+end
+
+subgraph group_exception["Exception Funnel"]
+  node_convert_exc["convert_exception_to_response<br/>[exception.py]"]
+  node_response_for_exception["response_for_exception<br/>[exception.py]"]
+  node_get_exception_response["get_exception_response<br/>[exception.py]"]
+  node_handle_uncaught["handle_uncaught_exception<br/>[exception.py]"]
+end
+
+subgraph group_urls["URL Resolution"]
+  node_resolve_request["resolve_request<br/>[base.py]"]
+  node_resolver_resolve["URLResolver.resolve<br/>[resolvers.py]"]
+  node_pattern_resolve["URLPattern.resolve<br/>[resolvers.py]"]
+  node_url_patterns["URLResolver.url_patterns<br/>[resolvers.py]"]
+  node_urlconf_module["urlconf_module<br/>[resolvers.py]"]
+  node_error_handler["resolve_error_handler<br/>[resolvers.py]"]
+  node_get_callable["get_callable<br/>[utils.py]"]
+end
+
+subgraph group_orm["QuerySet Layer"]
+  node_queryset["QuerySet<br/>[query.py]"]
+  node_queryset_iter["QuerySet.__iter__<br/>[query.py]"]
+  node_fetch_all["QuerySet._fetch_all<br/>[query.py]"]
+  node_iterator["QuerySet.iterator<br/>[query.py]"]
+  node_inner_iterator["QuerySet._iterator<br/>[query.py]"]
+  node_model_iterable["ModelIterable<br/>[query.py]"]
+end
+
+subgraph group_sql["SQL Compilation"]
+  node_get_compiler["Query.get_compiler<br/>[query.py]"]
+  node_as_sql["SQLCompiler.as_sql<br/>[compiler.py]"]
+  node_execute_sql["SQLCompiler.execute_sql<br/>[compiler.py]"]
+  node_results_iter["SQLCompiler.results_iter<br/>[compiler.py]"]
+  node_chunk_size["GET_ITERATOR_CHUNK_SIZE<br/>[constants.py]"]
+end
+
+node_wsgi_call -->|"inherits"| node_base_handler
+node_asgi_call -->|"inherits"| node_base_handler
+node_base_handler -->|"lazy one-time init"| node_load_middleware
+node_load_middleware -->|"sync/async glue"| node_adapt_method_mode
+node_load_middleware -->|"wraps each layer"| node_convert_exc
+node_load_middleware -->|"self._middleware_chain = handler"| node_middleware_chain
+node_wsgi_call -->|"self.get_response&#40;request&#41;"| node_get_response
+node_asgi_call -->|"await handle&#40;&#41;"| node_get_response_async
+node_get_response -->|"response = chain&#40;request&#41;"| node_middleware_chain
+node_get_response_async -->|"await chain&#40;request&#41;"| node_middleware_chain
+node_middleware_chain -->|"innermost callable"| node_dispatch
+node_dispatch -->|"callback, args, kwargs"| node_resolve_request
+node_resolve_request -->|"resolver.resolve&#40;path_info&#41;"| node_resolver_resolve
+node_resolver_resolve -->|"for pattern in self.url_patterns"| node_url_patterns
+node_url_patterns -->|"import_module&#40;ROOT_URLCONF&#41;"| node_urlconf_module
+node_resolver_resolve -->|"pattern.resolve&#40;new_path&#41;"| node_pattern_resolve
+node_error_handler -->|"dotted path to function"| node_get_callable
+node_get_exception_response -->|"status_code handler lookup"| node_error_handler
+node_dispatch -->|"ATOMIC_REQUESTS wrap"| node_make_view_atomic
+node_dispatch -->|"None-return guard"| node_check_response
+node_dispatch -->|"view raised"| node_process_exception_mw
+node_convert_exc -->|"any leaked exception"| node_response_for_exception
+node_response_for_exception -->|"Http404 branch"| node_get_exception_response
+node_response_for_exception -->|"unknown exception"| node_handle_uncaught
+node_queryset_iter -->|"iter&#40;result_cache&#41;"| node_fetch_all
+node_fetch_all -->|"list&#40;self._iterable_class&#40;self&#41;&#41;"| node_model_iterable
+node_iterator -->|"chunked streaming"| node_inner_iterator
+node_inner_iterator -->|"yield from iterable"| node_model_iterable
+node_model_iterable -->|"queryset.query.get_compiler&#40;db&#41;"| node_get_compiler
+node_get_compiler -->|"sql, params = self.as_sql&#40;&#41;"| node_as_sql
+node_get_compiler -->|"row tuples"| node_results_iter
+node_results_iter -->|"fetchmany batches"| node_execute_sql
+node_execute_sql -->|"100 rows per fetch"| node_chunk_size
+node_as_sql -->|"cursor.execute&#40;sql, params&#41;"| node_execute_sql
+
+click node_wsgi_call "https://github.com/django/django/blob/main/django/core/handlers/wsgi.py"
+click node_asgi_call "https://github.com/django/django/blob/main/django/core/handlers/asgi.py"
+click node_base_handler "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_load_middleware "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_adapt_method_mode "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_middleware_chain "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_get_response "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_get_response_async "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_dispatch "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_resolve_request "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_check_response "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_make_view_atomic "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_process_exception_mw "https://github.com/django/django/blob/main/django/core/handlers/base.py"
+click node_convert_exc "https://github.com/django/django/blob/main/django/core/handlers/exception.py"
+click node_response_for_exception "https://github.com/django/django/blob/main/django/core/handlers/exception.py"
+click node_get_exception_response "https://github.com/django/django/blob/main/django/core/handlers/exception.py"
+click node_handle_uncaught "https://github.com/django/django/blob/main/django/core/handlers/exception.py"
+click node_resolver_resolve "https://github.com/django/django/blob/main/django/urls/resolvers.py"
+click node_pattern_resolve "https://github.com/django/django/blob/main/django/urls/resolvers.py"
+click node_url_patterns "https://github.com/django/django/blob/main/django/urls/resolvers.py"
+click node_urlconf_module "https://github.com/django/django/blob/main/django/urls/resolvers.py"
+click node_error_handler "https://github.com/django/django/blob/main/django/urls/resolvers.py"
+click node_get_callable "https://github.com/django/django/blob/main/django/urls/utils.py"
+click node_queryset "https://github.com/django/django/blob/main/django/db/models/query.py"
+click node_queryset_iter "https://github.com/django/django/blob/main/django/db/models/query.py"
+click node_fetch_all "https://github.com/django/django/blob/main/django/db/models/query.py"
+click node_iterator "https://github.com/django/django/blob/main/django/db/models/query.py"
+click node_inner_iterator "https://github.com/django/django/blob/main/django/db/models/query.py"
+click node_model_iterable "https://github.com/django/django/blob/main/django/db/models/query.py"
+click node_get_compiler "https://github.com/django/django/blob/main/django/db/models/sql/query.py"
+click node_as_sql "https://github.com/django/django/blob/main/django/db/models/sql/compiler.py"
+click node_execute_sql "https://github.com/django/django/blob/main/django/db/models/sql/compiler.py"
+click node_results_iter "https://github.com/django/django/blob/main/django/db/models/sql/compiler.py"
+click node_chunk_size "https://github.com/django/django/blob/main/django/db/models/sql/constants.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_wsgi_call,node_asgi_call,node_get_compiler,node_as_sql,node_execute_sql,node_results_iter,node_chunk_size toneBlue
+class node_base_handler,node_get_response,node_get_response_async,node_dispatch,node_check_response,node_make_view_atomic,node_process_exception_mw toneAmber
+class node_load_middleware,node_adapt_method_mode,node_middleware_chain toneMint
+class node_convert_exc,node_response_for_exception,node_get_exception_response,node_handle_uncaught toneRose
+class node_resolve_request,node_resolver_resolve,node_pattern_resolve,node_url_patterns,node_urlconf_module,node_error_handler,node_get_callable toneIndigo
+class node_queryset,node_queryset_iter,node_fetch_all,node_iterator,node_inner_iterator,node_model_iterable toneTeal
