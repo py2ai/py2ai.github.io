@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_g_cpp["C++ Bootstrap"]
+  node_main_entry["int main&#40;&#41;<br/>[node_main.cc]"]
+  node_node_start["node::Start&#40;&#41;<br/>[node.cc]"]
+  node_start_internal["StartInternal&#40;&#41;<br/>[node.cc]"]
+  node_main_instance_run["NodeMainInstance::Run&#40;&#41;"]
+  node_create_main_env["CreateMainEnvironment&#40;&#41;"]
+  node_create_environment["CreateEnvironment&#40;&#41;<br/>[environment.cc]"]
+end
+
+subgraph group_g_jsb["JS Bootstrap &amp; Bindings"]
+  node_load_env["LoadEnvironment&#40;&#41;<br/>[environment.cc]"]
+  node_run_bootstrapping["Realm::RunBootstrapping&#40;&#41;<br/>[node_realm.cc]"]
+  node_realm_js["internal/bootstrap/realm.js<br/>[realm.js]"]
+  node_bootstrap_node["internal/bootstrap/node.js<br/>[node.js]"]
+  node_switches_main["switches/is_main_thread.js<br/>[is_main_thread.js]"]
+  node_pre_execution["prepareMainThreadExecution&#40;&#41;<br/>[pre_execution.js]"]
+  node_get_internal_binding["GetInternalBinding&#40;&#41;<br/>[node_binding.cc]"]
+end
+
+subgraph group_g_cjs["CommonJS Loader"]
+  node_run_main_module["run_main_module.js<br/>[run_main_module.js]"]
+  node_module_runmain["Module.runMain alias<br/>[loader.js]"]
+  node_execute_entry["executeUserEntryPoint&#40;&#41;<br/>[run_main.js]"]
+  node_cjs_load["Module._load&#40;&#41;<br/>[loader.js]"]
+end
+
+subgraph group_g_esm["ESM Loader"]
+  node_should_use_esm["shouldUseESMLoader&#40;&#41;<br/>[run_main.js]"]
+  node_esm_entry["importForEntryPoint&#40;&#41;<br/>[run_main.js]"]
+  node_esm_import["ESMLoader.import&#40;&#41;<br/>[loader.js]"]
+end
+
+subgraph group_g_loop["libuv Event Loop"]
+  node_spin_loop["SpinEventLoopInternal&#40;&#41;<br/>[embed_helpers.cc]"]
+  node_uv_run_call["uv_run&#40;&#41;<br/>[core.c]"]
+  node_io_poll["uv__io_poll&#40;&#41;<br/>[core.c]"]
+  node_run_timers_uv["uv__run_timers&#40;&#41;<br/>[core.c]"]
+  node_run_timers_cpp["Environment::RunTimers&#40;&#41;<br/>[env.cc]"]
+  node_process_timers["processTimers&#40;&#41;<br/>[timers.js]"]
+  node_drain_tasks["NodePlatform::DrainTasks&#40;&#41;<br/>[node_platform.cc]"]
+end
+
+subgraph group_g_pool["Thread Pool &amp; File I/O"]
+  node_threadpool_init["default_threads&#91;4&#93;<br/>[threadpool.c]"]
+  node_queue_work["uv_queue_work&#40;&#41;<br/>[threadpool.c]"]
+  node_uv_fs_work["uv__fs_work&#40;&#41;<br/>[fs.c]"]
+  node_fs_read["FileHandle::Dispatch&#40;uv_fs_read&#41;<br/>[node_file.cc]"]
+end
+
+subgraph group_g_async["Workers &amp; Streams"]
+  node_worker_create["Worker thread spawn<br/>[node_worker.cc]"]
+  node_worker_spin["Worker::Run event loop<br/>[node_worker.cc]"]
+  node_readable["Readable<br/>[readable.js]"]
+end
+
+node_main_entry -->|"returns node::Start&#40;argc, argv&#41;"| node_node_start
+node_node_start -->|"single-run path"| node_start_internal
+node_start_internal -->|"NodeMainInstance over uv_default_loop"| node_main_instance_run
+node_main_instance_run -->|"CreateMainEnvironment&#40;&#41;"| node_create_main_env
+node_create_main_env -->|"NewContext + CreateEnvironment&#40;&#41;"| node_create_environment
+node_create_environment -->|"Environment ready"| node_load_env
+node_load_env -->|"bootstrap before main scripts"| node_run_bootstrapping
+node_run_bootstrapping -->|"ExecuteBootstrapper&#40;'internal/bootstrap/realm'&#41;"| node_realm_js
+node_realm_js -->|"per-context global/process setup"| node_bootstrap_node
+node_realm_js -->|"internalBinding&#40;&#41; fetches native exports"| node_get_internal_binding
+node_bootstrap_node -->|"switches/ wire stdio and streams"| node_switches_main
+node_switches_main -->|"lib/internal/main script chosen"| node_pre_execution
+node_pre_execution -->|"run_main_module.js"| node_run_main_module
+node_run_main_module -->|"Module.runMain&#40;mainEntry&#41;"| node_module_runmain
+node_module_runmain -->|"delegates to executeUserEntryPoint"| node_execute_entry
+node_execute_entry -->|"resolveMainPath + loader decision"| node_should_use_esm
+node_execute_entry -->|"wrapModuleLoad&#40;main, null, true&#41; CommonJS first"| node_cjs_load
+node_should_use_esm -->|"ESM entry point"| node_esm_entry
+node_esm_entry -->|"load graph"| node_esm_import
+node_esm_import -->|"evaluation done or deferred by top-level await"| node_spin_loop
+node_cjs_load -->|"sync execution returns; loop drives callbacks"| node_spin_loop
+node_spin_loop -->|"uv_run&#40;env-&gt;event_loop&#40;&#41;, UV_RUN_DEFAULT&#41;"| node_uv_run_call
+node_spin_loop -->|"platform-&gt;DrainTasks&#40;isolate&#41;"| node_drain_tasks
+node_drain_tasks -->|"re-check uv_loop_alive for another iteration"| node_uv_run_call
+node_uv_run_call -->|"poll phase"| node_io_poll
+node_uv_run_call -->|"timers phase"| node_run_timers_uv
+node_run_timers_uv -->|"Environment::RunTimers handle callback"| node_run_timers_cpp
+node_run_timers_cpp -->|"invokes stored JS timer callback"| node_process_timers
+node_process_timers -->|"re-schedules via internalBinding&#40;'timers'&#41;"| node_run_timers_cpp
+node_threadpool_init -->|"4 default workers; UV_THREADPOOL_SIZE override"| node_queue_work
+node_fs_read -->|"Dispatch&#40;uv_fs_read&#41;"| node_uv_fs_work
+node_uv_fs_work -->|"uv__work_submit"| node_queue_work
+node_queue_work -->|"completion wakes the loop via async handle"| node_io_poll
+node_io_poll -->|"handle callbacks push chunks into streams"| node_readable
+node_main_instance_run -->|"worker_threads: each Worker gets its own thread"| node_worker_create
+node_worker_create -->|"w-&gt;Run&#40;&#41;"| node_worker_spin
+node_worker_spin -->|"own loop per worker"| node_spin_loop
+
+click node_main_entry "https://github.com/nodejs/node/blob/main/src/node_main.cc"
+click node_node_start "https://github.com/nodejs/node/blob/main/src/node.cc"
+click node_start_internal "https://github.com/nodejs/node/blob/main/src/node.cc"
+click node_main_instance_run "https://github.com/nodejs/node/blob/main/src/node_main_instance.cc"
+click node_create_main_env "https://github.com/nodejs/node/blob/main/src/node_main_instance.cc"
+click node_create_environment "https://github.com/nodejs/node/blob/main/src/api/environment.cc"
+click node_load_env "https://github.com/nodejs/node/blob/main/src/api/environment.cc"
+click node_run_bootstrapping "https://github.com/nodejs/node/blob/main/src/node_realm.cc"
+click node_realm_js "https://github.com/nodejs/node/blob/main/lib/internal/bootstrap/realm.js"
+click node_bootstrap_node "https://github.com/nodejs/node/blob/main/lib/internal/bootstrap/node.js"
+click node_switches_main "https://github.com/nodejs/node/blob/main/lib/internal/bootstrap/switches/is_main_thread.js"
+click node_pre_execution "https://github.com/nodejs/node/blob/main/lib/internal/process/pre_execution.js"
+click node_get_internal_binding "https://github.com/nodejs/node/blob/main/src/node_binding.cc"
+click node_run_main_module "https://github.com/nodejs/node/blob/main/lib/internal/main/run_main_module.js"
+click node_module_runmain "https://github.com/nodejs/node/blob/main/lib/internal/modules/cjs/loader.js"
+click node_execute_entry "https://github.com/nodejs/node/blob/main/lib/internal/modules/run_main.js"
+click node_cjs_load "https://github.com/nodejs/node/blob/main/lib/internal/modules/cjs/loader.js"
+click node_should_use_esm "https://github.com/nodejs/node/blob/main/lib/internal/modules/run_main.js"
+click node_esm_entry "https://github.com/nodejs/node/blob/main/lib/internal/modules/run_main.js"
+click node_esm_import "https://github.com/nodejs/node/blob/main/lib/internal/modules/esm/loader.js"
+click node_spin_loop "https://github.com/nodejs/node/blob/main/src/api/embed_helpers.cc"
+click node_uv_run_call "https://github.com/nodejs/node/blob/main/deps/uv/src/unix/core.c"
+click node_io_poll "https://github.com/nodejs/node/blob/main/deps/uv/src/unix/core.c"
+click node_run_timers_uv "https://github.com/nodejs/node/blob/main/deps/uv/src/unix/core.c"
+click node_run_timers_cpp "https://github.com/nodejs/node/blob/main/src/env.cc"
+click node_process_timers "https://github.com/nodejs/node/blob/main/lib/internal/timers.js"
+click node_drain_tasks "https://github.com/nodejs/node/blob/main/src/node_platform.cc"
+click node_threadpool_init "https://github.com/nodejs/node/blob/main/deps/uv/src/threadpool.c"
+click node_queue_work "https://github.com/nodejs/node/blob/main/deps/uv/src/threadpool.c"
+click node_uv_fs_work "https://github.com/nodejs/node/blob/main/deps/uv/src/unix/fs.c"
+click node_fs_read "https://github.com/nodejs/node/blob/main/src/node_file.cc"
+click node_worker_create "https://github.com/nodejs/node/blob/main/src/node_worker.cc"
+click node_worker_spin "https://github.com/nodejs/node/blob/main/src/node_worker.cc"
+click node_readable "https://github.com/nodejs/node/blob/main/lib/internal/streams/readable.js"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_node_start,node_start_internal,node_main_instance_run,node_create_main_env,node_create_environment,node_worker_create,node_worker_spin,node_readable toneBlue
+class node_load_env,node_run_bootstrapping,node_realm_js,node_bootstrap_node,node_switches_main,node_pre_execution,node_get_internal_binding toneAmber
+class node_run_main_module,node_module_runmain,node_execute_entry,node_cjs_load toneMint
+class node_should_use_esm,node_esm_entry,node_esm_import toneRose
+class node_spin_loop,node_uv_run_call,node_io_poll,node_run_timers_uv,node_run_timers_cpp,node_process_timers,node_drain_tasks toneIndigo
+class node_threadpool_init,node_queue_work,node_uv_fs_work,node_fs_read toneTeal
