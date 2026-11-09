@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_g_entry["Application surface"]
+  node_engine_call["Rails::Engine&#35;call<br/>[engine.rb]"]
+  node_engine_app["Engine&#35;app<br/>[engine.rb]"]
+  node_app_default_stack["Application&#35;default_middleware_stack<br/>[application.rb]"]
+end
+
+subgraph group_g_stack["How the chain is built"]
+  node_build_stack["DefaultMiddlewareStack&#35;build_stack"]
+  node_stack_build["MiddlewareStack&#35;build<br/>[stack.rb]"]
+  node_middleware_build["Middleware&#35;build<br/>[stack.rb]"]
+end
+
+subgraph group_g_mw["Ordered default middlewares"]
+  node_rack_sendfile["Rack::Sendfile"]
+  node_static_mw["ActionDispatch::Static"]
+  node_executor_mw["ActionDispatch::Executor&#35;call<br/>[executor.rb]"]
+  node_rack_runtime["Rack::Runtime"]
+  node_method_override["Rack::MethodOverride"]
+  node_request_id["ActionDispatch::RequestId"]
+  node_remote_ip["ActionDispatch::RemoteIp"]
+  node_logger_mw["Rails::Rack::Logger&#35;call<br/>[logger.rb]"]
+  node_debug_exceptions["ActionDispatch::DebugExceptions"]
+  node_callbacks["ActionDispatch::Callbacks"]
+  node_rack_etag["Rack::ETag"]
+end
+
+subgraph group_g_router["Request routing"]
+  node_route_set_draw["RouteSet&#35;draw<br/>[route_set.rb]"]
+  node_route_set_call["RouteSet&#35;call<br/>[route_set.rb]"]
+  node_journey_serve["Journey::Router&#35;serve<br/>[router.rb]"]
+  node_recognize["Journey::Router&#35;recognize<br/>[router.rb]"]
+end
+
+subgraph group_g_match["Route matching machinery"]
+  node_static_map["Routes&#35;static_exact_map<br/>[routes.rb]"]
+  node_routes_simulator["Routes&#35;simulator<br/>[routes.rb]"]
+  node_sim_memos["GTG::Simulator&#35;memos<br/>[simulator.rb]"]
+  node_filter_routes["Router&#35;filter_routes<br/>[router.rb]"]
+  node_match_head["Router&#35;match_head_routes<br/>[router.rb]"]
+  node_route_matches["Journey::Route&#35;matches?<br/>[route.rb]"]
+  node_constraints_serve["Constraints&#35;serve<br/>[mapper.rb]"]
+end
+
+subgraph group_g_ctrl["From route to action"]
+  node_dispatcher_serve["RouteSet::Dispatcher&#35;serve<br/>[route_set.rb]"]
+  node_controller_class["Request&#35;controller_class<br/>[request.rb]"]
+  node_make_response["Metal.make_response!<br/>[metal.rb]"]
+  node_metal_dispatch["Metal&#35;dispatch<br/>[metal.rb]"]
+  node_process["AbstractController::Base&#35;process<br/>[base.rb]"]
+  node_process_action["Base&#35;process_action<br/>[base.rb]"]
+end
+
+node_engine_call -->|"app.call&#40;req.env&#41;"| node_engine_app
+node_engine_app -->|"default stack"| node_app_default_stack
+node_app_default_stack -->|"build_stack"| node_build_stack
+node_engine_app -->|"config.middleware.build&#40;endpoint&#41;"| node_stack_build
+node_build_stack -->|"first default use"| node_rack_sendfile
+node_stack_build -->|"fold reversed"| node_middleware_build
+node_rack_sendfile -->|"next"| node_static_mw
+node_static_mw -->|"next"| node_executor_mw
+node_executor_mw -->|"next"| node_rack_runtime
+node_rack_runtime -->|"next"| node_method_override
+node_method_override -->|"next"| node_request_id
+node_request_id -->|"next"| node_remote_ip
+node_remote_ip -->|"next"| node_logger_mw
+node_logger_mw -->|"next"| node_debug_exceptions
+node_debug_exceptions -->|"next"| node_callbacks
+node_callbacks -->|"next"| node_rack_etag
+node_rack_etag -->|"endpoint = routes"| node_route_set_call
+node_route_set_draw -->|"routes compiled at boot"| node_route_set_call
+node_route_set_call -->|"@router.serve&#40;req&#41;"| node_journey_serve
+node_journey_serve -->|"exact hash lookup"| node_static_map
+node_static_map -->|"static route hit"| node_dispatcher_serve
+node_journey_serve -->|"cascade pass"| node_recognize
+node_recognize -->|"candidate scan"| node_filter_routes
+node_filter_routes -->|"NFA for path"| node_routes_simulator
+node_routes_simulator -->|"transition table"| node_sim_memos
+node_recognize -->|"HEAD requests"| node_match_head
+node_recognize -->|"verb + constraints"| node_route_matches
+node_route_matches -->|"route.app.serve"| node_constraints_serve
+node_constraints_serve -->|"constraints ok"| node_dispatcher_serve
+node_dispatcher_serve -->|"req.controller_class"| node_controller_class
+node_dispatcher_serve -->|"make_response!"| node_make_response
+node_dispatcher_serve -->|"controller.dispatch"| node_metal_dispatch
+node_metal_dispatch -->|"process&#40;name&#41;"| node_process
+node_process -->|"process_action"| node_process_action
+
+click node_engine_call "https://github.com/rails/rails/blob/main/railties/lib/rails/engine.rb"
+click node_engine_app "https://github.com/rails/rails/blob/main/railties/lib/rails/engine.rb"
+click node_app_default_stack "https://github.com/rails/rails/blob/main/railties/lib/rails/application.rb"
+click node_build_stack "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_stack_build "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/middleware/stack.rb"
+click node_middleware_build "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/middleware/stack.rb"
+click node_rack_sendfile "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_static_mw "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_executor_mw "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/middleware/executor.rb"
+click node_rack_runtime "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_method_override "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_request_id "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_remote_ip "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_logger_mw "https://github.com/rails/rails/blob/main/railties/lib/rails/rack/logger.rb"
+click node_debug_exceptions "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_callbacks "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_rack_etag "https://github.com/rails/rails/blob/main/railties/lib/rails/application/default_middleware_stack.rb"
+click node_route_set_draw "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/routing/route_set.rb"
+click node_route_set_call "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/routing/route_set.rb"
+click node_journey_serve "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/router.rb"
+click node_static_map "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/routes.rb"
+click node_routes_simulator "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/routes.rb"
+click node_sim_memos "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/gtg/simulator.rb"
+click node_recognize "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/router.rb"
+click node_filter_routes "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/router.rb"
+click node_match_head "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/router.rb"
+click node_route_matches "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/journey/route.rb"
+click node_constraints_serve "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/routing/mapper.rb"
+click node_dispatcher_serve "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/routing/route_set.rb"
+click node_controller_class "https://github.com/rails/rails/blob/main/actionpack/lib/action_dispatch/http/request.rb"
+click node_make_response "https://github.com/rails/rails/blob/main/actionpack/lib/action_controller/metal.rb"
+click node_metal_dispatch "https://github.com/rails/rails/blob/main/actionpack/lib/action_controller/metal.rb"
+click node_process "https://github.com/rails/rails/blob/main/actionpack/lib/abstract_controller/base.rb"
+click node_process_action "https://github.com/rails/rails/blob/main/actionpack/lib/abstract_controller/base.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_engine_call,node_engine_app,node_app_default_stack toneBlue
+class node_build_stack,node_stack_build,node_middleware_build toneAmber
+class node_rack_sendfile,node_static_mw,node_executor_mw,node_rack_runtime,node_method_override,node_request_id,node_remote_ip,node_logger_mw,node_debug_exceptions,node_callbacks,node_rack_etag toneMint
+class node_route_set_draw,node_route_set_call,node_journey_serve,node_recognize toneRose
+class node_static_map,node_routes_simulator,node_sim_memos,node_filter_routes,node_match_head,node_route_matches,node_constraints_serve toneIndigo
+class node_dispatcher_serve,node_controller_class,node_make_response,node_metal_dispatch,node_process,node_process_action toneTeal
