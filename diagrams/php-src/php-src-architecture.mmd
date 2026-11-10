@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_sapi["SAPI Layer"]
+  node_sapi_struct["sapi_module_struct<br/>[SAPI.h]"]
+  node_cli_sapi["cli_sapi_module<br/>[php_cli.c]"]
+  node_sapi_activate["sapi_activate<br/>[SAPI.c]"]
+end
+
+subgraph group_lifecycle["Process and Request Lifecycle"]
+  node_php_cli_main["do_php_cli<br/>[php_cli.c]"]
+  node_mod_startup["php_module_startup<br/>[main.c]"]
+  node_zend_startup["zend_startup<br/>[zend.c]"]
+  node_req_startup["php_request_startup<br/>[main.c]"]
+  node_zend_activate["zend_activate<br/>[zend.c]"]
+  node_activate_modules["zend_activate_modules<br/>[zend_API.c]"]
+  node_execute_script["php_execute_script<br/>[main.c]"]
+  node_req_shutdown["php_request_shutdown<br/>[main.c]"]
+end
+
+subgraph group_compile["Compile Stage"]
+  node_compile_file_ptr["zend_compile_file &#40;pointer&#41;<br/>[zend_compile.c]"]
+  node_compile_file_fn["compile_file"]
+  node_open_scan["open_file_for_scanning"]
+  node_zend_compile_fn["zend_compile"]
+  node_zendparse_fn["zendparse"]
+  node_compile_top["zend_compile_top_stmt<br/>[zend_compile.c]"]
+  node_zend_execute_script["zend_execute_script<br/>[zend.c]"]
+end
+
+subgraph group_vm["Zend VM"]
+  node_op_def["struct _zend_op<br/>[zend_compile.h]"]
+  node_op_array_def["struct _zend_op_array<br/>[zend_compile.h]"]
+  node_exec_data["struct _zend_execute_data<br/>[zend_compile.h]"]
+  node_zend_execute_fn["zend_execute<br/>[zend_vm_execute.h]"]
+  node_execute_ex_fn["execute_ex<br/>[zend_vm_execute.h]"]
+  node_set_handler["zend_vm_set_opcode_handler<br/>[zend_vm_execute.h]"]
+  node_assign_handler["ZEND_ASSIGN handler<br/>[zend_vm_def.h]"]
+  node_do_fcall["ZEND_DO_FCALL handler<br/>[zend_vm_def.h]"]
+  node_ret_handler["ZEND_RETURN handler<br/>[zend_vm_def.h]"]
+end
+
+subgraph group_data["Data Model"]
+  node_zval_struct["struct _zval_struct<br/>[zend_types.h]"]
+  node_refcounted_h["zend_refcounted_h<br/>[zend_types.h]"]
+  node_gc_addref["GC_ADDREF<br/>[zend_types.h]"]
+end
+
+subgraph group_opcache["OPcache and JIT"]
+  node_persistent_compile["persistent_compile_file<br/>[ZendAccelerator.c]"]
+  node_load_script["zend_accel_load_script<br/>[ZendAccelerator.c]"]
+  node_jit_op_array["zend_jit_op_array<br/>[zend_jit.c]"]
+  node_jit_trace_exec["zend_jit_trace_execute"]
+end
+
+node_cli_sapi -->|"implements"| node_sapi_struct
+node_php_cli_main -->|"uses"| node_cli_sapi
+node_php_cli_main -->|"calls once"| node_mod_startup
+node_php_cli_main -->|"per request"| node_req_startup
+node_php_cli_main -->|"runs script"| node_execute_script
+node_php_cli_main -->|"tears down"| node_req_shutdown
+node_mod_startup -->|"copies SAPI in"| node_sapi_struct
+node_mod_startup -->|"boots engine"| node_zend_startup
+node_req_startup -->|"resets compiler and executor"| node_zend_activate
+node_req_startup -->|"activates SAPI"| node_sapi_activate
+node_req_startup -->|"runs extension RINIT"| node_activate_modules
+node_req_shutdown -->|"runs RSHUTDOWN"| node_activate_modules
+node_execute_script -->|"delegates"| node_zend_execute_script
+node_zend_execute_script -->|"compiles via pointer"| node_compile_file_ptr
+node_compile_file_ptr -->|"default target"| node_compile_file_fn
+node_compile_file_fn -->|"opens and scans"| node_open_scan
+node_compile_file_fn -->|"calls"| node_zend_compile_fn
+node_zend_compile_fn -->|"parses tokens to AST"| node_zendparse_fn
+node_zend_compile_fn -->|"AST to opcodes"| node_compile_top
+node_zend_execute_script -->|"executes op_array"| node_zend_execute_fn
+node_zend_execute_script -->|"produces"| node_op_array_def
+node_op_array_def -->|"array of"| node_op_def
+node_zend_execute_fn -->|"pushes frame"| node_exec_data
+node_zend_execute_fn -->|"enters loop"| node_execute_ex_fn
+node_set_handler -->|"specializes"| node_op_def
+node_execute_ex_fn -->|"dispatches"| node_assign_handler
+node_execute_ex_fn -->|"dispatches"| node_do_fcall
+node_execute_ex_fn -->|"dispatches"| node_ret_handler
+node_assign_handler -->|"writes"| node_zval_struct
+node_assign_handler -->|"adjusts refcount"| node_gc_addref
+node_gc_addref -->|"increments"| node_refcounted_h
+node_zval_struct -->|"refcounted payloads"| node_refcounted_h
+node_compile_file_ptr -->|"OPcache override"| node_persistent_compile
+node_persistent_compile -->|"serves cached"| node_load_script
+node_persistent_compile -->|"JIT compiles on load"| node_jit_op_array
+node_execute_ex_fn -->|"interrupt triggers tracing"| node_jit_trace_exec
+
+click node_sapi_struct "https://github.com/php/php-src/blob/master/main/SAPI.h"
+click node_cli_sapi "https://github.com/php/php-src/blob/master/sapi/cli/php_cli.c"
+click node_sapi_activate "https://github.com/php/php-src/blob/master/main/SAPI.c"
+click node_php_cli_main "https://github.com/php/php-src/blob/master/sapi/cli/php_cli.c"
+click node_mod_startup "https://github.com/php/php-src/blob/master/main/main.c"
+click node_zend_startup "https://github.com/php/php-src/blob/master/Zend/zend.c"
+click node_req_startup "https://github.com/php/php-src/blob/master/main/main.c"
+click node_zend_activate "https://github.com/php/php-src/blob/master/Zend/zend.c"
+click node_activate_modules "https://github.com/php/php-src/blob/master/Zend/zend_API.c"
+click node_execute_script "https://github.com/php/php-src/blob/master/main/main.c"
+click node_req_shutdown "https://github.com/php/php-src/blob/master/main/main.c"
+click node_compile_file_ptr "https://github.com/php/php-src/blob/master/Zend/zend_compile.c"
+click node_compile_file_fn "https://github.com/php/php-src/blob/master/Zend/zend_language_scanner.l"
+click node_open_scan "https://github.com/php/php-src/blob/master/Zend/zend_language_scanner.l"
+click node_zend_compile_fn "https://github.com/php/php-src/blob/master/Zend/zend_language_scanner.l"
+click node_zendparse_fn "https://github.com/php/php-src/blob/master/Zend/zend_globals_macros.h"
+click node_compile_top "https://github.com/php/php-src/blob/master/Zend/zend_compile.c"
+click node_zend_execute_script "https://github.com/php/php-src/blob/master/Zend/zend.c"
+click node_op_def "https://github.com/php/php-src/blob/master/Zend/zend_compile.h"
+click node_op_array_def "https://github.com/php/php-src/blob/master/Zend/zend_compile.h"
+click node_exec_data "https://github.com/php/php-src/blob/master/Zend/zend_compile.h"
+click node_zend_execute_fn "https://github.com/php/php-src/blob/master/Zend/zend_vm_execute.h"
+click node_execute_ex_fn "https://github.com/php/php-src/blob/master/Zend/zend_vm_execute.h"
+click node_set_handler "https://github.com/php/php-src/blob/master/Zend/zend_vm_execute.h"
+click node_assign_handler "https://github.com/php/php-src/blob/master/Zend/zend_vm_def.h"
+click node_do_fcall "https://github.com/php/php-src/blob/master/Zend/zend_vm_def.h"
+click node_ret_handler "https://github.com/php/php-src/blob/master/Zend/zend_vm_def.h"
+click node_zval_struct "https://github.com/php/php-src/blob/master/Zend/zend_types.h"
+click node_refcounted_h "https://github.com/php/php-src/blob/master/Zend/zend_types.h"
+click node_gc_addref "https://github.com/php/php-src/blob/master/Zend/zend_types.h"
+click node_persistent_compile "https://github.com/php/php-src/blob/master/ext/opcache/ZendAccelerator.c"
+click node_load_script "https://github.com/php/php-src/blob/master/ext/opcache/ZendAccelerator.c"
+click node_jit_op_array "https://github.com/php/php-src/blob/master/ext/opcache/jit/zend_jit.c"
+click node_jit_trace_exec "https://github.com/php/php-src/blob/master/ext/opcache/jit/zend_jit_vm_helpers.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_sapi_struct,node_cli_sapi,node_sapi_activate toneBlue
+class node_php_cli_main,node_mod_startup,node_zend_startup,node_req_startup,node_zend_activate,node_activate_modules,node_execute_script,node_req_shutdown toneAmber
+class node_compile_file_ptr,node_compile_file_fn,node_open_scan,node_zend_compile_fn,node_zendparse_fn,node_compile_top,node_zend_execute_script toneMint
+class node_op_def,node_op_array_def,node_exec_data,node_zend_execute_fn,node_execute_ex_fn,node_set_handler,node_assign_handler,node_do_fcall,node_ret_handler toneRose
+class node_zval_struct,node_refcounted_h,node_gc_addref toneIndigo
+class node_persistent_compile,node_load_script,node_jit_op_array,node_jit_trace_exec toneTeal
