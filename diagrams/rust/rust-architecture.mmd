@@ -1,0 +1,114 @@
+flowchart TD
+
+subgraph group_g_driver["rustc_interface orchestration"]
+  node_run_compiler["run_compiler<br/>[interface.rs]"]
+  node_start_codegen["start_codegen<br/>[passes.rs]"]
+end
+
+subgraph group_g_front["Lexing and parsing"]
+  node_strip_shebang["strip_shebang<br/>[lib.rs]"]
+  node_tokenize["tokenize<br/>[lib.rs]"]
+  node_cursor["Cursor<br/>[lib.rs]"]
+  node_new_parser["new_parser_from_source_str<br/>[lib.rs]"]
+  node_parse_crate_mod["parse_crate_mod<br/>[item.rs]"]
+  node_parse_item["parse_item<br/>[item.rs]"]
+end
+
+subgraph group_g_hir["Lowering and type checking"]
+  node_lowering_context["LoweringContext<br/>[lib.rs]"]
+  node_lower_to_hir["lower_to_hir<br/>[lib.rs]"]
+  node_lower_expr["lower_expr<br/>[expr.rs]"]
+  node_typeck_check_fn["check_fn<br/>[check.rs]"]
+  node_check_expr["check_expr<br/>[expr.rs]"]
+  node_check_expr_method_call["check_expr_method_call<br/>[expr.rs]"]
+end
+
+subgraph group_g_mir["Build, borrow check, optimize"]
+  node_build_mir["build_mir_inner_impl<br/>[mod.rs]"]
+  node_build_mir_scope["build_mir<br/>[scope.rs]"]
+  node_mir_borrowck["mir_borrowck<br/>[lib.rs]"]
+  node_do_mir_borrowck["do_mir_borrowck<br/>[root_cx.rs]"]
+  node_compute_regions["compute_regions<br/>[nll.rs]"]
+  node_borrowck_finalize["finalize<br/>[root_cx.rs]"]
+  node_run_passes["run_passes<br/>[pass_manager.rs]"]
+  node_run_optimization_passes["run_optimization_passes<br/>[lib.rs]"]
+  node_inline_pass["Inline<br/>[lib.rs]"]
+  node_gvn_pass["GVN<br/>[lib.rs]"]
+  node_optimized_mir["optimized_mir<br/>[lib.rs]"]
+end
+
+subgraph group_g_backend["LLVM codegen"]
+  node_llvm_codegen_crate["codegen_crate<br/>[llvm_backend.rs]"]
+  node_ssa_codegen_entry["ssa base codegen_crate<br/>[llvm_backend.rs]"]
+  node_compile_codegen_unit["compile_codegen_unit<br/>[llvm_backend.rs]"]
+end
+
+node_run_compiler -->|"Config with source"| node_new_parser
+node_strip_shebang -->|"skips shebang first"| node_tokenize
+node_tokenize -->|"one Cursor per file"| node_cursor
+node_cursor -->|"token stream"| node_new_parser
+node_new_parser -->|"parse whole crate"| node_parse_crate_mod
+node_parse_crate_mod -->|"per top-level item"| node_parse_item
+node_parse_item -->|"AST items"| node_lower_to_hir
+node_lower_to_hir -->|"creates context"| node_lowering_context
+node_lowering_context -->|"desugars exprs"| node_lower_expr
+node_lower_expr -->|"HIR expressions"| node_typeck_check_fn
+node_typeck_check_fn -->|"walks body"| node_check_expr
+node_check_expr -->|"expr kind dispatch"| node_check_expr_method_call
+node_typeck_check_fn -->|"checked bodies"| node_build_mir
+node_build_mir -->|"scopes and drops"| node_build_mir_scope
+node_build_mir -->|"raw MIR body"| node_mir_borrowck
+node_mir_borrowck -->|"BorrowCheckRootCtxt"| node_do_mir_borrowck
+node_do_mir_borrowck -->|"NLL inference"| node_compute_regions
+node_do_mir_borrowck -->|"diagnostics"| node_borrowck_finalize
+node_do_mir_borrowck -->|"post-borrowck MIR"| node_run_optimization_passes
+node_run_optimization_passes -->|"ordered pass list"| node_run_passes
+node_run_passes -->|"runs Inline"| node_inline_pass
+node_run_passes -->|"runs GVN"| node_gvn_pass
+node_run_optimization_passes -->|"Runtime::Optimized"| node_optimized_mir
+node_optimized_mir -->|"final MIR"| node_start_codegen
+node_start_codegen -->|"backend entry"| node_llvm_codegen_crate
+node_llvm_codegen_crate -->|"delegates to SSA"| node_ssa_codegen_entry
+node_ssa_codegen_entry -->|"parallel units"| node_compile_codegen_unit
+
+click node_run_compiler "https://github.com/rust-lang/rust/blob/main/compiler/rustc_interface/src/interface.rs"
+click node_start_codegen "https://github.com/rust-lang/rust/blob/main/compiler/rustc_interface/src/passes.rs"
+click node_strip_shebang "https://github.com/rust-lang/rust/blob/main/compiler/rustc_lexer/src/lib.rs"
+click node_tokenize "https://github.com/rust-lang/rust/blob/main/compiler/rustc_lexer/src/lib.rs"
+click node_cursor "https://github.com/rust-lang/rust/blob/main/compiler/rustc_lexer/src/lib.rs"
+click node_new_parser "https://github.com/rust-lang/rust/blob/main/compiler/rustc_parse/src/lib.rs"
+click node_parse_crate_mod "https://github.com/rust-lang/rust/blob/main/compiler/rustc_parse/src/parser/item.rs"
+click node_parse_item "https://github.com/rust-lang/rust/blob/main/compiler/rustc_parse/src/parser/item.rs"
+click node_lowering_context "https://github.com/rust-lang/rust/blob/main/compiler/rustc_ast_lowering/src/lib.rs"
+click node_lower_to_hir "https://github.com/rust-lang/rust/blob/main/compiler/rustc_ast_lowering/src/lib.rs"
+click node_lower_expr "https://github.com/rust-lang/rust/blob/main/compiler/rustc_ast_lowering/src/expr.rs"
+click node_typeck_check_fn "https://github.com/rust-lang/rust/blob/main/compiler/rustc_hir_typeck/src/check.rs"
+click node_check_expr "https://github.com/rust-lang/rust/blob/main/compiler/rustc_hir_typeck/src/expr.rs"
+click node_check_expr_method_call "https://github.com/rust-lang/rust/blob/main/compiler/rustc_hir_typeck/src/expr.rs"
+click node_build_mir "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_build/src/builder/mod.rs"
+click node_build_mir_scope "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_build/src/builder/scope.rs"
+click node_mir_borrowck "https://github.com/rust-lang/rust/blob/main/compiler/rustc_borrowck/src/lib.rs"
+click node_do_mir_borrowck "https://github.com/rust-lang/rust/blob/main/compiler/rustc_borrowck/src/root_cx.rs"
+click node_compute_regions "https://github.com/rust-lang/rust/blob/main/compiler/rustc_borrowck/src/nll.rs"
+click node_borrowck_finalize "https://github.com/rust-lang/rust/blob/main/compiler/rustc_borrowck/src/root_cx.rs"
+click node_run_passes "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_transform/src/pass_manager.rs"
+click node_run_optimization_passes "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_transform/src/lib.rs"
+click node_inline_pass "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_transform/src/lib.rs"
+click node_gvn_pass "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_transform/src/lib.rs"
+click node_optimized_mir "https://github.com/rust-lang/rust/blob/main/compiler/rustc_mir_transform/src/lib.rs"
+click node_llvm_codegen_crate "https://github.com/rust-lang/rust/blob/main/compiler/rustc_codegen_llvm/src/back/llvm_backend.rs"
+click node_ssa_codegen_entry "https://github.com/rust-lang/rust/blob/main/compiler/rustc_codegen_llvm/src/back/llvm_backend.rs"
+click node_compile_codegen_unit "https://github.com/rust-lang/rust/blob/main/compiler/rustc_codegen_llvm/src/back/llvm_backend.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_run_compiler,node_start_codegen toneBlue
+class node_strip_shebang,node_tokenize,node_cursor,node_new_parser,node_parse_crate_mod,node_parse_item toneAmber
+class node_lowering_context,node_lower_to_hir,node_lower_expr,node_typeck_check_fn,node_check_expr,node_check_expr_method_call toneMint
+class node_build_mir,node_build_mir_scope,node_mir_borrowck,node_do_mir_borrowck,node_compute_regions,node_borrowck_finalize,node_run_passes,node_run_optimization_passes,node_inline_pass,node_gvn_pass,node_optimized_mir toneRose
+class node_llvm_codegen_crate,node_ssa_codegen_entry,node_compile_codegen_unit toneIndigo
