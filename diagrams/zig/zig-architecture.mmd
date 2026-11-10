@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_driver["CLI &amp; Job Driver"]
+  node_main{{"pub fn main<br/>[main.zig]"}}
+  node_buildrunner["build_runner.zig<br/>[build_runner.zig]"]
+  node_compilation["Compilation.update<br/>[Compilation.zig]"]
+  node_cachemode[("CacheMode<br/>[Compilation.zig]")]
+  node_performwork["performAllTheWork<br/>[Compilation.zig]"]
+  node_processjob["processOneJob<br/>[Compilation.zig]"]
+end
+
+subgraph group_parse["Parse Frontend"]
+  node_tokenizer["Tokenizer<br/>[tokenizer.zig]"]
+  node_parse["Parse.parseRoot<br/>[Parse.zig]"]
+  node_ast[("Ast<br/>[Ast.zig]")]
+  node_astgen{{"AstGen.generate<br/>[AstGen.zig]"}}
+  node_astgenexpr["AstGen.expr<br/>[AstGen.zig]"]
+end
+
+subgraph group_ir["Intermediate Representations"]
+  node_zir[("ZIR<br/>[Zir.zig]")]
+  node_zoir[("ZOIR<br/>[Zoir.zig]")]
+  node_internpool[("InternPool<br/>[InternPool.zig]")]
+  node_air[("AIR<br/>[Air.zig]")]
+  node_legalize["Air.Legalize<br/>[Legalize.zig]"]
+  node_liveness["Air.Liveness<br/>[Liveness.zig]"]
+end
+
+subgraph group_sema["Semantic Analysis"]
+  node_zcu["Zcu<br/>[Zcu.zig]"]
+  node_perthread{{"Zcu.PerThread<br/>[PerThread.zig]"}}
+  node_updatezirrefs["updateZirRefs<br/>[PerThread.zig]"]
+  node_ensurenavval["ensureNavValUpToDate<br/>[PerThread.zig]"]
+  node_analyzebody["analyzeFnBodyInner<br/>[PerThread.zig]"]
+  node_sema{{"Sema.analyzeFnBody<br/>[Sema.zig]"}}
+  node_resolvetype["Sema.resolveType<br/>[Sema.zig]"]
+  node_structlayout["resolveStructLayout<br/>[Sema.zig]"]
+  node_comptimeunit["analyzeComptimeUnit<br/>[PerThread.zig]"]
+end
+
+subgraph group_backend["Codegen Backends"]
+  node_codegen{{"generateFunction<br/>[codegen.zig]"}}
+  node_importbackend["importBackend<br/>[codegen.zig]"]
+  node_llvmobj["llvm.Object<br/>[llvm.zig]"]
+  node_llvmemit["llvm.Object.emit<br/>[llvm.zig]"]
+  node_x64codegen["x86_64 CodeGen<br/>[CodeGen.zig]"]
+  node_cbackend["C backend<br/>[c.zig]"]
+end
+
+subgraph group_output["Linking &amp; Artifacts"]
+  node_linkfile{{"link.File.flush<br/>[link.zig]"}}
+end
+
+node_main -->|"dispatches build-exe/build/test"| node_compilation
+node_buildrunner -->|"zig build invokes"| node_compilation
+node_compilation -->|"whole vs incremental"| node_cachemode
+node_compilation -->|"runs the job queue"| node_performwork
+node_performwork -->|"AstGen jobs first"| node_processjob
+node_processjob -->|"executes Zcu jobs"| node_perthread
+node_zcu -->|"thread-local entries"| node_perthread
+node_perthread -->|"incremental ZIR diff"| node_updatezirrefs
+node_updatezirrefs -->|"maps old to new"| node_zir
+node_perthread -->|"parses changed files"| node_parse
+node_parse -->|"scanner feeds parser"| node_tokenizer
+node_parse -->|"builds tree"| node_ast
+node_ast -->|"walks nodes"| node_astgen
+node_astgen -->|"per-node lowering"| node_astgenexpr
+node_astgen -->|"emits ZIR"| node_zir
+node_processjob -->|"queues decl analysis"| node_ensurenavval
+node_ensurenavval -->|"lazy body analysis"| node_analyzebody
+node_analyzebody -->|"constructs Sema"| node_sema
+node_sema -->|"resolves types"| node_resolvetype
+node_sema -->|"lazy layout"| node_structlayout
+node_resolvetype -->|"interns types"| node_internpool
+node_structlayout -->|"memoized layout"| node_internpool
+node_sema -->|"interns values"| node_internpool
+node_zcu -->|"global pool"| node_internpool
+node_sema -->|"emits AIR"| node_air
+node_analyzebody -->|"returns AIR"| node_air
+node_sema -->|"comptime decls"| node_comptimeunit
+node_comptimeunit -->|"interprets ZIR"| node_zir
+node_air -->|"legalization"| node_legalize
+node_air -->|"liveness scan"| node_liveness
+node_processjob -->|"codegen job"| node_codegen
+node_codegen -->|"per-backend features"| node_legalize
+node_codegen -->|"consumes liveness"| node_liveness
+node_codegen -->|"selects backend"| node_importbackend
+node_importbackend -->|"use_llvm"| node_llvmobj
+node_importbackend -->|"native x86_64"| node_x64codegen
+node_importbackend -->|"C output"| node_cbackend
+node_x64codegen -->|"reads AIR"| node_air
+node_llvmobj -->|"updateFunc consumes AIR"| node_air
+node_llvmobj -->|"emit object"| node_llvmemit
+node_llvmemit -->|"flush object"| node_linkfile
+node_x64codegen -->|"MIR via AnyMir"| node_linkfile
+node_cbackend -->|"C source output"| node_linkfile
+node_compilation -->|"flush artifacts"| node_linkfile
+
+click node_main "https://github.com/ziglang/zig/blob/master/src/main.zig"
+click node_buildrunner "https://github.com/ziglang/zig/blob/master/lib/compiler/build_runner.zig"
+click node_compilation "https://github.com/ziglang/zig/blob/master/src/Compilation.zig"
+click node_cachemode "https://github.com/ziglang/zig/blob/master/src/Compilation.zig"
+click node_performwork "https://github.com/ziglang/zig/blob/master/src/Compilation.zig"
+click node_processjob "https://github.com/ziglang/zig/blob/master/src/Compilation.zig"
+click node_tokenizer "https://github.com/ziglang/zig/blob/master/lib/std/zig/tokenizer.zig"
+click node_parse "https://github.com/ziglang/zig/blob/master/lib/std/zig/Parse.zig"
+click node_ast "https://github.com/ziglang/zig/blob/master/lib/std/zig/Ast.zig"
+click node_astgen "https://github.com/ziglang/zig/blob/master/lib/std/zig/AstGen.zig"
+click node_astgenexpr "https://github.com/ziglang/zig/blob/master/lib/std/zig/AstGen.zig"
+click node_zir "https://github.com/ziglang/zig/blob/master/lib/std/zig/Zir.zig"
+click node_zoir "https://github.com/ziglang/zig/blob/master/lib/std/zig/Zoir.zig"
+click node_internpool "https://github.com/ziglang/zig/blob/master/src/InternPool.zig"
+click node_air "https://github.com/ziglang/zig/blob/master/src/Air.zig"
+click node_legalize "https://github.com/ziglang/zig/blob/master/src/Air/Legalize.zig"
+click node_liveness "https://github.com/ziglang/zig/blob/master/src/Air/Liveness.zig"
+click node_zcu "https://github.com/ziglang/zig/blob/master/src/Zcu.zig"
+click node_perthread "https://github.com/ziglang/zig/blob/master/src/Zcu/PerThread.zig"
+click node_updatezirrefs "https://github.com/ziglang/zig/blob/master/src/Zcu/PerThread.zig"
+click node_ensurenavval "https://github.com/ziglang/zig/blob/master/src/Zcu/PerThread.zig"
+click node_analyzebody "https://github.com/ziglang/zig/blob/master/src/Zcu/PerThread.zig"
+click node_sema "https://github.com/ziglang/zig/blob/master/src/Sema.zig"
+click node_resolvetype "https://github.com/ziglang/zig/blob/master/src/Sema.zig"
+click node_structlayout "https://github.com/ziglang/zig/blob/master/src/Sema.zig"
+click node_comptimeunit "https://github.com/ziglang/zig/blob/master/src/Zcu/PerThread.zig"
+click node_codegen "https://github.com/ziglang/zig/blob/master/src/codegen.zig"
+click node_importbackend "https://github.com/ziglang/zig/blob/master/src/codegen.zig"
+click node_llvmobj "https://github.com/ziglang/zig/blob/master/src/codegen/llvm.zig"
+click node_llvmemit "https://github.com/ziglang/zig/blob/master/src/codegen/llvm.zig"
+click node_x64codegen "https://github.com/ziglang/zig/blob/master/src/codegen/x86_64/CodeGen.zig"
+click node_cbackend "https://github.com/ziglang/zig/blob/master/src/codegen/c.zig"
+click node_linkfile "https://github.com/ziglang/zig/blob/master/src/link.zig"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_buildrunner,node_compilation,node_cachemode,node_performwork,node_processjob toneBlue
+class node_tokenizer,node_parse,node_ast,node_astgen,node_astgenexpr toneAmber
+class node_zir,node_zoir,node_internpool,node_air,node_legalize,node_liveness toneMint
+class node_zcu,node_perthread,node_updatezirrefs,node_ensurenavval,node_analyzebody,node_sema,node_resolvetype,node_structlayout,node_comptimeunit toneRose
+class node_codegen,node_importbackend,node_llvmobj,node_llvmemit,node_x64codegen,node_cbackend toneIndigo
+class node_linkfile toneTeal
