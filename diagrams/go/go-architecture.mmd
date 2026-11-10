@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_toolchain["Compiler Toolchain"]
+  node_gobuild["go build &#40;CmdBuild&#41;<br/>[build.go]"]
+  node_compilemain["cmd/compile Main<br/>[main.go]"]
+  node_buildssa["buildssa<br/>[ssa.go]"]
+end
+
+subgraph group_entry["Runtime Entry"]
+  node_rmain["runtime.main + schedinit<br/>[proc.go]"]
+end
+
+subgraph group_scheduler["G/M/P Scheduler"]
+  node_gstruct["type g struct<br/>[runtime2.go]"]
+  node_mstruct["type m struct<br/>[runtime2.go]"]
+  node_pstruct["type p struct<br/>[runtime2.go]"]
+  node_schedstruct["type schedt struct<br/>[runtime2.go]"]
+  node_newproc["newproc / newproc1<br/>[proc.go]"]
+  node_runqput["runqput<br/>[proc.go]"]
+  node_schedule["schedule<br/>[proc.go]"]
+  node_findrunnable["findRunnable<br/>[proc.go]"]
+  node_runqget["runqget<br/>[proc.go]"]
+  node_stealwork["stealWork<br/>[proc.go]"]
+  node_execute["execute<br/>[proc.go]"]
+  node_gopark["gopark<br/>[proc.go]"]
+  node_goready["goready / ready<br/>[proc.go]"]
+  node_goexit0["goexit0<br/>[proc.go]"]
+  node_sysmon["sysmon / retake<br/>[proc.go]"]
+  node_retake["retake<br/>[proc.go]"]
+end
+
+subgraph group_channels["Channels &amp; Sudog"]
+  node_hchan["type hchan struct<br/>[chan.go]"]
+  node_chansend["chansend<br/>[chan.go]"]
+  node_chanrecv["chanrecv<br/>[chan.go]"]
+end
+
+subgraph group_gc["Tricolor GC"]
+  node_gcstart["gcStart<br/>[mgc.go]"]
+  node_gcbgmarkworker["gcBgMarkWorker<br/>[mgc.go]"]
+  node_gcdrain["gcDrain &#40;tricolor mark&#41;<br/>[mgcmark.go]"]
+  node_bgsweep["bgsweep<br/>[mgcsweep.go]"]
+end
+
+subgraph group_memory["Allocator"]
+  node_mallocgc["mallocgc<br/>[malloc.go]"]
+  node_mcache_refill["mcache.refill<br/>[mcache.go]"]
+  node_mheapcentral["mheap.central<br/>[mheap.go]"]
+end
+
+subgraph group_netpoll["Netpoller"]
+  node_pollwait["poll_runtime_pollWait<br/>[netpoll.go]"]
+  node_netpollready["netpoll integration<br/>[proc.go]"]
+end
+
+subgraph group_stacks["Stack Management"]
+  node_newstack["newstack<br/>[stack.go]"]
+end
+
+node_gobuild -->|"go build invokes cmd/compile per package"| node_compilemain
+node_compilemain -->|"IR handed to SSA backend"| node_buildssa
+node_gobuild -->|"linked binary starts at runtime.main"| node_rmain
+node_rmain -->|"spawns main goroutine g1"| node_newproc
+node_newproc -->|"allocates g, sets _Grunnable"| node_gstruct
+node_newproc -->|"wakeupp puts G on P.runnext"| node_runqput
+node_runqput -->|"256-slot ring + runnext slot"| node_pstruct
+node_schedule -->|"asks for next runnable G"| node_findrunnable
+node_findrunnable -->|"drains own P first"| node_runqget
+node_runqget -->|"CAS on local ring buffer"| node_pstruct
+node_findrunnable -->|"then steal from other Ps"| node_stealwork
+node_stealwork -->|"returns stolen G"| node_gstruct
+node_findrunnable -->|"global runq / spinning state"| node_schedstruct
+node_schedule -->|"runs the chosen G"| node_execute
+node_execute -->|"binds m.curg, _Grunning"| node_gstruct
+node_execute -->|"M runs one G at a time"| node_mstruct
+node_execute -->|"blocking op parks the G"| node_gopark
+node_execute -->|"G returns, thread cleans up"| node_goexit0
+node_gopark -->|"unblockf completes the wait"| node_goready
+node_goready -->|"readied G re-enters a queue"| node_runqput
+node_sysmon -->|"no-P thread polls every 10ms"| node_retake
+node_retake -->|"syscall handoff / preempt &gt;10ms"| node_pstruct
+node_hchan -->|"locks hchan, checks recvq/buf"| node_chansend
+node_hchan -->|"locks hchan, checks sendq/buf"| node_chanrecv
+node_chansend -->|"buffer full: sudog on sendq"| node_gopark
+node_chanrecv -->|"buffer empty: sudog on recvq"| node_gopark
+node_chansend -->|"direct handoff to parked receiver"| node_chanrecv
+node_mallocgc -->|"heap goal reached triggers cycle"| node_gcstart
+node_gcstart -->|"dedicated + fractional workers"| node_gcbgmarkworker
+node_gcbgmarkworker -->|"workers drain gcWork"| node_gcdrain
+node_findrunnable -->|"findRunnableGCWorker hand-off"| node_gcbgmarkworker
+node_mallocgc -->|"GC assist pays scan debt"| node_gcdrain
+node_gcstart -->|"mark termination, sweep resumes"| node_bgsweep
+node_mallocgc -->|"small objects from span cache"| node_mcache_refill
+node_mcache_refill -->|"pull span from central list"| node_mheapcentral
+node_pollwait -->|"parks G until fd ready"| node_gopark
+node_netpollready -->|"ready Gs from netpoller"| node_goready
+node_newstack -->|"doubles gp.stack, rewrites pointers"| node_gstruct
+
+click node_gobuild "https://github.com/golang/go/blob/master/src/cmd/go/internal/work/build.go"
+click node_compilemain "https://github.com/golang/go/blob/master/src/cmd/compile/internal/gc/main.go"
+click node_buildssa "https://github.com/golang/go/blob/master/src/cmd/compile/internal/ssagen/ssa.go"
+click node_rmain "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_gstruct "https://github.com/golang/go/blob/master/src/runtime/runtime2.go"
+click node_mstruct "https://github.com/golang/go/blob/master/src/runtime/runtime2.go"
+click node_pstruct "https://github.com/golang/go/blob/master/src/runtime/runtime2.go"
+click node_schedstruct "https://github.com/golang/go/blob/master/src/runtime/runtime2.go"
+click node_newproc "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_runqput "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_schedule "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_findrunnable "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_runqget "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_stealwork "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_execute "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_gopark "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_goready "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_goexit0 "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_sysmon "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_retake "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_hchan "https://github.com/golang/go/blob/master/src/runtime/chan.go"
+click node_chansend "https://github.com/golang/go/blob/master/src/runtime/chan.go"
+click node_chanrecv "https://github.com/golang/go/blob/master/src/runtime/chan.go"
+click node_gcstart "https://github.com/golang/go/blob/master/src/runtime/mgc.go"
+click node_gcbgmarkworker "https://github.com/golang/go/blob/master/src/runtime/mgc.go"
+click node_gcdrain "https://github.com/golang/go/blob/master/src/runtime/mgcmark.go"
+click node_bgsweep "https://github.com/golang/go/blob/master/src/runtime/mgcsweep.go"
+click node_mallocgc "https://github.com/golang/go/blob/master/src/runtime/malloc.go"
+click node_mcache_refill "https://github.com/golang/go/blob/master/src/runtime/mcache.go"
+click node_mheapcentral "https://github.com/golang/go/blob/master/src/runtime/mheap.go"
+click node_pollwait "https://github.com/golang/go/blob/master/src/runtime/netpoll.go"
+click node_netpollready "https://github.com/golang/go/blob/master/src/runtime/proc.go"
+click node_newstack "https://github.com/golang/go/blob/master/src/runtime/stack.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_gobuild,node_compilemain,node_buildssa,node_pollwait,node_netpollready toneBlue
+class node_rmain,node_newstack toneAmber
+class node_gstruct,node_mstruct,node_pstruct,node_schedstruct,node_newproc,node_runqput,node_schedule,node_findrunnable,node_runqget,node_stealwork,node_execute,node_gopark,node_goready,node_goexit0,node_sysmon,node_retake toneMint
+class node_hchan,node_chansend,node_chanrecv toneRose
+class node_gcstart,node_gcbgmarkworker,node_gcdrain,node_bgsweep toneIndigo
+class node_mallocgc,node_mcache_refill,node_mheapcentral toneTeal

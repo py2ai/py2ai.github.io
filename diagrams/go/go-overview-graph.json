@@ -1,0 +1,43 @@
+{
+  "owner": "golang",
+  "repo": "go",
+  "branch": "master",
+  "groups": [
+    { "id": "toolchain", "name": "toolchain", "label": "Compiler Toolchain" },
+    { "id": "entry", "name": "entry", "label": "Runtime Entry" },
+    { "id": "scheduler", "name": "scheduler", "label": "G/M/P Scheduler" },
+    { "id": "channels", "name": "channels", "label": "Channels" },
+    { "id": "memory", "name": "memory", "label": "Memory Allocator" },
+    { "id": "gc", "name": "gc", "label": "Garbage Collector" }
+  ],
+  "nodes": [
+    { "id": "gobuild", "label": "go build (CmdBuild)", "file": "build.go", "path": "src/cmd/go/internal/work/build.go", "group": "toolchain", "groupId": "toolchain", "desc": "runBuild drives compilation of a package into a static binary; the binary's real entry point is runtime.main, not the user's main." },
+    { "id": "buildssa", "label": "buildssa (SSA backend)", "file": "ssa.go", "path": "src/cmd/compile/internal/ssagen/ssa.go", "group": "toolchain", "groupId": "toolchain", "desc": "buildssa lowers the IR of each function into SSA form; ssacompile/compile.go then runs its ordered pass sequence (opt, lower, cse) that produces machine code." },
+    { "id": "rmain", "label": "runtime.main", "file": "proc.go", "path": "src/runtime/proc.go", "group": "entry", "groupId": "entry", "desc": "runtime.main first runs schedinit to bootstrap GC, allocators and allp, then calls newproc to launch the user's main function as goroutine g1." },
+    { "id": "newproc", "label": "newproc / newproc1", "file": "proc.go", "path": "src/runtime/proc.go", "group": "scheduler", "groupId": "scheduler", "desc": "newproc allocates a new g via newproc1 and hands it to runqput; every go statement costs a small allocation, not a thread." },
+    { "id": "gmp", "label": "G / M / P structs", "file": "runtime2.go", "path": "src/runtime/runtime2.go", "group": "scheduler", "groupId": "scheduler", "desc": "g (L471) is a goroutine, m (L615) an OS thread, p (L774) a scheduler context holding a local run queue; schedt (L936) holds the global queue and idle M/P pools." },
+    { "id": "schedule", "label": "schedule loop", "file": "proc.go", "path": "src/runtime/proc.go", "group": "scheduler", "groupId": "scheduler", "desc": "schedule calls findRunnable, then execute binds the M to the chosen G; when a G blocks or exits the thread falls straight back into this loop." },
+    { "id": "findrunnable", "label": "findRunnable", "file": "proc.go", "path": "src/runtime/proc.go", "group": "scheduler", "groupId": "scheduler", "desc": "findRunnable checks the P's runnext and local runq, the global run queue, GC mark workers, the netpoller, and finally stealWork on other Ps." },
+    { "id": "gopark", "label": "gopark / goready", "file": "proc.go", "path": "src/runtime/proc.go", "group": "scheduler", "groupId": "scheduler", "desc": "gopark parks the current G (setting _Gwaiting) and lets the M keep working; goready/read make it runnable again on some P's queue." },
+    { "id": "chansend", "label": "chansend / chanrecv", "file": "chan.go", "path": "src/runtime/chan.go", "group": "channels", "groupId": "channels", "desc": "chansend locks the hchan, hands the value directly to a waiting receiver or buffers it; when full it enqueues a sudog and parks the sender." },
+    { "id": "mcache", "label": "mcache (per-P cache)", "file": "mcache.go", "path": "src/runtime/mcache.go", "group": "memory", "groupId": "memory", "desc": "Each P owns an mcache of per-size-class spans; refill pulls a fresh span from the mcentral lists when the local free list runs dry." },
+    { "id": "mallocgc", "label": "mallocgc", "file": "malloc.go", "path": "src/runtime/malloc.go", "group": "memory", "groupId": "memory", "desc": "mallocgc routes tiny (<16B) objects to the tiny allocator, small objects to mcache spans, and large objects straight to the mheap." },
+    { "id": "gcstart", "label": "gcStart cycle", "file": "mgc.go", "path": "src/runtime/mgc.go", "group": "gc", "groupId": "gc", "desc": "gcStart flips the world into _GCmark with a write barrier, spreads tricolor marking over background workers, then gcMarkDone leads to concurrent sweep." }
+  ],
+  "edges": [
+    { "from": "gobuild", "to": "buildssa", "label": "compiler lowers each function to SSA" },
+    { "from": "gobuild", "to": "rmain", "label": "static binary starts at runtime.main" },
+    { "from": "rmain", "to": "newproc", "label": "spawns the main goroutine" },
+    { "from": "newproc", "to": "gmp", "label": "allocates a G into a P's run queue" },
+    { "from": "newproc", "to": "schedule", "label": "new G becomes runnable" },
+    { "from": "schedule", "to": "findrunnable", "label": "M asks for the next runnable G" },
+    { "from": "findrunnable", "to": "gmp", "label": "local runq, global runq, steal, netpoll" },
+    { "from": "schedule", "to": "gmp", "label": "M executes G on its P" },
+    { "from": "gopark", "to": "schedule", "label": "blocked G parks, M loops back" },
+    { "from": "chansend", "to": "gopark", "label": "full buffer parks sender on sendq" },
+    { "from": "gmp", "to": "chansend", "label": "running G performs channel ops" },
+    { "from": "mallocgc", "to": "mcache", "label": "per-P size-class span cache" },
+    { "from": "mallocgc", "to": "gcstart", "label": "heap goal reached triggers cycle" },
+    { "from": "gcstart", "to": "gmp", "label": "mark workers compete in findRunnable" }
+  ]
+}

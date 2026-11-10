@@ -1,0 +1,2158 @@
+
+
+  <!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Theme initialization to prevent flash -->
+  <script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
+
+  <!-- Pinterest & Google verification -->
+  <meta name="p:domain_verify" content="fb68a8459fe32b8b072bcd5cc620d125"/>
+  <meta name="google-site-verification" content="WAkFPi5cvufClnQetgIl0STmvvwHhVf8jfyENFWhsxU" />
+  <meta name="google-site-verification" content="g2pFZlv-92XQD67BPgiVHsvZ4TZH13Ucvmmvvv36kU4" />
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code | PyShine</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code" />
+<meta name="author" content="PyShine" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="A verified source tour of the golang/go runtime showing how the G/M/P scheduler, channel blocking, tricolor garbage collector, and per-P memory allocator execute every goroutine you spawn." />
+<meta property="og:description" content="A verified source tour of the golang/go runtime showing how the G/M/P scheduler, channel blocking, tricolor garbage collector, and per-P memory allocator execute every goroutine you spawn." />
+<link rel="canonical" href="https://pyshine.com/go/" />
+<meta property="og:url" content="https://pyshine.com/go/" />
+<meta property="og:site_name" content="PyShine" />
+<meta property="og:image" content="https://pyshine.com/assets/img/diagrams/go/golang-go-overview-architecture.svg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-11-10T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://pyshine.com/assets/img/diagrams/go/golang-go-overview-architecture.svg" />
+<meta property="twitter:title" content="Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"PyShine"},"dateModified":"2026-11-10T00:00:00+00:00","datePublished":"2026-11-10T00:00:00+00:00","description":"A verified source tour of the golang/go runtime showing how the G/M/P scheduler, channel blocking, tricolor garbage collector, and per-P memory allocator execute every goroutine you spawn.","headline":"Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code","image":"https://pyshine.com/assets/img/diagrams/go/golang-go-overview-architecture.svg","mainEntityOfPage":{"@type":"WebPage","@id":"https://pyshine.com/go/"},"name":"{{ page.title escape }}","url":"https://pyshine.com/go/"}</script>
+<!-- End Jekyll SEO tag -->
+  <!-- This will generate canonical link automatically -->
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="post">
+  <meta property="og:url" content="https://pyshine.com/go/">
+  <meta property="og:title" content="Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code">
+  <meta property="og:description" content="A verified source tour of the golang/go runtime showing how the G/M/P scheduler, channel blocking, tricolor garbage collector, and per-P memory allocator exe...">
+  <meta property="og:image" content="https://pyshine.com/assets/img/diagrams/go/golang-go-overview-architecture.svg">
+  <meta property="og:site_name" content="PyShine">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://pyshine.com/go/">
+  <meta name="twitter:title" content="Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code">
+  <meta name="twitter:description" content="A verified source tour of the golang/go runtime showing how the G/M/P scheduler, channel blocking, tricolor garbage collector, and per-P memory allocator exe...">
+  <meta name="twitter:image" content="https://pyshine.com/assets/img/diagrams/go/golang-go-overview-architecture.svg">
+
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="Im0K82YsmEDy08+6wyUIZA" async></script>
+
+  <!-- Favicon & App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icons/apple-touch-icon.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png?v=qA3OXqyw77">
+  <link rel="manifest" href="/assets/img/icons/manifest.json?v=qA3OXqyw77">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+
+  <!-- App & Theme Info -->
+  <meta name="apple-mobile-web-app-title" content="Sleek">
+  <meta name="application-name" content="Sleek">
+  <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77">
+  <meta name="theme-color" content="#ffffff">
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-TCVFBKF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-TCVFBKF');
+</script>
+
+  
+
+  <!-- Critical CSS Inline -->
+  <style class="inlineCSS">
+    /* Critical CSS - inlined by Jekyll at build time */
+    :root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --text-color: #343851;
+  --text-secondary: #5a5f7a;
+  --heading-color: #313237;
+  --link-color: #277cea;
+  --link-hover: #68a4f1;
+  --border-color: #dce6f0;
+  --card-bg: #ffffff;
+  --card-border: #ededed;
+  --code-bg: #f6f8fa;
+  --code-text: #25292e;
+  --header-bg: #ffffff;
+  --header-text: #000000;
+  --header-shadow: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #dbdbdb;
+  --input-text: #343851;
+  --button-bg: #222325;
+  --button-text: #ffffff;
+  --success-color: #8fd896;
+  --error-color: #ff6161;
+  --table-header-bg: #f5f5f5;
+  --table-row-hover: #f9f9f9;
+  --blockquote-bg: #f5f5f5;
+  --blockquote-border: #277cea;
+  --pre-bg: #f6f8fa;
+  --hr-color: #dce6f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --hero-bg: #dde5ea;
+  --hero-overlay: rgba(52, 56, 81, 0.8);
+  /* Syntax highlighting colors - VSCode Light+ theme */
+  --syntax-bg: #ffffff;
+  --syntax-text: #383a42;
+  --syntax-comment: #a0a1a7;
+  --syntax-keyword: #e45649;
+  --syntax-string: #50a14f;
+  --syntax-function: #4078f2;
+  --syntax-number: #986801;
+  --syntax-type: #c18401;
+  --syntax-operator: #0184bc;
+  --syntax-punctuation: #383a42;
+  --syntax-variable: #e06c75;
+  --syntax-constant: #986801;
+  --syntax-class: #c18401;
+  --syntax-regex: #50a14f;
+  --syntax-error: #e45649;
+  --syntax-warning: #c18401;
+  --syntax-diff-add: #50a14f;
+  --syntax-diff-del: #e45649;
+  --syntax-diff-add-bg: #e6ffed;
+  --syntax-diff-del-bg: #ffebe9;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.1);
+  /* Copy button colors - light theme */
+  --copy-btn-bg-start: #4facfe;
+  --copy-btn-bg-end: #00f2fe;
+  --copy-btn-border: #4facfe;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --copy-btn-hover-bg-start: #00f2fe;
+  --copy-btn-hover-bg-end: #4facfe;
+  --copy-btn-hover-border: #00f2fe;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --text-color: #ffffff;
+  --text-secondary: #8b949e;
+  --heading-color: #ffffff;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --border-color: #30363d;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --code-bg: #161b22;
+  --code-text: #ffffff;
+  --header-bg: #0d1117;
+  --header-text: #e6e6e6;
+  --header-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #0d1117;
+  --input-border: #30363d;
+  --input-text: #ffffff;
+  --button-bg: #21262d;
+  --button-text: #ffffff;
+  --success-color: #3fb950;
+  --error-color: #f85149;
+  --table-header-bg: #161b22;
+  --table-row-hover: #21262d;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #58a6ff;
+  --pre-bg: #161b22;
+  --hr-color: #30363d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hero-bg: #161b22;
+  --hero-overlay: rgba(13, 17, 23, 0.85);
+  /* Syntax highlighting colors - Night Owl theme */
+  --syntax-bg: #011627;
+  --syntax-text: #d6deeb;
+  --syntax-comment: #637777;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-function: #82aaff;
+  --syntax-number: #f78c6c;
+  --syntax-type: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-punctuation: #89ddff;
+  --syntax-variable: #f78c6c;
+  --syntax-constant: #f78c6c;
+  --syntax-class: #ffcb6b;
+  --syntax-regex: #c3e88d;
+  --syntax-error: #c792ea;
+  --syntax-warning: #ffcb6b;
+  --syntax-diff-add: #c3e88d;
+  --syntax-diff-del: #c792ea;
+  --syntax-diff-add-bg: #1e3a1e;
+  --syntax-diff-del-bg: #3a1e1e;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.05);
+  /* Copy button colors - dark theme */
+  --copy-btn-bg-start: #1f6feb;
+  --copy-btn-bg-end: #388bfd;
+  --copy-btn-border: #1f6feb;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --copy-btn-hover-bg-start: #388bfd;
+  --copy-btn-hover-bg-end: #1f6feb;
+  --copy-btn-hover-border: #58a6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] body {
+  background-color: #0d1117;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] a {
+  color: #58a6ff;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .post-content p,
+[data-theme="dark"] .post-content li,
+[data-theme="dark"] .post-content td,
+[data-theme="dark"] .post-content th,
+[data-theme="dark"] .post-content figure {
+  color: #ffffff !important;
+}
+
+/* Dark theme table styles */
+[data-theme="dark"] .post-content table {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table thead,
+[data-theme="dark"] .post-content table th {
+  background-color: #21262d;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table td {
+  background-color: #0d1117;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table tr:hover td {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .post-content code:not(.highlight code) {
+  color: #ffffff !important;
+  background-color: #30363d;
+}
+
+/* Ensure syntax tokens inside code blocks have no individual background */
+[data-theme="dark"] .highlight code,
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight span {
+  background-color: transparent;
+}
+
+/* Ensure syntax text color is applied in dark theme */
+[data-theme="dark"] .highlight {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight code {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .site {
+  background-color: #0d1117;
+}
+
+[data-theme="dark"] .blog {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-card {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .footer {
+  background-color: #161b22;
+  color: #8b949e;
+}
+
+/* Header dark theme */
+[data-theme="dark"] .header {
+  background: #0d1117 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__logo {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__logo:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__link,
+[data-theme="dark"] .header__dropdown-toggle {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__toggle span {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .header__links {
+  background: #0d1117;
+}
+
+[data-theme="dark"] .header__dropdown-menu {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__dropdown-item {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__dropdown-item:hover {
+  background: #21262d;
+}
+
+/* YouTube section dark theme */
+[data-theme="dark"] #youtube-video {
+  background: #161b22 !important;
+}
+
+/* Back to top button dark theme */
+[data-theme="dark"] .back-to-top {
+  background: #21262d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .back-to-top:hover {
+  background: #30363d;
+}
+
+/* Related posts dark theme */
+[data-theme="dark"] .related-posts {
+  border-top-color: #30363d;
+}
+
+[data-theme="dark"] .related-post-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .related-posts__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__excerpt {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .related-post-card__date {
+  color: #8b949e;
+}
+
+/* Link preview dark theme */
+[data-theme="dark"] .link-preview-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .link-preview-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .link-preview-description {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .link-preview-domain {
+  color: #8b949e;
+}
+
+/* Code header container for copy button positioning */
+.code-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.code-header .copy-btn {
+  position: relative;
+  z-index: 10;
+}
+
+  </style>
+
+  <!-- Main CSS -->
+  <link rel="preload" href="/assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/css/main.css"></noscript>
+
+  <script type="text/javascript">
+    /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+(function(w){"use strict";if(!w.loadCSS){w.loadCSS=function(){}}
+var rp=loadCSS.relpreload={};rp.support=(function(){var ret;try{ret=w.document.createElement("link").relList.supports("preload")}catch(e){ret=!1}
+return function(){return ret}})();rp.bindMediaToggle=function(link){var finalMedia=link.media||"all";function enableStylesheet(){link.media=finalMedia}
+if(link.addEventListener){link.addEventListener("load",enableStylesheet)}else if(link.attachEvent){link.attachEvent("onload",enableStylesheet)}
+setTimeout(function(){link.rel="stylesheet";link.media="only x"});setTimeout(enableStylesheet,3000)};rp.poly=function(){if(rp.support()){return}
+var links=w.document.getElementsByTagName("link");for(var i=0;i<links.length;i++){var link=links[i];if(link.rel==="preload"&&link.getAttribute("as")==="style"&&!link.getAttribute("data-loadcss")){link.setAttribute("data-loadcss",!0);rp.bindMediaToggle(link)}}};if(!rp.support()){rp.poly();var run=w.setInterval(rp.poly,500);if(w.addEventListener){w.addEventListener("load",function(){rp.poly();w.clearInterval(run)})}else if(w.attachEvent){w.attachEvent("onload",function(){rp.poly();w.clearInterval(run)})}}
+if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}
+else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this))
+
+  </script>
+
+  
+</head>
+
+
+  <!-- Zoomable SVG Viewer CSS -->
+  <link rel="stylesheet" href="/assets/css/svg-viewer.css">
+
+  <body class="site" itemscope itemtype="https://schema.org/WebPage">
+
+    
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCVFBKF"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager -->
+    
+
+    <header class="header"
+  itemscope
+  itemtype="http://schema.org/SiteNavigationElement"
+  aria-label="Main navigation">
+
+  <div class="container">
+    <div class="header__inner">
+
+      <!-- Logo -->
+      <a class="header__logo" href="/">
+        <div class="header__logo--container">
+          <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve">
+<g>
+	<path d="M18.121,9.88l-7.832-7.836c-0.155-0.158-0.428-0.155-0.584,0L1.842,9.913c-0.262,0.263-0.073,0.705,0.292,0.705h2.069v7.042c0,0.227,0.187,0.414,0.414,0.414h3.725c0.228,0,0.414-0.188,0.414-0.414v-3.313h2.483v3.313c0,0.227,0.187,0.414,0.413,0.414h3.726c0.229,0,0.414-0.188,0.414-0.414v-7.042h2.068h0.004C18.331,10.617,18.389,10.146,18.121,9.88 M14.963,17.245h-2.896v-3.313c0-0.229-0.186-0.415-0.414-0.415H8.342c-0.228,0-0.414,0.187-0.414,0.415v3.313H5.032v-6.628h9.931V17.245z M3.133,9.79l6.864-6.868l6.867,6.868H3.133z"></path>
+
+	
+	
+</g>
+</svg>
+
+        </div>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header__links">
+        <div class="header__links-wrapper">
+
+          
+            
+              <a class="header__link" href="/">
+                Home
+              </a>
+            
+          
+            
+              <a class="header__link" href="/categories">
+                Posts
+              </a>
+            
+          
+            
+              <a class="header__link" href="/all-posts/">
+                All Posts
+              </a>
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Tutorials
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/tutorials/">
+                    🔍 View All Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Rust-in-One-Post-Complete-Tutorial-Ownership-Borrow-Async-Quick-Start/">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-JavaScript-TypeScript-in-One-Post-Complete-Tutorial-Async-Types-Quick-Start/">
+                    JavaScript / TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Java-in-One-Post-Complete-Tutorial-OOP-Streams-Virtual-Threads-JVM-Quick-Start/">
+                    Java
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-CPP-in-One-Post-Complete-Tutorial-Modern-Cpp-Quick-Start/">
+                    C++
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-SQL-in-One-Post-Complete-Tutorial-Joins-Window-Functions-Transactions-Quick-Start/">
+                    SQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">
+                    Docker
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">
+                    Kubernetes
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Git-in-One-Post-Complete-Tutorial-Branches-Rebase-Workflows-Quick-Start/">
+                    Git
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/">
+                    Linux CLI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">
+                    REST API
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-GraphQL-in-One-Post-Complete-Tutorial-Schema-Queries-Mutations-Resolvers-Apollo-Quick-Start/">
+                    GraphQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-React-Next-js-in-One-Post-Complete-Tutorial-Components-Hooks-Server-Components-Quick-Start/">
+                    React / Next.js
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">
+                    FastAPI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">
+                    Deep Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">
+                    System Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Bash-in-One-Post-Complete-Tutorial-Pipelines-Functions-Scripts-Quick-Start/">
+                    Bash
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Regex-in-One-Post-Complete-Tutorial-Anchors-Quantifiers-Lookarounds-Quick-Start/">
+                    Regex
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Terraform-in-One-Post-Complete-Tutorial-HCL-State-Modules-Providers-Quick-Start/">
+                    Terraform
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Redis-in-One-Post-Complete-Tutorial-Data-Structures-Caching-Persistence-Quick-Start/">
+                    Redis
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-PostgreSQL-in-One-Post-Complete-Tutorial-Indexes-MVCC-Performance-Quick-Start/">
+                    PostgreSQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-gRPC-Protobuf-in-One-Post-Complete-Tutorial-Proto-Streaming-Interceptors-Quick-Start/">
+                    gRPC / Protobuf
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-WebSocket-in-One-Post-Complete-Tutorial-Handshake-Frames-Scaling-Quick-Start/">
+                    WebSocket
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Categories
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/">
+                    All Categories
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-developertools">
+                    Developer Tools
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-opensource">
+                    Open Source
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aiagents">
+                    AI Agents
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-python">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-machinelearning">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-typescript">
+                    TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-tutorial">
+                    Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-rust">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aidesign">
+                    AI Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-security">
+                    Security
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-devops">
+                    DevOps
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-go">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-webdevelopment">
+                    Web Development
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Applications
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/m3u8-player.html">
+                    Online M3U8 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/dash-player.html">
+                    Online DASH (MPD) Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/mp4-player.html">
+                    Online MP4 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/solar-map/">
+                    Solar Helper
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Clipboard-App-for-Two-PCs/">
+                    Clipboard App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo_correction">
+                    Online Photo Correction
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo">
+                    Online Passport Photo 20KB
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/finger.html">
+                    Online Fingers Scanner
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/avatars">
+                    Online Make Avatars
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/kanban/debounce.html">
+                    Online Reminder App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/converter.html">
+                    Online Image Resize
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/translator.html">
+                    Online Live Translator
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-sv.html">
+                    Procreate Swatch Viewer
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-bv.html">
+                    Procreate Brush Viewer
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Games
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/games/snake/">
+                    Snake Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/flappy-bird/">
+                    Flappy Bird
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/tetris/">
+                    Tetris
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/memory-match/">
+                    Memory Match
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/pong/">
+                    Pong
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/2048/">
+                    2048
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/battleship/">
+                    Battleship
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/go/">
+                    GO Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/chess/">
+                    Chess Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/copter/">
+                    Copter Game
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+              <a class="header__link" href="/about">
+                About
+              </a>
+            
+          
+            
+              <a class="header__link" href="/contact">
+                Contact
+              </a>
+            
+          
+            
+              <a class="header__link" href="/privacy">
+                Privacy Policy
+              </a>
+            
+          
+            
+              <a class="header__link" href="/disclaimer">
+                Disclaimer
+              </a>
+            
+          
+
+        </div>
+      </nav>
+
+      <!-- Language Switcher -->
+      
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <div class="header__toggle">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </div>
+
+<style>
+/* ==================================================
+   🔒 HEADER — ALWAYS VISIBLE, FULL WIDTH COLOR
+================================================== */
+.header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 10000;
+  background: var(--header-bg, #ffffff) !important;
+  box-shadow: 0 1px 3px var(--header-shadow, rgba(0, 0, 0, 0.1));
+  transform: none !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header__inner{
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body{
+  padding-top: 56px;
+}
+
+/* ===============================
+   NAV BASE
+=============================== */
+.header__links-wrapper{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  flex-wrap:nowrap;
+}
+
+.header__link,
+.header__dropdown-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color: var(--header-text);
+  white-space:nowrap;
+  padding:3px 6px;
+}
+
+/* ===============================
+   DROPDOWN
+=============================== */
+.header__dropdown{
+  position:relative;
+}
+
+.dropdown-arrow{
+  font-size:1em;
+  transition:transform .2s ease;
+}
+
+.header__dropdown:hover .dropdown-arrow{
+  transform:rotate(180deg);
+}
+
+.header__dropdown-menu{
+  position:absolute;
+  top:100%;
+  left:0;
+  min-width:200px;
+  background:var(--card-bg, #ffffff);
+  border:1px solid var(--border-color, #dce6f0);
+  border-radius:8px;
+  padding:4px 0;
+  display:none;
+  z-index:9999;
+  box-shadow:0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.header__dropdown:hover .header__dropdown-menu{
+  display:block;
+}
+
+.header__dropdown-item{
+  display:block;
+  padding:8px 14px;
+  color:var(--text-color, #343851);
+  text-decoration:none;
+  font-size:13px;
+  transition:background-color 0.2s ease;
+}
+
+.header__dropdown-item:hover{
+  background:var(--bg-secondary, #f9f9f9);
+}
+
+/* ===============================
+   MOBILE
+=============================== */
+@media (max-width:768px){
+
+  body{
+    padding-top: 56px;
+  }
+
+  .header__inner{
+    min-height: 56px;
+  }
+
+  .header__links-wrapper{
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+  }
+
+  .header__dropdown-toggle{
+    justify-content:space-between;
+    padding:12px 14px;
+  }
+
+  .header__dropdown-menu{
+    position:static;
+    display:none;
+    background:var(--card-bg, #ffffff);
+    border:none;
+  }
+
+  .header__dropdown:hover .header__dropdown-menu{
+    display:block;
+  }
+
+  .header__dropdown-item{
+    padding:12px 18px;
+    background:var(--card-bg, #ffffff);
+    border-top:1px solid var(--border-color, #dce6f0);
+    font-size:14px;
+  }
+}
+
+/* ===============================
+   LANGUAGE SWITCHER
+=============================== */
+.header__lang-switcher{
+  display:inline-flex;
+  gap:.4rem;
+  align-items:center;
+  font-size:1.1rem;
+  margin-left:0.5rem;
+}
+.lang-flag.active{ text-decoration:underline }
+.lang-flag.disabled{ opacity:.5; filter:grayscale(100%) }
+
+/* ===============================
+   THEME TOGGLE BUTTON
+=============================== */
+.theme-toggle {
+  background: rgba(79, 172, 254, 0.15);
+  border: 2px solid #4facfe;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-left: 0.5rem;
+  color: #4facfe;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.3);
+  border-color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(79, 172, 254, 0.2);
+  border: 2px solid #6fc3ff;
+  color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.35);
+  border-color: #8fd4ff;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+</style>
+
+<script>
+(function() {
+  /* Theme toggle - use addEventListener only, no onclick */
+  var themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+  
+  /* Dropdown functionality for mobile */
+  var dropdowns = document.querySelectorAll('.header__dropdown');
+  
+  dropdowns.forEach(function(dropdown) {
+    var toggle = dropdown.querySelector('.header__dropdown-toggle');
+    var menu = dropdown.querySelector('.header__dropdown-menu');
+    
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          var isOpen = menu.style.display === 'block';
+          document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+          menu.style.display = isOpen ? 'none' : 'block';
+          var arrow = toggle.querySelector('.dropdown-arrow');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && !e.target.closest('.header__dropdown')) {
+      document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.querySelectorAll('.dropdown-arrow').forEach(function(a) { a.style.transform = ''; });
+    }
+  });
+})();
+</script>
+</header>
+
+
+    
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code">
+    
+        <div class="hero__wrap">
+
+          
+            <div class="hero__categories">
+              
+                <a class="label"
+                   href="/categories/#AI Inference"
+                   aria-label="Category: AI Inference">
+                   AI Inference
+                </a>
+                
+              
+            </div>
+          
+
+          <h1 class="hero__title" itemprop="headline">Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code</h1>
+
+          <p class="hero__meta">
+            <time datetime="2026-11-10T00:00:00+00:00" itemprop="datePublished">
+              10 Nov 2026
+            </time>
+            &nbsp;·&nbsp;
+            
+            <span itemprop="timeRequired">
+              
+                12 mins read
+              
+            </span>
+          </p>
+        </div>
+      </div>
+
+    <main class="site__content" role="main">
+
+      <div class="container post-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="post-toc" id="post-toc">
+          <h3 class="no-toc">Contents</h3>
+          <nav id="toc-list"></nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <article class="post-content"
+                 itemprop="articleBody"
+                 itemscope itemtype="https://schema.org/Article">
+
+          <p>Every Go developer has felt the gap. You write <code class="language-plaintext highlighter-rouge">go handler(conn)</code> and the function starts running on a stack measured in kilobytes — tens of thousands of them per process, on the same machine where a Python program threads awkwardly around the GIL. In <a href="/cpython/">CPython</a>, a thread is an OS thread with a lock around bytecode execution; in Go, concurrency is a runtime-internal illusion layered on top of a small number of real threads. That gap is not magic. It is roughly eight thousand lines of exacting Go code in <code class="language-plaintext highlighter-rouge">src/runtime/proc.go</code>, and understanding it changes how you write servers — the same discipline that powers <a href="/gin/">gin</a>, <a href="/etcd/">etcd</a>, and <a href="/kubernetes/">kubernetes</a>.</p>
+
+<p>The pain shows up in production telemetry. Why does p99 latency jump right when a channel’s buffer fills and senders start parking? Why does the GC steal CPU from your hot handler even though the world is never fully stopped? Why does a goroutine blocked on a socket cost nothing, while one spinning in a tight loop is preempted exactly 10 milliseconds later? Each question has a precise answer in the runtime source — the scheduler’s spinning-thread protocol, the GC pacer’s assist mechanism, and one constant called <code class="language-plaintext highlighter-rouge">forcePreemptNS</code>.</p>
+
+<p>This post tours the actual implementation. The target is the <strong>golang/go</strong> repository on GitHub, <strong>branch <code class="language-plaintext highlighter-rouge">master</code></strong>, and every symbol, file, and line number cited below was grepped and verified against a real checkout of that tree — no invented identifiers, no stale blog-lore. Two diagrams map the territory: an overview of the execution path from <code class="language-plaintext highlighter-rouge">go build</code> to a running goroutine, and a detailed graph of the scheduler, channel, allocator, GC, netpoller, and stack machinery.</p>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/go/golang-go-overview-architecture.svg" alt="Go runtime overview: compiler toolchain, runtime.main entry, G/M/P scheduler, channels, allocator, and GC cycle" style="min-width:900px;width:100%;max-width:1100px;" loading="lazy" /></div>
+
+<p><em>Overview of the Go execution path: the toolchain produces a binary whose entry point is the runtime, the runtime boots the G/M/P scheduler, and channel, allocation, and GC operations all funnel back into the same scheduling loop.</em></p>
+
+<p>Reading the overview from left to right:</p>
+
+<ul>
+  <li><strong>The binary starts in the runtime, not your code.</strong> <a href="https://github.com/golang/go/blob/master/src/cmd/go/internal/work/build.go#L29"><code class="language-plaintext highlighter-rouge">CmdBuild</code>, L29</a> drives the build, but the linked executable’s real entry point is <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L152"><code class="language-plaintext highlighter-rouge">runtime.main</code>, L152</a>, which first runs <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L843"><code class="language-plaintext highlighter-rouge">schedinit</code>, L843</a> to bootstrap the allocator, GC, and the array of Ps.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">go</code> statements are allocations, not syscalls.</strong> <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L5341"><code class="language-plaintext highlighter-rouge">newproc</code>, L5341</a> creates a new <code class="language-plaintext highlighter-rouge">g</code> via <code class="language-plaintext highlighter-rouge">newproc1</code> and hands it to <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L7550"><code class="language-plaintext highlighter-rouge">runqput</code>, L7550</a>, which fills the P’s <code class="language-plaintext highlighter-rouge">runnext</code> slot; <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L7596"><code class="language-plaintext highlighter-rouge">runqputslow</code>, L7596</a> spills half the queue to the global one only when the 256-slot ring overflows.</li>
+  <li><strong>Scheduling is P-first, then global, then theft.</strong> <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L4157"><code class="language-plaintext highlighter-rouge">schedule</code>, L4157</a> calls <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L3409"><code class="language-plaintext highlighter-rouge">findRunnable</code>, L3409</a>, which tries the local queue, the global run queue via <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L7353"><code class="language-plaintext highlighter-rouge">globrunqget</code>, L7353</a>, GC mark workers, and finally <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L3848"><code class="language-plaintext highlighter-rouge">stealWork</code>, L3848</a> — stealing half a victim P’s queue in one batch with <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L7734"><code class="language-plaintext highlighter-rouge">runqgrab</code>, L7734</a>.</li>
+  <li><strong>Blocking never blocks the thread.</strong> <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L168"><code class="language-plaintext highlighter-rouge">chansend</code>, L168</a> hands its value straight to a parked receiver or buffers it; on a full buffer it enqueues a <code class="language-plaintext highlighter-rouge">sudog</code> and calls <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L456"><code class="language-plaintext highlighter-rouge">gopark</code>, L456</a>, and the same thread is instantly back in <code class="language-plaintext highlighter-rouge">schedule</code> looking for other work.</li>
+  <li><strong>Allocation is almost lock-free.</strong> <a href="https://github.com/golang/go/blob/master/src/runtime/malloc.go#L1016"><code class="language-plaintext highlighter-rouge">mallocgc</code>, L1016</a> serves small objects from a per-P <code class="language-plaintext highlighter-rouge">mcache</code>; <a href="https://github.com/golang/go/blob/master/src/runtime/mcache.go#L160"><code class="language-plaintext highlighter-rouge">mcache.refill</code>, L160</a> pulls a fresh span from the <a href="https://github.com/golang/go/blob/master/src/runtime/mheap.go#L211"><code class="language-plaintext highlighter-rouge">mheap.central</code>, L211</a> lists only when the local span is exhausted.</li>
+  <li><strong>The GC rides the scheduler instead of pausing it.</strong> <a href="https://github.com/golang/go/blob/master/src/runtime/mgc.go#L733"><code class="language-plaintext highlighter-rouge">gcStart</code>, L733</a> flips the heap into <code class="language-plaintext highlighter-rouge">_GCmark</code> and enables the write barrier; <a href="https://github.com/golang/go/blob/master/src/runtime/mgc.go#L1766"><code class="language-plaintext highlighter-rouge">gcBgMarkWorker</code>, L1766</a> goroutines are handed to Ps by <code class="language-plaintext highlighter-rouge">findRunnableGCWorker</code>, so marking competes fairly with user goroutines rather than monopolizing cores.</li>
+  <li><strong>Wakeups converge on the same queues.</strong> <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L492"><code class="language-plaintext highlighter-rouge">goready</code>, L492</a> (backed by <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L1122"><code class="language-plaintext highlighter-rouge">ready</code>, L1122</a>) is the single re-entry point: a finished syscall, a ready socket, or a completed channel send all end with a G dropped onto some P’s run queue.</li>
+</ul>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/go/golang-go-architecture.svg" alt="Go runtime detail graph: G/M/P scheduler path, hchan channel operations, tricolor GC workers, mcache/mcentral/mheap allocator, netpoller, stack growth" style="min-width:900px;width:100%;max-width:1100px;" loading="lazy" /></div>
+
+<p><em>The detailed graph follows one coherent execution path — spawn, schedule, block on a channel, allocate, trigger GC, and wake through the netpoller — with every node pinned to a verified line in the master tree.</em></p>
+
+<h2 id="goroutines-are-not-threads-the-gmp-machine">Goroutines Are Not Threads: The G/M/P Machine</h2>
+
+<p>Three structs carry the whole design. <a href="https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L471"><code class="language-plaintext highlighter-rouge">g</code>, L471</a> is a goroutine: stack bounds, a status field cycling through runnable, running, and waiting, and a saved register buffer. <a href="https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L615"><code class="language-plaintext highlighter-rouge">m</code>, L615</a> is an OS thread with its own <code class="language-plaintext highlighter-rouge">g0</code> scheduling stack. <a href="https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L774"><code class="language-plaintext highlighter-rouge">p</code>, L774</a> is the crucial middle layer — a scheduler context owning a local run queue, an <code class="language-plaintext highlighter-rouge">mcache</code>, and timers. An M must hold a P to execute Go code; work therefore lands on a P first, and only contention pushes it global, onto <a href="https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L936"><code class="language-plaintext highlighter-rouge">schedt</code>, L936</a>.</p>
+
+<p>The fairness machinery lives outside the scheduler loop entirely. <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L6550"><code class="language-plaintext highlighter-rouge">sysmon</code>, L6550</a> is a thread that runs <em>without</em> a P, waking between 20 microseconds and 10 milliseconds; its <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L6694"><code class="language-plaintext highlighter-rouge">retake</code>, L6694</a> pass does two jobs. If an M has been stuck in a syscall past a sysmon tick, the P is handed off via <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L3141"><code class="language-plaintext highlighter-rouge">handoffp</code>, L3141</a> to a fresh thread. If a goroutine has occupied the same P past <code class="language-plaintext highlighter-rouge">forcePreemptNS</code> — a 10-millisecond constant defined at <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L6692"><code class="language-plaintext highlighter-rouge">proc.go</code>, L6692</a> — <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L6930"><code class="language-plaintext highlighter-rouge">preemptone</code>, L6930</a> forces it out, which is why an untight loop can never starve its siblings. When a goroutine finally returns, <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L4513"><code class="language-plaintext highlighter-rouge">goexit0</code>, L4513</a> resets it to <code class="language-plaintext highlighter-rouge">_Gdead</code> and returns the thread to <code class="language-plaintext highlighter-rouge">schedule</code>; spawning an M (<code class="language-plaintext highlighter-rouge">newm</code>, <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L2870"><code class="language-plaintext highlighter-rouge">proc.go</code>, L2870</a>) happens only when idle Ps actually need threads.</p>
+
+<h2 id="when-a-channel-blocks-sudog-sendq-and-gopark">When a Channel Blocks: sudog, sendq, and gopark</h2>
+
+<p>A channel is a small struct, not a queue library. <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L34"><code class="language-plaintext highlighter-rouge">hchan</code>, L34</a> holds a circular buffer with send and receive indexes, two waiter lists, and — remarkably — a single lock. The send path in <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L168"><code class="language-plaintext highlighter-rouge">chansend</code>, L168</a> has three outcomes. First, if a receiver is already parked on <code class="language-plaintext highlighter-rouge">recvq</code>, <code class="language-plaintext highlighter-rouge">send</code> (<a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L310"><code class="language-plaintext highlighter-rouge">chan.go</code>, L310</a>) copies the value directly into the receiver’s stack slot and marks it runnable — the buffered channel memory is bypassed entirely. Second, if buffer space exists, the value lands at <code class="language-plaintext highlighter-rouge">sendx</code> and the lock is released; the whole fast path costs one mutex acquire.</p>
+
+<p>Only the third outcome blocks, and it does so without blocking the thread. The sender allocates a <a href="https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L404"><code class="language-plaintext highlighter-rouge">sudog</code>, L404</a> — the runtime’s record of “one goroutine waiting on one channel” — via <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L499"><code class="language-plaintext highlighter-rouge">acquireSudog</code>, L499</a>, enqueues it on <code class="language-plaintext highlighter-rouge">sendq</code> at <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L265"><code class="language-plaintext highlighter-rouge">chan.go</code>, L265</a>, and calls <code class="language-plaintext highlighter-rouge">gopark</code>. The M is immediately free; when a receiver or <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L406"><code class="language-plaintext highlighter-rouge">closechan</code>, L406</a> completes the operation, the parked G re-enters the normal queues. The mirror image lives in <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L516"><code class="language-plaintext highlighter-rouge">chanrecv</code>, L516</a>, where a waiting sender’s value is stolen via <code class="language-plaintext highlighter-rouge">sendDirect</code> (<a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L384"><code class="language-plaintext highlighter-rouge">chan.go</code>, L384</a>). One subtlety: <code class="language-plaintext highlighter-rouge">parkingOnChan</code> and <a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#L741"><code class="language-plaintext highlighter-rouge">chanparkcommit</code>, L741</a> exist so the stack-shrink machinery never moves a stack out from under a parked sudog.</p>
+
+<h2 id="the-allocator-and-the-stacks-beneath-it">The Allocator and the Stacks Beneath It</h2>
+
+<p><code class="language-plaintext highlighter-rouge">mallocgc</code> is a size dispatcher. Tiny no-scan objects under 16 bytes go to <a href="https://github.com/golang/go/blob/master/src/runtime/malloc.go#L1153"><code class="language-plaintext highlighter-rouge">mallocgcTiny</code>, L1153</a>, which packs several small strings into one 8-byte block; medium objects split between <a href="https://github.com/golang/go/blob/master/src/runtime/malloc.go#L1309"><code class="language-plaintext highlighter-rouge">mallocgcSmallNoscan</code>, L1309</a> and two scan-aware paths; anything large goes straight to <a href="https://github.com/golang/go/blob/master/src/runtime/malloc.go#L1638"><code class="language-plaintext highlighter-rouge">mallocgcLarge</code>, L1638</a> and the heap. The per-P <code class="language-plaintext highlighter-rouge">mcache</code> (<a href="https://github.com/golang/go/blob/master/src/runtime/mcache.go#L48"><code class="language-plaintext highlighter-rouge">mcache.go</code>, L48</a>) caches exactly one span per size class, and the class count is <code class="language-plaintext highlighter-rouge">NumSizeClasses &lt;&lt; 1</code> — scan and no-scan variants (<a href="https://github.com/golang/go/blob/master/src/runtime/mheap.go#L576"><code class="language-plaintext highlighter-rouge">mheap.go</code>, L576</a>). That is why allocation on a busy multi-core server rarely touches a shared lock: the P-local span absorbs it.</p>
+
+<p>Goroutine stacks follow the same “pay for what you use” philosophy. A new G starts on a small stack from <a href="https://github.com/golang/go/blob/master/src/runtime/stack.go#L344"><code class="language-plaintext highlighter-rouge">stackalloc</code>, L344</a>; on overflow, <a href="https://github.com/golang/go/blob/master/src/runtime/stack.go#L1067"><code class="language-plaintext highlighter-rouge">newstack</code>, L1067</a> allocates a doubled stack and <a href="https://github.com/golang/go/blob/master/src/runtime/stack.go#L701"><code class="language-plaintext highlighter-rouge">adjustframe</code>, L701</a> rewrites every pointer in every frame during the copy. Oversized stacks are reclaimed at GC time by <a href="https://github.com/golang/go/blob/master/src/runtime/stack.go#L1298"><code class="language-plaintext highlighter-rouge">shrinkstack</code>, L1298</a>. This is why deeply recursive code can be as cheap in Go as iterative code — the runtime quietly moves your stack between the OS pages.</p>
+
+<h2 id="the-tricolor-gc-and-your-p99">The Tricolor GC and Your p99</h2>
+
+<p>The collector is concurrent, tricolor mark-sweep with a hybrid write barrier. <a href="https://github.com/golang/go/blob/master/src/runtime/mgc.go#L733"><code class="language-plaintext highlighter-rouge">gcStart</code>, L733</a> begins with a very short stop-the-world window that only switches the phase to <code class="language-plaintext highlighter-rouge">_GCmark</code> and enables the write barrier (<a href="https://github.com/golang/go/blob/master/src/runtime/mgc.go#L259"><code class="language-plaintext highlighter-rouge">mgc.go</code>, L259</a>); application goroutines resume immediately after. Marking itself is spread across per-P workers: <a href="https://github.com/golang/go/blob/master/src/runtime/mgc.go#L1766"><code class="language-plaintext highlighter-rouge">gcBgMarkWorker</code>, L1766</a> loops forever, and the scheduler hands workers out through <code class="language-plaintext highlighter-rouge">findRunnableGCWorker</code> (<a href="https://github.com/golang/go/blob/master/src/runtime/mgcpacer.go#L859"><code class="language-plaintext highlighter-rouge">mgcpacer.go</code>, L859</a>) — GC work literally competes with your goroutines inside <code class="language-plaintext highlighter-rouge">findRunnable</code>, which is the design’s central trick.</p>
+
+<p>The actual marking is a work-stealing traversal. <a href="https://github.com/golang/go/blob/master/src/runtime/mgcmark.go#L1253"><code class="language-plaintext highlighter-rouge">gcDrain</code>, L1253</a> pulls grey objects from a local <code class="language-plaintext highlighter-rouge">gcWork</code> buffer; <a href="https://github.com/golang/go/blob/master/src/runtime/mgcmark.go#L221"><code class="language-plaintext highlighter-rouge">markroot</code>, L221</a> scans globals and every goroutine stack (<a href="https://github.com/golang/go/blob/master/src/runtime/mgcmark.go#L904"><code class="language-plaintext highlighter-rouge">scanstack</code>, L904</a>); <a href="https://github.com/golang/go/blob/master/src/runtime/mgcmark.go#L1493"><code class="language-plaintext highlighter-rouge">scanblock</code>, L1493</a> follows pointers and <a href="https://github.com/golang/go/blob/master/src/runtime/mgcmark.go#L1653"><code class="language-plaintext highlighter-rouge">greyobject</code>, L1653</a> shades discovered objects. If allocation outpaces the background workers, the mutator pays: <a href="https://github.com/golang/go/blob/master/src/runtime/mgcmark.go#L499"><code class="language-plaintext highlighter-rouge">gcAssistAlloc</code>, L499</a> makes the allocating goroutine do scan work proportional to the bytes it allocated. That assist — not a monolithic pause — is what produces those small p99 wobbles under allocation pressure, and it is why the pacer’s heap goal (<a href="https://github.com/golang/go/blob/master/src/runtime/mgcpacer.go#L149"><code class="language-plaintext highlighter-rouge">gcPercentHeapGoal</code>, L149</a>) matters for latency tuning. <a href="https://github.com/golang/go/blob/master/src/runtime/mgc.go#L997"><code class="language-plaintext highlighter-rouge">gcMarkDone</code>, L997</a> closes the mark phase, and <a href="https://github.com/golang/go/blob/master/src/runtime/mgcsweep.go#L285"><code class="language-plaintext highlighter-rouge">bgsweep</code>, L285</a> reclaims spans lazily in the background. Note also that <a href="https://github.com/golang/go/blob/master/src/runtime/proc.go#L6540"><code class="language-plaintext highlighter-rouge">forcegcperiod</code>, L6540</a> forces a cycle every two minutes even if the heap goal is never reached — a quiet source of periodic latency in allocation-light services.</p>
+
+<h2 id="from-install-to-your-first-model">From Install to Your First Model</h2>
+
+<p>The repository’s own README keeps it simple: official binary distributions are available at <code class="language-plaintext highlighter-rouge">go.dev/dl/</code>, with installation instructions linked from the docs, and for unsupported platform combinations the source-install instructions live at <code class="language-plaintext highlighter-rouge">go.dev/doc/install/source</code>. The canonical Git repository is hosted at <code class="language-plaintext highlighter-rouge">go.googlesource.com/go</code>, with <code class="language-plaintext highlighter-rouge">github.com/golang/go</code> acting as the read-only mirror this tour used. The Go source is distributed under a BSD-style license found in the repo’s LICENSE file.</p>
+
+<p>From source to a running program, the toolchain is entirely self-hosted. The <code class="language-plaintext highlighter-rouge">go</code> command’s build path is implemented in <code class="language-plaintext highlighter-rouge">src/cmd/go/internal/work</code> — <a href="https://github.com/golang/go/blob/master/src/cmd/go/internal/work/build.go#L29"><code class="language-plaintext highlighter-rouge">CmdBuild</code>, L29</a> with <code class="language-plaintext highlighter-rouge">runBuild</code> at <a href="https://github.com/golang/go/blob/master/src/cmd/go/internal/work/build.go#L465">L465</a> — and each package is compiled by <code class="language-plaintext highlighter-rouge">cmd/compile</code>, whose <a href="https://github.com/golang/go/blob/master/src/cmd/compile/internal/gc/main.go#L67"><code class="language-plaintext highlighter-rouge">Main</code>, L67</a> wires inlining and escape analysis before the SSA backend takes over at <a href="https://github.com/golang/go/blob/master/src/cmd/compile/internal/ssagen/ssa.go#L302"><code class="language-plaintext highlighter-rouge">buildssa</code>, L302</a>. The SSA pass table, from initial deadcode elimination through <code class="language-plaintext highlighter-rouge">lower</code> to <code class="language-plaintext highlighter-rouge">lowered cse</code>, is declared in <a href="https://github.com/golang/go/blob/master/src/cmd/compile/internal/ssacompile/compile.go#L414"><code class="language-plaintext highlighter-rouge">compile.go</code>, L414</a>. The mental model to carry into your first concurrent program: the compiler emits the code, but the runtime you now understand decides when, where, and on which stack it runs.</p>
+
+<h2 id="honest-limits">Honest Limits</h2>
+
+<p>This tour is deliberately narrow. The scheduler code shown here is the mainstream path in <code class="language-plaintext highlighter-rouge">proc.go</code>; OS specifics leak through — extra stack headroom is added only on Windows and Plan 9 (<a href="https://github.com/golang/go/blob/master/src/runtime/stack.go#L75"><code class="language-plaintext highlighter-rouge">stack.go</code>, L75</a>). The netpoller’s actual event loop is implemented per OS — epoll, kqueue, IOCP — outside the generic <a href="https://github.com/golang/go/blob/master/src/runtime/netpoll.go"><code class="language-plaintext highlighter-rouge">netpoll.go</code></a> we touched, so its internals deserve a separate tour. Line numbers are pinned to the <code class="language-plaintext highlighter-rouge">master</code> tree as of this writing and will drift; the symbols, not the numbers, are the durable knowledge. And whole subsystems remain unopened: timer heaps (<code class="language-plaintext highlighter-rouge">checkTimers</code>), cgo transitions, the trace reader, and the pacer’s control theory in <code class="language-plaintext highlighter-rouge">mgcpacer.go</code>.</p>
+
+<script type="application/ld+json">
+{
+"@context": "https://schema.org",
+"@type": "TechArticle",
+"headline": "Inside the Go Runtime: How G/M/P, Channels, and the Tricolor GC Actually Run Your Code",
+"description": "A verified source tour of the golang/go runtime showing how the G/M/P scheduler, channel blocking, tricolor garbage collector, and per-P memory allocator execute every goroutine you spawn.",
+"datePublished": "2026-11-10",
+"dateModified": "2026-11-10",
+"author": {"@type": "Person", "name": "PyShine"},
+"publisher": {"@type": "Organization", "name": "PyShine"},
+"keywords": "Go runtime, goroutine scheduler, GMP model, channel operations, tricolor mark sweep, Go garbage collector, memory allocator, netpoller, stack growth, Go compiler",
+"image": "https://pyshine.com/assets/img/diagrams/go/golang-go-overview-architecture.svg",
+"mainEntityOfPage": "https://pyshine.com/go/",
+"codeRepository": "https://github.com/golang/go",
+"programmingLanguage": "Go"
+}
+</script>
+
+
+
+          <!-- Follow.it CTA -->
+          <section class="follow-cta" aria-label="Follow for updates">
+  <div class="follow-cta-content">
+    <img src="/assets/img/formit.png" alt="Follow.it" class="follow-cta-icon">
+    <p class="follow-cta-text">
+      Enjoyed this post? <a href="https://follow.it/pyshine?leanpub" target="_blank" rel="noopener noreferrer">Never miss out on future posts by following us</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .follow-cta {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--bg-color, #f8f9fa);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .follow-cta:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .follow-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .follow-cta-icon {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  
+  .follow-cta-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
+  
+  .follow-cta-text a {
+    color: var(--link-color, #0066cc);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .follow-cta-text a:hover {
+    color: var(--link-hover-color, #004499);
+    text-decoration: none;
+  }
+  
+  @media (max-width: 480px) {
+    .follow-cta {
+      padding: 1.25rem;
+    }
+    
+    .follow-cta-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .follow-cta-icon {
+      width: 100px;
+      height: auto;
+    }
+    
+    .follow-cta-text {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Dark theme support */
+  [data-theme="dark"] .follow-cta,
+  body.dark-theme .follow-cta {
+    background: var(--bg-color, #1e1e1e);
+    border-color: var(--border-color, #333);
+  }
+  
+  [data-theme="dark"] .follow-cta-text,
+  body.dark-theme .follow-cta-text {
+    color: var(--text-color, #e0e0e0);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a,
+  body.dark-theme .follow-cta-text a {
+    color: var(--link-color, #66b3ff);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a:hover,
+  body.dark-theme .follow-cta-text a:hover {
+    color: var(--link-hover-color, #99ccff);
+  }
+</style>
+
+          <!-- Syntax Highlighting -->
+          <link href="/assets/css/syntax.css" rel="stylesheet">
+          <script src="/assets/scripts/copyCode.js" async></script>
+
+          <!-- Ads -->
+          <section aria-label="Advertisements" class="ads mt-4">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+                    crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2976211678184829"
+                 data-ad-slot="7658460605"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </section>
+
+        </article>
+
+      </div>
+
+      <!-- Post Navigation -->
+      <nav class="post-navigation controls__inner mt-5" aria-label="Post navigation">
+        <div class="controls__item prev">
+          
+            <span>Previous</span>
+            <a href="/deno/" rel="prev">
+              Inside Deno: How a Rust Core Hosts V8...
+            </a>
+          
+        </div>
+
+        <div class="controls__item next">
+          
+            <span>Next</span>
+            <a href="/node/" rel="next">
+              How Node.js Actually Runs Your Code: ...
+            </a>
+          
+        </div>
+      </nav>
+
+      <!-- Related Posts -->
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        <section class="related-posts mt-5" aria-label="Related Posts">
+          <div class="container">
+            <h2 class="related-posts__title">Related Posts</h2>
+            <div class="related-posts__grid">
+              
+                <a class="related-post-card" href="/bun/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/bun/oven-sh-bun-overview-architecture.svg"
+                           alt="Inside Bun's Runtime: How One Binary Turns Your TypeScript into Running Code"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside Bun's Runtime: How One Binary Turns Your TypeScrip...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        You run bun run index.tsx and a file full of TypeScript annotations just executes —...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 10, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/cpython/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/cpython/python-cpython-overview-architecture.svg"
+                           alt="What Actually Happens When You Run python script.py: A CPython Source Tour"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">What Actually Happens When You Run python script.py: A CP...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Your data-processing loop takes forty seconds while a NumPy rewrite of the same math takes...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 10, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/deno/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/deno/denoland-deno-overview-architecture.svg"
+                           alt="Inside Deno: How a Rust Core Hosts V8 and Guards Every Op"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside Deno: How a Rust Core Hosts V8 and Guards Every Op</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        You write await fetch("https://api.openai.com/v1/models") in TypeScript and a response comes back. But between that one...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 10, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/node/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/node/nodejs-node-overview-architecture.svg"
+                           alt="How Node.js Actually Runs Your Code: Bootstrap, the Event Loop, and the Thread Pool in the Source"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">How Node.js Actually Runs Your Code: Bootstrap, the Event...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every Node.js developer eventually meets the same wall: one synchronous call — a tight JSON...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 10, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/php-src/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/php-src/php-php-src-overview-architecture.svg"
+                           alt="Inside php-src: How PHP Actually Runs Your Code, from SAPI to the Zend VM"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside php-src: How PHP Actually Runs Your Code, from SAP...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every PHP developer eventually meets the same mystery: you edit a file, refresh, and the...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 10, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/ruby/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/ruby/ruby-ruby-overview-architecture.svg"
+                           alt="Inside ruby/ruby: How YARV Actually Runs Your Code"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside ruby/ruby: How YARV Actually Runs Your Code</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every Rails developer eventually meets the same mystery: the first request after boot is slow,...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 10, 2026
+                    </span>
+                  </div>
+                </a>
+              
+            </div>
+          </div>
+        </section>
+      
+
+    </main>
+
+    <!-- YouTube Video Section -->
+    <section id="youtube-video" style="text-align:center; padding:30px 20px; background:var(--bg-secondary, #f8f8f8);">
+      <div class="container">
+        <div style="margin-top:10px;">
+          <a href="https://www.youtube.com/@pyshine_official/shorts"
+            target="_blank"
+            style="background:#ff0000; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 24 24">
+              <path fill="#FFF" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8z"/>
+              <path fill="#FF0000" d="M9.75 15.02v-6l6 3z"/>
+            </svg>
+            Watch PyShine on YouTube
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+  <div class="container">
+    <div class="footer__links" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+      <a href="/" style="color: #00A8E8; text-decoration: none;">Home</a>
+      <a href="/about/" style="color: #00A8E8; text-decoration: none;">About</a>
+      <a href="/contact/" style="color: #00A8E8; text-decoration: none;">Contact</a>
+      <a href="/games/" style="color: #00A8E8; text-decoration: none;">Games</a>
+      <a href="/solar-map/" style="color: #00A8E8; text-decoration: none;">Solar Map</a>
+      <a href="/Clipboard-App-for-Two-PCs/" style="color: #00A8E8; text-decoration: none;">Clipboard App</a>
+      <a href="/privacy/" style="color: #00A8E8; text-decoration: none;">Privacy</a>
+      <a href="/disclaimer/" style="color: #00A8E8; text-decoration: none;">Disclaimer</a>
+    </div>
+    <nav class="social">
+      
+        <a class="social__link" target="_blank" rel="noopener noreferrer" href="https://github.com/pyshine-labs">
+          <svg class="social__icon" viewBox="0 0 20 20" width="20px" height="20px"><path d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+        </a>
+      
+      
+      
+    </nav>
+    <span>&copy; 2026 PyShine. All rights reserved.</span>
+  </div>
+</footer>
+<script async src="/assets/js/bundle.js"></script>
+
+<script async>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function( registration ) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  }
+</script>
+
+
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Button -->
+    <button id="mobile-toc-btn" class="mobile-toc-btn" aria-label="Table of Contents">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Modal -->
+    <div id="mobile-toc-modal" class="mobile-toc-modal">
+      <div class="mobile-toc-content">
+        <div class="mobile-toc-header">
+          <h3>Contents</h3>
+          <button class="mobile-toc-close" aria-label="Close">&times;</button>
+        </div>
+        <ul id="mobile-toc-list" class="mobile-toc-list"></ul>
+      </div>
+    </div>
+
+    <!-- MathJax -->
+    
+
+
+    <!-- Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+            crossorigin="anonymous"></script>
+
+    <!-- SIDEBAR TOC SCRIPT -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toc = document.getElementById("toc-list");
+      const mobileTocList = document.getElementById("mobile-toc-list");
+      const headings = document.querySelectorAll(
+        ".post-content h2:not(.no-toc), .post-content h3:not(.no-toc)"
+      );
+      if ((!toc && !mobileTocList) || headings.length === 0) return;
+
+      const ul = document.createElement("ul");
+      const mobileUl = document.createElement("ul");
+      mobileUl.className = "mobile-toc-list";
+
+      headings.forEach(h => {
+        const id = h.id || h.textContent.trim().toLowerCase().replace(/\s+/g, "-");
+        h.id = id;
+
+        const li = document.createElement("li");
+        const mobileLi = document.createElement("li");
+        
+        if (h.tagName === "H3") {
+          li.style.marginLeft = "1rem";
+          mobileLi.setAttribute("data-level", "3");
+        }
+
+        li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        mobileLi.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        
+        ul.appendChild(li);
+        mobileUl.appendChild(mobileLi);
+      });
+      
+      if (toc) toc.appendChild(ul);
+      if (mobileTocList) mobileTocList.appendChild(mobileUl);
+
+      /* Scroll-spy: highlight active TOC link as user scrolls */
+      const tocLinks = toc ? toc.querySelectorAll("a") : [];
+      const mobileTocLinks = mobileTocList ? mobileTocList.querySelectorAll("a") : [];
+      /* The scrollable container is the aside (#post-toc), not the nav (#toc-list) */
+      const tocScrollContainer = document.getElementById("post-toc");
+
+      function setActiveLink(headingEl) {
+        const id = headingEl.id;
+        let activeDesktopLink = null;
+        tocLinks.forEach(function(link) {
+          const isActive = link.getAttribute("href") === "#" + id;
+          link.classList.toggle("active", isActive);
+          if (isActive) activeDesktopLink = link;
+        });
+        mobileTocLinks.forEach(function(link) {
+          link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+        });
+        /* Auto-scroll the TOC sidebar to keep the active link visible */
+        if (activeDesktopLink && tocScrollContainer) {
+          const linkRect = activeDesktopLink.getBoundingClientRect();
+          const containerRect = tocScrollContainer.getBoundingClientRect();
+          const margin = 40;
+          if (linkRect.top < containerRect.top + margin) {
+            /* Active link is above the visible area — scroll container up */
+            tocScrollContainer.scrollTop -= (containerRect.top + margin - linkRect.top);
+          } else if (linkRect.bottom > containerRect.bottom - margin) {
+            /* Active link is below the visible area — scroll container down */
+            tocScrollContainer.scrollTop += (linkRect.bottom - (containerRect.bottom - margin));
+          }
+        }
+      }
+
+      if (tocLinks.length > 0 && "IntersectionObserver" in window) {
+        const observerOptions = {
+          rootMargin: "-100px 0px -70% 0px",
+          threshold: 0
+        };
+        const headingObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              setActiveLink(entry.target);
+            }
+          });
+        }, observerOptions);
+        headings.forEach(function(h) {
+          headingObserver.observe(h);
+        });
+      }
+
+      /* Mobile TOC Modal */
+      const mobileTocBtn = document.getElementById("mobile-toc-btn");
+      const mobileTocModal = document.getElementById("mobile-toc-modal");
+      const mobileTocClose = mobileTocModal ? mobileTocModal.querySelector(".mobile-toc-close") : null;
+
+      if (mobileTocBtn && mobileTocModal) {
+        mobileTocBtn.addEventListener("click", function() {
+          mobileTocModal.classList.add("active");
+        });
+
+        if (mobileTocClose) {
+          mobileTocClose.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        }
+
+        mobileTocModal.addEventListener("click", function(e) {
+          if (e.target === mobileTocModal) {
+            mobileTocModal.classList.remove("active");
+          }
+        });
+
+        mobileUl.querySelectorAll("a").forEach(function(link) {
+          link.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        });
+      }
+    });
+    </script>
+
+    <!-- Back to Top Button Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const backToTopButton = document.getElementById("back-to-top");
+      if (!backToTopButton) return;
+
+      /* Show button when scrolled down 300px */
+      window.addEventListener("scroll", function() {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("visible");
+        } else {
+          backToTopButton.classList.remove("visible");
+        }
+      });
+
+      /* Smooth scroll to top when clicked */
+      backToTopButton.addEventListener("click", function() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+    </script>
+
+    <style>
+      /* Center post navigation */
+      .post-navigation.controls__inner {
+        justify-content: center !important;
+        gap: 4rem;
+      }
+      /* Related Posts Styles */
+      .related-posts {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+      }
+      .related-posts .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      .related-posts__title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading-color, #000000);
+        text-align: center;
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .related-post-card {
+        display: block;
+        text-decoration: none;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .related-post-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-4px);
+      }
+      .related-post-card__image {
+        width: 100%;
+        height: 100px;
+        background: var(--bg-secondary, #f5f5f5);
+      }
+      .related-post-card__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .related-post-card__content {
+        padding: 0.75rem;
+      }
+      .related-post-card__title {
+        font-size: 0.95rem;
+        margin: 0 0 0.4rem 0;
+        color: var(--heading-color, #000000);
+        line-height: 1.3;
+        font-weight: 600;
+      }
+      .related-post-card__excerpt {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+      }
+      .related-post-card__date {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #999);
+      }
+      @media (max-width: 992px) {
+        .related-posts__grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .related-posts__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Back to Top Button Styles */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg, #000000);
+        color: var(--button-text, #ffffff);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 9999;
+      }
+      .back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .back-to-top:hover {
+        background: var(--text-color, #333333);
+        box-shadow: 0 6px 16px var(--shadow-color, rgba(0, 0, 0, 0.4));
+        transform: translateY(-2px);
+      }
+      .back-to-top:active {
+        transform: translateY(0);
+      }
+      @media (max-width: 768px) {
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
+      }
+      /* Link Preview Styles */
+      .link-preview-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .link-preview-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
+      }
+      .link-preview-link {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        text-decoration: none;
+        width: 100%;
+      }
+      .link-preview-image {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary, #f5f5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .link-preview-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .link-preview-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--heading-color, #000000);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-domain {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #999999);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .link-preview-domain::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--border-color, #e0e0e0);
+        border-radius: 50%;
+      }
+      @media (max-width: 600px) {
+        .link-preview-card {
+          flex-direction: column;
+        }
+        .link-preview-image {
+          width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <!-- Zoomable SVG Viewer JS -->
+    <script src="/assets/js/svg-viewer.js" defer></script>
+  </body>
+</html>
+
+
