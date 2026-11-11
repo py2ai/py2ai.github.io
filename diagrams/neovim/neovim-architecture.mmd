@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_boot["Bootstrap"]
+  node_nvim_main["main&#40;&#41;<br/>[main.c]"]
+  node_early_init["early_init&#40;&#41;<br/>[main.c]"]
+  node_event_init["event_init&#40;&#41;<br/>[main.c]"]
+  node_main_loop_decl["Loop main_loop<br/>[main.c]"]
+end
+
+subgraph group_loop["Event Loop"]
+  node_loop_init["loop_init&#40;&#41;<br/>[loop.c]"]
+  node_loop_uv_run["loop_uv_run&#40;&#41;<br/>[loop.c]"]
+  node_uv_run["uv_run&#40;&#41;<br/>[loop.c]"]
+  node_loop_poll_events["loop_poll_events&#40;&#41;<br/>[loop.c]"]
+  node_multiqueue_new["multiqueue_new&#40;&#41;<br/>[multiqueue.c]"]
+  node_multiqueue_child["multiqueue_new_child&#40;&#41;<br/>[multiqueue.c]"]
+  node_multiqueue_put_event["multiqueue_put_event&#40;&#41;<br/>[multiqueue.c]"]
+end
+
+subgraph group_rpc["msgpack-RPC"]
+  node_server_init["server_init&#40;&#41;<br/>[server.c]"]
+  node_rpc_start["rpc_start&#40;&#41;<br/>[channel.c]"]
+  node_unpacker["unpacker<br/>[unpacker.c]"]
+  node_packer["packer<br/>[packer.c]"]
+  node_handle_request["handle_request&#40;&#41;<br/>[channel.c]"]
+  node_api_vimscript["nvim_exec2&#40;&#41;<br/>[vimscript.c]"]
+  node_nvim_eval["nvim_eval&#40;&#41;<br/>[vimscript.c]"]
+end
+
+subgraph group_scripting["Scripting Hosts"]
+  node_nlua_exec["nlua_exec&#40;&#41;<br/>[executor.c]"]
+  node_nlua_pcall["nlua_pcall&#40;&#41;<br/>[executor.c]"]
+  node_nlua_call["nlua_call&#40;&#41;<br/>[executor.c]"]
+  node_nlua_in_fast_event["nlua_in_fast_event&#40;&#41;<br/>[executor.c]"]
+  node_nlua_exec_typval_callable["nlua_exec_typval_callable&#40;&#41;<br/>[executor.c]"]
+  node_eval_expr["eval_expr&#40;&#41;<br/>[eval.c]"]
+  node_eval1["eval1&#40;&#41;<br/>[eval.c]"]
+end
+
+subgraph group_data["Editor State"]
+  node_buf_ensure_loaded["buf_ensure_loaded&#40;&#41;<br/>[buffer.c]"]
+  node_open_buffer["open_buffer&#40;&#41;<br/>[buffer.c]"]
+  node_buf_set_lines["nvim_buf_set_lines&#40;&#41;<br/>[buffer.c]"]
+  node_window["windows &amp; tabpages<br/>[window.c]"]
+  node_apply_autocmds["apply_autocmds&#40;&#41;<br/>[autocmd.c]"]
+end
+
+subgraph group_ui["UI Layer"]
+  node_ui_refresh["ui_refresh&#40;&#41;<br/>[ui.c]"]
+  node_ui_schedule_refresh["ui_schedule_refresh&#40;&#41;<br/>[ui.c]"]
+  node_update_screen["update_screen&#40;&#41;<br/>[drawscreen.c]"]
+  node_redraw_all_later["redraw_all_later&#40;&#41;<br/>[drawscreen.c]"]
+end
+
+node_nvim_main -->|"command-line and env first pass"| node_early_init
+node_nvim_main -->|"event_init&#40;&#41; call"| node_event_init
+node_event_init -->|"Loop main_loop at L146"| node_main_loop_decl
+node_event_init -->|"loop_init&#40;&amp;main_loop&#41;"| node_loop_init
+node_event_init -->|"resize_events child queue"| node_multiqueue_child
+node_main_loop_decl -->|"main loop waits here"| node_loop_poll_events
+node_loop_init -->|"events queue created"| node_multiqueue_new
+node_multiqueue_new -->|"children inherit flushing"| node_multiqueue_child
+node_loop_poll_events -->|"wait ms"| node_loop_uv_run
+node_loop_uv_run -->|"UV_RUN_ONCE"| node_uv_run
+node_multiqueue_put_event -->|"consumed on next pass"| node_loop_poll_events
+node_server_init -->|"listening channel accepted"| node_rpc_start
+node_rpc_start -->|"feed raw bytes"| node_unpacker
+node_unpacker -->|"msgpack request decoded"| node_handle_request
+node_handle_request -->|"msgpack response"| node_packer
+node_handle_request -->|"nvim_exec2"| node_api_vimscript
+node_handle_request -->|"nvim_eval"| node_nvim_eval
+node_handle_request -->|"nvim_exec_lua"| node_nlua_exec
+node_rpc_start -->|"rstream/wstream on loop"| node_main_loop_decl
+node_nlua_exec -->|"loadbuffer then pcall"| node_nlua_pcall
+node_nlua_exec_typval_callable -->|"typval args path"| node_nlua_pcall
+node_nlua_call -->|"fast-context guard"| node_nlua_in_fast_event
+node_nvim_eval -->|"eval_expr&#40;arg&#41;"| node_eval_expr
+node_api_vimscript -->|"Ex command expressions"| node_eval1
+node_eval_expr -->|"recursive descent"| node_eval1
+node_eval1 -->|"luaeval&#40;&#41; / v:lua escape"| node_nlua_exec
+node_buf_ensure_loaded -->|"open memfile if needed"| node_open_buffer
+node_buf_set_lines -->|"edit requires loaded buf"| node_buf_ensure_loaded
+node_buf_set_lines -->|"fix_cursor adjusts view"| node_window
+node_buf_set_lines -->|"changed_lines flags redraw"| node_update_screen
+node_buf_set_lines -->|"buffer change events"| node_apply_autocmds
+node_ui_schedule_refresh -->|"put on resize_events"| node_multiqueue_child
+node_multiqueue_child -->|"ui_refresh_event runs"| node_ui_refresh
+node_redraw_all_later -->|"flags flushed next pass"| node_update_screen
+node_update_screen -->|"grid sizing on option change"| node_ui_refresh
+node_apply_autocmds -->|"Lua autocmd callbacks"| node_nlua_exec
+
+click node_nvim_main "https://github.com/neovim/neovim/blob/master/src/nvim/main.c"
+click node_early_init "https://github.com/neovim/neovim/blob/master/src/nvim/main.c"
+click node_event_init "https://github.com/neovim/neovim/blob/master/src/nvim/main.c"
+click node_main_loop_decl "https://github.com/neovim/neovim/blob/master/src/nvim/main.c"
+click node_loop_init "https://github.com/neovim/neovim/blob/master/src/nvim/event/loop.c"
+click node_loop_uv_run "https://github.com/neovim/neovim/blob/master/src/nvim/event/loop.c"
+click node_uv_run "https://github.com/neovim/neovim/blob/master/src/nvim/event/loop.c"
+click node_loop_poll_events "https://github.com/neovim/neovim/blob/master/src/nvim/event/loop.c"
+click node_multiqueue_new "https://github.com/neovim/neovim/blob/master/src/nvim/event/multiqueue.c"
+click node_multiqueue_child "https://github.com/neovim/neovim/blob/master/src/nvim/event/multiqueue.c"
+click node_multiqueue_put_event "https://github.com/neovim/neovim/blob/master/src/nvim/event/multiqueue.c"
+click node_server_init "https://github.com/neovim/neovim/blob/master/src/nvim/msgpack_rpc/server.c"
+click node_rpc_start "https://github.com/neovim/neovim/blob/master/src/nvim/msgpack_rpc/channel.c"
+click node_unpacker "https://github.com/neovim/neovim/blob/master/src/nvim/msgpack_rpc/unpacker.c"
+click node_packer "https://github.com/neovim/neovim/blob/master/src/nvim/msgpack_rpc/packer.c"
+click node_handle_request "https://github.com/neovim/neovim/blob/master/src/nvim/msgpack_rpc/channel.c"
+click node_api_vimscript "https://github.com/neovim/neovim/blob/master/src/nvim/api/vimscript.c"
+click node_nvim_eval "https://github.com/neovim/neovim/blob/master/src/nvim/api/vimscript.c"
+click node_nlua_exec "https://github.com/neovim/neovim/blob/master/src/nvim/lua/executor.c"
+click node_nlua_pcall "https://github.com/neovim/neovim/blob/master/src/nvim/lua/executor.c"
+click node_nlua_call "https://github.com/neovim/neovim/blob/master/src/nvim/lua/executor.c"
+click node_nlua_in_fast_event "https://github.com/neovim/neovim/blob/master/src/nvim/lua/executor.c"
+click node_nlua_exec_typval_callable "https://github.com/neovim/neovim/blob/master/src/nvim/lua/executor.c"
+click node_eval_expr "https://github.com/neovim/neovim/blob/master/src/nvim/eval.c"
+click node_eval1 "https://github.com/neovim/neovim/blob/master/src/nvim/eval.c"
+click node_buf_ensure_loaded "https://github.com/neovim/neovim/blob/master/src/nvim/buffer.c"
+click node_open_buffer "https://github.com/neovim/neovim/blob/master/src/nvim/buffer.c"
+click node_buf_set_lines "https://github.com/neovim/neovim/blob/master/src/nvim/api/buffer.c"
+click node_window "https://github.com/neovim/neovim/blob/master/src/nvim/window.c"
+click node_apply_autocmds "https://github.com/neovim/neovim/blob/master/src/nvim/autocmd.c"
+click node_ui_refresh "https://github.com/neovim/neovim/blob/master/src/nvim/ui.c"
+click node_ui_schedule_refresh "https://github.com/neovim/neovim/blob/master/src/nvim/ui.c"
+click node_update_screen "https://github.com/neovim/neovim/blob/master/src/nvim/drawscreen.c"
+click node_redraw_all_later "https://github.com/neovim/neovim/blob/master/src/nvim/drawscreen.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_nvim_main,node_early_init,node_event_init,node_main_loop_decl toneBlue
+class node_loop_init,node_loop_uv_run,node_uv_run,node_loop_poll_events,node_multiqueue_new,node_multiqueue_child,node_multiqueue_put_event toneAmber
+class node_server_init,node_rpc_start,node_unpacker,node_packer,node_handle_request,node_api_vimscript,node_nvim_eval toneMint
+class node_nlua_exec,node_nlua_pcall,node_nlua_call,node_nlua_in_fast_event,node_nlua_exec_typval_callable,node_eval_expr,node_eval1 toneRose
+class node_buf_ensure_loaded,node_open_buffer,node_buf_set_lines,node_window,node_apply_autocmds toneIndigo
+class node_ui_refresh,node_ui_schedule_refresh,node_update_screen,node_redraw_all_later toneTeal
