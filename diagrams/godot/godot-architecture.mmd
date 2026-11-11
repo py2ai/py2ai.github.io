@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_g_boot["Boot Sequence"]
+  node_main_setup["Main::setup<br/>[main.cpp]"]
+  node_main_start["Main::start<br/>[main.cpp]"]
+end
+
+subgraph group_g_frame["Frame Loop"]
+  node_main_iteration["Main::iteration<br/>[main.cpp]"]
+  node_timer_sync["MainTimerSync::advance<br/>[main.cpp]"]
+  node_gdext_frame["GDExtensionManager::frame<br/>[main.cpp]"]
+  node_frame_delay["OS::add_frame_delay<br/>[main.cpp]"]
+end
+
+subgraph group_g_scene["Scene System"]
+  node_st_physics["SceneTree::physics_process<br/>[scene_tree.cpp]"]
+  node_st_process["SceneTree::process<br/>[scene_tree.cpp]"]
+  node_st_process_all["SceneTree::_process<br/>[scene_tree.cpp]"]
+  node_st_process_group["SceneTree::_process_group<br/>[scene_tree.cpp]"]
+  node_node_ready["Node::_propagate_ready<br/>[node.cpp]"]
+  node_node_notification["Node::_notification<br/>[node.cpp]"]
+  node_node_set_process["Node::set_process<br/>[node.cpp]"]
+  node_node_set_physics["Node::set_physics_process<br/>[node.cpp]"]
+end
+
+subgraph group_g_render["Rendering Server"]
+  node_rs_api["RenderingServer API"]
+  node_rs_sync["RenderingServerDefault::sync"]
+  node_rs_draw["RenderingServerDefault::draw"]
+  node_rs_draw_impl["RenderingServerDefault::_draw"]
+  node_rs_init["RenderingServerDefault::init"]
+  node_rs_thread["RenderingServerDefault::_thread_loop"]
+  node_rsg["RSG globals"]
+end
+
+subgraph group_g_physics["Physics Servers"]
+  node_ps3d_api["PhysicsServer3D"]
+  node_ps3d_manager["PhysicsServer3DManager"]
+end
+
+subgraph group_g_script["GDScript Pipeline"]
+  node_gd_reload["GDScript::reload<br/>[gdscript.cpp]"]
+  node_gd_parser["GDScriptParser::parse"]
+  node_gd_analyzer["GDScriptAnalyzer"]
+  node_gd_compiler["GDScriptCompiler::compile"]
+  node_gd_compile_class["GDScriptCompiler::_compile_class"]
+  node_gd_codegen["GDScriptByteCodeGenerator"]
+  node_gd_vm["GDScriptFunction::call<br/>[gdscript_vm.cpp]"]
+  node_gd_dispatch["DISPATCH_OPCODE<br/>[gdscript_vm.cpp]"]
+  node_gd_depth["MAX_CALL_DEPTH guard<br/>[gdscript_vm.cpp]"]
+end
+
+subgraph group_g_backend["Backends"]
+  node_gp3d_step["GodotPhysicsServer3D::step"]
+  node_jolt["JoltPhysicsServer3D"]
+end
+
+node_main_setup -->|"two-phase boot"| node_main_start
+node_main_start -->|"OS::run pumps frames"| node_main_iteration
+node_main_iteration -->|"split elapsed time"| node_timer_sync
+node_main_iteration -->|"tick extensions"| node_gdext_frame
+node_main_iteration -->|"pace the frame"| node_frame_delay
+node_main_iteration -->|"per physics tick"| node_st_physics
+node_main_iteration -->|"once per frame"| node_st_process
+node_st_physics -->|"physics pass"| node_st_process_all
+node_st_process -->|"idle pass"| node_st_process_all
+node_st_process_all -->|"run each group"| node_st_process_group
+node_st_process_group -->|"NOTIFICATION_PROCESS"| node_node_notification
+node_node_set_process -->|"joins idle list"| node_st_process_group
+node_node_set_physics -->|"joins physics list"| node_st_process_group
+node_node_ready -->|"NOTIFICATION_READY"| node_node_notification
+node_node_notification -->|"script override"| node_gd_vm
+node_node_notification -->|"RID commands"| node_rs_api
+node_main_iteration -->|"sync/flush/step"| node_ps3d_api
+node_ps3d_manager -->|"creates backend"| node_ps3d_api
+node_ps3d_api -->|"default backend"| node_gp3d_step
+node_ps3d_api -->|"alt backend"| node_jolt
+node_main_iteration -->|"drain queue"| node_rs_sync
+node_rs_api -->|"queued commands"| node_rs_sync
+node_rs_sync -->|"then draw"| node_rs_draw
+node_rs_draw -->|"direct or queued"| node_rs_draw_impl
+node_rs_draw_impl -->|"RSG::scene/canvas update"| node_rsg
+node_rs_init -->|"creates singletons"| node_rsg
+node_rs_init -->|"spawn pump task"| node_rs_thread
+node_rs_thread -->|"flush_all"| node_rs_sync
+node_gd_reload -->|"source to AST"| node_gd_parser
+node_gd_parser -->|"resolve types"| node_gd_analyzer
+node_gd_analyzer -->|"validated AST"| node_gd_compiler
+node_gd_compiler -->|"lower classes"| node_gd_compile_class
+node_gd_compile_class -->|"emit opcodes"| node_gd_codegen
+node_gd_codegen -->|"bytecode"| node_gd_vm
+node_gd_vm -->|"per-instruction jump"| node_gd_dispatch
+node_gd_vm -->|"recursion guard"| node_gd_depth
+
+click node_main_setup "https://github.com/godotengine/godot/blob/master/main/main.cpp"
+click node_main_start "https://github.com/godotengine/godot/blob/master/main/main.cpp"
+click node_main_iteration "https://github.com/godotengine/godot/blob/master/main/main.cpp"
+click node_timer_sync "https://github.com/godotengine/godot/blob/master/main/main.cpp"
+click node_gdext_frame "https://github.com/godotengine/godot/blob/master/main/main.cpp"
+click node_frame_delay "https://github.com/godotengine/godot/blob/master/main/main.cpp"
+click node_st_physics "https://github.com/godotengine/godot/blob/master/scene/main/scene_tree.cpp"
+click node_st_process "https://github.com/godotengine/godot/blob/master/scene/main/scene_tree.cpp"
+click node_st_process_all "https://github.com/godotengine/godot/blob/master/scene/main/scene_tree.cpp"
+click node_st_process_group "https://github.com/godotengine/godot/blob/master/scene/main/scene_tree.cpp"
+click node_node_ready "https://github.com/godotengine/godot/blob/master/scene/main/node.cpp"
+click node_node_notification "https://github.com/godotengine/godot/blob/master/scene/main/node.cpp"
+click node_node_set_process "https://github.com/godotengine/godot/blob/master/scene/main/node.cpp"
+click node_node_set_physics "https://github.com/godotengine/godot/blob/master/scene/main/node.cpp"
+click node_rs_api "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server.cpp"
+click node_rs_sync "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server_default.cpp"
+click node_rs_draw "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server_default.cpp"
+click node_rs_draw_impl "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server_default.cpp"
+click node_rs_init "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server_default.cpp"
+click node_rs_thread "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server_default.cpp"
+click node_rsg "https://github.com/godotengine/godot/blob/master/servers/rendering/rendering_server_globals.h"
+click node_ps3d_api "https://github.com/godotengine/godot/blob/master/servers/physics_3d/physics_server_3d.h"
+click node_ps3d_manager "https://github.com/godotengine/godot/blob/master/servers/physics_3d/physics_server_3d_manager.cpp"
+click node_gp3d_step "https://github.com/godotengine/godot/blob/master/modules/godot_physics_3d/godot_physics_server_3d.cpp"
+click node_jolt "https://github.com/godotengine/godot/blob/master/modules/jolt_physics/jolt_physics_server_3d.cpp"
+click node_gd_reload "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript.cpp"
+click node_gd_parser "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_parser.cpp"
+click node_gd_analyzer "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_analyzer.cpp"
+click node_gd_compiler "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_compiler.cpp"
+click node_gd_compile_class "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_compiler.cpp"
+click node_gd_codegen "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_byte_codegen.cpp"
+click node_gd_vm "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_vm.cpp"
+click node_gd_dispatch "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_vm.cpp"
+click node_gd_depth "https://github.com/godotengine/godot/blob/master/modules/gdscript/gdscript_vm.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_setup,node_main_start,node_gp3d_step,node_jolt toneBlue
+class node_main_iteration,node_timer_sync,node_gdext_frame,node_frame_delay toneAmber
+class node_st_physics,node_st_process,node_st_process_all,node_st_process_group,node_node_ready,node_node_notification,node_node_set_process,node_node_set_physics toneMint
+class node_rs_api,node_rs_sync,node_rs_draw,node_rs_draw_impl,node_rs_init,node_rs_thread,node_rsg toneRose
+class node_ps3d_api,node_ps3d_manager toneIndigo
+class node_gd_reload,node_gd_parser,node_gd_analyzer,node_gd_compiler,node_gd_compile_class,node_gd_codegen,node_gd_vm,node_gd_dispatch,node_gd_depth toneTeal
