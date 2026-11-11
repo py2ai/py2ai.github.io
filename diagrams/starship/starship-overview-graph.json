@@ -1,0 +1,43 @@
+{
+  "owner": "starship",
+  "repo": "starship",
+  "branch": "main",
+  "groups": [
+    { "id": "g_shell", "name": "Shell Integration", "label": "Shell Integration" },
+    { "id": "g_cli", "name": "CLI Entry", "label": "CLI Entry" },
+    { "id": "g_ctx", "name": "Context & Config", "label": "Context & Config" },
+    { "id": "g_mods", "name": "Module Engine", "label": "Module Engine" },
+    { "id": "g_render", "name": "Render Flow", "label": "Render Flow" }
+  ],
+  "nodes": [
+    { "id": "shell_init", "label": "starship init (two-phase bootstrap)", "file": "mod.rs", "path": "src/init/mod.rs", "group": "Shell Integration", "groupId": "g_shell", "desc": "init_stub/init_main emit per-shell scripts with ::STARSHIP:: substitution" },
+    { "id": "main", "label": "starship prompt (clap dispatch)", "file": "main.rs", "path": "src/main.rs", "group": "CLI Entry", "groupId": "g_cli", "desc": "Commands::Prompt maps --right/--profile/--continuation to a Target" },
+    { "id": "prompt_fn", "label": "print::prompt", "file": "print.rs", "path": "src/print.rs", "group": "CLI Entry", "groupId": "g_cli", "desc": "Builds a Context, calls get_prompt, writes the ANSI string to stdout" },
+    { "id": "context", "label": "Context::new", "file": "mod.rs", "path": "src/context/mod.rs", "group": "Context & Config", "groupId": "g_ctx", "desc": "Resolves cwd/PWD, shell, terminal width; holds OnceLock caches" },
+    { "id": "config", "label": "StarshipConfig (starship.toml)", "file": "config.rs", "path": "src/config.rs", "group": "Context & Config", "groupId": "g_ctx", "desc": "Reads STARSHIP_CONFIG or ~/.config/starship.toml; bad TOML falls back to defaults" },
+    { "id": "dirscan", "label": "DirContents scan", "file": "mod.rs", "path": "src/context/mod.rs", "group": "Context & Config", "groupId": "g_ctx", "desc": "Worker-thread directory scan bounded by scan_timeout (30ms default)" },
+    { "id": "gitrepo", "label": "gix repo discovery", "file": "git_repo.rs", "path": "src/context/git_repo.rs", "group": "Context & Config", "groupId": "g_ctx", "desc": "get_git_repo lazily discovers the repo once via gix and caches branch/state" },
+    { "id": "modreg", "label": "ALL_MODULES registry", "file": "module.rs", "path": "src/module.rs", "group": "Module Engine", "groupId": "g_mods", "desc": "Static list of every module name; PROMPT_ORDER supplies default $all order" },
+    { "id": "modhnd", "label": "modules::handle dispatch", "file": "mod.rs", "path": "src/modules/mod.rs", "group": "Module Engine", "groupId": "g_mods", "desc": "One giant match over ALL_MODULES; records per-module elapsed time" },
+    { "id": "gitstatus", "label": "git_status module", "file": "git_status.rs", "path": "src/modules/git_status.rs", "group": "Module Engine", "groupId": "g_mods", "desc": "Counts staged/modified/untracked via gix status or git status --porcelain=2" },
+    { "id": "fmt", "label": "StringFormatter", "file": "string_formatter.rs", "path": "src/formatter/string_formatter.rs", "group": "Render Flow", "groupId": "g_render", "desc": "Parses format strings and maps each variable to module output" },
+    { "id": "seg", "label": "Segment assembly", "file": "segment.rs", "path": "src/segment.rs", "group": "Render Flow", "groupId": "g_render", "desc": "Text/Fill/LineTerm chunks become styled ANSI strings" }
+  ],
+  "edges": [
+    { "from": "shell_init", "to": "main", "label": "shell runs starship prompt" },
+    { "from": "main", "to": "prompt_fn", "label": "Commands::Prompt" },
+    { "from": "prompt_fn", "to": "context", "label": "Context::new(args, target)" },
+    { "from": "context", "to": "config", "label": "initialize at context build" },
+    { "from": "context", "to": "dirscan", "label": "lazy scan with scan_timeout" },
+    { "from": "context", "to": "gitrepo", "label": "lazy get_git_repo()" },
+    { "from": "prompt_fn", "to": "fmt", "label": "load_formatter_and_modules" },
+    { "from": "fmt", "to": "modhnd", "label": "map_variables_to_segments" },
+    { "from": "modreg", "to": "modhnd", "label": "registry lookup" },
+    { "from": "modhnd", "to": "gitstatus", "label": "module implementations" },
+    { "from": "gitstatus", "to": "gitrepo", "label": "shared GitRepo handle" },
+    { "from": "modhnd", "to": "context", "label": "every module takes &Context" },
+    { "from": "fmt", "to": "seg", "label": "variables become Segments" },
+    { "from": "seg", "to": "prompt_fn", "label": "ansi_strings_for_width" },
+    { "from": "config", "to": "fmt", "label": "format string source" }
+  ]
+}
