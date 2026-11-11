@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_interactive["Reader &amp; Line Editor"]
+  node_fish_main["main&#40;&#41;<br/>[fish.rs]"]
+  node_reader_read{{"reader_read / read_i<br/>[reader.rs]"}}
+  node_reader_readline["Reader::readline<br/>[reader.rs]"]
+  node_update_autosuggestion["update_autosuggestion<br/>[reader.rs]"]
+  node_highlight_shell["highlight_shell<br/>[highlight.rs]"]
+  node_binding["BindingSet<br/>[binding.rs]"]
+  node_pager["Pager<br/>[pager.rs]"]
+  node_complete["complete&#40;&#41;<br/>[complete.rs]"]
+  node_reader_run_command["reader_run_command<br/>[reader.rs]"]
+end
+
+subgraph group_parse["Tokenize &amp; Parse"]
+  node_tokenizer["Tokenizer<br/>[tokenizer.rs]"]
+  node_parse_tree["parse_source<br/>[parse_tree.rs]"]
+  node_ast["ast::parse<br/>[ast.rs]"]
+  node_parser_t{{"Parser<br/>[parser.rs]"}}
+  node_parse_execution{{"ExecutionContext<br/>[parse_execution.rs]"}}
+end
+
+subgraph group_expand["Expansion Machinery"]
+  node_expand_string{{"expand_string<br/>[expand.rs]"}}
+  node_stage_variables["stage_variables<br/>[expand.rs]"]
+  node_stage_braces["stage_braces<br/>[expand.rs]"]
+  node_expand_tilde["expand_tilde<br/>[expand.rs]"]
+  node_expand_cmdsubst["expand_cmdsubst<br/>[expand.rs]"]
+  node_stage_wildcards["stage_wildcards<br/>[expand.rs]"]
+  node_wildcard["wildcard_expand_string<br/>[wildcard.rs]"]
+end
+
+subgraph group_exec["Job Execution"]
+  node_job["Job<br/>[proc.rs]"]
+  node_process["Process<br/>[proc.rs]"]
+  node_job_group["JobGroup<br/>[job_group.rs]"]
+  node_exec_job{{"exec_job<br/>[exec.rs]"}}
+  node_exec_process_in_job["exec_process_in_job<br/>[exec.rs]"]
+  node_exec_external_command["exec_external_command<br/>[exec.rs]"]
+  node_posix_spawner["PosixSpawner<br/>[spawn.rs]"]
+  node_exec_subshell_for_expand["exec_subshell_for_expand<br/>[exec.rs]"]
+  node_job_reap["job_reap<br/>[proc.rs]"]
+end
+
+subgraph group_state["Variables &amp; History"]
+  node_envstack[("EnvStack<br/>[environment.rs]")]
+  node_env_universal[("EnvUniversal")]
+  node_uvar_notifier["NotifydNotifier<br/>[notifyd.rs]"]
+  node_history[("History / HistorySearch<br/>[history.rs]")]
+end
+
+node_fish_main -->|"starts the interactive loop"| node_reader_read
+node_reader_read -->|"readline per iteration"| node_reader_readline
+node_binding -.->|"keys become ReadlineCmd"| node_reader_readline
+node_reader_readline -->|"on every edit"| node_update_autosuggestion
+node_update_autosuggestion -->|"prefix search"| node_history
+node_update_autosuggestion -.->|"validate from history"| node_highlight_shell
+node_reader_read -.->|"repaint colors"| node_highlight_shell
+node_reader_read -.->|"tab completion queries"| node_complete
+node_reader_read -.->|"renders completions"| node_pager
+node_reader_read -->|"evaluates accepted line"| node_reader_run_command
+node_reader_run_command -->|"Parser::eval"| node_parser_t
+node_reader_run_command -.->|"reap after eval"| node_job_reap
+node_parser_t -->|"parse_source&#40;&#41;"| node_parse_tree
+node_parse_tree -->|"ast::parse&#40;&#41;"| node_ast
+node_tokenizer -->|"token stream"| node_ast
+node_parser_t -->|"eval_node"| node_parse_execution
+node_parse_execution -->|"expand_to_command_and_args"| node_expand_string
+node_expand_string -->|"variable stage"| node_stage_variables
+node_expand_string -->|"brace stage"| node_stage_braces
+node_expand_string -->|"home stage"| node_expand_tilde
+node_expand_string -->|"cmdsubst stage"| node_expand_cmdsubst
+node_expand_string -->|"wildcard stage"| node_stage_wildcards
+node_stage_wildcards -->|"wildcard_expand_string"| node_wildcard
+node_stage_variables -.->|"variable lookup"| node_envstack
+node_expand_tilde -.->|"HOME lookup"| node_envstack
+node_expand_cmdsubst -->|"child fish runs &#40;cmd&#41;"| node_exec_subshell_for_expand
+node_parser_t -.->|"variable assignments"| node_envstack
+node_env_universal -->|"universal layer"| node_envstack
+node_uvar_notifier -.->|"change notices"| node_env_universal
+node_parse_execution -->|"Job::new with props"| node_job
+node_job -->|"one group per job tree"| node_job_group
+node_job -->|"contains processes"| node_process
+node_parse_execution -->|"exec_job&#40;parser, &amp;job, io&#41;"| node_exec_job
+node_exec_job -->|"per process"| node_exec_process_in_job
+node_exec_process_in_job -->|"external command"| node_exec_external_command
+node_exec_external_command -->|"posix_spawn fast path"| node_posix_spawner
+node_job_group -.->|"pgid and tty handoff"| node_exec_external_command
+
+click node_fish_main "https://github.com/fish-shell/fish-shell/blob/master/src/bin/fish.rs"
+click node_reader_read "https://github.com/fish-shell/fish-shell/blob/master/src/reader/reader.rs"
+click node_reader_readline "https://github.com/fish-shell/fish-shell/blob/master/src/reader/reader.rs"
+click node_update_autosuggestion "https://github.com/fish-shell/fish-shell/blob/master/src/reader/reader.rs"
+click node_highlight_shell "https://github.com/fish-shell/fish-shell/blob/master/src/highlight/highlight.rs"
+click node_binding "https://github.com/fish-shell/fish-shell/blob/master/src/input/binding.rs"
+click node_pager "https://github.com/fish-shell/fish-shell/blob/master/src/pager.rs"
+click node_complete "https://github.com/fish-shell/fish-shell/blob/master/src/complete.rs"
+click node_reader_run_command "https://github.com/fish-shell/fish-shell/blob/master/src/reader/reader.rs"
+click node_tokenizer "https://github.com/fish-shell/fish-shell/blob/master/src/tokenizer.rs"
+click node_parse_tree "https://github.com/fish-shell/fish-shell/blob/master/src/parse_tree.rs"
+click node_ast "https://github.com/fish-shell/fish-shell/blob/master/src/ast.rs"
+click node_parser_t "https://github.com/fish-shell/fish-shell/blob/master/src/parser.rs"
+click node_parse_execution "https://github.com/fish-shell/fish-shell/blob/master/src/parse_execution.rs"
+click node_expand_string "https://github.com/fish-shell/fish-shell/blob/master/src/expand.rs"
+click node_stage_variables "https://github.com/fish-shell/fish-shell/blob/master/src/expand.rs"
+click node_stage_braces "https://github.com/fish-shell/fish-shell/blob/master/src/expand.rs"
+click node_expand_tilde "https://github.com/fish-shell/fish-shell/blob/master/src/expand.rs"
+click node_expand_cmdsubst "https://github.com/fish-shell/fish-shell/blob/master/src/expand.rs"
+click node_stage_wildcards "https://github.com/fish-shell/fish-shell/blob/master/src/expand.rs"
+click node_wildcard "https://github.com/fish-shell/fish-shell/blob/master/src/wildcard.rs"
+click node_job "https://github.com/fish-shell/fish-shell/blob/master/src/proc.rs"
+click node_process "https://github.com/fish-shell/fish-shell/blob/master/src/proc.rs"
+click node_job_group "https://github.com/fish-shell/fish-shell/blob/master/src/job_group.rs"
+click node_exec_job "https://github.com/fish-shell/fish-shell/blob/master/src/exec.rs"
+click node_exec_process_in_job "https://github.com/fish-shell/fish-shell/blob/master/src/exec.rs"
+click node_exec_external_command "https://github.com/fish-shell/fish-shell/blob/master/src/exec.rs"
+click node_posix_spawner "https://github.com/fish-shell/fish-shell/blob/master/src/fork_exec/spawn.rs"
+click node_exec_subshell_for_expand "https://github.com/fish-shell/fish-shell/blob/master/src/exec.rs"
+click node_job_reap "https://github.com/fish-shell/fish-shell/blob/master/src/proc.rs"
+click node_envstack "https://github.com/fish-shell/fish-shell/blob/master/src/env/environment.rs"
+click node_env_universal "https://github.com/fish-shell/fish-shell/blob/master/src/env_universal_common.rs"
+click node_uvar_notifier "https://github.com/fish-shell/fish-shell/blob/master/src/universal_notifier/notifyd.rs"
+click node_history "https://github.com/fish-shell/fish-shell/blob/master/src/history/history.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_fish_main,node_reader_read,node_reader_readline,node_update_autosuggestion,node_highlight_shell,node_binding,node_pager,node_complete,node_reader_run_command toneBlue
+class node_tokenizer,node_parse_tree,node_ast,node_parser_t,node_parse_execution toneAmber
+class node_expand_string,node_stage_variables,node_stage_braces,node_expand_tilde,node_expand_cmdsubst,node_stage_wildcards,node_wildcard toneMint
+class node_job,node_process,node_job_group,node_exec_job,node_exec_process_in_job,node_exec_external_command,node_posix_spawner,node_exec_subshell_for_expand,node_job_reap toneRose
+class node_envstack,node_env_universal,node_uvar_notifier,node_history toneIndigo
