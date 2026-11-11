@@ -1,0 +1,131 @@
+flowchart TD
+
+subgraph group_g_cli["crates/core"]
+  node_main{{"main / run<br/>[main.rs]"}}
+  node_flags_parse["flags::parse<br/>[parse.rs]"]
+  node_hiargs["HiArgs<br/>[hiargs.rs]"]
+  node_worker["SearchWorker<br/>[search.rs]"]
+  node_pattern_matcher["PatternMatcher<br/>[search.rs]"]
+  node_printer_enum["Printer enum<br/>[search.rs]"]
+end
+
+subgraph group_g_walker["crates/ignore walk"]
+  node_walk_builder["WalkBuilder<br/>[walk.rs]"]
+  node_walk_parallel["WalkParallel<br/>[walk.rs]"]
+  node_threads["threads&#40;&#41;<br/>[walk.rs]"]
+end
+
+subgraph group_g_filter["crates/ignore dir + crates/globset"]
+  node_ignore_struct["Ignore chain<br/>[dir.rs]"]
+  node_matched_ignore["matched_ignore<br/>[dir.rs]"]
+  node_gitignore["Gitignore<br/>[gitignore.rs]"]
+  node_gitignore_matched["Gitignore::matched<br/>[gitignore.rs]"]
+  node_globset["GlobSet<br/>[lib.rs]"]
+  node_globset_strats["GlobSetMatchStrategy<br/>[lib.rs]"]
+  node_glob["Glob<br/>[glob.rs]"]
+end
+
+subgraph group_g_engine["crates/regex + crates/matcher + crates/pcre2"]
+  node_matcher_trait["Matcher trait<br/>[lib.rs]"]
+  node_regex_builder["RegexMatcherBuilder<br/>[matcher.rs]"]
+  node_configured_hir["ConfiguredHIR<br/>[config.rs]"]
+  node_regex_matcher["RegexMatcher<br/>[matcher.rs]"]
+  node_candidate_line["find_candidate_line<br/>[matcher.rs]"]
+  node_pcre2["PCRE2 matcher<br/>[matcher.rs]"]
+end
+
+subgraph group_g_search["crates/searcher"]
+  node_searcher["Searcher<br/>[mod.rs]"]
+  node_search_path["search_path<br/>[mod.rs]"]
+  node_mmap_choice["MmapChoice<br/>[mmap.rs]"]
+  node_line_buffer["LineBuffer<br/>[line_buffer.rs]"]
+  node_glue_read["ReadByLine<br/>[glue.rs]"]
+  node_core_loop["Core<br/>[core.rs]"]
+  node_fast_loop["match_by_line_fast<br/>[core.rs]"]
+end
+
+subgraph group_g_output["crates/printer + sink"]
+  node_sink["Sink trait<br/>[sink.rs]"]
+  node_printer_standard["Standard printer<br/>[standard.rs]"]
+end
+
+node_main -->|"dispatch"| node_flags_parse
+node_flags_parse -->|"LowArgs to HiArgs"| node_hiargs
+node_hiargs -->|"assembles"| node_worker
+node_hiargs -->|"engine choice"| node_pattern_matcher
+node_worker -->|"holds matcher"| node_pattern_matcher
+node_worker -->|"holds printer"| node_printer_enum
+node_hiargs -->|"walk_builder&#40;&#41; configures"| node_walk_builder
+node_walk_builder -->|"build_parallel&#40;&#41;"| node_walk_parallel
+node_walk_parallel -->|"worker pool size"| node_threads
+node_walk_parallel -->|"per-directory state"| node_ignore_struct
+node_ignore_struct -->|"precedence walk"| node_matched_ignore
+node_matched_ignore -->|".gitignore/.ignore"| node_gitignore
+node_gitignore -->|"matched&#40;&#41;"| node_gitignore_matched
+node_gitignore -->|"backed by GlobSet"| node_globset
+node_globset -->|"strategy dispatch"| node_globset_strats
+node_globset_strats -->|"compiled patterns"| node_glob
+node_matched_ignore -->|"prune subtrees"| node_walk_parallel
+node_pattern_matcher -->|"RustRegex default"| node_regex_builder
+node_regex_builder -->|"parse and analyze"| node_configured_hir
+node_configured_hir -->|"to_regex&#40;&#41; compile"| node_regex_matcher
+node_regex_matcher -->|"implements"| node_matcher_trait
+node_pattern_matcher -->|"-P behind feature flag"| node_pcre2
+node_pcre2 -->|"implements"| node_matcher_trait
+node_worker -->|"search&#40;&amp;haystack&#41;"| node_searcher
+node_searcher -->|"search_path/search_slice"| node_search_path
+node_search_path -->|"mmap when beneficial"| node_mmap_choice
+node_search_path -->|"streaming fallback"| node_glue_read
+node_glue_read -->|"64 KB rolling reads"| node_line_buffer
+node_glue_read -->|"match_by_line"| node_core_loop
+node_core_loop -->|"fast path"| node_fast_loop
+node_fast_loop -->|"probe before confirm"| node_candidate_line
+node_core_loop -->|"sinks matches"| node_sink
+node_printer_enum -->|"Standard/Summary/JSON"| node_printer_standard
+node_printer_standard -->|"sink_with_path"| node_sink
+
+click node_main "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/main.rs"
+click node_flags_parse "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/flags/parse.rs"
+click node_hiargs "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/flags/hiargs.rs"
+click node_worker "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/search.rs"
+click node_pattern_matcher "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/search.rs"
+click node_printer_enum "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/search.rs"
+click node_walk_builder "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/walk.rs"
+click node_walk_parallel "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/walk.rs"
+click node_threads "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/walk.rs"
+click node_ignore_struct "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/dir.rs"
+click node_matched_ignore "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/dir.rs"
+click node_gitignore "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/gitignore.rs"
+click node_gitignore_matched "https://github.com/BurntSushi/ripgrep/blob/master/crates/ignore/src/gitignore.rs"
+click node_globset "https://github.com/BurntSushi/ripgrep/blob/master/crates/globset/src/lib.rs"
+click node_globset_strats "https://github.com/BurntSushi/ripgrep/blob/master/crates/globset/src/lib.rs"
+click node_glob "https://github.com/BurntSushi/ripgrep/blob/master/crates/globset/src/glob.rs"
+click node_matcher_trait "https://github.com/BurntSushi/ripgrep/blob/master/crates/matcher/src/lib.rs"
+click node_regex_builder "https://github.com/BurntSushi/ripgrep/blob/master/crates/regex/src/matcher.rs"
+click node_configured_hir "https://github.com/BurntSushi/ripgrep/blob/master/crates/regex/src/config.rs"
+click node_regex_matcher "https://github.com/BurntSushi/ripgrep/blob/master/crates/regex/src/matcher.rs"
+click node_candidate_line "https://github.com/BurntSushi/ripgrep/blob/master/crates/regex/src/matcher.rs"
+click node_pcre2 "https://github.com/BurntSushi/ripgrep/blob/master/crates/pcre2/src/matcher.rs"
+click node_searcher "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/searcher/mod.rs"
+click node_search_path "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/searcher/mod.rs"
+click node_mmap_choice "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/searcher/mmap.rs"
+click node_line_buffer "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/line_buffer.rs"
+click node_glue_read "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/searcher/glue.rs"
+click node_core_loop "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/searcher/core.rs"
+click node_fast_loop "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/searcher/core.rs"
+click node_sink "https://github.com/BurntSushi/ripgrep/blob/master/crates/searcher/src/sink.rs"
+click node_printer_standard "https://github.com/BurntSushi/ripgrep/blob/master/crates/printer/src/standard.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_flags_parse,node_hiargs,node_worker,node_pattern_matcher,node_printer_enum toneBlue
+class node_walk_builder,node_walk_parallel,node_threads toneAmber
+class node_ignore_struct,node_matched_ignore,node_gitignore,node_gitignore_matched,node_globset,node_globset_strats,node_glob toneMint
+class node_matcher_trait,node_regex_builder,node_configured_hir,node_regex_matcher,node_candidate_line,node_pcre2 toneRose
+class node_searcher,node_search_path,node_mmap_choice,node_line_buffer,node_glue_read,node_core_loop,node_fast_loop toneIndigo
+class node_sink,node_printer_standard toneTeal
