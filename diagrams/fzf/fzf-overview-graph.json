@@ -1,0 +1,122 @@
+{
+  "owner": "junegunn",
+  "repo": "fzf",
+  "branch": "master",
+  "groups": [
+    { "id": "coordination", "name": "coordination", "label": "Coordinator" },
+    { "id": "ingest", "name": "ingest", "label": "Ingestion" },
+    { "id": "storage", "name": "storage", "label": "Item Storage" },
+    { "id": "matching", "name": "matching", "label": "Parallel Matching" },
+    { "id": "ranking", "name": "ranking", "label": "Ranking" },
+    { "id": "terminal", "name": "terminal", "label": "Terminal UI" }
+  ],
+  "nodes": [
+    {
+      "id": "core",
+      "label": "Run",
+      "file": "core.go",
+      "path": "src/core.go",
+      "group": "coordination",
+      "groupId": "coordination",
+      "desc": "Central event coordinator: wires reader, matcher and terminal, snapshots the chunk list and dispatches Evt* events between them"
+    },
+    {
+      "id": "reader",
+      "label": "Reader",
+      "file": "reader.go",
+      "path": "src/reader.go",
+      "group": "ingest",
+      "groupId": "ingest",
+      "desc": "Streams stdin, FZF_DEFAULT_COMMAND output or fastwalk directory walk into the chunk list, signals EvtReadNew"
+    },
+    {
+      "id": "chunklist",
+      "label": "ChunkList",
+      "file": "chunklist.go",
+      "path": "src/chunklist.go",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "Grows item storage in fixed 1024-item chunks and hands out immutable snapshots for the matcher"
+    },
+    {
+      "id": "chunkcache",
+      "label": "ChunkCache",
+      "file": "cache.go",
+      "path": "src/cache.go",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "Per-chunk bitmap cache of matching items, reused across keystrokes via prefix/suffix key lookup"
+    },
+    {
+      "id": "pattern",
+      "label": "Pattern",
+      "file": "pattern.go",
+      "path": "src/pattern.go",
+      "group": "matching",
+      "groupId": "matching",
+      "desc": "Parses the query into term sets (fuzzy, exact, prefix, suffix, inverse) and matches each chunk against cached bitmaps"
+    },
+    {
+      "id": "algo",
+      "label": "algo.FuzzyMatchV1/V2",
+      "file": "algo.go",
+      "path": "src/algo/algo.go",
+      "group": "matching",
+      "groupId": "matching",
+      "desc": "The scoring engine: greedy V1 scan and modified Smith-Waterman V2 with boundary bonuses and gap penalties"
+    },
+    {
+      "id": "matcher",
+      "label": "Matcher",
+      "file": "matcher.go",
+      "path": "src/matcher.go",
+      "group": "matching",
+      "groupId": "matching",
+      "desc": "One goroutine per CPU core pulling chunks from an atomic counter; publishes progress and final merger results"
+    },
+    {
+      "id": "merger",
+      "label": "Merger",
+      "file": "merger.go",
+      "path": "src/merger.go",
+      "group": "ranking",
+      "groupId": "ranking",
+      "desc": "Lazily k-way merges the per-worker sorted lists into one globally ranked view"
+    },
+    {
+      "id": "result",
+      "label": "Result / sortCriteria",
+      "file": "result.go",
+      "path": "src/result.go",
+      "group": "ranking",
+      "groupId": "ranking",
+      "desc": "Packs score, chunk, length and begin/end offsets into a 64-bit rank key and radix-sorts matches"
+    },
+    {
+      "id": "terminal",
+      "label": "Terminal",
+      "file": "terminal.go",
+      "path": "src/terminal.go",
+      "group": "terminal",
+      "groupId": "terminal",
+      "desc": "Interactive loop: keystrokes, rendering, spinner, preview, and EvtSearchNew on every query change"
+    }
+  ],
+  "edges": [
+    { "from": "core", "to": "reader", "label": "spawns ReadSource goroutine" },
+    { "from": "reader", "to": "chunklist", "label": "pusher(line) via ChunkList.Push" },
+    { "from": "reader", "to": "core", "label": "EvtReadNew / EvtReadFin" },
+    { "from": "core", "to": "chunklist", "label": "Snapshot(tail) on data events" },
+    { "from": "chunklist", "to": "chunkcache", "label": "retire evicted chunks" },
+    { "from": "core", "to": "matcher", "label": "Reset(snapshot, query)" },
+    { "from": "matcher", "to": "pattern", "label": "build and cache Pattern" },
+    { "from": "pattern", "to": "chunkcache", "label": "bitmap Lookup/Search" },
+    { "from": "pattern", "to": "algo", "label": "run Algo per item" },
+    { "from": "matcher", "to": "merger", "label": "partial results per worker" },
+    { "from": "merger", "to": "result", "label": "k-way merge by rank" },
+    { "from": "result", "to": "algo", "label": "score and offsets feed rank" },
+    { "from": "matcher", "to": "core", "label": "EvtSearchProgress / EvtSearchFin" },
+    { "from": "core", "to": "terminal", "label": "UpdateList(MatchResult)" },
+    { "from": "terminal", "to": "core", "label": "EvtSearchNew on keystroke" }
+  ]
+}
