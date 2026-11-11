@@ -1,0 +1,118 @@
+{
+  "owner": "sharkdp",
+  "repo": "fd",
+  "branch": "master",
+  "groups": [
+    { "id": "cli", "name": "cli", "label": "CLI layer" },
+    { "id": "matching", "name": "matching", "label": "Pattern matching" },
+    { "id": "walkcore", "name": "walkcore", "label": "Parallel walk core" },
+    { "id": "data", "name": "data", "label": "Shared data types" },
+    { "id": "printing", "name": "printing", "label": "Result output" }
+  ],
+  "nodes": [
+    {
+      "id": "run",
+      "label": "run()",
+      "file": "main.rs",
+      "path": "src/main.rs",
+      "group": "cli",
+      "groupId": "cli",
+      "desc": "Entry point: parses CLI options, decides pattern type and smart case, builds the matcher and Config, then hands everything to walk::scan."
+    },
+    {
+      "id": "opts",
+      "label": "Opts (clap)",
+      "file": "cli.rs",
+      "path": "src/cli.rs",
+      "group": "cli",
+      "groupId": "cli",
+      "desc": "Clap-derive option struct; includes -u/--unrestricted as an alias for --no-ignore --hidden."
+    },
+    {
+      "id": "patterns",
+      "label": "build_patterns",
+      "file": "patterns.rs",
+      "path": "src/patterns.rs",
+      "group": "matching",
+      "groupId": "matching",
+      "desc": "Turns user patterns into a Matcher: RegexSet, GlobSet, FixedStrings or MatchAll; RegexSet matches only when every pattern hits."
+    },
+    {
+      "id": "walk",
+      "label": "walk::scan",
+      "file": "walk.rs",
+      "path": "src/walk.rs",
+      "group": "walkcore",
+      "groupId": "walkcore",
+      "desc": "Orchestrator: WorkerState::scan builds the walker, opens a bounded channel and spawns sender/receiver threads."
+    },
+    {
+      "id": "walker",
+      "label": "build_walker",
+      "file": "walk.rs",
+      "path": "src/walk.rs",
+      "group": "walkcore",
+      "groupId": "walkcore",
+      "desc": "Configures ignore::WalkBuilder: gitignore/parent/global rules, .fdignore, hidden files, max depth, threads; returns WalkParallel."
+    },
+    {
+      "id": "senders",
+      "label": "spawn_senders",
+      "file": "walk.rs",
+      "path": "src/walk.rs",
+      "group": "walkcore",
+      "groupId": "walkcore",
+      "desc": "Per-thread worker closure: applies every filter in a cheap-to-expensive order and ships surviving entries as batches."
+    },
+    {
+      "id": "receiver",
+      "label": "ReceiverBuffer",
+      "file": "walk.rs",
+      "path": "src/walk.rs",
+      "group": "walkcore",
+      "groupId": "walkcore",
+      "desc": "Receiver thread: buffers results for up to 100 ms to sort them; if the walk is slow it switches to streaming mode."
+    },
+    {
+      "id": "config",
+      "label": "Config",
+      "file": "config.rs",
+      "path": "src/config.rs",
+      "group": "data",
+      "groupId": "data",
+      "desc": "Immutable struct carrying every search knob (threads, filters, colors, quiet mode) shared by all stages."
+    },
+    {
+      "id": "dir_entry",
+      "label": "DirEntry",
+      "file": "dir_entry.rs",
+      "path": "src/dir_entry.rs",
+      "group": "data",
+      "groupId": "data",
+      "desc": "Wrapper around ignore::DirEntry with lazily cached metadata and ls-colors style so stats are only fetched when needed."
+    },
+    {
+      "id": "output",
+      "label": "print_entry",
+      "file": "output.rs",
+      "path": "src/output.rs",
+      "group": "printing",
+      "groupId": "printing",
+      "desc": "Writes one entry: hyperlinks, colors, custom separators, --format templates, NUL terminator."
+    }
+  ],
+  "edges": [
+    { "from": "run", "to": "opts", "label": "Opts::parse" },
+    { "from": "run", "to": "patterns", "label": "build_patterns" },
+    { "from": "run", "to": "config", "label": "construct_config" },
+    { "from": "run", "to": "walk", "label": "walk::scan(paths, patterns, config)" },
+    { "from": "walk", "to": "walker", "label": "build_walker" },
+    { "from": "walk", "to": "senders", "label": "spawn_senders" },
+    { "from": "walk", "to": "receiver", "label": "spawn receiver thread" },
+    { "from": "walker", "to": "senders", "label": "WalkParallel::run drives worker closure" },
+    { "from": "senders", "to": "receiver", "label": "Batch of WorkerResults over bounded channel" },
+    { "from": "senders", "to": "patterns", "label": "patterns.matches_path" },
+    { "from": "senders", "to": "dir_entry", "label": "DirEntry::normal / broken_symlink" },
+    { "from": "receiver", "to": "output", "label": "output::print_entry" }
+  ]
+}
