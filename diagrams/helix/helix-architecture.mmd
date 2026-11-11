@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_core["helix-core: text &amp; selections"]
+  node_rope["ropey::Rope buffers<br/>[transaction.rs]"]
+  node_operation["Operation &#40;Retain/Delete/Insert&#41;<br/>[transaction.rs]"]
+  node_changeset["ChangeSet<br/>[transaction.rs]"]
+  node_changeset_apply["ChangeSet::apply<br/>[transaction.rs]"]
+  node_transaction["Transaction<br/>[transaction.rs]"]
+  node_transaction_apply["Transaction::apply<br/>[transaction.rs]"]
+  node_range["Range &#123;anchor, head&#125;<br/>[selection.rs]"]
+  node_selection["Selection<br/>[selection.rs]"]
+  node_selection_primary["Selection::primary<br/>[selection.rs]"]
+  node_movement["movement.rs primitives<br/>[movement.rs]"]
+end
+
+subgraph group_syntax["helix-core: tree-house syntax"]
+  node_syntax["Syntax<br/>[syntax.rs]"]
+  node_syntax_update["Syntax::update<br/>[syntax.rs]"]
+  node_syntax_loader["Loader<br/>[syntax.rs]"]
+  node_highlighter["Highlighter<br/>[syntax.rs]"]
+end
+
+subgraph group_view["helix-view: editor state"]
+  node_document["Document<br/>[document.rs]"]
+  node_doc_apply["Document::apply<br/>[document.rs]"]
+  node_doc_set_selection["Document::set_selection<br/>[document.rs]"]
+  node_editor["Editor<br/>[editor.rs]"]
+  node_editor_open["Editor::open<br/>[editor.rs]"]
+  node_editor_event["EditorEvent queue<br/>[editor.rs]"]
+  node_handlers_lsp["LSP handlers<br/>[lsp.rs]"]
+end
+
+subgraph group_term["helix-term: app &amp; UI"]
+  node_application["Application<br/>[application.rs]"]
+  node_render["Application::render<br/>[application.rs]"]
+  node_event_loop["Application::event_loop<br/>[application.rs]"]
+  node_event_loop_until_idle["event_loop_until_idle<br/>[application.rs]"]
+  node_handle_terminal_events["handle_terminal_events<br/>[application.rs]"]
+  node_handle_lsp_message["handle_language_server_message<br/>[application.rs]"]
+  node_commands["MappableCommand<br/>[commands.rs]"]
+  node_keymap_default["default keymap<br/>[default.rs]"]
+end
+
+subgraph group_lsp["helix-lsp: async clients"]
+  node_registry["Registry<br/>[lib.rs]"]
+  node_registry_get["Registry::get<br/>[lib.rs]"]
+  node_start_client["Registry::start_client<br/>[lib.rs]"]
+  node_client["Client<br/>[client.rs]"]
+  node_client_call["Client::call<br/>[client.rs]"]
+end
+
+node_rope -->|"ops describe rope deltas"| node_operation
+node_operation -->|"merged into op list"| node_changeset
+node_changeset -->|"apply&#40;&#41; walks rope"| node_changeset_apply
+node_changeset_apply -->|"splices text in place"| node_rope
+node_changeset -->|"ChangeSet + selection"| node_transaction
+node_transaction -->|"apply to doc rope"| node_transaction_apply
+node_range -->|"ranges: anchor+head"| node_selection
+node_selection -->|"primary_index lookup"| node_selection_primary
+node_selection -->|"rides with every edit"| node_transaction
+node_movement -->|"extends/collapses heads"| node_selection
+node_syntax_loader -->|"compiled language data"| node_syntax
+node_syntax -->|"incremental reparse"| node_syntax_update
+node_syntax_update -->|"generate_edits&#40;changeset&#41;"| node_changeset
+node_highlighter -->|"walks tree layers"| node_syntax
+node_editor -->|"documents map"| node_document
+node_editor_open -->|"open&#40;path, Action&#41;"| node_editor
+node_document -->|"apply_inner"| node_doc_apply
+node_doc_apply -->|"consumes Transaction"| node_transaction
+node_document -->|"per-view selections"| node_doc_set_selection
+node_editor_event -->|"wait_event queue"| node_editor
+node_handlers_lsp -->|"apply_edit hook"| node_editor
+node_doc_apply -->|"edits sync to servers"| node_handlers_lsp
+node_application -->|"draw frame"| node_render
+node_application -->|"top-level loop"| node_event_loop
+node_event_loop -->|"until idle"| node_event_loop_until_idle
+node_event_loop_until_idle -->|"select! biased branch"| node_handle_terminal_events
+node_keymap_default -->|"key -&gt; command map"| node_handle_terminal_events
+node_handle_terminal_events -->|"MappableCommand::execute"| node_commands
+node_commands -->|"build Transaction"| node_transaction
+node_commands -->|"mutate selections"| node_selection
+node_application -->|"server Call handling"| node_handle_lsp_message
+node_application -->|"owns Editor"| node_editor
+node_registry -->|"resolve per language"| node_registry_get
+node_registry_get -->|"spawn if not reused"| node_start_client
+node_start_client -->|"starts process+streams"| node_client
+node_registry -->|"SlotMap&lt;Id, Arc&lt;Client&gt;&gt;"| node_client
+node_client_call -->|"pending request map"| node_client
+node_client -->|"calls merged via SelectAll"| node_registry
+node_registry -->|"incoming stream"| node_handle_lsp_message
+node_handlers_lsp -->|"didChange notifications"| node_client
+node_editor_open -->|"attach servers on open"| node_registry_get
+node_doc_apply -->|"ChangeSet -&gt; reparse"| node_syntax_update
+
+click node_rope "https://github.com/helix-editor/helix/blob/master/helix-core/src/transaction.rs"
+click node_operation "https://github.com/helix-editor/helix/blob/master/helix-core/src/transaction.rs"
+click node_changeset "https://github.com/helix-editor/helix/blob/master/helix-core/src/transaction.rs"
+click node_changeset_apply "https://github.com/helix-editor/helix/blob/master/helix-core/src/transaction.rs"
+click node_transaction "https://github.com/helix-editor/helix/blob/master/helix-core/src/transaction.rs"
+click node_transaction_apply "https://github.com/helix-editor/helix/blob/master/helix-core/src/transaction.rs"
+click node_range "https://github.com/helix-editor/helix/blob/master/helix-core/src/selection.rs"
+click node_selection "https://github.com/helix-editor/helix/blob/master/helix-core/src/selection.rs"
+click node_selection_primary "https://github.com/helix-editor/helix/blob/master/helix-core/src/selection.rs"
+click node_movement "https://github.com/helix-editor/helix/blob/master/helix-core/src/movement.rs"
+click node_syntax "https://github.com/helix-editor/helix/blob/master/helix-core/src/syntax.rs"
+click node_syntax_update "https://github.com/helix-editor/helix/blob/master/helix-core/src/syntax.rs"
+click node_syntax_loader "https://github.com/helix-editor/helix/blob/master/helix-core/src/syntax.rs"
+click node_highlighter "https://github.com/helix-editor/helix/blob/master/helix-core/src/syntax.rs"
+click node_document "https://github.com/helix-editor/helix/blob/master/helix-view/src/document.rs"
+click node_doc_apply "https://github.com/helix-editor/helix/blob/master/helix-view/src/document.rs"
+click node_doc_set_selection "https://github.com/helix-editor/helix/blob/master/helix-view/src/document.rs"
+click node_editor "https://github.com/helix-editor/helix/blob/master/helix-view/src/editor.rs"
+click node_editor_open "https://github.com/helix-editor/helix/blob/master/helix-view/src/editor.rs"
+click node_editor_event "https://github.com/helix-editor/helix/blob/master/helix-view/src/editor.rs"
+click node_handlers_lsp "https://github.com/helix-editor/helix/blob/master/helix-view/src/handlers/lsp.rs"
+click node_application "https://github.com/helix-editor/helix/blob/master/helix-term/src/application.rs"
+click node_render "https://github.com/helix-editor/helix/blob/master/helix-term/src/application.rs"
+click node_event_loop "https://github.com/helix-editor/helix/blob/master/helix-term/src/application.rs"
+click node_event_loop_until_idle "https://github.com/helix-editor/helix/blob/master/helix-term/src/application.rs"
+click node_handle_terminal_events "https://github.com/helix-editor/helix/blob/master/helix-term/src/application.rs"
+click node_handle_lsp_message "https://github.com/helix-editor/helix/blob/master/helix-term/src/application.rs"
+click node_commands "https://github.com/helix-editor/helix/blob/master/helix-term/src/commands.rs"
+click node_keymap_default "https://github.com/helix-editor/helix/blob/master/helix-term/src/keymap/default.rs"
+click node_registry "https://github.com/helix-editor/helix/blob/master/helix-lsp/src/lib.rs"
+click node_registry_get "https://github.com/helix-editor/helix/blob/master/helix-lsp/src/lib.rs"
+click node_start_client "https://github.com/helix-editor/helix/blob/master/helix-lsp/src/lib.rs"
+click node_client "https://github.com/helix-editor/helix/blob/master/helix-lsp/src/client.rs"
+click node_client_call "https://github.com/helix-editor/helix/blob/master/helix-lsp/src/client.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_rope,node_operation,node_changeset,node_changeset_apply,node_transaction,node_transaction_apply,node_range,node_selection,node_selection_primary,node_movement toneBlue
+class node_syntax,node_syntax_update,node_syntax_loader,node_highlighter toneAmber
+class node_document,node_doc_apply,node_doc_set_selection,node_editor,node_editor_open,node_editor_event,node_handlers_lsp toneMint
+class node_application,node_render,node_event_loop,node_event_loop_until_idle,node_handle_terminal_events,node_handle_lsp_message,node_commands,node_keymap_default toneRose
+class node_registry,node_registry_get,node_start_client,node_client,node_client_call toneIndigo
