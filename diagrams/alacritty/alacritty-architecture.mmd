@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_binary["alacritty Binary"]
+  node_main{{"main.rs<br/>[main.rs]"}}
+  node_window_context["WindowContext<br/>[window_context.rs]"]
+  node_input_processor["input::Processor<br/>[mod.rs]"]
+end
+
+subgraph group_events["Event Plumbing"]
+  node_event["EventType / Event<br/>[event.rs]"]
+  node_event_proxy["EventProxy<br/>[event.rs]"]
+  node_terminal_event["Terminal Event<br/>[event.rs]"]
+  node_notifier["Notifier<br/>[event_loop.rs]"]
+end
+
+subgraph group_ptyio["PTY &amp; I/O Thread"]
+  node_event_loop["EventLoop<br/>[event_loop.rs]"]
+  node_pty_read["pty_read<br/>[event_loop.rs]"]
+  node_pty_write["pty_write<br/>[event_loop.rs]"]
+  node_tty_mod["tty traits<br/>[mod.rs]"]
+  node_tty_unix["unix Pty<br/>[unix.rs]"]
+  node_tty_windows["ConPTY<br/>[conpty.rs]"]
+  node_sync["FairMutex<br/>[sync.rs]"]
+end
+
+subgraph group_core["Terminal Core"]
+  node_term["Term<br/>[mod.rs]"]
+  node_handler["impl Handler<br/>[mod.rs]"]
+  node_term_damage["TermDamageState<br/>[mod.rs]"]
+  node_term_config["term::Config<br/>[mod.rs]"]
+end
+
+subgraph group_grid["Grid &amp; Cells"]
+  node_grid["Grid<br/>[mod.rs]"]
+  node_storage[("Storage<br/>[storage.rs]")]
+  node_row["Row<br/>[row.rs]"]
+  node_cell["Cell<br/>[cell.rs]"]
+end
+
+subgraph group_render["GPU Renderer"]
+  node_display["Display<br/>[mod.rs]"]
+  node_content["RenderableContent<br/>[content.rs]"]
+  node_damage["DamageTracker<br/>[damage.rs]"]
+  node_renderer["Renderer<br/>[mod.rs]"]
+  node_text["TextRenderer trait<br/>[mod.rs]"]
+  node_atlas[("Atlas<br/>[atlas.rs]")]
+  node_glyph_cache["GlyphCache<br/>[glyph_cache.rs]"]
+  node_glsl3["Glsl3Renderer<br/>[glsl3.rs]"]
+  node_gles2["Gles2Renderer<br/>[gles2.rs]"]
+end
+
+node_main -->|"creates per window"| node_window_context
+node_main -->|"Processor::new"| node_input_processor
+node_input_processor -->|"dispatch input"| node_window_context
+node_input_processor -->|"raise EventType"| node_event
+node_window_context -->|"Term::new + FairMutex"| node_term
+node_window_context -->|"tty::new"| node_tty_mod
+node_window_context -->|"new + spawn"| node_event_loop
+node_window_context -->|"Notifier&#40;loop_tx&#41;"| node_notifier
+node_window_context -->|"owns"| node_display
+node_terminal_event -->|"PtyWrite -&gt; Msg::Input"| node_notifier
+node_notifier -->|"channel + poll"| node_event_loop
+node_event_proxy -->|"send_event&#40;Event&#41;"| node_event
+node_pty_read -->|"Event::Wakeup"| node_event_proxy
+node_event_loop -->|"on readable"| node_pty_read
+node_event_loop -->|"drain queue"| node_pty_write
+node_pty_read -->|"lease/try_lock"| node_sync
+node_pty_read -->|"lock + parse"| node_term
+node_pty_read -->|"parser.advance"| node_handler
+node_pty_write -->|"writer&#40;&#41;.write"| node_tty_mod
+node_event_loop -->|"register&#40;poll&#41;"| node_tty_mod
+node_tty_mod -->|"cfg&#40;unix&#41;"| node_tty_unix
+node_tty_mod -->|"cfg&#40;windows&#41;"| node_tty_windows
+node_term -->|"ANSI callbacks"| node_handler
+node_term -->|"damage&#40;&#41;/reset"| node_term_damage
+node_term -->|"set_options"| node_term_config
+node_term -->|"Title/Bell events"| node_event_proxy
+node_term -->|"grid + alt screen"| node_grid
+node_grid -->|"raw rows"| node_storage
+node_storage -->|"Vec&lt;Row&lt;T&gt;&gt;"| node_row
+node_row -->|"one per column"| node_cell
+node_grid -->|"Grid&lt;Cell&gt;"| node_cell
+node_display -->|"lock + damage&#40;&#41;"| node_term
+node_display -->|"RenderableContent::new"| node_content
+node_content -->|"reads cells"| node_term
+node_display -->|"frame&#40;&#41;.damage_line"| node_damage
+node_display -->|"clear + draw_cells"| node_renderer
+node_renderer -->|"GLSL &gt;= 3.3"| node_glsl3
+node_renderer -->|"fallback"| node_gles2
+node_renderer -->|"TextRendererProvider"| node_text
+node_text -->|"load glyph"| node_glyph_cache
+node_glyph_cache -->|"insert glyph"| node_atlas
+node_text -->|"LoaderApi upload"| node_atlas
+
+click node_main "https://github.com/alacritty/alacritty/blob/master/alacritty/src/main.rs"
+click node_window_context "https://github.com/alacritty/alacritty/blob/master/alacritty/src/window_context.rs"
+click node_input_processor "https://github.com/alacritty/alacritty/blob/master/alacritty/src/input/mod.rs"
+click node_event "https://github.com/alacritty/alacritty/blob/master/alacritty/src/event.rs"
+click node_event_proxy "https://github.com/alacritty/alacritty/blob/master/alacritty/src/event.rs"
+click node_terminal_event "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/event.rs"
+click node_notifier "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/event_loop.rs"
+click node_event_loop "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/event_loop.rs"
+click node_pty_read "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/event_loop.rs"
+click node_pty_write "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/event_loop.rs"
+click node_tty_mod "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/tty/mod.rs"
+click node_tty_unix "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/tty/unix.rs"
+click node_tty_windows "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/tty/windows/conpty.rs"
+click node_sync "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/sync.rs"
+click node_term "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/term/mod.rs"
+click node_handler "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/term/mod.rs"
+click node_term_damage "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/term/mod.rs"
+click node_term_config "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/term/mod.rs"
+click node_grid "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/grid/mod.rs"
+click node_storage "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/grid/storage.rs"
+click node_row "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/grid/row.rs"
+click node_cell "https://github.com/alacritty/alacritty/blob/master/alacritty_terminal/src/term/cell.rs"
+click node_display "https://github.com/alacritty/alacritty/blob/master/alacritty/src/display/mod.rs"
+click node_content "https://github.com/alacritty/alacritty/blob/master/alacritty/src/display/content.rs"
+click node_damage "https://github.com/alacritty/alacritty/blob/master/alacritty/src/display/damage.rs"
+click node_renderer "https://github.com/alacritty/alacritty/blob/master/alacritty/src/renderer/mod.rs"
+click node_text "https://github.com/alacritty/alacritty/blob/master/alacritty/src/renderer/text/mod.rs"
+click node_atlas "https://github.com/alacritty/alacritty/blob/master/alacritty/src/renderer/text/atlas.rs"
+click node_glyph_cache "https://github.com/alacritty/alacritty/blob/master/alacritty/src/renderer/text/glyph_cache.rs"
+click node_glsl3 "https://github.com/alacritty/alacritty/blob/master/alacritty/src/renderer/text/glsl3.rs"
+click node_gles2 "https://github.com/alacritty/alacritty/blob/master/alacritty/src/renderer/text/gles2.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_window_context,node_input_processor toneBlue
+class node_event,node_event_proxy,node_terminal_event,node_notifier toneAmber
+class node_event_loop,node_pty_read,node_pty_write,node_tty_mod,node_tty_unix,node_tty_windows,node_sync toneMint
+class node_term,node_handler,node_term_damage,node_term_config toneRose
+class node_grid,node_storage,node_row,node_cell toneIndigo
+class node_display,node_content,node_damage,node_renderer,node_text,node_atlas,node_glyph_cache,node_glsl3,node_gles2 toneTeal
