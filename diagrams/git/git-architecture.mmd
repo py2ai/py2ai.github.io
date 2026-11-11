@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_g_cli["Command layer"]
+  node_cmd_commit["cmd_commit<br/>[commit.c]"]
+  node_prepare_to_commit["prepare_to_commit<br/>[commit.c]"]
+  node_cmd_pack_objects["cmd_pack_objects<br/>[pack-objects.c]"]
+end
+
+subgraph group_g_index["Staged state"]
+  node_verify_hdr["verify_hdr<br/>[read-cache.c]"]
+  node_do_read_index["do_read_index<br/>[read-cache.c]"]
+  node_ce_write_entry["ce_write_entry<br/>[read-cache.c]"]
+  node_write_locked_index["write_locked_index<br/>[read-cache.c]"]
+end
+
+subgraph group_g_objects["Content-addressed store"]
+  node_odb_write_object_ext["odb_write_object_ext<br/>[odb.c]"]
+  node_odb_loose_path["odb_loose_path<br/>[object-file.c]"]
+  node_fill_loose_path["fill_loose_path<br/>[object-file.c]"]
+  node_check_object_signature["check_object_signature<br/>[object-file.c]"]
+  node_parse_object_buffer["parse_object_buffer<br/>[object.c]"]
+  node_parse_object["parse_object<br/>[object.c]"]
+end
+
+subgraph group_g_names["Rev syntax to oid"]
+  node_repo_get_oid["repo_get_oid<br/>[object-name.c]"]
+  node_get_oid_basic["get_oid_basic<br/>[object-name.c]"]
+  node_repo_find_unique_abbrev_r["repo_find_unique_abbrev_r<br/>[object-name.c]"]
+end
+
+subgraph group_g_refs["Branches, tags, HEAD"]
+  node_refs_resolve_ref_unsafe["refs_resolve_ref_unsafe<br/>[refs.c]"]
+  node_refs_update_ref["refs_update_ref<br/>[refs.c]"]
+  node_files_read_raw_ref["files_read_raw_ref<br/>[files-backend.c]"]
+  node_packed_read_raw_ref["packed_read_raw_ref<br/>[packed-backend.c]"]
+  node_reftable_be_read_raw_ref["reftable_be_read_raw_ref<br/>[reftable-backend.c]"]
+end
+
+subgraph group_g_packs["Compressed storage"]
+  node_use_pack["use_pack<br/>[packfile.c]"]
+  node_find_pack_entry_one["find_pack_entry_one<br/>[packfile.c]"]
+  node_unpack_entry["unpack_entry<br/>[packfile.c]"]
+  node_try_delta["try_delta<br/>[pack-objects.c]"]
+  node_write_reuse_object["write_reuse_object<br/>[pack-objects.c]"]
+  node_write_no_reuse_object["write_no_reuse_object<br/>[pack-objects.c]"]
+end
+
+subgraph group_g_walk["Commit traversal"]
+  node_setup_revisions["setup_revisions<br/>[revision.c]"]
+  node_limit_list["limit_list<br/>[revision.c]"]
+  node_mark_parents_uninteresting["mark_parents_uninteresting<br/>[revision.c]"]
+  node_prepare_revision_walk["prepare_revision_walk<br/>[revision.c]"]
+  node_parse_commit_buffer["parse_commit_buffer<br/>[commit.c]"]
+  node_sort_in_topological_order["sort_in_topological_order<br/>[commit.c]"]
+  node_parse_commit_in_graph["parse_commit_in_graph<br/>[commit-graph.c]"]
+end
+
+node_cmd_commit -->|"hooks, message, index snapshot"| node_prepare_to_commit
+node_prepare_to_commit -->|"read staged changes"| node_do_read_index
+node_cmd_commit -->|"atomically persist new index"| node_write_locked_index
+node_cmd_commit -->|"store blobs, trees, the commit"| node_odb_write_object_ext
+node_cmd_commit -->|"advance branch/HEAD ref"| node_refs_update_ref
+node_do_read_index -->|"DIRC magic and version bounds"| node_verify_hdr
+node_write_locked_index -->|"serialize cache entries"| node_ce_write_entry
+node_odb_write_object_ext -->|"loose write under objects/"| node_odb_loose_path
+node_odb_loose_path -->|"first hash byte is the dir"| node_fill_loose_path
+node_parse_object -->|"re-hash, compare to name"| node_check_object_signature
+node_parse_object -->|"dispatch by object type"| node_parse_object_buffer
+node_repo_get_oid -->|"hex, refs, @-expressions"| node_get_oid_basic
+node_get_oid_basic -->|"ref names become oids"| node_refs_resolve_ref_unsafe
+node_repo_get_oid -->|"load and type-check"| node_parse_object
+node_repo_get_oid -->|"short hashes stay unambiguous"| node_repo_find_unique_abbrev_r
+node_refs_resolve_ref_unsafe -->|"files backend read"| node_files_read_raw_ref
+node_refs_resolve_ref_unsafe -->|"reftable backend read"| node_reftable_be_read_raw_ref
+node_files_read_raw_ref -->|"loose miss falls to packed-refs"| node_packed_read_raw_ref
+node_refs_update_ref -->|"verify old value first"| node_refs_resolve_ref_unsafe
+node_parse_object -->|"packed object inflated on demand"| node_unpack_entry
+node_unpack_entry -->|"delta base oid to offset"| node_find_pack_entry_one
+node_unpack_entry -->|"sliding mmap windows"| node_use_pack
+node_cmd_pack_objects -->|"window x depth delta search"| node_try_delta
+node_cmd_pack_objects -->|"reuse valid deltas"| node_write_reuse_object
+node_try_delta -->|"fresh delta encoded"| node_write_no_reuse_object
+node_write_reuse_object -->|"fallback when reuse fails"| node_write_no_reuse_object
+node_setup_revisions -->|"args parsed, walk begins"| node_prepare_revision_walk
+node_prepare_revision_walk -->|"prune when revs-&gt;limited"| node_limit_list
+node_limit_list -->|"excluded ancestors flood"| node_mark_parents_uninteresting
+node_prepare_revision_walk -->|"tips parsed via handle_commit"| node_parse_commit_buffer
+node_prepare_revision_walk -->|"parents without inflating"| node_parse_commit_in_graph
+node_prepare_revision_walk -->|"when topo_order requested"| node_sort_in_topological_order
+node_limit_list -->|"each popped commit parsed"| node_parse_commit_buffer
+node_parse_commit_buffer -->|"parents looked up for parsing"| node_parse_object
+
+click node_cmd_commit "https://github.com/git/git/blob/master/builtin/commit.c"
+click node_prepare_to_commit "https://github.com/git/git/blob/master/builtin/commit.c"
+click node_cmd_pack_objects "https://github.com/git/git/blob/master/builtin/pack-objects.c"
+click node_verify_hdr "https://github.com/git/git/blob/master/read-cache.c"
+click node_do_read_index "https://github.com/git/git/blob/master/read-cache.c"
+click node_ce_write_entry "https://github.com/git/git/blob/master/read-cache.c"
+click node_write_locked_index "https://github.com/git/git/blob/master/read-cache.c"
+click node_odb_write_object_ext "https://github.com/git/git/blob/master/odb.c"
+click node_odb_loose_path "https://github.com/git/git/blob/master/object-file.c"
+click node_fill_loose_path "https://github.com/git/git/blob/master/object-file.c"
+click node_check_object_signature "https://github.com/git/git/blob/master/object-file.c"
+click node_parse_object_buffer "https://github.com/git/git/blob/master/object.c"
+click node_parse_object "https://github.com/git/git/blob/master/object.c"
+click node_repo_get_oid "https://github.com/git/git/blob/master/object-name.c"
+click node_get_oid_basic "https://github.com/git/git/blob/master/object-name.c"
+click node_repo_find_unique_abbrev_r "https://github.com/git/git/blob/master/object-name.c"
+click node_refs_resolve_ref_unsafe "https://github.com/git/git/blob/master/refs.c"
+click node_refs_update_ref "https://github.com/git/git/blob/master/refs.c"
+click node_files_read_raw_ref "https://github.com/git/git/blob/master/refs/files-backend.c"
+click node_packed_read_raw_ref "https://github.com/git/git/blob/master/refs/packed-backend.c"
+click node_reftable_be_read_raw_ref "https://github.com/git/git/blob/master/refs/reftable-backend.c"
+click node_use_pack "https://github.com/git/git/blob/master/packfile.c"
+click node_find_pack_entry_one "https://github.com/git/git/blob/master/packfile.c"
+click node_unpack_entry "https://github.com/git/git/blob/master/packfile.c"
+click node_try_delta "https://github.com/git/git/blob/master/builtin/pack-objects.c"
+click node_write_reuse_object "https://github.com/git/git/blob/master/builtin/pack-objects.c"
+click node_write_no_reuse_object "https://github.com/git/git/blob/master/builtin/pack-objects.c"
+click node_setup_revisions "https://github.com/git/git/blob/master/revision.c"
+click node_limit_list "https://github.com/git/git/blob/master/revision.c"
+click node_mark_parents_uninteresting "https://github.com/git/git/blob/master/revision.c"
+click node_prepare_revision_walk "https://github.com/git/git/blob/master/revision.c"
+click node_parse_commit_buffer "https://github.com/git/git/blob/master/commit.c"
+click node_sort_in_topological_order "https://github.com/git/git/blob/master/commit.c"
+click node_parse_commit_in_graph "https://github.com/git/git/blob/master/commit-graph.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cmd_commit,node_prepare_to_commit,node_cmd_pack_objects,node_setup_revisions,node_limit_list,node_mark_parents_uninteresting,node_prepare_revision_walk,node_parse_commit_buffer,node_sort_in_topological_order,node_parse_commit_in_graph toneBlue
+class node_verify_hdr,node_do_read_index,node_ce_write_entry,node_write_locked_index toneAmber
+class node_odb_write_object_ext,node_odb_loose_path,node_fill_loose_path,node_check_object_signature,node_parse_object_buffer,node_parse_object toneMint
+class node_repo_get_oid,node_get_oid_basic,node_repo_find_unique_abbrev_r toneRose
+class node_refs_resolve_ref_unsafe,node_refs_update_ref,node_files_read_raw_ref,node_packed_read_raw_ref,node_reftable_be_read_raw_ref toneIndigo
+class node_use_pack,node_find_pack_entry_one,node_unpack_entry,node_try_delta,node_write_reuse_object,node_write_no_reuse_object toneTeal
