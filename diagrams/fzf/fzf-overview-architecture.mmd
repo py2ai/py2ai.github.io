@@ -1,0 +1,70 @@
+flowchart TD
+
+subgraph group_coordination["Coordinator"]
+  node_core["Run<br/>[core.go]"]
+end
+
+subgraph group_ingest["Ingestion"]
+  node_reader["Reader<br/>[reader.go]"]
+end
+
+subgraph group_storage["Item Storage"]
+  node_chunklist["ChunkList<br/>[chunklist.go]"]
+  node_chunkcache["ChunkCache<br/>[cache.go]"]
+end
+
+subgraph group_matching["Parallel Matching"]
+  node_pattern["Pattern<br/>[pattern.go]"]
+  node_algo["algo.FuzzyMatchV1/V2<br/>[algo.go]"]
+  node_matcher["Matcher<br/>[matcher.go]"]
+end
+
+subgraph group_ranking["Ranking"]
+  node_merger["Merger<br/>[merger.go]"]
+  node_result["Result / sortCriteria<br/>[result.go]"]
+end
+
+subgraph group_terminal["Terminal UI"]
+  node_terminal["Terminal<br/>[terminal.go]"]
+end
+
+node_core -->|"spawns ReadSource goroutine"| node_reader
+node_reader -->|"pusher&#40;line&#41; via ChunkList.Push"| node_chunklist
+node_reader -->|"EvtReadNew / EvtReadFin"| node_core
+node_core -->|"Snapshot&#40;tail&#41; on data events"| node_chunklist
+node_chunklist -->|"retire evicted chunks"| node_chunkcache
+node_core -->|"Reset&#40;snapshot, query&#41;"| node_matcher
+node_matcher -->|"build and cache Pattern"| node_pattern
+node_pattern -->|"bitmap Lookup/Search"| node_chunkcache
+node_pattern -->|"run Algo per item"| node_algo
+node_matcher -->|"partial results per worker"| node_merger
+node_merger -->|"k-way merge by rank"| node_result
+node_result -->|"score and offsets feed rank"| node_algo
+node_matcher -->|"EvtSearchProgress / EvtSearchFin"| node_core
+node_core -->|"UpdateList&#40;MatchResult&#41;"| node_terminal
+node_terminal -->|"EvtSearchNew on keystroke"| node_core
+
+click node_core "https://github.com/junegunn/fzf/blob/master/src/core.go"
+click node_reader "https://github.com/junegunn/fzf/blob/master/src/reader.go"
+click node_chunklist "https://github.com/junegunn/fzf/blob/master/src/chunklist.go"
+click node_chunkcache "https://github.com/junegunn/fzf/blob/master/src/cache.go"
+click node_pattern "https://github.com/junegunn/fzf/blob/master/src/pattern.go"
+click node_algo "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_matcher "https://github.com/junegunn/fzf/blob/master/src/matcher.go"
+click node_merger "https://github.com/junegunn/fzf/blob/master/src/merger.go"
+click node_result "https://github.com/junegunn/fzf/blob/master/src/result.go"
+click node_terminal "https://github.com/junegunn/fzf/blob/master/src/terminal.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_core toneBlue
+class node_reader toneAmber
+class node_chunklist,node_chunkcache toneMint
+class node_pattern,node_algo,node_matcher toneRose
+class node_merger,node_result toneIndigo
+class node_terminal toneTeal

@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_ingest["Ingestion"]
+  node_readsource["ReadSource<br/>[reader.go]"]
+  node_feed["feed<br/>[reader.go]"]
+  node_fastwalk["readFiles<br/>[reader.go]"]
+  node_event_poller["startEventPoller<br/>[reader.go]"]
+end
+
+subgraph group_storage["Item Storage"]
+  node_chunk["Chunk<br/>[chunklist.go]"]
+  node_chunklist_push["ChunkList.Push<br/>[chunklist.go]"]
+  node_snapshot["Snapshot<br/>[chunklist.go]"]
+  node_chunkcache["ChunkCache<br/>[cache.go]"]
+  node_cache_search["Search prefix/suffix<br/>[cache.go]"]
+  node_item["Item<br/>[item.go]"]
+end
+
+subgraph group_matching["Matching Engine"]
+  node_pattern_build["BuildPattern<br/>[pattern.go]"]
+  node_parseterms["parseTerms<br/>[pattern.go]"]
+  node_match_chunk["matchChunk<br/>[pattern.go]"]
+  node_direct_algo["directAlgo fast path<br/>[pattern.go]"]
+  node_extended_match["extendedMatch<br/>[pattern.go]"]
+  node_algo_v2["FuzzyMatchV2<br/>[algo.go]"]
+  node_algo_v1["FuzzyMatchV1<br/>[algo.go]"]
+  node_ascii_index["asciiFuzzyIndex<br/>[algo.go]"]
+  node_single_fast["fuzzyMatchV2Single<br/>[algo.go]"]
+  node_two_fast["fuzzyMatchV2Two<br/>[algo.go]"]
+  node_bonus["bonusMatrix<br/>[algo.go]"]
+  node_slab["util.Slab<br/>[slab.go]"]
+  node_matcher_scan["Matcher.scan<br/>[matcher.go]"]
+  node_matcher_cache["mergerCache<br/>[matcher.go]"]
+end
+
+subgraph group_ranking["Ranking"]
+  node_result_points["Result.points<br/>[result.go]"]
+  node_radix_sort["radixSortResults<br/>[result.go]"]
+  node_compare_ranks["compareRanks<br/>[result_x86.go]"]
+  node_merger_get["Merger.mergedGet<br/>[merger.go]"]
+end
+
+subgraph group_terminal_ui["Terminal UI"]
+  node_terminal_loop["Terminal.Loop<br/>[terminal.go]"]
+  node_renderer["tui renderer<br/>[terminal.go]"]
+  node_update_list["UpdateList<br/>[terminal.go]"]
+  node_bytime["byTimeOrder<br/>[terminal.go]"]
+end
+
+subgraph group_coordination["Coordinator"]
+  node_core_run["Run coordinator<br/>[core.go]"]
+end
+
+node_readsource -->|"stdin or command output"| node_feed
+node_readsource -->|"tty stdin, no default command"| node_fastwalk
+node_feed -->|"atomic EvtReadNew flag"| node_event_poller
+node_event_poller -->|"EvtReadNew via EventBox"| node_core_run
+node_feed -->|"pusher&#40;line&#41;"| node_chunklist_push
+node_fastwalk -->|"pusher&#40;path&#41;"| node_chunklist_push
+node_chunklist_push -->|"append chunk when full"| node_chunk
+node_chunk -->|"1024 fixed slots"| node_item
+node_core_run -->|"on EvtReadNew/Fin"| node_snapshot
+node_snapshot -->|"retire evicted chunks"| node_chunkcache
+node_core_run -->|"patternBuilder&#40;query&#41;"| node_pattern_build
+node_pattern_build -->|"extended mode"| node_parseterms
+node_pattern_build -->|"Reset via reqBox"| node_matcher_scan
+node_matcher_scan -->|"per stolen chunk"| node_match_chunk
+node_match_chunk -->|"cache miss handling"| node_cache_search
+node_cache_search -->|"read/write bitmaps"| node_chunkcache
+node_match_chunk -->|"single fuzzy term"| node_direct_algo
+node_direct_algo -->|"direct call"| node_algo_v2
+node_match_chunk -->|"multi-term query"| node_extended_match
+node_extended_match -->|"fuzzy terms"| node_algo_v2
+node_extended_match -->|"procFun dispatch"| node_algo_v1
+node_algo_v2 -->|"Phase 1 scope"| node_ascii_index
+node_ascii_index -->|"M == 1 ASCII"| node_single_fast
+node_ascii_index -->|"M == 2 ASCII"| node_two_fast
+node_algo_v2 -->|"Phase 2 bonuses"| node_bonus
+node_algo_v2 -->|"slab overflow fallback"| node_algo_v1
+node_algo_v2 -->|"alloc16/alloc32"| node_slab
+node_matcher_scan -->|"memoize merger"| node_matcher_cache
+node_matcher_scan -->|"worker-local matches"| node_result_points
+node_result_points -->|"sortBuf per partition"| node_radix_sort
+node_radix_sort -->|"fallback below 128 items"| node_compare_ranks
+node_matcher_scan -->|"NewMerger&#40;lists&#41;"| node_merger_get
+node_merger_get -->|"pick min cursor rank"| node_compare_ranks
+node_matcher_scan -->|"EvtSearchProgress/Fin"| node_core_run
+node_core_run -->|"EvtSearchFin"| node_update_list
+node_update_list -->|"reqList repaint"| node_terminal_loop
+node_terminal_loop -->|"draw frames"| node_renderer
+node_terminal_loop -->|"EvtSearchNew on query change"| node_core_run
+node_terminal_loop -->|"accept sorts selections"| node_bytime
+
+click node_readsource "https://github.com/junegunn/fzf/blob/master/src/reader.go"
+click node_feed "https://github.com/junegunn/fzf/blob/master/src/reader.go"
+click node_fastwalk "https://github.com/junegunn/fzf/blob/master/src/reader.go"
+click node_event_poller "https://github.com/junegunn/fzf/blob/master/src/reader.go"
+click node_chunk "https://github.com/junegunn/fzf/blob/master/src/chunklist.go"
+click node_chunklist_push "https://github.com/junegunn/fzf/blob/master/src/chunklist.go"
+click node_snapshot "https://github.com/junegunn/fzf/blob/master/src/chunklist.go"
+click node_chunkcache "https://github.com/junegunn/fzf/blob/master/src/cache.go"
+click node_cache_search "https://github.com/junegunn/fzf/blob/master/src/cache.go"
+click node_item "https://github.com/junegunn/fzf/blob/master/src/item.go"
+click node_pattern_build "https://github.com/junegunn/fzf/blob/master/src/pattern.go"
+click node_parseterms "https://github.com/junegunn/fzf/blob/master/src/pattern.go"
+click node_match_chunk "https://github.com/junegunn/fzf/blob/master/src/pattern.go"
+click node_direct_algo "https://github.com/junegunn/fzf/blob/master/src/pattern.go"
+click node_extended_match "https://github.com/junegunn/fzf/blob/master/src/pattern.go"
+click node_algo_v2 "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_algo_v1 "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_ascii_index "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_single_fast "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_two_fast "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_bonus "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go"
+click node_slab "https://github.com/junegunn/fzf/blob/master/src/util/slab.go"
+click node_matcher_scan "https://github.com/junegunn/fzf/blob/master/src/matcher.go"
+click node_matcher_cache "https://github.com/junegunn/fzf/blob/master/src/matcher.go"
+click node_result_points "https://github.com/junegunn/fzf/blob/master/src/result.go"
+click node_radix_sort "https://github.com/junegunn/fzf/blob/master/src/result.go"
+click node_compare_ranks "https://github.com/junegunn/fzf/blob/master/src/result_x86.go"
+click node_merger_get "https://github.com/junegunn/fzf/blob/master/src/merger.go"
+click node_terminal_loop "https://github.com/junegunn/fzf/blob/master/src/terminal.go"
+click node_renderer "https://github.com/junegunn/fzf/blob/master/src/terminal.go"
+click node_update_list "https://github.com/junegunn/fzf/blob/master/src/terminal.go"
+click node_bytime "https://github.com/junegunn/fzf/blob/master/src/terminal.go"
+click node_core_run "https://github.com/junegunn/fzf/blob/master/src/core.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_readsource,node_feed,node_fastwalk,node_event_poller toneBlue
+class node_chunk,node_chunklist_push,node_snapshot,node_chunkcache,node_cache_search,node_item toneAmber
+class node_pattern_build,node_parseterms,node_match_chunk,node_direct_algo,node_extended_match,node_algo_v2,node_algo_v1,node_ascii_index,node_single_fast,node_two_fast,node_bonus,node_slab,node_matcher_scan,node_matcher_cache toneMint
+class node_result_points,node_radix_sort,node_compare_ranks,node_merger_get toneRose
+class node_terminal_loop,node_renderer,node_update_list,node_bytime toneIndigo
+class node_core_run toneTeal
