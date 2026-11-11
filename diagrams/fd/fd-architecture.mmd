@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_entry["Startup &amp; configuration"]
+  node_main["main&#40;&#41;<br/>[main.rs]"]
+  node_run["run&#40;&#41;<br/>[main.rs]"]
+  node_smart_case["smart case<br/>[main.rs]"]
+  node_construct_config["construct_config<br/>[main.rs]"]
+  node_config["Config<br/>[config.rs]"]
+end
+
+subgraph group_options["CLI options"]
+  node_opts["Opts &#40;clap derive&#41;<br/>[cli.rs]"]
+  node_unrestricted["-u / --unrestricted<br/>[cli.rs]"]
+  node_threads["default_num_threads<br/>[cli.rs]"]
+end
+
+subgraph group_matching["Matcher construction"]
+  node_build_patterns["build_patterns<br/>[patterns.rs]"]
+  node_regex_matcher["RegexSet matcher<br/>[patterns.rs]"]
+  node_glob_matcher["Glob matcher<br/>[patterns.rs]"]
+  node_fixed_matcher["FixedStrings / ExactStrings<br/>[patterns.rs]"]
+  node_match_all["MatchAll<br/>[patterns.rs]"]
+end
+
+subgraph group_walking["Parallel directory walk"]
+  node_scan["WorkerState::scan<br/>[walk.rs]"]
+  node_worker_state["WorkerState<br/>[walk.rs]"]
+  node_build_walker["build_walker<br/>[walk.rs]"]
+  node_build_overrides["build_overrides<br/>[walk.rs]"]
+  node_walkbuilder["WalkBuilder wiring<br/>[walk.rs]"]
+  node_spawn_senders["spawn_senders<br/>[walk.rs]"]
+  node_batch_sender["BatchSender<br/>[walk.rs]"]
+  node_bounded_channel["bounded&#40;2 * threads&#41;<br/>[walk.rs]"]
+end
+
+subgraph group_filtering["Per-entry filters"]
+  node_filter_entry["worker filter closure<br/>[walk.rs]"]
+  node_name_match["patterns.matches_path<br/>[walk.rs]"]
+  node_ext_filter["extension filter<br/>[walk.rs]"]
+  node_filetype_filter["FileTypes::should_ignore<br/>[filetypes.rs]"]
+  node_owner_filter["OwnerFilter<br/>[owner.rs]"]
+  node_size_filter["SizeFilter::is_within<br/>[size.rs]"]
+  node_time_filter["TimeFilter::applies_to<br/>[time.rs]"]
+  node_prune["prune &#40;WalkState::Skip&#41;<br/>[walk.rs]"]
+end
+
+subgraph group_output["Receiver &amp; printing"]
+  node_receiver_buffer["ReceiverBuffer<br/>[walk.rs]"]
+  node_mode_switch["Buffering vs Streaming<br/>[walk.rs]"]
+  node_sort_stop["stop&#40;&#41; + sort<br/>[walk.rs]"]
+  node_dir_entry["DirEntry<br/>[dir_entry.rs]"]
+  node_print_entry["print_entry<br/>[output.rs]"]
+end
+
+node_main -->|"run&#40;&#41; returns ExitCode"| node_run
+node_run -->|"Opts::parse"| node_opts
+node_run -->|"pick ignore_case"| node_smart_case
+node_run -->|"translate flags"| node_construct_config
+node_run -->|"build matcher"| node_build_patterns
+node_run -->|"walk::scan"| node_scan
+node_construct_config -->|"fills Config"| node_config
+node_opts -->|"-u alias"| node_unrestricted
+node_opts -->|"thread count default"| node_threads
+node_smart_case -->|"ignore_case flag"| node_build_patterns
+node_build_patterns -->|"default &amp; fixed fallback"| node_regex_matcher
+node_build_patterns -->|"--glob"| node_glob_matcher
+node_build_patterns -->|"--fixed-strings / --exact"| node_fixed_matcher
+node_build_patterns -->|"empty pattern"| node_match_all
+node_scan -->|"new WorkerState"| node_worker_state
+node_scan -->|"construct walker"| node_build_walker
+node_scan -->|"open tx/rx"| node_bounded_channel
+node_scan -->|"spawn receiver"| node_receiver_buffer
+node_build_walker -->|"--exclude globs"| node_build_overrides
+node_build_walker -->|"ignore settings"| node_walkbuilder
+node_walkbuilder -->|"build_parallel&#40;&#41;.run"| node_spawn_senders
+node_spawn_senders -->|"one closure per thread"| node_filter_entry
+node_filter_entry -->|"cheap first check"| node_name_match
+node_filter_entry -->|"-e"| node_ext_filter
+node_filter_entry -->|"-t"| node_filetype_filter
+node_filter_entry -->|"--owner &#40;unix&#41;"| node_owner_filter
+node_filter_entry -->|"-S"| node_size_filter
+node_filter_entry -->|"--changed-*"| node_time_filter
+node_filter_entry -->|"wrap + lazy style"| node_dir_entry
+node_filter_entry -->|"tx.send&#40;WorkerResult&#41;"| node_batch_sender
+node_filter_entry -->|"after match"| node_prune
+node_name_match -->|"Matcher trait dispatch"| node_regex_matcher
+node_batch_sender -->|"flush batch at limit"| node_bounded_channel
+node_bounded_channel -->|"recv batches"| node_receiver_buffer
+node_receiver_buffer -->|"timeout flips mode"| node_mode_switch
+node_receiver_buffer -->|"final ordering"| node_sort_stop
+node_receiver_buffer -->|"stream output"| node_print_entry
+node_receiver_buffer -->|"lazy metadata/style"| node_dir_entry
+node_print_entry -->|"stripped path &amp; style"| node_dir_entry
+
+click node_main "https://github.com/sharkdp/fd/blob/master/src/main.rs"
+click node_run "https://github.com/sharkdp/fd/blob/master/src/main.rs"
+click node_smart_case "https://github.com/sharkdp/fd/blob/master/src/main.rs"
+click node_construct_config "https://github.com/sharkdp/fd/blob/master/src/main.rs"
+click node_config "https://github.com/sharkdp/fd/blob/master/src/config.rs"
+click node_opts "https://github.com/sharkdp/fd/blob/master/src/cli.rs"
+click node_unrestricted "https://github.com/sharkdp/fd/blob/master/src/cli.rs"
+click node_threads "https://github.com/sharkdp/fd/blob/master/src/cli.rs"
+click node_build_patterns "https://github.com/sharkdp/fd/blob/master/src/patterns.rs"
+click node_regex_matcher "https://github.com/sharkdp/fd/blob/master/src/patterns.rs"
+click node_glob_matcher "https://github.com/sharkdp/fd/blob/master/src/patterns.rs"
+click node_fixed_matcher "https://github.com/sharkdp/fd/blob/master/src/patterns.rs"
+click node_match_all "https://github.com/sharkdp/fd/blob/master/src/patterns.rs"
+click node_scan "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_worker_state "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_build_walker "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_build_overrides "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_walkbuilder "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_spawn_senders "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_batch_sender "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_bounded_channel "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_filter_entry "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_name_match "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_ext_filter "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_filetype_filter "https://github.com/sharkdp/fd/blob/master/src/filetypes.rs"
+click node_owner_filter "https://github.com/sharkdp/fd/blob/master/src/filter/owner.rs"
+click node_size_filter "https://github.com/sharkdp/fd/blob/master/src/filter/size.rs"
+click node_time_filter "https://github.com/sharkdp/fd/blob/master/src/filter/time.rs"
+click node_prune "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_receiver_buffer "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_mode_switch "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_sort_stop "https://github.com/sharkdp/fd/blob/master/src/walk.rs"
+click node_dir_entry "https://github.com/sharkdp/fd/blob/master/src/dir_entry.rs"
+click node_print_entry "https://github.com/sharkdp/fd/blob/master/src/output.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_run,node_smart_case,node_construct_config,node_config toneBlue
+class node_opts,node_unrestricted,node_threads toneAmber
+class node_build_patterns,node_regex_matcher,node_glob_matcher,node_fixed_matcher,node_match_all toneMint
+class node_scan,node_worker_state,node_build_walker,node_build_overrides,node_walkbuilder,node_spawn_senders,node_batch_sender,node_bounded_channel toneRose
+class node_filter_entry,node_name_match,node_ext_filter,node_filetype_filter,node_owner_filter,node_size_filter,node_time_filter,node_prune toneIndigo
+class node_receiver_buffer,node_mode_switch,node_sort_stop,node_dir_entry,node_print_entry toneTeal
