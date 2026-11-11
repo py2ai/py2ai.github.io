@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_client["Client"]
+  node_client_main["client_main<br/>[client.c]"]
+  node_client_connect["client_connect<br/>[client.c]"]
+  node_client_get_lock["client_get_lock<br/>[client.c]"]
+end
+
+subgraph group_server["Server Core"]
+  node_proc_fork_and_daemon["proc_fork_and_daemon<br/>[proc.c]"]
+  node_server_start["server_start<br/>[server.c]"]
+  node_server_create_socket["server_create_socket<br/>[server.c]"]
+  node_server_accept["server_accept<br/>[server.c]"]
+  node_server_client_dispatch["server_client_dispatch<br/>[server-client.c]"]
+  node_server_client_loop["server_client_loop<br/>[server-client.c]"]
+end
+
+subgraph group_commands["Command Dispatch"]
+  node_cmd_parse_lines["cmd-parse.y grammar<br/>[cmd-parse.y]"]
+  node_cmd_new_session_exec["cmd_new_session_exec<br/>[cmd-new-session.c]"]
+  node_spawn_window["spawn_window<br/>[spawn.c]"]
+  node_spawn_pane["spawn_pane<br/>[spawn.c]"]
+end
+
+subgraph group_sessions["Sessions, Windows &amp; Panes"]
+  node_session_create["session_create<br/>[session.c]"]
+  node_struct_session["struct session<br/>[tmux.h]"]
+  node_window_create["window_create<br/>[window.c]"]
+  node_window_add_pane["window_add_pane<br/>[window.c]"]
+  node_window_pane_create["window_pane_create<br/>[window.c]"]
+  node_struct_window_pane["struct window_pane<br/>[tmux.h]"]
+end
+
+subgraph group_screen["Screen &amp; Grid"]
+  node_screen_init["screen_init<br/>[screen.c]"]
+  node_grid_create["grid_create<br/>[grid.c]"]
+  node_struct_grid_cell["struct grid_cell<br/>[tmux.h]"]
+  node_screen_write_cell["screen_write_cell<br/>[screen-write.c]"]
+  node_screen_write_collect_end["screen_write_collect_end<br/>[screen-write.c]"]
+end
+
+subgraph group_parsing["PTY Input Parsing"]
+  node_window_pane_read_callback["window_pane_read_callback<br/>[window.c]"]
+  node_input_init["input_init<br/>[input.c]"]
+  node_input_parse["input_parse<br/>[input.c]"]
+  node_input_state_ground["input_state_ground<br/>[input.c]"]
+  node_input_print["input_print<br/>[input.c]"]
+end
+
+subgraph group_render["Redraw &amp; TTY"]
+  node_redraw_build_cells["redraw_build_cells<br/>[screen-redraw.c]"]
+  node_redraw_make_scene["redraw_make_scene<br/>[screen-redraw.c]"]
+  node_redraw_draw["redraw_draw<br/>[screen-redraw.c]"]
+  node_tty_write["tty_write<br/>[tty.c]"]
+  node_tty_start_tty["tty_start_tty<br/>[tty.c]"]
+end
+
+node_client_main -->|"open the server socket"| node_client_connect
+node_client_connect -->|"ECONNREFUSED: take flock"| node_client_get_lock
+node_client_connect -->|"still no server: fork one"| node_server_start
+node_server_start -->|"detach from caller"| node_proc_fork_and_daemon
+node_proc_fork_and_daemon -->|"child binds socket"| node_server_create_socket
+node_server_create_socket -->|"listen, EV_READ"| node_server_accept
+node_server_accept -->|"peer registered"| node_server_client_dispatch
+node_server_client_dispatch -->|"command string"| node_cmd_parse_lines
+node_cmd_parse_lines -->|"parsed command list"| node_cmd_new_session_exec
+node_cmd_new_session_exec -->|"session if needed"| node_session_create
+node_cmd_new_session_exec -->|"spawn first window"| node_spawn_window
+node_spawn_window -->|"first pane"| node_spawn_pane
+node_spawn_pane -->|"attach pane"| node_window_add_pane
+node_window_add_pane -->|"allocate pane + pty"| node_window_pane_create
+node_session_create -->|"RB_INSERT&#40;&amp;sessions&#41;"| node_struct_session
+node_window_pane_create -->|"id, flags, pty fd"| node_struct_window_pane
+node_window_pane_create -->|"screen sized to pane"| node_screen_init
+node_screen_init -->|"allocate grids"| node_grid_create
+node_grid_create -->|"arrays of cells"| node_struct_grid_cell
+node_window_pane_create -->|"parser per pane"| node_input_init
+node_input_init -->|"starts in ground"| node_input_state_ground
+node_window_pane_read_callback -->|"pty bytes"| node_input_parse
+node_input_parse -->|"transition lookup"| node_input_state_ground
+node_input_parse -->|"printable char handler"| node_input_print
+node_input_parse -->|"non-print stops collection"| node_screen_write_collect_end
+node_input_print -->|"chars land in grid"| node_screen_write_cell
+node_screen_write_collect_end -->|"flush run"| node_screen_write_cell
+node_screen_write_cell -->|"read/write cells"| node_struct_grid_cell
+node_server_client_loop -->|"check_redraw flushes dirty panes"| node_redraw_draw
+node_redraw_draw -->|"build or reuse scene"| node_redraw_make_scene
+node_redraw_make_scene -->|"stage 1 cells"| node_redraw_build_cells
+node_redraw_draw -->|"spans to client ttys"| node_tty_write
+node_tty_write -->|"ensure terminal ready"| node_tty_start_tty
+
+click node_client_main "https://github.com/tmux/tmux/blob/master/client.c"
+click node_client_connect "https://github.com/tmux/tmux/blob/master/client.c"
+click node_client_get_lock "https://github.com/tmux/tmux/blob/master/client.c"
+click node_proc_fork_and_daemon "https://github.com/tmux/tmux/blob/master/proc.c"
+click node_server_start "https://github.com/tmux/tmux/blob/master/server.c"
+click node_server_create_socket "https://github.com/tmux/tmux/blob/master/server.c"
+click node_server_accept "https://github.com/tmux/tmux/blob/master/server.c"
+click node_server_client_dispatch "https://github.com/tmux/tmux/blob/master/server-client.c"
+click node_server_client_loop "https://github.com/tmux/tmux/blob/master/server-client.c"
+click node_cmd_parse_lines "https://github.com/tmux/tmux/blob/master/cmd-parse.y"
+click node_cmd_new_session_exec "https://github.com/tmux/tmux/blob/master/cmd-new-session.c"
+click node_spawn_window "https://github.com/tmux/tmux/blob/master/spawn.c"
+click node_spawn_pane "https://github.com/tmux/tmux/blob/master/spawn.c"
+click node_session_create "https://github.com/tmux/tmux/blob/master/session.c"
+click node_struct_session "https://github.com/tmux/tmux/blob/master/tmux.h"
+click node_window_create "https://github.com/tmux/tmux/blob/master/window.c"
+click node_window_add_pane "https://github.com/tmux/tmux/blob/master/window.c"
+click node_window_pane_create "https://github.com/tmux/tmux/blob/master/window.c"
+click node_struct_window_pane "https://github.com/tmux/tmux/blob/master/tmux.h"
+click node_screen_init "https://github.com/tmux/tmux/blob/master/screen.c"
+click node_grid_create "https://github.com/tmux/tmux/blob/master/grid.c"
+click node_struct_grid_cell "https://github.com/tmux/tmux/blob/master/tmux.h"
+click node_screen_write_cell "https://github.com/tmux/tmux/blob/master/screen-write.c"
+click node_screen_write_collect_end "https://github.com/tmux/tmux/blob/master/screen-write.c"
+click node_window_pane_read_callback "https://github.com/tmux/tmux/blob/master/window.c"
+click node_input_init "https://github.com/tmux/tmux/blob/master/input.c"
+click node_input_parse "https://github.com/tmux/tmux/blob/master/input.c"
+click node_input_state_ground "https://github.com/tmux/tmux/blob/master/input.c"
+click node_input_print "https://github.com/tmux/tmux/blob/master/input.c"
+click node_redraw_build_cells "https://github.com/tmux/tmux/blob/master/screen-redraw.c"
+click node_redraw_make_scene "https://github.com/tmux/tmux/blob/master/screen-redraw.c"
+click node_redraw_draw "https://github.com/tmux/tmux/blob/master/screen-redraw.c"
+click node_tty_write "https://github.com/tmux/tmux/blob/master/tty.c"
+click node_tty_start_tty "https://github.com/tmux/tmux/blob/master/tty.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_client_main,node_client_connect,node_client_get_lock,node_redraw_build_cells,node_redraw_make_scene,node_redraw_draw,node_tty_write,node_tty_start_tty toneBlue
+class node_proc_fork_and_daemon,node_server_start,node_server_create_socket,node_server_accept,node_server_client_dispatch,node_server_client_loop toneAmber
+class node_cmd_parse_lines,node_cmd_new_session_exec,node_spawn_window,node_spawn_pane toneMint
+class node_session_create,node_struct_session,node_window_create,node_window_add_pane,node_window_pane_create,node_struct_window_pane toneRose
+class node_screen_init,node_grid_create,node_struct_grid_cell,node_screen_write_cell,node_screen_write_collect_end toneIndigo
+class node_window_pane_read_callback,node_input_init,node_input_parse,node_input_state_ground,node_input_print toneTeal
