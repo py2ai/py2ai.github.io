@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_g_hooks["Shell Hooks"]
+  node_init_stub["init_stub<br/>[mod.rs]"]
+  node_init_main["init_main<br/>[mod.rs]"]
+  node_bash_hook["starship.bash<br/>[starship.bash]"]
+  node_zsh_hook["starship.zsh<br/>[starship.zsh]"]
+  node_fish_hook["starship.fish<br/>[starship.fish]"]
+end
+
+subgraph group_g_cli["CLI &amp; Entry"]
+  node_main["main&#40;&#41; CLI dispatch<br/>[main.rs]"]
+  node_prompt_fn["print::prompt<br/>[print.rs]"]
+  node_get_prompt["get_prompt<br/>[print.rs]"]
+  node_handle_module["handle_module<br/>[print.rs]"]
+end
+
+subgraph group_g_ctx["Context &amp; State Probes"]
+  node_ctx_new["Context::new<br/>[mod.rs]"]
+  node_get_shell["get_shell<br/>[mod.rs]"]
+  node_config_path["config path resolution<br/>[mod.rs]"]
+  node_dir_contents["DirContents::from_path_with_timeout<br/>[mod.rs]"]
+  node_exec_cmd["Context::exec_cmd<br/>[mod.rs]"]
+  node_git_repo["GitRepo &#40;gix handle&#41;<br/>[git_repo.rs]"]
+  node_jj_repo["JJRepo<br/>[jj_repo.rs]"]
+end
+
+subgraph group_g_cfg["Config &amp; Format"]
+  node_config_init["StarshipConfig::initialize<br/>[config.rs]"]
+  node_module_cfg["get_module_config<br/>[config.rs]"]
+  node_root_cfg["StarshipRootConfig<br/>[starship_root.rs]"]
+  node_prompt_order["PROMPT_ORDER<br/>[starship_root.rs]"]
+  node_configure["starship config/toggle<br/>[configure.rs]"]
+end
+
+subgraph group_g_mods["Module Engine"]
+  node_all_modules["ALL_MODULES<br/>[module.rs]"]
+  node_dispatch["modules::handle<br/>[mod.rs]"]
+  node_git_status["git_status module<br/>[git_status.rs]"]
+  node_shared_status["get_static_repo_status<br/>[git_status.rs]"]
+  node_nodejs["nodejs module<br/>[nodejs.rs]"]
+  node_python["python module<br/>[python.rs]"]
+  node_custom["custom commands<br/>[custom.rs]"]
+end
+
+subgraph group_g_render["Formatter &amp; Output"]
+  node_fmt_new["StringFormatter::new"]
+  node_map_vars["map_variables_to_segments"]
+  node_pest["parser::parse<br/>[parser.rs]"]
+  node_grammar["spec.pest grammar<br/>[spec.pest]"]
+  node_segments["Segment enum<br/>[segment.rs]"]
+  node_wrap_shell["wrap_colorseq_for_shell<br/>[mod.rs]"]
+end
+
+node_init_stub -->|"two-phase: stub evals full script"| node_init_main
+node_init_main -->|"emits bash script"| node_bash_hook
+node_init_main -->|"emits zsh script"| node_zsh_hook
+node_init_main -->|"emits fish script"| node_fish_hook
+node_bash_hook -->|"PROMPT_COMMAND runs starship prompt"| node_main
+node_zsh_hook -->|"PROMPT='$&#40;starship prompt ...&#41;'"| node_main
+node_fish_hook -->|"fish_prompt calls starship prompt"| node_main
+node_main -->|"Commands::Prompt"| node_prompt_fn
+node_prompt_fn -->|"Context::new"| node_ctx_new
+node_prompt_fn -->|"get_prompt&#40;context&#41;"| node_get_prompt
+node_get_prompt -->|"one call per format variable"| node_handle_module
+node_ctx_new -->|"STARSHIP_SHELL probe"| node_get_shell
+node_ctx_new -->|"resolve config file"| node_config_path
+node_ctx_new -->|"OnceLock lazy scan"| node_dir_contents
+node_ctx_new -->|"command_timeout guard"| node_exec_cmd
+node_ctx_new -->|"lazy gix discovery"| node_git_repo
+node_ctx_new -->|"lazy JJ discover"| node_jj_repo
+node_config_path -->|"file -&gt; toml::Table"| node_config_init
+node_config_init -->|"per-module tables"| node_module_cfg
+node_config_init -->|"StarshipRootConfig::load"| node_root_cfg
+node_root_cfg -->|"$all order + format"| node_prompt_order
+node_configure -->|"edits starship.toml"| node_config_init
+node_handle_module -->|"$all expansion"| node_prompt_order
+node_handle_module -->|"registry membership"| node_all_modules
+node_handle_module -->|"modules::handle&#40;name&#41;"| node_dispatch
+node_dispatch -->|"git_status::module"| node_git_status
+node_dispatch -->|"nodejs::module"| node_nodejs
+node_dispatch -->|"python::module"| node_python
+node_dispatch -->|"custom::module"| node_custom
+node_git_status -->|"context.get_git_repo&#40;&#41;"| node_git_repo
+node_git_status -->|"Arc&lt;RepoStatus&gt; cache"| node_shared_status
+node_shared_status -->|"gix status or exec_git"| node_git_repo
+node_nodejs -->|"detect files/extensions"| node_dir_contents
+node_python -->|"detect files/extensions"| node_dir_contents
+node_get_prompt -->|"StringFormatter::new&#40;format&#41;"| node_fmt_new
+node_fmt_new -->|"parse via pest"| node_pest
+node_pest -->|"Rule::text/variable/..."| node_grammar
+node_fmt_new -->|"mapper chain"| node_map_vars
+node_map_vars -->|"render each variable"| node_handle_module
+node_map_vars -->|"Segment::from_text/fill"| node_segments
+node_segments -->|"AnsiStrings output"| node_wrap_shell
+node_wrap_shell -->|"final shell-safe buffer"| node_get_prompt
+
+click node_init_stub "https://github.com/starship/starship/blob/main/src/init/mod.rs"
+click node_init_main "https://github.com/starship/starship/blob/main/src/init/mod.rs"
+click node_bash_hook "https://github.com/starship/starship/blob/main/src/init/starship.bash"
+click node_zsh_hook "https://github.com/starship/starship/blob/main/src/init/starship.zsh"
+click node_fish_hook "https://github.com/starship/starship/blob/main/src/init/starship.fish"
+click node_main "https://github.com/starship/starship/blob/main/src/main.rs"
+click node_prompt_fn "https://github.com/starship/starship/blob/main/src/print.rs"
+click node_get_prompt "https://github.com/starship/starship/blob/main/src/print.rs"
+click node_handle_module "https://github.com/starship/starship/blob/main/src/print.rs"
+click node_ctx_new "https://github.com/starship/starship/blob/main/src/context/mod.rs"
+click node_get_shell "https://github.com/starship/starship/blob/main/src/context/mod.rs"
+click node_config_path "https://github.com/starship/starship/blob/main/src/context/mod.rs"
+click node_dir_contents "https://github.com/starship/starship/blob/main/src/context/mod.rs"
+click node_exec_cmd "https://github.com/starship/starship/blob/main/src/context/mod.rs"
+click node_git_repo "https://github.com/starship/starship/blob/main/src/context/git_repo.rs"
+click node_jj_repo "https://github.com/starship/starship/blob/main/src/context/jj_repo.rs"
+click node_config_init "https://github.com/starship/starship/blob/main/src/config.rs"
+click node_module_cfg "https://github.com/starship/starship/blob/main/src/config.rs"
+click node_root_cfg "https://github.com/starship/starship/blob/main/src/configs/starship_root.rs"
+click node_prompt_order "https://github.com/starship/starship/blob/main/src/configs/starship_root.rs"
+click node_configure "https://github.com/starship/starship/blob/main/src/configure.rs"
+click node_all_modules "https://github.com/starship/starship/blob/main/src/module.rs"
+click node_dispatch "https://github.com/starship/starship/blob/main/src/modules/mod.rs"
+click node_git_status "https://github.com/starship/starship/blob/main/src/modules/git_status.rs"
+click node_shared_status "https://github.com/starship/starship/blob/main/src/modules/git_status.rs"
+click node_nodejs "https://github.com/starship/starship/blob/main/src/modules/nodejs.rs"
+click node_python "https://github.com/starship/starship/blob/main/src/modules/python.rs"
+click node_custom "https://github.com/starship/starship/blob/main/src/modules/custom.rs"
+click node_fmt_new "https://github.com/starship/starship/blob/main/src/formatter/string_formatter.rs"
+click node_map_vars "https://github.com/starship/starship/blob/main/src/formatter/string_formatter.rs"
+click node_pest "https://github.com/starship/starship/blob/main/src/formatter/parser.rs"
+click node_grammar "https://github.com/starship/starship/blob/main/src/formatter/spec.pest"
+click node_segments "https://github.com/starship/starship/blob/main/src/segment.rs"
+click node_wrap_shell "https://github.com/starship/starship/blob/main/src/utils/mod.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_init_stub,node_init_main,node_bash_hook,node_zsh_hook,node_fish_hook toneBlue
+class node_main,node_prompt_fn,node_get_prompt,node_handle_module toneAmber
+class node_ctx_new,node_get_shell,node_config_path,node_dir_contents,node_exec_cmd,node_git_repo,node_jj_repo toneMint
+class node_config_init,node_module_cfg,node_root_cfg,node_prompt_order,node_configure toneRose
+class node_all_modules,node_dispatch,node_git_status,node_shared_status,node_nodejs,node_python,node_custom toneIndigo
+class node_fmt_new,node_map_vars,node_pest,node_grammar,node_segments,node_wrap_shell toneTeal
