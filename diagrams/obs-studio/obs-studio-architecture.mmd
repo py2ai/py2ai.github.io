@@ -1,0 +1,129 @@
+flowchart TD
+
+subgraph group_app["Qt frontend"]
+  node_main["int main<br/>[obs-main.cpp]"]
+  node_obsapp["OBSApp::OBSApp<br/>[OBSApp.cpp]"]
+  node_scene_create["obs_scene_create<br/>[obs-scene.c]"]
+end
+
+subgraph group_core["libobs init &amp; thread"]
+  node_obs_startup["obs_startup<br/>[obs.c]"]
+  node_init_graphics["obs_init_graphics<br/>[obs.c]"]
+  node_init_video["obs_init_video<br/>[obs.c]"]
+  node_spawn_thread["pthread_create &#40;video&#41;<br/>[obs.c]"]
+  node_init_audio["obs_init_audio<br/>[obs.c]"]
+  node_gfx_thread["obs_graphics_thread<br/>[obs-video.c]"]
+  node_video_sleep["video_sleep<br/>[obs-video.c]"]
+  node_fps_calc["FPS accounting<br/>[obs-video.c]"]
+end
+
+subgraph group_tick_chain["Per-frame source tick"]
+  node_tick_sources["tick_sources<br/>[obs-video.c]"]
+  node_source_tick["obs_source_video_tick<br/>[obs-source.c]"]
+  node_scene_tick["scene_video_tick<br/>[obs-scene.c]"]
+end
+
+subgraph group_render["Scene render chain"]
+  node_output_frames["output_frames<br/>[obs-video.c]"]
+  node_output_frame["output_frame<br/>[obs-video.c]"]
+  node_render_video["render_video<br/>[obs-video.c]"]
+  node_render_main["render_main_texture<br/>[obs-video.c]"]
+  node_view_render["obs_view_render<br/>[obs-view.c]"]
+  node_scene_render["scene_video_render<br/>[obs-scene.c]"]
+  node_render_displays["render_displays<br/>[obs-video.c]"]
+end
+
+subgraph group_gfx["Graphics engine"]
+  node_gs_effect["gs_effect &#40;shaders&#41;<br/>[effect.c]"]
+  node_convert_texture["render_convert_texture<br/>[obs-video.c]"]
+  node_download_frame["download_frame<br/>[obs-video.c]"]
+end
+
+subgraph group_audio["Audio thread &amp; mixing"]
+  node_audio_open["audio_output_open<br/>[audio-io.c]"]
+  node_audio_thread["audio_thread<br/>[audio-io.c]"]
+  node_mix_audio["input_and_output &#40;mix&#41;<br/>[audio-io.c]"]
+end
+
+subgraph group_out["Encoders &amp; output"]
+  node_output_start["obs_output_start<br/>[obs-output.c]"]
+  node_can_capture["obs_output_can_begin_data_capture<br/>[obs-output.c]"]
+  node_begin_capture["obs_output_begin_data_capture<br/>[obs-output.c]"]
+end
+
+node_main -->|"creates Qt app"| node_obsapp
+node_obsapp -->|"boots core"| node_obs_startup
+node_obs_startup -->|"gs subsystem"| node_init_graphics
+node_obs_startup -->|"canvas &amp; mixes"| node_init_video
+node_obs_startup -->|"audio subsystem"| node_init_audio
+node_init_video -->|"after mix init"| node_spawn_thread
+node_spawn_thread -->|"obs.c L720"| node_gfx_thread
+node_init_audio -->|"audio-io open"| node_audio_open
+node_audio_open -->|"pthread_create L376"| node_audio_thread
+node_gfx_thread -->|"L1112"| node_tick_sources
+node_tick_sources -->|"per source L82"| node_source_tick
+node_source_tick -->|"scenes tick items"| node_scene_tick
+node_gfx_thread -->|"L1125"| node_output_frames
+node_output_frames -->|"per mix L925"| node_output_frame
+node_output_frame -->|"L888"| node_render_video
+node_output_frame -->|"L894"| node_download_frame
+node_render_video -->|"L549"| node_render_main
+node_render_main -->|"L202"| node_view_render
+node_view_render -->|"L135"| node_scene_render
+node_scene_render -->|"draw calls"| node_gs_effect
+node_render_video -->|"L566"| node_convert_texture
+node_gfx_thread -->|"L1129"| node_render_displays
+node_gfx_thread -->|"L1142"| node_video_sleep
+node_video_sleep -->|"loop bookkeeping"| node_fps_calc
+node_download_frame -.->|"staged frames feed outputs"| node_output_start
+node_audio_thread -->|"every 1024 frames L231"| node_mix_audio
+node_mix_audio -.->|"mixed PCM callbacks"| node_output_start
+node_obsapp -->|"builds scene tree"| node_scene_create
+node_obsapp -->|"user clicks Start"| node_output_start
+node_output_start -->|"validate"| node_can_capture
+node_can_capture -->|"wire callbacks"| node_begin_capture
+
+click node_main "https://github.com/obsproject/obs-studio/blob/master/frontend/obs-main.cpp"
+click node_obsapp "https://github.com/obsproject/obs-studio/blob/master/frontend/OBSApp.cpp"
+click node_scene_create "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-scene.c"
+click node_obs_startup "https://github.com/obsproject/obs-studio/blob/master/libobs/obs.c"
+click node_init_graphics "https://github.com/obsproject/obs-studio/blob/master/libobs/obs.c"
+click node_init_video "https://github.com/obsproject/obs-studio/blob/master/libobs/obs.c"
+click node_spawn_thread "https://github.com/obsproject/obs-studio/blob/master/libobs/obs.c"
+click node_init_audio "https://github.com/obsproject/obs-studio/blob/master/libobs/obs.c"
+click node_gfx_thread "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_tick_sources "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_source_tick "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-source.c"
+click node_scene_tick "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-scene.c"
+click node_output_frames "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_output_frame "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_render_video "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_render_main "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_view_render "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-view.c"
+click node_scene_render "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-scene.c"
+click node_render_displays "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_gs_effect "https://github.com/obsproject/obs-studio/blob/master/libobs/graphics/effect.c"
+click node_convert_texture "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_download_frame "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_video_sleep "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_fps_calc "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_audio_open "https://github.com/obsproject/obs-studio/blob/master/libobs/media-io/audio-io.c"
+click node_audio_thread "https://github.com/obsproject/obs-studio/blob/master/libobs/media-io/audio-io.c"
+click node_mix_audio "https://github.com/obsproject/obs-studio/blob/master/libobs/media-io/audio-io.c"
+click node_output_start "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-output.c"
+click node_can_capture "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-output.c"
+click node_begin_capture "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-output.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_obsapp,node_scene_create,node_output_start,node_can_capture,node_begin_capture toneBlue
+class node_obs_startup,node_init_graphics,node_init_video,node_spawn_thread,node_init_audio,node_gfx_thread,node_video_sleep,node_fps_calc toneAmber
+class node_tick_sources,node_source_tick,node_scene_tick toneMint
+class node_output_frames,node_output_frame,node_render_video,node_render_main,node_view_render,node_scene_render,node_render_displays toneRose
+class node_gs_effect,node_convert_texture,node_download_frame toneIndigo
+class node_audio_open,node_audio_thread,node_mix_audio toneTeal
