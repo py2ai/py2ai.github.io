@@ -1,0 +1,42 @@
+{
+  "owner": "mpv-player",
+  "repo": "mpv",
+  "branch": "master",
+  "groups": [
+    {"id": "core_loop", "name": "core", "label": "Player core (single core thread)"},
+    {"id": "demux", "name": "demuxer", "label": "Demuxer (background reader)"},
+    {"id": "video", "name": "video", "label": "Video chain"},
+    {"id": "audio", "name": "audio", "label": "Audio chain"},
+    {"id": "input", "name": "input", "label": "Input / commands"}
+  ],
+  "nodes": [
+    {"id": "mpv_main", "label": "mpv_main()", "file": "main.c", "path": "player/main.c", "group": "core_loop", "groupId": "core_loop", "desc": "Process entry: creates MPContext, initializes, drives playback"},
+    {"id": "mp_context", "label": "struct MPContext", "file": "core.h", "path": "player/core.h", "group": "core_loop", "groupId": "core_loop", "desc": "Shared player state every component reads and writes"},
+    {"id": "mp_play_files", "label": "mp_play_files()", "file": "loadfile.c", "path": "player/loadfile.c", "group": "core_loop", "groupId": "core_loop", "desc": "Top-level loop: idle, load next playlist entry, play, repeat"},
+    {"id": "run_playloop", "label": "run_playloop()", "file": "playloop.c", "path": "player/playloop.c", "group": "core_loop", "groupId": "core_loop", "desc": "One playback iteration: audio, video, seeks, OSD, input, sleep"},
+    {"id": "mp_wait_events", "label": "mp_wait_events()", "file": "playloop.c", "path": "player/playloop.c", "group": "core_loop", "groupId": "core_loop", "desc": "Parks the core thread until timeout or wakeup"},
+    {"id": "run_command", "label": "run_command()", "file": "command.c", "path": "player/command.c", "group": "input", "groupId": "input", "desc": "Executes one command (pause, seek, volume) inside the playloop"},
+    {"id": "demux_thread", "label": "demux_thread()", "file": "demux.c", "path": "demux/demux.c", "group": "demux", "groupId": "demux", "desc": "Background thread reading packets ahead of playback"},
+    {"id": "demux_read_packet_async", "label": "demux_read_packet_async()", "file": "demux.c", "path": "demux/demux.c", "group": "demux", "groupId": "demux", "desc": "Reader-side pull of the next packet without blocking the core"},
+    {"id": "write_video", "label": "write_video()", "file": "video.c", "path": "player/video.c", "group": "video", "groupId": "video", "desc": "Decodes and queues the next video frame each iteration"},
+    {"id": "check_framedrop", "label": "check_framedrop()", "file": "video.c", "path": "player/video.c", "group": "video", "groupId": "video", "desc": "Drops N decode frames when the A/V gap grows too large"},
+    {"id": "vo_thread", "label": "vo_thread()", "file": "vo.c", "path": "video/out/vo.c", "group": "video", "groupId": "video", "desc": "Video-out thread: renders at vsync targets, counts dropped frames"},
+    {"id": "fill_audio_out_buffers", "label": "fill_audio_out_buffers()", "file": "audio.c", "path": "player/audio.c", "group": "audio", "groupId": "audio", "desc": "Keeps the audio device queue topped up; detects underruns"}
+  ],
+  "edges": [
+    {"from": "mpv_main", "to": "mp_context", "label": "instantiates"},
+    {"from": "mpv_main", "to": "mp_play_files", "label": "drives playback"},
+    {"from": "mp_play_files", "to": "run_playloop", "label": "while (!stop_play) per file"},
+    {"from": "run_playloop", "to": "fill_audio_out_buffers", "label": "each tick"},
+    {"from": "run_playloop", "to": "write_video", "label": "each tick"},
+    {"from": "run_playloop", "to": "run_command", "label": "consumes keys"},
+    {"from": "run_playloop", "to": "mp_wait_events", "label": "sleeps when idle"},
+    {"from": "mp_wait_events", "to": "run_playloop", "label": "wakeup restarts loop", "style": "dashed"},
+    {"from": "write_video", "to": "demux_read_packet_async", "label": "pulls packets"},
+    {"from": "demux_read_packet_async", "to": "demux_thread", "label": "wakes reader"},
+    {"from": "demux_thread", "to": "demux_read_packet_async", "label": "refills queue", "style": "dashed"},
+    {"from": "write_video", "to": "vo_thread", "label": "queues frames"},
+    {"from": "write_video", "to": "check_framedrop", "label": "catches up"},
+    {"from": "vo_thread", "to": "run_playloop", "label": "wakes core on frame done", "style": "dashed"}
+  ]
+}

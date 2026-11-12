@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_core_loop["Player core &#40;playloop&#41;"]
+  node_mp_play_files["mp_play_files&#40;&#41;<br/>[loadfile.c]"]
+  node_idle_loop["idle_loop&#40;&#41;<br/>[playloop.c]"]
+  node_play_current_file["play_current_file&#40;&#41;<br/>[loadfile.c]"]
+  node_run_playloop["run_playloop&#40;&#41;<br/>[playloop.c]"]
+  node_mp_wait_events["mp_wait_events&#40;&#41;<br/>[playloop.c]"]
+  node_mp_set_timeout["mp_set_timeout&#40;&#41;<br/>[playloop.c]"]
+  node_mp_wakeup_core["mp_wakeup_core&#40;&#41;<br/>[playloop.c]"]
+  node_execute_queued_seek["execute_queued_seek&#40;&#41;<br/>[playloop.c]"]
+  node_handle_playback_restart["handle_playback_restart&#40;&#41;<br/>[playloop.c]"]
+  node_handle_eof["handle_eof&#40;&#41;<br/>[playloop.c]"]
+end
+
+subgraph group_demux["Demuxer thread + caches"]
+  node_demux_thread["demux_thread&#40;&#41;<br/>[demux.c]"]
+  node_thread_work["thread_work&#40;&#41;<br/>[demux.c]"]
+  node_read_packet["read_packet&#40;&#41;<br/>[demux.c]"]
+  node_prune_old_packets["prune_old_packets&#40;&#41;<br/>[demux.c]"]
+  node_update_cache["update_cache&#40;&#41;<br/>[demux.c]"]
+  node_demux_read_packet_async["demux_read_packet_async&#40;&#41;<br/>[demux.c]"]
+  node_demux_get_reader_state["demux_get_reader_state&#40;&#41;<br/>[demux.c]"]
+end
+
+subgraph group_video["Video chain"]
+  node_write_video["write_video&#40;&#41;<br/>[video.c]"]
+  node_video_output_image["video_output_image&#40;&#41;<br/>[video.c]"]
+  node_check_framedrop["check_framedrop&#40;&#41;<br/>[video.c]"]
+  node_adjust_sync["adjust_sync&#40;&#41;<br/>[video.c]"]
+  node_vo_thread["vo_thread&#40;&#41;<br/>[vo.c]"]
+  node_render_frame["render_frame&#40;&#41;<br/>[vo.c]"]
+  node_vo_queue_frame["vo_queue_frame&#40;&#41;<br/>[vo.c]"]
+end
+
+subgraph group_audio["Audio chain"]
+  node_fill_audio_out_buffers["fill_audio_out_buffers&#40;&#41;<br/>[audio.c]"]
+  node_reinit_audio_chain["reinit_audio_chain&#40;&#41;<br/>[audio.c]"]
+  node_audio_start_ao["audio_start_ao&#40;&#41;<br/>[audio.c]"]
+  node_ao_init_best["ao_init_best&#40;&#41;<br/>[ao.c]"]
+end
+
+subgraph group_input["Input / commands"]
+  node_mp_process_input["mp_process_input&#40;&#41;<br/>[playloop.c]"]
+  node_run_command["run_command&#40;&#41;<br/>[command.c]"]
+  node_set_pause_state["set_pause_state&#40;&#41;<br/>[playloop.c]"]
+end
+
+subgraph group_lifecycle["Entry and lifecycle"]
+  node_mpv_main["mpv_main&#40;&#41;<br/>[main.c]"]
+  node_mp_context["struct MPContext<br/>[core.h]"]
+end
+
+node_mpv_main -->|"creates"| node_mp_context
+node_mpv_main -->|"drives playback"| node_mp_play_files
+node_mp_play_files -->|"STOP state"| node_idle_loop
+node_mp_play_files -->|"next entry"| node_play_current_file
+node_play_current_file -->|"while &#40;!stop_play&#41;"| node_run_playloop
+node_run_playloop -->|"audio first"| node_fill_audio_out_buffers
+node_run_playloop -->|"then video"| node_write_video
+node_run_playloop -->|"READY to PLAYING"| node_handle_playback_restart
+node_run_playloop -->|"one seek per tick"| node_execute_queued_seek
+node_run_playloop -->|"end detection"| node_handle_eof
+node_run_playloop -->|"after sleep"| node_mp_process_input
+node_run_playloop -->|"sleep until woken"| node_mp_wait_events
+node_mp_set_timeout -->|"sets deadline"| node_mp_wait_events
+node_mp_wait_events -.->|"returns on wakeup"| node_run_playloop
+node_mp_process_input -->|"one command each"| node_run_command
+node_run_command -->|"pause toggle"| node_set_pause_state
+node_set_pause_state -->|"re-run loop"| node_mp_wakeup_core
+node_run_command -->|"seek key"| node_execute_queued_seek
+node_write_video -->|"decode image"| node_video_output_image
+node_write_video -->|"packets for decoder"| node_demux_read_packet_async
+node_write_video -->|"hand frame to VO"| node_vo_queue_frame
+node_write_video -->|"on VD_WAIT"| node_check_framedrop
+node_write_video -->|"every shown frame"| node_adjust_sync
+node_check_framedrop -->|"fewer decodes"| node_video_output_image
+node_vo_queue_frame -->|"queued"| node_vo_thread
+node_vo_thread -->|"at vsync target"| node_render_frame
+node_render_frame -->|"drop or done"| node_mp_wakeup_core
+node_demux_read_packet_async -->|"wakes reader thread"| node_demux_thread
+node_demux_thread -->|"loop body"| node_thread_work
+node_thread_work -->|"fill queues"| node_read_packet
+node_thread_work -->|"periodically"| node_update_cache
+node_read_packet -->|"bound memory"| node_prune_old_packets
+node_thread_work -->|"more data ready"| node_mp_wakeup_core
+node_demux_get_reader_state -->|"reader eof check"| node_handle_eof
+node_fill_audio_out_buffers -->|"reload on AO events"| node_reinit_audio_chain
+node_reinit_audio_chain -->|"open device"| node_ao_init_best
+node_fill_audio_out_buffers -->|"queue full = READY"| node_handle_playback_restart
+node_handle_playback_restart -->|"both chains READY"| node_audio_start_ao
+node_audio_start_ao -->|"sound starts"| node_mp_wakeup_core
+
+click node_mpv_main "https://github.com/mpv-player/mpv/blob/master/player/main.c"
+click node_mp_context "https://github.com/mpv-player/mpv/blob/master/player/core.h"
+click node_mp_play_files "https://github.com/mpv-player/mpv/blob/master/player/loadfile.c"
+click node_idle_loop "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_play_current_file "https://github.com/mpv-player/mpv/blob/master/player/loadfile.c"
+click node_run_playloop "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_mp_wait_events "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_mp_set_timeout "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_mp_wakeup_core "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_mp_process_input "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_run_command "https://github.com/mpv-player/mpv/blob/master/player/command.c"
+click node_set_pause_state "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_execute_queued_seek "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_handle_playback_restart "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_handle_eof "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_demux_thread "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_thread_work "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_read_packet "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_prune_old_packets "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_update_cache "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_demux_read_packet_async "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_demux_get_reader_state "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_write_video "https://github.com/mpv-player/mpv/blob/master/player/video.c"
+click node_video_output_image "https://github.com/mpv-player/mpv/blob/master/player/video.c"
+click node_check_framedrop "https://github.com/mpv-player/mpv/blob/master/player/video.c"
+click node_adjust_sync "https://github.com/mpv-player/mpv/blob/master/player/video.c"
+click node_vo_thread "https://github.com/mpv-player/mpv/blob/master/video/out/vo.c"
+click node_render_frame "https://github.com/mpv-player/mpv/blob/master/video/out/vo.c"
+click node_vo_queue_frame "https://github.com/mpv-player/mpv/blob/master/video/out/vo.c"
+click node_fill_audio_out_buffers "https://github.com/mpv-player/mpv/blob/master/player/audio.c"
+click node_reinit_audio_chain "https://github.com/mpv-player/mpv/blob/master/player/audio.c"
+click node_audio_start_ao "https://github.com/mpv-player/mpv/blob/master/player/audio.c"
+click node_ao_init_best "https://github.com/mpv-player/mpv/blob/master/audio/out/ao.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_mp_play_files,node_idle_loop,node_play_current_file,node_run_playloop,node_mp_wait_events,node_mp_set_timeout,node_mp_wakeup_core,node_execute_queued_seek,node_handle_playback_restart,node_handle_eof toneBlue
+class node_demux_thread,node_thread_work,node_read_packet,node_prune_old_packets,node_update_cache,node_demux_read_packet_async,node_demux_get_reader_state toneAmber
+class node_write_video,node_video_output_image,node_check_framedrop,node_adjust_sync,node_vo_thread,node_render_frame,node_vo_queue_frame toneMint
+class node_fill_audio_out_buffers,node_reinit_audio_chain,node_audio_start_ao,node_ao_init_best toneRose
+class node_mp_process_input,node_run_command,node_set_pause_state toneIndigo
+class node_mpv_main,node_mp_context toneTeal
