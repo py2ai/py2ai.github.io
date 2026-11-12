@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_startup["Process &amp; LibVLC init"]
+  node_app_main["main&#40;&#41;<br/>[vlc.c]"]
+  node_libvlc_new["libvlc_new&#40;&#41;<br/>[core.c]"]
+  node_internal_init["libvlc_InternalInit&#40;&#41;<br/>[libvlc.c]"]
+end
+
+subgraph group_modbank["Plugin bank &amp; generic loader"]
+  node_module_loadplugins["module_LoadPlugins&#40;&#41;<br/>[bank.c]"]
+  node_allocate_all["AllocateAllPlugins&#40;&#41;<br/>[bank.c]"]
+  node_alloc_plugin_file["AllocatePluginFile&#40;&#41;<br/>[bank.c]"]
+  node_module_init_dynamic["module_InitDynamic&#40;&#41;<br/>[bank.c]"]
+  node_module_init_static["module_InitStatic&#40;&#41;<br/>[bank.c]"]
+  node_vlc_module_match["vlc_module_match&#40;&#41;<br/>[modules.c]"]
+  node_vlc_module_load["vlc_module_load&#40;&#41;<br/>[modules.c]"]
+  node_module_need["module_need&#40;&#41;<br/>[modules.c]"]
+end
+
+subgraph group_player["libVLC player state machine"]
+  node_player_new["vlc_player_New&#40;&#41;<br/>[player.c]"]
+  node_player_start["vlc_player_Start&#40;&#41;<br/>[player.c]"]
+  node_open_next_media["vlc_player_OpenNextMedia&#40;&#41;<br/>[player.c]"]
+end
+
+subgraph group_input["Input thread &amp; stream chain"]
+  node_input_start["input_Start&#40;&#41;<br/>[input.c]"]
+  node_input_run["Run&#40;&#41;<br/>[input.c]"]
+  node_input_mainloop["MainLoop&#40;&#41;<br/>[input.c]"]
+  node_source_demux["InputSourceInit chain<br/>[input.c]"]
+  node_stream_access["stream_AccessNew&#40;&#41;<br/>[access.c]"]
+end
+
+subgraph group_demux["Demuxer probing &#40;MP4 example&#41;"]
+  node_demux_new["demux_NewAdvanced&#40;&#41;<br/>[demux.c]"]
+  node_demux_probe_load["vlc_module_load&#40;'demux'&#41;<br/>[demux.c]"]
+  node_mp4_module["MP4 demux module<br/>[mp4.c]"]
+  node_mp4_open["MP4 Open&#40;&#41;<br/>[mp4.c]"]
+end
+
+subgraph group_decode["ES routing &amp; decoder threads &#40;avcodec example&#41;"]
+  node_es_out_new["input_EsOutNew&#40;&#41;<br/>[es_out.c]"]
+  node_es_create_decoder["EsOutCreateDecoder&#40;&#41;<br/>[es_out.c]"]
+  node_create_decoder["CreateDecoder&#40;&#41;<br/>[decoder.c]"]
+  node_decoder_thread["DecoderThread&#40;&#41;<br/>[decoder.c]"]
+  node_load_decoder["LoadDecoder&#40;&#41;<br/>[decoder.c]"]
+  node_decoder_load_module["decoder_LoadModule&#40;&#41;<br/>[decoder_helpers.c]"]
+  node_avcodec_module["avcodec plugin<br/>[avcodec.c]"]
+end
+
+subgraph group_output["Audio &amp; video output modules"]
+  node_aout_new["aout_New&#40;&#41;<br/>[output.c]"]
+  node_aout_module["module_need_var&#40;'audio output'&#41;<br/>[output.c]"]
+  node_vout_create["vout_Create&#40;&#41;<br/>[video_output.c]"]
+  node_vout_display["vout_display_New&#40;&#41;<br/>[display.c]"]
+end
+
+node_app_main -->|"libvlc_new&#40;count, args&#41; L239"| node_libvlc_new
+node_libvlc_new -->|"InternalCreate L64 + InternalInit L68"| node_internal_init
+node_internal_init -->|"boot the bank L146-162"| node_module_loadplugins
+node_module_loadplugins -->|"scan plugin dirs"| node_allocate_all
+node_module_loadplugins -->|"builtin modules"| node_module_init_static
+node_allocate_all -->|"per-file"| node_alloc_plugin_file
+node_alloc_plugin_file -->|"dlopen entry"| node_module_init_dynamic
+node_module_loadplugins -->|"bank ready for lookups"| node_vlc_module_match
+node_vlc_module_match -->|"ranked candidate list"| node_vlc_module_load
+node_vlc_module_load -->|"wrapped by"| node_module_need
+node_app_main -->|"libvlc_InternalPlay&#40;&#41; L254 -&gt; interface.c L166"| node_player_start
+node_player_new -->|"player object first"| node_player_start
+node_player_start -->|"open media L1264"| node_open_next_media
+node_open_next_media -->|"spawn input thread"| node_input_start
+node_input_start -->|"thread body"| node_input_run
+node_input_run -->|"after Init&#40;&#41;"| node_input_mainloop
+node_input_run -->|"build access stream"| node_stream_access
+node_stream_access -->|"capability 'access'"| node_module_need
+node_input_run -->|"InputSourceInit"| node_source_demux
+node_source_demux -->|"demux_NewAdvanced&#40;&#41; L2803"| node_demux_new
+node_demux_new -->|"sniff then load"| node_demux_probe_load
+node_demux_probe_load -->|"capability 'demux'"| node_vlc_module_load
+node_demux_probe_load -->|"score 240 candidate"| node_mp4_module
+node_mp4_module -->|"probe wins"| node_mp4_open
+node_source_demux -->|"es_out passed in"| node_es_out_new
+node_es_out_new -->|"per ES"| node_es_create_decoder
+node_es_create_decoder -->|"vlc_input_decoder cfg"| node_create_decoder
+node_create_decoder -->|"own fifo thread"| node_decoder_thread
+node_create_decoder -->|"initial load L2284"| node_load_decoder
+node_decoder_thread -->|"DecoderThread_Reload L576"| node_load_decoder
+node_load_decoder -->|"decoder_LoadModule"| node_decoder_load_module
+node_decoder_load_module -->|"ES category as capability"| node_module_need
+node_decoder_load_module -->|"FFmpeg codec plugin"| node_avcodec_module
+node_es_create_decoder -->|"feeds fifo"| node_decoder_thread
+node_decoder_thread -->|"decoded audio"| node_aout_new
+node_decoder_thread -->|"decoded frames"| node_vout_create
+node_aout_new -->|"pick sink"| node_aout_module
+node_aout_module -->|"capability 'audio output'"| node_module_need
+node_vout_create -->|"open display"| node_vout_display
+node_vout_display -->|"capability 'vout display'"| node_vlc_module_match
+
+click node_app_main "https://github.com/videolan/vlc/blob/master/bin/vlc.c"
+click node_libvlc_new "https://github.com/videolan/vlc/blob/master/lib/core.c"
+click node_internal_init "https://github.com/videolan/vlc/blob/master/src/libvlc.c"
+click node_module_loadplugins "https://github.com/videolan/vlc/blob/master/src/modules/bank.c"
+click node_allocate_all "https://github.com/videolan/vlc/blob/master/src/modules/bank.c"
+click node_alloc_plugin_file "https://github.com/videolan/vlc/blob/master/src/modules/bank.c"
+click node_module_init_dynamic "https://github.com/videolan/vlc/blob/master/src/modules/bank.c"
+click node_module_init_static "https://github.com/videolan/vlc/blob/master/src/modules/bank.c"
+click node_vlc_module_match "https://github.com/videolan/vlc/blob/master/src/modules/modules.c"
+click node_vlc_module_load "https://github.com/videolan/vlc/blob/master/src/modules/modules.c"
+click node_module_need "https://github.com/videolan/vlc/blob/master/src/modules/modules.c"
+click node_player_new "https://github.com/videolan/vlc/blob/master/src/player/player.c"
+click node_player_start "https://github.com/videolan/vlc/blob/master/src/player/player.c"
+click node_open_next_media "https://github.com/videolan/vlc/blob/master/src/player/player.c"
+click node_input_start "https://github.com/videolan/vlc/blob/master/src/input/input.c"
+click node_input_run "https://github.com/videolan/vlc/blob/master/src/input/input.c"
+click node_input_mainloop "https://github.com/videolan/vlc/blob/master/src/input/input.c"
+click node_source_demux "https://github.com/videolan/vlc/blob/master/src/input/input.c"
+click node_stream_access "https://github.com/videolan/vlc/blob/master/src/input/access.c"
+click node_demux_new "https://github.com/videolan/vlc/blob/master/src/input/demux.c"
+click node_demux_probe_load "https://github.com/videolan/vlc/blob/master/src/input/demux.c"
+click node_mp4_module "https://github.com/videolan/vlc/blob/master/modules/demux/mp4/mp4.c"
+click node_mp4_open "https://github.com/videolan/vlc/blob/master/modules/demux/mp4/mp4.c"
+click node_es_out_new "https://github.com/videolan/vlc/blob/master/src/input/es_out.c"
+click node_es_create_decoder "https://github.com/videolan/vlc/blob/master/src/input/es_out.c"
+click node_create_decoder "https://github.com/videolan/vlc/blob/master/src/input/decoder.c"
+click node_decoder_thread "https://github.com/videolan/vlc/blob/master/src/input/decoder.c"
+click node_load_decoder "https://github.com/videolan/vlc/blob/master/src/input/decoder.c"
+click node_decoder_load_module "https://github.com/videolan/vlc/blob/master/src/input/decoder_helpers.c"
+click node_avcodec_module "https://github.com/videolan/vlc/blob/master/modules/codec/avcodec/avcodec.c"
+click node_aout_new "https://github.com/videolan/vlc/blob/master/src/audio_output/output.c"
+click node_aout_module "https://github.com/videolan/vlc/blob/master/src/audio_output/output.c"
+click node_vout_create "https://github.com/videolan/vlc/blob/master/src/video_output/video_output.c"
+click node_vout_display "https://github.com/videolan/vlc/blob/master/src/video_output/display.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app_main,node_libvlc_new,node_internal_init,node_aout_new,node_aout_module,node_vout_create,node_vout_display toneBlue
+class node_module_loadplugins,node_allocate_all,node_alloc_plugin_file,node_module_init_dynamic,node_module_init_static,node_vlc_module_match,node_vlc_module_load,node_module_need toneAmber
+class node_player_new,node_player_start,node_open_next_media toneMint
+class node_input_start,node_input_run,node_input_mainloop,node_source_demux,node_stream_access toneRose
+class node_demux_new,node_demux_probe_load,node_mp4_module,node_mp4_open toneIndigo
+class node_es_out_new,node_es_create_decoder,node_create_decoder,node_decoder_thread,node_load_decoder,node_decoder_load_module,node_avcodec_module toneTeal
