@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_cli["fftools CLI entry"]
+  node_main["main&#40;&#41;<br/>[ffmpeg.c]"]
+  node_transcode["transcode&#40;&#41;<br/>[ffmpeg.c]"]
+end
+
+subgraph group_sched["scheduler and queues"]
+  node_sch_alloc["sch_alloc&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_sch_start["sch_start&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_task_start["task_start&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_sch_dec_send["sch_dec_send&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_sch_filter_receive["sch_filter_receive&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_sch_filter_send["sch_filter_send&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_sch_enc_send["sch_enc_send&#40;&#41;<br/>[ffmpeg_sched.c]"]
+  node_sq_send["sq_send&#40;&#41;<br/>[sync_queue.c]"]
+end
+
+subgraph group_input["demux side"]
+  node_ifile_open["ifile_open&#40;&#41;<br/>[ffmpeg_demux.c]"]
+  node_input_thread["input_thread&#40;&#41;<br/>[ffmpeg_demux.c]"]
+  node_demux_send["demux_send&#40;&#41;<br/>[ffmpeg_demux.c]"]
+  node_av_read_frame["av_read_frame&#40;&#41;<br/>[demux.c]"]
+  node_ff_read_packet["ff_read_packet&#40;&#41;<br/>[demux.c]"]
+end
+
+subgraph group_decode["decode"]
+  node_decoder_thread["decoder_thread&#40;&#41;<br/>[ffmpeg_dec.c]"]
+  node_packet_decode["packet_decode&#40;&#41;<br/>[ffmpeg_dec.c]"]
+  node_avcodec_send_packet["avcodec_send_packet&#40;&#41;<br/>[decode.c]"]
+  node_decode_receive_frame_internal["decode_receive_frame_internal&#40;&#41;<br/>[decode.c]"]
+  node_avcodec_receive_frame["avcodec_receive_frame&#40;&#41;<br/>[avcodec.c]"]
+end
+
+subgraph group_filter["filter graph"]
+  node_configure_filtergraph["configure_filtergraph&#40;&#41;<br/>[ffmpeg_filter.c]"]
+  node_filter_thread["filter_thread&#40;&#41;<br/>[ffmpeg_filter.c]"]
+  node_send_frame["send_frame&#40;&#41;<br/>[ffmpeg_filter.c]"]
+  node_filter_frame_to_filter["filter_frame_to_filter&#40;&#41;<br/>[avfilter.c]"]
+  node_ff_filter_graph_run_once["ff_filter_graph_run_once&#40;&#41;<br/>[avfiltergraph.c]"]
+  node_avfilter_graph_config["avfilter_graph_config&#40;&#41;<br/>[avfiltergraph.c]"]
+end
+
+subgraph group_encode["encode"]
+  node_encoder_thread["encoder_thread&#40;&#41;<br/>[ffmpeg_enc.c]"]
+  node_encode_frame["encode_frame&#40;&#41;<br/>[ffmpeg_enc.c]"]
+  node_avcodec_send_frame["avcodec_send_frame&#40;&#41;<br/>[encode.c]"]
+  node_avcodec_receive_packet["avcodec_receive_packet&#40;&#41;<br/>[encode.c]"]
+end
+
+subgraph group_output["mux side"]
+  node_muxer_thread["muxer_thread&#40;&#41;<br/>[ffmpeg_mux.c]"]
+  node_sync_queue_process["sync_queue_process&#40;&#41;<br/>[ffmpeg_mux.c]"]
+  node_avformat_write_header["avformat_write_header&#40;&#41;<br/>[mux.c]"]
+  node_av_interleaved_write_frame["av_interleaved_write_frame&#40;&#41;<br/>[mux.c]"]
+end
+
+node_main -->|"Scheduler *sch = sch_alloc&#40;&#41; &#40;ffmpeg.c:1016&#41;"| node_sch_alloc
+node_main -->|"ret = transcode&#40;sch&#41; &#40;ffmpeg.c:1045&#41;"| node_transcode
+node_transcode -->|"sch_start&#40;&#41; launches every worker &#40;ffmpeg.c:910&#41;"| node_sch_start
+node_sch_start -->|"pthread_create&#40;&#41; per node &#40;ffmpeg_sched.c:425&#41;"| node_task_start
+node_ifile_open -->|"input_thread registered as demux task function"| node_input_thread
+node_input_thread -->|"while&#40;1&#41; av_read_frame&#40;&#41; &#40;ffmpeg_demux.c:867&#41;"| node_av_read_frame
+node_av_read_frame -->|"read_frame_internal -&gt; ff_read_packet &#40;demux.c:1412&#41;"| node_ff_read_packet
+node_input_thread -->|"packet routed via bsf chain &#40;ffmpeg_demux.c:615&#41;"| node_demux_send
+node_demux_send -->|"packet queued to SCH_NODE_TYPE_DEC consumer"| node_decoder_thread
+node_decoder_thread -->|"packet_decode per packet &#40;ffmpeg_dec.c:950&#41;"| node_packet_decode
+node_packet_decode -->|"avcodec_send_packet&#40;dec, pkt&#41; &#40;ffmpeg_dec.c:719&#41;"| node_avcodec_send_packet
+node_avcodec_send_packet -->|"decode_simple_receive_frame chain &#40;decode.c:617&#41;"| node_decode_receive_frame_internal
+node_packet_decode -->|"avcodec_receive_frame_flags pull &#40;ffmpeg_dec.c:749&#41;"| node_avcodec_receive_frame
+node_decoder_thread -->|"decoded frames published &#40;ffmpeg_dec.c:820&#41;"| node_sch_dec_send
+node_sch_dec_send -->|"frame crosses decoder-&gt;filtergraph queue"| node_sch_filter_receive
+node_sch_filter_receive -->|"filter thread wakes with next frame &#40;ffmpeg_filter.c:3537&#41;"| node_filter_thread
+node_filter_thread -->|"lazy graph build on first frame &#40;ffmpeg_filter.c:3523&#41;"| node_configure_filtergraph
+node_configure_filtergraph -->|"negotiation + init &#40;ffmpeg_filter.c:2268&#41;"| node_avfilter_graph_config
+node_filter_thread -->|"send_frame into buffersrc &#40;ffmpeg_filter.c:3575&#41;"| node_send_frame
+node_send_frame -->|"activation walks link by link &#40;avfilter.c:1202&#41;"| node_filter_frame_to_filter
+node_send_frame -->|"buffersrc push pumps graph &#40;buffersrc.c:212&#41;"| node_ff_filter_graph_run_once
+node_filter_thread -->|"read_frames drains buffersink &#40;ffmpeg_filter.c:2891&#41;"| node_sch_filter_send
+node_sch_filter_send -->|"frame crosses filtergraph-&gt;encoder queue"| node_encoder_thread
+node_encoder_thread -->|"via frame_encode &#40;ffmpeg_enc.c:867&#41;"| node_encode_frame
+node_encode_frame -->|"avcodec_send_frame&#40;enc, frame&#41; &#40;ffmpeg_enc.c:722&#41;"| node_avcodec_send_frame
+node_encode_frame -->|"avcodec_receive_packet loop &#40;ffmpeg_enc.c:734&#41;"| node_avcodec_receive_packet
+node_encode_frame -->|"compressed packets out &#40;ffmpeg_enc.c:529&#41;"| node_sch_enc_send
+node_sch_enc_send -->|"packet crosses encoder-&gt;muxer queue"| node_muxer_thread
+node_muxer_thread -->|"keep streams interleaved &#40;ffmpeg_mux.c:344&#41;"| node_sync_queue_process
+node_sync_queue_process -->|"sq_send&#40;mux-&gt;sq_mux, ...&#41; &#40;ffmpeg_mux.c:249&#41;"| node_sq_send
+node_muxer_thread -->|"write_packet -&gt; av_interleaved_write_frame &#40;ffmpeg_mux.c:230&#41;"| node_av_interleaved_write_frame
+node_muxer_thread -->|"mux_check_init -&gt; header &#40;ffmpeg_mux.c:556&#41;"| node_avformat_write_header
+
+click node_main "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg.c"
+click node_transcode "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg.c"
+click node_sch_alloc "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_sch_start "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_task_start "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_sch_dec_send "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_sch_filter_receive "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_sch_filter_send "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_sch_enc_send "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_sq_send "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/sync_queue.c"
+click node_ifile_open "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_demux.c"
+click node_input_thread "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_demux.c"
+click node_demux_send "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_demux.c"
+click node_av_read_frame "https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/demux.c"
+click node_ff_read_packet "https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/demux.c"
+click node_decoder_thread "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_dec.c"
+click node_packet_decode "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_dec.c"
+click node_avcodec_send_packet "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/decode.c"
+click node_decode_receive_frame_internal "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/decode.c"
+click node_avcodec_receive_frame "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/avcodec.c"
+click node_configure_filtergraph "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_filter.c"
+click node_filter_thread "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_filter.c"
+click node_send_frame "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_filter.c"
+click node_filter_frame_to_filter "https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/avfilter.c"
+click node_ff_filter_graph_run_once "https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/avfiltergraph.c"
+click node_avfilter_graph_config "https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/avfiltergraph.c"
+click node_encoder_thread "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_enc.c"
+click node_encode_frame "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_enc.c"
+click node_avcodec_send_frame "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/encode.c"
+click node_avcodec_receive_packet "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/encode.c"
+click node_muxer_thread "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_mux.c"
+click node_sync_queue_process "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_mux.c"
+click node_avformat_write_header "https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/mux.c"
+click node_av_interleaved_write_frame "https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/mux.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_transcode,node_muxer_thread,node_sync_queue_process,node_avformat_write_header,node_av_interleaved_write_frame toneBlue
+class node_sch_alloc,node_sch_start,node_task_start,node_sch_dec_send,node_sch_filter_receive,node_sch_filter_send,node_sch_enc_send,node_sq_send toneAmber
+class node_ifile_open,node_input_thread,node_demux_send,node_av_read_frame,node_ff_read_packet toneMint
+class node_decoder_thread,node_packet_decode,node_avcodec_send_packet,node_decode_receive_frame_internal,node_avcodec_receive_frame toneRose
+class node_configure_filtergraph,node_filter_thread,node_send_frame,node_filter_frame_to_filter,node_ff_filter_graph_run_once,node_avfilter_graph_config toneIndigo
+class node_encoder_thread,node_encode_frame,node_avcodec_send_frame,node_avcodec_receive_packet toneTeal
