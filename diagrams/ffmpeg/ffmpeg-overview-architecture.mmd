@@ -1,0 +1,77 @@
+flowchart TD
+
+subgraph group_cli["fftools CLI entry"]
+  node_main["main&#40;&#41;<br/>[ffmpeg.c]"]
+  node_transcode["transcode&#40;&#41;<br/>[ffmpeg.c]"]
+end
+
+subgraph group_sched["scheduler"]
+  node_scheduler["Scheduler<br/>[ffmpeg_sched.c]"]
+end
+
+subgraph group_input["demux"]
+  node_demuxer["input_thread&#40;&#41;<br/>[ffmpeg_demux.c]"]
+  node_avformat_demux["av_read_frame&#40;&#41;<br/>[demux.c]"]
+end
+
+subgraph group_decode["decode"]
+  node_decoder["decoder_thread&#40;&#41;<br/>[ffmpeg_dec.c]"]
+  node_avcodec_decode["avcodec_send_packet&#40;&#41;<br/>[decode.c]"]
+end
+
+subgraph group_filter["filter"]
+  node_filtergraph["filter_thread&#40;&#41;<br/>[ffmpeg_filter.c]"]
+  node_avfilter["AVFilterGraph<br/>[avfiltergraph.c]"]
+end
+
+subgraph group_encode["encode"]
+  node_encoder["encoder_thread&#40;&#41;<br/>[ffmpeg_enc.c]"]
+  node_avcodec_encode["avcodec_send_frame&#40;&#41;<br/>[encode.c]"]
+end
+
+subgraph group_output["mux"]
+  node_muxer["muxer_thread&#40;&#41;<br/>[ffmpeg_mux.c]"]
+end
+
+node_main -->|"transcode&#40;sch&#41; after option parsing &#40;ffmpeg.c:1045&#41;"| node_transcode
+node_transcode -->|"sch_start&#40;&#41; launches all workers &#40;ffmpeg.c:910&#41;"| node_scheduler
+node_scheduler -->|"task_start: input_thread"| node_demuxer
+node_demuxer -->|"av_read_frame&#40;&#41; per packet &#40;ffmpeg_demux.c:867&#41;"| node_avformat_demux
+node_demuxer -->|"packets queued to SCH_NODE_TYPE_DEC &#40;ffmpeg_sched.h:99&#41;"| node_decoder
+node_scheduler -->|"task_start: decoder_thread"| node_decoder
+node_decoder -->|"avcodec_send_packet&#40;&#41; per packet &#40;ffmpeg_dec.c:719&#41;"| node_avcodec_decode
+node_decoder -->|"sch_dec_send&#40;&#41; frames &#40;ffmpeg_dec.c:820&#41;"| node_filtergraph
+node_scheduler -->|"task_start: filter_thread"| node_filtergraph
+node_filtergraph -->|"buffersrc push + graph run &#40;ffmpeg_filter.c:3575&#41;"| node_avfilter
+node_filtergraph -->|"sch_filter_send&#40;&#41; to encoder &#40;ffmpeg_filter.c:2891&#41;"| node_encoder
+node_scheduler -->|"task_start: encoder_thread"| node_encoder
+node_encoder -->|"avcodec_send_frame&#40;&#41; &#40;ffmpeg_enc.c:722&#41;"| node_avcodec_encode
+node_encoder -->|"sch_enc_send&#40;&#41; packets &#40;ffmpeg_enc.c:529&#41;"| node_muxer
+node_scheduler -->|"task_start: muxer_thread"| node_muxer
+
+click node_main "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg.c"
+click node_transcode "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg.c"
+click node_scheduler "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_sched.c"
+click node_demuxer "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_demux.c"
+click node_avformat_demux "https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/demux.c"
+click node_decoder "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_dec.c"
+click node_avcodec_decode "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/decode.c"
+click node_filtergraph "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_filter.c"
+click node_avfilter "https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/avfiltergraph.c"
+click node_encoder "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_enc.c"
+click node_avcodec_encode "https://github.com/FFmpeg/FFmpeg/blob/master/libavcodec/encode.c"
+click node_muxer "https://github.com/FFmpeg/FFmpeg/blob/master/fftools/ffmpeg_mux.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_transcode,node_muxer toneBlue
+class node_scheduler toneAmber
+class node_demuxer,node_avformat_demux toneMint
+class node_decoder,node_avcodec_decode toneRose
+class node_filtergraph,node_avfilter toneIndigo
+class node_encoder,node_avcodec_encode toneTeal

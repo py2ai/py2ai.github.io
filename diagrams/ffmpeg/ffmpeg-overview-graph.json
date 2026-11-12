@@ -1,0 +1,45 @@
+{
+  "owner": "FFmpeg",
+  "repo": "FFmpeg",
+  "branch": "master",
+  "groups": [
+    { "id": "cli", "name": "CLI entry", "label": "fftools CLI entry" },
+    { "id": "sched", "name": "Scheduler", "label": "scheduler" },
+    { "id": "input", "name": "Demux", "label": "demux" },
+    { "id": "decode", "name": "Decode", "label": "decode" },
+    { "id": "filter", "name": "Filter", "label": "filter" },
+    { "id": "encode", "name": "Encode", "label": "encode" },
+    { "id": "output", "name": "Mux", "label": "mux" }
+  ],
+  "nodes": [
+    { "id": "main", "label": "main()", "file": "ffmpeg.c", "path": "fftools/ffmpeg.c", "group": "cli", "groupId": "cli", "desc": "int main (L995): allocates the Scheduler, parses options, then calls transcode() at L1045" },
+    { "id": "transcode", "label": "transcode()", "file": "ffmpeg.c", "path": "fftools/ffmpeg.c", "group": "cli", "groupId": "cli", "desc": "transcode (L901): sch_start() kicks every worker thread off, then main thread loops on sch_wait() printing progress reports" },
+    { "id": "scheduler", "label": "Scheduler", "file": "ffmpeg_sched.c", "path": "fftools/ffmpeg_sched.c", "group": "sched", "groupId": "sched", "desc": "sch_start (L1767) and task_start (L414): one pthread per demux/decode/filter/encode/mux task, connected by queues" },
+    { "id": "demuxer", "label": "input_thread()", "file": "ffmpeg_demux.c", "path": "fftools/ffmpeg_demux.c", "group": "input", "groupId": "input", "desc": "input_thread (L843): while(1) av_read_frame() loop (L867), routes packets through demux_send (L673)" },
+    { "id": "avformat_demux", "label": "av_read_frame()", "file": "demux.c", "path": "libavformat/demux.c", "group": "input", "groupId": "input", "desc": "av_read_frame (L1646) -> read_frame_internal (L1412) -> ff_read_packet (L652) asks the container demuxer for raw packets" },
+    { "id": "decoder", "label": "decoder_thread()", "file": "ffmpeg_dec.c", "path": "fftools/ffmpeg_dec.c", "group": "decode", "groupId": "decode", "desc": "decoder_thread (L909): pulls packets via sch_dec_receive (L924), runs packet_decode (L692), hands frames to sch_dec_send (L820)" },
+    { "id": "avcodec_decode", "label": "avcodec_send_packet()", "file": "decode.c", "path": "libavcodec/decode.c", "group": "decode", "groupId": "decode", "desc": "avcodec_send_packet (L738) -> decode_receive_frame_internal (L669); avcodec_receive_frame lives in libavcodec/avcodec.c (L718)" },
+    { "id": "filtergraph", "label": "filter_thread()", "file": "ffmpeg_filter.c", "path": "fftools/ffmpeg_filter.c", "group": "filter", "groupId": "filter", "desc": "filter_thread (L3507): pulls frames via sch_filter_receive (L3537), lazily builds the graph (configure_filtergraph, L2187), pushes frames in with send_frame (L3242)" },
+    { "id": "avfilter", "label": "AVFilterGraph", "file": "avfiltergraph.c", "path": "libavfilter/avfiltergraph.c", "group": "filter", "groupId": "filter", "desc": "avfilter_graph_config (L1480) negotiates formats; ff_filter_graph_run_once (L1675) advances frame processing link by link (libavfilter/avfilter.c)" },
+    { "id": "encoder", "label": "encoder_thread()", "file": "ffmpeg_enc.c", "path": "fftools/ffmpeg_enc.c", "group": "encode", "groupId": "encode", "desc": "encoder_thread (L998) -> frame_encode (L867) -> encode_frame (L683) pushes frames into the codec and reads packets out" },
+    { "id": "avcodec_encode", "label": "avcodec_send_frame()", "file": "encode.c", "path": "libavcodec/encode.c", "group": "encode", "groupId": "encode", "desc": "avcodec_send_frame (L567) -> encode_send_frame_internal (L485); avcodec_receive_packet (L600) returns compressed packets" },
+    { "id": "muxer", "label": "muxer_thread()", "file": "ffmpeg_mux.c", "path": "fftools/ffmpeg_mux.c", "group": "output", "groupId": "output", "desc": "muxer_thread (L401) -> sync_queue_process (L244) -> write_packet -> av_interleaved_write_frame (libavformat/mux.c L1268); header written by avformat_write_header (L512)" }
+  ],
+  "edges": [
+    { "from": "main", "to": "transcode", "label": "transcode(sch) after option parsing (ffmpeg.c:1045)" },
+    { "from": "transcode", "to": "scheduler", "label": "sch_start() launches all workers (ffmpeg.c:910)" },
+    { "from": "scheduler", "to": "demuxer", "label": "task_start: input_thread" },
+    { "from": "demuxer", "to": "avformat_demux", "label": "av_read_frame() per packet (ffmpeg_demux.c:867)" },
+    { "from": "demuxer", "to": "decoder", "label": "packets queued to SCH_NODE_TYPE_DEC (ffmpeg_sched.h:99)" },
+    { "from": "scheduler", "to": "decoder", "label": "task_start: decoder_thread" },
+    { "from": "decoder", "to": "avcodec_decode", "label": "avcodec_send_packet() per packet (ffmpeg_dec.c:719)" },
+    { "from": "decoder", "to": "filtergraph", "label": "sch_dec_send() frames (ffmpeg_dec.c:820)" },
+    { "from": "scheduler", "to": "filtergraph", "label": "task_start: filter_thread" },
+    { "from": "filtergraph", "to": "avfilter", "label": "buffersrc push + graph run (ffmpeg_filter.c:3575)" },
+    { "from": "filtergraph", "to": "encoder", "label": "sch_filter_send() to encoder (ffmpeg_filter.c:2891)" },
+    { "from": "scheduler", "to": "encoder", "label": "task_start: encoder_thread" },
+    { "from": "encoder", "to": "avcodec_encode", "label": "avcodec_send_frame() (ffmpeg_enc.c:722)" },
+    { "from": "encoder", "to": "muxer", "label": "sch_enc_send() packets (ffmpeg_enc.c:529)" },
+    { "from": "scheduler", "to": "muxer", "label": "task_start: muxer_thread" }
+  ]
+}
