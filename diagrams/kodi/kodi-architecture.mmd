@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_entry["Bootstrap"]
+  node_posix_main["main&#40;&#41;<br/>[main.cpp]"]
+  node_xbmc_run["XBMC_Run&#40;&#41;<br/>[xbmc.cpp]"]
+  node_app_create["CApplication::Create&#40;&#41;<br/>[Application.cpp]"]
+end
+
+subgraph group_loop["GUI thread &amp; services"]
+  node_app_run["CApplication::Run&#40;&#41;<br/>[Application.cpp]"]
+  node_app_iteration["CApplication::RunIteration&#40;&#41;<br/>[Application.cpp]"]
+  node_app_process["CApplication::Process&#40;&#41;<br/>[Application.cpp]"]
+  node_app_frame["CApplication::FrameMove&#40;&#41;<br/>[Application.cpp]"]
+  node_app_render["CApplication::Render&#40;&#41;<br/>[Application.cpp]"]
+  node_messenger["CApplicationMessenger::ProcessMessages&#40;&#41;"]
+  node_broker["CServiceBroker<br/>[ServiceBroker.cpp]"]
+end
+
+subgraph group_gui["Skin rendering"]
+  node_winman_process["CGUIWindowManager::Process&#40;&#41;"]
+  node_winman_render["CGUIWindowManager::Render&#40;&#41;"]
+end
+
+subgraph group_input["Key handling"]
+  node_input_mgr["CInputManager::HandleKey&#40;&#41;<br/>[InputManager.cpp]"]
+end
+
+subgraph group_python["Addon interpreters"]
+  node_xbpython["XBPython::XBPython&#40;&#41;<br/>[XBPython.cpp]"]
+  node_py_invoker["CPythonInvoker::execute&#40;&#41;<br/>[PythonInvoker.cpp]"]
+  node_py_legacy["AddonClass &#40;legacy API&#41;<br/>[AddonClass.cpp]"]
+  node_py_swig["AddonModuleXbmcgui.i"]
+end
+
+subgraph group_player["Player threads"]
+  node_app_player["CApplicationPlayer::OpenFile&#40;&#41;"]
+  node_player_core["CPlayerCoreFactory"]
+  node_vp_open_file["CVideoPlayer::OpenFile&#40;&#41;<br/>[VideoPlayer.cpp]"]
+  node_vp_process["CVideoPlayer::Process&#40;&#41;<br/>[VideoPlayer.cpp]"]
+  node_vp_open_input["CVideoPlayer::OpenInputStream&#40;&#41;<br/>[VideoPlayer.cpp]"]
+  node_vp_open_demux["CVideoPlayer::OpenDemuxStream&#40;&#41;<br/>[VideoPlayer.cpp]"]
+  node_vp_read_packet["CVideoPlayer::ReadPacket&#40;&#41;<br/>[VideoPlayer.cpp]"]
+  node_vp_msg["CVideoPlayer::HandleMessages&#40;&#41;<br/>[VideoPlayer.cpp]"]
+  node_vp_video["CVideoPlayerVideo::Process&#40;&#41;"]
+  node_vp_video_open["CVideoPlayerVideo::OpenStream&#40;&#41;"]
+end
+
+subgraph group_ffmpeg["Demux &amp; codec"]
+  node_demux_ffmpeg["CDVDDemuxFFmpeg::Open&#40;&#41;<br/>[DVDDemuxFFmpeg.cpp]"]
+  node_demux_read["CDVDDemuxFFmpeg::Read&#40;&#41;<br/>[DVDDemuxFFmpeg.cpp]"]
+  node_factory_codec["CDVDFactoryCodec::CreateVideoCodec&#40;&#41;"]
+  node_vcodec_ffmpeg["CDVDVideoCodecFFmpeg::Open&#40;&#41;"]
+  node_vcodec_decode["CDVDVideoCodecFFmpeg::Decode&#40;&#41;"]
+end
+
+subgraph group_render["Video renderer"]
+  node_render_mgr["CRenderManager::FrameMove&#40;&#41;<br/>[RenderManager.cpp]"]
+end
+
+node_posix_main -->|"XBMC_Run&#40;true&#41;"| node_xbmc_run
+node_xbmc_run -->|"g_application.Create&#40;&#41;"| node_app_create
+node_app_create -->|"registers messenger + services"| node_broker
+node_xbmc_run -->|"g_application.Run&#40;&#41;"| node_app_run
+node_app_run -->|"while &#40;!m_bStop&#41;"| node_app_iteration
+node_app_iteration -->|"step 1"| node_app_process
+node_app_iteration -->|"step 2"| node_app_frame
+node_app_iteration -->|"step 3"| node_app_render
+node_app_process -->|"ProcessMessages&#40;&#41;"| node_messenger
+node_app_process -->|"DispatchThreadMessages&#40;&#41;"| node_winman_process
+node_app_process -->|"CScriptInvocationManager::Process&#40;&#41;"| node_py_invoker
+node_app_frame -->|"CInputManager::Process&#40;&#41;"| node_input_mgr
+node_app_render -->|"GetWindowManager&#40;&#41;.Render&#40;&#41;"| node_winman_render
+node_messenger -->|"TMSG_PLAY* payloads"| node_app_player
+node_input_mgr -->|"action -&gt; app components"| node_broker
+node_broker -->|"GetGUI&#40;&#41;-&gt;GetWindowManager&#40;&#41;"| node_winman_process
+node_app_player -->|"CreatePlayer&#40;factory, ...&#41;"| node_player_core
+node_player_core -->|"selects CVideoPlayer"| node_vp_open_file
+node_vp_open_file -->|"player thread starts"| node_vp_process
+node_vp_process -->|"OpenInputStream&#40;&#41;"| node_vp_open_input
+node_vp_open_input -->|"input stream feeds demuxer"| node_demux_ffmpeg
+node_vp_process -->|"OpenDemuxStream&#40;&#41;"| node_vp_open_demux
+node_vp_process -->|"HandleMessages&#40;&#41; each pass"| node_vp_msg
+node_vp_process -->|"ReadPacket&#40;&#41;"| node_vp_read_packet
+node_vp_read_packet -->|"av_read_frame packet"| node_demux_read
+node_vp_open_demux -->|"default streams route packets"| node_vp_video
+node_vp_process -->|"ProcessVideoData&#40;&#41;"| node_vp_video
+node_vp_video -->|"CDVDMsgVideoCodecChange"| node_vp_video_open
+node_vp_video_open -->|"CreateVideoCodec&#40;&#41;"| node_factory_codec
+node_factory_codec -->|"software fallback"| node_vcodec_ffmpeg
+node_vcodec_ffmpeg -->|"open then Decode&#40;&#41;"| node_vcodec_decode
+node_vp_video -->|"OutputPicture&#40;&#41;"| node_render_mgr
+node_py_invoker -->|"PyThreadState_New&#40;main interp&#41;"| node_xbpython
+node_py_invoker -->|"script body runs on this API"| node_py_legacy
+node_py_legacy -->|"wrapped by SWIG bindings"| node_py_swig
+
+click node_posix_main "https://github.com/xbmc/xbmc/blob/master/xbmc/platform/posix/main.cpp"
+click node_xbmc_run "https://github.com/xbmc/xbmc/blob/master/xbmc/platform/xbmc.cpp"
+click node_app_create "https://github.com/xbmc/xbmc/blob/master/xbmc/application/Application.cpp"
+click node_app_run "https://github.com/xbmc/xbmc/blob/master/xbmc/application/Application.cpp"
+click node_app_iteration "https://github.com/xbmc/xbmc/blob/master/xbmc/application/Application.cpp"
+click node_app_process "https://github.com/xbmc/xbmc/blob/master/xbmc/application/Application.cpp"
+click node_app_frame "https://github.com/xbmc/xbmc/blob/master/xbmc/application/Application.cpp"
+click node_app_render "https://github.com/xbmc/xbmc/blob/master/xbmc/application/Application.cpp"
+click node_messenger "https://github.com/xbmc/xbmc/blob/master/xbmc/messaging/ApplicationMessenger.cpp"
+click node_broker "https://github.com/xbmc/xbmc/blob/master/xbmc/ServiceBroker.cpp"
+click node_winman_process "https://github.com/xbmc/xbmc/blob/master/xbmc/guilib/GUIWindowManager.cpp"
+click node_winman_render "https://github.com/xbmc/xbmc/blob/master/xbmc/guilib/GUIWindowManager.cpp"
+click node_input_mgr "https://github.com/xbmc/xbmc/blob/master/xbmc/input/InputManager.cpp"
+click node_xbpython "https://github.com/xbmc/xbmc/blob/master/xbmc/interfaces/python/XBPython.cpp"
+click node_py_invoker "https://github.com/xbmc/xbmc/blob/master/xbmc/interfaces/python/PythonInvoker.cpp"
+click node_py_legacy "https://github.com/xbmc/xbmc/blob/master/xbmc/interfaces/legacy/AddonClass.cpp"
+click node_py_swig "https://github.com/xbmc/xbmc/blob/master/xbmc/interfaces/swig/AddonModuleXbmcgui.i"
+click node_app_player "https://github.com/xbmc/xbmc/blob/master/xbmc/application/ApplicationPlayer.cpp"
+click node_player_core "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/playercorefactory/PlayerCoreFactory.cpp"
+click node_vp_open_file "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayer.cpp"
+click node_vp_process "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayer.cpp"
+click node_vp_open_input "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayer.cpp"
+click node_vp_open_demux "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayer.cpp"
+click node_vp_read_packet "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayer.cpp"
+click node_vp_msg "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayer.cpp"
+click node_vp_video "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp"
+click node_vp_video_open "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp"
+click node_demux_ffmpeg "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp"
+click node_demux_read "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp"
+click node_factory_codec "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/DVDCodecs/DVDFactoryCodec.cpp"
+click node_vcodec_ffmpeg "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecFFmpeg.cpp"
+click node_vcodec_decode "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecFFmpeg.cpp"
+click node_render_mgr "https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_posix_main,node_xbmc_run,node_app_create,node_demux_ffmpeg,node_demux_read,node_factory_codec,node_vcodec_ffmpeg,node_vcodec_decode toneBlue
+class node_app_run,node_app_iteration,node_app_process,node_app_frame,node_app_render,node_messenger,node_broker,node_render_mgr toneAmber
+class node_winman_process,node_winman_render toneMint
+class node_input_mgr toneRose
+class node_xbpython,node_py_invoker,node_py_legacy,node_py_swig toneIndigo
+class node_app_player,node_player_core,node_vp_open_file,node_vp_process,node_vp_open_input,node_vp_open_demux,node_vp_read_packet,node_vp_msg,node_vp_video,node_vp_video_open toneTeal
