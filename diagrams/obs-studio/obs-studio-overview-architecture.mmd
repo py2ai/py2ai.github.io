@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_app["Qt Frontend"]
+  node_frontend_main["Qt frontend &#40;int main&#41;<br/>[obs-main.cpp]"]
+end
+
+subgraph group_core["libobs core"]
+  node_obs_startup["obs_startup<br/>[obs.c]"]
+  node_gfx_thread["obs_graphics_thread &#40;30/60 Hz&#41;<br/>[obs-video.c]"]
+end
+
+subgraph group_video["Graphics thread pacing"]
+  node_tick_sources["tick_sources<br/>[obs-video.c]"]
+  node_out_frame["output_frame &#40;render + stage&#41;<br/>[obs-video.c]"]
+  node_video_sleep["video_sleep &#40;lagged_frames&#41;<br/>[obs-video.c]"]
+end
+
+subgraph group_render["Scenes &amp; rendering"]
+  node_view_render["obs_view_render<br/>[obs-view.c]"]
+  node_scene_render["scene_video_render<br/>[obs-scene.c]"]
+  node_gs_effect["gs effects &#40;shaders&#41;<br/>[effect.c]"]
+end
+
+subgraph group_audio["Audio mixing"]
+  node_audio_thread["audio-io thread &#40;1024 frames&#41;<br/>[audio-io.c]"]
+end
+
+subgraph group_out["Encoders &amp; output"]
+  node_obs_output_start["obs_output_start<br/>[obs-output.c]"]
+end
+
+node_frontend_main -->|"boots libobs"| node_obs_startup
+node_obs_startup -->|"obs_init_video spawns thread &#40;obs.c L720&#41;"| node_gfx_thread
+node_obs_startup -->|"obs_init_audio L907"| node_audio_thread
+node_gfx_thread -->|"first step of every frame"| node_tick_sources
+node_gfx_thread -->|"output_frames L919"| node_out_frame
+node_out_frame -->|"render_main_texture L172"| node_view_render
+node_view_render -->|"obs_source_video_render L135"| node_scene_render
+node_scene_render -->|"draws items with effects"| node_gs_effect
+node_out_frame -->|"frame budget consumed"| node_video_sleep
+node_video_sleep -.->|"miss -&gt; lagged_frames L828"| node_gfx_thread
+node_out_frame -.->|"staged frames to outputs"| node_obs_output_start
+node_audio_thread -.->|"mixed PCM callbacks"| node_obs_output_start
+
+click node_frontend_main "https://github.com/obsproject/obs-studio/blob/master/frontend/obs-main.cpp"
+click node_obs_startup "https://github.com/obsproject/obs-studio/blob/master/libobs/obs.c"
+click node_gfx_thread "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_tick_sources "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_out_frame "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_video_sleep "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-video.c"
+click node_view_render "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-view.c"
+click node_scene_render "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-scene.c"
+click node_gs_effect "https://github.com/obsproject/obs-studio/blob/master/libobs/graphics/effect.c"
+click node_audio_thread "https://github.com/obsproject/obs-studio/blob/master/libobs/media-io/audio-io.c"
+click node_obs_output_start "https://github.com/obsproject/obs-studio/blob/master/libobs/obs-output.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_frontend_main toneBlue
+class node_obs_startup,node_gfx_thread toneAmber
+class node_tick_sources,node_out_frame,node_video_sleep toneMint
+class node_view_render,node_scene_render,node_gs_effect toneRose
+class node_audio_thread toneIndigo
+class node_obs_output_start toneTeal

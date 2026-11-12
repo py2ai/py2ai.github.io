@@ -1,0 +1,128 @@
+{
+  "owner": "obsproject",
+  "repo": "obs-studio",
+  "branch": "master",
+  "groups": [
+    { "id": "app", "name": "Frontend", "label": "Qt Frontend" },
+    { "id": "core", "name": "Core lifecycle", "label": "libobs core" },
+    { "id": "video", "name": "Video pacing", "label": "Graphics thread pacing" },
+    { "id": "render", "name": "Render graph", "label": "Scenes & rendering" },
+    { "id": "audio", "name": "Audio path", "label": "Audio mixing" },
+    { "id": "out", "name": "Output", "label": "Encoders & output" }
+  ],
+  "nodes": [
+    {
+      "id": "frontend_main",
+      "label": "Qt frontend (int main)",
+      "file": "obs-main.cpp",
+      "path": "frontend/obs-main.cpp",
+      "group": "app",
+      "groupId": "app",
+      "desc": "int main at L887 parses args and hands off to the OBSApp Qt object."
+    },
+    {
+      "id": "obs_startup",
+      "label": "obs_startup",
+      "file": "obs.c",
+      "path": "libobs/obs.c",
+      "group": "core",
+      "groupId": "core",
+      "desc": "L1330: boots the libobs core, then obs_init sets up modules, video and audio."
+    },
+    {
+      "id": "gfx_thread",
+      "label": "obs_graphics_thread (30/60 Hz)",
+      "file": "obs-video.c",
+      "path": "libobs/obs-video.c",
+      "group": "core",
+      "groupId": "core",
+      "desc": "L1161: the single graphics thread spawned at obs.c L720; every iteration ticks sources, renders, and sleeps to the next frame interval."
+    },
+    {
+      "id": "tick_sources",
+      "label": "tick_sources",
+      "file": "obs-video.c",
+      "path": "libobs/obs-video.c",
+      "group": "video",
+      "groupId": "video",
+      "desc": "L32: walks every source and calls obs_source_video_tick once per frame."
+    },
+    {
+      "id": "out_frame",
+      "label": "output_frame (render + stage)",
+      "file": "obs-video.c",
+      "path": "libobs/obs-video.c",
+      "group": "video",
+      "groupId": "video",
+      "desc": "L871: renders the main texture, converts it, downloads it to CPU or hands it to GPU encoders."
+    },
+    {
+      "id": "video_sleep",
+      "label": "video_sleep (lagged_frames)",
+      "file": "obs-video.c",
+      "path": "libobs/obs-video.c",
+      "group": "video",
+      "groupId": "video",
+      "desc": "L808: os_sleepto_ns targets the next interval; a miss bumps lagged_frames at L828 — the ledger of dropped frames."
+    },
+    {
+      "id": "view_render",
+      "label": "obs_view_render",
+      "file": "obs-view.c",
+      "path": "libobs/obs-view.c",
+      "group": "render",
+      "groupId": "render",
+      "desc": "L118: renders the source bound to each of MAX_CHANNELS channels of the main view."
+    },
+    {
+      "id": "scene_render",
+      "label": "scene_video_render",
+      "file": "obs-scene.c",
+      "path": "libobs/obs-scene.c",
+      "group": "render",
+      "groupId": "render",
+      "desc": "L1059: walks the linked list of scene items and renders each visible one."
+    },
+    {
+      "id": "gs_effect",
+      "label": "gs effects (shaders)",
+      "file": "effect.c",
+      "path": "libobs/graphics/effect.c",
+      "group": "render",
+      "groupId": "render",
+      "desc": "Effect objects with parameters (gs_effect_get_param_by_name L275) uploaded before each draw."
+    },
+    {
+      "id": "audio_thread",
+      "label": "audio-io thread (1024 frames)",
+      "file": "audio-io.c",
+      "path": "libobs/media-io/audio-io.c",
+      "group": "audio",
+      "groupId": "audio",
+      "desc": "L205: independent thread that every AUDIO_OUTPUT_FRAMES=1024 samples mixes inputs and emits PCM."
+    },
+    {
+      "id": "obs_output_start",
+      "label": "obs_output_start",
+      "file": "obs-output.c",
+      "path": "libobs/obs-output.c",
+      "group": "out",
+      "groupId": "out",
+      "desc": "L397: starts an output (stream/record), wiring encoders or raw callbacks."
+    }
+  ],
+  "edges": [
+    { "from": "frontend_main", "to": "obs_startup", "label": "boots libobs", "style": "solid" },
+    { "from": "obs_startup", "to": "gfx_thread", "label": "obs_init_video spawns thread (obs.c L720)", "style": "solid" },
+    { "from": "obs_startup", "to": "audio_thread", "label": "obs_init_audio L907", "style": "solid" },
+    { "from": "gfx_thread", "to": "tick_sources", "label": "first step of every frame", "style": "solid" },
+    { "from": "gfx_thread", "to": "out_frame", "label": "output_frames L919", "style": "solid" },
+    { "from": "out_frame", "to": "view_render", "label": "render_main_texture L172", "style": "solid" },
+    { "from": "view_render", "to": "scene_render", "label": "obs_source_video_render L135", "style": "solid" },
+    { "from": "scene_render", "to": "gs_effect", "label": "draws items with effects", "style": "solid" },
+    { "from": "out_frame", "to": "video_sleep", "label": "frame budget consumed", "style": "solid" },
+    { "from": "video_sleep", "to": "gfx_thread", "label": "miss -> lagged_frames L828", "style": "dashed" },
+    { "from": "out_frame", "to": "obs_output_start", "label": "staged frames to outputs", "style": "dashed" },
+    { "from": "audio_thread", "to": "obs_output_start", "label": "mixed PCM callbacks", "style": "dashed" }
+  ]
+}
