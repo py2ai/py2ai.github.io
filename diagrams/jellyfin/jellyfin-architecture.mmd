@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_host["Host &amp; DI bootstrap"]
+  node_program["Program.Main<br/>[Program.cs]"]
+  node_apphost["ApplicationHost<br/>[ApplicationHost.cs]"]
+  node_coreapphost["CoreAppHost<br/>[CoreAppHost.cs]"]
+  node_startup["Startup middleware<br/>[Startup.cs]"]
+end
+
+subgraph group_api["HTTP API layer"]
+  node_itemsctrl["ItemsController<br/>[ItemsController.cs]"]
+  node_videosctrl["VideosController"]
+  node_hlsctrl["DynamicHlsController"]
+  node_hlsseg["HlsSegmentController"]
+  node_mediainfoctrl["MediaInfoController"]
+  node_sessionctrl["SessionController"]
+  node_streaminghelpers["StreamingHelpers"]
+end
+
+subgraph group_library["Library item graph"]
+  node_librarymgr["LibraryManager<br/>[LibraryManager.cs]"]
+  node_ilibrarymgr["ILibraryManager<br/>[ILibraryManager.cs]"]
+  node_baseitem["BaseItem<br/>[BaseItem.cs]"]
+  node_video["Video<br/>[Video.cs]"]
+  node_folder["Folder<br/>[Folder.cs]"]
+  node_librarymonitor["LibraryMonitor<br/>[LibraryMonitor.cs]"]
+end
+
+subgraph group_session["Session tracking"]
+  node_sessionmgr["SessionManager<br/>[SessionManager.cs]"]
+  node_sessioninfo["SessionInfo<br/>[SessionInfo.cs]"]
+  node_isessionmgr["ISessionManager<br/>[ISessionManager.cs]"]
+end
+
+subgraph group_transcode["Transcoding engine"]
+  node_mediaencoder["MediaEncoder<br/>[MediaEncoder.cs]"]
+  node_encodervalidator["EncoderValidator"]
+  node_imediaencoder["IMediaEncoder<br/>[IMediaEncoder.cs]"]
+  node_transmgr["TranscodeManager"]
+  node_itranscodemgr["ITranscodeManager"]
+  node_transjob["TranscodingJob<br/>[TranscodingJob.cs]"]
+  node_transjobtype["TranscodingJobType"]
+  node_encjobinfo["EncodingJobInfo<br/>[EncodingJobInfo.cs]"]
+  node_streamstate["StreamState<br/>[StreamState.cs]"]
+  node_videorequestdto["VideoRequestDto<br/>[VideoRequestDto.cs]"]
+  node_encodinghelper["EncodingHelper<br/>[EncodingHelper.cs]"]
+  node_baseencopts["BaseEncodingJobOptions"]
+  node_throttler["TranscodingThrottler"]
+  node_segcleaner["TranscodingSegmentCleaner"]
+end
+
+node_program -->|"constructs host"| node_apphost
+node_coreapphost -->|"subclass, overrides RegisterServices"| node_apphost
+node_apphost -->|"instantiated in StartServer"| node_coreapphost
+node_program -->|"ConfigureWebHostDefaults"| node_startup
+node_startup -->|"MapControllers"| node_itemsctrl
+node_startup -->|"MapControllers"| node_videosctrl
+node_startup -->|"MapControllers"| node_hlsctrl
+node_startup -->|"MapControllers"| node_hlsseg
+node_startup -->|"MapControllers"| node_mediainfoctrl
+node_startup -->|"MapControllers"| node_sessionctrl
+node_apphost -->|"AddSingleton + SetFFmpegPath"| node_mediaencoder
+node_mediaencoder -->|"interrogate ffmpeg capabilities"| node_encodervalidator
+node_mediaencoder -->|"implements"| node_imediaencoder
+node_transmgr -->|"implements"| node_itranscodemgr
+node_mediainfoctrl -->|"GetItemById for PlaybackInfo"| node_librarymgr
+node_mediainfoctrl -->|"session/device binding"| node_isessionmgr
+node_itemsctrl -->|"query items"| node_ilibrarymgr
+node_videosctrl -->|"binds query params"| node_videorequestdto
+node_videosctrl -->|"GetStreamingState"| node_streaminghelpers
+node_hlsctrl -->|"GetStreamingState"| node_streaminghelpers
+node_streaminghelpers -->|"constructs"| node_streamstate
+node_streamstate -->|"inherits"| node_encjobinfo
+node_videorequestdto -->|"inherits request knobs"| node_baseencopts
+node_videosctrl -->|"media source lookup"| node_librarymgr
+node_hlsctrl -->|"LockAsync + StartFfMpeg"| node_transmgr
+node_hlsctrl -->|"GetCommandLineArguments"| node_encodinghelper
+node_transmgr -->|"IsCopyCodec check"| node_encodinghelper
+node_transmgr -->|"EncoderPath for Process"| node_mediaencoder
+node_transmgr -->|"OnTranscodeBeginning creates"| node_transjob
+node_transjob -->|"Hls/Progressive flavor"| node_transjobtype
+node_hlsseg -->|"GetTranscodingJob"| node_transmgr
+node_hlsseg -->|"segment cleanup on requests"| node_segcleaner
+node_transmgr -->|"job throttling lifecycle"| node_throttler
+node_apphost -->|"AddSingleton&lt;ILibraryManager&gt;"| node_librarymgr
+node_ilibrarymgr -->|"implemented by"| node_librarymgr
+node_librarymgr -->|"resolves/registers items"| node_baseitem
+node_video -->|"inherits"| node_baseitem
+node_folder -->|"inherits"| node_baseitem
+node_apphost -->|"AddSingleton&lt;ISessionManager&gt;"| node_sessionmgr
+node_isessionmgr -->|"implemented by"| node_sessionmgr
+node_sessionctrl -->|"SendPlayCommand"| node_isessionmgr
+node_sessionmgr -->|"owns per-client records"| node_sessioninfo
+node_sessioninfo -->|"TranscodingInfo from job events"| node_transmgr
+node_transmgr -->|"PlaybackStart/Progress events"| node_isessionmgr
+node_apphost -->|"AddSingleton&lt;ILibraryMonitor&gt;"| node_librarymonitor
+
+click node_program "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Server/Program.cs"
+click node_apphost "https://github.com/jellyfin/jellyfin/blob/master/Emby.Server.Implementations/ApplicationHost.cs"
+click node_coreapphost "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Server/CoreAppHost.cs"
+click node_startup "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Server/Startup.cs"
+click node_mediaencoder "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.MediaEncoding/Encoder/MediaEncoder.cs"
+click node_encodervalidator "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.MediaEncoding/Encoder/EncoderValidator.cs"
+click node_imediaencoder "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/IMediaEncoder.cs"
+click node_itemsctrl "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Controllers/ItemsController.cs"
+click node_videosctrl "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Controllers/VideosController.cs"
+click node_hlsctrl "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Controllers/DynamicHlsController.cs"
+click node_hlsseg "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Controllers/HlsSegmentController.cs"
+click node_mediainfoctrl "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Controllers/MediaInfoController.cs"
+click node_sessionctrl "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Controllers/SessionController.cs"
+click node_streaminghelpers "https://github.com/jellyfin/jellyfin/blob/master/Jellyfin.Api/Helpers/StreamingHelpers.cs"
+click node_librarymgr "https://github.com/jellyfin/jellyfin/blob/master/Emby.Server.Implementations/Library/LibraryManager.cs"
+click node_ilibrarymgr "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Library/ILibraryManager.cs"
+click node_baseitem "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Entities/BaseItem.cs"
+click node_video "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Entities/Video.cs"
+click node_folder "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Entities/Folder.cs"
+click node_librarymonitor "https://github.com/jellyfin/jellyfin/blob/master/Emby.Server.Implementations/IO/LibraryMonitor.cs"
+click node_sessionmgr "https://github.com/jellyfin/jellyfin/blob/master/Emby.Server.Implementations/Session/SessionManager.cs"
+click node_sessioninfo "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Session/SessionInfo.cs"
+click node_isessionmgr "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Session/ISessionManager.cs"
+click node_transmgr "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.MediaEncoding/Transcoding/TranscodeManager.cs"
+click node_itranscodemgr "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/ITranscodeManager.cs"
+click node_transjob "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/TranscodingJob.cs"
+click node_transjobtype "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/TranscodingJobType.cs"
+click node_encjobinfo "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/EncodingJobInfo.cs"
+click node_streamstate "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Streaming/StreamState.cs"
+click node_videorequestdto "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/Streaming/VideoRequestDto.cs"
+click node_encodinghelper "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/EncodingHelper.cs"
+click node_baseencopts "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/BaseEncodingJobOptions.cs"
+click node_throttler "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/TranscodingThrottler.cs"
+click node_segcleaner "https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Controller/MediaEncoding/TranscodingSegmentCleaner.cs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_program,node_apphost,node_coreapphost,node_startup toneBlue
+class node_itemsctrl,node_videosctrl,node_hlsctrl,node_hlsseg,node_mediainfoctrl,node_sessionctrl,node_streaminghelpers toneAmber
+class node_librarymgr,node_ilibrarymgr,node_baseitem,node_video,node_folder,node_librarymonitor toneMint
+class node_sessionmgr,node_sessioninfo,node_isessionmgr toneRose
+class node_mediaencoder,node_encodervalidator,node_imediaencoder,node_transmgr,node_itranscodemgr,node_transjob,node_transjobtype,node_encjobinfo,node_streamstate,node_videorequestdto,node_encodinghelper,node_baseencopts,node_throttler,node_segcleaner toneIndigo
