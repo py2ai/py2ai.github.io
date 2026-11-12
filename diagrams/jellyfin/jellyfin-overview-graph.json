@@ -1,0 +1,46 @@
+{
+  "owner": "jellyfin",
+  "repo": "jellyfin",
+  "branch": "master",
+  "groups": [
+    { "id": "host", "name": "host", "label": "Host & DI bootstrap" },
+    { "id": "api", "name": "api", "label": "HTTP API layer" },
+    { "id": "library", "name": "library", "label": "Library item graph" },
+    { "id": "session", "name": "session", "label": "Session tracking" },
+    { "id": "transcode", "name": "transcode", "label": "Transcoding engine" }
+  ],
+  "nodes": [
+    { "id": "program", "label": "Program.Main", "file": "Program.cs", "path": "Jellyfin.Server/Program.cs", "group": "host", "groupId": "host", "desc": "Entry point: parses startup options, builds the generic host, starts Kestrel" },
+    { "id": "apphost", "label": "ApplicationHost", "file": "ApplicationHost.cs", "path": "Emby.Server.Implementations/ApplicationHost.cs", "group": "host", "groupId": "host", "desc": "Central DI container; registers all services, validates ffmpeg before startup completes" },
+    { "id": "startup", "label": "Startup middleware", "file": "Startup.cs", "path": "Jellyfin.Server/Startup.cs", "group": "host", "groupId": "host", "desc": "ASP.NET Core middleware: routing, auth, swagger, MapControllers" },
+    { "id": "mediaencoder", "label": "MediaEncoder", "file": "MediaEncoder.cs", "path": "MediaBrowser.MediaEncoding/Encoder/MediaEncoder.cs", "group": "transcode", "groupId": "transcode", "desc": "Locates and interrogates ffmpeg/ffprobe; caches available encoders, decoders, filters, hwaccels" },
+    { "id": "itemsctrl", "label": "ItemsController", "file": "ItemsController.cs", "path": "Jellyfin.Api/Controllers/ItemsController.cs", "group": "api", "groupId": "api", "desc": "GET /Items: browses and queries the library via LibraryManager" },
+    { "id": "videosctrl", "label": "VideosController", "file": "VideosController.cs", "path": "Jellyfin.Api/Controllers/VideosController.cs", "group": "api", "groupId": "api", "desc": "GET /Videos/{id}/stream: direct play or progressive transcode decisions" },
+    { "id": "hlsctrl", "label": "DynamicHlsController", "file": "DynamicHlsController.cs", "path": "Jellyfin.Api/Controllers/DynamicHlsController.cs", "group": "api", "groupId": "api", "desc": "GET /Videos/{id}/master.m3u8: starts and serves HLS fMP4 transcodes" },
+    { "id": "hlsseg", "label": "HlsSegmentController", "file": "HlsSegmentController.cs", "path": "Jellyfin.Api/Controllers/HlsSegmentController.cs", "group": "api", "groupId": "api", "desc": "Serves .ts/.mp4 segments produced by running ffmpeg jobs" },
+    { "id": "librarymgr", "label": "LibraryManager", "file": "LibraryManager.cs", "path": "Emby.Server.Implementations/Library/LibraryManager.cs", "group": "library", "groupId": "library", "desc": "Resolves, registers and deletes items; the in-memory facade over the item database" },
+    { "id": "baseitem", "label": "BaseItem", "file": "BaseItem.cs", "path": "MediaBrowser.Controller/Entities/BaseItem.cs", "group": "library", "groupId": "library", "desc": "Abstract root of the item graph; Video, Folder, Episode all inherit from it" },
+    { "id": "sessionmgr", "label": "SessionManager", "file": "SessionManager.cs", "path": "Emby.Server.Implementations/Session/SessionManager.cs", "group": "session", "groupId": "session", "desc": "Tracks every active connection and playback session in ConcurrentDictionary maps" },
+    { "id": "transmgr", "label": "TranscodeManager", "file": "TranscodeManager.cs", "path": "MediaBrowser.MediaEncoding/Transcoding/TranscodeManager.cs", "group": "transcode", "groupId": "transcode", "desc": "Owns the set of live ffmpeg child processes: StartFfMpeg, KillTranscodingJobs" }
+  ],
+  "edges": [
+    { "from": "program", "to": "apphost", "label": "constructs CoreAppHost + generic host" },
+    { "from": "apphost", "to": "mediaencoder", "label": "SetFFmpegPath() validation at startup" },
+    { "from": "apphost", "to": "librarymgr", "label": "AddSingleton<ILibraryManager>" },
+    { "from": "apphost", "to": "sessionmgr", "label": "AddSingleton<ISessionManager>" },
+    { "from": "program", "to": "startup", "label": "ConfigureWebHostDefaults" },
+    { "from": "startup", "to": "itemsctrl", "label": "MapControllers" },
+    { "from": "startup", "to": "videosctrl", "label": "MapControllers" },
+    { "from": "startup", "to": "hlsctrl", "label": "MapControllers" },
+    { "from": "startup", "to": "hlsseg", "label": "MapControllers" },
+    { "from": "itemsctrl", "to": "librarymgr", "label": "GetItemsResult / GetItemById" },
+    { "from": "videosctrl", "to": "librarymgr", "label": "StreamingHelpers.GetStreamingState" },
+    { "from": "videosctrl", "to": "sessionmgr", "label": "playSessionId playback reports" },
+    { "from": "videosctrl", "to": "transmgr", "label": "progressive transcode fallback" },
+    { "from": "librarymgr", "to": "baseitem", "label": "item graph rooted on BaseItem" },
+    { "from": "hlsctrl", "to": "transmgr", "label": "StartFfMpeg per missing playlist" },
+    { "from": "hlsseg", "to": "transmgr", "label": "GetTranscodingJob lookup" },
+    { "from": "transmgr", "to": "mediaencoder", "label": "spawns ffmpeg as child process" },
+    { "from": "transmgr", "to": "sessionmgr", "label": "subscribes PlaybackStart/Progress" }
+  ]
+}
