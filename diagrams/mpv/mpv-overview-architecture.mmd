@@ -1,0 +1,69 @@
+flowchart TD
+
+subgraph group_core_loop["Player core &#40;single core thread&#41;"]
+  node_mpv_main["mpv_main&#40;&#41;<br/>[main.c]"]
+  node_mp_context["struct MPContext<br/>[core.h]"]
+  node_mp_play_files["mp_play_files&#40;&#41;<br/>[loadfile.c]"]
+  node_run_playloop["run_playloop&#40;&#41;<br/>[playloop.c]"]
+  node_mp_wait_events["mp_wait_events&#40;&#41;<br/>[playloop.c]"]
+end
+
+subgraph group_demux["Demuxer &#40;background reader&#41;"]
+  node_demux_thread["demux_thread&#40;&#41;<br/>[demux.c]"]
+  node_demux_read_packet_async["demux_read_packet_async&#40;&#41;<br/>[demux.c]"]
+end
+
+subgraph group_video["Video chain"]
+  node_write_video["write_video&#40;&#41;<br/>[video.c]"]
+  node_check_framedrop["check_framedrop&#40;&#41;<br/>[video.c]"]
+  node_vo_thread["vo_thread&#40;&#41;<br/>[vo.c]"]
+end
+
+subgraph group_audio["Audio chain"]
+  node_fill_audio_out_buffers["fill_audio_out_buffers&#40;&#41;<br/>[audio.c]"]
+end
+
+subgraph group_input["Input / commands"]
+  node_run_command["run_command&#40;&#41;<br/>[command.c]"]
+end
+
+node_mpv_main -->|"instantiates"| node_mp_context
+node_mpv_main -->|"drives playback"| node_mp_play_files
+node_mp_play_files -->|"while &#40;!stop_play&#41; per file"| node_run_playloop
+node_run_playloop -->|"each tick"| node_fill_audio_out_buffers
+node_run_playloop -->|"each tick"| node_write_video
+node_run_playloop -->|"consumes keys"| node_run_command
+node_run_playloop -->|"sleeps when idle"| node_mp_wait_events
+node_mp_wait_events -.->|"wakeup restarts loop"| node_run_playloop
+node_write_video -->|"pulls packets"| node_demux_read_packet_async
+node_demux_read_packet_async -->|"wakes reader"| node_demux_thread
+node_demux_thread -.->|"refills queue"| node_demux_read_packet_async
+node_write_video -->|"queues frames"| node_vo_thread
+node_write_video -->|"catches up"| node_check_framedrop
+node_vo_thread -.->|"wakes core on frame done"| node_run_playloop
+
+click node_mpv_main "https://github.com/mpv-player/mpv/blob/master/player/main.c"
+click node_mp_context "https://github.com/mpv-player/mpv/blob/master/player/core.h"
+click node_mp_play_files "https://github.com/mpv-player/mpv/blob/master/player/loadfile.c"
+click node_run_playloop "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_mp_wait_events "https://github.com/mpv-player/mpv/blob/master/player/playloop.c"
+click node_run_command "https://github.com/mpv-player/mpv/blob/master/player/command.c"
+click node_demux_thread "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_demux_read_packet_async "https://github.com/mpv-player/mpv/blob/master/demux/demux.c"
+click node_write_video "https://github.com/mpv-player/mpv/blob/master/player/video.c"
+click node_check_framedrop "https://github.com/mpv-player/mpv/blob/master/player/video.c"
+click node_vo_thread "https://github.com/mpv-player/mpv/blob/master/video/out/vo.c"
+click node_fill_audio_out_buffers "https://github.com/mpv-player/mpv/blob/master/player/audio.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_mpv_main,node_mp_context,node_mp_play_files,node_run_playloop,node_mp_wait_events toneBlue
+class node_demux_thread,node_demux_read_packet_async toneAmber
+class node_write_video,node_check_framedrop,node_vo_thread toneMint
+class node_fill_audio_out_buffers toneRose
+class node_run_command toneIndigo
