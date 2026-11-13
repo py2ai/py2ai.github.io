@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_api_core["libhb API core &#40;hb.c&#41;"]
+  node_hb_init["hb_init&#40;&#41;<br/>[hb.c]"]
+  node_hb_start["hb_start&#40;&#41;<br/>[hb.c]"]
+  node_hb_stop_pause["hb_pause / hb_stop<br/>[hb.c]"]
+  node_hb_global_init["hb_global_init&#40;&#41;<br/>[hb.c]"]
+  node_thread_func["thread_func monitor<br/>[hb.c]"]
+  node_hb_scan_api["hb_scan&#40;&#41;<br/>[hb.c]"]
+end
+
+subgraph group_state_machine["State &amp;amp; progress reporting"]
+  node_state_defs{{"HB_STATE_* defines<br/>[common.h]"}}
+  node_hb_get_state["hb_get_state&#40;&#41;<br/>[hb.c]"]
+  node_work_state["InitWorkState&#40;&#41;<br/>[work.c]"]
+  node_eta["UpdateState&#40;&#41;<br/>[sync.c]"]
+  node_scan_progress["UpdateState3&#40;&#41;<br/>[scan.c]"]
+  node_json_state["state JSON fields<br/>[hb_json.c]"]
+end
+
+subgraph group_wiring["Job wiring &#40;work.c&#41;"]
+  node_work_func["work_func&#40;&#41;<br/>[work.c]"]
+  node_do_job["do_job&#40;&#41;<br/>[work.c]"]
+  node_hb_get_work["hb_get_work&#40;&#41;<br/>[work.c]"]
+  node_init_launch["init &amp; launch loop<br/>[work.c]"]
+  node_hb_work_loop["hb_work_loop&#40;&#41;<br/>[work.c]"]
+  node_filter_loop["filter_loop&#40;&#41;<br/>[work.c]"]
+end
+
+subgraph group_transport["Buffer transport"]
+  node_hb_fifo[("hb_fifo_* primitives<br/>[fifo.c]")]
+  node_work_struct{{"struct hb_work_object_s<br/>[common.h]"}}
+end
+
+subgraph group_input_scan["Input &amp;amp; title scan"]
+  node_hb_reader["hb_reader<br/>[reader.c]"]
+  node_hb_scan_init["hb_scan_init&#40;&#41;<br/>[scan.c]"]
+  node_scan_func["ScanFunc&#40;&#41;<br/>[scan.c]"]
+  node_decode_previews["DecodePreviews&#40;&#41;<br/>[scan.c]"]
+end
+
+subgraph group_decode["Decoders &#40;libav*&#41;"]
+  node_decavcodecv["hb_decavcodecv<br/>[decavcodec.c]"]
+  node_decavcodeca["hb_decavcodeca<br/>[decavcodec.c]"]
+end
+
+subgraph group_filters_grp["Filter chain"]
+  node_filter_factory["hb_filter_init&#40;&#41;<br/>[common.c]"]
+  node_avfilter_graph["hb_avfilter_graph_init&#40;&#41;<br/>[hbavfilter.c]"]
+end
+
+subgraph group_encode_mux["Encode, sync &amp;amp; mux"]
+  node_sync_video["hb_sync_video<br/>[sync.c]"]
+  node_encavcodec["hb_encavcodec<br/>[encavcodec.c]"]
+  node_muxer["hb_muxer<br/>[muxcommon.c]"]
+  node_ports["hb_thread_init&#40;&#41;<br/>[ports.c]"]
+end
+
+node_hb_init -->|"hb_thread_init&#40;'libhb'&#41;"| node_thread_func
+node_hb_start -->|"hb_work_init spawns 'work' thread"| node_work_func
+node_hb_start -->|"InitWorkState: WORKING"| node_work_state
+node_hb_stop_pause -->|"sets *work_die"| node_hb_work_loop
+node_hb_global_init -->|"hb_register fills hb_objects"| node_hb_get_work
+node_hb_scan_api -->|"hb_scan&#40;&#41; starts scan"| node_hb_scan_init
+node_hb_scan_init -->|"hb_thread_init&#40;'scan'&#41;"| node_scan_func
+node_scan_func -->|"per title"| node_decode_previews
+node_decode_previews -->|"preview decode"| node_decavcodecv
+node_scan_func -->|"title/preview progress"| node_scan_progress
+node_scan_progress -->|"hb_set_state&#40;SCANNING&#41;"| node_hb_get_state
+node_work_func -->|"one call per pass"| node_do_job
+node_work_func -->|"hb_force_rescan after job"| node_hb_scan_api
+node_do_job -->|"worker lookup by id"| node_hb_get_work
+node_do_job -->|"job fifos in/raw/sync/out"| node_hb_fifo
+node_do_job -->|"hb_video_decoder wiring"| node_decavcodecv
+node_do_job -->|"adds WORK_SYNC_VIDEO"| node_sync_video
+node_do_job -->|"hb_video_encoder wiring"| node_encavcodec
+node_do_job -->|"adds WORK_MUX last"| node_muxer
+node_do_job -->|"w-&gt;init&#40;&#41; then threads"| node_init_launch
+node_init_launch -->|"hb_thread_init per worker"| node_hb_work_loop
+node_init_launch -->|"filter threads"| node_filter_loop
+node_hb_work_loop -->|"get_wait -&gt; work -&gt; push"| node_hb_fifo
+node_hb_work_loop -->|"invokes w-&gt;work&#40;&#41;"| node_work_struct
+node_filter_loop -->|"frames between filters"| node_hb_fifo
+node_hb_reader -->|"demuxed packets"| node_hb_fifo
+node_decavcodecv -->|"decoded frames to fifo_raw"| node_hb_fifo
+node_decavcodeca -->|"decoded audio"| node_hb_fifo
+node_decavcodecv -->|"frames to AV sync"| node_sync_video
+node_sync_video -->|"job-&gt;list_filter chain"| node_filter_factory
+node_filter_factory -->|"HB_FILTER_AVFILTER graphs"| node_avfilter_graph
+node_avfilter_graph -->|"fifo_render frames"| node_encavcodec
+node_encavcodec -->|"encoded packets"| node_muxer
+node_muxer -->|"drains fifo_out"| node_hb_fifo
+node_sync_video -->|"UpdateState&#40;frame_count&#41;"| node_eta
+node_eta -->|"hb_set_state rate/ETA"| node_hb_get_state
+node_eta -->|"ETASeconds JSON"| node_json_state
+node_thread_func -->|"SCANDONE / WORKDONE"| node_hb_get_state
+node_ports -->|"pthread_create wrapper"| node_hb_work_loop
+node_ports -->|"hb_thread_init&#40;'libhb'&#41;"| node_thread_func
+node_hb_get_state -->|"HB_STATE_* bitmask"| node_state_defs
+
+click node_hb_init "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_hb_start "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_hb_stop_pause "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_hb_global_init "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_thread_func "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_hb_scan_api "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_state_defs "https://github.com/HandBrake/HandBrake/blob/master/libhb/handbrake/common.h"
+click node_hb_get_state "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_work_state "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_eta "https://github.com/HandBrake/HandBrake/blob/master/libhb/sync.c"
+click node_scan_progress "https://github.com/HandBrake/HandBrake/blob/master/libhb/scan.c"
+click node_json_state "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb_json.c"
+click node_work_func "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_do_job "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_hb_get_work "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_init_launch "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_hb_work_loop "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_filter_loop "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_hb_fifo "https://github.com/HandBrake/HandBrake/blob/master/libhb/fifo.c"
+click node_work_struct "https://github.com/HandBrake/HandBrake/blob/master/libhb/handbrake/common.h"
+click node_hb_reader "https://github.com/HandBrake/HandBrake/blob/master/libhb/reader.c"
+click node_hb_scan_init "https://github.com/HandBrake/HandBrake/blob/master/libhb/scan.c"
+click node_scan_func "https://github.com/HandBrake/HandBrake/blob/master/libhb/scan.c"
+click node_decode_previews "https://github.com/HandBrake/HandBrake/blob/master/libhb/scan.c"
+click node_decavcodecv "https://github.com/HandBrake/HandBrake/blob/master/libhb/decavcodec.c"
+click node_decavcodeca "https://github.com/HandBrake/HandBrake/blob/master/libhb/decavcodec.c"
+click node_filter_factory "https://github.com/HandBrake/HandBrake/blob/master/libhb/common.c"
+click node_avfilter_graph "https://github.com/HandBrake/HandBrake/blob/master/libhb/hbavfilter.c"
+click node_sync_video "https://github.com/HandBrake/HandBrake/blob/master/libhb/sync.c"
+click node_encavcodec "https://github.com/HandBrake/HandBrake/blob/master/libhb/encavcodec.c"
+click node_muxer "https://github.com/HandBrake/HandBrake/blob/master/libhb/muxcommon.c"
+click node_ports "https://github.com/HandBrake/HandBrake/blob/master/libhb/ports.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_hb_init,node_hb_start,node_hb_stop_pause,node_hb_global_init,node_thread_func,node_hb_scan_api,node_filter_factory,node_avfilter_graph toneBlue
+class node_state_defs,node_hb_get_state,node_work_state,node_eta,node_scan_progress,node_json_state,node_sync_video,node_encavcodec,node_muxer,node_ports toneAmber
+class node_work_func,node_do_job,node_hb_get_work,node_init_launch,node_hb_work_loop,node_filter_loop toneMint
+class node_hb_fifo,node_work_struct toneRose
+class node_hb_reader,node_hb_scan_init,node_scan_func,node_decode_previews toneIndigo
+class node_decavcodecv,node_decavcodeca toneTeal

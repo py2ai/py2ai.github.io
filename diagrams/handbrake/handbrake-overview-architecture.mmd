@@ -1,0 +1,71 @@
+flowchart TD
+
+subgraph group_g_api["libhb public API &#40;hb.c&#41;"]
+  node_hb_api["hb_init / hb_start / hb_stop<br/>[hb.c]"]
+  node_hb_scan_api["hb_scan&#40;&#41;<br/>[hb.c]"]
+  node_state_machine{{"HB_STATE_* machine<br/>[common.h]"}}
+end
+
+subgraph group_g_scan["Title scan"]
+  node_scan_thread["ScanFunc + DecodePreviews<br/>[scan.c]"]
+end
+
+subgraph group_g_chain["Work chain threads"]
+  node_work_engine["work_func / do_job<br/>[work.c]"]
+  node_fifo_queues[("hb_fifo_* queues<br/>[fifo.c]")]
+  node_reader["hb_reader<br/>[reader.c]"]
+  node_sync["hb_sync_video<br/>[sync.c]"]
+  node_filters["Video filter chain<br/>[hbavfilter.c]"]
+end
+
+subgraph group_g_ffmpeg["FFmpeg &#40;libav*&#41; codec layer"]
+  node_decoders["libavcodec decoders<br/>[decavcodec.c]"]
+  node_encoders["libavcodec + x264/x265 encoders<br/>[encavcodec.c]"]
+end
+
+subgraph group_g_out["Mux &amp;amp; state"]
+  node_muxer["hb_muxer<br/>[muxcommon.c]"]
+end
+
+node_hb_api -->|"hb_scan&#40;&#41; entry"| node_hb_scan_api
+node_hb_scan_api -->|"hb_thread_init&#40;'scan'&#41;"| node_scan_thread
+node_scan_thread -->|"HB_STATE_SCANNING"| node_state_machine
+node_hb_api -->|"hb_get_state polling"| node_state_machine
+node_hb_api -->|"hb_start -&gt; hb_work_init"| node_work_engine
+node_work_engine -->|"adds WORK_READER"| node_reader
+node_work_engine -->|"hb_fifo_init sizing"| node_fifo_queues
+node_reader -->|"hb_fifo_push"| node_fifo_queues
+node_fifo_queues -->|"packet fifos"| node_decoders
+node_scan_thread -->|"preview decode via libavcodec"| node_decoders
+node_decoders -->|"decoded frames"| node_sync
+node_sync -->|"fifo_sync"| node_filters
+node_filters -->|"fifo_render"| node_encoders
+node_encoders -->|"fifo_out"| node_muxer
+node_sync -->|"progress + ETA"| node_state_machine
+node_muxer -->|"HB_STATE_WORKDONE"| node_state_machine
+
+click node_hb_api "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_hb_scan_api "https://github.com/HandBrake/HandBrake/blob/master/libhb/hb.c"
+click node_state_machine "https://github.com/HandBrake/HandBrake/blob/master/libhb/handbrake/common.h"
+click node_scan_thread "https://github.com/HandBrake/HandBrake/blob/master/libhb/scan.c"
+click node_work_engine "https://github.com/HandBrake/HandBrake/blob/master/libhb/work.c"
+click node_fifo_queues "https://github.com/HandBrake/HandBrake/blob/master/libhb/fifo.c"
+click node_reader "https://github.com/HandBrake/HandBrake/blob/master/libhb/reader.c"
+click node_sync "https://github.com/HandBrake/HandBrake/blob/master/libhb/sync.c"
+click node_filters "https://github.com/HandBrake/HandBrake/blob/master/libhb/hbavfilter.c"
+click node_decoders "https://github.com/HandBrake/HandBrake/blob/master/libhb/decavcodec.c"
+click node_encoders "https://github.com/HandBrake/HandBrake/blob/master/libhb/encavcodec.c"
+click node_muxer "https://github.com/HandBrake/HandBrake/blob/master/libhb/muxcommon.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_hb_api,node_hb_scan_api,node_state_machine toneBlue
+class node_scan_thread toneAmber
+class node_work_engine,node_fifo_queues,node_reader,node_sync,node_filters toneMint
+class node_decoders,node_encoders toneRose
+class node_muxer toneIndigo

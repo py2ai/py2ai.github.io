@@ -1,0 +1,44 @@
+{
+  "owner": "HandBrake",
+  "repo": "HandBrake",
+  "branch": "master",
+  "groups": [
+    {"id": "g_api", "name": "Public API", "label": "libhb public API (hb.c)"},
+    {"id": "g_scan", "name": "Scan", "label": "Title scan"},
+    {"id": "g_chain", "name": "Work Chain", "label": "Work chain threads"},
+    {"id": "g_ffmpeg", "name": "FFmpeg Layer", "label": "FFmpeg (libav*) codec layer"},
+    {"id": "g_out", "name": "Output", "label": "Mux &amp; state"}
+  ],
+  "nodes": [
+    {"id": "hb_api", "label": "hb_init / hb_start / hb_stop", "file": "hb.c", "path": "libhb/hb.c", "group": "Public API", "groupId": "g_api", "shape": "box", "desc": "hb_handle_t lifecycle. hb_init() starts the 'libhb' monitor thread; hb_start() flips state to HB_STATE_WORKING and spawns the work thread; hb_stop() just sets a die flag."},
+    {"id": "hb_scan_api", "label": "hb_scan()", "file": "hb.c", "path": "libhb/hb.c", "group": "Public API", "groupId": "g_api", "shape": "box", "desc": "Title scan entry point: default preview_count is 10, and it short-circuits when the same source was already scanned."},
+    {"id": "state_machine", "label": "HB_STATE_* machine", "file": "common.h", "path": "libhb/handbrake/common.h", "group": "Public API", "groupId": "g_api", "shape": "hexagon", "desc": "IDLE, SCANNING, SCANDONE, WORKING, PAUSED, WORKDONE, MUXING, SEARCHING bitmask; every UI callback consumes it."},
+    {"id": "scan_thread", "label": "ScanFunc + DecodePreviews", "file": "scan.c", "path": "libhb/scan.c", "group": "Scan", "groupId": "g_scan", "shape": "box", "desc": "The 'scan' thread: decodes at least 3 previews per title (10 by default) to detect features, audio, and crop."},
+    {"id": "work_engine", "label": "work_func / do_job", "file": "work.c", "path": "libhb/work.c", "group": "Work Chain", "groupId": "g_chain", "shape": "box", "desc": "Pops queued jobs, expands multi-pass encodes, then wires decoder, sync, filters, encoder, and muxer into job->list_work."},
+    {"id": "fifo_queues", "label": "hb_fifo_* queues", "file": "fifo.c", "path": "libhb/fifo.c", "group": "Work Chain", "groupId": "g_chain", "shape": "database", "desc": "Fixed-capacity buffer queues (16/32 entries typical) that couple every stage and provide backpressure between threads."},
+    {"id": "reader", "label": "hb_reader", "file": "reader.c", "path": "libhb/reader.c", "group": "Work Chain", "groupId": "g_chain", "shape": "box", "desc": "Source-side work object: demuxes Blu-ray/DVD/stream input into packet fifos; the only worker with no fifo_in."},
+    {"id": "sync", "label": "hb_sync_video", "file": "sync.c", "path": "libhb/sync.c", "group": "Work Chain", "groupId": "g_chain", "shape": "box", "desc": "Aligns audio/video on timestamps and owns the progress + ETA math the UI displays."},
+    {"id": "filters", "label": "Video filter chain", "file": "hbavfilter.c", "path": "libhb/hbavfilter.c", "group": "Work Chain", "groupId": "g_chain", "shape": "box", "desc": "Deinterlace/decomb, crop/scale, subtitles, etc.: one thread + mini-fifo per filter, with optional libavfilter graphs."},
+    {"id": "decoders", "label": "libavcodec decoders", "file": "decavcodec.c", "path": "libhb/decavcodec.c", "group": "FFmpeg Layer", "groupId": "g_ffmpeg", "shape": "box", "desc": "hb_decavcodecv / hb_decavcodeca wrap avcodec_send_packet + avcodec_receive_frame for video and audio."},
+    {"id": "encoders", "label": "libavcodec + x264/x265 encoders", "file": "encavcodec.c", "path": "libhb/encavcodec.c", "group": "FFmpeg Layer", "groupId": "g_ffmpeg", "shape": "box", "desc": "hb_encavcodec plus the x264/x265/SVT-AV1 wrappers; NVENC, QSV, VAAPI, and MediaFoundation hardware paths."},
+    {"id": "muxer", "label": "hb_muxer", "file": "muxcommon.c", "path": "libhb/muxcommon.c", "group": "Output", "groupId": "g_out", "shape": "document", "desc": "Terminal work object: drains fifo_out and writes the finished container (MP4/MKV/WebM) via libavformat."}
+  ],
+  "edges": [
+    {"from": "hb_api", "to": "hb_scan_api", "label": "hb_scan() entry"},
+    {"from": "hb_scan_api", "to": "scan_thread", "label": "hb_thread_init('scan')"},
+    {"from": "scan_thread", "to": "state_machine", "label": "HB_STATE_SCANNING"},
+    {"from": "hb_api", "to": "state_machine", "label": "hb_get_state polling"},
+    {"from": "hb_api", "to": "work_engine", "label": "hb_start -> hb_work_init"},
+    {"from": "work_engine", "to": "reader", "label": "adds WORK_READER"},
+    {"from": "work_engine", "to": "fifo_queues", "label": "hb_fifo_init sizing"},
+    {"from": "reader", "to": "fifo_queues", "label": "hb_fifo_push"},
+    {"from": "fifo_queues", "to": "decoders", "label": "packet fifos"},
+    {"from": "scan_thread", "to": "decoders", "label": "preview decode via libavcodec"},
+    {"from": "decoders", "to": "sync", "label": "decoded frames"},
+    {"from": "sync", "to": "filters", "label": "fifo_sync"},
+    {"from": "filters", "to": "encoders", "label": "fifo_render"},
+    {"from": "encoders", "to": "muxer", "label": "fifo_out"},
+    {"from": "sync", "to": "state_machine", "label": "progress + ETA"},
+    {"from": "muxer", "to": "state_machine", "label": "HB_STATE_WORKDONE"}
+  ]
+}
