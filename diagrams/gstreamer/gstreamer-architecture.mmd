@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_factory_state["Creation &amp; state machine"]
+  node_factory["gst_element_factory_make&#40;&#41;"]
+  node_parse["parse.l DSL lexer<br/>[parse.l]"]
+  node_elem_state["gst_element_set_state&#40;&#41;<br/>[gstelement.c]"]
+  node_elem_continue["gst_element_continue_state&#40;&#41;<br/>[gstelement.c]"]
+  node_pad_activate["gst_pad_activate_mode&#40;&#41;<br/>[gstpad.c]"]
+end
+
+subgraph group_bin_tree["Bins &amp; topology"]
+  node_top_bin["Top-level bin<br/>[gstpipeline.c]"]
+  node_bin_add["gst_bin_add&#40;&#41;<br/>[gstbin.c]"]
+  node_bin_state["bin change_state func<br/>[gstbin.c]"]
+  node_bin_latency["gst_bin_recalculate_latency&#40;&#41;<br/>[gstbin.c]"]
+  node_bin_msg["bin handle_message func<br/>[gstbin.c]"]
+end
+
+subgraph group_pad_engine["Pad dataflow machinery"]
+  node_pad_link["gst_pad_link_full&#40;&#41;<br/>[gstpad.c]"]
+  node_pad_push["gst_pad_push&#40;&#41;<br/>[gstpad.c]"]
+  node_pad_push_data["gst_pad_push_data&#40;&#41;<br/>[gstpad.c]"]
+  node_pad_chain["gst_pad_chain_data_unchecked&#40;&#41;<br/>[gstpad.c]"]
+  node_pad_getrange["gst_pad_get_range&#40;&#41;<br/>[gstpad.c]"]
+  node_pad_probe["gst_pad_add_probe&#40;&#41;<br/>[gstpad.c]"]
+end
+
+subgraph group_caps_neg["Caps negotiation"]
+  node_caps_query["gst_pad_query_caps_default&#40;&#41;<br/>[gstpad.c]"]
+  node_caps_can["gst_caps_can_intersect&#40;&#41;<br/>[gstcaps.c]"]
+  node_caps_zigzag["gst_caps_intersect_zig_zag&#40;&#41;<br/>[gstcaps.c]"]
+  node_caps_subset["gst_caps_is_subset&#40;&#41;<br/>[gstcaps.c]"]
+  node_transform_caps["base transform_caps<br/>[gstbasetransform.c]"]
+end
+
+subgraph group_bus_debug["Messaging &amp; tracing"]
+  node_bus_post["gst_bus_post&#40;&#41;<br/>[gstbus.c]"]
+  node_bus_poll["gst_bus_poll&#40;&#41;<br/>[gstbus.c]"]
+  node_bus_pop["gst_bus_pop&#40;&#41;<br/>[gstbus.c]"]
+  node_debug_log["gst_debug_log&#40;&#41;<br/>[gstinfo.c]"]
+end
+
+subgraph group_core_elems["Core plugin elements"]
+  node_fake_src["fake_src create<br/>[gstfakesrc.c]"]
+  node_identity["identity transform_ip<br/>[gstidentity.c]"]
+  node_capsfilter_elem["capsfilter transform_caps<br/>[gstcapsfilter.c]"]
+  node_queue_chain["queue chain<br/>[gstqueue.c]"]
+  node_queue_loop["queue loop<br/>[gstqueue.c]"]
+  node_typefind["typefind chain"]
+  node_fake_sink["fake_sink render<br/>[gstfakesink.c]"]
+end
+
+subgraph group_base_cls["Base classes"]
+  node_base_src_loop["base_src_loop<br/>[gstbasesrc.c]"]
+  node_base_src_range["base_src_get_range<br/>[gstbasesrc.c]"]
+end
+
+node_parse -->|"grammar calls factory_make&#40;&#41;"| node_factory
+node_factory -->|"instances returned"| node_bin_add
+node_bin_add -->|"child of the top bin"| node_top_bin
+node_top_bin -->|"set_state on the top bin"| node_bin_state
+node_bin_state -->|"transitions each child"| node_elem_state
+node_elem_state -->|"async commit steps"| node_elem_continue
+node_elem_state -->|"pads activate at PAUSED"| node_pad_activate
+node_pad_activate -->|"PULL mode arms getrange"| node_pad_getrange
+node_top_bin -->|"children report here"| node_bin_msg
+node_elem_state -->|"STATE_CHANGED"| node_bus_post
+node_bin_msg -->|"reposted app-ward"| node_bus_post
+node_bus_post -->|"app waits"| node_bus_poll
+node_bus_post -->|"or drains"| node_bus_pop
+node_bin_msg -->|"LATENCY message"| node_bin_latency
+node_pad_link -->|"link checks formats"| node_caps_can
+node_pad_link -->|"peer CAPS during link"| node_caps_query
+node_caps_query -->|"fixed-caps decision"| node_caps_subset
+node_caps_can -->|"intersect details"| node_caps_zigzag
+node_capsfilter_elem -->|"its vmethod"| node_transform_caps
+node_elem_state -->|"PAUSED negotiation round"| node_caps_query
+node_base_src_loop -->|"request one buffer"| node_base_src_range
+node_base_src_range -->|"create vmethod"| node_fake_src
+node_base_src_loop -->|"buffer pushed"| node_pad_push
+node_pad_push -->|"probe path"| node_pad_push_data
+node_pad_push_data -->|"probe callbacks"| node_pad_probe
+node_pad_push_data -->|"peer chain call"| node_pad_chain
+node_pad_chain -->|"buffer enqueued"| node_queue_chain
+node_queue_chain -->|"handoff to src thread"| node_queue_loop
+node_queue_loop -->|"push downstream again"| node_pad_push
+node_pad_chain -->|"in-place transform"| node_identity
+node_identity -->|"push through the filter"| node_capsfilter_elem
+node_capsfilter_elem -->|"downstream element"| node_typefind
+node_typefind -->|"render consumes"| node_fake_sink
+node_pad_push_data -->|"per-buffer trace"| node_debug_log
+node_elem_state -->|"state trace"| node_debug_log
+node_pad_chain -->|"chain trace"| node_debug_log
+node_queue_loop -->|"loop trace"| node_debug_log
+
+click node_factory "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstelementfactory.c"
+click node_parse "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/parse/parse.l"
+click node_elem_state "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstelement.c"
+click node_elem_continue "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstelement.c"
+click node_pad_activate "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_top_bin "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpipeline.c"
+click node_bin_add "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbin.c"
+click node_bin_state "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbin.c"
+click node_bin_latency "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbin.c"
+click node_bin_msg "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbin.c"
+click node_pad_link "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_pad_push "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_pad_push_data "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_pad_chain "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_pad_getrange "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_pad_probe "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_caps_query "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstpad.c"
+click node_caps_can "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstcaps.c"
+click node_caps_zigzag "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstcaps.c"
+click node_caps_subset "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstcaps.c"
+click node_transform_caps "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/libs/gst/base/gstbasetransform.c"
+click node_bus_post "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbus.c"
+click node_bus_poll "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbus.c"
+click node_bus_pop "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstbus.c"
+click node_debug_log "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/gst/gstinfo.c"
+click node_fake_src "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gstfakesrc.c"
+click node_identity "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gstidentity.c"
+click node_capsfilter_elem "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gstcapsfilter.c"
+click node_queue_chain "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gstqueue.c"
+click node_queue_loop "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gstqueue.c"
+click node_typefind "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gsttypefindelement.c"
+click node_fake_sink "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/plugins/elements/gstfakesink.c"
+click node_base_src_loop "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/libs/gst/base/gstbasesrc.c"
+click node_base_src_range "https://github.com/GStreamer/gstreamer/blob/main/subprojects/gstreamer/libs/gst/base/gstbasesrc.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_factory,node_parse,node_elem_state,node_elem_continue,node_pad_activate,node_base_src_loop,node_base_src_range toneBlue
+class node_top_bin,node_bin_add,node_bin_state,node_bin_latency,node_bin_msg toneAmber
+class node_pad_link,node_pad_push,node_pad_push_data,node_pad_chain,node_pad_getrange,node_pad_probe toneMint
+class node_caps_query,node_caps_can,node_caps_zigzag,node_caps_subset,node_transform_caps toneRose
+class node_bus_post,node_bus_poll,node_bus_pop,node_debug_log toneIndigo
+class node_fake_src,node_identity,node_capsfilter_elem,node_queue_chain,node_queue_loop,node_typefind,node_fake_sink toneTeal
