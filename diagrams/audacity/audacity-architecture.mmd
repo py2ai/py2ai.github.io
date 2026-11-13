@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_au4_shell["Audacity 4 UI shell &#40;src/&#41;"]
+  node_qml_ui["ProjectScene UI &#40;QML&#41;<br/>[CMakeLists.txt]"]
+  node_au4_playback["AU4 PlaybackController"]
+  node_au4_record["AU4 RecordController"]
+  node_au3wrap["AU3 project wrapper<br/>[au3project.cpp]"]
+  node_dom_accessor["DOM accessor<br/>[domaccessor.cpp]"]
+end
+
+subgraph group_transport["Transport &#40;au3&#41;"]
+  node_project_mgr["ProjectAudioManager"]
+  node_project_audio_io["ProjectAudioIO<br/>[ProjectAudioIO.cpp]"]
+  node_playback_schedule["PlaybackSchedule"]
+end
+
+subgraph group_audio_thread["Audio thread &#40;au3-audio-io&#41;"]
+  node_pa_stream["PortAudio stream<br/>[AudioIO.cpp]"]
+  node_audioio_thread["AudioThread loop<br/>[AudioIO.cpp]"]
+  node_fill_play["FillPlayBuffers<br/>[AudioIO.cpp]"]
+  node_process_slices["ProcessPlaybackSlices<br/>[AudioIO.cpp]"]
+  node_ring_buffer["RingBuffer<br/>[RingBuffer.cpp]"]
+  node_audio_callback["audacityAudioCallback<br/>[AudioIO.cpp]"]
+  node_fill_output["FillOutputBuffers<br/>[AudioIO.cpp]"]
+  node_capture["Capture path<br/>[AudioIO.cpp]"]
+end
+
+subgraph group_track_model["Track / clip / sequence model"]
+  node_wavetrack["WaveTrack<br/>[WaveTrack.cpp]"]
+  node_waveclip["WaveClip<br/>[WaveClip.cpp]"]
+  node_sequence["Sequence<br/>[Sequence.cpp]"]
+end
+
+subgraph group_mixer["Mixer sources"]
+  node_mixer["Mixer<br/>[Mix.cpp]"]
+  node_mixer_source["MixerSource<br/>[MixerSource.cpp]"]
+  node_downmix["DownmixSource<br/>[DownmixSource.cpp]"]
+end
+
+subgraph group_effects_chain["Realtime effects"]
+  node_realtime_mgr["RealtimeEffectManager"]
+  node_realtime_state["RealtimeEffectState"]
+  node_effect_base["EffectBase<br/>[EffectBase.cpp]"]
+end
+
+subgraph group_block_storage["SQLite block storage"]
+  node_projectfileio["ProjectFileIO<br/>[ProjectFileIO.cpp]"]
+  node_dbconnection["DBConnection<br/>[DBConnection.cpp]"]
+  node_block_factory["SqliteSampleBlockFactory"]
+  node_sqlite_block["SqliteSampleBlock"]
+end
+
+node_qml_ui -->|"play/pause intents"| node_au4_playback
+node_qml_ui -->|"arm + record"| node_au4_record
+node_au4_playback -->|"delegate to AU3 core"| node_au3wrap
+node_au4_record -->|"delegate to AU3 core"| node_au3wrap
+node_au3wrap -->|"edit requests"| node_dom_accessor
+node_dom_accessor -->|"clip mutations"| node_wavetrack
+node_au3wrap -->|"transport intents"| node_project_mgr
+node_project_mgr -->|"meters + token"| node_project_audio_io
+node_project_mgr -->|"StartStream"| node_pa_stream
+node_project_mgr -->|"t0/t1, loop policy"| node_playback_schedule
+node_pa_stream -->|"registers callback"| node_audio_callback
+node_pa_stream -->|"StartThread"| node_audioio_thread
+node_audioio_thread -->|"buffer exchange"| node_fill_play
+node_fill_play -->|"while buffers low"| node_process_slices
+node_process_slices -->|"GetPlaybackSlice"| node_playback_schedule
+node_process_slices -->|"Mixer::Process"| node_mixer
+node_mixer -->|"one source per sequence"| node_mixer_source
+node_mixer_source -->|"GetFloats + envelope"| node_wavetrack
+node_process_slices -->|"produce frames"| node_ring_buffer
+node_process_slices -->|"ProcessingScope::Process"| node_realtime_mgr
+node_realtime_mgr -->|"state per track"| node_realtime_state
+node_realtime_state -->|"ProcessBlock"| node_effect_base
+node_audio_callback -->|"each framesPerBuffer"| node_fill_output
+node_fill_output -->|"consume frames"| node_ring_buffer
+node_audio_callback -->|"recorded frames"| node_capture
+node_capture -->|"WaveTrack::Append"| node_wavetrack
+node_wavetrack -->|"holder of intervals"| node_waveclip
+node_waveclip -->|"one Sequence per channel"| node_sequence
+node_sequence -->|"CreateSampleBlock"| node_block_factory
+node_block_factory -->|"new + dedup"| node_sqlite_block
+node_sequence -->|"GetSamples by blockid"| node_sqlite_block
+node_sqlite_block -->|"INSERT sampleblocks"| node_dbconnection
+node_projectfileio -->|"open + PRAGMA setup"| node_dbconnection
+node_projectfileio -->|"load block rows"| node_sqlite_block
+node_project_mgr -->|"checkpoint on stop"| node_projectfileio
+node_au3wrap -->|"open/save .aup3"| node_projectfileio
+
+click node_qml_ui "https://github.com/audacity/audacity/blob/master/src/projectscene/CMakeLists.txt"
+click node_au4_playback "https://github.com/audacity/audacity/blob/master/src/playback/internal/playbackcontroller.cpp"
+click node_au4_record "https://github.com/audacity/audacity/blob/master/src/record/internal/recordcontroller.cpp"
+click node_au3wrap "https://github.com/audacity/audacity/blob/master/src/au3wrap/internal/au3project.cpp"
+click node_dom_accessor "https://github.com/audacity/audacity/blob/master/src/au3wrap/internal/domaccessor.cpp"
+click node_project_mgr "https://github.com/audacity/audacity/blob/master/au3/src/ProjectAudioManager.cpp"
+click node_project_audio_io "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/ProjectAudioIO.cpp"
+click node_playback_schedule "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/PlaybackSchedule.cpp"
+click node_pa_stream "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_audioio_thread "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_fill_play "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_process_slices "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_ring_buffer "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/RingBuffer.cpp"
+click node_audio_callback "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_fill_output "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_capture "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-audio-io/AudioIO.cpp"
+click node_wavetrack "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-wave-track/WaveTrack.cpp"
+click node_waveclip "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-wave-track/WaveClip.cpp"
+click node_sequence "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-wave-track/Sequence.cpp"
+click node_mixer "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-mixer/Mix.cpp"
+click node_mixer_source "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-mixer/MixerSource.cpp"
+click node_downmix "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-mixer/DownmixSource.cpp"
+click node_realtime_mgr "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-realtime-effects/RealtimeEffectManager.cpp"
+click node_realtime_state "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-realtime-effects/RealtimeEffectState.cpp"
+click node_effect_base "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-effects/EffectBase.cpp"
+click node_projectfileio "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-project-file-io/ProjectFileIO.cpp"
+click node_dbconnection "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-project-file-io/DBConnection.cpp"
+click node_block_factory "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-project-file-io/SqliteSampleBlock.cpp"
+click node_sqlite_block "https://github.com/audacity/audacity/blob/master/au3/libraries/au3-project-file-io/SqliteSampleBlock.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_qml_ui,node_au4_playback,node_au4_record,node_au3wrap,node_dom_accessor,node_projectfileio,node_dbconnection,node_block_factory,node_sqlite_block toneBlue
+class node_project_mgr,node_project_audio_io,node_playback_schedule toneAmber
+class node_pa_stream,node_audioio_thread,node_fill_play,node_process_slices,node_ring_buffer,node_audio_callback,node_fill_output,node_capture toneMint
+class node_wavetrack,node_waveclip,node_sequence toneRose
+class node_mixer,node_mixer_source,node_downmix toneIndigo
+class node_realtime_mgr,node_realtime_state,node_effect_base toneTeal
