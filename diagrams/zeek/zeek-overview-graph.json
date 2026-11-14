@@ -1,0 +1,38 @@
+{
+  "owner": "zeek",
+  "repo": "zeek",
+  "branch": "master",
+  "groups": [
+    { "id": "capture", "name": "Capture", "label": "Main loop & packet capture" },
+    { "id": "packet", "name": "PacketTree", "label": "Packet analyzer tree" },
+    { "id": "session", "name": "Session", "label": "Session & TCP reassembly" },
+    { "id": "events", "name": "Events", "label": "Event engine" },
+    { "id": "scripts", "name": "Scripts", "label": "Zeek script layer" },
+    { "id": "logging", "name": "Logging", "label": "Logging framework" }
+  ],
+  "nodes": [
+    { "id": "main_loop", "label": "main() + run_loop()", "file": "main.cc", "path": "src/main.cc", "group": "capture", "groupId": "capture", "desc": "main() calls zeek::detail::setup(), then run_loop() pumps IOSources forever" },
+    { "id": "pkt_src", "label": "PktSrc::Process()", "file": "PktSrc.cc", "path": "src/iosource/PktSrc.cc", "group": "capture", "groupId": "capture", "desc": "libpcap/AF_PACKET source extracts the next packet and calls dispatch_packet()" },
+    { "id": "pa_manager", "label": "Manager::ProcessPacket()", "file": "Manager.cc", "path": "src/packet_analysis/Manager.cc", "group": "packet", "groupId": "packet", "desc": "Entry into packet analysis; hands the raw packet to the root analyzer" },
+    { "id": "fwd_tree", "label": "Analyzer::ForwardPacket() tree", "file": "Analyzer.cc", "path": "src/packet_analysis/Analyzer.cc", "group": "packet", "groupId": "packet", "desc": "Each analyzer looks up the next analyzer in its Dispatcher by protocol identifier" },
+    { "id": "proto_analyzers", "label": "Ethernet / IP / TCP / UDP", "file": "IP.cc", "path": "src/packet_analysis/protocol/ip/IP.cc", "group": "packet", "groupId": "packet", "desc": "Tree of protocol analyzers under src/packet_analysis/protocol/ peeling link, network and transport layers" },
+    { "id": "tcp_session", "label": "TCPSessionAdapter", "file": "TCPSessionAdapter.cc", "path": "src/packet_analysis/protocol/tcp/TCPSessionAdapter.cc", "group": "session", "groupId": "session", "desc": "Per-connection adapter tracking endpoints, sequence numbers and reassembly" },
+    { "id": "tcp_reassembler", "label": "TCP_Reassembler::Deliver()", "file": "TCP_Reassembler.cc", "path": "src/analyzer/protocol/tcp/TCP_Reassembler.cc", "group": "session", "groupId": "session", "desc": "Rebuilds ordered byte streams and feeds application analyzers" },
+    { "id": "event_mgr", "label": "EventMgr Enqueue/Drain", "file": "Event.cc", "path": "src/Event.cc", "group": "events", "groupId": "events", "desc": "Analyzers enqueue events; run_loop drains them two rounds at a time" },
+    { "id": "script_layer", "label": "Zeek scripts & hooks", "file": "main.zeek", "path": "scripts/base/frameworks/logging/main.zeek", "group": "scripts", "groupId": "scripts", "desc": "Script-layer event handlers and policy hooks decide what becomes a log stream" },
+    { "id": "log_manager", "label": "logging::Manager::CreateWriter()", "file": "Manager.cc", "path": "src/logging/Manager.cc", "group": "logging", "groupId": "logging", "desc": "Creates WriterFrontend + WriterBackend per stream/filter" },
+    { "id": "writer_backend", "label": "WriterBackend::DoWrite()", "file": "WriterBackend.h", "path": "src/logging/WriterBackend.h", "group": "logging", "groupId": "logging", "desc": "Writer thread (Ascii, SQLite, none) serializes records to conn.log, dns.log and friends" }
+  ],
+  "edges": [
+    { "from": "main_loop", "to": "pkt_src", "label": "run_loop pumps ready IOSources" },
+    { "from": "pkt_src", "to": "pa_manager", "label": "dispatch_packet()" },
+    { "from": "pa_manager", "to": "fwd_tree", "label": "root_analyzer->ForwardPacket()" },
+    { "from": "fwd_tree", "to": "proto_analyzers", "label": "Dispatcher::Lookup by identifier" },
+    { "from": "proto_analyzers", "to": "tcp_session", "label": "IPBasedAnalyzer::NewConn attaches session adapter" },
+    { "from": "tcp_session", "to": "tcp_reassembler", "label": "per-direction byte streams" },
+    { "from": "tcp_reassembler", "to": "event_mgr", "label": "application analyzers raise events" },
+    { "from": "event_mgr", "to": "script_layer", "label": "Event::Dispatch runs script handlers" },
+    { "from": "script_layer", "to": "log_manager", "label": "Log::__write builtin" },
+    { "from": "log_manager", "to": "writer_backend", "label": "WriteMessage to writer thread" }
+  ]
+}

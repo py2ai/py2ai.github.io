@@ -1,0 +1,67 @@
+flowchart TD
+
+subgraph group_capture["Main loop &amp; packet capture"]
+  node_main_loop["main&#40;&#41; + run_loop&#40;&#41;<br/>[main.cc]"]
+  node_pkt_src["PktSrc::Process&#40;&#41;<br/>[PktSrc.cc]"]
+end
+
+subgraph group_packet["Packet analyzer tree"]
+  node_pa_manager["Manager::ProcessPacket&#40;&#41;<br/>[Manager.cc]"]
+  node_fwd_tree["Analyzer::ForwardPacket&#40;&#41; tree<br/>[Analyzer.cc]"]
+  node_proto_analyzers["Ethernet / IP / TCP / UDP<br/>[IP.cc]"]
+end
+
+subgraph group_session["Session &amp; TCP reassembly"]
+  node_tcp_session["TCPSessionAdapter"]
+  node_tcp_reassembler["TCP_Reassembler::Deliver&#40;&#41;<br/>[TCP_Reassembler.cc]"]
+end
+
+subgraph group_events["Event engine"]
+  node_event_mgr["EventMgr Enqueue/Drain<br/>[Event.cc]"]
+end
+
+subgraph group_scripts["Zeek script layer"]
+  node_script_layer["Zeek scripts &amp; hooks<br/>[main.zeek]"]
+end
+
+subgraph group_logging["Logging framework"]
+  node_log_manager["logging::Manager::CreateWriter&#40;&#41;<br/>[Manager.cc]"]
+  node_writer_backend["WriterBackend::DoWrite&#40;&#41;<br/>[WriterBackend.h]"]
+end
+
+node_main_loop -->|"run_loop pumps ready IOSources"| node_pkt_src
+node_pkt_src -->|"dispatch_packet&#40;&#41;"| node_pa_manager
+node_pa_manager -->|"root_analyzer-&gt;ForwardPacket&#40;&#41;"| node_fwd_tree
+node_fwd_tree -->|"Dispatcher::Lookup by identifier"| node_proto_analyzers
+node_proto_analyzers -->|"IPBasedAnalyzer::NewConn attaches session adapter"| node_tcp_session
+node_tcp_session -->|"per-direction byte streams"| node_tcp_reassembler
+node_tcp_reassembler -->|"application analyzers raise events"| node_event_mgr
+node_event_mgr -->|"Event::Dispatch runs script handlers"| node_script_layer
+node_script_layer -->|"Log::__write builtin"| node_log_manager
+node_log_manager -->|"WriteMessage to writer thread"| node_writer_backend
+
+click node_main_loop "https://github.com/zeek/zeek/blob/master/src/main.cc"
+click node_pkt_src "https://github.com/zeek/zeek/blob/master/src/iosource/PktSrc.cc"
+click node_pa_manager "https://github.com/zeek/zeek/blob/master/src/packet_analysis/Manager.cc"
+click node_fwd_tree "https://github.com/zeek/zeek/blob/master/src/packet_analysis/Analyzer.cc"
+click node_proto_analyzers "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/ip/IP.cc"
+click node_tcp_session "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/tcp/TCPSessionAdapter.cc"
+click node_tcp_reassembler "https://github.com/zeek/zeek/blob/master/src/analyzer/protocol/tcp/TCP_Reassembler.cc"
+click node_event_mgr "https://github.com/zeek/zeek/blob/master/src/Event.cc"
+click node_script_layer "https://github.com/zeek/zeek/blob/master/scripts/base/frameworks/logging/main.zeek"
+click node_log_manager "https://github.com/zeek/zeek/blob/master/src/logging/Manager.cc"
+click node_writer_backend "https://github.com/zeek/zeek/blob/master/src/logging/WriterBackend.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_loop,node_pkt_src toneBlue
+class node_pa_manager,node_fwd_tree,node_proto_analyzers toneAmber
+class node_tcp_session,node_tcp_reassembler toneMint
+class node_event_mgr toneRose
+class node_script_layer toneIndigo
+class node_log_manager,node_writer_backend toneTeal
