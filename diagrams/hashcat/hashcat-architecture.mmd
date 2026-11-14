@@ -1,0 +1,122 @@
+flowchart TD
+
+subgraph group_entry["Entry &amp; session"]
+  node_main["int main<br/>[main.c]"]
+  node_session_execute{{"hashcat_session_execute<br/>[hashcat.c]"}}
+  node_inner2_loop["inner2_loop<br/>[hashcat.c]"]
+end
+
+subgraph group_attack["Attack modes"]
+  node_straight_ctx{{"straight_ctx_init<br/>[straight.c]"}}
+  node_rules_load["kernel_rules_load<br/>[straight.c]"]
+  node_amplifier{{"rules amplifier<br/>[straight.c]"}}
+  node_combinator_ctx{{"combinator_ctx_init<br/>[combinator.c]"}}
+end
+
+subgraph group_feed["Candidate feeds"]
+  node_feed_loader{{"feed plugin loader<br/>[generic.c]"}}
+  node_feed_wordlist["feed_wordlist thread_next<br/>[feed_wordlist.c]"]
+  node_feed_mask["feed_mask thread_next<br/>[feed_mask.c]"]
+end
+
+subgraph group_engine["Dispatch engine"]
+  node_get_work{{"get_work<br/>[dispatch.c]"}}
+  node_fill_generic{{"fill_generic<br/>[dispatch.c]"}}
+  node_calc{{"calc<br/>[dispatch.c]"}}
+  node_thread_calc["thread_calc<br/>[dispatch.c]"]
+end
+
+subgraph group_device["GPU backend"]
+  node_backend_ctx_init{{"backend_ctx_init<br/>[backend.c]"}}
+  node_devices_init{{"backend_ctx_devices_init<br/>[backend.c]"}}
+  node_kernel_filename["kernel path builder<br/>[backend.c]"]
+  node_choose_kernel{{"choose_kernel<br/>[backend.c]"}}
+  node_run_kernel{{"run_kernel<br/>[backend.c]"}}
+  node_run_kernel_amp{{"run_kernel_amp<br/>[backend.c]"}}
+end
+
+subgraph group_plugins["Mode plugins &amp; kernels"]
+  node_module_load{{"module_load<br/>[interface.c]"}}
+  node_module_md5["module_00000 &#40;MD5&#41;<br/>[module_00000.c]"]
+  node_md5_kernel[("m00000_a0-optimized.cl")]
+  node_amp_kernel[("amp_a0.cl<br/>[amp_a0.cl]")]
+end
+
+subgraph group_ui["Monitor &amp; status"]
+  node_monitor{{"monitor loop<br/>[monitor.c]"}}
+  node_status_speed["status_get_hashes_msec_all<br/>[status.c]"]
+  node_terminal_welcome["welcome_screen<br/>[terminal.c]"]
+end
+
+node_main -->|"runs session"| node_session_execute
+node_main -->|"banner"| node_terminal_welcome
+node_session_execute -->|"round loop"| node_inner2_loop
+node_session_execute -->|"load -m plugin"| node_module_load
+node_session_execute -->|"-a 0 rules"| node_straight_ctx
+node_session_execute -->|"-a 1/6/7"| node_combinator_ctx
+node_session_execute -->|"device layer"| node_backend_ctx_init
+node_module_load -->|"-m 0"| node_module_md5
+node_module_md5 -->|"KERN_TYPE names .cl"| node_kernel_filename
+node_kernel_filename -->|"driver compiles"| node_md5_kernel
+node_straight_ctx -->|"-r files"| node_rules_load
+node_straight_ctx -->|"rules count"| node_amplifier
+node_straight_ctx -->|"dictionary work"| node_feed_wordlist
+node_combinator_ctx -->|"mask producers"| node_feed_mask
+node_feed_loader -->|"bind hooks"| node_feed_wordlist
+node_feed_loader -->|"bind hooks"| node_feed_mask
+node_feed_wordlist -->|"thread_next words"| node_fill_generic
+node_feed_mask -->|"thread_next words"| node_fill_generic
+node_backend_ctx_init -->|"enumerate"| node_devices_init
+node_devices_init -->|"thread per device"| node_thread_calc
+node_get_work -->|"keyspace slice"| node_calc
+node_thread_calc -->|"calls"| node_calc
+node_calc -->|"pack batches"| node_fill_generic
+node_calc -->|"stage dispatch"| node_choose_kernel
+node_choose_kernel -->|"KERN_RUN_1..4"| node_run_kernel
+node_choose_kernel -->|"-a 6/7 amp pass"| node_run_kernel_amp
+node_run_kernel -->|"launch"| node_md5_kernel
+node_run_kernel_amp -->|"launch"| node_amp_kernel
+node_run_kernel -->|"H/s counters"| node_status_speed
+node_monitor -->|"watchdog temps"| node_run_kernel
+
+click node_main "https://github.com/hashcat/hashcat/blob/master/src/main.c"
+click node_session_execute "https://github.com/hashcat/hashcat/blob/master/src/hashcat.c"
+click node_inner2_loop "https://github.com/hashcat/hashcat/blob/master/src/hashcat.c"
+click node_straight_ctx "https://github.com/hashcat/hashcat/blob/master/src/straight.c"
+click node_rules_load "https://github.com/hashcat/hashcat/blob/master/src/straight.c"
+click node_amplifier "https://github.com/hashcat/hashcat/blob/master/src/straight.c"
+click node_combinator_ctx "https://github.com/hashcat/hashcat/blob/master/src/combinator.c"
+click node_feed_loader "https://github.com/hashcat/hashcat/blob/master/src/generic.c"
+click node_feed_wordlist "https://github.com/hashcat/hashcat/blob/master/src/feeds/feed_wordlist.c"
+click node_feed_mask "https://github.com/hashcat/hashcat/blob/master/src/feeds/feed_mask.c"
+click node_get_work "https://github.com/hashcat/hashcat/blob/master/src/dispatch.c"
+click node_fill_generic "https://github.com/hashcat/hashcat/blob/master/src/dispatch.c"
+click node_calc "https://github.com/hashcat/hashcat/blob/master/src/dispatch.c"
+click node_thread_calc "https://github.com/hashcat/hashcat/blob/master/src/dispatch.c"
+click node_backend_ctx_init "https://github.com/hashcat/hashcat/blob/master/src/backend.c"
+click node_devices_init "https://github.com/hashcat/hashcat/blob/master/src/backend.c"
+click node_kernel_filename "https://github.com/hashcat/hashcat/blob/master/src/backend.c"
+click node_choose_kernel "https://github.com/hashcat/hashcat/blob/master/src/backend.c"
+click node_run_kernel "https://github.com/hashcat/hashcat/blob/master/src/backend.c"
+click node_run_kernel_amp "https://github.com/hashcat/hashcat/blob/master/src/backend.c"
+click node_module_load "https://github.com/hashcat/hashcat/blob/master/src/interface.c"
+click node_module_md5 "https://github.com/hashcat/hashcat/blob/master/src/modules/module_00000.c"
+click node_md5_kernel "https://github.com/hashcat/hashcat/blob/master/OpenCL/m00000_a0-optimized.cl"
+click node_amp_kernel "https://github.com/hashcat/hashcat/blob/master/OpenCL/amp_a0.cl"
+click node_monitor "https://github.com/hashcat/hashcat/blob/master/src/monitor.c"
+click node_status_speed "https://github.com/hashcat/hashcat/blob/master/src/status.c"
+click node_terminal_welcome "https://github.com/hashcat/hashcat/blob/master/src/terminal.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_session_execute,node_inner2_loop,node_monitor,node_status_speed,node_terminal_welcome toneBlue
+class node_straight_ctx,node_rules_load,node_amplifier,node_combinator_ctx toneAmber
+class node_feed_loader,node_feed_wordlist,node_feed_mask toneMint
+class node_get_work,node_fill_generic,node_calc,node_thread_calc toneRose
+class node_backend_ctx_init,node_devices_init,node_kernel_filename,node_choose_kernel,node_run_kernel,node_run_kernel_amp toneIndigo
+class node_module_load,node_module_md5,node_md5_kernel,node_amp_kernel toneTeal

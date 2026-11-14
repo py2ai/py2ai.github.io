@@ -1,0 +1,42 @@
+{
+  "owner": "hashcat",
+  "repo": "hashcat",
+  "branch": "master",
+  "groups": [
+    { "id": "entry", "name": "Entry", "label": "Entry & session" },
+    { "id": "attack", "name": "Attack modes", "label": "Attack modes" },
+    { "id": "feed", "name": "Feeds", "label": "Candidate feeds" },
+    { "id": "engine", "name": "Dispatch", "label": "Dispatch engine" },
+    { "id": "device", "name": "Backend", "label": "GPU backend" },
+    { "id": "plugins", "name": "Plugins", "label": "Mode plugins & kernels" }
+  ],
+  "nodes": [
+    { "id": "main", "label": "int main", "file": "main.c", "path": "src/main.c", "group": "Entry & session", "groupId": "entry", "desc": "Console entry point; builds hashcat_ctx and hands off to the session layer (L2205)", "shape": "box" },
+    { "id": "session_execute", "label": "hashcat_session_execute", "file": "hashcat.c", "path": "src/hashcat.c", "group": "Entry & session", "groupId": "entry", "desc": "Loads the mode plugin, inits attack contexts, then runs the crack rounds (L3034)", "shape": "hexagon" },
+    { "id": "inner2_loop", "label": "inner2_loop", "file": "hashcat.c", "path": "src/hashcat.c", "group": "Entry & session", "groupId": "entry", "desc": "Per-attack round loop: feeds words to devices, collects cracks (L252)", "shape": "box" },
+    { "id": "straight_ctx", "label": "straight_ctx_init", "file": "straight.c", "path": "src/straight.c", "group": "Attack modes", "groupId": "attack", "desc": "-a 0 rule-based attack setup; one NOP rule when no -r given (L690)", "shape": "hexagon" },
+    { "id": "combinator_ctx", "label": "combinator_ctx_init", "file": "combinator.c", "path": "src/combinator.c", "group": "Attack modes", "groupId": "attack", "desc": "-a 1/6/7 combinator wiring of base and modifier word lists (L67)", "shape": "hexagon" },
+    { "id": "feed_loader", "label": "feed plugin loader", "file": "generic.c", "path": "src/generic.c", "group": "Candidate feeds", "groupId": "feed", "desc": "dlopens src/feeds/<name>.so and binds global_init/thread_next (L57)", "shape": "hexagon" },
+    { "id": "feed_wordlist", "label": "feed_wordlist thread_next", "file": "feed_wordlist.c", "path": "src/feeds/feed_wordlist.c", "group": "Candidate feeds", "groupId": "feed", "desc": "Producer thread emitting one base word per call; thread_seek jumps the keyspace (L77)", "shape": "document" },
+    { "id": "dispatch", "label": "thread_calc", "file": "dispatch.c", "path": "src/dispatch.c", "group": "Dispatch engine", "groupId": "engine", "desc": "One worker thread per device; fill_generic packs pw_batch_t buffers (L1749)", "shape": "hexagon" },
+    { "id": "choose_kernel", "label": "choose_kernel", "file": "backend.c", "path": "src/backend.c", "group": "GPU backend", "groupId": "device", "desc": "Picks the KERN_RUN stages a hash mode needs for this batch (L2519)", "shape": "hexagon" },
+    { "id": "run_kernel", "label": "run_kernel", "file": "backend.c", "path": "src/backend.c", "group": "GPU backend", "groupId": "device", "desc": "Launches an OpenCL/CUDA kernel with tuned work-group size (L4068)", "shape": "hexagon" },
+    { "id": "module_load", "label": "module_load", "file": "interface.c", "path": "src/interface.c", "group": "Mode plugins & kernels", "groupId": "plugins", "desc": "dlopens modules/module_%05d.so for the -m mode number (L149)", "shape": "hexagon" },
+    { "id": "mode_kernels", "label": "OpenCL/m%05d_*.cl", "file": "m00000_a0-optimized.cl", "path": "OpenCL/m00000_a0-optimized.cl", "group": "Mode plugins & kernels", "groupId": "plugins", "desc": "On-disk kernel sources; the GPU driver compiles them at runtime (L19: m00000_m04)", "shape": "database" }
+  ],
+  "edges": [
+    { "from": "main", "to": "session_execute", "label": "runs session" },
+    { "from": "session_execute", "to": "inner2_loop", "label": "round loop" },
+    { "from": "session_execute", "to": "straight_ctx", "label": "-a 0 rules ctx" },
+    { "from": "session_execute", "to": "combinator_ctx", "label": "-a 1/6/7" },
+    { "from": "session_execute", "to": "module_load", "label": "load mode plugin" },
+    { "from": "module_load", "to": "mode_kernels", "label": "KERN_TYPE names kernel" },
+    { "from": "straight_ctx", "to": "feed_loader", "label": "rules amplifier" },
+    { "from": "combinator_ctx", "to": "feed_loader", "label": "mask feeds" },
+    { "from": "feed_loader", "to": "feed_wordlist", "label": "dlopen feed .so" },
+    { "from": "feed_wordlist", "to": "dispatch", "label": "candidate batches" },
+    { "from": "dispatch", "to": "choose_kernel", "label": "per-device work" },
+    { "from": "choose_kernel", "to": "run_kernel", "label": "KERN_RUN_1..4" },
+    { "from": "run_kernel", "to": "mode_kernels", "label": "compile + launch" }
+  ]
+}
