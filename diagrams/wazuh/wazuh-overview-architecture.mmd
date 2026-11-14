@@ -1,0 +1,66 @@
+flowchart TD
+
+subgraph group_agent_side["Agent host &#40;per monitored machine&#41;"]
+  node_logcollector["Log collector<br/>[logcollector.c]"]
+  node_fim["FIM &#40;syscheckd&#41;<br/>[run_check.c]"]
+  node_mq["Local message queue<br/>[mq_op.c]"]
+  node_agentd["wazuh-agentd EventForward<br/>[event-forward.c]"]
+end
+
+subgraph group_agent_transport["Agent HTTPS transport"]
+  node_accumulator["EventAccumulator"]
+  node_stateless["Stateless HTTPS stream"]
+end
+
+subgraph group_manager_ingress["Manager ingress &#40;wazuh-remoted&#41;"]
+  node_remoted["wazuh-remoted<br/>[remoted.c]"]
+  node_stateless_ep["/stateless endpoint"]
+end
+
+subgraph group_engine["Wazuh engine &#40;wazuh-engine&#41;"]
+  node_event_api["Engine event API<br/>[handlers.cpp]"]
+  node_router["Router<br/>[router.cpp]"]
+  node_policy["Policy builder<br/>[policy.cpp]"]
+end
+
+subgraph group_storage["Indexing and storage"]
+  node_indexer_out["Indexer output<br/>[indexer.yml]"]
+end
+
+node_logcollector -->|"SendMSGtoSCK"| node_mq
+node_fim -->|"fim_send_msg"| node_mq
+node_mq -->|"Unix-socket datagrams"| node_agentd
+node_agentd -->|"submit_event"| node_accumulator
+node_accumulator -->|"batch flush"| node_stateless
+node_stateless -->|"HTTPS POST /stateless"| node_remoted
+node_remoted -->|"route"| node_stateless_ep
+node_stateless_ep -->|"UDS /events/enriched"| node_event_api
+node_event_api -->|"postEvent"| node_router
+node_router -->|"environment ingest"| node_policy
+node_policy -->|"index wazuh-events-v5-*"| node_indexer_out
+
+click node_logcollector "https://github.com/wazuh/wazuh/blob/main/src/logcollector/src/logcollector.c"
+click node_fim "https://github.com/wazuh/wazuh/blob/main/src/syscheckd/src/run_check.c"
+click node_mq "https://github.com/wazuh/wazuh/blob/main/src/shared/src/mq_op.c"
+click node_agentd "https://github.com/wazuh/wazuh/blob/main/src/client-agent/src/event-forward.c"
+click node_accumulator "https://github.com/wazuh/wazuh/blob/main/src/client-agent/https_client/src/eventAccumulator.hpp"
+click node_stateless "https://github.com/wazuh/wazuh/blob/main/src/client-agent/https_client/src/statelessStream.cpp"
+click node_remoted "https://github.com/wazuh/wazuh/blob/main/src/remoted/src/remoted.c"
+click node_stateless_ep "https://github.com/wazuh/wazuh/blob/main/src/remoted/remoted_module/src/endpoints/statelessEndpoint.cpp"
+click node_event_api "https://github.com/wazuh/wazuh/blob/main/src/engine/source/api/event/src/handlers.cpp"
+click node_router "https://github.com/wazuh/wazuh/blob/main/src/engine/source/router/src/router.cpp"
+click node_policy "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/policy/policy.cpp"
+click node_indexer_out "https://github.com/wazuh/wazuh/blob/main/src/engine/ruleset/outputs/indexer.yml"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_logcollector,node_fim,node_mq,node_agentd toneBlue
+class node_accumulator,node_stateless toneAmber
+class node_remoted,node_stateless_ep toneMint
+class node_event_api,node_router,node_policy toneRose
+class node_indexer_out toneIndigo

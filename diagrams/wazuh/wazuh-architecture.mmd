@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_agent_modules["Agent collection modules"]
+  node_logcollector["Logcollector<br/>[logcollector.c]"]
+  node_fim_run_check["FIM run_check<br/>[run_check.c]"]
+  node_fim_db["FIM SQLite DB<br/>[fimDB.cpp]"]
+  node_rootcheck["Rootcheck<br/>[run_rk_check.c]"]
+  node_vd_scanner["Vulnerability scanner"]
+end
+
+subgraph group_agent_core["Agent core &#40;wazuh-agentd&#41;"]
+  node_mq_op["SendMSG &#40;mq_op.c&#41;<br/>[mq_op.c]"]
+  node_agentd["agentd.c<br/>[agentd.c]"]
+  node_event_forward["EventForward&#40;&#41;<br/>[event-forward.c]"]
+end
+
+subgraph group_agent_transport["Agent HTTPS transport"]
+  node_accumulator["EventAccumulator"]
+  node_stateless_stream["/stateless stream"]
+end
+
+subgraph group_manager_ingress["Manager ingress &#40;wazuh-remoted&#41;"]
+  node_remoted["HandleRemote&#40;&#41;<br/>[remoted.c]"]
+  node_secure["secure.c &#40;legacy&#41;<br/>[secure.c]"]
+  node_rem_queue["Remoted input queue<br/>[queue.c]"]
+  node_auth_mw["Auth middleware<br/>[authMiddleware.cpp]"]
+  node_zstd_dec["zstd decoder<br/>[zstdDecoder.cpp]"]
+  node_stateless_ep["/stateless endpoint"]
+  node_downstream["DeferredForwarder"]
+end
+
+subgraph group_engine_intake["Engine intake"]
+  node_httpsrv["Engine HTTP server<br/>[server.cpp]"]
+  node_event_api["pushEvent&#40;&#41;<br/>[handlers.cpp]"]
+  node_agent_cache["AgentMetadataCache"]
+end
+
+subgraph group_router_core["Router core"]
+  node_router_ingest["Router::ingest&#40;&#41;<br/>[router.cpp]"]
+  node_worker["RouterWorker<br/>[worker.cpp]"]
+end
+
+subgraph group_builder_chain["Policy builder chain"]
+  node_policy["Policy builder<br/>[policy.cpp]"]
+  node_parse_stage["parse stage<br/>[parse.cpp]"]
+  node_logpar["logpar<br/>[logpar.hpp]"]
+  node_map_stage["map stage<br/>[map.cpp]"]
+  node_filter_stage["filter stage<br/>[filter.cpp]"]
+end
+
+subgraph group_outputs["Outputs and stores"]
+  node_outputs_stage["outputs stage<br/>[outputs.cpp]"]
+  node_indexer_stage["indexer output<br/>[indexerOutput.cpp]"]
+  node_indexer_yml["indexer.yml<br/>[indexer.yml]"]
+  node_raw_indexer["Raw event indexer"]
+  node_wdb["wazuh-db<br/>[wdb.c]"]
+  node_wdb_sync["Agent sync API"]
+end
+
+node_logcollector -->|"SendMSGtoSCK"| node_mq_op
+node_fim_run_check -->|"fim_send_msg / SYSCHECK_MQ"| node_mq_op
+node_rootcheck -->|"queue write"| node_mq_op
+node_fim_db -->|"diff + integrity source"| node_fim_run_check
+node_mq_op -->|"OS_SendUnix datagrams"| node_event_forward
+node_event_forward -->|"submit_event"| node_accumulator
+node_accumulator -->|"batch flush"| node_stateless_stream
+node_stateless_stream -->|"HTTPS POST /stateless"| node_remoted
+node_remoted -->|"TLS + request auth"| node_auth_mw
+node_auth_mw -->|"authenticated request"| node_stateless_ep
+node_zstd_dec -->|"decompressed payload"| node_stateless_ep
+node_stateless_ep -->|"deferred batch"| node_downstream
+node_downstream -->|"UDS POST /events/enriched"| node_httpsrv
+node_httpsrv -->|"route dispatch"| node_event_api
+node_event_api -->|"identity validation"| node_agent_cache
+node_event_api -->|"postEvent -&gt; queue"| node_worker
+node_worker -->|"parseLegacyEvent -&gt; ingest"| node_router_ingest
+node_worker -->|"raw doc before parsing"| node_raw_indexer
+node_router_ingest -->|"environment ingest"| node_policy
+node_policy -->|"asset build"| node_parse_stage
+node_parse_stage -->|"compile parsers"| node_logpar
+node_parse_stage -->|"decoded fields"| node_map_stage
+node_map_stage -->|"conditional drop"| node_filter_stage
+node_filter_stage -->|"surviving events"| node_outputs_stage
+node_outputs_stage -->|"indexer ops"| node_indexer_stage
+node_indexer_stage -->|"wazuh-events-v5-*"| node_indexer_yml
+node_wdb -->|"HTTP sync endpoints"| node_wdb_sync
+node_vd_scanner -->|"inventory queries"| node_wdb
+node_secure -->|"rem_msgpush"| node_rem_queue
+
+click node_logcollector "https://github.com/wazuh/wazuh/blob/main/src/logcollector/src/logcollector.c"
+click node_fim_run_check "https://github.com/wazuh/wazuh/blob/main/src/syscheckd/src/run_check.c"
+click node_fim_db "https://github.com/wazuh/wazuh/blob/main/src/syscheckd/src/db/src/fimDB.cpp"
+click node_rootcheck "https://github.com/wazuh/wazuh/blob/main/src/rootcheck/src/run_rk_check.c"
+click node_vd_scanner "https://github.com/wazuh/wazuh/blob/main/src/wazuh_modules/vulnerability_scanner/src/databaseFeedManager/databaseFeedManager.cpp"
+click node_mq_op "https://github.com/wazuh/wazuh/blob/main/src/shared/src/mq_op.c"
+click node_agentd "https://github.com/wazuh/wazuh/blob/main/src/client-agent/src/agentd.c"
+click node_event_forward "https://github.com/wazuh/wazuh/blob/main/src/client-agent/src/event-forward.c"
+click node_accumulator "https://github.com/wazuh/wazuh/blob/main/src/client-agent/https_client/src/eventAccumulator.hpp"
+click node_stateless_stream "https://github.com/wazuh/wazuh/blob/main/src/client-agent/https_client/src/statelessStream.cpp"
+click node_remoted "https://github.com/wazuh/wazuh/blob/main/src/remoted/src/remoted.c"
+click node_secure "https://github.com/wazuh/wazuh/blob/main/src/remoted/src/secure.c"
+click node_rem_queue "https://github.com/wazuh/wazuh/blob/main/src/remoted/src/queue.c"
+click node_auth_mw "https://github.com/wazuh/wazuh/blob/main/src/remoted/remoted_module/src/auth/authMiddleware.cpp"
+click node_zstd_dec "https://github.com/wazuh/wazuh/blob/main/src/remoted/remoted_module/src/common/zstdDecoder.cpp"
+click node_stateless_ep "https://github.com/wazuh/wazuh/blob/main/src/remoted/remoted_module/src/endpoints/statelessEndpoint.cpp"
+click node_downstream "https://github.com/wazuh/wazuh/blob/main/src/remoted/remoted_module/src/downstream/deferredForwarder.cpp"
+click node_httpsrv "https://github.com/wazuh/wazuh/blob/main/src/engine/source/httpsrv/src/server.cpp"
+click node_event_api "https://github.com/wazuh/wazuh/blob/main/src/engine/source/api/event/src/handlers.cpp"
+click node_agent_cache "https://github.com/wazuh/wazuh/blob/main/src/engine/source/agentcache/include/agentcache/agentMetadataCache.hpp"
+click node_router_ingest "https://github.com/wazuh/wazuh/blob/main/src/engine/source/router/src/router.cpp"
+click node_worker "https://github.com/wazuh/wazuh/blob/main/src/engine/source/router/src/worker.cpp"
+click node_policy "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/policy/policy.cpp"
+click node_parse_stage "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/builders/stage/parse.cpp"
+click node_logpar "https://github.com/wazuh/wazuh/blob/main/src/engine/source/logpar/include/logpar/logpar.hpp"
+click node_map_stage "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/builders/opmap/map.cpp"
+click node_filter_stage "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/builders/opfilter/filter.cpp"
+click node_outputs_stage "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/builders/stage/outputs.cpp"
+click node_indexer_stage "https://github.com/wazuh/wazuh/blob/main/src/engine/source/builder/src/builders/stage/indexerOutput.cpp"
+click node_indexer_yml "https://github.com/wazuh/wazuh/blob/main/src/engine/ruleset/outputs/indexer.yml"
+click node_raw_indexer "https://github.com/wazuh/wazuh/blob/main/src/engine/source/rawevtindexer/src/raweventindexer.cpp"
+click node_wdb "https://github.com/wazuh/wazuh/blob/main/src/wazuh_db/src/wdb.c"
+click node_wdb_sync "https://github.com/wazuh/wazuh/blob/main/src/wazuh_db/src/http/endpointPostV1AgentsSync.hpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_logcollector,node_fim_run_check,node_fim_db,node_rootcheck,node_vd_scanner,node_policy,node_parse_stage,node_logpar,node_map_stage,node_filter_stage toneBlue
+class node_mq_op,node_agentd,node_event_forward,node_outputs_stage,node_indexer_stage,node_indexer_yml,node_raw_indexer,node_wdb,node_wdb_sync toneAmber
+class node_accumulator,node_stateless_stream toneMint
+class node_remoted,node_secure,node_rem_queue,node_auth_mw,node_zstd_dec,node_stateless_ep,node_downstream toneRose
+class node_httpsrv,node_event_api,node_agent_cache toneIndigo
+class node_router_ingest,node_worker toneTeal

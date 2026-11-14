@@ -1,0 +1,135 @@
+{
+  "owner": "wazuh",
+  "repo": "wazuh",
+  "branch": "main",
+  "groups": [
+    { "id": "agent_side", "name": "Agent host", "label": "Agent host (per monitored machine)" },
+    { "id": "agent_transport", "name": "Agent transport", "label": "Agent HTTPS transport" },
+    { "id": "manager_ingress", "name": "Manager ingress", "label": "Manager ingress (wazuh-remoted)" },
+    { "id": "engine", "name": "Analysis engine", "label": "Wazuh engine (wazuh-engine)" },
+    { "id": "storage", "name": "Storage", "label": "Indexing and storage" }
+  ],
+  "nodes": [
+    {
+      "id": "logcollector",
+      "label": "Log collector",
+      "file": "logcollector.c",
+      "path": "src/logcollector/src/logcollector.c",
+      "group": "agent_side",
+      "groupId": "agent_side",
+      "desc": "Tails log files and Windows event channels; hands lines to SendMSGtoSCK"
+    },
+    {
+      "id": "fim",
+      "label": "FIM (syscheckd)",
+      "file": "run_check.c",
+      "path": "src/syscheckd/src/run_check.c",
+      "group": "agent_side",
+      "groupId": "agent_side",
+      "desc": "File integrity monitoring; fim_send_msg() emits change events"
+    },
+    {
+      "id": "mq",
+      "label": "Local message queue",
+      "file": "mq_op.c",
+      "path": "src/shared/src/mq_op.c",
+      "group": "agent_side",
+      "groupId": "agent_side",
+      "desc": "SendMSGAction() writes framed events to the agent-local Unix socket queue"
+    },
+    {
+      "id": "agentd",
+      "label": "wazuh-agentd EventForward",
+      "file": "event-forward.c",
+      "path": "src/client-agent/src/event-forward.c",
+      "group": "agent_side",
+      "groupId": "agent_side",
+      "desc": "Drains the local queue and submits events to the HTTPS client"
+    },
+    {
+      "id": "accumulator",
+      "label": "EventAccumulator",
+      "file": "eventAccumulator.hpp",
+      "path": "src/client-agent/https_client/src/eventAccumulator.hpp",
+      "group": "agent_transport",
+      "groupId": "agent_transport",
+      "desc": "Accumulates events into batches; drops newest when the cap is hit"
+    },
+    {
+      "id": "stateless",
+      "label": "Stateless HTTPS stream",
+      "file": "statelessStream.cpp",
+      "path": "src/client-agent/https_client/src/statelessStream.cpp",
+      "group": "agent_transport",
+      "groupId": "agent_transport",
+      "desc": "POSTs NDJSON event batches to the manager /stateless endpoint"
+    },
+    {
+      "id": "remoted",
+      "label": "wazuh-remoted",
+      "file": "remoted.c",
+      "path": "src/remoted/src/remoted.c",
+      "group": "manager_ingress",
+      "groupId": "manager_ingress",
+      "desc": "Manager listener: HTTPS for 5.x agents; classic TCP/UDP only serves 4.x agents"
+    },
+    {
+      "id": "stateless_ep",
+      "label": "/stateless endpoint",
+      "file": "statelessEndpoint.cpp",
+      "path": "src/remoted/remoted_module/src/endpoints/statelessEndpoint.cpp",
+      "group": "manager_ingress",
+      "groupId": "manager_ingress",
+      "desc": "Validates the agent identity and forwards batches to the engine over a UDS HTTP hop"
+    },
+    {
+      "id": "event_api",
+      "label": "Engine event API",
+      "file": "handlers.cpp",
+      "path": "src/engine/source/api/event/src/handlers.cpp",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "pushEvent() parses NDJSON batches and enqueues ingest events"
+    },
+    {
+      "id": "router",
+      "label": "Router",
+      "file": "router.cpp",
+      "path": "src/engine/source/router/src/router.cpp",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "Router::ingest() fans each event out to matching policy environments"
+    },
+    {
+      "id": "policy",
+      "label": "Policy builder",
+      "file": "policy.cpp",
+      "path": "src/engine/source/builder/src/policy/policy.cpp",
+      "group": "engine",
+      "groupId": "engine",
+      "desc": "Builds the policy expression tree from store assets: parse, map, filter, outputs"
+    },
+    {
+      "id": "indexer_out",
+      "label": "Indexer output",
+      "file": "indexer.yml",
+      "path": "src/engine/ruleset/outputs/indexer.yml",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "Routes classified events to wazuh-events-v5-* data streams"
+    }
+  ],
+  "edges": [
+    { "from": "logcollector", "to": "mq", "label": "SendMSGtoSCK" },
+    { "from": "fim", "to": "mq", "label": "fim_send_msg" },
+    { "from": "mq", "to": "agentd", "label": "Unix-socket datagrams" },
+    { "from": "agentd", "to": "accumulator", "label": "submit_event" },
+    { "from": "accumulator", "to": "stateless", "label": "batch flush" },
+    { "from": "stateless", "to": "remoted", "label": "HTTPS POST /stateless" },
+    { "from": "remoted", "to": "stateless_ep", "label": "route" },
+    { "from": "stateless_ep", "to": "event_api", "label": "UDS /events/enriched" },
+    { "from": "event_api", "to": "router", "label": "postEvent" },
+    { "from": "router", "to": "policy", "label": "environment ingest" },
+    { "from": "policy", "to": "indexer_out", "label": "index wazuh-events-v5-*" }
+  ]
+}
