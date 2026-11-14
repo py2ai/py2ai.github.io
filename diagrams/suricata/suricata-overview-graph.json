@@ -1,0 +1,40 @@
+{
+  "owner": "OISF",
+  "repo": "suricata",
+  "branch": "main",
+  "groups": [
+    { "id": "framework", "name": "Framework", "label": "Framework" },
+    { "id": "capture", "name": "CaptureDecode", "label": "Capture & Decode" },
+    { "id": "flow", "name": "Flow", "label": "Flow" },
+    { "id": "detect", "name": "Detect", "label": "Detect" },
+    { "id": "output", "name": "Output", "label": "Output" }
+  ],
+  "nodes": [
+    { "id": "main_loop", "label": "main() → SuricataMainLoop", "file": "suricata.c", "path": "src/suricata.c", "group": "framework", "groupId": "framework", "desc": "Entry point in main.c L20; SuricataMainLoop dispatches the configured runmode" },
+    { "id": "runmode_dispatch", "label": "RunModeDispatch", "file": "runmodes.c", "path": "src/runmodes.c", "group": "framework", "groupId": "framework", "desc": "Selects the runmode handler and spawns management threads" },
+    { "id": "workers_setup", "label": "RunModeSetLiveCaptureWorkers", "file": "util-runmodes.c", "path": "src/util-runmodes.c", "group": "framework", "groupId": "framework", "desc": "Builds one worker thread per rx queue with a fixed slot chain" },
+    { "id": "afp_recv_loop", "label": "ReceiveAFPLoop", "file": "source-af-packet.c", "path": "src/source-af-packet.c", "group": "capture", "groupId": "capture", "desc": "AF_PACKET ring read loop, hands packets to next slot" },
+    { "id": "afp_decode", "label": "DecodeAFP", "file": "source-af-packet.c", "path": "src/source-af-packet.c", "group": "capture", "groupId": "capture", "desc": "Datalink dispatch slot after receive" },
+    { "id": "decode_eth", "label": "DecodeEthernet", "file": "decode-ethernet.c", "path": "src/decode-ethernet.c", "group": "capture", "groupId": "capture", "desc": "Ethernet header parse, dispatches network layer" },
+    { "id": "flow_worker", "label": "FlowWorker", "file": "flow-worker.c", "path": "src/flow-worker.c", "group": "flow", "groupId": "flow", "desc": "One slot combining flow lookup, TCP/app-layer, detect and output" },
+    { "id": "flow_from_hash", "label": "FlowGetFlowFromHash", "file": "flow-hash.c", "path": "src/flow-hash.c", "group": "flow", "groupId": "flow", "desc": "Hash-bucket flow lookup, returns locked flow" },
+    { "id": "detect_fn", "label": "Detect", "file": "detect.c", "path": "src/detect.c", "group": "detect", "groupId": "detect", "desc": "Detection entry: DetectFlow or DetectNoFlow" },
+    { "id": "prefilter_fn", "label": "Prefilter", "file": "detect-engine-prefilter.c", "path": "src/detect-engine-prefilter.c", "group": "detect", "groupId": "detect", "desc": "Runs MPM prefilter engines, collects candidate sids" },
+    { "id": "hs_search", "label": "SCHSSearch", "file": "util-mpm-hs.c", "path": "src/util-mpm-hs.c", "group": "detect", "groupId": "detect", "desc": "Hyperscan multi-pattern scan via hs_scan callback" },
+    { "id": "output_logger", "label": "OutputLoggerLog", "file": "output.c", "path": "src/output.c", "group": "output", "groupId": "output", "desc": "Drives registered loggers (eve, alert, stats) per packet" }
+  ],
+  "edges": [
+    { "from": "main_loop", "to": "runmode_dispatch", "label": "dispatch" },
+    { "from": "runmode_dispatch", "to": "workers_setup", "label": "workers mode handler" },
+    { "from": "workers_setup", "to": "afp_recv_loop", "label": "slot 1: ReceiveAFP" },
+    { "from": "afp_recv_loop", "to": "afp_decode", "label": "same thread slot" },
+    { "from": "afp_decode", "to": "decode_eth", "label": "DecodeLinkLayer" },
+    { "from": "decode_eth", "to": "flow_worker", "label": "slot: FlowWorker" },
+    { "from": "flow_worker", "to": "flow_from_hash", "label": "hash lookup" },
+    { "from": "flow_worker", "to": "detect_fn", "label": "Detect()" },
+    { "from": "flow_worker", "to": "output_logger", "label": "OutputLoggerLog" },
+    { "from": "detect_fn", "to": "prefilter_fn", "label": "mask + engine list" },
+    { "from": "prefilter_fn", "to": "hs_search", "label": "mpm-algo hs" },
+    { "from": "hs_search", "to": "detect_fn", "label": "candidate sids back" }
+  ]
+}
