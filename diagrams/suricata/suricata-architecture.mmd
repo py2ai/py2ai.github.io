@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_framework["Framework"]
+  node_main_entry["main&#40;&#41;<br/>[main.c]"]
+  node_main_loop["SuricataMainLoop<br/>[suricata.c]"]
+  node_runmode_dispatch["RunModeDispatch<br/>[runmodes.c]"]
+  node_workers_setup["RunModeSetLiveCaptureWorkers<br/>[util-runmodes.c]"]
+  node_workers_for_device["RunModeSetLiveCaptureWorkersForDevice<br/>[util-runmodes.c]"]
+  node_pkt_acq_loop["TmThreadsSlotPktAcqLoop<br/>[tm-threads.c]"]
+  node_slot_var_run["TmThreadsSlotVarRun<br/>[tm-threads.c]"]
+  node_slot_process_pkt["TmThreadsSlotProcessPkt<br/>[tm-threads.h]"]
+  node_packetpool["thread_pkt_pool<br/>[tmqh-packetpool.c]"]
+end
+
+subgraph group_capture["Capture &amp; Decode"]
+  node_afp_recv_loop["ReceiveAFPLoop<br/>[source-af-packet.c]"]
+  node_afp_decode["DecodeAFP<br/>[source-af-packet.c]"]
+  node_decode_eth["DecodeEthernet<br/>[decode-ethernet.c]"]
+  node_decode_ipv4["DecodeIPV4<br/>[decode-ipv4.c]"]
+end
+
+subgraph group_flow["Flow"]
+  node_flow_worker["FlowWorker<br/>[flow-worker.c]"]
+  node_flow_handle["FlowHandlePacket<br/>[flow.c]"]
+  node_flow_from_hash["FlowGetFlowFromHash<br/>[flow-hash.c]"]
+  node_stream_update["FlowWorkerStreamTCPUpdate<br/>[flow-worker.c]"]
+end
+
+subgraph group_detect["Detect"]
+  node_detect_fn["Detect<br/>[detect.c]"]
+  node_detect_flow["DetectFlow<br/>[detect.c]"]
+  node_detect_prefilter_pkt["DetectRunPrefilterPkt<br/>[detect.c]"]
+  node_prefilter_fn["Prefilter"]
+  node_hs_search["SCHSSearch<br/>[util-mpm-hs.c]"]
+  node_ac_search["SCACSearch<br/>[util-mpm-ac.c]"]
+  node_inspect_rule_header["DetectRunInspectRuleHeader<br/>[detect.c]"]
+  node_content_inspection["DetectEngineContentInspection"]
+  node_alert_queue["AlertQueueAppendPacket"]
+end
+
+subgraph group_rules["Rule Compilation"]
+  node_sig_parse["SigParse<br/>[detect-parse.c]"]
+  node_fp_select["RetrieveFPForSig"]
+  node_sig_group_build["SigGroupBuild"]
+  node_prefilter_append["PrefilterAppendPayloadEngine"]
+  node_mpm_prepare["PatternMatchThreadPrepare"]
+end
+
+subgraph group_output["Output"]
+  node_output_logger["OutputLoggerLog<br/>[output.c]"]
+end
+
+node_main_entry -->|"entry"| node_main_loop
+node_main_loop -->|"dispatch runmode"| node_runmode_dispatch
+node_runmode_dispatch -->|"mode-&gt;RunModeFunc"| node_workers_setup
+node_workers_setup -->|"per device"| node_workers_for_device
+node_workers_for_device -->|"TmThreadCreatePacketHandler"| node_packetpool
+node_workers_for_device -->|"slot 1: ReceiveAFP"| node_afp_recv_loop
+node_afp_recv_loop -->|"hand off packet inline"| node_slot_process_pkt
+node_slot_process_pkt -->|"walk slot chain"| node_slot_var_run
+node_afp_recv_loop -->|"slot 2: DecodeAFP"| node_afp_decode
+node_afp_decode -->|"DecodeLinkLayer"| node_decode_eth
+node_decode_eth -->|"ethertype 0x0800"| node_decode_ipv4
+node_afp_decode -->|"slot 3: FlowWorker"| node_flow_worker
+node_flow_worker -->|"PKT_WANTS_FLOW"| node_flow_handle
+node_flow_handle -->|"locked lookup"| node_flow_from_hash
+node_flow_worker -->|"TCP packets"| node_stream_update
+node_flow_worker -->|"Detect&#40;&#41;"| node_detect_fn
+node_detect_fn -->|"p-&gt;flow set"| node_detect_flow
+node_detect_flow -->|"pre-filter first"| node_detect_prefilter_pkt
+node_detect_prefilter_pkt -->|"engine list"| node_prefilter_fn
+node_prefilter_fn -->|"mpm-algo hs"| node_hs_search
+node_prefilter_fn -->|"mpm-algo ac"| node_ac_search
+node_hs_search -->|"candidate sids"| node_detect_flow
+node_ac_search -->|"candidate sids"| node_detect_flow
+node_detect_flow -->|"per candidate rule"| node_inspect_rule_header
+node_inspect_rule_header -->|"header ok"| node_content_inspection
+node_content_inspection -->|"on match"| node_alert_queue
+node_alert_queue -->|"alerts flushed"| node_output_logger
+node_flow_worker -->|"OutputLoggerLog"| node_output_logger
+node_sig_parse -->|"fast-pattern pick"| node_fp_select
+node_sig_parse -->|"load time"| node_sig_group_build
+node_sig_group_build -->|"bind engines"| node_prefilter_append
+node_prefilter_append -->|"thread ctx"| node_mpm_prepare
+node_mpm_prepare -->|"runtime scan ctx"| node_prefilter_fn
+
+click node_main_entry "https://github.com/OISF/suricata/blob/main/src/main.c"
+click node_main_loop "https://github.com/OISF/suricata/blob/main/src/suricata.c"
+click node_runmode_dispatch "https://github.com/OISF/suricata/blob/main/src/runmodes.c"
+click node_workers_setup "https://github.com/OISF/suricata/blob/main/src/util-runmodes.c"
+click node_workers_for_device "https://github.com/OISF/suricata/blob/main/src/util-runmodes.c"
+click node_pkt_acq_loop "https://github.com/OISF/suricata/blob/main/src/tm-threads.c"
+click node_slot_var_run "https://github.com/OISF/suricata/blob/main/src/tm-threads.c"
+click node_slot_process_pkt "https://github.com/OISF/suricata/blob/main/src/tm-threads.h"
+click node_packetpool "https://github.com/OISF/suricata/blob/main/src/tmqh-packetpool.c"
+click node_afp_recv_loop "https://github.com/OISF/suricata/blob/main/src/source-af-packet.c"
+click node_afp_decode "https://github.com/OISF/suricata/blob/main/src/source-af-packet.c"
+click node_decode_eth "https://github.com/OISF/suricata/blob/main/src/decode-ethernet.c"
+click node_decode_ipv4 "https://github.com/OISF/suricata/blob/main/src/decode-ipv4.c"
+click node_flow_worker "https://github.com/OISF/suricata/blob/main/src/flow-worker.c"
+click node_flow_handle "https://github.com/OISF/suricata/blob/main/src/flow.c"
+click node_flow_from_hash "https://github.com/OISF/suricata/blob/main/src/flow-hash.c"
+click node_stream_update "https://github.com/OISF/suricata/blob/main/src/flow-worker.c"
+click node_detect_fn "https://github.com/OISF/suricata/blob/main/src/detect.c"
+click node_detect_flow "https://github.com/OISF/suricata/blob/main/src/detect.c"
+click node_detect_prefilter_pkt "https://github.com/OISF/suricata/blob/main/src/detect.c"
+click node_prefilter_fn "https://github.com/OISF/suricata/blob/main/src/detect-engine-prefilter.c"
+click node_hs_search "https://github.com/OISF/suricata/blob/main/src/util-mpm-hs.c"
+click node_ac_search "https://github.com/OISF/suricata/blob/main/src/util-mpm-ac.c"
+click node_inspect_rule_header "https://github.com/OISF/suricata/blob/main/src/detect.c"
+click node_content_inspection "https://github.com/OISF/suricata/blob/main/src/detect-engine-content-inspection.c"
+click node_alert_queue "https://github.com/OISF/suricata/blob/main/src/detect-engine-alert.c"
+click node_sig_parse "https://github.com/OISF/suricata/blob/main/src/detect-parse.c"
+click node_fp_select "https://github.com/OISF/suricata/blob/main/src/detect-engine-mpm.c"
+click node_sig_group_build "https://github.com/OISF/suricata/blob/main/src/detect-engine-build.c"
+click node_prefilter_append "https://github.com/OISF/suricata/blob/main/src/detect-engine-prefilter.c"
+click node_mpm_prepare "https://github.com/OISF/suricata/blob/main/src/detect-engine-mpm.c"
+click node_output_logger "https://github.com/OISF/suricata/blob/main/src/output.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_main_loop,node_runmode_dispatch,node_workers_setup,node_workers_for_device,node_pkt_acq_loop,node_slot_var_run,node_slot_process_pkt,node_packetpool toneBlue
+class node_afp_recv_loop,node_afp_decode,node_decode_eth,node_decode_ipv4 toneAmber
+class node_flow_worker,node_flow_handle,node_flow_from_hash,node_stream_update toneMint
+class node_detect_fn,node_detect_flow,node_detect_prefilter_pkt,node_prefilter_fn,node_hs_search,node_ac_search,node_inspect_rule_header,node_content_inspection,node_alert_queue toneRose
+class node_sig_parse,node_fp_select,node_sig_group_build,node_prefilter_append,node_mpm_prepare toneIndigo
+class node_output_logger toneTeal
