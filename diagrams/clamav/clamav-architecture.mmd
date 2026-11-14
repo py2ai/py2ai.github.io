@@ -1,0 +1,149 @@
+flowchart TD
+
+subgraph group_clients["Clients &amp; Updater"]
+  node_clamscan_main["clamscan manager.c<br/>[manager.c]"]
+  node_freshclam_updatedb["freshclam updatedb"]
+end
+
+subgraph group_daemon["clamd Daemon"]
+  node_clamd_main["clamd main&#40;&#41;<br/>[clamd.c]"]
+  node_tcpserver["tcpserver<br/>[tcpserver.c]"]
+  node_acceptloop_th["acceptloop_th<br/>[server-th.c]"]
+  node_session_cmds["session commands<br/>[session.c]"]
+  node_thrmgr_pool["thrmgr thread pool<br/>[thrmgr.c]"]
+  node_scanner_thread["scanner_thread<br/>[server-th.c]"]
+  node_scan_task["scan task<br/>[scanner.c]"]
+end
+
+subgraph group_loading["Signature Loading"]
+  node_cl_load["cl_load<br/>[readdb.c]"]
+  node_cli_load["cli_load dispatch<br/>[readdb.c]"]
+  node_cli_loadndb["cli_loadndb<br/>[readdb.c]"]
+  node_cli_loadmd["cli_loadmd<br/>[readdb.c]"]
+  node_cli_loadftm["cli_loadftm<br/>[readdb.c]"]
+  node_add_content["add content sig<br/>[readdb.c]"]
+end
+
+subgraph group_compiling["Engine Compile"]
+  node_cl_engine_compile["cl_engine_compile<br/>[readdb.c]"]
+  node_ac_buildtrie["cli_ac_buildtrie<br/>[matcher-ac.c]"]
+  node_pcre_build["cli_pcre_build<br/>[matcher-pcre.c]"]
+  node_engine_struct["struct cl_engine<br/>[others.h]"]
+end
+
+subgraph group_scanning["Scan Pipeline"]
+  node_cl_scanfile["cl_scanfile<br/>[scanners.c]"]
+  node_magic_scan["cli_magic_scan<br/>[scanners.c]"]
+  node_type_detect["type detection<br/>[filetypes.c]"]
+  node_clean_cache["clean file cache<br/>[cache.c]"]
+  node_dispatch_switch["switch &#40;type&#41;<br/>[scanners.c]"]
+  node_scanraw["scanraw<br/>[scanners.c]"]
+  node_nested_scan["nested fmap scan<br/>[scanners.c]"]
+  node_scan_fmap["cli_scan_fmap<br/>[matcher.c]"]
+end
+
+subgraph group_parsers["Container Parsers"]
+  node_cli_unzip["cli_unzip<br/>[unzip.c]"]
+  node_cli_scanrar["cli_scanrar<br/>[scanners.c]"]
+end
+
+subgraph group_matching["Match Tiers"]
+  node_matcher_run["matcher_run<br/>[matcher.c]"]
+  node_filter_prefilter["select filter<br/>[filtering.c]"]
+  node_bm_scanbuff["cli_bm_scanbuff<br/>[matcher-bm.c]"]
+  node_ac_scanbuff["cli_ac_scanbuff<br/>[matcher-ac.c]"]
+  node_hm_scan["cli_hm_scan<br/>[matcher-hash.c]"]
+end
+
+node_clamscan_main -->|"cl_load&#40;dbdir&#41;"| node_cl_load
+node_clamscan_main -->|"cl_engine_compile&#40;&#41;"| node_cl_engine_compile
+node_clamscan_main -->|"scan_files&#40;&#41; per argument"| node_cl_scanfile
+node_freshclam_updatedb -->|"database files on disk -&gt; reload_db&#40;&#41;"| node_clamd_main
+node_clamd_main -->|"bind/listen TCP"| node_tcpserver
+node_clamd_main -->|"spawn accept thread"| node_acceptloop_th
+node_tcpserver -->|"listen fds"| node_acceptloop_th
+node_acceptloop_th -->|"parse_dispatch_cmd&#40;&#41;"| node_session_cmds
+node_session_cmds -->|"thrmgr_group_dispatch&#40;&#41;"| node_thrmgr_pool
+node_thrmgr_pool -->|"pops job from work queue"| node_scanner_thread
+node_scanner_thread -->|"scanqueue_item"| node_scan_task
+node_scan_task -->|"cl_scanfile_callback&#40;&#41;"| node_cl_scanfile
+node_scan_task -->|"MULTISCAN: one job per entry"| node_thrmgr_pool
+node_cl_load -->|"one database file at a time"| node_cli_load
+node_cli_load -->|".ndb/.ndu"| node_cli_loadndb
+node_cli_load -->|".hdb/.hsb/.mdb/.msb"| node_cli_loadmd
+node_cli_load -->|".ftm"| node_cli_loadftm
+node_cli_load -->|"hex content sigs"| node_add_content
+node_cli_loadndb -->|"each line -&gt; hex parse"| node_add_content
+node_add_content -->|"cli_ac_addpatt + cli_bm_addpatt"| node_engine_struct
+node_cli_loadftm -->|"magic sigs in engine-&gt;ftypes"| node_type_detect
+node_cl_engine_compile -->|"cli_ac_buildtrie&#40;&#41; per target"| node_ac_buildtrie
+node_cl_engine_compile -->|"cli_pcre_build&#40;&#41;"| node_pcre_build
+node_cl_engine_compile -->|"finalize roots + hm_*"| node_engine_struct
+node_ac_buildtrie -->|"failure links ready"| node_ac_scanbuff
+node_cl_engine_compile -->|"CL_DB_COMPILED gate"| node_magic_scan
+node_cl_scanfile -->|"scan_common -&gt; cli_magic_scan"| node_magic_scan
+node_magic_scan -->|"cli_determine_fmap_type&#40;&#41;"| node_type_detect
+node_magic_scan -->|"clean_cache_check&#40;&#41;; hit -&gt; early return"| node_clean_cache
+node_type_detect -->|"switch &#40;type&#41;"| node_dispatch_switch
+node_dispatch_switch -->|"CL_TYPE_ZIP"| node_cli_unzip
+node_dispatch_switch -->|"CL_TYPE_RAR/RARSFX"| node_cli_scanrar
+node_dispatch_switch -->|"no parser -&gt; raw match"| node_scanraw
+node_cli_unzip -->|"per extracted entry"| node_nested_scan
+node_nested_scan -->|"recursion into cli_magic_scan"| node_magic_scan
+node_scanraw -->|"cli_scan_fmap on raw bytes"| node_scan_fmap
+node_magic_scan -->|"no-parse fast path"| node_scan_fmap
+node_scan_fmap -->|"matcher_run&#40;&#41; per chunk"| node_matcher_run
+node_matcher_run -->|"filter_search_ext&#40;&#41; first"| node_filter_prefilter
+node_matcher_run -->|"cli_bm_scanbuff&#40;&#41; when !ac_only"| node_bm_scanbuff
+node_matcher_run -->|"cli_ac_scanbuff&#40;&#41; always"| node_ac_scanbuff
+node_engine_struct -->|"hm_hdb/hm_imp verdicts"| node_hm_scan
+node_type_detect -->|"AC_SCAN_FT filetype sigs"| node_ac_scanbuff
+
+click node_clamscan_main "https://github.com/Cisco-Talos/clamav/blob/main/clamscan/manager.c"
+click node_freshclam_updatedb "https://github.com/Cisco-Talos/clamav/blob/main/libfreshclam/libfreshclam_internal.c"
+click node_clamd_main "https://github.com/Cisco-Talos/clamav/blob/main/clamd/clamd.c"
+click node_tcpserver "https://github.com/Cisco-Talos/clamav/blob/main/clamd/tcpserver.c"
+click node_acceptloop_th "https://github.com/Cisco-Talos/clamav/blob/main/clamd/server-th.c"
+click node_session_cmds "https://github.com/Cisco-Talos/clamav/blob/main/clamd/session.c"
+click node_thrmgr_pool "https://github.com/Cisco-Talos/clamav/blob/main/clamd/thrmgr.c"
+click node_scanner_thread "https://github.com/Cisco-Talos/clamav/blob/main/clamd/server-th.c"
+click node_scan_task "https://github.com/Cisco-Talos/clamav/blob/main/clamd/scanner.c"
+click node_cl_load "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_cli_load "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_cli_loadndb "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_cli_loadmd "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_cli_loadftm "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_add_content "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_cl_engine_compile "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/readdb.c"
+click node_ac_buildtrie "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher-ac.c"
+click node_pcre_build "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher-pcre.c"
+click node_engine_struct "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/others.h"
+click node_cl_scanfile "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/scanners.c"
+click node_magic_scan "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/scanners.c"
+click node_type_detect "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/filetypes.c"
+click node_clean_cache "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/cache.c"
+click node_dispatch_switch "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/scanners.c"
+click node_scanraw "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/scanners.c"
+click node_nested_scan "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/scanners.c"
+click node_scan_fmap "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher.c"
+click node_cli_unzip "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/unzip.c"
+click node_cli_scanrar "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/scanners.c"
+click node_matcher_run "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher.c"
+click node_filter_prefilter "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/filtering.c"
+click node_bm_scanbuff "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher-bm.c"
+click node_ac_scanbuff "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher-ac.c"
+click node_hm_scan "https://github.com/Cisco-Talos/clamav/blob/main/libclamav/matcher-hash.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_clamscan_main,node_freshclam_updatedb,node_matcher_run,node_filter_prefilter,node_bm_scanbuff,node_ac_scanbuff,node_hm_scan toneBlue
+class node_clamd_main,node_tcpserver,node_acceptloop_th,node_session_cmds,node_thrmgr_pool,node_scanner_thread,node_scan_task toneAmber
+class node_cl_load,node_cli_load,node_cli_loadndb,node_cli_loadmd,node_cli_loadftm,node_add_content toneMint
+class node_cl_engine_compile,node_ac_buildtrie,node_pcre_build,node_engine_struct toneRose
+class node_cl_scanfile,node_magic_scan,node_type_detect,node_clean_cache,node_dispatch_switch,node_scanraw,node_nested_scan,node_scan_fmap toneIndigo
+class node_cli_unzip,node_cli_scanrar toneTeal

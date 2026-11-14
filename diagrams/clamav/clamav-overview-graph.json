@@ -1,0 +1,138 @@
+{
+  "owner": "Cisco-Talos",
+  "repo": "clamav",
+  "branch": "main",
+  "groups": [
+    { "id": "clients", "name": "clients", "label": "Clients & Updater" },
+    { "id": "daemon", "name": "daemon", "label": "clamd Daemon" },
+    { "id": "loading", "name": "loading", "label": "Signature Loading" },
+    { "id": "scanning", "name": "scanning", "label": "Scan Engine" },
+    { "id": "matching", "name": "matching", "label": "Matchers" }
+  ],
+  "nodes": [
+    {
+      "id": "clamscan",
+      "label": "clamscan CLI",
+      "file": "manager.c",
+      "path": "clamscan/manager.c",
+      "group": "clients",
+      "groupId": "clients",
+      "desc": "One-shot scanner: cl_load() + cl_engine_compile() in-process, then scans each path argument"
+    },
+    {
+      "id": "freshclam",
+      "label": "freshclam updater",
+      "file": "libfreshclam_internal.c",
+      "path": "libfreshclam/libfreshclam_internal.c",
+      "group": "clients",
+      "groupId": "clients",
+      "desc": "updatedb(): fetch CVD head, apply CDIFF patches, rebuild .cld, write database files"
+    },
+    {
+      "id": "clamd_main",
+      "label": "clamd main()",
+      "file": "clamd.c",
+      "path": "clamd/clamd.c",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "Daemon entry: load database, compile engine, open TCP/unix sockets, start thread pool"
+    },
+    {
+      "id": "accept_loop",
+      "label": "accept loop",
+      "file": "server-th.c",
+      "path": "clamd/server-th.c",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "acceptloop_th: single select() thread accepting connections and reading commands"
+    },
+    {
+      "id": "session",
+      "label": "command session",
+      "file": "session.c",
+      "path": "clamd/session.c",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "Protocol commands SCAN/INSTREAM/MULTISCAN/RELOAD; execute_or_dispatch_command()"
+    },
+    {
+      "id": "thread_pool",
+      "label": "thread pool",
+      "file": "thrmgr.c",
+      "path": "clamd/thrmgr.c",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "thrmgr_new() pool with work queue; MaxThreads cap; group dispatch for MULTISCAN"
+    },
+    {
+      "id": "scan_task",
+      "label": "scan task",
+      "file": "scanner.c",
+      "path": "clamd/scanner.c",
+      "group": "daemon",
+      "groupId": "daemon",
+      "desc": "Worker job: cl_scanfile_callback() on each queued file"
+    },
+    {
+      "id": "db_load",
+      "label": "database loader",
+      "file": "readdb.c",
+      "path": "libclamav/readdb.c",
+      "group": "loading",
+      "groupId": "loading",
+      "desc": "cl_load()/cli_load(): parse .ndb/.hdb/.cdb/.ftm/.ldb/.wdb by file extension"
+    },
+    {
+      "id": "engine_compile",
+      "label": "engine compile",
+      "file": "readdb.c",
+      "path": "libclamav/readdb.c",
+      "group": "loading",
+      "groupId": "loading",
+      "desc": "cl_engine_compile(): build AC tries and PCRE per target type; set CL_DB_COMPILED"
+    },
+    {
+      "id": "magic_scan",
+      "label": "cli_magic_scan",
+      "file": "scanners.c",
+      "path": "libclamav/scanners.c",
+      "group": "scanning",
+      "groupId": "scanning",
+      "desc": "Per-layer brain: cache check, file typing, switch (type) to parsers, scanraw fallback, recursion"
+    },
+    {
+      "id": "type_detect",
+      "label": "type detection",
+      "file": "filetypes.c",
+      "path": "libclamav/filetypes.c",
+      "group": "scanning",
+      "groupId": "scanning",
+      "desc": "cli_determine_fmap_type(): magic bytes + .ftm signatures via the filetype AC trie"
+    },
+    {
+      "id": "matcher_run",
+      "label": "matcher_run",
+      "file": "matcher.c",
+      "path": "libclamav/matcher.c",
+      "group": "matching",
+      "groupId": "matching",
+      "desc": "cli_scan_fmap -> matcher_run: filter prefilter, Boyer-Moore, Aho-Corasick over each chunk"
+    }
+  ],
+  "edges": [
+    { "from": "clamscan", "to": "db_load", "label": "cl_load()" },
+    { "from": "clamscan", "to": "engine_compile", "label": "cl_engine_compile()" },
+    { "from": "clamscan", "to": "magic_scan", "label": "scan path arguments" },
+    { "from": "freshclam", "to": "clamd_main", "label": "fresh .cvd/.cld on disk -> RELOAD" },
+    { "from": "clamd_main", "to": "db_load", "label": "cl_load()" },
+    { "from": "clamd_main", "to": "engine_compile", "label": "cl_engine_compile()" },
+    { "from": "clamd_main", "to": "accept_loop", "label": "listen sockets" },
+    { "from": "accept_loop", "to": "session", "label": "execute_or_dispatch_command()" },
+    { "from": "session", "to": "thread_pool", "label": "thrmgr_group_dispatch()" },
+    { "from": "thread_pool", "to": "scan_task", "label": "scanner_thread worker" },
+    { "from": "scan_task", "to": "magic_scan", "label": "cl_scanfile_callback()" },
+    { "from": "engine_compile", "to": "matcher_run", "label": "compiled tries" },
+    { "from": "magic_scan", "to": "type_detect", "label": "cli_determine_fmap_type()" },
+    { "from": "magic_scan", "to": "matcher_run", "label": "scanraw + cli_scan_fmap" }
+  ]
+}
