@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_cli["CLI &amp; Timing"]
+  node_nmap_main["nmap_main<br/>[nmap.cc]"]
+  node_timing_templates["-T0..-T5 templates<br/>[nmap.cc]"]
+end
+
+subgraph group_targets["Target &amp; Port Lists"]
+  node_hostgroup_state["HostGroupState<br/>[targets.cc]"]
+  node_get_next_host["HostGroupState::get_next_host<br/>[targets.cc]"]
+  node_defer["HostGroupState::defer<br/>[targets.cc]"]
+  node_getpts["getpts<br/>[scan_lists.cc]"]
+end
+
+subgraph group_engine["Probe Scheduling"]
+  node_ultra_scan["ultra_scan<br/>[scan_engine.cc]"]
+  node_usi["UltraScanInfo<br/>[scan_engine.cc]"]
+  node_ultraprobe["UltraProbe<br/>[scan_engine.h]"]
+  node_begin_sniffer["begin_sniffer<br/>[scan_engine.cc]"]
+  node_probe_loop["probe main loop<br/>[scan_engine.cc]"]
+  node_retransmits["doAnyOutstandingRetransmits<br/>[scan_engine.cc]"]
+  node_ultra_timing_vals["ultra_timing_vals<br/>[timing.cc]"]
+  node_scan_performance_vars["scan_performance_vars<br/>[timing.cc]"]
+end
+
+subgraph group_transport["Raw Transport"]
+  node_send_ip_packet["send_ip_packet<br/>[tcpip.cc]"]
+  node_send_tcp_raw["send_tcp_raw<br/>[tcpip.cc]"]
+end
+
+subgraph group_portstate["Port State Store"]
+  node_setportstate["PortList::setPortState<br/>[portlist.cc]"]
+  node_setserviceproberesults["PortList::setServiceProbeResults<br/>[portlist.cc]"]
+end
+
+subgraph group_vscan["Version Detection"]
+  node_service_scan["service_scan<br/>[service_scan.cc]"]
+  node_servicenfo["ServiceNFO<br/>[service_scan.cc]"]
+  node_servicegroup["ServiceGroup<br/>[service_scan.cc]"]
+  node_startnextprobe["startNextProbe<br/>[service_scan.cc]"]
+  node_serviceprobesdb["nmap-service-probes"]
+end
+
+subgraph group_oscan["OS Detection"]
+  node_osscan["OSScan::os_scan<br/>[osscan2.cc]"]
+  node_chunk_and_do_scan["OSScan::chunk_and_do_scan<br/>[osscan2.cc]"]
+  node_hostosscan["HostOsScan<br/>[osscan2.cc]"]
+end
+
+subgraph group_nse["NSE Engine"]
+  node_open_nse["open_nse<br/>[nse_main.cc]"]
+  node_run_main["run_main<br/>[nse_main.cc]"]
+  node_nse_main_lua["main&#40;hosts, scantype&#41;<br/>[nse_main.lua]"]
+  node_get_chosen_scripts["get_chosen_scripts<br/>[nse_main.lua]"]
+  node_run_loop["run&#40;threads_iter&#41;<br/>[nse_main.lua]"]
+  node_threads_iters["threads_iters<br/>[nse_main.lua]"]
+  node_script_scan["script_scan<br/>[nmap.cc]"]
+end
+
+node_nmap_main -->|"-T sets delay and RTT caps"| node_timing_templates
+node_nmap_main -->|"requests next batch"| node_hostgroup_state
+node_nmap_main -->|"parses -p expressions"| node_getpts
+node_nmap_main -->|"once per selected scan type"| node_ultra_scan
+node_nmap_main -->|"-sV after port scan"| node_service_scan
+node_nmap_main -->|"-O after service scan"| node_osscan
+node_nmap_main -->|"three script phases"| node_script_scan
+node_hostgroup_state -->|"yields targets"| node_get_next_host
+node_get_next_host -->|"Targets vector"| node_ultra_scan
+node_getpts -->|"scan_lists"| node_ultra_scan
+node_timing_templates -->|"parallelism and RTT bounds"| node_ultra_scan
+node_ultra_scan -->|"creates"| node_usi
+node_usi -->|"pools live probes"| node_ultraprobe
+node_ultra_scan -->|"raw scans only"| node_begin_sniffer
+node_ultra_scan -->|"runs each iteration"| node_probe_loop
+node_probe_loop -->|"resend timed-out probes"| node_retransmits
+node_retransmits -->|"drops rescale rate"| node_ultra_timing_vals
+node_scan_performance_vars -->|"thresholds"| node_ultra_timing_vals
+node_ultraprobe -->|"TCP probe variants"| node_send_tcp_raw
+node_send_tcp_raw -->|"hand off packet"| node_send_ip_packet
+node_begin_sniffer -->|"captures replies"| node_usi
+node_usi -->|"records states"| node_setportstate
+node_service_scan -->|"builds queues"| node_servicegroup
+node_service_scan -->|"one per open port"| node_servicenfo
+node_service_scan -->|"nsock-driven"| node_startnextprobe
+node_serviceprobesdb -->|"probe order and payloads"| node_startnextprobe
+node_startnextprobe -->|"match line hits"| node_setserviceproberesults
+node_servicegroup -->|"finished services"| node_setserviceproberesults
+node_osscan -->|"chunking"| node_chunk_and_do_scan
+node_chunk_and_do_scan -->|"probe sequence per host"| node_hostosscan
+node_setportstate -->|"open ports gate fingerprinting"| node_osscan
+node_script_scan -->|"ensures Lua state"| node_open_nse
+node_open_nse -->|"registers C entry"| node_run_main
+node_run_main -->|"executes main&#40;hosts&#41;"| node_nse_main_lua
+node_nse_main_lua -->|"resolves scripts"| node_get_chosen_scripts
+node_nse_main_lua -->|"generates threads"| node_threads_iters
+node_nse_main_lua -->|"schedules coroutines"| node_run_loop
+node_setportstate -->|"portrules see open ports"| node_threads_iters
+
+click node_nmap_main "https://github.com/nmap/nmap/blob/master/nmap.cc"
+click node_timing_templates "https://github.com/nmap/nmap/blob/master/nmap.cc"
+click node_hostgroup_state "https://github.com/nmap/nmap/blob/master/targets.cc"
+click node_get_next_host "https://github.com/nmap/nmap/blob/master/targets.cc"
+click node_defer "https://github.com/nmap/nmap/blob/master/targets.cc"
+click node_getpts "https://github.com/nmap/nmap/blob/master/scan_lists.cc"
+click node_ultra_scan "https://github.com/nmap/nmap/blob/master/scan_engine.cc"
+click node_usi "https://github.com/nmap/nmap/blob/master/scan_engine.cc"
+click node_ultraprobe "https://github.com/nmap/nmap/blob/master/scan_engine.h"
+click node_begin_sniffer "https://github.com/nmap/nmap/blob/master/scan_engine.cc"
+click node_probe_loop "https://github.com/nmap/nmap/blob/master/scan_engine.cc"
+click node_retransmits "https://github.com/nmap/nmap/blob/master/scan_engine.cc"
+click node_ultra_timing_vals "https://github.com/nmap/nmap/blob/master/timing.cc"
+click node_scan_performance_vars "https://github.com/nmap/nmap/blob/master/timing.cc"
+click node_send_ip_packet "https://github.com/nmap/nmap/blob/master/tcpip.cc"
+click node_send_tcp_raw "https://github.com/nmap/nmap/blob/master/tcpip.cc"
+click node_setportstate "https://github.com/nmap/nmap/blob/master/portlist.cc"
+click node_setserviceproberesults "https://github.com/nmap/nmap/blob/master/portlist.cc"
+click node_service_scan "https://github.com/nmap/nmap/blob/master/service_scan.cc"
+click node_servicenfo "https://github.com/nmap/nmap/blob/master/service_scan.cc"
+click node_servicegroup "https://github.com/nmap/nmap/blob/master/service_scan.cc"
+click node_startnextprobe "https://github.com/nmap/nmap/blob/master/service_scan.cc"
+click node_osscan "https://github.com/nmap/nmap/blob/master/osscan2.cc"
+click node_chunk_and_do_scan "https://github.com/nmap/nmap/blob/master/osscan2.cc"
+click node_hostosscan "https://github.com/nmap/nmap/blob/master/osscan2.cc"
+click node_open_nse "https://github.com/nmap/nmap/blob/master/nse_main.cc"
+click node_run_main "https://github.com/nmap/nmap/blob/master/nse_main.cc"
+click node_nse_main_lua "https://github.com/nmap/nmap/blob/master/nse_main.lua"
+click node_get_chosen_scripts "https://github.com/nmap/nmap/blob/master/nse_main.lua"
+click node_run_loop "https://github.com/nmap/nmap/blob/master/nse_main.lua"
+click node_threads_iters "https://github.com/nmap/nmap/blob/master/nse_main.lua"
+click node_script_scan "https://github.com/nmap/nmap/blob/master/nmap.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_nmap_main,node_timing_templates,node_osscan,node_chunk_and_do_scan,node_hostosscan toneBlue
+class node_hostgroup_state,node_get_next_host,node_defer,node_getpts,node_open_nse,node_run_main,node_nse_main_lua,node_get_chosen_scripts,node_run_loop,node_threads_iters,node_script_scan toneAmber
+class node_ultra_scan,node_usi,node_ultraprobe,node_begin_sniffer,node_probe_loop,node_retransmits,node_ultra_timing_vals,node_scan_performance_vars toneMint
+class node_send_ip_packet,node_send_tcp_raw toneRose
+class node_setportstate,node_setserviceproberesults toneIndigo
+class node_service_scan,node_servicenfo,node_servicegroup,node_startnextprobe,node_serviceprobesdb toneTeal
