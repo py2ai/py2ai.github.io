@@ -1,0 +1,42 @@
+{
+  "owner": "osquery",
+  "repo": "osquery",
+  "branch": "master",
+  "groups": [
+    {"id": "runtime", "name": "runtime", "label": "Process runtime"},
+    {"id": "sql_engine", "name": "sql_engine", "label": "SQL engine"},
+    {"id": "table_layer", "name": "table_layer", "label": "Table layer"},
+    {"id": "scheduling", "name": "scheduling", "label": "Query scheduling"},
+    {"id": "config", "name": "config", "label": "Configuration"},
+    {"id": "telemetry", "name": "telemetry", "label": "Results & enrollment"}
+  ],
+  "nodes": [
+    {"id": "entrypoint", "label": "osqueryd / startShell", "file": "main.cpp", "path": "osquery/main/main.cpp", "group": "runtime", "groupId": "runtime", "desc": "Process entry: Initializer starts daemon mode, shell mode, or both", "shape": "hexagon"},
+    {"id": "shell", "label": "Interactive shell", "file": "shell.cpp", "path": "osquery/devtools/shell.cpp", "group": "runtime", "groupId": "runtime", "desc": "Readline loop that issues SQL straight into the in-memory SQLite engine", "shape": "box"},
+    {"id": "watcher", "label": "Watchdog", "file": "watcher.h", "path": "osquery/core/watcher.h", "group": "runtime", "groupId": "runtime", "desc": "Parent process respawning workers and enforcing CPU/memory limits", "shape": "box"},
+    {"id": "db_manager", "label": "SQLiteDBManager", "file": "sqlite_util.cpp", "path": "osquery/sql/sqlite_util.cpp", "group": "sql_engine", "groupId": "sql_engine", "desc": "Hands out thread-local in-memory SQLite connections", "shape": "database"},
+    {"id": "virtual_tables", "label": "SQLite virtual table module", "file": "virtual_table.cpp", "path": "osquery/sql/virtual_table.cpp", "group": "sql_engine", "groupId": "sql_engine", "desc": "xBestIndex/xFilter/xColumn callbacks bridging SQLite to live C++ generators", "shape": "box"},
+    {"id": "table_plugins", "label": "TablePlugin registry", "file": "tables.h", "path": "osquery/core/tables.h", "group": "table_layer", "groupId": "table_layer", "desc": "Registry of table plugins answering columns and generate calls", "shape": "box"},
+    {"id": "specs", "label": ".table spec files", "file": "processes.table", "path": "specs/processes.table", "group": "table_layer", "groupId": "table_layer", "desc": "Declarative column schemas expanded at build time into C++ plugins", "shape": "document"},
+    {"id": "platform_impls", "label": "Platform generators", "file": "processes.cpp", "path": "osquery/tables/system/linux/processes.cpp", "group": "table_layer", "groupId": "table_layer", "desc": "genProcesses() walking /proc on Linux; WinAPI and sysctl twins elsewhere", "shape": "box"},
+    {"id": "config", "label": "Config loader", "file": "config.cpp", "path": "osquery/config/config.cpp", "group": "config", "groupId": "config", "desc": "Config::load pulls sources and packs, feeds the schedule", "shape": "document"},
+    {"id": "scheduler", "label": "SchedulerRunner", "file": "scheduler.cpp", "path": "osquery/dispatcher/scheduler.cpp", "group": "scheduling", "groupId": "scheduling", "desc": "One-second tick loop firing queries on splayed intervals", "shape": "box"},
+    {"id": "logger", "label": "Logger plugin", "file": "logger.cpp", "path": "osquery/logger/logger.cpp", "group": "telemetry", "groupId": "telemetry", "desc": "logString ships result snapshots to the active logger plugin", "shape": "box"},
+    {"id": "enroll", "label": "TLS enroll", "file": "enroll.cpp", "path": "osquery/remote/enroll/enroll.cpp", "group": "telemetry", "groupId": "telemetry", "desc": "Secret-based node key enrollment over the TLSTransport", "shape": "box"}
+  ],
+  "edges": [
+    {"from": "entrypoint", "to": "shell", "label": "startShell (osqueryi)"},
+    {"from": "entrypoint", "to": "watcher", "label": "daemon spawns worker"},
+    {"from": "entrypoint", "to": "config", "label": "load packs + schedule"},
+    {"from": "shell", "to": "db_manager", "label": "get() in-memory DB"},
+    {"from": "db_manager", "to": "virtual_tables", "label": "attachVirtualTables"},
+    {"from": "virtual_tables", "to": "table_plugins", "label": "Registry.call columns"},
+    {"from": "specs", "to": "table_plugins", "label": "gentable.py codegen"},
+    {"from": "specs", "to": "platform_impls", "label": "implementation() binding"},
+    {"from": "table_plugins", "to": "platform_impls", "label": "generate via QueryContext"},
+    {"from": "config", "to": "scheduler", "label": "scheduledQueries()"},
+    {"from": "scheduler", "to": "virtual_tables", "label": "launchQuery SQL"},
+    {"from": "scheduler", "to": "logger", "label": "result snapshots"},
+    {"from": "logger", "to": "enroll", "label": "node key + TLS relay"}
+  ]
+}

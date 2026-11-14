@@ -1,0 +1,139 @@
+flowchart TD
+
+subgraph group_runtime["Process runtime"]
+  node_initializer{{"Initializer ctor<br/>[init.cpp]"}}
+  node_start_daemon["startDaemon<br/>[main.cpp]"]
+  node_start_shell["startShell<br/>[main.cpp]"]
+  node_watcher["Watcher &#40;parent&#41;<br/>[watcher.h]"]
+  node_watcher_runner["WatcherRunner<br/>[watcher.h]"]
+end
+
+subgraph group_sql_engine["SQLite engine"]
+  node_db_manager[("SQLiteDBManager<br/>[sqlite_util.h]")]
+  node_sqlite_open[(":memory: connection<br/>[sqlite_util.cpp]")]
+  node_query_internal["queryInternal<br/>[sqlite_util.cpp]"]
+end
+
+subgraph group_vtable_module["Virtual table module"]
+  node_attach_virtual_tables{{"attachVirtualTables<br/>[virtual_table.cpp]"}}
+  node_attach_table_internal["attachTableInternal<br/>[virtual_table.cpp]"]
+  node_module_map["sqlite_module_map<br/>[virtual_table.cpp]"]
+  node_vtable_struct["VirtualTable struct<br/>[virtual_table.h]"]
+  node_cursor["BaseCursor<br/>[virtual_table.h]"]
+  node_xcreate["xCreate<br/>[virtual_table.cpp]"]
+  node_xbestindex["xBestIndex<br/>[virtual_table.cpp]"]
+  node_xfilter["xFilter<br/>[virtual_table.cpp]"]
+  node_xcolumn["xColumn<br/>[virtual_table.cpp]"]
+end
+
+subgraph group_table_layer["Tables &amp; codegen"]
+  node_table_plugins["TablePlugin<br/>[tables.h]"]
+  node_query_context["QueryContext<br/>[tables.h]"]
+  node_is_cached["Table cache<br/>[tables.h]"]
+  node_specs["processes.table spec<br/>[processes.table]"]
+  node_gentable{{"gentable.py<br/>[gentable.py]"}}
+  node_linux_processes["Linux genProcesses<br/>[processes.cpp]"]
+  node_windows_processes["Windows processes<br/>[processes.cpp]"]
+  node_darwin_processes["Darwin processes<br/>[processes.cpp]"]
+end
+
+subgraph group_scheduling["Scheduling"]
+  node_scheduler_runner["SchedulerRunner::start<br/>[scheduler.cpp]"]
+  node_splayed_interval["splay trigger<br/>[scheduler.cpp]"]
+  node_launch_query["launchQuery<br/>[scheduler.cpp]"]
+end
+
+subgraph group_config["Configuration"]
+  node_config_load["Config::load<br/>[config.cpp]"]
+  node_packs["Pack::initialize<br/>[packs.cpp]"]
+end
+
+subgraph group_telemetry["Logging &amp; enrollment"]
+  node_logger_logstring["logString<br/>[logger.cpp]"]
+  node_enroll_plugin["EnrollPlugin::call<br/>[enroll.cpp]"]
+  node_tls_transport["TLSTransport<br/>[tls.h]"]
+end
+
+node_initializer -->|"runner.start&#40;&#41;"| node_start_daemon
+node_initializer -->|"shell mode"| node_start_shell
+node_start_daemon -->|"initWorkerWatcher"| node_watcher
+node_watcher -->|"limit enforcement"| node_watcher_runner
+node_start_shell -->|"in-memory DB"| node_db_manager
+node_db_manager -->|"one :memory: handle"| node_sqlite_open
+node_db_manager -->|"attach on get&#40;&#41;"| node_attach_virtual_tables
+node_attach_virtual_tables -->|"per plugin name"| node_attach_table_internal
+node_attach_table_internal -->|"fills callbacks"| node_module_map
+node_module_map -->|"xCreate = xConnect"| node_xcreate
+node_module_map -->|"planner hook"| node_xbestindex
+node_module_map -->|"scan hook"| node_xfilter
+node_module_map -->|"read hook"| node_xcolumn
+node_xcreate -->|"allocates"| node_vtable_struct
+node_xfilter -->|"fills rows/generator"| node_cursor
+node_xcolumn -->|"reads current row"| node_cursor
+node_xcreate -->|"columns action"| node_table_plugins
+node_xbestindex -->|"constraint IDX"| node_query_context
+node_xfilter -->|"constraints in"| node_query_context
+node_query_internal -->|"prepared on instance"| node_db_manager
+node_table_plugins -->|"skip repeat scans"| node_is_cached
+node_specs -->|"parsed at build"| node_gentable
+node_gentable -->|"emits C++"| node_table_plugins
+node_specs -->|"implementation&#40;&#41;"| node_linux_processes
+node_query_context -->|"pid constraint"| node_linux_processes
+node_query_context -->|"pid constraint"| node_windows_processes
+node_query_context -->|"pid constraint"| node_darwin_processes
+node_config_load -->|"genPack each"| node_packs
+node_packs -->|"schedule items"| node_scheduler_runner
+node_scheduler_runner -->|"tick check"| node_splayed_interval
+node_splayed_interval -->|"fire"| node_launch_query
+node_launch_query -->|"SQL text"| node_query_internal
+node_launch_query -->|"snapshot"| node_logger_logstring
+node_enroll_plugin -->|"HTTPS"| node_tls_transport
+node_logger_logstring -->|"log endpoint"| node_tls_transport
+
+click node_initializer "https://github.com/osquery/osquery/blob/master/osquery/core/init.cpp"
+click node_start_daemon "https://github.com/osquery/osquery/blob/master/osquery/main/main.cpp"
+click node_start_shell "https://github.com/osquery/osquery/blob/master/osquery/main/main.cpp"
+click node_watcher "https://github.com/osquery/osquery/blob/master/osquery/core/watcher.h"
+click node_watcher_runner "https://github.com/osquery/osquery/blob/master/osquery/core/watcher.h"
+click node_db_manager "https://github.com/osquery/osquery/blob/master/osquery/sql/sqlite_util.h"
+click node_sqlite_open "https://github.com/osquery/osquery/blob/master/osquery/sql/sqlite_util.cpp"
+click node_query_internal "https://github.com/osquery/osquery/blob/master/osquery/sql/sqlite_util.cpp"
+click node_attach_virtual_tables "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_attach_table_internal "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_module_map "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_vtable_struct "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.h"
+click node_cursor "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.h"
+click node_xcreate "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_xbestindex "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_xfilter "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_xcolumn "https://github.com/osquery/osquery/blob/master/osquery/sql/virtual_table.cpp"
+click node_table_plugins "https://github.com/osquery/osquery/blob/master/osquery/core/tables.h"
+click node_query_context "https://github.com/osquery/osquery/blob/master/osquery/core/tables.h"
+click node_is_cached "https://github.com/osquery/osquery/blob/master/osquery/core/tables.h"
+click node_specs "https://github.com/osquery/osquery/blob/master/specs/processes.table"
+click node_gentable "https://github.com/osquery/osquery/blob/master/tools/codegen/gentable.py"
+click node_linux_processes "https://github.com/osquery/osquery/blob/master/osquery/tables/system/linux/processes.cpp"
+click node_windows_processes "https://github.com/osquery/osquery/blob/master/osquery/tables/system/windows/processes.cpp"
+click node_darwin_processes "https://github.com/osquery/osquery/blob/master/osquery/tables/system/darwin/processes.cpp"
+click node_config_load "https://github.com/osquery/osquery/blob/master/osquery/config/config.cpp"
+click node_packs "https://github.com/osquery/osquery/blob/master/osquery/config/packs.cpp"
+click node_scheduler_runner "https://github.com/osquery/osquery/blob/master/osquery/dispatcher/scheduler.cpp"
+click node_splayed_interval "https://github.com/osquery/osquery/blob/master/osquery/dispatcher/scheduler.cpp"
+click node_launch_query "https://github.com/osquery/osquery/blob/master/osquery/dispatcher/scheduler.cpp"
+click node_logger_logstring "https://github.com/osquery/osquery/blob/master/osquery/logger/logger.cpp"
+click node_enroll_plugin "https://github.com/osquery/osquery/blob/master/osquery/remote/enroll/enroll.cpp"
+click node_tls_transport "https://github.com/osquery/osquery/blob/master/osquery/remote/transports/tls.h"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_initializer,node_start_daemon,node_start_shell,node_watcher,node_watcher_runner,node_logger_logstring,node_enroll_plugin,node_tls_transport toneBlue
+class node_db_manager,node_sqlite_open,node_query_internal toneAmber
+class node_attach_virtual_tables,node_attach_table_internal,node_module_map,node_vtable_struct,node_cursor,node_xcreate,node_xbestindex,node_xfilter,node_xcolumn toneMint
+class node_table_plugins,node_query_context,node_is_cached,node_specs,node_gentable,node_linux_processes,node_windows_processes,node_darwin_processes toneRose
+class node_scheduler_runner,node_splayed_interval,node_launch_query toneIndigo
+class node_config_load,node_packs toneTeal
