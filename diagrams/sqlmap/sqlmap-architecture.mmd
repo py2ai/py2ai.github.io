@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_controller["Scan controller"]
+  node_start["start&#40;&#41;<br/>[controller.py]"]
+  node_checks{{"checkSqlInjection&#40;&#41;<br/>[checks.py]"}}
+  node_heuristic{{"heuristicCheckSqlInjection&#40;&#41;<br/>[checks.py]"}}
+end
+
+subgraph group_core["Payload engine"]
+  node_agent["Agent.payload&#40;&#41;<br/>[agent.py]"]
+  node_prefixquery["prefixQuery&#40;&#41;<br/>[agent.py]"]
+  node_suffixquery["suffixQuery&#40;&#41;<br/>[agent.py]"]
+  node_enums["PAYLOAD.TECHNIQUE<br/>[enums.py]"]
+  node_sortedtests["getSortedInjectionTests&#40;&#41;<br/>[common.py]"]
+  node_kb["kb / conf<br/>[data.py]"]
+  node_option["initialization<br/>[option.py]"]
+end
+
+subgraph group_data_xml["XML dictionaries"]
+  node_boundaries_xml[("boundaries.xml<br/>[boundaries.xml]")]
+  node_payloads_dir[("payloads/*.xml")]
+  node_boolean_xml["boolean_blind.xml<br/>[boolean_blind.xml]"]
+  node_time_xml["time_blind.xml<br/>[time_blind.xml]"]
+  node_error_xml["error_based.xml<br/>[error_based.xml]"]
+  node_union_xml["union_query.xml<br/>[union_query.xml]"]
+  node_stacked_xml["stacked_queries.xml"]
+  node_queries_xml[("queries.xml<br/>[queries.xml]")]
+  node_errors_xml[("errors.xml<br/>[errors.xml]")]
+end
+
+subgraph group_request["HTTP layer"]
+  node_connect["Connect.getPage&#40;&#41;<br/>[connect.py]"]
+  node_querypage["queryPage&#40;&#41;<br/>[connect.py]"]
+  node_comparison{{"comparison&#40;&#41;<br/>[comparison.py]"}}
+  node_inject{{"getValue&#40;&#41;<br/>[inject.py]"}}
+  node_gobool["_goBooleanProxy&#40;&#41;<br/>[inject.py]"]
+  node_goinference["_goInference&#40;&#41;<br/>[inject.py]"]
+  node_gostacked["goStacked&#40;&#41;<br/>[inject.py]"]
+  node_timeless{{"readBit&#40;&#41;<br/>[timeless.py]"}}
+end
+
+subgraph group_techniques["Extraction engines"]
+  node_bisection["bisection&#40;&#41;<br/>[inference.py]"]
+  node_multibit["attempt&#40;&#41;<br/>[multibit.py]"]
+  node_uniontest["unionTest&#40;&#41;<br/>[test.py]"]
+  node_unionuse["unionUse&#40;&#41;<br/>[use.py]"]
+  node_erroruse["errorUse&#40;&#41;<br/>[use.py]"]
+  node_err_oneshot["_oneShotErrorUse&#40;&#41;<br/>[use.py]"]
+end
+
+subgraph group_tamper["Payload mutators"]
+  node_space2comment["space2comment<br/>[space2comment.py]"]
+end
+
+node_start -->|"hands each parameter to the detection loop"| node_checks
+node_start -.->|"calibration and dynamicity traffic"| node_querypage
+node_checks -->|"pop&#40;&#41; ordered test queue"| node_sortedtests
+node_sortedtests -->|"tests parsed from 6 XMLs"| node_payloads_dir
+node_payloads_dir -->|"75 boolean tests"| node_boolean_xml
+node_payloads_dir -->|"118 time tests"| node_time_xml
+node_payloads_dir -->|"92 error tests"| node_error_xml
+node_payloads_dir -->|"36 union tests"| node_union_xml
+node_payloads_dir -->|"38 stacked tests"| node_stacked_xml
+node_option -->|"loadBoundaries&#40;&#41; at startup"| node_boundaries_xml
+node_option -->|"loadPayloads&#40;&#41; at startup"| node_payloads_dir
+node_option -.->|"tamper scripts into kb.tamperFunctions"| node_kb
+node_checks -->|"boundary filter loop L408"| node_boundaries_xml
+node_checks -->|"forge template+boundary probes"| node_agent
+node_boundaries_xml -->|"prefix/suffix wrap payload"| node_agent
+node_agent -->|"prefix per WHERE clause"| node_prefixquery
+node_agent -->|"suffix and comment"| node_suffixquery
+node_agent -->|"DBMS syntax templates"| node_queries_xml
+node_agent -.->|"technique codes 1-6"| node_enums
+node_checks -->|"one probe per test/boundary/where"| node_connect
+node_connect -.->|"tamper chain runs L1278"| node_space2comment
+node_connect -->|"response classification"| node_querypage
+node_querypage -->|"similarity ratio"| node_comparison
+node_heuristic -.->|"quote-laden probe L1146"| node_querypage
+node_heuristic -->|"DBMS fingerprint from errors"| node_errors_xml
+node_checks -.->|"reduceTests after fingerprint"| node_errors_xml
+node_querypage -->|"boolean/time oracle"| node_bisection
+node_querypage -.->|"response-pair timing votes"| node_timeless
+node_inject -->|"single boolean check"| node_gobool
+node_inject -->|"blind extraction path"| node_goinference
+node_inject -->|"stacked execution"| node_gostacked
+node_inject -->|"_goInference calls bisection"| node_bisection
+node_gobool -->|"checkBooleanExpression"| node_querypage
+node_goinference -.->|"multibit shortcut when eligible"| node_multibit
+node_bisection -->|"ORD/ASCII/SLEEP vectors"| node_queries_xml
+node_multibit -->|"multiple bits per request"| node_querypage
+node_uniontest -->|"forgeUnionQuery L943"| node_agent
+node_uniontest -->|"column-count candidates"| node_union_xml
+node_unionuse -->|"fires UNION extraction requests"| node_connect
+node_erroruse -->|"one request per chunk"| node_err_oneshot
+node_erroruse -->|"error regexes parse output"| node_errors_xml
+node_gostacked -->|"second statement classified"| node_querypage
+node_timeless -.->|"statistical verdict"| node_querypage
+
+click node_start "https://github.com/sqlmapproject/sqlmap/blob/master/lib/controller/controller.py"
+click node_checks "https://github.com/sqlmapproject/sqlmap/blob/master/lib/controller/checks.py"
+click node_heuristic "https://github.com/sqlmapproject/sqlmap/blob/master/lib/controller/checks.py"
+click node_agent "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/agent.py"
+click node_prefixquery "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/agent.py"
+click node_suffixquery "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/agent.py"
+click node_enums "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/enums.py"
+click node_sortedtests "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/common.py"
+click node_kb "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/data.py"
+click node_option "https://github.com/sqlmapproject/sqlmap/blob/master/lib/core/option.py"
+click node_boundaries_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/boundaries.xml"
+click node_boolean_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/payloads/boolean_blind.xml"
+click node_time_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/payloads/time_blind.xml"
+click node_error_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/payloads/error_based.xml"
+click node_union_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/payloads/union_query.xml"
+click node_stacked_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/payloads/stacked_queries.xml"
+click node_queries_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/queries.xml"
+click node_errors_xml "https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/errors.xml"
+click node_connect "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/connect.py"
+click node_querypage "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/connect.py"
+click node_comparison "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/comparison.py"
+click node_inject "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/inject.py"
+click node_gobool "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/inject.py"
+click node_goinference "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/inject.py"
+click node_gostacked "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/inject.py"
+click node_timeless "https://github.com/sqlmapproject/sqlmap/blob/master/lib/request/timeless.py"
+click node_bisection "https://github.com/sqlmapproject/sqlmap/blob/master/lib/techniques/blind/inference.py"
+click node_multibit "https://github.com/sqlmapproject/sqlmap/blob/master/lib/techniques/blind/multibit.py"
+click node_uniontest "https://github.com/sqlmapproject/sqlmap/blob/master/lib/techniques/union/test.py"
+click node_unionuse "https://github.com/sqlmapproject/sqlmap/blob/master/lib/techniques/union/use.py"
+click node_erroruse "https://github.com/sqlmapproject/sqlmap/blob/master/lib/techniques/error/use.py"
+click node_err_oneshot "https://github.com/sqlmapproject/sqlmap/blob/master/lib/techniques/error/use.py"
+click node_space2comment "https://github.com/sqlmapproject/sqlmap/blob/master/tamper/space2comment.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_start,node_checks,node_heuristic toneBlue
+class node_agent,node_prefixquery,node_suffixquery,node_enums,node_sortedtests,node_kb,node_option toneAmber
+class node_boundaries_xml,node_payloads_dir,node_boolean_xml,node_time_xml,node_error_xml,node_union_xml,node_stacked_xml,node_queries_xml,node_errors_xml toneMint
+class node_connect,node_querypage,node_comparison,node_inject,node_gobool,node_goinference,node_gostacked,node_timeless toneRose
+class node_bisection,node_multibit,node_uniontest,node_unionuse,node_erroruse,node_err_oneshot toneIndigo
+class node_space2comment toneTeal
