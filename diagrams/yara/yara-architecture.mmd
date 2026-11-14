@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_cli["CLI"]
+  node_cli_main{{"_tmain<br/>[yara.c]"}}
+  node_cli_scanner["yr_scanner_create<br/>[yara.c]"]
+end
+
+subgraph group_frontend["Compile Frontend"]
+  node_comp_add_string["yr_compiler_add_string<br/>[compiler.c]"]
+  node_lexer_entry["yr_lex_parse_rules_string<br/>[lexer.l]"]
+  node_grammar_rule["rule production<br/>[grammar.y]"]
+  node_phase_1["reduce_rule_declaration_phase_1<br/>[parser.c]"]
+  node_phase_2["reduce_rule_declaration_phase_2<br/>[parser.c]"]
+  node_string_decl["reduce_string_declaration<br/>[parser.c]"]
+  node_write_string["_yr_parser_write_string<br/>[parser.c]"]
+  node_reduce_import["yr_parser_reduce_import<br/>[parser.c]"]
+end
+
+subgraph group_regexp["Regexp Engine"]
+  node_re_emit["yr_re_ast_emit_code<br/>[re.c]"]
+  node_re_exec["yr_re_exec<br/>[re.c]"]
+  node_re_fast["yr_re_fast_exec<br/>[re.c]"]
+end
+
+subgraph group_atoms["Atoms"]
+  node_atoms_entry["yr_atoms_extract_from_re<br/>[atoms.c]"]
+  node_atoms_from_re["_yr_atoms_extract_from_re<br/>[atoms.c]"]
+  node_atoms_quality["yr_atoms_heuristic_quality<br/>[atoms.c]"]
+end
+
+subgraph group_automaton["Aho-Corasick"]
+  node_ac_add_string["yr_ac_add_string<br/>[ahocorasick.c]"]
+  node_ac_compile["yr_ac_compile<br/>[ahocorasick.c]"]
+  node_ac_failure_links["_yr_ac_create_failure_links<br/>[ahocorasick.c]"]
+  node_ac_optimize["_yr_ac_optimize_failure_links<br/>[ahocorasick.c]"]
+  node_ac_build_table["_yr_ac_build_transition_table<br/>[ahocorasick.c]"]
+end
+
+subgraph group_compiler["Rule Serialization"]
+  node_comp_compile_rules["_yr_compiler_compile_rules<br/>[compiler.c]"]
+  node_comp_get_rules["yr_compiler_get_rules<br/>[compiler.c]"]
+end
+
+subgraph group_scan["Scan Loop"]
+  node_rules_scan_mem["yr_rules_scan_mem<br/>[rules.c]"]
+  node_scan_blocks["yr_scanner_scan_mem_blocks<br/>[scanner.c]"]
+  node_ac_loop{{"_yr_scanner_scan_mem_block<br/>[scanner.c]"}}
+  node_verify_match["yr_scan_verify_match<br/>[scan.c]"]
+  node_verify_re["_yr_scan_verify_re_match<br/>[scan.c]"]
+  node_verify_literal["_yr_scan_verify_literal_match<br/>[scan.c]"]
+end
+
+subgraph group_vm["Condition VM &amp; Modules"]
+  node_vm_exec{{"yr_execute_code<br/>[exec.c]"}}
+  node_op_init_rule["OP_INIT_RULE<br/>[exec.c]"]
+  node_op_match_rule["OP_MATCH_RULE<br/>[exec.c]"]
+  node_op_import["OP_IMPORT<br/>[exec.c]"]
+  node_modules_load["yr_modules_load<br/>[modules.c]"]
+end
+
+node_cli_main -->|"compile_files feeds source"| node_comp_add_string
+node_comp_add_string -->|"yr_lex_parse_rules_string"| node_lexer_entry
+node_lexer_entry -->|"tokens: _RULE_, _CONDITION_"| node_grammar_rule
+node_grammar_rule -->|"action after identifier"| node_phase_1
+node_grammar_rule -->|"action on closing brace"| node_phase_2
+node_grammar_rule -->|"strings section"| node_string_decl
+node_string_decl -->|"store + index string"| node_write_string
+node_grammar_rule -->|"import action"| node_reduce_import
+node_write_string -->|"forward + backward code"| node_re_emit
+node_write_string -->|"extract atoms"| node_atoms_entry
+node_atoms_entry -->|"walk RE AST"| node_atoms_from_re
+node_atoms_from_re -->|"score candidates"| node_atoms_quality
+node_write_string -->|"atoms join trie"| node_ac_add_string
+node_ac_add_string -->|"trie finalized on get_rules"| node_ac_compile
+node_ac_compile -->|"step 1: BFS fail links"| node_ac_failure_links
+node_ac_compile -->|"step 2: prune links"| node_ac_optimize
+node_ac_compile -->|"step 3: flatten table"| node_ac_build_table
+node_comp_get_rules -->|"first call compiles"| node_comp_compile_rules
+node_comp_compile_rules -->|"automaton into arena"| node_ac_compile
+node_comp_get_rules -->|"YR_RULES handed over"| node_cli_scanner
+node_rules_scan_mem -->|"legacy wrapper"| node_scan_blocks
+node_cli_scanner -->|"scan each target"| node_scan_blocks
+node_scan_blocks -->|"per block"| node_ac_loop
+node_ac_loop -->|"match_table&#91;state&#93; hit"| node_verify_match
+node_verify_match -->|"literal path"| node_verify_literal
+node_verify_match -->|"regexp path"| node_verify_re
+node_verify_re -->|"STRING_IS_FAST_REGEXP"| node_re_fast
+node_verify_re -->|"full fiber engine"| node_re_exec
+node_scan_blocks -->|"yr_execute_code after pass"| node_vm_exec
+node_vm_exec -->|"enter rule body"| node_op_init_rule
+node_op_init_rule -->|"condition bytecode"| node_op_match_rule
+node_verify_match -.->|"sets required_eval bitmask"| node_op_init_rule
+node_vm_exec -->|"module import"| node_op_import
+node_op_import -->|"yr_modules_load"| node_modules_load
+node_op_match_rule -->|"CALLBACK_MSG_RULE_MATCHING"| node_cli_scanner
+
+click node_cli_main "https://github.com/VirusTotal/yara/blob/master/cli/yara.c"
+click node_cli_scanner "https://github.com/VirusTotal/yara/blob/master/cli/yara.c"
+click node_comp_add_string "https://github.com/VirusTotal/yara/blob/master/libyara/compiler.c"
+click node_lexer_entry "https://github.com/VirusTotal/yara/blob/master/libyara/lexer.l"
+click node_grammar_rule "https://github.com/VirusTotal/yara/blob/master/libyara/grammar.y"
+click node_phase_1 "https://github.com/VirusTotal/yara/blob/master/libyara/parser.c"
+click node_phase_2 "https://github.com/VirusTotal/yara/blob/master/libyara/parser.c"
+click node_string_decl "https://github.com/VirusTotal/yara/blob/master/libyara/parser.c"
+click node_write_string "https://github.com/VirusTotal/yara/blob/master/libyara/parser.c"
+click node_reduce_import "https://github.com/VirusTotal/yara/blob/master/libyara/parser.c"
+click node_re_emit "https://github.com/VirusTotal/yara/blob/master/libyara/re.c"
+click node_re_exec "https://github.com/VirusTotal/yara/blob/master/libyara/re.c"
+click node_re_fast "https://github.com/VirusTotal/yara/blob/master/libyara/re.c"
+click node_atoms_entry "https://github.com/VirusTotal/yara/blob/master/libyara/atoms.c"
+click node_atoms_from_re "https://github.com/VirusTotal/yara/blob/master/libyara/atoms.c"
+click node_atoms_quality "https://github.com/VirusTotal/yara/blob/master/libyara/atoms.c"
+click node_ac_add_string "https://github.com/VirusTotal/yara/blob/master/libyara/ahocorasick.c"
+click node_ac_compile "https://github.com/VirusTotal/yara/blob/master/libyara/ahocorasick.c"
+click node_ac_failure_links "https://github.com/VirusTotal/yara/blob/master/libyara/ahocorasick.c"
+click node_ac_optimize "https://github.com/VirusTotal/yara/blob/master/libyara/ahocorasick.c"
+click node_ac_build_table "https://github.com/VirusTotal/yara/blob/master/libyara/ahocorasick.c"
+click node_comp_compile_rules "https://github.com/VirusTotal/yara/blob/master/libyara/compiler.c"
+click node_comp_get_rules "https://github.com/VirusTotal/yara/blob/master/libyara/compiler.c"
+click node_rules_scan_mem "https://github.com/VirusTotal/yara/blob/master/libyara/rules.c"
+click node_scan_blocks "https://github.com/VirusTotal/yara/blob/master/libyara/scanner.c"
+click node_ac_loop "https://github.com/VirusTotal/yara/blob/master/libyara/scanner.c"
+click node_verify_match "https://github.com/VirusTotal/yara/blob/master/libyara/scan.c"
+click node_verify_re "https://github.com/VirusTotal/yara/blob/master/libyara/scan.c"
+click node_verify_literal "https://github.com/VirusTotal/yara/blob/master/libyara/scan.c"
+click node_vm_exec "https://github.com/VirusTotal/yara/blob/master/libyara/exec.c"
+click node_op_init_rule "https://github.com/VirusTotal/yara/blob/master/libyara/exec.c"
+click node_op_match_rule "https://github.com/VirusTotal/yara/blob/master/libyara/exec.c"
+click node_op_import "https://github.com/VirusTotal/yara/blob/master/libyara/exec.c"
+click node_modules_load "https://github.com/VirusTotal/yara/blob/master/libyara/modules.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli_main,node_cli_scanner,node_rules_scan_mem,node_scan_blocks,node_ac_loop,node_verify_match,node_verify_re,node_verify_literal toneBlue
+class node_comp_add_string,node_lexer_entry,node_grammar_rule,node_phase_1,node_phase_2,node_string_decl,node_write_string,node_reduce_import,node_vm_exec,node_op_init_rule,node_op_match_rule,node_op_import,node_modules_load toneAmber
+class node_re_emit,node_re_exec,node_re_fast toneMint
+class node_atoms_entry,node_atoms_from_re,node_atoms_quality toneRose
+class node_ac_add_string,node_ac_compile,node_ac_failure_links,node_ac_optimize,node_ac_build_table toneIndigo
+class node_comp_compile_rules,node_comp_get_rules toneTeal
