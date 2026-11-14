@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_cli["tshark command line"]
+  node_tshark_main["main&#40;&#41;<br/>[tshark.c]"]
+  node_cf_open_fn["cf_open&#40;&#41;<br/>[tshark.c]"]
+  node_run_with_taps["epan_dissect_run_with_taps&#40;&#41;<br/>[tshark.c]"]
+end
+
+subgraph group_gui["Qt main window"]
+  node_qt_window["WiresharkMainWindow&#40;&#41;"]
+end
+
+subgraph group_capture_io["wiretap file readers"]
+  node_wtap_open["wtap_open_offline&#40;&#41;<br/>[file_access.c]"]
+  node_pcapng_shb["pcapng_read_section_header_block&#40;&#41;<br/>[pcapng.c]"]
+  node_pcap_common_encap["wtap_pcap_encap_to_wtap_encap&#40;&#41;<br/>[pcap-common.c]"]
+end
+
+subgraph group_engine_core["epan engine core"]
+  node_fdata_init["frame_data_init&#40;&#41;<br/>[frame_data.c]"]
+  node_edt_new["epan_dissect_new&#40;&#41;<br/>[epan.c]"]
+  node_edt_run["epan_dissect_run&#40;&#41;<br/>[epan.c]"]
+  node_tap_q_init["tap_queue_init&#40;&#41;<br/>[tap.c]"]
+  node_dissect_record_fn["dissect_record&#40;&#41;<br/>[packet.c]"]
+  node_add_data_source["add_new_data_source&#40;&#41;<br/>[packet.c]"]
+end
+
+subgraph group_dissector_layer["registry, tables and dissectors"]
+  node_call_work["call_dissector_work&#40;&#41;<br/>[packet.c]"]
+  node_dissector_add["dissector_add_uint&#40;&#41;<br/>[packet.c]"]
+  node_try_uint["dissector_try_uint&#40;&#41;<br/>[packet.c]"]
+  node_heur_add["heur_dissector_add&#40;&#41;<br/>[packet.c]"]
+  node_try_heur["dissector_try_heuristic&#40;&#41;<br/>[packet.c]"]
+  node_frame_dis["dissect_frame&#40;&#41;<br/>[packet-frame.c]"]
+  node_ethertype_fn["ethertype&#40;&#41;<br/>[packet-ethertype.c]"]
+  node_dissect_ip["dissect_ip&#40;&#41;<br/>[packet-ip.c]"]
+  node_ip_table["ip.proto table<br/>[packet-ip.c]"]
+  node_dissect_tcp["dissect_tcp&#40;&#41;<br/>[packet-tcp.c]"]
+  node_decode_ports["decode_tcp_ports&#40;&#41;<br/>[packet-tcp.c]"]
+  node_proc_payload["process_tcp_payload&#40;&#41;<br/>[packet-tcp.c]"]
+  node_tcp_table["tcp.port table<br/>[packet-tcp.c]"]
+  node_tcp_heur["tcp heur list<br/>[packet-tcp.c]"]
+  node_reg_proto["proto_register_protocol&#40;&#41;<br/>[proto.c]"]
+  node_reg_fields["proto_register_field_array&#40;&#41;<br/>[proto.c]"]
+  node_add_item["proto_tree_add_item_new&#40;&#41;<br/>[proto.c]"]
+end
+
+subgraph group_listeners["taps and columns"]
+  node_tap_push["tap_push_tapped_queue&#40;&#41;<br/>[tap.c]"]
+  node_col_setup_fn["col_setup&#40;&#41;<br/>[column-utils.c]"]
+end
+
+node_tshark_main -->|"file argument"| node_cf_open_fn
+node_cf_open_fn -->|"open capture"| node_wtap_open
+node_wtap_open -->|"pcapng blocks"| node_pcapng_shb
+node_pcapng_shb -->|"encap mapping"| node_pcap_common_encap
+node_wtap_open -->|"frame metadata"| node_fdata_init
+node_cf_open_fn -->|"create edt"| node_edt_new
+node_edt_new -->|"then run"| node_edt_run
+node_tshark_main -->|"per-packet loop"| node_run_with_taps
+node_run_with_taps -->|"with taps"| node_edt_run
+node_edt_run -->|"reset queue"| node_tap_q_init
+node_edt_run -->|"push results"| node_tap_push
+node_edt_run -->|"engine entry"| node_dissect_record_fn
+node_dissect_record_fn -->|"frame bytes"| node_add_data_source
+node_dissect_record_fn -->|"frame_handle"| node_call_work
+node_call_work -->|"layer 0"| node_frame_dis
+node_frame_dis -->|"eth payload"| node_ethertype_fn
+node_ethertype_fn -->|"etype lookup"| node_try_uint
+node_try_uint -->|"0x0800"| node_dissect_ip
+node_dissect_ip -->|"nxt field"| node_ip_table
+node_ip_table -->|"proto 6"| node_dissect_tcp
+node_dissect_tcp -->|"tcp fields"| node_add_item
+node_dissect_tcp -->|"ports"| node_decode_ports
+node_dissect_tcp -->|"direct path"| node_proc_payload
+node_decode_ports -->|"port lookup"| node_tcp_table
+node_tcp_table -->|"matched"| node_proc_payload
+node_decode_ports -->|"port miss"| node_tcp_heur
+node_tcp_heur -->|"heur list"| node_try_heur
+node_try_heur -->|"claimed"| node_proc_payload
+node_proc_payload -->|"next layer"| node_call_work
+node_reg_proto -->|"register then add"| node_dissector_add
+node_dissector_add -->|"tcp.port"| node_tcp_table
+node_dissector_add -->|"ip.proto"| node_ip_table
+node_heur_add -->|"heur registration"| node_tcp_heur
+node_reg_proto -->|"hf array"| node_reg_fields
+node_reg_fields -->|"hfinfo lookup"| node_add_item
+node_add_data_source -->|"bytes pane"| node_qt_window
+node_tap_push -->|"stats dialogs"| node_qt_window
+node_col_setup_fn -->|"packet-list columns"| node_qt_window
+
+click node_tshark_main "https://github.com/Wireshark/wireshark/blob/master/tshark.c"
+click node_cf_open_fn "https://github.com/Wireshark/wireshark/blob/master/tshark.c"
+click node_run_with_taps "https://github.com/Wireshark/wireshark/blob/master/tshark.c"
+click node_qt_window "https://github.com/Wireshark/wireshark/blob/master/ui/qt/wireshark_main_window.cpp"
+click node_wtap_open "https://github.com/Wireshark/wireshark/blob/master/wiretap/file_access.c"
+click node_pcapng_shb "https://github.com/Wireshark/wireshark/blob/master/wiretap/pcapng.c"
+click node_pcap_common_encap "https://github.com/Wireshark/wireshark/blob/master/wiretap/pcap-common.c"
+click node_fdata_init "https://github.com/Wireshark/wireshark/blob/master/epan/frame_data.c"
+click node_edt_new "https://github.com/Wireshark/wireshark/blob/master/epan/epan.c"
+click node_edt_run "https://github.com/Wireshark/wireshark/blob/master/epan/epan.c"
+click node_tap_q_init "https://github.com/Wireshark/wireshark/blob/master/epan/tap.c"
+click node_tap_push "https://github.com/Wireshark/wireshark/blob/master/epan/tap.c"
+click node_dissect_record_fn "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_add_data_source "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_call_work "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_dissector_add "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_try_uint "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_heur_add "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_try_heur "https://github.com/Wireshark/wireshark/blob/master/epan/packet.c"
+click node_frame_dis "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-frame.c"
+click node_ethertype_fn "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-ethertype.c"
+click node_dissect_ip "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-ip.c"
+click node_ip_table "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-ip.c"
+click node_dissect_tcp "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-tcp.c"
+click node_decode_ports "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-tcp.c"
+click node_proc_payload "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-tcp.c"
+click node_tcp_table "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-tcp.c"
+click node_tcp_heur "https://github.com/Wireshark/wireshark/blob/master/epan/dissectors/packet-tcp.c"
+click node_reg_proto "https://github.com/Wireshark/wireshark/blob/master/epan/proto.c"
+click node_reg_fields "https://github.com/Wireshark/wireshark/blob/master/epan/proto.c"
+click node_add_item "https://github.com/Wireshark/wireshark/blob/master/epan/proto.c"
+click node_col_setup_fn "https://github.com/Wireshark/wireshark/blob/master/epan/column-utils.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_tshark_main,node_cf_open_fn,node_run_with_taps toneBlue
+class node_qt_window toneAmber
+class node_wtap_open,node_pcapng_shb,node_pcap_common_encap toneMint
+class node_fdata_init,node_edt_new,node_edt_run,node_tap_q_init,node_dissect_record_fn,node_add_data_source toneRose
+class node_call_work,node_dissector_add,node_try_uint,node_heur_add,node_try_heur,node_frame_dis,node_ethertype_fn,node_dissect_ip,node_ip_table,node_dissect_tcp,node_decode_ports,node_proc_payload,node_tcp_table,node_tcp_heur,node_reg_proto,node_reg_fields,node_add_item toneIndigo
+class node_tap_push,node_col_setup_fn toneTeal
