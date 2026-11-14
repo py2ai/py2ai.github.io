@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_mainloop["Startup &amp; run loop"]
+  node_main["main&#40;&#41;<br/>[main.cc]"]
+  node_setup["zeek::detail::setup&#40;&#41;<br/>[zeek-setup.cc]"]
+  node_run_loop["run_loop&#40;&#41;<br/>[RunState.cc]"]
+  node_pkt_src["PktSrc::Process&#40;&#41;<br/>[PktSrc.cc]"]
+  node_dispatch_packet["run_state::detail::dispatch_packet&#40;&#41;<br/>[RunState.cc]"]
+end
+
+subgraph group_packet["Packet analyzer tree"]
+  node_pa_manager["Manager::ProcessPacket&#40;&#41;<br/>[Manager.cc]"]
+  node_pa_root["Root analyzer<br/>[Root.cc]"]
+  node_dispatcher["Dispatcher::Register/Lookup<br/>[Dispatcher.h]"]
+  node_fwd_packet["Analyzer::ForwardPacket&#40;&#41;<br/>[Analyzer.cc]"]
+  node_ethernet["EthernetAnalyzer::AnalyzePacket&#40;&#41;<br/>[Ethernet.cc]"]
+  node_ip_analyzer["IPAnalyzer::AnalyzePacket&#40;&#41;<br/>[IP.cc]"]
+  node_tcp_analyzer["TCPAnalyzer<br/>[TCP.cc]"]
+  node_udp_analyzer["UDPAnalyzer<br/>[UDP.cc]"]
+  node_ipbased["IPBasedAnalyzer::AnalyzePacket&#40;&#41;<br/>[IPBasedAnalyzer.cc]"]
+end
+
+subgraph group_session["Sessions &amp; TCP reassembly"]
+  node_new_conn["IPBasedAnalyzer::NewConn&#40;&#41;<br/>[IPBasedAnalyzer.cc]"]
+  node_session_mgr["session::Manager::Insert&#40;&#41;<br/>[Manager.cc]"]
+  node_tcp_adapter["TCPSessionAdapter::DeliverPacket&#40;&#41;"]
+  node_tcp_endpoint["TCP_Endpoint<br/>[TCP_Endpoint.h]"]
+  node_tcp_reassembler["TCP_Reassembler::Deliver&#40;&#41;<br/>[TCP_Reassembler.cc]"]
+end
+
+subgraph group_events["Event engine"]
+  node_event_mgr["EventMgr &#40;IOSource&#41;<br/>[Event.h]"]
+  node_enqueue["EventMgr::Enqueue&#40;&#41;<br/>[Event.cc]"]
+  node_drain["EventMgr::Drain&#40;&#41;<br/>[Event.cc]"]
+  node_event_dispatch["Event::Dispatch&#40;&#41;<br/>[Event.cc]"]
+end
+
+subgraph group_scripts["Zeek script layer"]
+  node_script_handlers["Script event handlers<br/>[main.zeek]"]
+  node_conn_stream["Log::create_stream &#40;conn&#41;<br/>[main.zeek]"]
+  node_dns_stream["Log::create_stream &#40;dns&#41;<br/>[main.zeek]"]
+  node_log_write["Log::write -&gt; Log::__write<br/>[logging.bif]"]
+end
+
+subgraph group_logging["Logging front end"]
+  node_log_manager["logging::Manager::CreateWriter&#40;&#41;<br/>[Manager.cc]"]
+  node_writer_frontend["WriterFrontend::Write&#40;&#41;<br/>[WriterFrontend.h]"]
+  node_flush_buffer["WriterFrontend::FlushWriteBuffer&#40;&#41;<br/>[WriterFrontend.cc]"]
+  node_write_message["WriteMessage<br/>[WriterFrontend.cc]"]
+end
+
+subgraph group_threads["Writer threads &amp; sinks"]
+  node_msg_thread["MsgThread::Process&#40;&#41;<br/>[MsgThread.cc]"]
+  node_writer_backend["WriterBackend::Write&#40;&#41;/DoWrite&#40;&#41;<br/>[WriterBackend.h]"]
+  node_ascii_writer["Ascii writer<br/>[Ascii.cc]"]
+end
+
+node_main -->|"returns SetupResult"| node_setup
+node_setup -->|"enters processing loop"| node_run_loop
+node_run_loop -->|"Process&#40;&#41; on ready sources"| node_pkt_src
+node_run_loop -->|"event_mgr.Drain&#40;&#41; each pass"| node_drain
+node_pkt_src -->|"current_packet"| node_dispatch_packet
+node_dispatch_packet -->|"ProcessPacket&#40;pkt&#41;"| node_pa_manager
+node_pa_manager -->|"root_analyzer-&gt;ForwardPacket&#40;&#41;"| node_pa_root
+node_pa_root -->|"dispatch on link_type"| node_ethernet
+node_ethernet -->|"ForwardPacket&#40;ethertype&#41;"| node_ip_analyzer
+node_ip_analyzer -->|"protocol 6"| node_tcp_analyzer
+node_ip_analyzer -->|"protocol 17"| node_udp_analyzer
+node_tcp_analyzer -->|"inherits AnalyzePacket"| node_ipbased
+node_udp_analyzer -->|"inherits AnalyzePacket"| node_ipbased
+node_ipbased -->|"unknown ConnKey"| node_new_conn
+node_ipbased -->|"MakeSessionAdapter&#40;&#41;"| node_tcp_analyzer
+node_new_conn -->|"Insert&#40;session&#41;"| node_session_mgr
+node_tcp_analyzer -->|"TCPSessionAdapter root"| node_tcp_adapter
+node_tcp_adapter -->|"per-direction state"| node_tcp_endpoint
+node_tcp_adapter -->|"byte stream capture"| node_tcp_reassembler
+node_tcp_reassembler -->|"app analyzers raise events"| node_enqueue
+node_udp_analyzer -->|"DeliverPacket -&gt; app events"| node_enqueue
+node_session_mgr -->|"new_connection / conn events"| node_enqueue
+node_enqueue -->|"queued events"| node_drain
+node_drain -->|"one Event at a time"| node_event_dispatch
+node_event_dispatch -->|"handler invocation"| node_script_handlers
+node_script_handlers -->|"create_stream on zeek_init"| node_conn_stream
+node_script_handlers -->|"create_stream on zeek_init"| node_dns_stream
+node_script_handlers -->|"Log::write&#40;&#41;"| node_log_write
+node_log_write -->|"builtin -&gt; manager"| node_log_manager
+node_log_manager -->|"frontend owns filter"| node_writer_frontend
+node_writer_frontend -->|"buffer full"| node_flush_buffer
+node_flush_buffer -->|"new WriteMessage"| node_write_message
+node_write_message -->|"SendIn -&gt; queue_in"| node_msg_thread
+node_msg_thread -->|"Process -&gt; DoWrites"| node_writer_backend
+node_writer_backend -->|"DoWrite impl"| node_ascii_writer
+
+click node_main "https://github.com/zeek/zeek/blob/master/src/main.cc"
+click node_setup "https://github.com/zeek/zeek/blob/master/src/zeek-setup.cc"
+click node_run_loop "https://github.com/zeek/zeek/blob/master/src/RunState.cc"
+click node_pkt_src "https://github.com/zeek/zeek/blob/master/src/iosource/PktSrc.cc"
+click node_dispatch_packet "https://github.com/zeek/zeek/blob/master/src/RunState.cc"
+click node_pa_manager "https://github.com/zeek/zeek/blob/master/src/packet_analysis/Manager.cc"
+click node_pa_root "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/root/Root.cc"
+click node_dispatcher "https://github.com/zeek/zeek/blob/master/src/packet_analysis/Dispatcher.h"
+click node_fwd_packet "https://github.com/zeek/zeek/blob/master/src/packet_analysis/Analyzer.cc"
+click node_ethernet "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/ethernet/Ethernet.cc"
+click node_ip_analyzer "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/ip/IP.cc"
+click node_tcp_analyzer "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/tcp/TCP.cc"
+click node_udp_analyzer "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/udp/UDP.cc"
+click node_ipbased "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/ip/IPBasedAnalyzer.cc"
+click node_new_conn "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/ip/IPBasedAnalyzer.cc"
+click node_session_mgr "https://github.com/zeek/zeek/blob/master/src/session/Manager.cc"
+click node_tcp_adapter "https://github.com/zeek/zeek/blob/master/src/packet_analysis/protocol/tcp/TCPSessionAdapter.cc"
+click node_tcp_endpoint "https://github.com/zeek/zeek/blob/master/src/analyzer/protocol/tcp/TCP_Endpoint.h"
+click node_tcp_reassembler "https://github.com/zeek/zeek/blob/master/src/analyzer/protocol/tcp/TCP_Reassembler.cc"
+click node_event_mgr "https://github.com/zeek/zeek/blob/master/src/Event.h"
+click node_enqueue "https://github.com/zeek/zeek/blob/master/src/Event.cc"
+click node_drain "https://github.com/zeek/zeek/blob/master/src/Event.cc"
+click node_event_dispatch "https://github.com/zeek/zeek/blob/master/src/Event.cc"
+click node_script_handlers "https://github.com/zeek/zeek/blob/master/scripts/base/frameworks/logging/main.zeek"
+click node_conn_stream "https://github.com/zeek/zeek/blob/master/scripts/base/protocols/conn/main.zeek"
+click node_dns_stream "https://github.com/zeek/zeek/blob/master/scripts/base/protocols/dns/main.zeek"
+click node_log_write "https://github.com/zeek/zeek/blob/master/src/logging/logging.bif"
+click node_log_manager "https://github.com/zeek/zeek/blob/master/src/logging/Manager.cc"
+click node_writer_frontend "https://github.com/zeek/zeek/blob/master/src/logging/WriterFrontend.h"
+click node_flush_buffer "https://github.com/zeek/zeek/blob/master/src/logging/WriterFrontend.cc"
+click node_write_message "https://github.com/zeek/zeek/blob/master/src/logging/WriterFrontend.cc"
+click node_msg_thread "https://github.com/zeek/zeek/blob/master/src/threading/MsgThread.cc"
+click node_writer_backend "https://github.com/zeek/zeek/blob/master/src/logging/WriterBackend.h"
+click node_ascii_writer "https://github.com/zeek/zeek/blob/master/src/logging/writers/ascii/Ascii.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_setup,node_run_loop,node_pkt_src,node_dispatch_packet,node_msg_thread,node_writer_backend,node_ascii_writer toneBlue
+class node_pa_manager,node_pa_root,node_dispatcher,node_fwd_packet,node_ethernet,node_ip_analyzer,node_tcp_analyzer,node_udp_analyzer,node_ipbased toneAmber
+class node_new_conn,node_session_mgr,node_tcp_adapter,node_tcp_endpoint,node_tcp_reassembler toneMint
+class node_event_mgr,node_enqueue,node_drain,node_event_dispatch toneRose
+class node_script_handlers,node_conn_stream,node_dns_stream,node_log_write toneIndigo
+class node_log_manager,node_writer_frontend,node_flush_buffer,node_write_message toneTeal
