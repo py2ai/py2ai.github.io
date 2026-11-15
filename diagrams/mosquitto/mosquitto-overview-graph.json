@@ -1,0 +1,44 @@
+{
+  "owner": "eclipse",
+  "repo": "mosquitto",
+  "branch": "master",
+  "groups": [
+    {"id": "loop", "name": "Event Loop", "label": "Event Loop"},
+    {"id": "protocol", "name": "MQTT Protocol", "label": "MQTT Protocol"},
+    {"id": "routing", "name": "Pub/Sub Routing", "label": "Pub/Sub Routing"},
+    {"id": "storage", "name": "Persistence", "label": "Persistence"},
+    {"id": "auth", "name": "Auth & Plugins", "label": "Auth & Plugins"}
+  ],
+  "nodes": [
+    {"id": "main_loop", "label": "mosquitto_main_loop()", "file": "loop.c", "path": "src/loop.c", "group": "Event Loop", "groupId": "loop", "desc": "The broker is one single-threaded while(g_run) loop: each tick runs housekeeping timers ($SYS stats, keepalive, session expiry, will delay), then mux__handle() blocks until sockets are ready, then triggers the persistence autosave."},
+    {"id": "mux", "label": "mux__handle()", "file": "mux.c", "path": "src/mux.c", "group": "Event Loop", "groupId": "loop", "desc": "A tiny vtable that dispatches to epoll on Linux, kqueue on BSD/macOS or poll elsewhere. Every other part of the broker only ever sees mux__init/add_out/delete/handle, so OS-specific readiness lives in one file."},
+    {"id": "accept", "label": "net__socket_accept()", "file": "net.c", "path": "src/net.c", "group": "Event Loop", "groupId": "loop", "desc": "When a listener socket is readable, accepts the TCP connection and allocates a per-client struct mosquitto context, registering it with the mux."},
+    {"id": "dispatch", "label": "handle__packet()", "file": "read_handle.c", "path": "src/read_handle.c", "group": "MQTT Protocol", "groupId": "protocol", "desc": "Switch on the low nibble of the MQTT fixed header: CMD_CONNECT, CMD_PUBLISH, CMD_SUBSCRIBE, CMD_AUTH... each case bumps a metrics counter then calls the matching handler."},
+    {"id": "handle_connect", "label": "handle__connect()", "file": "handle_connect.c", "path": "src/handle_connect.c", "group": "MQTT Protocol", "groupId": "protocol", "desc": "CONNECT handling: client id validation, MQTT 3.1.1/5 protocol version negotiation, will message registration, session takeover, then the auth chain before sending CONNACK."},
+    {"id": "handle_publish", "label": "handle__publish()", "file": "handle_publish.c", "path": "src/handle_publish.c", "group": "MQTT Protocol", "groupId": "protocol", "desc": "PUBLISH handling: parses topic and payload, enforces QoS and retain rules, decodes MQTT 5 properties (topic alias, message expiry, subscription identifiers), then stores the message."},
+    {"id": "handle_subscribe", "label": "handle__subscribe()", "file": "handle_subscribe.c", "path": "src/handle_subscribe.c", "group": "MQTT Protocol", "groupId": "protocol", "desc": "SUBSCRIBE handling: validates each topic filter, inserts a subleaf into the topic tree, replays retained messages, then sends SUBACK."},
+    {"id": "subs_tree", "label": "sub__messages_queue()", "file": "subs.c", "path": "src/subs.c", "group": "Pub/Sub Routing", "groupId": "routing", "desc": "Walks the hashed topic tree (mosquitto__subhier nodes, subleaf lists), matches + and # wildcards, and queues the stored message to every matching subscriber. Shared subscriptions get exactly one receiver."},
+    {"id": "retain_tree", "label": "retain__store()", "file": "retain.c", "path": "src/retain.c", "group": "Pub/Sub Routing", "groupId": "routing", "desc": "A second hashed tree (mosquitto__retainhier) that keeps the last retained message per topic. retain__queue() replays matching retained messages when a client subscribes."},
+    {"id": "msg_store", "label": "db__message_store()", "file": "database.c", "path": "src/database.c", "group": "Persistence", "groupId": "storage", "desc": "The ref-counted mosquitto__base_msg store: one allocation per published message is shared by every subscriber, with per-client mosquitto__client_msg references tracking delivery state."},
+    {"id": "persist", "label": "persist__backup()", "file": "persist_write.c", "path": "src/persist_write.c", "group": "Persistence", "groupId": "storage", "desc": "Serialises sessions, subscriptions, retained messages and in-flight QoS messages to the on-disk database; persist__restore() replays it at startup."},
+    {"id": "plugins", "label": "mosquitto_callback_register()", "file": "plugin_callbacks.c", "path": "src/plugin_callbacks.c", "group": "Auth & Plugins", "groupId": "auth", "desc": "The v4/v5 plugin event API: password_file, ACL file and the dynamic-security plugin all register MOSQ_EVT_BASIC_AUTH / MOSQ_EVT_ACL_CHECK / MOSQ_EVT_MESSAGE callbacks through this single choke point."}
+  ],
+  "edges": [
+    {"from": "main_loop", "to": "mux", "label": "each tick"},
+    {"from": "mux", "to": "accept", "label": "EPOLLIN on listener"},
+    {"from": "mux", "to": "dispatch", "label": "EPOLLIN on client, packet__read"},
+    {"from": "dispatch", "to": "handle_connect", "label": "CMD_CONNECT"},
+    {"from": "dispatch", "to": "handle_publish", "label": "CMD_PUBLISH"},
+    {"from": "dispatch", "to": "handle_subscribe", "label": "CMD_SUBSCRIBE"},
+    {"from": "handle_connect", "to": "plugins", "label": "MOSQ_EVT_BASIC_AUTH"},
+    {"from": "handle_publish", "to": "plugins", "label": "MOSQ_EVT_MESSAGE_IN"},
+    {"from": "handle_publish", "to": "msg_store", "label": "db__message_store"},
+    {"from": "msg_store", "to": "subs_tree", "label": "sub__messages_queue"},
+    {"from": "handle_subscribe", "to": "subs_tree", "label": "sub__add leaf"},
+    {"from": "handle_subscribe", "to": "retain_tree", "label": "replay via retain__queue"},
+    {"from": "handle_publish", "to": "retain_tree", "label": "retain flag: retain__store"},
+    {"from": "subs_tree", "to": "mux", "label": "queued PUBLISH writes"},
+    {"from": "main_loop", "to": "persist", "label": "autosave interval"},
+    {"from": "persist", "to": "msg_store", "label": "restore at boot"}
+  ]
+}
