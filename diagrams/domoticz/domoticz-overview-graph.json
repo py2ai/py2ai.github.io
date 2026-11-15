@@ -1,0 +1,44 @@
+{
+  "owner": "domoticz",
+  "repo": "domoticz",
+  "branch": "development",
+  "groups": [
+    { "id": "grp_entry", "name": "entry", "label": "Entry & Startup" },
+    { "id": "grp_core", "name": "core", "label": "Main Worker Core" },
+    { "id": "grp_hw", "name": "hardware", "label": "Hardware Layer" },
+    { "id": "grp_plug", "name": "plugins", "label": "Python Plugin System" },
+    { "id": "grp_store", "name": "storage", "label": "Device Database" },
+    { "id": "grp_events", "name": "events", "label": "Event Engine" },
+    { "id": "grp_api", "name": "api", "label": "Web API" }
+  ],
+  "nodes": [
+    { "id": "entry", "label": "int main()", "file": "domoticz.cpp", "path": "main/domoticz.cpp", "group": "entry", "groupId": "grp_entry", "desc": "Process entry point; parses command line, then calls m_mainworker.Start() at line 1241" },
+    { "id": "mainworker", "label": "MainWorker::Start", "file": "mainworker.cpp", "path": "main/mainworker.cpp", "group": "core", "groupId": "grp_core", "desc": "Hub startup: opens the SQLite database, starts plugin system, adds hardware, starts web servers, then spawns the Do_Work and Rx-message threads (lines 1262/1264)" },
+    { "id": "hw_base", "label": "CDomoticzHardwareBase", "file": "DomoticzHardware.h", "path": "hardware/DomoticzHardware.h", "group": "hardware", "groupId": "grp_hw", "desc": "Base class of every hardware adapter; publishes the sDecodeRXMessage boost::signals2 signal (line 52)" },
+    { "id": "mysensors", "label": "MySensorsSerial", "file": "MySensorsSerial.cpp", "path": "hardware/MySensorsSerial.cpp", "group": "hardware", "groupId": "grp_hw", "desc": "Serial MySensors gateway; readCallback at line 190 feeds parsed node messages upward" },
+    { "id": "httppoller", "label": "CHttpPoller", "file": "HttpPoller.cpp", "path": "hardware/HttpPoller.cpp", "group": "hardware", "groupId": "grp_hw", "desc": "Periodic HTTP poller hardware; Do_Work loop at line 76 fetches JSON URLs" },
+    { "id": "pluginsys", "label": "CPluginSystem", "file": "PluginManager.cpp", "path": "hardware/plugins/PluginManager.cpp", "group": "plugins", "groupId": "grp_plug", "desc": "Python plugin framework; StartPluginSystem at line 82, Py_Initialize at line 153" },
+    { "id": "rxqueue", "label": "Do_Work_On_Rx_Messages", "file": "mainworker.cpp", "path": "main/mainworker.cpp", "group": "core", "groupId": "grp_core", "desc": "Dedicated RX queue thread (line 2016); pops concurrent_queue items and dispatches to ProcessRXMessage" },
+    { "id": "processrx", "label": "ProcessRXMessage", "file": "mainworker.cpp", "path": "main/mainworker.cpp", "group": "core", "groupId": "grp_core", "desc": "Giant switch on pRXCommand[1] (line 2110) routing raw frames to per-type decoders; fires sOnDeviceReceived at line 2370" },
+    { "id": "sqlhelper", "label": "CSQLHelper::UpdateValueInt", "file": "SQLHelper.cpp", "path": "main/SQLHelper.cpp", "group": "storage", "groupId": "grp_store", "desc": "Device/value persistence in SQLite; UpdateValueInt at line 5892, InsertDevice at 5518, ProcessDevice hand-off at 5680" },
+    { "id": "eventsys", "label": "CEventSystem::ProcessDevice", "file": "EventSystem.cpp", "path": "main/EventSystem.cpp", "group": "events", "groupId": "grp_events", "desc": "Lua/dzVents event engine; ProcessDevice dedupes updates (line 1644) and queues _tEventQueue items" },
+    { "id": "dzvents", "label": "CdzVents::EvaluateDzVents", "file": "dzVents.cpp", "path": "main/dzVents.cpp", "group": "events", "groupId": "grp_events", "desc": "dzVents scripting layer over Lua; EvaluateDzVents at line 56 builds the domoticz device tables" },
+    { "id": "webserver", "label": "CWebServer::StartServer", "file": "WebServer.cpp", "path": "main/WebServer.cpp", "group": "api", "groupId": "grp_api", "desc": "HTTP/SSL front-end; StartServer at line 153, JSON command table registered via RegisterCommandCode at line 354" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "mainworker", "label": "m_mainworker.Start() (#L1241)" },
+    { "from": "mainworker", "to": "pluginsys", "label": "StartPluginSystem (#L1158)" },
+    { "from": "mainworker", "to": "hw_base", "label": "AddAllDomoticzHardware (#L1160)" },
+    { "from": "mainworker", "to": "webserver", "label": "StartServers (#L1181)" },
+    { "from": "mainworker", "to": "rxqueue", "label": "spawns RxQueue thread (#L1264)" },
+    { "from": "mysensors", "to": "hw_base", "label": "inherits base adapter" },
+    { "from": "httppoller", "to": "hw_base", "label": "inherits base adapter" },
+    { "from": "pluginsys", "to": "hw_base", "label": "CPlugin wraps as hardware" },
+    { "from": "hw_base", "to": "rxqueue", "label": "sDecodeRXMessage signal (#L52)" },
+    { "from": "rxqueue", "to": "processrx", "label": "dispatch decoded frame (#L2088)" },
+    { "from": "processrx", "to": "sqlhelper", "label": "UpdateValue / UpdateValueInt (#L5280)" },
+    { "from": "sqlhelper", "to": "eventsys", "label": "ProcessDevice hand-off (#L5680)" },
+    { "from": "eventsys", "to": "dzvents", "label": "EvaluateDzVents (#L56)" },
+    { "from": "webserver", "to": "sqlhelper", "label": "JSON API reads/writes devices (#L4834)" }
+  ]
+}
