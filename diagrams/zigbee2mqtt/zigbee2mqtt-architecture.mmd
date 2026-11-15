@@ -1,0 +1,154 @@
+flowchart TD
+
+subgraph group_entry["Entry &amp; Watchdog"]
+  node_entrypoint["index.js start&#40;&#41;<br/>[index.js]"]
+  node_build_check["checkDist&#40;&#41; tsc build<br/>[index.js]"]
+  node_onboarding["onboard&#40;&#41;<br/>[onboarding.ts]"]
+  node_watchdog["Z2M_WATCHDOG restart<br/>[index.js]"]
+end
+
+subgraph group_core["Core"]
+  node_controller["Controller<br/>[controller.ts]"]
+  node_eventbus["EventBus<br/>[eventBus.ts]"]
+  node_extension_base["Extension base<br/>[extension.ts]"]
+  node_publish_state["publishEntityState&#40;&#41;<br/>[controller.ts]"]
+end
+
+subgraph group_radio["Radio &#40;zigbee-herdsman&#41;"]
+  node_zigbee["Zigbee<br/>[zigbee.ts]"]
+  node_herdsman["zigbee-herdsman &#40;dep&#41;<br/>[package.json]"]
+  node_zh_start["zh Controller.start&#40;&#41;<br/>[zigbee.ts]"]
+  node_zh_message["herdsman.on&#40;'message'&#41;<br/>[zigbee.ts]"]
+end
+
+subgraph group_ext["Extensions"]
+  node_receive["Receive<br/>[receive.ts]"]
+  node_from_converters["fromZigbee filter<br/>[receive.ts]"]
+  node_debounce["debounce / throttle<br/>[receive.ts]"]
+  node_publish["Publish<br/>[publish.ts]"]
+  node_topic_parse["parseTopic&#40;&#41; get&#124;set<br/>[publish.ts]"]
+  node_to_converters["toZigbee match<br/>[publish.ts]"]
+  node_availability["Availability<br/>[availability.ts]"]
+  node_ota["OTAUpdate<br/>[otaUpdate.ts]"]
+end
+
+subgraph group_broker["MQTT &amp; Frontend"]
+  node_mqtt["Mqtt<br/>[mqtt.ts]"]
+  node_mqtt_onmessage["Mqtt.onMessage&#40;&#41;<br/>[mqtt.ts]"]
+  node_mqtt_publish["Mqtt.publish&#40;&#41;<br/>[mqtt.ts]"]
+  node_retained["retainedMessages cache<br/>[mqtt.ts]"]
+  node_bridge["Bridge<br/>[bridge.ts]"]
+  node_bridge_requests["requestLookup RPC<br/>[bridge.ts]"]
+  node_bridge_logging["bridge/logging transport<br/>[bridge.ts]"]
+  node_frontend["Frontend<br/>[frontend.ts]"]
+  node_frontend_ws["WebSocket /api<br/>[frontend.ts]"]
+end
+
+subgraph group_model["Device Model"]
+  node_device["Device<br/>[device.ts]"]
+  node_resolve_def["resolveDefinition&#40;&#41;<br/>[device.ts]"]
+  node_exposes["exposes&#40;&#41; catalog<br/>[device.ts]"]
+end
+
+subgraph group_persist["Persistence &amp; Config"]
+  node_state_node["State &#40;state.json&#41;<br/>[state.ts]"]
+  node_data_node["data dir &#40;ZIGBEE2MQTT_DATA&#41;<br/>[data.ts]"]
+end
+
+node_entrypoint -->|"checkDist&#40;&#41; before start"| node_build_check
+node_build_check -->|"onboard&#40;&#41; gates startup"| node_onboarding
+node_entrypoint -->|"new Controller&#40;&#41;"| node_controller
+node_watchdog -->|"backoff restart"| node_entrypoint
+node_controller -->|"creates"| node_eventbus
+node_controller -->|"publishEntityState&#40;&#41;"| node_publish_state
+node_controller -->|"owns"| node_zigbee
+node_controller -->|"owns"| node_mqtt
+node_controller -->|"constructs with shared args"| node_extension_base
+node_extension_base -->|"extends"| node_receive
+node_extension_base -->|"extends"| node_publish
+node_extension_base -->|"extends"| node_bridge
+node_extension_base -->|"extends"| node_frontend
+node_extension_base -->|"extends"| node_availability
+node_extension_base -->|"extends"| node_ota
+node_zigbee -->|"serial settings + zh.Controller&#40;&#41;"| node_herdsman
+node_zh_start -->|"start + passlist/blocklist"| node_zigbee
+node_zigbee -->|"wires herdsman events"| node_zh_message
+node_zh_message -->|"emitDeviceMessage"| node_eventbus
+node_eventbus -->|"onDeviceMessage"| node_receive
+node_receive -->|"filters definition.fromZigbee"| node_from_converters
+node_from_converters -->|"per-device debounce/throttle"| node_debounce
+node_debounce -->|"coalesced publish"| node_publish_state
+node_receive -->|"direct publish"| node_publish_state
+node_publish_state -->|"state.set&#40;&#41; cache"| node_state_node
+node_publish_state -->|"publishes JSON/attribute"| node_mqtt
+node_publish_state -->|"emitPublishEntityState"| node_eventbus
+node_eventbus -->|"live state push"| node_frontend_ws
+node_mqtt -->|"client.on&#40;'message'&#41;"| node_mqtt_onmessage
+node_mqtt_onmessage -->|"emitMQTTMessage"| node_eventbus
+node_eventbus -->|"onMQTTMessage"| node_publish
+node_publish -->|"parseTopic&#40;&#41;"| node_topic_parse
+node_topic_parse -->|"resolves entity + endpoint"| node_to_converters
+node_to_converters -->|"definition.toZigbee match"| node_device
+node_to_converters -->|"optimistic state update"| node_publish_state
+node_device -->|"zhc.findByDevice&#40;&#41;"| node_resolve_def
+node_resolve_def -->|"modelID/manufacturer match"| node_herdsman
+node_device -->|"exposes&#40;&#41; + linkquality"| node_exposes
+node_exposes -->|"bridge/devices catalog"| node_bridge
+node_availability -->|"online/offline states"| node_publish_state
+node_ota -->|"OTA image transfer"| node_zigbee
+node_bridge_requests -->|"bridge/request/* RPC"| node_bridge
+node_bridge -->|"bridge/info + bridge/devices"| node_mqtt
+node_bridge_logging -->|"bridge/logging"| node_mqtt
+node_state_node -->|"state.json in data dir"| node_data_node
+node_state_node -->|"cache merged into publishes"| node_controller
+node_from_converters -->|"converter.convert&#40;&#41;"| node_device
+node_device -->|"database.db persistence"| node_data_node
+
+click node_entrypoint "https://github.com/Koenkk/zigbee2mqtt/blob/master/index.js"
+click node_build_check "https://github.com/Koenkk/zigbee2mqtt/blob/master/index.js"
+click node_onboarding "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/util/onboarding.ts"
+click node_watchdog "https://github.com/Koenkk/zigbee2mqtt/blob/master/index.js"
+click node_controller "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/controller.ts"
+click node_eventbus "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/eventBus.ts"
+click node_extension_base "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/extension.ts"
+click node_publish_state "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/controller.ts"
+click node_zigbee "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/zigbee.ts"
+click node_herdsman "https://github.com/Koenkk/zigbee2mqtt/blob/master/package.json"
+click node_zh_start "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/zigbee.ts"
+click node_zh_message "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/zigbee.ts"
+click node_mqtt "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/mqtt.ts"
+click node_mqtt_onmessage "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/mqtt.ts"
+click node_mqtt_publish "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/mqtt.ts"
+click node_retained "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/mqtt.ts"
+click node_bridge "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/bridge.ts"
+click node_bridge_requests "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/bridge.ts"
+click node_bridge_logging "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/bridge.ts"
+click node_frontend "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/frontend.ts"
+click node_frontend_ws "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/frontend.ts"
+click node_receive "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/receive.ts"
+click node_from_converters "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/receive.ts"
+click node_debounce "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/receive.ts"
+click node_publish "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/publish.ts"
+click node_topic_parse "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/publish.ts"
+click node_to_converters "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/publish.ts"
+click node_availability "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/availability.ts"
+click node_ota "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/otaUpdate.ts"
+click node_device "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/model/device.ts"
+click node_resolve_def "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/model/device.ts"
+click node_exposes "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/model/device.ts"
+click node_state_node "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/state.ts"
+click node_data_node "https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/util/data.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entrypoint,node_build_check,node_onboarding,node_watchdog,node_state_node,node_data_node toneBlue
+class node_controller,node_eventbus,node_extension_base,node_publish_state toneAmber
+class node_zigbee,node_herdsman,node_zh_start,node_zh_message toneMint
+class node_receive,node_from_converters,node_debounce,node_publish,node_topic_parse,node_to_converters,node_availability,node_ota toneRose
+class node_mqtt,node_mqtt_onmessage,node_mqtt_publish,node_retained,node_bridge,node_bridge_requests,node_bridge_logging,node_frontend,node_frontend_ws toneIndigo
+class node_device,node_resolve_def,node_exposes toneTeal

@@ -1,0 +1,46 @@
+{
+  "owner": "Koenkk",
+  "repo": "zigbee2mqtt",
+  "branch": "master",
+  "groups": [
+    {"id": "entry", "name": "Entry", "label": "Entry"},
+    {"id": "core", "name": "Core", "label": "Core"},
+    {"id": "transport", "name": "Transports", "label": "Transports"},
+    {"id": "ext", "name": "Extensions", "label": "Extensions"},
+    {"id": "persist", "name": "State & Config", "label": "State & Config"}
+  ],
+  "nodes": [
+    {"id": "entrypoint", "label": "index.js start()", "file": "index.js", "path": "index.js", "group": "Entry", "groupId": "entry", "desc": "Bootstraps Zigbee2MQTT: builds the TypeScript project if needed, runs onboarding, then constructs the Controller and starts it. A watchdog can restart the whole process with exponential backoff."},
+    {"id": "controller", "label": "Controller", "file": "controller.ts", "path": "lib/controller.ts", "group": "Core", "groupId": "core", "desc": "Central orchestrator. Creates EventBus, Zigbee, Mqtt and State, registers all extensions, and owns publishEntityState(), the single choke point through which every MQTT state message flows."},
+    {"id": "eventbus", "label": "EventBus", "file": "eventBus.ts", "path": "lib/eventBus.ts", "group": "Core", "groupId": "core", "desc": "Typed EventEmitter with ~22 named events (deviceMessage, mqttMessage, publishEntityState...). Every cross-component message in Zigbee2MQTT travels through this bus, and listeners are registered per-owner so they can be removed on shutdown."},
+    {"id": "zigbee", "label": "Zigbee", "file": "zigbee.ts", "path": "lib/zigbee.ts", "group": "Transports", "groupId": "transport", "desc": "Wrapper around the zigbee-herdsman Controller. Translates serial settings (port, baudrate, adapter) into herdsman config and re-emits raw Zigbee frames as typed EventBus events."},
+    {"id": "mqtt", "label": "Mqtt", "file": "mqtt.ts", "path": "lib/mqtt.ts", "group": "Transports", "groupId": "transport", "desc": "MQTT client (mqtt.js). Registers an LWT on bridge/state, subscribes to the whole base topic, suppresses echo of its own publishes, and republishes retained messages if the broker drops them."},
+    {"id": "state", "label": "State", "file": "state.ts", "path": "lib/state.ts", "group": "State & Config", "groupId": "persist", "desc": "In-memory state cache keyed by entity ID, persisted to state.json every 5 minutes. Lets every publish carry the full merged device state, not just the changed attribute."},
+    {"id": "settings", "label": "Settings", "file": "settings.ts", "path": "lib/util/settings.ts", "group": "State & Config", "groupId": "persist", "desc": "Reads and writes configuration.yaml, resolves per-device friendly names and options, and migrates old config shapes on startup."},
+    {"id": "device", "label": "Device", "file": "device.ts", "path": "lib/model/device.ts", "group": "Core", "groupId": "core", "desc": "Model around each zh.Device. resolveDefinition() matches the interviewed device against zigbee-herdsman-converters to find its fromZigbee/toZigbee converter set and exposes."},
+    {"id": "receive", "label": "Receive", "file": "receive.ts", "path": "lib/extension/receive.ts", "group": "Extensions", "groupId": "ext", "desc": "Inbound path: picks matching fromZigbee converters for each incoming frame, post-processes payloads, and applies per-device debounce/throttle before publishing state."},
+    {"id": "publish", "label": "Publish", "file": "publish.ts", "path": "lib/extension/publish.ts", "group": "Extensions", "groupId": "ext", "desc": "Outbound path: parses <base_topic>/<entity>/set|get topics, matches each attribute against toZigbee converters, and writes to Zigbee endpoints (with optimistic state updates)."},
+    {"id": "bridge", "label": "Bridge", "file": "bridge.ts", "path": "lib/extension/bridge.ts", "group": "Extensions", "groupId": "ext", "desc": "Exposes control topics: bridge/info, bridge/devices, bridge/logging and a requestLookup table of RPC commands under bridge/request/* (permit_join, device/rename, restart...)."},
+    {"id": "frontend", "label": "Frontend", "file": "frontend.ts", "path": "lib/extension/frontend.ts", "group": "Extensions", "groupId": "ext", "desc": "Optional HTTP + WebSocket server (zigbee2mqtt-frontend package). Serves the UI statically and pushes every published state message live over the /api WebSocket."}
+  ],
+  "edges": [
+    {"from": "entrypoint", "to": "controller", "label": "new Controller()"},
+    {"from": "controller", "to": "eventbus", "label": "creates"},
+    {"from": "controller", "to": "zigbee", "label": "owns"},
+    {"from": "controller", "to": "mqtt", "label": "owns"},
+    {"from": "controller", "to": "state", "label": "owns"},
+    {"from": "controller", "to": "receive", "label": "starts extension"},
+    {"from": "controller", "to": "publish", "label": "starts extension"},
+    {"from": "controller", "to": "bridge", "label": "starts extension"},
+    {"from": "controller", "to": "frontend", "label": "starts when frontend.enabled"},
+    {"from": "zigbee", "to": "eventbus", "label": "emitDeviceMessage"},
+    {"from": "mqtt", "to": "eventbus", "label": "emitMQTTMessage"},
+    {"from": "eventbus", "to": "receive", "label": "onDeviceMessage"},
+    {"from": "eventbus", "to": "publish", "label": "onMQTTMessage"},
+    {"from": "receive", "to": "device", "label": "definition.fromZigbee"},
+    {"from": "publish", "to": "device", "label": "definition.toZigbee"},
+    {"from": "device", "to": "settings", "label": "getDevice() options"},
+    {"from": "receive", "to": "state", "label": "updates cache"},
+    {"from": "publish", "to": "state", "label": "reads cached state"}
+  ]
+}
