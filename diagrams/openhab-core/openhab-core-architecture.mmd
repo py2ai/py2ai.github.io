@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_g_items["Items &amp; Registry"]
+  node_item["Item<br/>[Item.java]"]
+  node_item_registry["ItemRegistry<br/>[ItemRegistry.java]"]
+  node_item_event_factory["ItemEventFactory"]
+end
+
+subgraph group_g_events["Event Bus"]
+  node_event["Event<br/>[Event.java]"]
+  node_event_publisher["EventPublisher"]
+  node_event_subscriber["EventSubscriber"]
+  node_osgi_event_publisher["OSGiEventPublisher"]
+  node_osgi_event_manager["OSGiEventManager"]
+end
+
+subgraph group_g_thing_api["Thing API"]
+  node_thing["Thing<br/>[Thing.java]"]
+  node_channel["Channel<br/>[Channel.java]"]
+  node_bridge["Bridge<br/>[Bridge.java]"]
+  node_thing_type["ThingType<br/>[ThingType.java]"]
+  node_thing_registry["ThingRegistry<br/>[ThingRegistry.java]"]
+  node_managed_thing_provider["ManagedThingProvider"]
+end
+
+subgraph group_g_binding["Binding SPI"]
+  node_thing_handler["ThingHandler<br/>[ThingHandler.java]"]
+  node_base_thing_handler["BaseThingHandler"]
+  node_handler_factory["ThingHandlerFactory"]
+end
+
+subgraph group_g_impl["Thing Wiring &#40;internal&#41;"]
+  node_thing_manager_impl["ThingManagerImpl"]
+  node_thing_registry_impl["ThingRegistryImpl"]
+  node_comm_manager["CommunicationManager"]
+  node_auto_update["AutoUpdateManager"]
+end
+
+subgraph group_g_links["Links &amp; Profiles"]
+  node_item_channel_link["ItemChannelLink"]
+  node_link_registry["ItemChannelLinkRegistry"]
+end
+
+subgraph group_g_rules["Rule Engine"]
+  node_rule["Rule<br/>[Rule.java]"]
+  node_trigger["Trigger<br/>[Trigger.java]"]
+  node_condition["Condition<br/>[Condition.java]"]
+  node_action["Action<br/>[Action.java]"]
+  node_rule_engine_impl["RuleEngineImpl"]
+  node_trigger_callback["TriggerHandlerCallbackImpl"]
+  node_event_trigger_handler["GenericEventTriggerHandler"]
+end
+
+subgraph group_g_disc["Discovery"]
+  node_discovery_service["DiscoveryService"]
+  node_abstract_discovery["AbstractDiscoveryService"]
+  node_discovery_result["DiscoveryResult"]
+  node_inbox["PersistentInbox"]
+end
+
+node_item_event_factory -->|"builds ItemCommandEvent/ItemStateEvent"| node_event
+node_item_event_factory -.->|"topics name items"| node_item
+node_item -->|"managed in"| node_item_registry
+node_event_publisher -->|"default implementation"| node_osgi_event_publisher
+node_event_subscriber -->|"dynamic @Reference tracking"| node_osgi_event_manager
+node_osgi_event_publisher -->|"EventAdmin.postEvent&#40;openhab/*&#41;"| node_osgi_event_manager
+node_osgi_event_manager -->|"rebuilds + receive&#40;&#41;"| node_event_subscriber
+node_thing -->|"hosts"| node_channel
+node_thing -.->|"may attach to"| node_bridge
+node_thing_type -->|"template for"| node_thing
+node_managed_thing_provider -->|"storage provider"| node_thing_registry
+node_thing_registry -->|"implemented by"| node_thing_registry_impl
+node_thing_registry_impl -->|"ThingTracker notifications"| node_thing_manager_impl
+node_thing_registry_impl -->|"add / update / remove"| node_thing
+node_thing_manager_impl -->|"resolves by ThingTypeUID"| node_handler_factory
+node_handler_factory -->|"registerHandler&#40;Thing&#41;"| node_thing_handler
+node_thing_manager_impl -->|"doInitializeHandler&#40;&#41;"| node_thing_handler
+node_thing_handler -.->|"convenience base"| node_base_thing_handler
+node_base_thing_handler -->|"updateStatus / updateState"| node_thing
+node_comm_manager -->|"receives item events"| node_event_subscriber
+node_link_registry -->|"tracks links"| node_item_channel_link
+node_link_registry -->|"RegistryChangeListener"| node_comm_manager
+node_comm_manager -->|"profile per link"| node_item_channel_link
+node_comm_manager -->|"receiveCommand&#40;&#41; intercept"| node_auto_update
+node_comm_manager -->|"onCommandFromItem -&gt; handleCommand"| node_thing_handler
+node_base_thing_handler -->|"publishes ItemStateEvent"| node_event_publisher
+node_event_trigger_handler -->|"subscribes to topics"| node_event_subscriber
+node_event_trigger_handler -->|"fires on match"| node_trigger_callback
+node_trigger_callback -->|"re.runRule&#40;ruleUID&#41;"| node_rule_engine_impl
+node_rule_engine_impl -->|"registers per rule"| node_trigger_callback
+node_rule_engine_impl -->|"initializes + executes"| node_rule
+node_rule -->|"composes"| node_trigger
+node_rule -->|"composes"| node_condition
+node_rule -->|"composes"| node_action
+node_discovery_service -.->|"base class"| node_abstract_discovery
+node_abstract_discovery -->|"emits"| node_discovery_result
+node_abstract_discovery -->|"listener notified"| node_inbox
+node_inbox -->|"approve&#40;&#41; -&gt; add"| node_thing_registry_impl
+node_inbox -.->|"stores proposals"| node_discovery_result
+
+click node_item "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/items/Item.java"
+click node_item_registry "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/items/ItemRegistry.java"
+click node_item_event_factory "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/items/events/ItemEventFactory.java"
+click node_event "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/events/Event.java"
+click node_event_publisher "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/events/EventPublisher.java"
+click node_event_subscriber "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/events/EventSubscriber.java"
+click node_osgi_event_publisher "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/internal/events/OSGiEventPublisher.java"
+click node_osgi_event_manager "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core/src/main/java/org/openhab/core/internal/events/OSGiEventManager.java"
+click node_thing "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/Thing.java"
+click node_channel "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/Channel.java"
+click node_bridge "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/Bridge.java"
+click node_thing_type "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/type/ThingType.java"
+click node_thing_registry "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/ThingRegistry.java"
+click node_managed_thing_provider "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/ManagedThingProvider.java"
+click node_thing_handler "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/binding/ThingHandler.java"
+click node_base_thing_handler "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/binding/BaseThingHandler.java"
+click node_handler_factory "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/binding/ThingHandlerFactory.java"
+click node_thing_manager_impl "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/internal/ThingManagerImpl.java"
+click node_thing_registry_impl "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/internal/ThingRegistryImpl.java"
+click node_comm_manager "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/internal/CommunicationManager.java"
+click node_auto_update "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/internal/AutoUpdateManager.java"
+click node_item_channel_link "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/link/ItemChannelLink.java"
+click node_link_registry "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.thing/src/main/java/org/openhab/core/thing/link/ItemChannelLinkRegistry.java"
+click node_rule "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/Rule.java"
+click node_trigger "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/Trigger.java"
+click node_condition "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/Condition.java"
+click node_action "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/Action.java"
+click node_rule_engine_impl "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/internal/RuleEngineImpl.java"
+click node_trigger_callback "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/internal/TriggerHandlerCallbackImpl.java"
+click node_event_trigger_handler "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.automation/src/main/java/org/openhab/core/automation/internal/module/handler/GenericEventTriggerHandler.java"
+click node_discovery_service "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.config.discovery/src/main/java/org/openhab/core/config/discovery/DiscoveryService.java"
+click node_abstract_discovery "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.config.discovery/src/main/java/org/openhab/core/config/discovery/AbstractDiscoveryService.java"
+click node_discovery_result "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.config.discovery/src/main/java/org/openhab/core/config/discovery/DiscoveryResult.java"
+click node_inbox "https://github.com/openhab/openhab-core/blob/main/bundles/org.openhab.core.config.discovery/src/main/java/org/openhab/core/config/discovery/internal/PersistentInbox.java"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_item,node_item_registry,node_item_event_factory,node_rule,node_trigger,node_condition,node_action,node_rule_engine_impl,node_trigger_callback,node_event_trigger_handler toneBlue
+class node_event,node_event_publisher,node_event_subscriber,node_osgi_event_publisher,node_osgi_event_manager,node_discovery_service,node_abstract_discovery,node_discovery_result,node_inbox toneAmber
+class node_thing,node_channel,node_bridge,node_thing_type,node_thing_registry,node_managed_thing_provider toneMint
+class node_thing_handler,node_base_thing_handler,node_handler_factory toneRose
+class node_thing_manager_impl,node_thing_registry_impl,node_comm_manager,node_auto_update toneIndigo
+class node_item_channel_link,node_link_registry toneTeal
