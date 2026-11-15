@@ -1,0 +1,146 @@
+﻿flowchart TD
+
+subgraph group_bootstrap["Server Bootstrap"]
+  node_octoprint_server["Server.run<br/>[__init__.py]"]
+  node_tornado_http["CustomHTTPServer<br/>[tornado.py]"]
+  node_permissions["Permissions<br/>[permissions.py]"]
+  node_user_manager["UserManager<br/>[users.py]"]
+end
+
+subgraph group_api["REST API"]
+  node_api_login["login&#40;&#41;<br/>[__init__.py]"]
+  node_api_job["controlJob&#40;&#41;<br/>[job.py]"]
+  node_api_files["uploadGcodeFile&#40;&#41;<br/>[files.py]"]
+  node_api_connection["connectionCommand&#40;&#41;<br/>[connection.py]"]
+  node_api_printer["printerCommand&#40;&#41;<br/>[printer.py]"]
+end
+
+subgraph group_realtime["Realtime Clients"]
+  node_sockjs_bridge["PrinterStateConnection<br/>[sockjs.py]"]
+  node_sockjs_on_message["on_message&#40;&#41;<br/>[sockjs.py]"]
+end
+
+subgraph group_plugins["Plugin Runtime"]
+  node_plugin_manager["PluginManager<br/>[core.py]"]
+  node_plugin_info["PluginInfo<br/>[core.py]"]
+  node_plugin_base["OctoPrintPlugin<br/>[types.py]"]
+  node_plugin_blueprint["BlueprintPlugin<br/>[types.py]"]
+  node_plugin_eventhandler["EventHandlerPlugin<br/>[types.py]"]
+end
+
+subgraph group_comm["Printer Link"]
+  node_comm_registry["ConnectedPrinter<br/>[connection.py]"]
+  node_printer_link_state["ConnectedPrinterState<br/>[connection.py]"]
+  node_serial_connector["ConnectedSerialPrinter<br/>[connector.py]"]
+  node_machine_com["MachineCom<br/>[serial_comm.py]"]
+  node_comm_monitor["_monitor&#40;&#41;<br/>[serial_comm.py]"]
+  node_comm_queues["SendQueue<br/>[serial_comm.py]"]
+  node_comm_streaming["StreamingGcodeFileInformation<br/>[serial_comm.py]"]
+end
+
+subgraph group_job["Job Engine"]
+  node_printer_state["Printer<br/>[standard.py]"]
+  node_state_monitor["StateMonitor<br/>[standard.py]"]
+  node_job_control["cancel_print&#40;&#41;<br/>[standard.py]"]
+  node_time_estimator["PrintTimeEstimator<br/>[estimation.py]"]
+end
+
+subgraph group_files["File Handling"]
+  node_file_manager["FileManager<br/>[__init__.py]"]
+  node_analysis_queue["GcodeAnalysisQueue<br/>[analysis.py]"]
+  node_gcode_interpreter["gcode"]
+  node_slicing_manager["SlicingManager<br/>[__init__.py]"]
+end
+
+subgraph group_events["Event Bus"]
+  node_event_bus["EventManager<br/>[events.py]"]
+  node_timelapse_render["TimelapseRenderJob<br/>[timelapse.py]"]
+end
+
+node_octoprint_server -->|"bootstraps"| node_plugin_manager
+node_octoprint_server -->|"creates"| node_event_bus
+node_octoprint_server -->|"creates"| node_printer_state
+node_octoprint_server -->|"creates"| node_file_manager
+node_octoprint_server -->|"starts"| node_tornado_http
+node_octoprint_server -->|"registers /sockjs"| node_sockjs_bridge
+node_octoprint_server -->|"initializes"| node_user_manager
+node_api_login -->|"authenticates"| node_user_manager
+node_api_login -->|"authorizes"| node_permissions
+node_api_job -->|"start/pause/cancel"| node_printer_state
+node_api_files -->|"writes upload"| node_file_manager
+node_api_connection -->|"connect&#40;&#41;/disconnect&#40;&#41;"| node_printer_state
+node_api_printer -->|"jog/home/temp"| node_printer_state
+node_sockjs_on_message -->|"browser job commands"| node_printer_state
+node_sockjs_bridge -->|"subscribes _onEvent"| node_event_bus
+node_state_monitor -->|"on_printer_send_current_data"| node_sockjs_bridge
+node_printer_state -->|"0.5s updates"| node_state_monitor
+node_api_job -->|"cancel/pause"| node_job_control
+node_printer_state -->|"durations"| node_time_estimator
+node_machine_com -->|"state/temp/log callbacks"| node_printer_state
+node_printer_state -->|"connect&#40;&#41; -&gt; find&#40;&#41;"| node_comm_registry
+node_comm_registry -->|"resolves 'serial'"| node_serial_connector
+node_serial_connector -->|"instantiates"| node_machine_com
+node_machine_com -->|"reads replies"| node_comm_monitor
+node_machine_com -->|"serializes sends"| node_comm_queues
+node_comm_streaming -->|"feeds job lines"| node_comm_queues
+node_serial_connector -->|"maps acks to states"| node_printer_link_state
+node_printer_link_state -->|"state callbacks"| node_printer_state
+node_printer_state -->|"fires Events.*"| node_event_bus
+node_file_manager -->|"enqueues"| node_analysis_queue
+node_analysis_queue -->|"parses model"| node_gcode_interpreter
+node_file_manager -->|"profiles"| node_slicing_manager
+node_analysis_queue -->|"MetadataAnalysisFinished"| node_event_bus
+node_event_bus -->|"render on PrintFinished"| node_timelapse_render
+node_event_bus -->|"on_event&#40;&#41;"| node_plugin_eventhandler
+node_plugin_manager -->|"wraps"| node_plugin_info
+node_plugin_info -->|"implementations"| node_plugin_base
+node_plugin_manager -->|"mounts blueprints"| node_plugin_blueprint
+node_octoprint_server -->|"loads at startup"| node_plugin_blueprint
+
+click node_octoprint_server "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/__init__.py"
+click node_tornado_http "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/util/tornado.py"
+click node_permissions "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/access/permissions.py"
+click node_user_manager "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/access/users.py"
+click node_api_login "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/api/__init__.py"
+click node_api_job "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/api/job.py"
+click node_api_files "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/api/files.py"
+click node_api_connection "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/api/connection.py"
+click node_api_printer "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/api/printer.py"
+click node_sockjs_bridge "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/util/sockjs.py"
+click node_sockjs_on_message "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/server/util/sockjs.py"
+click node_plugin_manager "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugin/core.py"
+click node_plugin_info "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugin/core.py"
+click node_plugin_base "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugin/types.py"
+click node_plugin_blueprint "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugin/types.py"
+click node_plugin_eventhandler "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugin/types.py"
+click node_comm_registry "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/printer/connection.py"
+click node_printer_link_state "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/printer/connection.py"
+click node_serial_connector "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugins/serial_connector/connector.py"
+click node_machine_com "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugins/serial_connector/serial_comm.py"
+click node_comm_monitor "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugins/serial_connector/serial_comm.py"
+click node_comm_queues "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugins/serial_connector/serial_comm.py"
+click node_comm_streaming "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/plugins/serial_connector/serial_comm.py"
+click node_printer_state "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/printer/standard.py"
+click node_state_monitor "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/printer/standard.py"
+click node_job_control "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/printer/standard.py"
+click node_time_estimator "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/printer/estimation.py"
+click node_file_manager "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/filemanager/__init__.py"
+click node_analysis_queue "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/filemanager/analysis.py"
+click node_gcode_interpreter "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/util/gcodeInterpreter.py"
+click node_slicing_manager "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/slicing/__init__.py"
+click node_event_bus "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/events.py"
+click node_timelapse_render "https://github.com/OctoPrint/OctoPrint/blob/dev/src/octoprint/timelapse.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_octoprint_server,node_tornado_http,node_permissions,node_user_manager,node_file_manager,node_analysis_queue,node_gcode_interpreter,node_slicing_manager toneBlue
+class node_api_login,node_api_job,node_api_files,node_api_connection,node_api_printer,node_event_bus,node_timelapse_render toneAmber
+class node_sockjs_bridge,node_sockjs_on_message toneMint
+class node_plugin_manager,node_plugin_info,node_plugin_base,node_plugin_blueprint,node_plugin_eventhandler toneRose
+class node_comm_registry,node_printer_link_state,node_serial_connector,node_machine_com,node_comm_monitor,node_comm_queues,node_comm_streaming toneIndigo
+class node_printer_state,node_state_monitor,node_job_control,node_time_estimator toneTeal
