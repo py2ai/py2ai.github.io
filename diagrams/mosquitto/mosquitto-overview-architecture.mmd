@@ -1,0 +1,71 @@
+flowchart TD
+
+subgraph group_loop["Event Loop"]
+  node_main_loop["mosquitto_main_loop&#40;&#41;<br/>[loop.c]"]
+  node_mux["mux__handle&#40;&#41;<br/>[mux.c]"]
+  node_accept["net__socket_accept&#40;&#41;<br/>[net.c]"]
+end
+
+subgraph group_protocol["MQTT Protocol"]
+  node_dispatch["handle__packet&#40;&#41;<br/>[read_handle.c]"]
+  node_handle_connect["handle__connect&#40;&#41;<br/>[handle_connect.c]"]
+  node_handle_publish["handle__publish&#40;&#41;<br/>[handle_publish.c]"]
+  node_handle_subscribe["handle__subscribe&#40;&#41;<br/>[handle_subscribe.c]"]
+end
+
+subgraph group_routing["Pub/Sub Routing"]
+  node_subs_tree["sub__messages_queue&#40;&#41;<br/>[subs.c]"]
+  node_retain_tree["retain__store&#40;&#41;<br/>[retain.c]"]
+end
+
+subgraph group_storage["Persistence"]
+  node_msg_store["db__message_store&#40;&#41;<br/>[database.c]"]
+  node_persist["persist__backup&#40;&#41;<br/>[persist_write.c]"]
+end
+
+subgraph group_auth["Auth &amp; Plugins"]
+  node_plugins["mosquitto_callback_register&#40;&#41;<br/>[plugin_callbacks.c]"]
+end
+
+node_main_loop -->|"each tick"| node_mux
+node_mux -->|"EPOLLIN on listener"| node_accept
+node_mux -->|"EPOLLIN on client, packet__read"| node_dispatch
+node_dispatch -->|"CMD_CONNECT"| node_handle_connect
+node_dispatch -->|"CMD_PUBLISH"| node_handle_publish
+node_dispatch -->|"CMD_SUBSCRIBE"| node_handle_subscribe
+node_handle_connect -->|"MOSQ_EVT_BASIC_AUTH"| node_plugins
+node_handle_publish -->|"MOSQ_EVT_MESSAGE_IN"| node_plugins
+node_handle_publish -->|"db__message_store"| node_msg_store
+node_msg_store -->|"sub__messages_queue"| node_subs_tree
+node_handle_subscribe -->|"sub__add leaf"| node_subs_tree
+node_handle_subscribe -->|"replay via retain__queue"| node_retain_tree
+node_handle_publish -->|"retain flag: retain__store"| node_retain_tree
+node_subs_tree -->|"queued PUBLISH writes"| node_mux
+node_main_loop -->|"autosave interval"| node_persist
+node_persist -->|"restore at boot"| node_msg_store
+
+click node_main_loop "https://github.com/eclipse/mosquitto/blob/master/src/loop.c"
+click node_mux "https://github.com/eclipse/mosquitto/blob/master/src/mux.c"
+click node_accept "https://github.com/eclipse/mosquitto/blob/master/src/net.c"
+click node_dispatch "https://github.com/eclipse/mosquitto/blob/master/src/read_handle.c"
+click node_handle_connect "https://github.com/eclipse/mosquitto/blob/master/src/handle_connect.c"
+click node_handle_publish "https://github.com/eclipse/mosquitto/blob/master/src/handle_publish.c"
+click node_handle_subscribe "https://github.com/eclipse/mosquitto/blob/master/src/handle_subscribe.c"
+click node_subs_tree "https://github.com/eclipse/mosquitto/blob/master/src/subs.c"
+click node_retain_tree "https://github.com/eclipse/mosquitto/blob/master/src/retain.c"
+click node_msg_store "https://github.com/eclipse/mosquitto/blob/master/src/database.c"
+click node_persist "https://github.com/eclipse/mosquitto/blob/master/src/persist_write.c"
+click node_plugins "https://github.com/eclipse/mosquitto/blob/master/src/plugin_callbacks.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_loop,node_mux,node_accept toneBlue
+class node_dispatch,node_handle_connect,node_handle_publish,node_handle_subscribe toneAmber
+class node_subs_tree,node_retain_tree toneMint
+class node_msg_store,node_persist toneRose
+class node_plugins toneIndigo

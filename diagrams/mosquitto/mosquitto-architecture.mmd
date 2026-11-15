@@ -1,0 +1,145 @@
+flowchart TD
+
+subgraph group_loop["Event Loop"]
+  node_main["main&#40;&#41;<br/>[mosquitto.c]"]
+  node_main_loop["mosquitto_main_loop&#40;&#41;<br/>[loop.c]"]
+  node_mux["mux__handle&#40;&#41;<br/>[mux.c]"]
+  node_mux_epoll["mux_epoll__handle&#40;&#41;<br/>[mux_epoll.c]"]
+  node_accept["net__socket_accept&#40;&#41;<br/>[net.c]"]
+  node_keepalive["keepalive__check&#40;&#41;<br/>[keepalive.c]"]
+  node_session_expiry["session_expiry__check&#40;&#41;<br/>[session_expiry.c]"]
+end
+
+subgraph group_protocol["Packet Handling"]
+  node_dispatch["handle__packet&#40;&#41;<br/>[read_handle.c]"]
+  node_handle_connect["handle__connect&#40;&#41;<br/>[handle_connect.c]"]
+  node_handle_publish["handle__publish&#40;&#41;<br/>[handle_publish.c]"]
+  node_accepted_publish["handle__accepted_publish&#40;&#41;<br/>[handle_publish.c]"]
+  node_handle_subscribe["handle__subscribe&#40;&#41;<br/>[handle_subscribe.c]"]
+  node_handle_auth["handle__auth&#40;&#41;<br/>[handle_auth.c]"]
+end
+
+subgraph group_routing["Topic Tree Routing"]
+  node_sub_add["sub__add&#40;&#41;<br/>[subs.c]"]
+  node_sub_queue["sub__messages_queue&#40;&#41;<br/>[subs.c]"]
+  node_subs_process["subs__process&#40;&#41;<br/>[subs.c]"]
+  node_shared_subs["subs__shared_process&#40;&#41;<br/>[subs.c]"]
+  node_retain_store["retain__store&#40;&#41;<br/>[retain.c]"]
+  node_retain_queue["retain__queue&#40;&#41;<br/>[retain.c]"]
+end
+
+subgraph group_qos["QoS &amp; Message Store"]
+  node_base_msg["struct mosquitto__base_msg"]
+  node_msg_store["db__message_store&#40;&#41;<br/>[database.c]"]
+  node_msg_insert_out["db__message_insert_outgoing&#40;&#41;<br/>[database.c]"]
+  node_msg_insert_in["db__message_insert_incoming&#40;&#41;<br/>[database.c]"]
+end
+
+subgraph group_persist["Persistence"]
+  node_persist_backup["persist__backup&#40;&#41;<br/>[persist_write.c]"]
+  node_persist_restore["persist__restore&#40;&#41;<br/>[persist_read.c]"]
+end
+
+subgraph group_auth["Security &amp; Plugins"]
+  node_callback_register["mosquitto_callback_register&#40;&#41;<br/>[plugin_callbacks.c]"]
+  node_password_file["broker_password_file__init&#40;&#41;<br/>[password_file.c]"]
+  node_dynsec["mosquitto_plugin_init&#40;&#41;<br/>[plugin.c]"]
+  node_dynsec_cmd["dynsec__handle_command&#40;&#41;<br/>[control.c]"]
+  node_broker_publish["mosquitto_broker_publish&#40;&#41;<br/>[plugin_public.c]"]
+end
+
+subgraph group_client["libmosquitto Client"]
+  node_mosquitto_new["mosquitto_new&#40;&#41;<br/>[libmosquitto.c]"]
+  node_client_loop["mosquitto_loop&#40;&#41;<br/>[loop.c]"]
+  node_client_dispatch["handle__packet&#40;&#41;<br/>[read_handle.c]"]
+  node_packet_read["packet__read&#40;&#41;<br/>[packet_mosq.c]"]
+end
+
+node_main -->|"after db__open + listeners"| node_main_loop
+node_main_loop -->|"block on I/O"| node_mux
+node_mux -->|"vtable: epoll on Linux"| node_mux_epoll
+node_mux_epoll -->|"listener EPOLLIN"| node_accept
+node_mux_epoll -->|"client EPOLLIN"| node_packet_read
+node_accept -->|"new context reads CONNECT"| node_dispatch
+node_main_loop -->|"every tick"| node_keepalive
+node_main_loop -->|"every tick"| node_session_expiry
+node_dispatch -->|"CMD_CONNECT"| node_handle_connect
+node_dispatch -->|"CMD_PUBLISH"| node_handle_publish
+node_dispatch -->|"CMD_SUBSCRIBE"| node_handle_subscribe
+node_dispatch -->|"CMD_AUTH"| node_handle_auth
+node_handle_connect -->|"MOSQ_EVT_BASIC_AUTH"| node_callback_register
+node_handle_auth -->|"MOSQ_EVT_EXTENDED_AUTH"| node_callback_register
+node_handle_publish -->|"db__message_store"| node_msg_store
+node_msg_store -->|"ref-counted record"| node_base_msg
+node_msg_store -->|"QoS 2 incoming"| node_msg_insert_in
+node_accepted_publish -->|"per QoS level"| node_sub_queue
+node_sub_queue -->|"leaf match"| node_subs_process
+node_sub_queue -->|"$share group"| node_shared_subs
+node_subs_process -->|"queue per client"| node_msg_insert_out
+node_msg_insert_out -->|"schedule PUBLISH write"| node_mux
+node_handle_subscribe -->|"insert leaf"| node_sub_add
+node_handle_subscribe -->|"replay retained"| node_retain_queue
+node_retain_queue -->|"reads stored messages"| node_retain_store
+node_handle_publish -->|"retain flag"| node_retain_store
+node_sub_add -->|"tree lookup later"| node_sub_queue
+node_main_loop -->|"autosave_interval"| node_persist_backup
+node_persist_restore -->|"rebuild at boot"| node_msg_store
+node_persist_restore -->|"re-arm expiring sessions"| node_session_expiry
+node_password_file -->|"MOSQ_EVT_BASIC_AUTH"| node_callback_register
+node_dynsec -->|"auth + ACL + control events"| node_callback_register
+node_dynsec -->|"$CONTROL dynamic-security"| node_dynsec_cmd
+node_dynsec_cmd -->|"reply messages"| node_broker_publish
+node_callback_register -->|"MOSQ_EVT_MESSAGE_IN"| node_handle_publish
+node_mosquitto_new -->|"then mosquitto_connect&#40;&#41;"| node_client_loop
+node_client_loop -->|"readable socket"| node_packet_read
+node_client_loop -->|"complete packet"| node_client_dispatch
+node_packet_read -->|"dispatch per type"| node_client_dispatch
+
+click node_main "https://github.com/eclipse/mosquitto/blob/master/src/mosquitto.c"
+click node_main_loop "https://github.com/eclipse/mosquitto/blob/master/src/loop.c"
+click node_mux "https://github.com/eclipse/mosquitto/blob/master/src/mux.c"
+click node_mux_epoll "https://github.com/eclipse/mosquitto/blob/master/src/mux_epoll.c"
+click node_accept "https://github.com/eclipse/mosquitto/blob/master/src/net.c"
+click node_keepalive "https://github.com/eclipse/mosquitto/blob/master/src/keepalive.c"
+click node_session_expiry "https://github.com/eclipse/mosquitto/blob/master/src/session_expiry.c"
+click node_dispatch "https://github.com/eclipse/mosquitto/blob/master/src/read_handle.c"
+click node_handle_connect "https://github.com/eclipse/mosquitto/blob/master/src/handle_connect.c"
+click node_handle_publish "https://github.com/eclipse/mosquitto/blob/master/src/handle_publish.c"
+click node_accepted_publish "https://github.com/eclipse/mosquitto/blob/master/src/handle_publish.c"
+click node_handle_subscribe "https://github.com/eclipse/mosquitto/blob/master/src/handle_subscribe.c"
+click node_handle_auth "https://github.com/eclipse/mosquitto/blob/master/src/handle_auth.c"
+click node_sub_add "https://github.com/eclipse/mosquitto/blob/master/src/subs.c"
+click node_sub_queue "https://github.com/eclipse/mosquitto/blob/master/src/subs.c"
+click node_subs_process "https://github.com/eclipse/mosquitto/blob/master/src/subs.c"
+click node_shared_subs "https://github.com/eclipse/mosquitto/blob/master/src/subs.c"
+click node_retain_store "https://github.com/eclipse/mosquitto/blob/master/src/retain.c"
+click node_retain_queue "https://github.com/eclipse/mosquitto/blob/master/src/retain.c"
+click node_base_msg "https://github.com/eclipse/mosquitto/blob/master/src/mosquitto_broker_internal.h"
+click node_msg_store "https://github.com/eclipse/mosquitto/blob/master/src/database.c"
+click node_msg_insert_out "https://github.com/eclipse/mosquitto/blob/master/src/database.c"
+click node_msg_insert_in "https://github.com/eclipse/mosquitto/blob/master/src/database.c"
+click node_persist_backup "https://github.com/eclipse/mosquitto/blob/master/src/persist_write.c"
+click node_persist_restore "https://github.com/eclipse/mosquitto/blob/master/src/persist_read.c"
+click node_callback_register "https://github.com/eclipse/mosquitto/blob/master/src/plugin_callbacks.c"
+click node_password_file "https://github.com/eclipse/mosquitto/blob/master/src/password_file.c"
+click node_dynsec "https://github.com/eclipse/mosquitto/blob/master/plugins/dynamic-security/plugin.c"
+click node_dynsec_cmd "https://github.com/eclipse/mosquitto/blob/master/plugins/dynamic-security/control.c"
+click node_broker_publish "https://github.com/eclipse/mosquitto/blob/master/src/plugin_public.c"
+click node_mosquitto_new "https://github.com/eclipse/mosquitto/blob/master/lib/libmosquitto.c"
+click node_client_loop "https://github.com/eclipse/mosquitto/blob/master/lib/loop.c"
+click node_client_dispatch "https://github.com/eclipse/mosquitto/blob/master/lib/read_handle.c"
+click node_packet_read "https://github.com/eclipse/mosquitto/blob/master/lib/packet_mosq.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_main_loop,node_mux,node_mux_epoll,node_accept,node_keepalive,node_session_expiry,node_mosquitto_new,node_client_loop,node_client_dispatch,node_packet_read toneBlue
+class node_dispatch,node_handle_connect,node_handle_publish,node_accepted_publish,node_handle_subscribe,node_handle_auth toneAmber
+class node_sub_add,node_sub_queue,node_subs_process,node_shared_subs,node_retain_store,node_retain_queue toneMint
+class node_base_msg,node_msg_store,node_msg_insert_out,node_msg_insert_in toneRose
+class node_persist_backup,node_persist_restore toneIndigo
+class node_callback_register,node_password_file,node_dynsec,node_dynsec_cmd,node_broker_publish toneTeal
