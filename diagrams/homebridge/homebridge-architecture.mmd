@@ -1,0 +1,153 @@
+flowchart TD
+
+subgraph group_g_entry["CLI Entry"]
+  node_cli["cli&#40;&#41;<br/>[cli.ts]"]
+end
+
+subgraph group_g_server["Server Startup"]
+  node_server["Server<br/>[server.ts]"]
+  node_load_config["Server.loadConfig<br/>[server.ts]"]
+  node_server_start["Server.start<br/>[server.ts]"]
+  node_load_accessories["Server.loadAccessories<br/>[server.ts]"]
+  node_load_platforms["Server.loadPlatforms<br/>[server.ts]"]
+  node_ipc_service["IpcService<br/>[ipcService.ts]"]
+end
+
+subgraph group_g_plugins["Plugin Discovery"]
+  node_plugin_manager["PluginManager<br/>[pluginManager.ts]"]
+  node_initialize_installed["initializeInstalledPlugins<br/>[pluginManager.ts]"]
+  node_plugin["Plugin<br/>[plugin.ts]"]
+  node_plugin_load["Plugin.load<br/>[plugin.ts]"]
+  node_plugin_initialize["Plugin.initialize<br/>[plugin.ts]"]
+  node_handle_register["handleRegisterAccessory<br/>[pluginManager.ts]"]
+end
+
+subgraph group_g_plugin_api["Plugin API Surface"]
+  node_api["HomebridgeAPI<br/>[api.ts]"]
+  node_register_platform_accessories["registerPlatformAccessories<br/>[api.ts]"]
+  node_signal_finished["signalFinished<br/>[api.ts]"]
+  node_dynamic_check["isDynamicPlatformPlugin<br/>[api.ts]"]
+end
+
+subgraph group_g_bridge["HAP Bridge"]
+  node_bridge_service["BridgeService<br/>[bridgeService.ts]"]
+  node_bridge["Bridge accessory<br/>[bridgeService.ts]"]
+  node_publish_bridge["publishBridge<br/>[bridgeService.ts]"]
+  node_create_hap_accessory["createHAPAccessory<br/>[bridgeService.ts]"]
+  node_load_platform_accessories["loadPlatformAccessories<br/>[bridgeService.ts]"]
+  node_external_accessories["handlePublishExternalAccessories<br/>[bridgeService.ts]"]
+  node_hap_nodejs["@homebridge/hap-nodejs<br/>[package.json]"]
+end
+
+subgraph group_g_cache["Accessory Cache"]
+  node_platform_accessory["PlatformAccessory"]
+  node_load_cached["loadCachedPlatformAccessoriesFromDisk<br/>[bridgeService.ts]"]
+  node_restore_cached["restoreCachedPlatformAccessories<br/>[bridgeService.ts]"]
+  node_save_cached["saveCachedPlatformAccessoriesOnDisk<br/>[bridgeService.ts]"]
+  node_user["User<br/>[user.ts]"]
+end
+
+subgraph group_g_child["Child Bridges"]
+  node_child_bridge_service["ChildBridgeService"]
+  node_child_bridge_fork["ChildBridgeFork<br/>[childBridgeFork.ts]"]
+  node_fork_load_plugin["ChildBridgeFork.loadPlugin<br/>[childBridgeFork.ts]"]
+end
+
+subgraph group_g_matter["Matter"]
+  node_matter_manager["MatterBridgeManager"]
+end
+
+node_cli -->|"constructs Server, calls start&#40;&#41;"| node_server
+node_server -->|"constructor parses config.json"| node_load_config
+node_server -->|"one HomebridgeAPI per process"| node_api
+node_server -->|"active/disabled plugin lists"| node_plugin_manager
+node_server -->|"bridge config + options"| node_bridge_service
+node_server -->|"start&#40;&#41;"| node_server_start
+node_server_start -->|"cache read before plugins initialize"| node_load_cached
+node_server_start -->|"plugins load second"| node_initialize_installed
+node_server_start -->|"config.platforms"| node_load_platforms
+node_server_start -->|"config.accessories"| node_load_accessories
+node_server_start -->|"api.signalFinished&#40;&#41; after platforms settle"| node_signal_finished
+node_server_start -->|"publishBridge&#40;&#41; when HAP enabled"| node_publish_bridge
+node_load_config -->|"User.configPath&#40;&#41; = ~/.homebridge/config.json"| node_user
+node_load_accessories -->|"_bridge.username present"| node_child_bridge_service
+node_load_accessories -->|"else bridge on main accessory"| node_create_hap_accessory
+node_load_platforms -->|"duck-type plugin flavour"| node_dynamic_check
+node_load_platforms -->|"static platform callback"| node_load_platform_accessories
+node_load_platforms -->|"_bridge present"| node_child_bridge_service
+node_plugin_manager -->|"discover then init loop"| node_initialize_installed
+node_initialize_installed -->|"plugin.load&#40;&#41; + initializePlugin&#40;&#41;"| node_plugin
+node_plugin -->|"dynamic import&#40;&#41; of entry"| node_plugin_load
+node_plugin_load -->|"default export = initializer"| node_plugin_initialize
+node_plugin_initialize -->|"receives api object"| node_api
+node_plugin_initialize -->|"registerAccessory/registerPlatform"| node_handle_register
+node_handle_register -->|"stores constructors in maps"| node_plugin
+node_api -->|"dynamic platforms manage cache"| node_register_platform_accessories
+node_register_platform_accessories -->|"InternalAPIEvent handlers"| node_bridge_service
+node_bridge_service -->|"new Bridge&#40;uuid 'HomeBridge'&#41;"| node_bridge
+node_publish_bridge -->|"AccessoryInformation + PublishInfo"| node_bridge
+node_publish_bridge -->|"bridge.publish&#40;&#41;: HAPServer + mDNS"| node_hap_nodejs
+node_bridge -->|"hap-nodejs Bridge base class"| node_hap_nodejs
+node_create_hap_accessory -->|"new Accessory&#40;displayName, uuid&#41;"| node_hap_nodejs
+node_load_cached -->|"PlatformAccessory.deserialize"| node_platform_accessory
+node_restore_cached -->|"configureAccessory replay"| node_platform_accessory
+node_restore_cached -->|"getActiveDynamicPlatform resolution"| node_plugin
+node_save_cached -->|"serialize&#40;&#41; to disk"| node_platform_accessory
+node_platform_accessory -->|"accessories dir under ~/.homebridge"| node_user
+node_child_bridge_service -->|"fork&#40;childBridgeFork.js&#41;"| node_child_bridge_fork
+node_child_bridge_service -->|"status + metadata via IPC"| node_ipc_service
+node_child_bridge_fork -->|"loadPlugin&#40;data&#41; on IPC message"| node_fork_load_plugin
+node_fork_load_plugin -->|"fresh HomebridgeAPI in child"| node_api
+node_fork_load_plugin -->|"loadPlugin&#40;path&#41; + plugin.load&#40;&#41;"| node_plugin
+node_child_bridge_fork -->|"own BridgeService, publishHapIfEnabled&#40;&#41;"| node_bridge_service
+node_external_accessories -->|"per-accessory HAPServer"| node_hap_nodejs
+node_dynamic_check -->|"assignDynamicPlatform / getActiveDynamicPlatform"| node_plugin
+node_server_start -->|"dynamic import when bridge.matter set"| node_matter_manager
+
+click node_cli "https://github.com/homebridge/homebridge/blob/latest/src/cli.ts"
+click node_server "https://github.com/homebridge/homebridge/blob/latest/src/server.ts"
+click node_load_config "https://github.com/homebridge/homebridge/blob/latest/src/server.ts"
+click node_server_start "https://github.com/homebridge/homebridge/blob/latest/src/server.ts"
+click node_load_accessories "https://github.com/homebridge/homebridge/blob/latest/src/server.ts"
+click node_load_platforms "https://github.com/homebridge/homebridge/blob/latest/src/server.ts"
+click node_ipc_service "https://github.com/homebridge/homebridge/blob/latest/src/ipcService.ts"
+click node_api "https://github.com/homebridge/homebridge/blob/latest/src/api.ts"
+click node_register_platform_accessories "https://github.com/homebridge/homebridge/blob/latest/src/api.ts"
+click node_signal_finished "https://github.com/homebridge/homebridge/blob/latest/src/api.ts"
+click node_dynamic_check "https://github.com/homebridge/homebridge/blob/latest/src/api.ts"
+click node_plugin_manager "https://github.com/homebridge/homebridge/blob/latest/src/pluginManager.ts"
+click node_initialize_installed "https://github.com/homebridge/homebridge/blob/latest/src/pluginManager.ts"
+click node_plugin "https://github.com/homebridge/homebridge/blob/latest/src/plugin.ts"
+click node_plugin_load "https://github.com/homebridge/homebridge/blob/latest/src/plugin.ts"
+click node_plugin_initialize "https://github.com/homebridge/homebridge/blob/latest/src/plugin.ts"
+click node_handle_register "https://github.com/homebridge/homebridge/blob/latest/src/pluginManager.ts"
+click node_bridge_service "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_bridge "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_publish_bridge "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_create_hap_accessory "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_load_platform_accessories "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_external_accessories "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_hap_nodejs "https://github.com/homebridge/homebridge/blob/latest/package.json"
+click node_platform_accessory "https://github.com/homebridge/homebridge/blob/latest/src/platformAccessory.ts"
+click node_load_cached "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_restore_cached "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_save_cached "https://github.com/homebridge/homebridge/blob/latest/src/bridgeService.ts"
+click node_user "https://github.com/homebridge/homebridge/blob/latest/src/user.ts"
+click node_child_bridge_service "https://github.com/homebridge/homebridge/blob/latest/src/childBridgeService.ts"
+click node_child_bridge_fork "https://github.com/homebridge/homebridge/blob/latest/src/childBridgeFork.ts"
+click node_fork_load_plugin "https://github.com/homebridge/homebridge/blob/latest/src/childBridgeFork.ts"
+click node_matter_manager "https://github.com/homebridge/homebridge/blob/latest/src/matter/MatterBridgeManager.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli,node_child_bridge_service,node_child_bridge_fork,node_fork_load_plugin toneBlue
+class node_server,node_load_config,node_server_start,node_load_accessories,node_load_platforms,node_ipc_service,node_matter_manager toneAmber
+class node_plugin_manager,node_initialize_installed,node_plugin,node_plugin_load,node_plugin_initialize,node_handle_register toneMint
+class node_api,node_register_platform_accessories,node_signal_finished,node_dynamic_check toneRose
+class node_bridge_service,node_bridge,node_publish_bridge,node_create_hap_accessory,node_load_platform_accessories,node_external_accessories,node_hap_nodejs toneIndigo
+class node_platform_accessory,node_load_cached,node_restore_cached,node_save_cached,node_user toneTeal
