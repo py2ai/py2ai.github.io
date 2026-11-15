@@ -1,0 +1,141 @@
+{
+  "owner": "homebridge",
+  "repo": "homebridge",
+  "branch": "latest",
+  "groups": [
+    { "id": "g_entry", "name": "CLI Entry", "label": "CLI Entry" },
+    { "id": "g_server", "name": "Server Core", "label": "Server Core" },
+    { "id": "g_plugins", "name": "Plugin System", "label": "Plugin System" },
+    { "id": "g_bridge", "name": "HAP Bridge", "label": "HAP Bridge" },
+    { "id": "g_cache", "name": "Accessory Cache", "label": "Accessory Cache" },
+    { "id": "g_child", "name": "Child Bridges", "label": "Child Bridges" }
+  ],
+  "nodes": [
+    {
+      "id": "cli",
+      "label": "cli()",
+      "file": "cli.ts",
+      "path": "src/cli.ts",
+      "group": "CLI Entry",
+      "groupId": "g_entry",
+      "desc": "Parses command-line flags (-I, -P, -U, -K), wires SIGINT/SIGTERM handlers, then boots the Server and calls start()"
+    },
+    {
+      "id": "server",
+      "label": "Server",
+      "file": "server.ts",
+      "path": "src/server.ts",
+      "group": "Server Core",
+      "groupId": "g_server",
+      "desc": "Top-level orchestrator: loads config.json, owns the PluginManager, BridgeService, child bridge map and IPC service"
+    },
+    {
+      "id": "api",
+      "label": "HomebridgeAPI",
+      "file": "api.ts",
+      "path": "src/api.ts",
+      "group": "Plugin System",
+      "groupId": "g_plugins",
+      "desc": "API v2.7 EventEmitter handed to every plugin; registerAccessory/registerPlatform calls funnel back through its internal events"
+    },
+    {
+      "id": "plugin_manager",
+      "label": "PluginManager",
+      "file": "pluginManager.ts",
+      "path": "src/pluginManager.ts",
+      "group": "Plugin System",
+      "groupId": "g_plugins",
+      "desc": "Discovers homebridge-* packages in global node_modules (plus -P custom path) and drives their load/initialize cycle"
+    },
+    {
+      "id": "plugin",
+      "label": "Plugin",
+      "file": "plugin.ts",
+      "path": "src/plugin.ts",
+      "group": "Plugin System",
+      "groupId": "g_plugins",
+      "desc": "Wraps one npm package: resolves its entry point, dynamic-imports it, stores registered accessory/platform constructors"
+    },
+    {
+      "id": "bridge_service",
+      "label": "BridgeService",
+      "file": "bridgeService.ts",
+      "path": "src/bridgeService.ts",
+      "group": "HAP Bridge",
+      "groupId": "g_bridge",
+      "desc": "Owns the single Bridge accessory, the accessory cache handlers and external accessory publishing"
+    },
+    {
+      "id": "hap_publish",
+      "label": "Bridge publish",
+      "file": "bridgeService.ts",
+      "path": "src/bridgeService.ts",
+      "group": "HAP Bridge",
+      "groupId": "g_bridge",
+      "desc": "publishBridge() sets AccessoryInformation, builds PublishInfo (username/pin/port) and hands the bridge to hap-nodejs"
+    },
+    {
+      "id": "hap_nodejs",
+      "label": "@homebridge/hap-nodejs",
+      "file": "package.json",
+      "path": "package.json",
+      "group": "HAP Bridge",
+      "groupId": "g_bridge",
+      "desc": "Dependency implementing the HomeKit Accessory Protocol: HAPServer, Accessory/Bridge classes, mDNS advertiser, pairing"
+    },
+    {
+      "id": "platform_accessory",
+      "label": "PlatformAccessory",
+      "file": "platformAccessory.ts",
+      "path": "src/platformAccessory.ts",
+      "group": "Accessory Cache",
+      "groupId": "g_cache",
+      "desc": "Plugin-facing accessory wrapper with context storage and _associatedPlugin/_associatedPlatform used by the cache"
+    },
+    {
+      "id": "user",
+      "label": "User",
+      "file": "user.ts",
+      "path": "src/user.ts",
+      "group": "Accessory Cache",
+      "groupId": "g_cache",
+      "desc": "Resolves storage paths under ~/.homebridge: config.json, persist (hap-nodejs), accessories (cache)"
+    },
+    {
+      "id": "child_bridge_service",
+      "label": "ChildBridgeService",
+      "file": "childBridgeService.ts",
+      "path": "src/childBridgeService.ts",
+      "group": "Child Bridges",
+      "groupId": "g_child",
+      "desc": "Supervises one forked Node process per _bridge config; restart/stop/start via IPC"
+    },
+    {
+      "id": "child_bridge_fork",
+      "label": "ChildBridgeFork",
+      "file": "childBridgeFork.ts",
+      "path": "src/childBridgeFork.ts",
+      "group": "Child Bridges",
+      "groupId": "g_child",
+      "desc": "Server inside the forked child: loads exactly one plugin and builds its own API, PluginManager and BridgeService"
+    }
+  ],
+  "edges": [
+    { "from": "cli", "to": "server", "label": "new Server(options), start()" },
+    { "from": "server", "to": "user", "label": "config.json + storage paths" },
+    { "from": "server", "to": "api", "label": "creates one HomebridgeAPI" },
+    { "from": "server", "to": "plugin_manager", "label": "creates with active/disabled lists" },
+    { "from": "server", "to": "bridge_service", "label": "creates with bridge config" },
+    { "from": "plugin_manager", "to": "plugin", "label": "discover, load, initialize" },
+    { "from": "plugin", "to": "api", "label": "initializer(api) registers constructors" },
+    { "from": "api", "to": "bridge_service", "label": "InternalAPIEvent subscriptions" },
+    { "from": "bridge_service", "to": "platform_accessory", "label": "deserialize / configureAccessory / serialize" },
+    { "from": "bridge_service", "to": "hap_publish", "label": "publishBridge()" },
+    { "from": "hap_publish", "to": "hap_nodejs", "label": "bridge.publish(): HAPServer + mDNS" },
+    { "from": "server", "to": "hap_publish", "label": "publishBridge() once platforms settle" },
+    { "from": "server", "to": "child_bridge_service", "label": "configs carrying _bridge" },
+    { "from": "child_bridge_service", "to": "child_bridge_fork", "label": "fork(childBridgeFork.js)" },
+    { "from": "child_bridge_fork", "to": "api", "label": "fresh HomebridgeAPI in child" },
+    { "from": "child_bridge_fork", "to": "bridge_service", "label": "own BridgeService publishes child bridge" }
+  ]
+}
