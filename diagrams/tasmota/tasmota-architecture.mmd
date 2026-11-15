@@ -1,0 +1,147 @@
+flowchart TD
+
+subgraph group_g_boot["Boot &amp; Configuration"]
+  node_my_user_config["my_user_config.h<br/>[my_user_config.h]"]
+  node_settings["SettingsInit&#40;&#41; / SettingsSaveAll&#40;&#41;<br/>[settings.ino]"]
+  node_modules["kModules&#91;&#93; device templates<br/>[tasmota_template.h]"]
+  node_setup["setup&#40;&#41;<br/>[tasmota.ino]"]
+end
+
+subgraph group_g_sched["Scheduler Heartbeat"]
+  node_tglobal["TasmotaGlobal_t<br/>[tasmota.ino]"]
+  node_loop["loop&#40;&#41;<br/>[tasmota.ino]"]
+  node_scheduler["Scheduler&#40;&#41;<br/>[tasmota.ino]"]
+  node_every_second["PerformEverySecond&#40;&#41;"]
+  node_active["XdrvCall&#40;FUNC_ACTIVE&#41;<br/>[xdrv_interface.ino]"]
+end
+
+subgraph group_g_cmd["Command Path"]
+  node_mailbox["XDRVMAILBOX -&gt; XdrvMailbox<br/>[tasmota.ino]"]
+  node_execute_cmd["ExecuteCommand&#40;cmnd, source&#41;"]
+  node_decode["DecodeCommand&#40;kTasmotaCommands&#41;<br/>[support.ino]"]
+  node_cmnd_fallback["XdrvCall&#40;FUNC_COMMAND&#41; -&gt; XsnsCall"]
+  node_response["Response_P / ResponseCmnd*"]
+end
+
+subgraph group_g_dispatch["Driver Dispatch"]
+  node_xdrvcall["XdrvCall&#40;function&#41;<br/>[xdrv_interface.ino]"]
+  node_kxdrvlist["kXdrvList&#91;&#93; / xdrv_present<br/>[xdrv_interface.ino]"]
+  node_funcptr["xdrv_func_ptr&#91;&#93;<br/>[xdrv_interface.ino]"]
+  node_calldriver["XdrvCallDriver&#40;driver, function&#41;<br/>[xdrv_interface.ino]"]
+end
+
+subgraph group_g_xdrv["Driver Slots"]
+  node_d_web["Xdrv01 WebServer"]
+  node_d_mqtt["Xdrv02 MQTT<br/>[xdrv_02_9_mqtt.ino]"]
+  node_d_rules["Xdrv10 Rules<br/>[xdrv_10_rules.ino]"]
+  node_d_hass["Xdrv12 Home Assistant"]
+  node_d_zigbee["Xdrv23 Zigbee"]
+end
+
+subgraph group_g_telemetry["MQTT &amp; Telemetry"]
+  node_mqtt_init["MqttInit&#40;&#41; + FUNC_MQTT_INIT<br/>[xdrv_02_9_mqtt.ino]"]
+  node_mqtt_pub["MqttPublish / PrefixTopic_P<br/>[xdrv_02_9_mqtt.ino]"]
+  node_teleperiod["tele_period counter"]
+  node_telestate["MqttPublishTeleState&#40;&#41;"]
+end
+
+subgraph group_g_rules["Rule Engine"]
+  node_rules_evt["XdrvRulesProcess&#40;teleperiod&#41;<br/>[xdrv_interface.ino]"]
+  node_rules_process["RulesProcessEvent&#40;json_event&#41;<br/>[xdrv_10_rules.ino]"]
+  node_rules_exec["ExecuteCommand&#40;SRC_RULE&#41;<br/>[xdrv_10_rules.ino]"]
+end
+
+subgraph group_g_web["Web UI &amp; State"]
+  node_webserver["TasmotaWebServer *Webserver"]
+  node_webcmd["ExecuteWebCommand&#40;&#41;"]
+  node_web_handlers["FUNC_WEB_ADD_HANDLER"]
+end
+
+node_my_user_config -->|"compile-time features"| node_setup
+node_settings -->|"loads Settings"| node_setup
+node_modules -->|"claims GPIOs"| node_setup
+node_setup -->|"hands over"| node_loop
+node_loop -->|"each pass"| node_scheduler
+node_scheduler -->|"FUNC_LOOP + timers"| node_xdrvcall
+node_scheduler -->|"1 s slice"| node_every_second
+node_scheduler -->|"FUNC_ACTIVE probe"| node_active
+node_active -->|"liveness broadcast"| node_xdrvcall
+node_execute_cmd -->|"fills fields"| node_mailbox
+node_execute_cmd -->|"core table first"| node_decode
+node_execute_cmd -->|"if unclaimed"| node_cmnd_fallback
+node_cmnd_fallback -->|"FUNC_COMMAND"| node_xdrvcall
+node_execute_cmd -->|"reply accumulates"| node_response
+node_mailbox -->|"drivers read payload"| node_xdrvcall
+node_xdrvcall -->|"walks list"| node_kxdrvlist
+node_kxdrvlist -->|"index pairs"| node_funcptr
+node_funcptr -->|"slot 01"| node_d_web
+node_funcptr -->|"slot 02"| node_d_mqtt
+node_funcptr -->|"slot 10"| node_d_rules
+node_funcptr -->|"slot 12"| node_d_hass
+node_funcptr -->|"slot 23"| node_d_zigbee
+node_xdrvcall -->|"single-slot variant"| node_calldriver
+node_d_mqtt -->|"on FUNC_INIT"| node_mqtt_init
+node_mqtt_init -->|"FUNC_MQTT_INIT notify"| node_xdrvcall
+node_every_second -->|"counts seconds"| node_teleperiod
+node_teleperiod -->|"on expiry"| node_telestate
+node_telestate -->|"publishes tele/STATE"| node_mqtt_pub
+node_mqtt_pub -->|"publish runs rules"| node_rules_evt
+node_rules_evt -->|"slot 10, FUNC_RULES_PROCESS"| node_calldriver
+node_calldriver -->|"single call"| node_d_rules
+node_d_rules -->|"on FUNC_RULES_PROCESS"| node_rules_process
+node_d_rules -->|"DO actions"| node_rules_exec
+node_rules_exec -->|"SRC_RULE re-entry"| node_execute_cmd
+node_d_web -->|"creates instance"| node_webserver
+node_webcmd -->|"SRC_WEBGUI"| node_execute_cmd
+node_d_web -->|"HTTP args"| node_webcmd
+node_webserver -->|"drivers add handlers"| node_web_handlers
+node_d_hass -->|"discovery publishes"| node_mqtt_pub
+node_d_zigbee -->|"device events"| node_mqtt_pub
+
+click node_my_user_config "https://github.com/arendst/Tasmota/blob/development/tasmota/my_user_config.h"
+click node_settings "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/settings.ino"
+click node_modules "https://github.com/arendst/Tasmota/blob/development/tasmota/include/tasmota_template.h"
+click node_setup "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota.ino"
+click node_tglobal "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota.ino"
+click node_loop "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota.ino"
+click node_scheduler "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota.ino"
+click node_every_second "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support_tasmota.ino"
+click node_active "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xx2c_global/xdrv_interface.ino"
+click node_mailbox "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota.ino"
+click node_execute_cmd "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support_command.ino"
+click node_decode "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support.ino"
+click node_cmnd_fallback "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support_command.ino"
+click node_response "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support_command.ino"
+click node_xdrvcall "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xx2c_global/xdrv_interface.ino"
+click node_kxdrvlist "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xx2c_global/xdrv_interface.ino"
+click node_funcptr "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xx2c_global/xdrv_interface.ino"
+click node_calldriver "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xx2c_global/xdrv_interface.ino"
+click node_d_web "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino"
+click node_d_mqtt "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_02_9_mqtt.ino"
+click node_d_rules "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_10_rules.ino"
+click node_d_hass "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_12_home_assistant.ino"
+click node_d_zigbee "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_23_zigbee_A_impl.ino"
+click node_mqtt_init "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_02_9_mqtt.ino"
+click node_mqtt_pub "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_02_9_mqtt.ino"
+click node_teleperiod "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support_tasmota.ino"
+click node_telestate "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_support/support_tasmota.ino"
+click node_rules_evt "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xx2c_global/xdrv_interface.ino"
+click node_rules_process "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_10_rules.ino"
+click node_rules_exec "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_10_rules.ino"
+click node_webserver "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino"
+click node_webcmd "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino"
+click node_web_handlers "https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_my_user_config,node_settings,node_modules,node_setup,node_rules_evt,node_rules_process,node_rules_exec toneBlue
+class node_tglobal,node_loop,node_scheduler,node_every_second,node_active,node_webserver,node_webcmd,node_web_handlers toneAmber
+class node_mailbox,node_execute_cmd,node_decode,node_cmnd_fallback,node_response toneMint
+class node_xdrvcall,node_kxdrvlist,node_funcptr,node_calldriver toneRose
+class node_d_web,node_d_mqtt,node_d_rules,node_d_hass,node_d_zigbee toneIndigo
+class node_mqtt_init,node_mqtt_pub,node_teleperiod,node_telestate toneTeal

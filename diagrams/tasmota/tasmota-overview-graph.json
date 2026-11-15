@@ -1,0 +1,140 @@
+{
+  "owner": "arendst",
+  "repo": "Tasmota",
+  "branch": "development",
+  "groups": [
+    { "id": "g_boot", "name": "Boot", "label": "Boot & Configuration" },
+    { "id": "g_loop", "name": "Scheduler", "label": "Core Scheduler" },
+    { "id": "g_framework", "name": "Framework", "label": "Driver Framework (xdrv)" },
+    { "id": "g_commands", "name": "Commands", "label": "Command Path" },
+    { "id": "g_mqtt", "name": "MQTT", "label": "MQTT & Telemetry" },
+    { "id": "g_ui", "name": "UI", "label": "Automation & UI" }
+  ],
+  "nodes": [
+    {
+      "id": "my_user_config",
+      "label": "my_user_config.h",
+      "file": "my_user_config.h",
+      "path": "tasmota/my_user_config.h",
+      "group": "Boot",
+      "groupId": "g_boot",
+      "desc": "Compile-time feature matrix: #define USE_RULES (L577), #define USE_WEBSERVER (L536) decide which drivers even exist in the binary"
+    },
+    {
+      "id": "setup",
+      "label": "setup()",
+      "file": "tasmota.ino",
+      "path": "tasmota/tasmota.ino",
+      "group": "Boot",
+      "groupId": "g_boot",
+      "desc": "L420: loads settings, claims GPIOs from the module template, starts network, then hands over to loop()"
+    },
+    {
+      "id": "loop",
+      "label": "loop() -> Scheduler()",
+      "file": "tasmota.ino",
+      "path": "tasmota/tasmota.ino",
+      "group": "Core",
+      "groupId": "g_loop",
+      "desc": "L893/L822: single cooperative loop that beats out timed slices (50/100/250 ms, 1 s) to all drivers"
+    },
+    {
+      "id": "mailbox",
+      "label": "XdrvMailbox",
+      "file": "tasmota.ino",
+      "path": "tasmota/tasmota.ino",
+      "group": "Commands",
+      "groupId": "g_commands",
+      "desc": "L201-214: one global struct (command, index, payload, data) handed to every driver call - the universal calling convention"
+    },
+    {
+      "id": "execute_cmd",
+      "label": "ExecuteCommand()",
+      "file": "support_command.ino",
+      "path": "tasmota/tasmota_support/support_command.ino",
+      "group": "Commands",
+      "groupId": "g_commands",
+      "desc": "L339: every interface (MQTT, HTTP, serial, rules) funnels here; fills XdrvMailbox then routes"
+    },
+    {
+      "id": "funcptr",
+      "label": "xdrv_func_ptr[] + kXdrvList",
+      "file": "xdrv_interface.ino",
+      "path": "tasmota/tasmota_xx2c_global/xdrv_interface.ino",
+      "group": "Framework",
+      "groupId": "g_framework",
+      "desc": "L21/L548: compile-time table of up to 128 driver entry points, trimmed by #ifdef XDRV_NN"
+    },
+    {
+      "id": "xdrvcall",
+      "label": "XdrvCall(function)",
+      "file": "xdrv_interface.ino",
+      "path": "tasmota/tasmota_xx2c_global/xdrv_interface.ino",
+      "group": "Framework",
+      "groupId": "g_framework",
+      "desc": "L1156: broadcasts one function code to all drivers; stops at first claimant for result-carrying functions (L1220)"
+    },
+    {
+      "id": "drivers",
+      "label": "xdrv_01 .. xdrv_127",
+      "file": "tasmota_xdrv_driver",
+      "path": "tasmota/tasmota_xdrv_driver",
+      "group": "Framework",
+      "groupId": "g_framework",
+      "desc": "204 driver files: webserver, MQTT, rules, zigbee, lights, energy, sensors - each exposes one XdrvNN(function) switch"
+    },
+    {
+      "id": "mqtt",
+      "label": "Xdrv02 MQTT",
+      "file": "xdrv_02_9_mqtt.ino",
+      "path": "tasmota/tasmota_xdrv_driver/xdrv_02_9_mqtt.ino",
+      "group": "MQTT",
+      "groupId": "g_mqtt",
+      "desc": "Local-first client: MqttInit (L268), MqttPublish (L1138), cmnd/stat/tele prefix topics (L1167)"
+    },
+    {
+      "id": "tele",
+      "label": "MqttPublishTeleState",
+      "file": "support_tasmota.ino",
+      "path": "tasmota/tasmota_support/support_tasmota.ino",
+      "group": "MQTT",
+      "groupId": "g_mqtt",
+      "desc": "L944: TelePeriod counter (L1248) fires aggregated FUNC_JSON_APPEND telemetry as tele/STATE JSON"
+    },
+    {
+      "id": "rules",
+      "label": "Xdrv10 Rules",
+      "file": "xdrv_10_rules.ino",
+      "path": "tasmota/tasmota_xdrv_driver/xdrv_10_rules.ino",
+      "group": "Automation",
+      "groupId": "g_ui",
+      "desc": "Rule engine: RulesProcessEvent (L880) matches triggers and re-enters ExecuteCommand with SRC_RULE (L839)"
+    },
+    {
+      "id": "web",
+      "label": "Xdrv01 WebServer",
+      "file": "xdrv_01_9_webserver.ino",
+      "path": "tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino",
+      "group": "Automation",
+      "groupId": "g_ui",
+      "desc": "TasmotaWebServer instance (L487/L666) serves the UI; ExecuteWebCommand (L590) re-enters the command path"
+    }
+  ],
+  "edges": [
+    { "from": "my_user_config", "to": "setup", "label": "feature flags baked in" },
+    { "from": "setup", "to": "loop", "label": "boots into" },
+    { "from": "loop", "to": "xdrvcall", "label": "FUNC_LOOP / FUNC_ACTIVE" },
+    { "from": "execute_cmd", "to": "mailbox", "label": "fills command payload" },
+    { "from": "execute_cmd", "to": "xdrvcall", "label": "FUNC_COMMAND fallback" },
+    { "from": "web", "to": "execute_cmd", "label": "ExecuteWebCommand" },
+    { "from": "mqtt", "to": "execute_cmd", "label": "topic payload as command" },
+    { "from": "xdrvcall", "to": "funcptr", "label": "iterates table" },
+    { "from": "funcptr", "to": "drivers", "label": "XdrvNN(function)" },
+    { "from": "drivers", "to": "mqtt", "label": "slot 02" },
+    { "from": "drivers", "to": "rules", "label": "slot 10" },
+    { "from": "drivers", "to": "web", "label": "slot 01" },
+    { "from": "tele", "to": "mqtt", "label": "publishes JSON" },
+    { "from": "rules", "to": "execute_cmd", "label": "SRC_RULE commands" },
+    { "from": "mailbox", "to": "xdrvcall", "label": "read by each driver" }
+  ]
+}
