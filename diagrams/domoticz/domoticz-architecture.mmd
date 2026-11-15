@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_grp_entry["Entry &amp; Startup"]
+  node_entry_main["int main&#40;&#41;<br/>[domoticz.cpp]"]
+  node_entry_start_call["m_mainworker.Start&#40;&#41;<br/>[domoticz.cpp]"]
+end
+
+subgraph group_grp_core["Main Worker Core"]
+  node_core_mw_start["MainWorker::Start<br/>[mainworker.cpp]"]
+  node_core_do_work["MainWorker::Do_Work<br/>[mainworker.cpp]"]
+  node_core_decode_rx["MainWorker::DecodeRXMessage<br/>[mainworker.cpp]"]
+  node_core_rx_worker["Do_Work_On_Rx_Messages<br/>[mainworker.cpp]"]
+  node_core_process_rx["ProcessRXMessage<br/>[mainworker.cpp]"]
+  node_core_signal_emitted["sOnDeviceReceived emitted<br/>[mainworker.cpp]"]
+  node_core_update_device["MainWorker::UpdateDevice<br/>[mainworker.cpp]"]
+end
+
+subgraph group_grp_hw["Hardware Layer"]
+  node_hw_base_class["CDomoticzHardwareBase<br/>[DomoticzHardware.h]"]
+  node_hw_rx_signal["sDecodeRXMessage signal<br/>[DomoticzHardware.h]"]
+  node_hw_send_temp["SendTempSensor"]
+  node_hw_mysensors_serial["MySensorsSerial::readCallback"]
+  node_hw_mysensors_base["MySensorsBase::SendSensor2Domoticz<br/>[MySensorsBase.cpp]"]
+  node_hw_http_poller["CHttpPoller::Do_Work<br/>[HttpPoller.cpp]"]
+end
+
+subgraph group_grp_plug["Python Plugin System"]
+  node_plug_system["CPluginSystem::StartPluginSystem<br/>[PluginManager.cpp]"]
+  node_plug_do_work["CPlugin::Do_Work<br/>[Plugins.cpp]"]
+end
+
+subgraph group_grp_store["Device Database"]
+  node_store_open_db["CSQLHelper::OpenDatabase<br/>[SQLHelper.cpp]"]
+  node_store_update_value["CSQLHelper::UpdateValue<br/>[SQLHelper.cpp]"]
+  node_store_insert_device["CSQLHelper::InsertDevice<br/>[SQLHelper.cpp]"]
+  node_store_update_value_int["CSQLHelper::UpdateValueInt<br/>[SQLHelper.cpp]"]
+  node_store_event_call["ProcessDevice hand-off<br/>[SQLHelper.cpp]"]
+end
+
+subgraph group_grp_events["Event Engine"]
+  node_event_start["CEventSystem::StartEventSystem<br/>[EventSystem.cpp]"]
+  node_event_do_work["CEventSystem::Do_Work<br/>[EventSystem.cpp]"]
+  node_event_process["CEventSystem::ProcessDevice<br/>[EventSystem.cpp]"]
+  node_event_export["ExportDeviceStatesToLua<br/>[EventSystem.cpp]"]
+  node_event_lua_classic["EvaluateLuaClassic<br/>[EventSystem.cpp]"]
+  node_event_dzvents["CdzVents::EvaluateDzVents<br/>[dzVents.cpp]"]
+end
+
+subgraph group_grp_api["Web API"]
+  node_api_start["CWebServer::StartServer<br/>[WebServer.cpp]"]
+  node_api_register["RegisterCommandCode<br/>[WebServer.cpp]"]
+  node_api_get_devices["CWebServer::Cmd_GetDevices<br/>[WebServerCmds.cpp]"]
+end
+
+subgraph group_grp_support["Support Utilities"]
+  node_support_lua_table["CLuaTable::InitTable<br/>[LuaTable.cpp]"]
+  node_support_json["ParseJSon<br/>[json_helper.cpp]"]
+  node_support_rfxnames["Hardware_Type_Desc<br/>[RFXNames.cpp]"]
+end
+
+node_entry_main -->|"after signal setup &#40;&#35;L1222&#41;"| node_entry_start_call
+node_entry_start_call -->|"MainWorker::Start &#40;&#35;L1136&#41;"| node_core_mw_start
+node_core_mw_start -->|"OpenDatabase first &#40;&#35;L1147&#41;"| node_store_open_db
+node_core_mw_start -->|"StartPluginSystem &#40;&#35;L1158&#41;"| node_plug_system
+node_core_mw_start -->|"StartServers &#40;&#35;L1181&#41;"| node_api_start
+node_core_mw_start -->|"spawns Do_Work thread &#40;&#35;L1262&#41;"| node_core_do_work
+node_core_do_work -->|"StartDomoticzHardware &#40;&#35;L1690&#41;"| node_hw_base_class
+node_core_do_work -->|"StartEventSystem &#40;&#35;L1697&#41;"| node_event_start
+node_event_start -->|"event thread &#40;&#35;L177&#41;"| node_event_do_work
+node_hw_base_class -->|"subclass adapter"| node_hw_mysensors_serial
+node_hw_base_class -->|"subclass adapter"| node_hw_http_poller
+node_plug_system -->|"per-plugin pump thread &#40;&#35;L1225&#41;"| node_plug_do_work
+node_plug_do_work -->|"CPlugin acts as hardware"| node_hw_base_class
+node_hw_mysensors_serial -->|"readCallback parse &#40;&#35;L190&#41;"| node_hw_mysensors_base
+node_hw_mysensors_base -->|"typed Send* helpers &#40;&#35;L602&#41;"| node_hw_send_temp
+node_hw_send_temp -->|"fire signal &#40;&#35;L179&#41;"| node_hw_rx_signal
+node_hw_rx_signal -->|"connected slot &#40;&#35;L356&#41;"| node_core_decode_rx
+node_core_decode_rx -->|"PushRxMessage queue &#40;&#35;L1904&#41;"| node_core_rx_worker
+node_core_rx_worker -->|"dispatch &#40;&#35;L2088&#41;"| node_core_process_rx
+node_core_process_rx -->|"UpdateValue &#40;&#35;L5280&#41;"| node_store_update_value
+node_core_process_rx -->|"announce device &#40;&#35;L2370&#41;"| node_core_signal_emitted
+node_store_update_value -->|"new device row &#40;&#35;L5518&#41;"| node_store_insert_device
+node_store_update_value -->|"delegates &#40;&#35;L5892&#41;"| node_store_update_value_int
+node_store_update_value_int -->|"used device &#40;&#35;L5680&#41;"| node_store_event_call
+node_store_event_call -->|"ProcessDevice &#40;&#35;L1644&#41;"| node_event_process
+node_event_process -->|"_tEventQueue items"| node_event_do_work
+node_event_do_work -->|"evaluate scripts"| node_event_lua_classic
+node_event_lua_classic -->|"device tables &#40;&#35;L2849&#41;"| node_event_export
+node_event_lua_classic -->|"dzVents route &#40;&#35;L56&#41;"| node_event_dzvents
+node_event_lua_classic -->|"Lua table builder &#40;&#35;L23&#41;"| node_support_lua_table
+node_api_start -->|"command table &#40;&#35;L354&#41;"| node_api_register
+node_api_register -->|"JSON routes &#40;&#35;L4834&#41;"| node_api_get_devices
+node_api_get_devices -->|"control commands"| node_core_update_device
+node_core_update_device -->|"write path &#40;&#35;L14482&#41;"| node_store_update_value
+node_hw_http_poller -->|"parse polled JSON &#40;&#35;L4&#41;"| node_support_json
+node_core_process_rx -->|"type/subtype names &#40;&#35;L287&#41;"| node_support_rfxnames
+node_core_signal_emitted -->|"MQTT.cpp republishes too &#40;&#35;L188&#41;"| node_hw_mysensors_serial
+
+click node_entry_main "https://github.com/domoticz/domoticz/blob/development/main/domoticz.cpp"
+click node_entry_start_call "https://github.com/domoticz/domoticz/blob/development/main/domoticz.cpp"
+click node_core_mw_start "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_core_do_work "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_core_decode_rx "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_core_rx_worker "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_core_process_rx "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_core_signal_emitted "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_core_update_device "https://github.com/domoticz/domoticz/blob/development/main/mainworker.cpp"
+click node_hw_base_class "https://github.com/domoticz/domoticz/blob/development/hardware/DomoticzHardware.h"
+click node_hw_rx_signal "https://github.com/domoticz/domoticz/blob/development/hardware/DomoticzHardware.h"
+click node_hw_send_temp "https://github.com/domoticz/domoticz/blob/development/hardware/DomoticzHardware.cpp"
+click node_hw_mysensors_serial "https://github.com/domoticz/domoticz/blob/development/hardware/MySensorsSerial.cpp"
+click node_hw_mysensors_base "https://github.com/domoticz/domoticz/blob/development/hardware/MySensorsBase.cpp"
+click node_hw_http_poller "https://github.com/domoticz/domoticz/blob/development/hardware/HttpPoller.cpp"
+click node_plug_system "https://github.com/domoticz/domoticz/blob/development/hardware/plugins/PluginManager.cpp"
+click node_plug_do_work "https://github.com/domoticz/domoticz/blob/development/hardware/plugins/Plugins.cpp"
+click node_store_open_db "https://github.com/domoticz/domoticz/blob/development/main/SQLHelper.cpp"
+click node_store_update_value "https://github.com/domoticz/domoticz/blob/development/main/SQLHelper.cpp"
+click node_store_insert_device "https://github.com/domoticz/domoticz/blob/development/main/SQLHelper.cpp"
+click node_store_update_value_int "https://github.com/domoticz/domoticz/blob/development/main/SQLHelper.cpp"
+click node_store_event_call "https://github.com/domoticz/domoticz/blob/development/main/SQLHelper.cpp"
+click node_event_start "https://github.com/domoticz/domoticz/blob/development/main/EventSystem.cpp"
+click node_event_do_work "https://github.com/domoticz/domoticz/blob/development/main/EventSystem.cpp"
+click node_event_process "https://github.com/domoticz/domoticz/blob/development/main/EventSystem.cpp"
+click node_event_export "https://github.com/domoticz/domoticz/blob/development/main/EventSystem.cpp"
+click node_event_lua_classic "https://github.com/domoticz/domoticz/blob/development/main/EventSystem.cpp"
+click node_event_dzvents "https://github.com/domoticz/domoticz/blob/development/main/dzVents.cpp"
+click node_api_start "https://github.com/domoticz/domoticz/blob/development/main/WebServer.cpp"
+click node_api_register "https://github.com/domoticz/domoticz/blob/development/main/WebServer.cpp"
+click node_api_get_devices "https://github.com/domoticz/domoticz/blob/development/main/WebServerCmds.cpp"
+click node_support_lua_table "https://github.com/domoticz/domoticz/blob/development/main/LuaTable.cpp"
+click node_support_json "https://github.com/domoticz/domoticz/blob/development/main/json_helper.cpp"
+click node_support_rfxnames "https://github.com/domoticz/domoticz/blob/development/main/RFXNames.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_entry_main,node_entry_start_call,node_api_start,node_api_register,node_api_get_devices toneBlue
+class node_core_mw_start,node_core_do_work,node_core_decode_rx,node_core_rx_worker,node_core_process_rx,node_core_signal_emitted,node_core_update_device,node_support_lua_table,node_support_json,node_support_rfxnames toneAmber
+class node_hw_base_class,node_hw_rx_signal,node_hw_send_temp,node_hw_mysensors_serial,node_hw_mysensors_base,node_hw_http_poller toneMint
+class node_plug_system,node_plug_do_work toneRose
+class node_store_open_db,node_store_update_value,node_store_insert_device,node_store_update_value_int,node_store_event_call toneIndigo
+class node_event_start,node_event_do_work,node_event_process,node_event_export,node_event_lua_classic,node_event_dzvents toneTeal
