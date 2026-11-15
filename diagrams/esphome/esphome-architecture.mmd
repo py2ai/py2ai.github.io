@@ -1,0 +1,132 @@
+flowchart TD
+
+subgraph group_yaml_input["YAML Input"]
+  node_yaml_config["load_yaml<br/>[yaml_util.py]"]
+end
+
+subgraph group_validation["Validation Phases"]
+  node_read_config["read_config&#40;&#41;<br/>[config.py]"]
+  node_load_config["load_config&#40;&#41;<br/>[config.py]"]
+  node_validate_config["validate_config&#40;&#41;<br/>[config.py]"]
+  node_config_class["Config<br/>[config.py]"]
+  node_step_queue["ConfigValidationStep<br/>[config.py]"]
+  node_schema_step["SchemaValidationStep<br/>[config.py]"]
+  node_id_step["IDPassValidationStep<br/>[config.py]"]
+  node_cv["config_validation"]
+  node_loader["get_component&#40;&#41;<br/>[loader.py]"]
+end
+
+subgraph group_codegen["Code Generation"]
+  node_iter_configs["iter_component_configs&#40;&#41;<br/>[config.py]"]
+  node_generate_cpp_contents["generate_cpp_contents&#40;&#41;<br/>[__main__.py]"]
+  node_wrap_to_code["_wrap_to_code&#40;&#41;<br/>[__main__.py]"]
+  node_cpp_expressions["Pvariable / add<br/>[cpp_generator.py]"]
+end
+
+subgraph group_emit["Emission &amp; Build"]
+  node_write_cpp_file["write_cpp_file&#40;&#41;<br/>[__main__.py]"]
+  node_writer_write_cpp["writer.write_cpp&#40;&#41;<br/>[writer.py]"]
+  node_cpp_base_format["CPP_BASE_FORMAT<br/>[writer.py]"]
+  node_line_directives["_reset_line_directives&#40;&#41;<br/>[writer.py]"]
+  node_compile_program["compile_program&#40;&#41;<br/>[__main__.py]"]
+  node_espidf_toolchain["ESP-IDF backend<br/>[toolchain.py]"]
+  node_platformio_toolchain["PlatformIO backend<br/>[toolchain.py]"]
+end
+
+subgraph group_runtime["Core Runtime &#40;C++&#41;"]
+  node_app["Application<br/>[application.h]"]
+  node_component_h["Component::setup/loop<br/>[component.h]"]
+end
+
+subgraph group_api_protocol["API Protocol"]
+  node_api_to_code["api to_code&#40;&#41;<br/>[__init__.py]"]
+  node_api_proto["api.proto<br/>[api.proto]"]
+  node_api_pb2["api_pb2.cpp<br/>[api_pb2.cpp]"]
+  node_api_connection["APIConnection<br/>[api_connection.h]"]
+end
+
+subgraph group_ota_stack["OTA Stack"]
+  node_ota_esphome["ota/esphome to_code&#40;&#41;<br/>[__init__.py]"]
+  node_ota_component["ota component<br/>[__init__.py]"]
+  node_ota_backend["OTA backends<br/>[ota_backend.h]"]
+  node_espota2["espota2.py uploader<br/>[espota2.py]"]
+end
+
+node_yaml_config -->|"parsed tree"| node_read_config
+node_read_config -->|"calls"| node_load_config
+node_load_config -->|"calls"| node_validate_config
+node_validate_config -->|"returns"| node_config_class
+node_validate_config -->|"schedules"| node_step_queue
+node_step_queue -->|"runs pass"| node_schema_step
+node_step_queue -->|"runs pass"| node_id_step
+node_schema_step -->|"validators"| node_cv
+node_loader -->|"manifests"| node_schema_step
+node_config_class -->|"iterated"| node_iter_configs
+node_iter_configs -->|"feeds jobs"| node_generate_cpp_contents
+node_generate_cpp_contents -->|"wraps each coro"| node_wrap_to_code
+node_wrap_to_code -->|"emits expressions"| node_cpp_expressions
+node_cpp_expressions -->|"accumulate in CORE"| node_write_cpp_file
+node_write_cpp_file -->|"calls"| node_writer_write_cpp
+node_writer_write_cpp -->|"fills skeleton"| node_cpp_base_format
+node_writer_write_cpp -->|"rewrites &#35;line"| node_line_directives
+node_write_cpp_file -->|"then builds"| node_compile_program
+node_compile_program -->|"ESP32/IDF"| node_espidf_toolchain
+node_compile_program -->|"Arduino/8266"| node_platformio_toolchain
+node_espidf_toolchain -->|"flashed image"| node_app
+node_platformio_toolchain -->|"flashed image"| node_app
+node_app -->|"calls setup/loop"| node_component_h
+node_app -->|"serves clients"| node_api_connection
+node_api_to_code -->|"generates setup"| node_api_connection
+node_api_to_code -->|"uses cg"| node_cpp_expressions
+node_api_proto -->|"generated from"| node_api_pb2
+node_api_pb2 -->|"decode/encode"| node_api_connection
+node_ota_esphome -->|"extends schema"| node_ota_component
+node_ota_esphome -->|"uses cg"| node_cpp_expressions
+node_ota_component -->|"selects backend"| node_ota_backend
+node_espota2 -->|"handshake"| node_ota_backend
+
+click node_yaml_config "https://github.com/esphome/esphome/blob/dev/esphome/yaml_util.py"
+click node_read_config "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_load_config "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_validate_config "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_config_class "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_step_queue "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_schema_step "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_id_step "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_cv "https://github.com/esphome/esphome/blob/dev/esphome/config_validation.py"
+click node_loader "https://github.com/esphome/esphome/blob/dev/esphome/loader.py"
+click node_iter_configs "https://github.com/esphome/esphome/blob/dev/esphome/config.py"
+click node_generate_cpp_contents "https://github.com/esphome/esphome/blob/dev/esphome/__main__.py"
+click node_wrap_to_code "https://github.com/esphome/esphome/blob/dev/esphome/__main__.py"
+click node_cpp_expressions "https://github.com/esphome/esphome/blob/dev/esphome/cpp_generator.py"
+click node_write_cpp_file "https://github.com/esphome/esphome/blob/dev/esphome/__main__.py"
+click node_writer_write_cpp "https://github.com/esphome/esphome/blob/dev/esphome/writer.py"
+click node_cpp_base_format "https://github.com/esphome/esphome/blob/dev/esphome/writer.py"
+click node_line_directives "https://github.com/esphome/esphome/blob/dev/esphome/writer.py"
+click node_compile_program "https://github.com/esphome/esphome/blob/dev/esphome/__main__.py"
+click node_espidf_toolchain "https://github.com/esphome/esphome/blob/dev/esphome/espidf/toolchain.py"
+click node_platformio_toolchain "https://github.com/esphome/esphome/blob/dev/esphome/platformio/toolchain.py"
+click node_app "https://github.com/esphome/esphome/blob/dev/esphome/core/application.h"
+click node_component_h "https://github.com/esphome/esphome/blob/dev/esphome/core/component.h"
+click node_api_to_code "https://github.com/esphome/esphome/blob/dev/esphome/components/api/__init__.py"
+click node_api_proto "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api.proto"
+click node_api_pb2 "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api_pb2.cpp"
+click node_api_connection "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api_connection.h"
+click node_ota_esphome "https://github.com/esphome/esphome/blob/dev/esphome/components/esphome/ota/__init__.py"
+click node_ota_component "https://github.com/esphome/esphome/blob/dev/esphome/components/ota/__init__.py"
+click node_ota_backend "https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_backend.h"
+click node_espota2 "https://github.com/esphome/esphome/blob/dev/esphome/espota2.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_yaml_config,node_ota_esphome,node_ota_component,node_ota_backend,node_espota2 toneBlue
+class node_read_config,node_load_config,node_validate_config,node_config_class,node_step_queue,node_schema_step,node_id_step,node_cv,node_loader toneAmber
+class node_iter_configs,node_generate_cpp_contents,node_wrap_to_code,node_cpp_expressions toneMint
+class node_write_cpp_file,node_writer_write_cpp,node_cpp_base_format,node_line_directives,node_compile_program,node_espidf_toolchain,node_platformio_toolchain toneRose
+class node_app,node_component_h toneIndigo
+class node_api_to_code,node_api_proto,node_api_pb2,node_api_connection toneTeal
