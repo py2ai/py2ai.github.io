@@ -1,0 +1,77 @@
+﻿flowchart TD
+
+subgraph group_g_runtime["App Lifecycle"]
+  node_app["FrigateApp<br/>[app.py]"]
+end
+
+subgraph group_g_capture["Camera Capture"]
+  node_capture_proc["CameraCapture<br/>[ffmpeg.py]"]
+  node_frame_shm["SharedMemoryFrameManager<br/>[image.py]"]
+end
+
+subgraph group_g_analyze["Per-Camera Analysis"]
+  node_camera_tracker["CameraTracker<br/>[detect.py]"]
+  node_motion["ImprovedMotionDetector<br/>[improved_motion.py]"]
+end
+
+subgraph group_g_detect["Detector Runtime"]
+  node_det_proc["ObjectDetectProcess<br/>[base.py]"]
+  node_registry["api_types<br/>[detector_types.py]"]
+end
+
+subgraph group_g_track["Tracking &amp; Events"]
+  node_tracked["TrackedObjectProcessor"]
+  node_event_proc["EventProcessor<br/>[maintainer.py]"]
+end
+
+subgraph group_g_comms["Messaging"]
+  node_dispatcher["Dispatcher<br/>[dispatcher.py]"]
+  node_mqtt["MqttClient<br/>[mqtt.py]"]
+end
+
+subgraph group_g_api["API &amp; Web UI"]
+  node_fastapi["create_fastapi_app<br/>[fastapi_app.py]"]
+end
+
+node_app -->|"starts via CameraMaintainer"| node_capture_proc
+node_capture_proc -->|"writes YUV slots"| node_frame_shm
+node_capture_proc -->|"frame_queue &#40;name, timestamp&#41;"| node_camera_tracker
+node_frame_shm -->|"zero-copy reads"| node_camera_tracker
+node_camera_tracker -->|"motion boxes per frame"| node_motion
+node_app -->|"start_detectors&#40;&#41;"| node_det_proc
+node_camera_tracker -->|"detection queue: camera shm name"| node_det_proc
+node_det_proc -->|"plugin lookup by type"| node_registry
+node_det_proc -->|"results via out-shm + ZMQ"| node_camera_tracker
+node_camera_tracker -->|"detected_frames_queue"| node_tracked
+node_tracked -->|"event start / end"| node_event_proc
+node_tracked -->|"object topics + snapshots"| node_dispatcher
+node_app -->|"init_dispatcher&#40;&#41;"| node_dispatcher
+node_dispatcher -->|"retained state topics"| node_mqtt
+node_app -->|"uvicorn.run&#40;:5001&#41;"| node_fastapi
+
+click node_app "https://github.com/blakeblackshear/frigate/blob/dev/frigate/app.py"
+click node_capture_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/ffmpeg.py"
+click node_frame_shm "https://github.com/blakeblackshear/frigate/blob/dev/frigate/util/image.py"
+click node_camera_tracker "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/detect.py"
+click node_motion "https://github.com/blakeblackshear/frigate/blob/dev/frigate/motion/improved_motion.py"
+click node_det_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/object_detection/base.py"
+click node_registry "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/detector_types.py"
+click node_tracked "https://github.com/blakeblackshear/frigate/blob/dev/frigate/track/object_processing.py"
+click node_event_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/events/maintainer.py"
+click node_dispatcher "https://github.com/blakeblackshear/frigate/blob/dev/frigate/comms/dispatcher.py"
+click node_mqtt "https://github.com/blakeblackshear/frigate/blob/dev/frigate/comms/mqtt.py"
+click node_fastapi "https://github.com/blakeblackshear/frigate/blob/dev/frigate/api/fastapi_app.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app,node_fastapi toneBlue
+class node_capture_proc,node_frame_shm toneAmber
+class node_camera_tracker,node_motion toneMint
+class node_det_proc,node_registry toneRose
+class node_tracked,node_event_proc toneIndigo
+class node_dispatcher,node_mqtt toneTeal

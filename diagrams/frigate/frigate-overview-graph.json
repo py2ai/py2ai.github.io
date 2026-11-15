@@ -1,0 +1,45 @@
+{
+  "owner": "blakeblackshear",
+  "repo": "frigate",
+  "branch": "dev",
+  "groups": [
+    {"id": "g_runtime", "name": "runtime", "label": "App Lifecycle"},
+    {"id": "g_capture", "name": "capture", "label": "Camera Capture"},
+    {"id": "g_analyze", "name": "analyze", "label": "Per-Camera Analysis"},
+    {"id": "g_detect", "name": "detect", "label": "Detector Runtime"},
+    {"id": "g_track", "name": "track", "label": "Tracking & Events"},
+    {"id": "g_comms", "name": "comms", "label": "Messaging"},
+    {"id": "g_api", "name": "api", "label": "API & Web UI"}
+  ],
+  "nodes": [
+    {"id": "app", "label": "FrigateApp", "file": "frigate/app.py", "path": "frigate/app.py", "group": "runtime", "groupId": "g_runtime", "desc": "Supervisor that spawns capture, analysis, detection and service processes, then serves the API."},
+    {"id": "capture_proc", "label": "CameraCapture", "file": "frigate/video/ffmpeg.py", "path": "frigate/video/ffmpeg.py", "group": "capture", "groupId": "g_capture", "desc": "One ffmpeg-backed process per camera that writes raw YUV frames into shared-memory ring slots."},
+    {"id": "frame_shm", "label": "SharedMemoryFrameManager", "file": "frigate/util/image.py", "path": "frigate/util/image.py", "group": "capture", "groupId": "g_capture", "desc": "Named frame slots in /dev/shm so every consumer reads frames zero-copy."},
+    {"id": "camera_tracker", "label": "CameraTracker", "file": "frigate/video/detect.py", "path": "frigate/video/detect.py", "group": "analyze", "groupId": "g_analyze", "desc": "Per-camera process: motion boxes, region selection, inference requests, object matching."},
+    {"id": "motion", "label": "ImprovedMotionDetector", "file": "frigate/motion/improved_motion.py", "path": "frigate/motion/improved_motion.py", "group": "analyze", "groupId": "g_analyze", "desc": "Cheap frame differencing that decides which regions earn expensive inference."},
+    {"id": "det_proc", "label": "ObjectDetectProcess", "file": "frigate/object_detection/base.py", "path": "frigate/object_detection/base.py", "group": "detect", "groupId": "g_detect", "desc": "Supervisor for one detector runner process per accelerator device."},
+    {"id": "registry", "label": "api_types", "file": "frigate/detectors/detector_types.py", "path": "frigate/detectors/detector_types.py", "group": "detect", "groupId": "g_detect", "desc": "Plugin registry: every DetectionApi subclass keyed by its config type string."},
+    {"id": "tracked", "label": "TrackedObjectProcessor", "file": "frigate/track/object_processing.py", "path": "frigate/track/object_processing.py", "group": "track", "groupId": "g_track", "desc": "Merges tracked objects, picks best snapshots, publishes per-camera state."},
+    {"id": "event_proc", "label": "EventProcessor", "file": "frigate/events/maintainer.py", "path": "frigate/events/maintainer.py", "group": "track", "groupId": "g_track", "desc": "Turns object start/end updates into persisted event rows in SQLite."},
+    {"id": "dispatcher", "label": "Dispatcher", "file": "frigate/comms/dispatcher.py", "path": "frigate/comms/dispatcher.py", "group": "comms", "groupId": "g_comms", "desc": "Hub that fans state out to MQTT, WebSocket and WebPush and routes commands back in."},
+    {"id": "mqtt", "label": "MqttClient", "file": "frigate/comms/mqtt.py", "path": "frigate/comms/mqtt.py", "group": "comms", "groupId": "g_comms", "desc": "Queued MQTT publisher with retained state topics that Home Assistant consumes."},
+    {"id": "fastapi", "label": "create_fastapi_app", "file": "frigate/api/fastapi_app.py", "path": "frigate/api/fastapi_app.py", "group": "api", "groupId": "g_api", "desc": "REST API served by uvicorn on 127.0.0.1:5001 behind nginx."}
+  ],
+  "edges": [
+    {"from": "app", "to": "capture_proc", "label": "starts via CameraMaintainer"},
+    {"from": "capture_proc", "to": "frame_shm", "label": "writes YUV slots"},
+    {"from": "capture_proc", "to": "camera_tracker", "label": "frame_queue (name, timestamp)"},
+    {"from": "frame_shm", "to": "camera_tracker", "label": "zero-copy reads"},
+    {"from": "camera_tracker", "to": "motion", "label": "motion boxes per frame"},
+    {"from": "app", "to": "det_proc", "label": "start_detectors()"},
+    {"from": "camera_tracker", "to": "det_proc", "label": "detection queue: camera shm name"},
+    {"from": "det_proc", "to": "registry", "label": "plugin lookup by type"},
+    {"from": "det_proc", "to": "camera_tracker", "label": "results via out-shm + ZMQ"},
+    {"from": "camera_tracker", "to": "tracked", "label": "detected_frames_queue"},
+    {"from": "tracked", "to": "event_proc", "label": "event start / end"},
+    {"from": "tracked", "to": "dispatcher", "label": "object topics + snapshots"},
+    {"from": "app", "to": "dispatcher", "label": "init_dispatcher()"},
+    {"from": "dispatcher", "to": "mqtt", "label": "retained state topics"},
+    {"from": "app", "to": "fastapi", "label": "uvicorn.run(:5001)"}
+  ]
+}

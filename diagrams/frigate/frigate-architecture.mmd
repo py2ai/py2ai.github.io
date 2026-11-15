@@ -1,0 +1,151 @@
+﻿flowchart TD
+
+subgraph group_g_config["Lifecycle &amp; Watchdogs"]
+  node_app["FrigateApp<br/>[app.py]"]
+  node_watchdog["FrigateWatchdog<br/>[watchdog.py]"]
+end
+
+subgraph group_g_capture["Camera Capture"]
+  node_maintainer["CameraMaintainer<br/>[maintainer.py]"]
+  node_capture_proc["CameraCapture<br/>[ffmpeg.py]"]
+  node_capture_frames["capture_frames<br/>[ffmpeg.py]"]
+  node_camera_watchdog["CameraWatchdog<br/>[ffmpeg.py]"]
+  node_frame_shm["SharedMemoryFrameManager<br/>[image.py]"]
+end
+
+subgraph group_g_analyze["Frame Analysis"]
+  node_camera_tracker["CameraTracker<br/>[detect.py]"]
+  node_process_frames["process_frames<br/>[detect.py]"]
+  node_motion["ImprovedMotionDetector<br/>[improved_motion.py]"]
+  node_detect_fn["detect<br/>[detect.py]"]
+  node_remote["RemoteObjectDetector<br/>[base.py]"]
+end
+
+subgraph group_g_detect["Detector Runtime"]
+  node_det_proc["ObjectDetectProcess<br/>[base.py]"]
+  node_runner["DetectorRunner<br/>[base.py]"]
+  node_map_input["map_input_frame<br/>[base.py]"]
+  node_registry["api_types<br/>[detector_types.py]"]
+  node_device_cfg["build_detector_config<br/>[device.py]"]
+  node_cpu["CpuTfl<br/>[cpu_tfl.py]"]
+  node_edgetpu["EdgeTpuTfl<br/>[edgetpu_tfl.py]"]
+  node_ov["OvDetector<br/>[openvino.py]"]
+  node_trt["TensorRtDetector<br/>[tensorrt.py]"]
+end
+
+subgraph group_g_track["Tracking &amp; Events"]
+  node_tracked["TrackedObjectProcessor"]
+  node_norfair["NorfairTracker<br/>[norfair_tracker.py]"]
+  node_event_proc["EventProcessor<br/>[maintainer.py]"]
+  node_review["ReviewProcess<br/>[review.py]"]
+end
+
+subgraph group_g_output["Recording &amp; Output"]
+  node_output_proc["OutputProcess<br/>[output.py]"]
+  node_record["RecordProcess<br/>[record.py]"]
+end
+
+subgraph group_g_comms["Communicators"]
+  node_dispatcher["Dispatcher<br/>[dispatcher.py]"]
+  node_mqtt["MqttClient<br/>[mqtt.py]"]
+  node_ws["WebSocketClient<br/>[ws.py]"]
+  node_ipc["InterProcessCommunicator<br/>[inter_process.py]"]
+end
+
+subgraph group_g_web["API &amp; Web UI"]
+  node_fastapi["create_fastapi_app<br/>[fastapi_app.py]"]
+  node_webapp["React web UI<br/>[App.tsx]"]
+end
+
+node_app -->|"start_camera_processor&#40;&#41;"| node_maintainer
+node_maintainer -->|"__start_camera_capture&#40;&#41;"| node_capture_proc
+node_capture_proc -->|"spawns watchdog thread"| node_camera_watchdog
+node_camera_watchdog -->|"restarts stalled ffmpeg"| node_capture_proc
+node_capture_proc -->|"capture threads per role"| node_capture_frames
+node_capture_frames -->|"readinto&#40;&#41; fills slot"| node_frame_shm
+node_maintainer -->|"__start_camera_processor&#40;&#41;"| node_camera_tracker
+node_camera_tracker -->|"run&#40;&#41; enters loop"| node_process_frames
+node_process_frames -->|"frame_manager.get&#40;&#41;"| node_frame_shm
+node_process_frames -->|"detect&#40;frame&#41; -&gt; boxes"| node_motion
+node_process_frames -->|"one detect&#40;&#41; per region"| node_detect_fn
+node_detect_fn -->|"object_detector.detect&#40;tensor_input&#41;"| node_remote
+node_remote -->|"detection_queue.put&#40;shm name&#41;"| node_det_proc
+node_det_proc -->|"results via out-shm + ZMQ"| node_remote
+node_process_frames -->|"object_tracker.match_and_update&#40;&#41;"| node_norfair
+node_camera_tracker -->|"detected_frames_queue"| node_tracked
+node_tracked -->|"owns tracker instances"| node_norfair
+node_tracked -->|"EventUpdateSubscriber updates"| node_event_proc
+node_app -->|"start_detectors&#40;&#41;"| node_det_proc
+node_device_cfg -->|"per-device detector config"| node_det_proc
+node_det_proc -->|"starts runner process"| node_runner
+node_runner -->|"pulls tensor from SHM"| node_map_input
+node_runner -->|"reads region tensors"| node_frame_shm
+node_runner -->|"resolves DetectionApi by type"| node_registry
+node_registry -->|"type: cpu_tfl"| node_cpu
+node_registry -->|"type: edgetpu_tfl &#40;Coral&#41;"| node_edgetpu
+node_registry -->|"type: openvino"| node_ov
+node_registry -->|"type: tensorrt &#40;Jetson&#41;"| node_trt
+node_app -->|"start_watchdog&#40;&#41;"| node_watchdog
+node_watchdog -->|"restarts stuck detectors"| node_det_proc
+node_app -->|"init_review_segment_manager&#40;&#41;"| node_review
+node_app -->|"init_recording_manager&#40;&#41;"| node_record
+node_record -->|"reads frames for segments"| node_frame_shm
+node_app -->|"start_video_output_processor&#40;&#41;"| node_output_proc
+node_output_proc -->|"live view / birdseye frames"| node_frame_shm
+node_app -->|"init_dispatcher&#40;&#41;"| node_dispatcher
+node_tracked -->|"object topics + snapshots"| node_dispatcher
+node_dispatcher -->|"retained topics"| node_mqtt
+node_dispatcher -->|"live broadcasts"| node_ws
+node_ipc -->|"config commands fan-in"| node_dispatcher
+node_app -->|"uvicorn.run&#40;:5001&#41;"| node_fastapi
+node_fastapi -->|"best snapshot / current frame"| node_tracked
+node_webapp -->|"REST + WebSocket calls"| node_fastapi
+node_ws -->|"live object stream"| node_webapp
+
+click node_app "https://github.com/blakeblackshear/frigate/blob/dev/frigate/app.py"
+click node_watchdog "https://github.com/blakeblackshear/frigate/blob/dev/frigate/watchdog.py"
+click node_maintainer "https://github.com/blakeblackshear/frigate/blob/dev/frigate/camera/maintainer.py"
+click node_capture_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/ffmpeg.py"
+click node_capture_frames "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/ffmpeg.py"
+click node_camera_watchdog "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/ffmpeg.py"
+click node_frame_shm "https://github.com/blakeblackshear/frigate/blob/dev/frigate/util/image.py"
+click node_camera_tracker "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/detect.py"
+click node_process_frames "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/detect.py"
+click node_motion "https://github.com/blakeblackshear/frigate/blob/dev/frigate/motion/improved_motion.py"
+click node_detect_fn "https://github.com/blakeblackshear/frigate/blob/dev/frigate/video/detect.py"
+click node_remote "https://github.com/blakeblackshear/frigate/blob/dev/frigate/object_detection/base.py"
+click node_det_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/object_detection/base.py"
+click node_runner "https://github.com/blakeblackshear/frigate/blob/dev/frigate/object_detection/base.py"
+click node_map_input "https://github.com/blakeblackshear/frigate/blob/dev/frigate/object_detection/base.py"
+click node_registry "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/detector_types.py"
+click node_device_cfg "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/device.py"
+click node_cpu "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/plugins/cpu_tfl.py"
+click node_edgetpu "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/plugins/edgetpu_tfl.py"
+click node_ov "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/plugins/openvino.py"
+click node_trt "https://github.com/blakeblackshear/frigate/blob/dev/frigate/detectors/plugins/tensorrt.py"
+click node_tracked "https://github.com/blakeblackshear/frigate/blob/dev/frigate/track/object_processing.py"
+click node_norfair "https://github.com/blakeblackshear/frigate/blob/dev/frigate/track/norfair_tracker.py"
+click node_event_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/events/maintainer.py"
+click node_review "https://github.com/blakeblackshear/frigate/blob/dev/frigate/review/review.py"
+click node_output_proc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/output/output.py"
+click node_record "https://github.com/blakeblackshear/frigate/blob/dev/frigate/record/record.py"
+click node_dispatcher "https://github.com/blakeblackshear/frigate/blob/dev/frigate/comms/dispatcher.py"
+click node_mqtt "https://github.com/blakeblackshear/frigate/blob/dev/frigate/comms/mqtt.py"
+click node_ws "https://github.com/blakeblackshear/frigate/blob/dev/frigate/comms/ws.py"
+click node_ipc "https://github.com/blakeblackshear/frigate/blob/dev/frigate/comms/inter_process.py"
+click node_fastapi "https://github.com/blakeblackshear/frigate/blob/dev/frigate/api/fastapi_app.py"
+click node_webapp "https://github.com/blakeblackshear/frigate/blob/dev/web/src/App.tsx"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app,node_watchdog,node_dispatcher,node_mqtt,node_ws,node_ipc toneBlue
+class node_maintainer,node_capture_proc,node_capture_frames,node_camera_watchdog,node_frame_shm,node_fastapi,node_webapp toneAmber
+class node_camera_tracker,node_process_frames,node_motion,node_detect_fn,node_remote toneMint
+class node_det_proc,node_runner,node_map_input,node_registry,node_device_cfg,node_cpu,node_edgetpu,node_ov,node_trt toneRose
+class node_tracked,node_norfair,node_event_proc,node_review toneIndigo
+class node_output_proc,node_record toneTeal
