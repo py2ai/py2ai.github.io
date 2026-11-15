@@ -1,0 +1,44 @@
+{
+  "owner": "node-red",
+  "repo": "node-red",
+  "branch": "main",
+  "groups": [
+    {"id": "entry", "name": "Process Bootstrap", "label": "Process Bootstrap"},
+    {"id": "editor", "name": "Editor & Admin API", "label": "Editor & Admin API"},
+    {"id": "rapi", "name": "Runtime API", "label": "Runtime API"},
+    {"id": "engine", "name": "Flow Engine", "label": "Flow Engine"},
+    {"id": "reg", "name": "Node Registry", "label": "Node Registry"},
+    {"id": "state", "name": "State & Context", "label": "State & Context"}
+  ],
+  "nodes": [
+    {"id": "cli", "label": "node-red CLI", "file": "red.js", "path": "packages/node_modules/node-red/red.js", "group": "Process Bootstrap", "groupId": "entry", "desc": "Parses flags and settings.js, builds the express app, then calls RED.init and RED.start."},
+    {"id": "bootstrap", "label": "lib/red.js wiring", "file": "red.js", "path": "packages/node_modules/node-red/lib/red.js", "group": "Process Bootstrap", "groupId": "entry", "desc": "Embeds @node-red/runtime and @node-red/editor-api into one process and hands the runtime API to the editor."},
+    {"id": "admin_api", "label": "Admin HTTP API", "file": "index.js", "path": "packages/node_modules/@node-red/editor-api/lib/admin/index.js", "group": "Editor & Admin API", "groupId": "editor", "desc": "Express routes the browser editor calls: GET/POST /flows, /nodes, /context, /settings."},
+    {"id": "ws_comms", "label": "WebSocket /comms", "file": "comms.js", "path": "packages/node_modules/@node-red/editor-api/lib/editor/comms.js", "group": "Editor & Admin API", "groupId": "editor", "desc": "Authenticated websocket for live editor traffic: subscribe requests, topics, heartbeats."},
+    {"id": "api_flows", "label": "Runtime flows API", "file": "flows.js", "path": "packages/node_modules/@node-red/runtime/lib/api/flows.js", "group": "Runtime API", "groupId": "rapi", "desc": "Mutex-serialized getFlows/setFlows; rejects a deploy whose rev does not match with 409."},
+    {"id": "api_comms", "label": "Runtime comms bus", "file": "comms.js", "path": "packages/node_modules/@node-red/runtime/lib/api/comms.js", "group": "Runtime API", "groupId": "rapi", "desc": "Publishes node-status and runtime events to editor connections, keeping retained topics."},
+    {"id": "flow_mgr", "label": "Flow manager", "file": "index.js", "path": "packages/node_modules/@node-red/runtime/lib/flows/index.js", "group": "Flow Engine", "groupId": "engine", "desc": "Loads flow JSON from storage, diffs configs, and drives the deploy cycle: stop, clean context, start."},
+    {"id": "flow", "label": "Flow instance", "file": "Flow.js", "path": "packages/node_modules/@node-red/runtime/lib/flows/Flow.js", "group": "Flow Engine", "groupId": "engine", "desc": "One Flow object per tab: instantiates nodes and routes SendEvents through hook stages to node.receive."},
+    {"id": "node_cls", "label": "Node base class", "file": "Node.js", "path": "packages/node_modules/@node-red/runtime/lib/nodes/Node.js", "group": "Flow Engine", "groupId": "engine", "desc": "Every node extends this: wires-aware send, receive, lazy context, error and status reporting."},
+    {"id": "registry", "label": "Type registry", "file": "registry.js", "path": "packages/node_modules/@node-red/registry/lib/registry.js", "group": "Node Registry", "groupId": "reg", "desc": "Maps node type strings to constructors via registerNodeConstructor and emits type-registered."},
+    {"id": "loader", "label": "Module loader", "file": "loader.js", "path": "packages/node_modules/@node-red/registry/lib/loader.js", "group": "Node Registry", "groupId": "reg", "desc": "Scans core nodes and the userDir node_modules tree, then requires and registers each node set."},
+    {"id": "context", "label": "Context stores", "file": "index.js", "path": "packages/node_modules/@node-red/runtime/lib/nodes/context/index.js", "group": "State & Context", "groupId": "state", "desc": "Node, flow and global context backed by pluggable stores: memory by default, or file/Redis-style plugins."}
+  ],
+  "edges": [
+    {"from": "cli", "to": "bootstrap", "label": "RED.init + RED.start"},
+    {"from": "bootstrap", "to": "admin_api", "label": "api.init mounts editor app"},
+    {"from": "bootstrap", "to": "loader", "label": "runtime init loads nodes"},
+    {"from": "loader", "to": "registry", "label": "registerNodeConstructor"},
+    {"from": "admin_api", "to": "api_flows", "label": "POST /flows deploy"},
+    {"from": "api_flows", "to": "flow_mgr", "label": "mutex then setFlows"},
+    {"from": "flow_mgr", "to": "flow", "label": "Flow.create per tab"},
+    {"from": "flow", "to": "node_cls", "label": "createNode instances"},
+    {"from": "node_cls", "to": "flow", "label": "node.send → _flow.send"},
+    {"from": "flow", "to": "registry", "label": "typeRegistry.get(type)"},
+    {"from": "flow", "to": "context", "label": "getFlowContext"},
+    {"from": "ws_comms", "to": "api_comms", "label": "subscribe + receive"},
+    {"from": "api_comms", "to": "ws_comms", "label": "publish status/events"},
+    {"from": "flow_mgr", "to": "api_comms", "label": "runtime-event → publish"},
+    {"from": "api_flows", "to": "api_comms", "label": "deploy revision events"}
+  ]
+}

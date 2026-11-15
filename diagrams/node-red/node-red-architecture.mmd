@@ -1,0 +1,140 @@
+flowchart TD
+
+subgraph group_entry["CLI &amp; Bootstrap"]
+  node_cli["red.js &#40;CLI&#41;<br/>[red.js]"]
+  node_red_lib["lib/red.js<br/>[red.js]"]
+  node_runtime_index["runtime init/start<br/>[index.js]"]
+  node_nodes_index["nodes facade<br/>[index.js]"]
+end
+
+subgraph group_editor_api["Editor API"]
+  node_api_index["editor-api init<br/>[index.js]"]
+  node_admin_index["admin routes<br/>[index.js]"]
+  node_admin_flows["POST /flows handler<br/>[flows.js]"]
+  node_comms_ws["websocket server<br/>[comms.js]"]
+  node_editor_ui["editor page<br/>[ui.js]"]
+end
+
+subgraph group_runtime_api["Runtime API"]
+  node_api_flows["flows API<br/>[flows.js]"]
+  node_api_comms["comms API<br/>[comms.js]"]
+end
+
+subgraph group_flow_engine["Flow Engine"]
+  node_flows_index["loadFlows<br/>[index.js]"]
+  node_set_flows["setFlows &#40;deploy&#41;<br/>[index.js]"]
+  node_flows_start["start&#40;type,diff&#41;<br/>[index.js]"]
+  node_flows_stop["stop&#40;type,diff&#41;<br/>[index.js]"]
+  node_flow_class["class Flow<br/>[Flow.js]"]
+  node_flow_start["Flow.start&#40;diff&#41;<br/>[Flow.js]"]
+  node_flow_send["Flow.send hooks<br/>[Flow.js]"]
+  node_deliver["deliverMessage<br/>[Flow.js]"]
+  node_node_cls["function Node<br/>[Node.js]"]
+  node_update_wires["updateWires<br/>[Node.js]"]
+  node_node_send["Node.send<br/>[Node.js]"]
+  node_emit_input["receive → input<br/>[Node.js]"]
+  node_node_close["Node.close<br/>[Node.js]"]
+end
+
+subgraph group_registry["Registry &amp; Loading"]
+  node_registry_lib["registry.js<br/>[registry.js]"]
+  node_loader_lib["loader.js<br/>[loader.js]"]
+  node_load_node_set["loadNodeSet<br/>[loader.js]"]
+end
+
+subgraph group_context_state["Context &amp; Storage"]
+  node_context_index["context module<br/>[index.js]"]
+  node_context_load["store plugins<br/>[index.js]"]
+  node_get_context["getContext&#40;id,flow&#41;<br/>[index.js]"]
+  node_memory_store["Memory store<br/>[memory.js]"]
+  node_storage_index["storage module<br/>[index.js]"]
+end
+
+node_cli -->|"requires ./lib/red.js"| node_red_lib
+node_red_lib -->|"runtime.init&#40;settings, server, api&#41;"| node_runtime_index
+node_red_lib -->|"api.init&#40;..., runtime.storage, runtime&#41;"| node_api_index
+node_runtime_index -->|"adminApi injected for comms"| node_api_index
+node_runtime_index -->|"redNodes.load → loadFlows → startFlows"| node_nodes_index
+node_runtime_index -->|"events wired to publish"| node_api_comms
+node_api_index -->|"mounts admin API app"| node_admin_index
+node_api_index -->|"editor.init wires websocket"| node_comms_ws
+node_api_index -->|"serves editor page"| node_editor_ui
+node_admin_index -->|"GET/POST /flows"| node_admin_flows
+node_admin_flows -->|"runtimeAPI.flows.setFlows"| node_api_flows
+node_comms_ws -->|"subscribe / receive topics"| node_api_comms
+node_api_comms -->|"connection.send batches 50ms"| node_comms_ws
+node_api_flows -->|"mutex then runtime.flows.setFlows"| node_set_flows
+node_api_flows -->|"reload → loadFlows"| node_flows_index
+node_nodes_index -->|"loadFlows facade"| node_flows_index
+node_flows_index -->|"load&#40;&#41; → setFlows type=load"| node_set_flows
+node_flows_index -->|"storage.getFlows"| node_storage_index
+node_set_flows -->|"storage.saveFlows + rev"| node_storage_index
+node_set_flows -->|"stop&#40;type,diff&#41;"| node_flows_stop
+node_set_flows -->|"start&#40;type,diff&#41; after clean"| node_flows_start
+node_flows_start -->|"Flow.create per tab"| node_flow_class
+node_flows_start -->|"await flow.start&#40;diff&#41;"| node_flow_start
+node_flow_class -->|"start&#40;diff&#41;"| node_flow_start
+node_flow_class -->|"context.getFlowContext"| node_context_index
+node_flow_start -->|"flowUtil.createNode"| node_node_cls
+node_flow_start -->|"typeRegistry.get&#40;type&#41;"| node_registry_lib
+node_registry_lib -->|"type-registered fills missing types"| node_flows_start
+node_loader_lib -->|"loadNodeSet per set"| node_load_node_set
+node_load_node_set -->|"registerNodeConstructor"| node_registry_lib
+node_node_cls -->|"constructor wiring"| node_update_wires
+node_node_cls -->|"lazy context&#40;&#41;"| node_get_context
+node_node_cls -->|"handleError / handleStatus / handleComplete"| node_flow_class
+node_node_send -->|"this._flow.send&#40;sendEvents&#41;"| node_flow_send
+node_flow_send -->|"preDeliver → setImmediate"| node_deliver
+node_deliver -->|"destination.node.receive&#40;msg&#41;"| node_emit_input
+node_emit_input -->|"done → node.send"| node_node_send
+node_flows_stop -->|"stopNode → node.close&#40;removed&#41;"| node_node_close
+node_node_close -->|"context.delete&#40;nodeId, z&#41;"| node_context_index
+node_context_index -->|"load&#40;&#41; stores"| node_context_load
+node_get_context -->|"store.get/set&#40;scope, key&#41;"| node_memory_store
+
+click node_cli "https://github.com/node-red/node-red/blob/main/packages/node_modules/node-red/red.js"
+click node_red_lib "https://github.com/node-red/node-red/blob/main/packages/node_modules/node-red/lib/red.js"
+click node_runtime_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/index.js"
+click node_nodes_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/index.js"
+click node_api_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/editor-api/lib/index.js"
+click node_admin_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/editor-api/lib/admin/index.js"
+click node_admin_flows "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/editor-api/lib/admin/flows.js"
+click node_comms_ws "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/editor-api/lib/editor/comms.js"
+click node_editor_ui "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/editor-api/lib/editor/ui.js"
+click node_api_flows "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/api/flows.js"
+click node_api_comms "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/api/comms.js"
+click node_flows_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/index.js"
+click node_set_flows "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/index.js"
+click node_flows_start "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/index.js"
+click node_flows_stop "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/index.js"
+click node_flow_class "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/Flow.js"
+click node_flow_start "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/Flow.js"
+click node_flow_send "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/Flow.js"
+click node_deliver "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/flows/Flow.js"
+click node_node_cls "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/Node.js"
+click node_update_wires "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/Node.js"
+click node_node_send "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/Node.js"
+click node_emit_input "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/Node.js"
+click node_node_close "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/Node.js"
+click node_registry_lib "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/registry/lib/registry.js"
+click node_loader_lib "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/registry/lib/loader.js"
+click node_load_node_set "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/registry/lib/loader.js"
+click node_context_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/context/index.js"
+click node_context_load "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/context/index.js"
+click node_get_context "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/context/index.js"
+click node_memory_store "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/nodes/context/memory.js"
+click node_storage_index "https://github.com/node-red/node-red/blob/main/packages/node_modules/%40node-red/runtime/lib/storage/index.js"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_cli,node_red_lib,node_runtime_index,node_nodes_index toneBlue
+class node_api_index,node_admin_index,node_admin_flows,node_comms_ws,node_editor_ui toneAmber
+class node_api_flows,node_api_comms toneMint
+class node_flows_index,node_set_flows,node_flows_start,node_flows_stop,node_flow_class,node_flow_start,node_flow_send,node_deliver,node_node_cls,node_update_wires,node_node_send,node_emit_input,node_node_close toneRose
+class node_registry_lib,node_loader_lib,node_load_node_set toneIndigo
+class node_context_index,node_context_load,node_get_context,node_memory_store,node_storage_index toneTeal
