@@ -1,0 +1,46 @@
+{
+  "owner": "OctoPrint",
+  "repo": "OctoPrint",
+  "branch": "dev",
+  "groups": [
+    {"id": "bootstrap", "name": "Server Bootstrap", "label": "Server Bootstrap"},
+    {"id": "plugins", "name": "Plugin Runtime", "label": "Plugin Runtime"},
+    {"id": "comm", "name": "Printer Link", "label": "Printer Link"},
+    {"id": "job", "name": "Print State", "label": "Print State"},
+    {"id": "files", "name": "File Handling", "label": "File Handling"},
+    {"id": "events", "name": "Event Bus", "label": "Event Bus"}
+  ],
+  "nodes": [
+    {"id": "octoprint_server", "label": "Server.run", "file": "__init__.py", "path": "src/octoprint/server/__init__.py", "group": "Server Bootstrap", "groupId": "bootstrap", "desc": "Composition root: instantiates printer, FileManager, analysis queue, event manager and plugin manager, then serves the Flask app via Tornado."},
+    {"id": "plugin_manager", "label": "PluginManager", "file": "core.py", "path": "src/octoprint/plugin/core.py", "group": "Plugin Runtime", "groupId": "plugins", "desc": "Discovers, validates and instantiates every plugin from entry points and folders before the web stack starts."},
+    {"id": "rest_api", "label": "REST API", "file": "__init__.py", "path": "src/octoprint/server/api/__init__.py", "group": "Server Bootstrap", "groupId": "bootstrap", "desc": "One Flask blueprint per domain: login, job, files, connection, printer, settings."},
+    {"id": "sockjs_bridge", "label": "PrinterStateConnection", "file": "sockjs.py", "path": "src/octoprint/server/util/sockjs.py", "group": "Event Bus", "groupId": "events", "desc": "Per-browser SockJS session that pushes printer state, temperatures, logs and events to clients."},
+    {"id": "printer_state", "label": "Printer", "file": "standard.py", "path": "src/octoprint/printer/standard.py", "group": "Print State", "groupId": "job", "desc": "Central print state machine: set_job, start_print, pause, cancel, jog, home — the facade every caller talks to."},
+    {"id": "comm_registry", "label": "ConnectedPrinter", "file": "connection.py", "path": "src/octoprint/printer/connection.py", "group": "Printer Link", "groupId": "comm", "desc": "Registry of printer connectors; connect() resolves a connector by name via the metaclass registry."},
+    {"id": "serial_connector", "label": "ConnectedSerialPrinter", "file": "connector.py", "path": "src/octoprint/plugins/serial_connector/connector.py", "group": "Printer Link", "groupId": "comm", "desc": "The bundled serial connector plugin that bridges the core to the serial engine."},
+    {"id": "machine_com", "label": "MachineCom", "file": "serial_comm.py", "path": "src/octoprint/plugins/serial_connector/serial_comm.py", "group": "Printer Link", "groupId": "comm", "desc": "Serial G-code engine: readline monitor, transmit queues, protocol detection and SD printing."},
+    {"id": "file_manager", "label": "FileManager", "file": "__init__.py", "path": "src/octoprint/filemanager/__init__.py", "group": "File Handling", "groupId": "files", "desc": "Multi-storage file tree: list, add, move and copy files across local disk and the printer SD card."},
+    {"id": "gcode_analysis", "label": "GcodeAnalysisQueue", "file": "analysis.py", "path": "src/octoprint/filemanager/analysis.py", "group": "File Handling", "groupId": "files", "desc": "Throttled background queue that walks G-code to produce print-time and filament estimates."},
+    {"id": "event_bus", "label": "EventManager", "file": "events.py", "path": "src/octoprint/events.py", "group": "Event Bus", "groupId": "events", "desc": "fire/subscribe pub-sub hub that every subsystem and plugin hangs off."}
+  ],
+  "edges": [
+    {"from": "octoprint_server", "to": "plugin_manager", "label": "boots first"},
+    {"from": "octoprint_server", "to": "rest_api", "label": "mounts blueprints"},
+    {"from": "octoprint_server", "to": "sockjs_bridge", "label": "registers /sockjs"},
+    {"from": "octoprint_server", "to": "printer_state", "label": "creates"},
+    {"from": "octoprint_server", "to": "file_manager", "label": "creates"},
+    {"from": "octoprint_server", "to": "event_bus", "label": "creates"},
+    {"from": "rest_api", "to": "printer_state", "label": "job + printer commands"},
+    {"from": "rest_api", "to": "file_manager", "label": "upload / delete"},
+    {"from": "rest_api", "to": "comm_registry", "label": "connection command"},
+    {"from": "printer_state", "to": "comm_registry", "label": "connect() -> find('serial')"},
+    {"from": "comm_registry", "to": "serial_connector", "label": "registered connector"},
+    {"from": "serial_connector", "to": "machine_com", "label": "wraps"},
+    {"from": "machine_com", "to": "printer_state", "label": "state / temp / log callbacks"},
+    {"from": "printer_state", "to": "sockjs_bridge", "label": "0.5s state push"},
+    {"from": "sockjs_bridge", "to": "event_bus", "label": "subscribes"},
+    {"from": "printer_state", "to": "event_bus", "label": "fires Events.*"},
+    {"from": "file_manager", "to": "gcode_analysis", "label": "enqueues"},
+    {"from": "gcode_analysis", "to": "event_bus", "label": "analysis finished"}
+  ]
+}
