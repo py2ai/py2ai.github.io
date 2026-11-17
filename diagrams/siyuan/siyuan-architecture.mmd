@@ -1,0 +1,130 @@
+flowchart TD
+
+subgraph group_frontend["TypeScript UI &#40;app/src&#41;"]
+  node_app_shell["App shell and panels"]
+  node_protyle_class["Protyle class<br/>[index.ts]"]
+  node_ws_model["Model WS client<br/>[Model.ts]"]
+  node_tx_sender["Transaction sender<br/>[transaction.ts]"]
+end
+
+subgraph group_boot["Process entry point"]
+  node_kernel_main{{"main&#40;&#41;<br/>[main.go]"}}
+  node_cli_serve["serve subcommand"]
+end
+
+subgraph group_server["gin server &#40;kernel/server&#41;"]
+  node_gin_serve["Serve&#40;&#41; boot<br/>[serve.go]"]
+  node_api_router["ServeAPI routes"]
+  node_ws_endpoint["serveWebSocket<br/>[serve.go]"]
+  node_ws_handler["handleWebSocketMessage<br/>[serve.go]"]
+end
+
+subgraph group_model["Trees, transactions, backlinks &#40;kernel/model&#41;"]
+  node_index_model["indexBox/UpsertIndexes<br/>[index.go]"]
+  node_index_refs["IndexRefs<br/>[index.go]"]
+  node_tx_engine["PerformTransactions<br/>[transaction.go]"]
+  node_tx_struct["Transaction struct<br/>[transaction.go]"]
+  node_tree_model["Tree files<br/>[tree.go]"]
+  node_backlink_model["Backlink queries<br/>[backlink.go]"]
+  node_blockinfo["Block info<br/>[blockinfo.go]"]
+end
+
+subgraph group_sql["Index schema and writers &#40;kernel/sql&#41;"]
+  node_db_init[("InitDatabase schema<br/>[database.go]")]
+  node_fts_index[("blocks_fts FTS5<br/>[database.go]")]
+  node_build_block["buildBlockFromNode<br/>[database.go]"]
+  node_build_span["buildSpanFromNode<br/>[database.go]"]
+  node_block_row["Block struct<br/>[block.go]"]
+  node_span_row["Span struct<br/>[span.go]"]
+  node_ref_rows["Refs upsert<br/>[block_ref.go]"]
+  node_sql_queue["Index queue<br/>[queue.go]"]
+  node_upsert_tree["upsertTreeWithChanges<br/>[upsert.go]"]
+  node_embed_content["Embed block content<br/>[embed_content.go]"]
+end
+
+subgraph group_sync["Snapshots and providers &#40;kernel/model, kernel/conf&#41;"]
+  node_sync_model["SyncData<br/>[sync.go]"]
+  node_conf_sync["Sync providers"]
+  node_repo_model["dejavu snapshots<br/>[repository.go]"]
+end
+
+subgraph group_bazaar["Marketplace packages"]
+  node_bazaar_model["Bazaar packages<br/>[bazaar.go]"]
+end
+
+node_kernel_main -->|"cmd.Execute"| node_cli_serve
+node_cli_serve -->|"go server.Serve"| node_gin_serve
+node_cli_serve -->|"sql.InitDatabase"| node_db_init
+node_gin_serve -->|"api.ServeAPI"| node_api_router
+node_gin_serve -->|"serveWebSocket"| node_ws_endpoint
+node_ws_endpoint -->|"HandleMessage"| node_ws_handler
+node_protyle_class -->|"new Model&#40;&#41;.connect"| node_ws_model
+node_ws_model -->|"ws://host/ws"| node_ws_endpoint
+node_tx_sender -->|"editor ops"| node_protyle_class
+node_tx_sender -->|"POST /api/transactions"| node_api_router
+node_api_router -->|"performTransactions"| node_tx_engine
+node_tx_engine -->|"appends ops"| node_tx_struct
+node_tx_engine -->|"reindex trees"| node_index_model
+node_ws_handler -->|"reload/refresh events"| node_protyle_class
+node_index_model -->|"LoadTree .sy JSON"| node_tree_model
+node_index_model -->|"IndexTreeQueue"| node_sql_queue
+node_index_refs -->|"rebuild refs"| node_ref_rows
+node_sql_queue -->|"FlushQueue"| node_upsert_tree
+node_upsert_tree -->|"project nodes"| node_build_block
+node_upsert_tree -->|"extract spans"| node_build_span
+node_build_block -->|"writes rows"| node_block_row
+node_build_span -->|"writes spans"| node_span_row
+node_ref_rows -->|"refs table"| node_db_init
+node_block_row -.->|"FTS5 rowid sync"| node_fts_index
+node_upsert_tree -.->|"refresh embeds"| node_embed_content
+node_backlink_model -->|"reads refs"| node_db_init
+node_blockinfo -->|"ref text lookup"| node_block_row
+node_index_refs -.->|"invalidates cache"| node_backlink_model
+node_sync_model -->|"provider selection"| node_conf_sync
+node_sync_model -->|"snapshot sync"| node_repo_model
+node_repo_model -.->|"snapshots of .sy files"| node_tree_model
+node_tx_engine -.->|"after tx sync upload"| node_sync_model
+node_bazaar_model -->|"install packages"| node_app_shell
+node_ws_handler -.->|"bazaarChanged events"| node_bazaar_model
+
+click node_protyle_class "https://github.com/siyuan-note/siyuan/blob/master/app/src/protyle/index.ts"
+click node_ws_model "https://github.com/siyuan-note/siyuan/blob/master/app/src/layout/Model.ts"
+click node_tx_sender "https://github.com/siyuan-note/siyuan/blob/master/app/src/protyle/wysiwyg/transaction.ts"
+click node_kernel_main "https://github.com/siyuan-note/siyuan/blob/master/kernel/main.go"
+click node_gin_serve "https://github.com/siyuan-note/siyuan/blob/master/kernel/server/serve.go"
+click node_ws_endpoint "https://github.com/siyuan-note/siyuan/blob/master/kernel/server/serve.go"
+click node_ws_handler "https://github.com/siyuan-note/siyuan/blob/master/kernel/server/serve.go"
+click node_index_model "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/index.go"
+click node_index_refs "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/index.go"
+click node_tx_engine "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/transaction.go"
+click node_tx_struct "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/transaction.go"
+click node_tree_model "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/tree.go"
+click node_backlink_model "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/backlink.go"
+click node_blockinfo "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/blockinfo.go"
+click node_db_init "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/database.go"
+click node_fts_index "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/database.go"
+click node_build_block "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/database.go"
+click node_build_span "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/database.go"
+click node_block_row "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/block.go"
+click node_span_row "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/span.go"
+click node_ref_rows "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/block_ref.go"
+click node_sql_queue "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/queue.go"
+click node_upsert_tree "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/upsert.go"
+click node_embed_content "https://github.com/siyuan-note/siyuan/blob/master/kernel/sql/embed_content.go"
+click node_sync_model "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/sync.go"
+click node_repo_model "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/repository.go"
+click node_bazaar_model "https://github.com/siyuan-note/siyuan/blob/master/kernel/model/bazaar.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_app_shell,node_protyle_class,node_ws_model,node_tx_sender,node_bazaar_model toneBlue
+class node_kernel_main,node_cli_serve toneAmber
+class node_gin_serve,node_api_router,node_ws_endpoint,node_ws_handler toneMint
+class node_index_model,node_index_refs,node_tx_engine,node_tx_struct,node_tree_model,node_backlink_model,node_blockinfo toneRose
+class node_db_init,node_fts_index,node_build_block,node_build_span,node_block_row,node_span_row,node_ref_rows,node_sql_queue,node_upsert_tree,node_embed_content toneIndigo
+class node_sync_model,node_conf_sync,node_repo_model toneTeal
