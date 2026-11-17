@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_ui["UI Layer"]
+  node_core["frontend.core<br/>[core.cljs]"]
+  node_editor["handler.editor/save-block!<br/>[editor.cljs]"]
+end
+
+subgraph group_state["State &amp; Startup"]
+  node_handler["frontend.handler/start!<br/>[handler.cljs]"]
+  node_restore["db.restore/restore-graph!<br/>[restore.cljs]"]
+  node_state["frontend.state<br/>[state.cljs]"]
+  node_config["frontend.config<br/>[config.cljs]"]
+end
+
+subgraph group_ops["Outliner Ops"]
+  node_op_build["outliner.op/save-block!<br/>[op.cljs]"]
+  node_op_transact["outliner.op/transact!<br/>[op.cljs]"]
+  node_op_data["outliner.datascript<br/>[datascript.cljs]"]
+  node_outliner_core["outliner.core/save-block<br/>[core.cljs]"]
+end
+
+subgraph group_worker["DB Worker"]
+  node_tx_batch["db.transact/enqueue-outliner-mutation!<br/>[transact.cljs]"]
+  node_tx_apply["db.transact/apply-outliner-ops<br/>[transact.cljs]"]
+  node_worker["worker.db-worker/init<br/>[db_worker.cljs]"]
+  node_subs["db.subs<br/>[subs.cljs]"]
+  node_subs_load["db.subs/&lt;load-block<br/>[subs.cljs]"]
+end
+
+subgraph group_data["DataScript &amp; Schema"]
+  node_schema["db.sqlite.create-graph<br/>[create_graph.cljs]"]
+  node_ldb["db.frontend.db<br/>[db.cljs]"]
+  node_ldb_parent["get-page-parents<br/>[db.cljs]"]
+end
+
+subgraph group_storage["SQLite &amp; Persistence"]
+  node_sqlite_conn["get-storage-conn<br/>[sqlite.cljs]"]
+  node_sqlite_kvs["kvs table<br/>[sqlite.cljs]"]
+  node_sqlite_path["get-db-full-path<br/>[sqlite.cljs]"]
+  node_persist["frontend.persist-db<br/>[persist_db.cljs]"]
+  node_opfs["common.file.opfs<br/>[opfs.cljs]"]
+end
+
+subgraph group_query["Query Engine"]
+  node_query_dsl["db.query-dsl/query<br/>[query_dsl.cljs]"]
+  node_query_custom["db.query-custom/custom-query<br/>[query_custom.cljs]"]
+  node_datalog["require-datalog-query!<br/>[query_custom.cljs]"]
+end
+
+subgraph group_ext["Plugins &amp; SDK"]
+  node_api["logseq.api<br/>[api.cljs]"]
+  node_api_db["logseq.api.db-based<br/>[db_based.cljs]"]
+  node_api_block["logseq.api.block<br/>[block.cljs]"]
+  node_plugin_setup["handler.plugin/setup!<br/>[plugin.cljs]"]
+  node_sdk["logseq.sdk.core<br/>[core.cljs]"]
+end
+
+node_core -->|"init calls start!"| node_handler
+node_handler -->|"restore-and-setup!"| node_restore
+node_handler -->|"setup! during boot"| node_plugin_setup
+node_handler -->|"app state wiring"| node_state
+node_restore -->|"worker calls + pub-event!"| node_state
+node_restore -->|"&lt;open-and-fetch-schema"| node_persist
+node_state -->|"&lt;invoke-db-worker"| node_worker
+node_state -->|"graph kind checks"| node_config
+node_editor -->|"save-block! builds op"| node_op_build
+node_op_build -->|"ops collected in transact!"| node_op_transact
+node_op_transact -->|"batch tx state"| node_op_data
+node_op_transact -->|"enqueue mutation"| node_tx_batch
+node_tx_batch -->|"ordered per repo"| node_tx_apply
+node_tx_apply -->|"thread-api/apply-outliner-ops"| node_worker
+node_outliner_core -->|"batch txs state"| node_op_data
+node_outliner_core -->|"reads graph entities"| node_ldb
+node_outliner_core -->|"requires create-graph"| node_schema
+node_worker -->|"deltas to renderer"| node_subs
+node_subs -->|"batched slot loads"| node_subs_load
+node_subs -->|"snapshot refresh"| node_editor
+node_worker -->|"opens graph"| node_sqlite_conn
+node_sqlite_conn -->|"storage pages"| node_sqlite_kvs
+node_sqlite_conn -->|"db.sqlite path"| node_sqlite_path
+node_sqlite_conn -->|"datom queries"| node_ldb
+node_ldb -->|":block/parent walk"| node_ldb_parent
+node_query_dsl -->|"thread-api/query-dsl-query"| node_worker
+node_query_custom -->|"validates :find vector"| node_datalog
+node_query_custom -->|"direct worker API"| node_worker
+node_persist -->|"browser graph files"| node_opfs
+node_persist -->|"runtime worker attach"| node_worker
+node_api -->|"dispatches DB version APIs"| node_api_db
+node_api -->|"plugin hooks read state"| node_state
+node_api_block -->|"plugin edits via ops"| node_op_build
+node_api_db -->|"page ops via outliner"| node_outliner_core
+
+click node_core "https://github.com/logseq/logseq/blob/master/src/main/frontend/core.cljs"
+click node_editor "https://github.com/logseq/logseq/blob/master/src/main/frontend/handler/editor.cljs"
+click node_op_build "https://github.com/logseq/logseq/blob/master/src/main/frontend/modules/outliner/op.cljs"
+click node_op_transact "https://github.com/logseq/logseq/blob/master/src/main/frontend/modules/outliner/op.cljs"
+click node_op_data "https://github.com/logseq/logseq/blob/master/deps/outliner/src/logseq/outliner/datascript.cljs"
+click node_outliner_core "https://github.com/logseq/logseq/blob/master/deps/outliner/src/logseq/outliner/core.cljs"
+click node_tx_batch "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/transact.cljs"
+click node_tx_apply "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/transact.cljs"
+click node_handler "https://github.com/logseq/logseq/blob/master/src/main/frontend/handler.cljs"
+click node_restore "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/restore.cljs"
+click node_state "https://github.com/logseq/logseq/blob/master/src/main/frontend/state.cljs"
+click node_config "https://github.com/logseq/logseq/blob/master/src/main/frontend/config.cljs"
+click node_worker "https://github.com/logseq/logseq/blob/master/src/main/frontend/worker/db_worker.cljs"
+click node_subs "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/subs.cljs"
+click node_subs_load "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/subs.cljs"
+click node_schema "https://github.com/logseq/logseq/blob/master/deps/db/src/logseq/db/sqlite/create_graph.cljs"
+click node_ldb "https://github.com/logseq/logseq/blob/master/deps/db/src/logseq/db/frontend/db.cljs"
+click node_ldb_parent "https://github.com/logseq/logseq/blob/master/deps/db/src/logseq/db/frontend/db.cljs"
+click node_sqlite_conn "https://github.com/logseq/logseq/blob/master/deps/db/src/logseq/db/common/sqlite.cljs"
+click node_sqlite_kvs "https://github.com/logseq/logseq/blob/master/deps/db/src/logseq/db/common/sqlite.cljs"
+click node_sqlite_path "https://github.com/logseq/logseq/blob/master/deps/db/src/logseq/db/common/sqlite.cljs"
+click node_persist "https://github.com/logseq/logseq/blob/master/src/main/frontend/persist_db.cljs"
+click node_opfs "https://github.com/logseq/logseq/blob/master/src/main/frontend/common/file/opfs.cljs"
+click node_query_dsl "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/query_dsl.cljs"
+click node_query_custom "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/query_custom.cljs"
+click node_datalog "https://github.com/logseq/logseq/blob/master/src/main/frontend/db/query_custom.cljs"
+click node_api "https://github.com/logseq/logseq/blob/master/src/main/logseq/api.cljs"
+click node_api_db "https://github.com/logseq/logseq/blob/master/src/main/logseq/api/db_based.cljs"
+click node_api_block "https://github.com/logseq/logseq/blob/master/src/main/logseq/api/block.cljs"
+click node_plugin_setup "https://github.com/logseq/logseq/blob/master/src/main/frontend/handler/plugin.cljs"
+click node_sdk "https://github.com/logseq/logseq/blob/master/src/main/logseq/sdk/core.cljs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_core,node_editor,node_query_dsl,node_query_custom,node_datalog toneBlue
+class node_handler,node_restore,node_state,node_config,node_api,node_api_db,node_api_block,node_plugin_setup,node_sdk toneAmber
+class node_op_build,node_op_transact,node_op_data,node_outliner_core toneMint
+class node_tx_batch,node_tx_apply,node_worker,node_subs,node_subs_load toneRose
+class node_schema,node_ldb,node_ldb_parent toneIndigo
+class node_sqlite_conn,node_sqlite_kvs,node_sqlite_path,node_persist,node_opfs toneTeal
