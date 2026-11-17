@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_bootstrap["Browser entry"]
+  node_index_html["index.html<br/>[index.html]"]
+  node_app_js["app.js<br/>[app.js]"]
+  node_react_index["react/index.web.js<br/>[index.web.js]"]
+end
+
+subgraph group_shell["React app shell"]
+  node_base_app["BaseApp.tsx<br/>[BaseApp.tsx]"]
+  node_app_willmount["appWillMount<br/>[actions.ts]"]
+  node_app_navigate["appNavigate<br/>[actions.web.ts]"]
+  node_load_config["loadConfig<br/>[functions.web.ts]"]
+end
+
+subgraph group_state["Redux core state"]
+  node_middleware_registry["MiddlewareRegistry"]
+  node_conf_reducer["conference reducer<br/>[reducer.ts]"]
+  node_tracks_reducer["tracks reducer<br/>[reducer.ts]"]
+end
+
+subgraph group_signaling["XMPP connection"]
+  node_lib_actions["initLib<br/>[actions.ts]"]
+  node_lib_index["lib-jitsi-meet exports<br/>[index.ts]"]
+  node_conn_web["connect &#40;web&#41;<br/>[actions.web.ts]"]
+  node_conn_actions["_connectInternal<br/>[actions.any.ts]"]
+  node_conn_middleware["connection middleware<br/>[middleware.web.ts]"]
+end
+
+subgraph group_lifecycle["Join lifecycle"]
+  node_conference_js["conference.js<br/>[conference.js]"]
+  node_conf_actions["createConference<br/>[actions.any.ts]"]
+  node_conf_middleware["conference middleware<br/>[middleware.any.ts]"]
+  node_conf_functions["conference functions<br/>[functions.ts]"]
+  node_tracks_actions["track actions<br/>[actions.any.ts]"]
+end
+
+subgraph group_quality["Quality and LastN"]
+  node_lastn_actions["setLastN<br/>[actions.ts]"]
+  node_lastn_middleware["lastn middleware<br/>[middleware.ts]"]
+  node_vidqual_actions["video-quality actions<br/>[actions.ts]"]
+  node_vidqual_subscriber["quality subscriber<br/>[subscriber.ts]"]
+  node_media_connectivity["media-connectivity middleware<br/>[middleware.ts]"]
+end
+
+subgraph group_render["Video rendering"]
+  node_largevideo_actions["selectParticipantInLargeVideo<br/>[actions.any.ts]"]
+  node_largevideo_sub["large-video subscriber<br/>[subscriber.web.ts]"]
+  node_videolayout["VideoLayout.js<br/>[VideoLayout.js]"]
+  node_largevideo_mgr["LargeVideoManager"]
+end
+
+subgraph group_embed["Embedding API"]
+  node_external_api["JitsiMeetExternalAPI<br/>[external_api.js]"]
+  node_api_js["API.js<br/>[API.js]"]
+  node_extapi_middleware["external-api middleware<br/>[middleware.ts]"]
+  node_transport["transport<br/>[index.js]"]
+end
+
+node_index_html -->|"loads app.bundle.min.js"| node_app_js
+node_index_html -->|"provides the JitsiMeetJS global"| node_lib_index
+node_app_js -->|"import './react'"| node_react_index
+node_react_index -->|"renderEntryPoint&#40;App&#41;"| node_base_app
+node_base_app -->|"createStore with feature middlewares"| node_middleware_registry
+node_base_app -->|"dispatch&#40;appWillMount&#41;"| node_app_willmount
+node_app_willmount -->|"APP.API.init&#40;&#41;"| node_api_js
+node_base_app -->|"componentDidMount opens the URL"| node_app_navigate
+node_app_navigate -->|"loadConfig&#40;url&#41;"| node_load_config
+node_app_navigate -->|"setConfig + setRoom"| node_conference_js
+node_lib_actions -->|"JitsiMeetJS.init&#40;config&#41;"| node_lib_index
+node_conference_js -->|"dispatch&#40;connect&#40;&#41;&#41;"| node_conn_web
+node_conn_web -->|"delegates to _connectInternal"| node_conn_actions
+node_conn_actions -->|"JitsiConnectionEvents"| node_lib_index
+node_conn_actions -->|"CONNECTION_ESTABLISHED"| node_conf_middleware
+node_conn_middleware -->|"APP.connection set for _createRoom"| node_conference_js
+node_conference_js -->|"createInitialLocalTracks"| node_tracks_actions
+node_tracks_actions -->|"trackAdded, TRACK_ADDED"| node_tracks_reducer
+node_conference_js -->|"_createRoom joins via room.join"| node_conf_actions
+node_conf_actions -->|"getConferenceOptions + sendLocalParticipant"| node_conf_functions
+node_conf_actions -->|"_conferenceWillJoin sets joining"| node_conf_reducer
+node_conf_middleware -->|"CONFERENCE_JOINED sets conference"| node_conf_reducer
+node_conf_middleware -->|"web join is driven by conference.js"| node_conference_js
+node_conf_middleware -->|"CONFERENCE_JOINED seen by every middleware"| node_lastn_middleware
+node_conf_middleware -->|"conference events surface to the API"| node_extapi_middleware
+node_lastn_middleware -->|"dispatch&#40;setLastN&#41;"| node_lastn_actions
+node_lastn_actions -->|"lastN state listener"| node_vidqual_subscriber
+node_vidqual_actions -->|"maxReceiverVideoQuality state"| node_vidqual_subscriber
+node_tracks_actions -->|"base/tracks listeners"| node_vidqual_subscriber
+node_vidqual_subscriber -->|"setReceiverConstraints / setSenderVideoConstraint"| node_conf_actions
+node_lib_index -->|"JitsiMediaConnectivityStatus"| node_media_connectivity
+node_tracks_actions -->|"participant and track state listeners"| node_largevideo_sub
+node_largevideo_actions -->|"on-stage participant id"| node_largevideo_sub
+node_largevideo_sub -->|"VideoLayout.updateLargeVideo"| node_videolayout
+node_videolayout -->|"largeVideo = new LargeVideoManager&#40;&#41;"| node_largevideo_mgr
+node_external_api -->|"wraps the page in an iframe"| node_index_html
+node_external_api -->|"_setupListeners via transport"| node_transport
+node_external_api -->|"executeCommand reaches API.js"| node_api_js
+node_api_js -->|"APP.store.dispatch&#40;commands&#41;"| node_middleware_registry
+node_api_js -->|"setAssumedBandwidthBps"| node_conf_middleware
+node_extapi_middleware -->|"APP.API.notify* out to the parent"| node_api_js
+
+click node_index_html "https://github.com/jitsi/jitsi-meet/blob/master/index.html"
+click node_app_js "https://github.com/jitsi/jitsi-meet/blob/master/app.js"
+click node_react_index "https://github.com/jitsi/jitsi-meet/blob/master/react/index.web.js"
+click node_base_app "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/app/components/BaseApp.tsx"
+click node_app_willmount "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/app/actions.ts"
+click node_app_navigate "https://github.com/jitsi/jitsi-meet/blob/master/react/features/app/actions.web.ts"
+click node_load_config "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/lib-jitsi-meet/functions.web.ts"
+click node_middleware_registry "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/redux/MiddlewareRegistry.ts"
+click node_conf_reducer "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/conference/reducer.ts"
+click node_tracks_reducer "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/tracks/reducer.ts"
+click node_lib_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/lib-jitsi-meet/actions.ts"
+click node_lib_index "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/lib-jitsi-meet/index.ts"
+click node_conn_web "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/connection/actions.web.ts"
+click node_conn_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/connection/actions.any.ts"
+click node_conn_middleware "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/connection/middleware.web.ts"
+click node_conference_js "https://github.com/jitsi/jitsi-meet/blob/master/conference.js"
+click node_conf_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/conference/actions.any.ts"
+click node_conf_middleware "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/conference/middleware.any.ts"
+click node_conf_functions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/conference/functions.ts"
+click node_tracks_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/tracks/actions.any.ts"
+click node_lastn_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/lastn/actions.ts"
+click node_lastn_middleware "https://github.com/jitsi/jitsi-meet/blob/master/react/features/base/lastn/middleware.ts"
+click node_vidqual_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/video-quality/actions.ts"
+click node_vidqual_subscriber "https://github.com/jitsi/jitsi-meet/blob/master/react/features/video-quality/subscriber.ts"
+click node_media_connectivity "https://github.com/jitsi/jitsi-meet/blob/master/react/features/media-connectivity/middleware.ts"
+click node_largevideo_actions "https://github.com/jitsi/jitsi-meet/blob/master/react/features/large-video/actions.any.ts"
+click node_largevideo_sub "https://github.com/jitsi/jitsi-meet/blob/master/react/features/large-video/subscriber.web.ts"
+click node_videolayout "https://github.com/jitsi/jitsi-meet/blob/master/modules/UI/videolayout/VideoLayout.js"
+click node_largevideo_mgr "https://github.com/jitsi/jitsi-meet/blob/master/modules/UI/videolayout/LargeVideoManager.js"
+click node_external_api "https://github.com/jitsi/jitsi-meet/blob/master/modules/API/external/external_api.js"
+click node_api_js "https://github.com/jitsi/jitsi-meet/blob/master/modules/API/API.js"
+click node_extapi_middleware "https://github.com/jitsi/jitsi-meet/blob/master/react/features/external-api/middleware.ts"
+click node_transport "https://github.com/jitsi/jitsi-meet/blob/master/modules/transport/index.js"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_index_html,node_app_js,node_react_index,node_largevideo_actions,node_largevideo_sub,node_videolayout,node_largevideo_mgr toneBlue
+class node_base_app,node_app_willmount,node_app_navigate,node_load_config,node_external_api,node_api_js,node_extapi_middleware,node_transport toneAmber
+class node_middleware_registry,node_conf_reducer,node_tracks_reducer toneMint
+class node_lib_actions,node_lib_index,node_conn_web,node_conn_actions,node_conn_middleware toneRose
+class node_conference_js,node_conf_actions,node_conf_middleware,node_conf_functions,node_tracks_actions toneIndigo
+class node_lastn_actions,node_lastn_middleware,node_vidqual_actions,node_vidqual_subscriber,node_media_connectivity toneTeal
