@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_flutter_ui["Flutter UI &#40;desktop + mobile&#41;"]
+  node_startup_deps["DependencyResolver &#40;GetIt&#41;<br/>[deps_resolver.dart]"]
+  node_rust_sdk_task["InitRustSDKTask<br/>[rust_sdk.dart]"]
+  node_flutter_blocs["DocumentBloc / view blocs<br/>[document_bloc.dart]"]
+end
+
+subgraph group_ffi_bridge["FFI bridge"]
+  node_flowy_sdk["FlowySDK.init"]
+  node_dart_dispatch["Dispatch.asyncRequest<br/>[dispatch.dart]"]
+  node_dart_ffi["dart-ffi: init_sdk / async_event<br/>[lib.rs]"]
+end
+
+subgraph group_rust_core["Rust core &#40;frontend/rust-lib&#41;"]
+  node_appflowy_core["AppFlowyCore<br/>[lib.rs]"]
+  node_event_dispatcher["AFPluginDispatcher<br/>[dispatcher.rs]"]
+  node_event_maps["Event maps: user/folder/document/database/AI<br/>[event_map.rs]"]
+end
+
+subgraph group_local_storage["Local storage"]
+  node_flowy_sqlite["SQLite via Diesel<br/>[lib.rs]"]
+  node_collab_builder["AppFlowyCollabBuilder &#40;yrs&#41;<br/>[collab_builder.rs]"]
+end
+
+subgraph group_sync["Collab sync &amp; cloud"]
+  node_af_cloud_ws["AppFlowy Cloud WSClient<br/>[server.rs]"]
+end
+
+node_rust_sdk_task -->|"FlowySDK.init&#40;env json&#41;"| node_flowy_sdk
+node_flowy_sdk -->|"init_sdk over FFI"| node_dart_ffi
+node_dart_ffi -->|"AppFlowyCore::new"| node_appflowy_core
+node_appflowy_core -->|"dispatcher built from plugins"| node_event_dispatcher
+node_flutter_blocs -->|"asyncRequest&#40;event, payload&#41;"| node_dart_dispatch
+node_dart_dispatch -->|"protobuf bytes + port"| node_dart_ffi
+node_dart_ffi -->|"async_event&#40;task&#41;"| node_event_dispatcher
+node_event_dispatcher -->|"route by event id"| node_event_maps
+node_event_maps -->|"handlers borrow managers"| node_appflowy_core
+node_event_maps -->|"metadata reads/writes"| node_flowy_sqlite
+node_event_maps -->|"open document collab"| node_collab_builder
+node_appflowy_core -->|"KVStorePreferences + user db"| node_flowy_sqlite
+node_appflowy_core -->|"shared collab builder"| node_collab_builder
+node_appflowy_core -->|"ServerProvider"| node_af_cloud_ws
+node_collab_builder -->|"sync CRDT updates"| node_af_cloud_ws
+node_af_cloud_ws -.->|"apply remote updates"| node_collab_builder
+node_dart_ffi -.->|"FFIResponse via port"| node_dart_dispatch
+
+click node_startup_deps "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/startup/deps_resolver.dart"
+click node_rust_sdk_task "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/startup/tasks/rust_sdk.dart"
+click node_flutter_blocs "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/plugins/document/application/document_bloc.dart"
+click node_flowy_sdk "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/packages/appflowy_backend/lib/appflowy_backend.dart"
+click node_dart_dispatch "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/packages/appflowy_backend/lib/dispatch/dispatch.dart"
+click node_dart_ffi "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/dart-ffi/src/lib.rs"
+click node_appflowy_core "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-core/src/lib.rs"
+click node_event_dispatcher "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/lib-dispatch/src/dispatcher.rs"
+click node_event_maps "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-document/src/event_map.rs"
+click node_flowy_sqlite "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-sqlite/src/lib.rs"
+click node_collab_builder "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/collab-integrate/src/collab_builder.rs"
+click node_af_cloud_ws "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-server/src/af_cloud/server.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_startup_deps,node_rust_sdk_task,node_flutter_blocs toneBlue
+class node_flowy_sdk,node_dart_dispatch,node_dart_ffi toneAmber
+class node_appflowy_core,node_event_dispatcher,node_event_maps toneMint
+class node_flowy_sqlite,node_collab_builder toneRose
+class node_af_cloud_ws toneIndigo

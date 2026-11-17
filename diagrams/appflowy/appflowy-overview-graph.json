@@ -1,0 +1,141 @@
+{
+  "owner": "AppFlowy-IO",
+  "repo": "AppFlowy",
+  "branch": "main",
+  "groups": [
+    { "id": "flutter_ui", "name": "Flutter UI", "label": "Flutter UI (desktop + mobile)" },
+    { "id": "ffi_bridge", "name": "FFI bridge", "label": "FFI bridge" },
+    { "id": "rust_core", "name": "Rust core", "label": "Rust core (frontend/rust-lib)" },
+    { "id": "local_storage", "name": "Local storage", "label": "Local storage" },
+    { "id": "sync", "name": "Sync", "label": "Collab sync & cloud" }
+  ],
+  "nodes": [
+    {
+      "id": "startup_deps",
+      "label": "DependencyResolver (GetIt)",
+      "file": "deps_resolver.dart",
+      "path": "frontend/appflowy_flutter/lib/startup/deps_resolver.dart",
+      "group": "flutter_ui",
+      "groupId": "flutter_ui",
+      "desc": "Wires auth, cloud and home dependencies; picks local vs AppFlowy Cloud at startup"
+    },
+    {
+      "id": "rust_sdk_task",
+      "label": "InitRustSDKTask",
+      "file": "rust_sdk.dart",
+      "path": "frontend/appflowy_flutter/lib/startup/tasks/rust_sdk.dart",
+      "group": "flutter_ui",
+      "groupId": "flutter_ui",
+      "desc": "Serialises AppFlowyConfiguration to JSON and hands it to the Rust side"
+    },
+    {
+      "id": "flutter_blocs",
+      "label": "DocumentBloc / view blocs",
+      "file": "document_bloc.dart",
+      "path": "frontend/appflowy_flutter/lib/plugins/document/application/document_bloc.dart",
+      "group": "flutter_ui",
+      "groupId": "flutter_ui",
+      "desc": "flutter_bloc state layer; every edit becomes an async event into the Rust core"
+    },
+    {
+      "id": "flowy_sdk",
+      "label": "FlowySDK.init",
+      "file": "appflowy_backend.dart",
+      "path": "frontend/appflowy_flutter/packages/appflowy_backend/lib/appflowy_backend.dart",
+      "group": "ffi_bridge",
+      "groupId": "ffi_bridge",
+      "desc": "Registers notification ports and calls init_sdk through dart:ffi"
+    },
+    {
+      "id": "dart_dispatch",
+      "label": "Dispatch.asyncRequest",
+      "file": "dispatch.dart",
+      "path": "frontend/appflowy_flutter/packages/appflowy_backend/lib/dispatch/dispatch.dart",
+      "group": "ffi_bridge",
+      "groupId": "ffi_bridge",
+      "desc": "Encodes protobuf FFIRequest bytes, passes a Dart port, awaits the response buffer"
+    },
+    {
+      "id": "dart_ffi",
+      "label": "dart-ffi: init_sdk / async_event",
+      "file": "lib.rs",
+      "path": "frontend/rust-lib/dart-ffi/src/lib.rs",
+      "group": "ffi_bridge",
+      "groupId": "ffi_bridge",
+      "desc": "C ABI entry points; boots AppFlowyCore on a dedicated thread and posts replies to Dart"
+    },
+    {
+      "id": "appflowy_core",
+      "label": "AppFlowyCore",
+      "file": "lib.rs",
+      "path": "frontend/rust-lib/flowy-core/src/lib.rs",
+      "group": "rust_core",
+      "groupId": "rust_core",
+      "desc": "Root container: builds all managers and the event dispatcher at init"
+    },
+    {
+      "id": "event_dispatcher",
+      "label": "AFPluginDispatcher",
+      "file": "dispatcher.rs",
+      "path": "frontend/rust-lib/lib-dispatch/src/dispatcher.rs",
+      "group": "rust_core",
+      "groupId": "rust_core",
+      "desc": "Routes every incoming event to the plugin that registered its handler"
+    },
+    {
+      "id": "event_maps",
+      "label": "Event maps: user/folder/document/database/AI",
+      "file": "event_map.rs",
+      "path": "frontend/rust-lib/flowy-document/src/event_map.rs",
+      "group": "rust_core",
+      "groupId": "rust_core",
+      "desc": "Eight AFPlugin registries mapping protobuf event codes to handlers"
+    },
+    {
+      "id": "flowy_sqlite",
+      "label": "SQLite via Diesel",
+      "file": "lib.rs",
+      "path": "frontend/rust-lib/flowy-sqlite/src/lib.rs",
+      "group": "local_storage",
+      "groupId": "local_storage",
+      "desc": "flowy-database.db with embedded Diesel migrations for user and view metadata"
+    },
+    {
+      "id": "collab_builder",
+      "label": "AppFlowyCollabBuilder (yrs)",
+      "file": "collab_builder.rs",
+      "path": "frontend/rust-lib/collab-integrate/src/collab_builder.rs",
+      "group": "local_storage",
+      "groupId": "local_storage",
+      "desc": "Builds CRDT Collab objects per document/grid, persists them to disk"
+    },
+    {
+      "id": "af_cloud_ws",
+      "label": "AppFlowy Cloud WSClient",
+      "file": "server.rs",
+      "path": "frontend/rust-lib/flowy-server/src/af_cloud/server.rs",
+      "group": "sync",
+      "groupId": "sync",
+      "desc": "Optional WebSocket channel that ships CRDT updates to self-hosted or AppFlowy Cloud"
+    }
+  ],
+  "edges": [
+    { "from": "rust_sdk_task", "to": "flowy_sdk", "label": "FlowySDK.init(env json)" },
+    { "from": "flowy_sdk", "to": "dart_ffi", "label": "init_sdk over FFI" },
+    { "from": "dart_ffi", "to": "appflowy_core", "label": "AppFlowyCore::new" },
+    { "from": "appflowy_core", "to": "event_dispatcher", "label": "dispatcher built from plugins" },
+    { "from": "flutter_blocs", "to": "dart_dispatch", "label": "asyncRequest(event, payload)" },
+    { "from": "dart_dispatch", "to": "dart_ffi", "label": "protobuf bytes + port" },
+    { "from": "dart_ffi", "to": "event_dispatcher", "label": "async_event(task)" },
+    { "from": "event_dispatcher", "to": "event_maps", "label": "route by event id" },
+    { "from": "event_maps", "to": "appflowy_core", "label": "handlers borrow managers" },
+    { "from": "event_maps", "to": "flowy_sqlite", "label": "metadata reads/writes" },
+    { "from": "event_maps", "to": "collab_builder", "label": "open document collab" },
+    { "from": "appflowy_core", "to": "flowy_sqlite", "label": "KVStorePreferences + user db" },
+    { "from": "appflowy_core", "to": "collab_builder", "label": "shared collab builder" },
+    { "from": "appflowy_core", "to": "af_cloud_ws", "label": "ServerProvider" },
+    { "from": "collab_builder", "to": "af_cloud_ws", "label": "sync CRDT updates" },
+    { "from": "af_cloud_ws", "to": "collab_builder", "label": "apply remote updates", "style": "dashed" },
+    { "from": "dart_ffi", "to": "dart_dispatch", "label": "FFIResponse via port", "style": "dashed" }
+  ]
+}

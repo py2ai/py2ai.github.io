@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_flutter_app["Flutter app shell"]
+  node_main_entry["main&#40;&#41;<br/>[main.dart]"]
+  node_app_startup["runAppFlowy / AppLauncher<br/>[startup.dart]"]
+  node_deps_resolver["DependencyResolver<br/>[deps_resolver.dart]"]
+  node_rust_sdk_task["InitRustSDKTask<br/>[rust_sdk.dart]"]
+  node_document_bloc["DocumentBloc<br/>[document_bloc.dart]"]
+end
+
+subgraph group_ffi_bridge["appflowy_backend &#40;Dart&#41;"]
+  node_flowy_sdk["FlowySDK.init"]
+  node_dispatch_dart["Dispatch.asyncRequest<br/>[dispatch.dart]"]
+  node_ffi_bindings["ffi.dart bindings<br/>[ffi.dart]"]
+  node_rust_stream["RustStreamReceiver<br/>[rust_stream.dart]"]
+end
+
+subgraph group_rust_dispatch["lib-dispatch &#40;Rust&#41;"]
+  node_dart_ffi_init["init_sdk / async_event<br/>[lib.rs]"]
+  node_ffi_runner["Runner &#40;task loop&#41;<br/>[lib.rs]"]
+  node_af_runtime["AFPluginRuntime<br/>[runtime.rs]"]
+  node_dispatcher["AFPluginDispatcher<br/>[dispatcher.rs]"]
+  node_plugin_reg["AFPlugin registry<br/>[module.rs]"]
+end
+
+subgraph group_rust_domain["Domain plugins &#40;rust-lib&#41;"]
+  node_flowy_core["AppFlowyCore::init<br/>[lib.rs]"]
+  node_make_plugins["make_plugins &#40;8 plugins&#41;<br/>[module.rs]"]
+  node_folder_events["FolderEvent handlers<br/>[event_map.rs]"]
+  node_doc_events["DocumentEvent handlers<br/>[event_map.rs]"]
+  node_db_events["DatabaseEvent handlers<br/>[event_map.rs]"]
+  node_user_mgr["UserManager<br/>[manager.rs]"]
+  node_folder_mgr["FolderManager<br/>[manager.rs]"]
+  node_document_mgr["DocumentManager<br/>[manager.rs]"]
+  node_database_mgr["DatabaseManager<br/>[manager.rs]"]
+  node_flowy_error["FlowyError / ErrorCode<br/>[errors.rs]"]
+end
+
+subgraph group_collab_sync["Collab CRDT &#40;yrs&#41;"]
+  node_collab_builder["AppFlowyCollabBuilder<br/>[collab_builder.rs]"]
+  node_collab_persist["CollabPersistenceImpl<br/>[collab_builder.rs]"]
+  node_yrs_dep["yrs 0.21 &#40;CRDT&#41;<br/>[Cargo.toml]"]
+end
+
+subgraph group_storage["Local storage"]
+  node_flowy_sqlite["SQLite &#40;Diesel&#41;<br/>[lib.rs]"]
+  node_kv_store["KVStorePreferences<br/>[kv.rs]"]
+end
+
+subgraph group_cloud["AppFlowy Cloud &#40;optional&#41;"]
+  node_server_provider["ServerProvider<br/>[server_layer.rs]"]
+  node_af_cloud_server["AppFlowyCloudServer<br/>[server.rs]"]
+  node_ws_client["WSClient channels<br/>[server.rs]"]
+end
+
+node_main_entry -->|"runAppFlowy&#40;&#41;"| node_app_startup
+node_app_startup -->|"resolve GetIt deps"| node_deps_resolver
+node_app_startup -->|"launch task"| node_rust_sdk_task
+node_rust_sdk_task -->|"FlowySDK.init&#40;env json&#41;"| node_flowy_sdk
+node_flowy_sdk -->|"init_sdk&#40;0, config&#41;"| node_ffi_bindings
+node_ffi_bindings -->|"FFI into libdart_ffi"| node_dart_ffi_init
+node_flowy_sdk -->|"set_stream_port"| node_rust_stream
+node_document_bloc -->|"asyncRequest"| node_dispatch_dart
+node_dispatch_dart -->|"async_event&#40;port, bytes&#41;"| node_ffi_bindings
+node_dart_ffi_init -->|"Task&#123;request, port&#125;"| node_ffi_runner
+node_ffi_runner -->|"boxed_async_send_with_callback"| node_dispatcher
+node_dart_ffi_init -->|"AppFlowyCore::new"| node_flowy_core
+node_flowy_core -->|"runtime handed to dispatcher"| node_af_runtime
+node_flowy_core -->|"Vec&lt;AFPlugin&gt;"| node_make_plugins
+node_make_plugins -->|"AFPlugin::new&#40;&#41;.event&#40;&#41;"| node_plugin_reg
+node_flowy_core -->|"AFPluginDispatcher::new"| node_dispatcher
+node_dispatcher -->|"match event id"| node_plugin_reg
+node_plugin_reg -.->|"FolderEvent::*"| node_folder_events
+node_plugin_reg -.->|"DocumentEvent::*"| node_doc_events
+node_plugin_reg -.->|"DatabaseEvent::*"| node_db_events
+node_folder_events -->|"view tree ops"| node_folder_mgr
+node_doc_events -->|"create/open/apply"| node_document_mgr
+node_db_events -->|"field/row/cell ops"| node_database_mgr
+node_flowy_core -->|"UserManager"| node_user_mgr
+node_user_mgr -->|"open per-user sqlite"| node_flowy_sqlite
+node_flowy_core -->|"KVStorePreferences"| node_kv_store
+node_document_mgr -->|"collab_for_document"| node_collab_builder
+node_folder_mgr -->|"folder collab"| node_collab_builder
+node_database_mgr -->|"grid/board collab"| node_collab_builder
+node_collab_builder -->|"write_collab_to_disk"| node_collab_persist
+node_collab_builder -->|"CRDT updates"| node_yrs_dep
+node_flowy_core -->|"ServerProvider"| node_server_provider
+node_server_provider -->|"authenticator_type"| node_af_cloud_server
+node_af_cloud_server -->|"WSClient::new"| node_ws_client
+node_collab_builder -->|"sync plugin pushes updates"| node_af_cloud_server
+node_af_cloud_server -.->|"remote updates"| node_collab_builder
+node_plugin_reg -->|"event_err = FlowyError"| node_flowy_error
+node_dispatcher -.->|"AFPluginEventResponse"| node_dart_ffi_init
+node_dart_ffi_init -.->|"post_to_flutter via port"| node_ffi_bindings
+node_dispatch_dart -.->|"FlowyResult&lt;Uint8List&gt;"| node_document_bloc
+
+click node_main_entry "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/main.dart"
+click node_app_startup "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/startup/startup.dart"
+click node_deps_resolver "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/startup/deps_resolver.dart"
+click node_rust_sdk_task "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/startup/tasks/rust_sdk.dart"
+click node_document_bloc "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/lib/plugins/document/application/document_bloc.dart"
+click node_flowy_sdk "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/packages/appflowy_backend/lib/appflowy_backend.dart"
+click node_dispatch_dart "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/packages/appflowy_backend/lib/dispatch/dispatch.dart"
+click node_ffi_bindings "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/packages/appflowy_backend/lib/ffi.dart"
+click node_rust_stream "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/appflowy_flutter/packages/appflowy_backend/lib/rust_stream.dart"
+click node_dart_ffi_init "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/dart-ffi/src/lib.rs"
+click node_ffi_runner "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/dart-ffi/src/lib.rs"
+click node_af_runtime "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/lib-dispatch/src/runtime.rs"
+click node_dispatcher "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/lib-dispatch/src/dispatcher.rs"
+click node_plugin_reg "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/lib-dispatch/src/module/module.rs"
+click node_flowy_core "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-core/src/lib.rs"
+click node_make_plugins "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-core/src/module.rs"
+click node_folder_events "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-folder/src/event_map.rs"
+click node_doc_events "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-document/src/event_map.rs"
+click node_db_events "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-database2/src/event_map.rs"
+click node_user_mgr "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-user/src/user_manager/manager.rs"
+click node_folder_mgr "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-folder/src/manager.rs"
+click node_document_mgr "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-document/src/manager.rs"
+click node_database_mgr "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-database2/src/manager.rs"
+click node_flowy_error "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-error/src/errors.rs"
+click node_collab_builder "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/collab-integrate/src/collab_builder.rs"
+click node_collab_persist "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/collab-integrate/src/collab_builder.rs"
+click node_yrs_dep "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/Cargo.toml"
+click node_flowy_sqlite "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-sqlite/src/lib.rs"
+click node_kv_store "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-sqlite/src/kv/kv.rs"
+click node_server_provider "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-core/src/server_layer.rs"
+click node_af_cloud_server "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-server/src/af_cloud/server.rs"
+click node_ws_client "https://github.com/AppFlowy-IO/AppFlowy/blob/main/frontend/rust-lib/flowy-server/src/af_cloud/server.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_app_startup,node_deps_resolver,node_rust_sdk_task,node_document_bloc,node_server_provider,node_af_cloud_server,node_ws_client toneBlue
+class node_flowy_sdk,node_dispatch_dart,node_ffi_bindings,node_rust_stream toneAmber
+class node_dart_ffi_init,node_ffi_runner,node_af_runtime,node_dispatcher,node_plugin_reg toneMint
+class node_flowy_core,node_make_plugins,node_folder_events,node_doc_events,node_db_events,node_user_mgr,node_folder_mgr,node_document_mgr,node_database_mgr,node_flowy_error toneRose
+class node_collab_builder,node_collab_persist,node_yrs_dep toneIndigo
+class node_flowy_sqlite,node_kv_store toneTeal
