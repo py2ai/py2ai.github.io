@@ -1,0 +1,2161 @@
+
+
+  <!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Theme initialization to prevent flash -->
+  <script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
+
+  <!-- Pinterest & Google verification -->
+  <meta name="p:domain_verify" content="fb68a8459fe32b8b072bcd5cc620d125"/>
+  <meta name="google-site-verification" content="WAkFPi5cvufClnQetgIl0STmvvwHhVf8jfyENFWhsxU" />
+  <meta name="google-site-verification" content="g2pFZlv-92XQD67BPgiVHsvZ4TZH13Ucvmmvvv36kU4" />
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>How uv Works: The Rust Architecture Behind Python’s Fastest Package Manager | PyShine</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="How uv Works: The Rust Architecture Behind Python’s Fastest Package Manager" />
+<meta name="author" content="PyShine" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="A source-level tour of uv: the PubGrub resolver, rkyv-backed cache, hardlink installs, and virtualenv engine that make Python packaging fast." />
+<meta property="og:description" content="A source-level tour of uv: the PubGrub resolver, rkyv-backed cache, hardlink installs, and virtualenv engine that make Python packaging fast." />
+<link rel="canonical" href="https://pyshine.com/uv/" />
+<meta property="og:url" content="https://pyshine.com/uv/" />
+<meta property="og:site_name" content="PyShine" />
+<meta property="og:image" content="https://pyshine.com/assets/img/diagrams/uv/astral-uv-overview-architecture.svg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-11-18T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://pyshine.com/assets/img/diagrams/uv/astral-uv-overview-architecture.svg" />
+<meta property="twitter:title" content="How uv Works: The Rust Architecture Behind Python’s Fastest Package Manager" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"PyShine"},"dateModified":"2026-11-18T00:00:00+00:00","datePublished":"2026-11-18T00:00:00+00:00","description":"A source-level tour of uv: the PubGrub resolver, rkyv-backed cache, hardlink installs, and virtualenv engine that make Python packaging fast.","headline":"How uv Works: The Rust Architecture Behind Python’s Fastest Package Manager","image":"https://pyshine.com/assets/img/diagrams/uv/astral-uv-overview-architecture.svg","mainEntityOfPage":{"@type":"WebPage","@id":"https://pyshine.com/uv/"},"name":"{{ page.title escape }}","url":"https://pyshine.com/uv/"}</script>
+<!-- End Jekyll SEO tag -->
+  <!-- This will generate canonical link automatically -->
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="post">
+  <meta property="og:url" content="https://pyshine.com/uv/">
+  <meta property="og:title" content="How uv Works: The Rust Architecture Behind Python&#39;s Fastest Package Manager">
+  <meta property="og:description" content="A source-level tour of uv: the PubGrub resolver, rkyv-backed cache, hardlink installs, and virtualenv engine that make Python packaging fast.">
+  <meta property="og:image" content="https://pyshine.com/assets/img/diagrams/uv/astral-uv-overview-architecture.svg">
+  <meta property="og:site_name" content="PyShine">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://pyshine.com/uv/">
+  <meta name="twitter:title" content="How uv Works: The Rust Architecture Behind Python&#39;s Fastest Package Manager">
+  <meta name="twitter:description" content="A source-level tour of uv: the PubGrub resolver, rkyv-backed cache, hardlink installs, and virtualenv engine that make Python packaging fast.">
+  <meta name="twitter:image" content="https://pyshine.com/assets/img/diagrams/uv/astral-uv-overview-architecture.svg">
+
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="Im0K82YsmEDy08+6wyUIZA" async></script>
+
+  <!-- Favicon & App Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/icons/apple-touch-icon.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png?v=qA3OXqyw77">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png?v=qA3OXqyw77">
+  <link rel="manifest" href="/assets/img/icons/manifest.json?v=qA3OXqyw77">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+
+  <!-- App & Theme Info -->
+  <meta name="apple-mobile-web-app-title" content="Sleek">
+  <meta name="application-name" content="Sleek">
+  <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77">
+  <meta name="theme-color" content="#ffffff">
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-TCVFBKF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-TCVFBKF');
+</script>
+
+  
+
+  <!-- Critical CSS Inline -->
+  <style class="inlineCSS">
+    /* Critical CSS - inlined by Jekyll at build time */
+    :root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --text-color: #343851;
+  --text-secondary: #5a5f7a;
+  --heading-color: #313237;
+  --link-color: #277cea;
+  --link-hover: #68a4f1;
+  --border-color: #dce6f0;
+  --card-bg: #ffffff;
+  --card-border: #ededed;
+  --code-bg: #f6f8fa;
+  --code-text: #25292e;
+  --header-bg: #ffffff;
+  --header-text: #000000;
+  --header-shadow: rgba(0, 0, 0, 0.1);
+  --input-bg: #ffffff;
+  --input-border: #dbdbdb;
+  --input-text: #343851;
+  --button-bg: #222325;
+  --button-text: #ffffff;
+  --success-color: #8fd896;
+  --error-color: #ff6161;
+  --table-header-bg: #f5f5f5;
+  --table-row-hover: #f9f9f9;
+  --blockquote-bg: #f5f5f5;
+  --blockquote-border: #277cea;
+  --pre-bg: #f6f8fa;
+  --hr-color: #dce6f0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --hero-bg: #dde5ea;
+  --hero-overlay: rgba(52, 56, 81, 0.8);
+  /* Syntax highlighting colors - VSCode Light+ theme */
+  --syntax-bg: #ffffff;
+  --syntax-text: #383a42;
+  --syntax-comment: #a0a1a7;
+  --syntax-keyword: #e45649;
+  --syntax-string: #50a14f;
+  --syntax-function: #4078f2;
+  --syntax-number: #986801;
+  --syntax-type: #c18401;
+  --syntax-operator: #0184bc;
+  --syntax-punctuation: #383a42;
+  --syntax-variable: #e06c75;
+  --syntax-constant: #986801;
+  --syntax-class: #c18401;
+  --syntax-regex: #50a14f;
+  --syntax-error: #e45649;
+  --syntax-warning: #c18401;
+  --syntax-diff-add: #50a14f;
+  --syntax-diff-del: #e45649;
+  --syntax-diff-add-bg: #e6ffed;
+  --syntax-diff-del-bg: #ffebe9;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.1);
+  /* Copy button colors - light theme */
+  --copy-btn-bg-start: #4facfe;
+  --copy-btn-bg-end: #00f2fe;
+  --copy-btn-border: #4facfe;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --copy-btn-hover-bg-start: #00f2fe;
+  --copy-btn-hover-bg-end: #4facfe;
+  --copy-btn-hover-border: #00f2fe;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --text-color: #ffffff;
+  --text-secondary: #8b949e;
+  --heading-color: #ffffff;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --border-color: #30363d;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --code-bg: #161b22;
+  --code-text: #ffffff;
+  --header-bg: #0d1117;
+  --header-text: #e6e6e6;
+  --header-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #0d1117;
+  --input-border: #30363d;
+  --input-text: #ffffff;
+  --button-bg: #21262d;
+  --button-text: #ffffff;
+  --success-color: #3fb950;
+  --error-color: #f85149;
+  --table-header-bg: #161b22;
+  --table-row-hover: #21262d;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #58a6ff;
+  --pre-bg: #161b22;
+  --hr-color: #30363d;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hero-bg: #161b22;
+  --hero-overlay: rgba(13, 17, 23, 0.85);
+  /* Syntax highlighting colors - Night Owl theme */
+  --syntax-bg: #011627;
+  --syntax-text: #d6deeb;
+  --syntax-comment: #637777;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-function: #82aaff;
+  --syntax-number: #f78c6c;
+  --syntax-type: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-punctuation: #89ddff;
+  --syntax-variable: #f78c6c;
+  --syntax-constant: #f78c6c;
+  --syntax-class: #ffcb6b;
+  --syntax-regex: #c3e88d;
+  --syntax-error: #c792ea;
+  --syntax-warning: #ffcb6b;
+  --syntax-diff-add: #c3e88d;
+  --syntax-diff-del: #c792ea;
+  --syntax-diff-add-bg: #1e3a1e;
+  --syntax-diff-del-bg: #3a1e1e;
+  --syntax-highlight-line: rgba(255, 255, 0, 0.05);
+  /* Copy button colors - dark theme */
+  --copy-btn-bg-start: #1f6feb;
+  --copy-btn-bg-end: #388bfd;
+  --copy-btn-border: #1f6feb;
+  --copy-btn-text: #ffffff;
+  --copy-btn-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+  --copy-btn-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --copy-btn-hover-bg-start: #388bfd;
+  --copy-btn-hover-bg-end: #1f6feb;
+  --copy-btn-hover-border: #58a6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] body {
+  background-color: #0d1117;
+  color: #ffffff;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] a {
+  color: #58a6ff;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .post-content p,
+[data-theme="dark"] .post-content li,
+[data-theme="dark"] .post-content td,
+[data-theme="dark"] .post-content th,
+[data-theme="dark"] .post-content figure {
+  color: #ffffff !important;
+}
+
+/* Dark theme table styles */
+[data-theme="dark"] .post-content table {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table thead,
+[data-theme="dark"] .post-content table th {
+  background-color: #21262d;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table td {
+  background-color: #0d1117;
+  color: #ffffff;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .post-content table tr:hover td {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .post-content code:not(.highlight code) {
+  color: #ffffff !important;
+  background-color: #30363d;
+}
+
+/* Ensure syntax tokens inside code blocks have no individual background */
+[data-theme="dark"] .highlight code,
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight span {
+  background-color: transparent;
+}
+
+/* Ensure syntax text color is applied in dark theme */
+[data-theme="dark"] .highlight {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .highlight pre,
+[data-theme="dark"] .highlight code {
+  color: var(--syntax-text);
+}
+
+[data-theme="dark"] .site {
+  background-color: #0d1117;
+}
+
+[data-theme="dark"] .blog {
+  background-color: #161b22;
+}
+
+[data-theme="dark"] .post-card {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .footer {
+  background-color: #161b22;
+  color: #8b949e;
+}
+
+/* Header dark theme */
+[data-theme="dark"] .header {
+  background: #0d1117 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__logo {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__logo:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .header__link,
+[data-theme="dark"] .header__dropdown-toggle {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__toggle span {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .header__links {
+  background: #0d1117;
+}
+
+[data-theme="dark"] .header__dropdown-menu {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .header__dropdown-item {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .header__dropdown-item:hover {
+  background: #21262d;
+}
+
+/* YouTube section dark theme */
+[data-theme="dark"] #youtube-video {
+  background: #161b22 !important;
+}
+
+/* Back to top button dark theme */
+[data-theme="dark"] .back-to-top {
+  background: #21262d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .back-to-top:hover {
+  background: #30363d;
+}
+
+/* Related posts dark theme */
+[data-theme="dark"] .related-posts {
+  border-top-color: #30363d;
+}
+
+[data-theme="dark"] .related-post-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .related-posts__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .related-post-card__excerpt {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .related-post-card__date {
+  color: #8b949e;
+}
+
+/* Link preview dark theme */
+[data-theme="dark"] .link-preview-card {
+  border-color: #30363d;
+  background: #161b22;
+}
+
+[data-theme="dark"] .link-preview-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .link-preview-description {
+  color: #8b949e;
+}
+
+[data-theme="dark"] .link-preview-domain {
+  color: #8b949e;
+}
+
+/* Code header container for copy button positioning */
+.code-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.code-header .copy-btn {
+  position: relative;
+  z-index: 10;
+}
+
+  </style>
+
+  <!-- Main CSS -->
+  <link rel="preload" href="/assets/css/main.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/css/main.css"></noscript>
+
+  <script type="text/javascript">
+    /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+(function(w){"use strict";if(!w.loadCSS){w.loadCSS=function(){}}
+var rp=loadCSS.relpreload={};rp.support=(function(){var ret;try{ret=w.document.createElement("link").relList.supports("preload")}catch(e){ret=!1}
+return function(){return ret}})();rp.bindMediaToggle=function(link){var finalMedia=link.media||"all";function enableStylesheet(){link.media=finalMedia}
+if(link.addEventListener){link.addEventListener("load",enableStylesheet)}else if(link.attachEvent){link.attachEvent("onload",enableStylesheet)}
+setTimeout(function(){link.rel="stylesheet";link.media="only x"});setTimeout(enableStylesheet,3000)};rp.poly=function(){if(rp.support()){return}
+var links=w.document.getElementsByTagName("link");for(var i=0;i<links.length;i++){var link=links[i];if(link.rel==="preload"&&link.getAttribute("as")==="style"&&!link.getAttribute("data-loadcss")){link.setAttribute("data-loadcss",!0);rp.bindMediaToggle(link)}}};if(!rp.support()){rp.poly();var run=w.setInterval(rp.poly,500);if(w.addEventListener){w.addEventListener("load",function(){rp.poly();w.clearInterval(run)})}else if(w.attachEvent){w.attachEvent("onload",function(){rp.poly();w.clearInterval(run)})}}
+if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}
+else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this))
+
+  </script>
+
+  
+</head>
+
+
+  <!-- Zoomable SVG Viewer CSS -->
+  <link rel="stylesheet" href="/assets/css/svg-viewer.css">
+
+  <body class="site" itemscope itemtype="https://schema.org/WebPage">
+
+    
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCVFBKF"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager -->
+    
+
+    <header class="header"
+  itemscope
+  itemtype="http://schema.org/SiteNavigationElement"
+  aria-label="Main navigation">
+
+  <div class="container">
+    <div class="header__inner">
+
+      <!-- Logo -->
+      <a class="header__logo" href="/">
+        <div class="header__logo--container">
+          <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24" enable-background="new 0 0 24 24" xml:space="preserve">
+<g>
+	<path d="M18.121,9.88l-7.832-7.836c-0.155-0.158-0.428-0.155-0.584,0L1.842,9.913c-0.262,0.263-0.073,0.705,0.292,0.705h2.069v7.042c0,0.227,0.187,0.414,0.414,0.414h3.725c0.228,0,0.414-0.188,0.414-0.414v-3.313h2.483v3.313c0,0.227,0.187,0.414,0.413,0.414h3.726c0.229,0,0.414-0.188,0.414-0.414v-7.042h2.068h0.004C18.331,10.617,18.389,10.146,18.121,9.88 M14.963,17.245h-2.896v-3.313c0-0.229-0.186-0.415-0.414-0.415H8.342c-0.228,0-0.414,0.187-0.414,0.415v3.313H5.032v-6.628h9.931V17.245z M3.133,9.79l6.864-6.868l6.867,6.868H3.133z"></path>
+
+	
+	
+</g>
+</svg>
+
+        </div>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="header__links">
+        <div class="header__links-wrapper">
+
+          
+            
+              <a class="header__link" href="/">
+                Home
+              </a>
+            
+          
+            
+              <a class="header__link" href="/categories">
+                Posts
+              </a>
+            
+          
+            
+              <a class="header__link" href="/all-posts/">
+                All Posts
+              </a>
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Tutorials
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/tutorials/">
+                    🔍 View All Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Python-in-One-Post-Complete-Tutorial-Async-Type-Hints-Quick-Start/">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Go-in-One-Post-Complete-Tutorial-Goroutines-Channels-Generics-Quick-Start/">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Rust-in-One-Post-Complete-Tutorial-Ownership-Borrow-Async-Quick-Start/">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-JavaScript-TypeScript-in-One-Post-Complete-Tutorial-Async-Types-Quick-Start/">
+                    JavaScript / TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Java-in-One-Post-Complete-Tutorial-OOP-Streams-Virtual-Threads-JVM-Quick-Start/">
+                    Java
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-CPP-in-One-Post-Complete-Tutorial-Modern-Cpp-Quick-Start/">
+                    C++
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-SQL-in-One-Post-Complete-Tutorial-Joins-Window-Functions-Transactions-Quick-Start/">
+                    SQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Docker-in-One-Post-Complete-Tutorial-Dockerfile-Volumes-Compose-Quick-Start/">
+                    Docker
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Kubernetes-in-One-Post-Complete-Tutorial-Pods-Deployments-Services-Production-Quick-Start/">
+                    Kubernetes
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Git-in-One-Post-Complete-Tutorial-Branches-Rebase-Workflows-Quick-Start/">
+                    Git
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Linux-CLI-in-One-Post-Complete-Tutorial-Files-Processes-Permissions-Quick-Start/">
+                    Linux CLI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-REST-API-in-One-Post-Complete-Tutorial-Methods-Status-Codes-Production-Quick-Start/">
+                    REST API
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-GraphQL-in-One-Post-Complete-Tutorial-Schema-Queries-Mutations-Resolvers-Apollo-Quick-Start/">
+                    GraphQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-React-Next-js-in-One-Post-Complete-Tutorial-Components-Hooks-Server-Components-Quick-Start/">
+                    React / Next.js
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-FastAPI-in-One-Post-Complete-Tutorial-Pydantic-Async-Dependency-Injection-Quick-Start/">
+                    FastAPI
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Machine-Learning-in-One-Post-Complete-Tutorial-Supervised-Unsupervised-Deep-Learning-Quick-Start/">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Deep-Learning-in-One-Post-Complete-Tutorial-Neural-Networks-CNN-Transformers-PyTorch-Quick-Start/">
+                    Deep Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-System-Design-in-One-Post-Complete-Tutorial-Scaling-CAP-Tradeoffs-Interview-Quick-Start/">
+                    System Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Bash-in-One-Post-Complete-Tutorial-Pipelines-Functions-Scripts-Quick-Start/">
+                    Bash
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Regex-in-One-Post-Complete-Tutorial-Anchors-Quantifiers-Lookarounds-Quick-Start/">
+                    Regex
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Terraform-in-One-Post-Complete-Tutorial-HCL-State-Modules-Providers-Quick-Start/">
+                    Terraform
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-Redis-in-One-Post-Complete-Tutorial-Data-Structures-Caching-Persistence-Quick-Start/">
+                    Redis
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-PostgreSQL-in-One-Post-Complete-Tutorial-Indexes-MVCC-Performance-Quick-Start/">
+                    PostgreSQL
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-gRPC-Protobuf-in-One-Post-Complete-Tutorial-Proto-Streaming-Interceptors-Quick-Start/">
+                    gRPC / Protobuf
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Learn-WebSocket-in-One-Post-Complete-Tutorial-Handshake-Frames-Scaling-Quick-Start/">
+                    WebSocket
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Categories
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/">
+                    All Categories
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-developertools">
+                    Developer Tools
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-opensource">
+                    Open Source
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aiagents">
+                    AI Agents
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-python">
+                    Python
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-machinelearning">
+                    Machine Learning
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-typescript">
+                    TypeScript
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-tutorial">
+                    Tutorials
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-rust">
+                    Rust
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-aidesign">
+                    AI Design
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-security">
+                    Security
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-devops">
+                    DevOps
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-go">
+                    Go
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/categories/#cat-webdevelopment">
+                    Web Development
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Applications
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/m3u8-player.html">
+                    Online M3U8 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/dash-player.html">
+                    Online DASH (MPD) Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/mp4-player.html">
+                    Online MP4 Player
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/solar-map/">
+                    Solar Helper
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/Clipboard-App-for-Two-PCs/">
+                    Clipboard App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo_correction">
+                    Online Photo Correction
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/photo">
+                    Online Passport Photo 20KB
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/finger.html">
+                    Online Fingers Scanner
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/avatars">
+                    Online Make Avatars
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/kanban/debounce.html">
+                    Online Reminder App
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/converter.html">
+                    Online Image Resize
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/translator.html">
+                    Online Live Translator
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-sv.html">
+                    Procreate Swatch Viewer
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/procreate-bv.html">
+                    Procreate Brush Viewer
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+
+            <!-- Applications Dropdown -->
+            <div class="header__dropdown">
+              <span class="header__link header__dropdown-toggle">
+                Games
+                <span class="dropdown-arrow">▾</span>
+              </span>
+
+              <div class="header__dropdown-menu">
+                
+                  <a class="header__dropdown-item"
+                     href="/games/snake/">
+                    Snake Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/flappy-bird/">
+                    Flappy Bird
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/tetris/">
+                    Tetris
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/memory-match/">
+                    Memory Match
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/pong/">
+                    Pong
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/2048/">
+                    2048
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/battleship/">
+                    Battleship
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/go/">
+                    GO Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/chess/">
+                    Chess Game
+                  </a>
+                
+                  <a class="header__dropdown-item"
+                     href="/games/copter/">
+                    Copter Game
+                  </a>
+                
+              </div>
+            </div>
+
+            
+          
+            
+              <a class="header__link" href="/about">
+                About
+              </a>
+            
+          
+            
+              <a class="header__link" href="/contact">
+                Contact
+              </a>
+            
+          
+            
+              <a class="header__link" href="/privacy">
+                Privacy Policy
+              </a>
+            
+          
+            
+              <a class="header__link" href="/disclaimer">
+                Disclaimer
+              </a>
+            
+          
+
+        </div>
+      </nav>
+
+      <!-- Language Switcher -->
+      
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <div class="header__toggle">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </div>
+
+<style>
+/* ==================================================
+   🔒 HEADER — ALWAYS VISIBLE, FULL WIDTH COLOR
+================================================== */
+.header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 10000;
+  background: var(--header-bg, #ffffff) !important;
+  box-shadow: 0 1px 3px var(--header-shadow, rgba(0, 0, 0, 0.1));
+  transform: none !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header__inner{
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body{
+  padding-top: 56px;
+}
+
+/* ===============================
+   NAV BASE
+=============================== */
+.header__links-wrapper{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  flex-wrap:nowrap;
+}
+
+.header__link,
+.header__dropdown-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  color: var(--header-text);
+  white-space:nowrap;
+  padding:3px 6px;
+}
+
+/* ===============================
+   DROPDOWN
+=============================== */
+.header__dropdown{
+  position:relative;
+}
+
+.dropdown-arrow{
+  font-size:1em;
+  transition:transform .2s ease;
+}
+
+.header__dropdown:hover .dropdown-arrow{
+  transform:rotate(180deg);
+}
+
+.header__dropdown-menu{
+  position:absolute;
+  top:100%;
+  left:0;
+  min-width:200px;
+  background:var(--card-bg, #ffffff);
+  border:1px solid var(--border-color, #dce6f0);
+  border-radius:8px;
+  padding:4px 0;
+  display:none;
+  z-index:9999;
+  box-shadow:0 4px 12px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.header__dropdown:hover .header__dropdown-menu{
+  display:block;
+}
+
+.header__dropdown-item{
+  display:block;
+  padding:8px 14px;
+  color:var(--text-color, #343851);
+  text-decoration:none;
+  font-size:13px;
+  transition:background-color 0.2s ease;
+}
+
+.header__dropdown-item:hover{
+  background:var(--bg-secondary, #f9f9f9);
+}
+
+/* ===============================
+   MOBILE
+=============================== */
+@media (max-width:768px){
+
+  body{
+    padding-top: 56px;
+  }
+
+  .header__inner{
+    min-height: 56px;
+  }
+
+  .header__links-wrapper{
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+  }
+
+  .header__dropdown-toggle{
+    justify-content:space-between;
+    padding:12px 14px;
+  }
+
+  .header__dropdown-menu{
+    position:static;
+    display:none;
+    background:var(--card-bg, #ffffff);
+    border:none;
+  }
+
+  .header__dropdown:hover .header__dropdown-menu{
+    display:block;
+  }
+
+  .header__dropdown-item{
+    padding:12px 18px;
+    background:var(--card-bg, #ffffff);
+    border-top:1px solid var(--border-color, #dce6f0);
+    font-size:14px;
+  }
+}
+
+/* ===============================
+   LANGUAGE SWITCHER
+=============================== */
+.header__lang-switcher{
+  display:inline-flex;
+  gap:.4rem;
+  align-items:center;
+  font-size:1.1rem;
+  margin-left:0.5rem;
+}
+.lang-flag.active{ text-decoration:underline }
+.lang-flag.disabled{ opacity:.5; filter:grayscale(100%) }
+
+/* ===============================
+   THEME TOGGLE BUTTON
+=============================== */
+.theme-toggle {
+  background: rgba(79, 172, 254, 0.15);
+  border: 2px solid #4facfe;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  margin-left: 0.5rem;
+  color: #4facfe;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.3);
+  border-color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(79, 172, 254, 0.2);
+  border: 2px solid #6fc3ff;
+  color: #6fc3ff;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(79, 172, 254, 0.35);
+  border-color: #8fd4ff;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+</style>
+
+<script>
+(function() {
+  /* Theme toggle - use addEventListener only, no onclick */
+  var themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+  
+  /* Dropdown functionality for mobile */
+  var dropdowns = document.querySelectorAll('.header__dropdown');
+  
+  dropdowns.forEach(function(dropdown) {
+    var toggle = dropdown.querySelector('.header__dropdown-toggle');
+    var menu = dropdown.querySelector('.header__dropdown-menu');
+    
+    if (toggle && menu) {
+      toggle.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          var isOpen = menu.style.display === 'block';
+          document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+          menu.style.display = isOpen ? 'none' : 'block';
+          var arrow = toggle.querySelector('.dropdown-arrow');
+          if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+      });
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && !e.target.closest('.header__dropdown')) {
+      document.querySelectorAll('.header__dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.querySelectorAll('.dropdown-arrow').forEach(function(a) { a.style.transform = ''; });
+    }
+  });
+})();
+</script>
+</header>
+
+
+    
+      <div class="hero lazyload"
+           data-bg="https://pyshine.com/assets/img/posts/ai-coding-frameworks/ai-coding-frameworks.jpg"
+           role="img"
+           aria-label="How uv Works: The Rust Architecture Behind Python's Fastest Package Manager">
+    
+        <div class="hero__wrap">
+
+          
+            <div class="hero__categories">
+              
+                <a class="label"
+                   href="/categories/#Developer Tools"
+                   aria-label="Category: Developer Tools">
+                   Developer Tools
+                </a>
+                
+              
+            </div>
+          
+
+          <h1 class="hero__title" itemprop="headline">How uv Works: The Rust Architecture Behind Python's Fastest Package Manager</h1>
+
+          <p class="hero__meta">
+            <time datetime="2026-11-18T00:00:00+00:00" itemprop="datePublished">
+              18 Nov 2026
+            </time>
+            &nbsp;·&nbsp;
+            
+            <span itemprop="timeRequired">
+              
+                10 mins read
+              
+            </span>
+          </p>
+        </div>
+      </div>
+
+    <main class="site__content" role="main">
+
+      <div class="container post-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="post-toc" id="post-toc">
+          <h3 class="no-toc">Contents</h3>
+          <nav id="toc-list"></nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <article class="post-content"
+                 itemprop="articleBody"
+                 itemscope itemtype="https://schema.org/Article">
+
+          <p>Every Python developer knows the ritual: create a virtualenv, upgrade pip, run <code class="language-plaintext highlighter-rouge">pip install -r requirements.txt</code>, then stare at the resolver as it backtracks through incompatible version combinations of your transitive dependencies. On projects with deep graphs — a data stack pulling in dozens of packages — resolution alone can stall for minutes, and none of that work is reused between runs. The cache misses, the wheels download again, and the interpreter churns through a parser built for a world where networks were slow.</p>
+
+<p><a href="https://github.com/astral-sh/uv">uv</a> is Astral’s answer to exactly this pain. It replaces the pip workflow — install, compile, sync, lock — with a single Rust binary that treats dependency resolution as a concurrent systems problem rather than a sequential script. Since its release it has spread rapidly through the Python ecosystem, and teams that adopted it mostly stayed: the speed is not a marketing veneer, it is structural, coming from how the resolver, the cache, and the installer are designed at the source level.</p>
+
+<p>This post is a source-level tour of that design. We cloned the repository at commit <code class="language-plaintext highlighter-rouge">7f396534d583</code> on <code class="language-plaintext highlighter-rouge">main</code> and read the real code — every symbol and line number below is checked against the actual tree, not guessed. If you like <a href="/rust/">Rust</a> systems archaeology in the same spirit as <a href="/ripgrep/">ripgrep</a>, this is a good one to follow along in a second terminal window.</p>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/uv/astral-uv-overview-architecture.svg" alt="uv architecture overview: CLI, workspace discovery, PubGrub resolver, registry client, cache, lock, installer" style="min-width:900px;width:100%;max-width:1100px;" loading="lazy" /></div>
+
+<p><em>uv's architecture on main: the CLI drives workspace discovery, a PubGrub resolver fed by an async registry client, and a planner that installs through the shared cache.</em></p>
+
+<p>Reading the overview from left to right:</p>
+
+<ul>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/mod.rs#L314"><code class="language-plaintext highlighter-rouge">Resolver::resolve</code>, L314</a> — the entry point that pairs a metadata-fetching future with the solver and joins them via <code class="language-plaintext highlighter-rouge">tokio::try_join!</code> (L344).</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/mod.rs#L131"><code class="language-plaintext highlighter-rouge">ResolverState</code>, L131</a> — the shared state read by the solver, the fetcher, and the reporter.</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/requests.rs#L22"><code class="language-plaintext highlighter-rouge">MetadataRequests</code>, L22</a> — metadata requests queued through an <code class="language-plaintext highlighter-rouge">mpsc::channel(300)</code> (resolver/mod.rs L321), sized deliberately to accommodate batch prefetching.</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/batch_prefetch.rs#L44"><code class="language-plaintext highlighter-rouge">BatchPrefetcher</code>, L44</a> — predicts which metadata the solver will need next and fetches it in batches before it is asked for.</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/prioritized_distribution.rs#L26"><code class="language-plaintext highlighter-rouge">PrioritizedDist</code>, L26</a> — ranks compatible wheels and source distributions per version, including platform tag priority.</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-cache/src/lib.rs#L162"><code class="language-plaintext highlighter-rouge">Cache</code>, L162</a> — a versioned bucket layout (<code class="language-plaintext highlighter-rouge">CacheBucket</code>, L1042) with pruning that is hardlink-aware (L623).</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/cached_client.rs#L216"><code class="language-plaintext highlighter-rouge">CachedClient</code>, L216</a> — wraps <code class="language-plaintext highlighter-rouge">BaseClient</code> and deserializes cached metadata zero-copy through the rkyv helpers in rkyvutil.rs (L25).</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-lock/src/lock/mod.rs#L313"><code class="language-plaintext highlighter-rouge">Lock</code>, L313</a> — the lockfile writer, with format version 1 (L99) and revision 5 (L133) constants guarding compatibility.</li>
+  <li><a href="https://github.com/astral-sh/uv/blob/main/crates/uv-virtualenv/src/lib.rs#L81"><code class="language-plaintext highlighter-rouge">create_venv</code>, L81</a> — the tail of every install: write <code class="language-plaintext highlighter-rouge">pyvenv.cfg</code>, seed it, and link the environment.</li>
+</ul>
+
+<div style="overflow-x:auto;"><img src="/assets/img/diagrams/uv/astral-uv-architecture.svg" alt="uv detailed architecture: resolver internals, forks, prefetching, HTTP cache layers, installer link modes" style="min-width:900px;width:100%;max-width:1100px;" loading="lazy" /></div>
+
+<p><em>The full resolution path in detail: request channel, prefetcher, fork handling, rkyv-backed cache layers, and the installer's link modes.</em></p>
+
+<h2 id="a-workspace-of-91-crates">A Workspace of 91 Crates</h2>
+
+<p>uv is not one big Rust file; it is a disciplined Cargo workspace. The root Cargo.toml declares <code class="language-plaintext highlighter-rouge">members = ["crates/*"]</code> (L2) — which resolves to 91 crate directories — with <code class="language-plaintext highlighter-rouge">resolver = "2"</code> (L8), <code class="language-plaintext highlighter-rouge">edition = "2024"</code> (L11), and <code class="language-plaintext highlighter-rouge">rust-version = "1.98.0"</code> (L12). Exactly one crate, <code class="language-plaintext highlighter-rouge">uv-trampoline</code>, is excluded because it needs nightly (L6); it builds the tiny Windows launcher executables instead of relying on batch-script entry points.</p>
+
+<p>The layering is strict. The <code class="language-plaintext highlighter-rouge">uv</code> binary crate contains only <code class="language-plaintext highlighter-rouge">pub async fn run</code> (crates/uv/src/lib.rs L134) and an <code class="language-plaintext highlighter-rouge">unsafe fn main</code> (L3077); the actual command tree lives in uv-cli, where <code class="language-plaintext highlighter-rouge">Cli</code> (L84), <code class="language-plaintext highlighter-rouge">Commands</code> (L345), and <code class="language-plaintext highlighter-rouge">PipCommand</code> (L788) are defined with clap. Settings are parsed into typed option structs — <code class="language-plaintext highlighter-rouge">ResolverOptions</code> (crates/uv-settings/src/settings.rs L662) and <code class="language-plaintext highlighter-rouge">InstallerOptions</code> (L561) — rather than passed around as loose config blobs.</p>
+
+<p>The small crates at the bottom of the graph are where performance habits show. uv-performance-memory-allocator switches the global allocator to mimalloc on Windows and jemalloc elsewhere, selected per target architecture (lib.rs L1-L19). uv-small-str defines <code class="language-plaintext highlighter-rouge">SmallString(ArcStr)</code> (L10), a compact string representation for the millions of package names and versions flowing through a solve. uv-fastid generates identifiers as a raw <code class="language-plaintext highlighter-rouge">Id([u8; 16])</code> (L20) instead of heap-allocated UUID strings. None of these are glamorous, but together they cut allocation churn from the hot path.</p>
+
+<h2 id="the-resolver-pubgrub-on-a-dedicated-thread">The Resolver: PubGrub on a Dedicated Thread</h2>
+
+<p>The heart of uv is crates/uv-resolver. The <code class="language-plaintext highlighter-rouge">Resolver</code> generic struct (L124) carries two pluggable pieces — a <code class="language-plaintext highlighter-rouge">ResolverProvider</code> for metadata and an <code class="language-plaintext highlighter-rouge">InstalledPackagesProvider</code> for the current environment — while <code class="language-plaintext highlighter-rouge">ResolverState</code> (L131) holds everything mutable. When <code class="language-plaintext highlighter-rouge">resolve</code> starts, it does something unusual: it spawns the PubGrub solver on a dedicated OS thread explicitly named <code class="language-plaintext highlighter-rouge">uv-resolver</code> (L328-L333) and runs the metadata fetcher as an async task concurrently, joining both with <code class="language-plaintext highlighter-rouge">try_join!</code>. Solving is CPU-bound pointer chasing; fetching is IO-bound. Separating them means neither starves the other.</p>
+
+<p>The solver itself is not a hand-rolled SAT search. uv imports a fork of the PubGrub crate — the workspace pins <code class="language-plaintext highlighter-rouge">pubgrub 0.7.1</code> as the package <code class="language-plaintext highlighter-rouge">astral-pubgrub</code> with an <code class="language-plaintext highlighter-rouge">unstable-state-api</code> feature (Cargo.toml L229) — and adapts it through <code class="language-plaintext highlighter-rouge">UvDependencyProvider</code> (dependency_provider.rs L15). Inside <code class="language-plaintext highlighter-rouge">solve</code> (L353) you can see the machinery: a <code class="language-plaintext highlighter-rouge">FxHashSet</code> of visited packages (L366), <code class="language-plaintext highlighter-rouge">State::init</code> of the PubGrub machine (L369), a <code class="language-plaintext highlighter-rouge">BatchPrefetcher</code> (L370), and a <code class="language-plaintext highlighter-rouge">ForkState</code> whose incompatibility arena is taken out and reused across branches (L378). Forks — uv’s mechanism for branching the solve when a package needs contradictory versions — are tracked in <code class="language-plaintext highlighter-rouge">ForkMap</code> (fork_map.rs L16), a plain <code class="language-plaintext highlighter-rouge">FxHashMap&lt;PackageName, Vec&lt;Entry&lt;T&gt;&gt;&gt;</code> with a unit-typed <code class="language-plaintext highlighter-rouge">ForkSet</code> alias (L12).</p>
+
+<p>Selection policy is separated from the search. <code class="language-plaintext highlighter-rouge">VersionMap</code> (version_map.rs L34) decides which versions are candidates for a package given the Python target; <code class="language-plaintext highlighter-rouge">PrioritizedDist</code> (prioritized_distribution.rs L26) ranks the compatible wheels and sdists within a version, with a wheel-compatibility variant carrying an explicit tag priority (L460-L493); and <code class="language-plaintext highlighter-rouge">AllowedYanks</code> (yanks.rs L14) encodes whether yanked releases may still be selected. This separation is what lets uv implement resolution modes and preferences without tangling them into the solver.</p>
+
+<h2 id="the-cache-hardlink-aware-and-zero-copy">The Cache: Hardlink-Aware and Zero-Copy</h2>
+
+<p>uv’s cache is the reason a second sync feels instantaneous. <code class="language-plaintext highlighter-rouge">Cache</code> (crates/uv-cache/src/lib.rs L162) organizes disk under versioned <code class="language-plaintext highlighter-rouge">CacheBucket</code> directories (L1042) — the doc comments show concrete layouts like <code class="language-plaintext highlighter-rouge">wheel-metadata-v0/pypi/foo/foo-1.0.0-py3-none-any.msgpack</code> — so a cache format change invalidates only one bucket instead of everything. The prune logic is unusually careful: “Remove file objects with no hardlinks outside the files bucket” (L623-L626), counting references with <code class="language-plaintext highlighter-rouge">uv_fs::hardlink_count</code> (L640) before deleting, because installed environments may still point into the cache.</p>
+
+<p>Networking goes through <code class="language-plaintext highlighter-rouge">RegistryClient</code> (crates/uv-client/src/registry_client.rs L275), whose <code class="language-plaintext highlighter-rouge">simple_detail</code> (L403) fetches PyPI Simple API index pages, built on <code class="language-plaintext highlighter-rouge">BaseClient</code> (base_client.rs L766) configured by <code class="language-plaintext highlighter-rouge">BaseClientBuilder</code> (L109) for retries, proxies, and TLS. Cached responses are handled by <code class="language-plaintext highlighter-rouge">CachedClient</code> — literally a one-field tuple struct around <code class="language-plaintext highlighter-rouge">BaseClient</code> (L216) — whose <code class="language-plaintext highlighter-rouge">Cacheable</code> trait supports both serde and rkyv (L30-L38). The rkyv path is the interesting one: rkyvutil.rs defines the <code class="language-plaintext highlighter-rouge">Serializer</code> (L25) and <code class="language-plaintext highlighter-rouge">Deserializer</code> (L36) aliases so cached metadata can be read without deserializing into owned Rust types. On top of that sits a real HTTP caching layer implementing RFC 9111 semantics — revalidation (httpcache/mod.rs L386), <code class="language-plaintext highlighter-rouge">Vary</code> handling (L192) — and when a project lacks PEP 658 metadata files, uv falls back to reading metadata from remote zip central directories (<code class="language-plaintext highlighter-rouge">wheel_metadata_from_remote_zip</code>, remote_metadata.rs L49). Credentials are memoized in <code class="language-plaintext highlighter-rouge">CredentialsCache</code> (crates/uv-auth/src/cache.rs L35).</p>
+
+<h2 id="from-backtracking-to-batch-prefetch-build-facts-in-numbers">From Backtracking to Batch Prefetch: Build Facts in Numbers</h2>
+
+<p>A few concrete engineering facts from the tree, for readers who like numbers:</p>
+
+<ul>
+  <li>The metadata channel between fetcher and solver is <code class="language-plaintext highlighter-rouge">mpsc::channel(300)</code> — the comment (resolver/mod.rs L320) says the size is set large specifically to accommodate batch prefetching. Prefetching exists because PubGrub explores in a breadth-ish order the fetcher cannot predict one request at a time.</li>
+  <li>The lockfile format is version 1 with revision 5 (<code class="language-plaintext highlighter-rouge">const VERSION</code>, L99; <code class="language-plaintext highlighter-rouge">const REVISION</code>, L133 in lock/mod.rs), and the revision history is documented in place (L126-L132): revision 2 added upload times, 3 added per-package <code class="language-plaintext highlighter-rouge">exclude-newer</code>, 5 added default-group metadata. Older files with <code class="language-plaintext highlighter-rouge">revision = 3</code> still read correctly.</li>
+  <li><code class="language-plaintext highlighter-rouge">LinkMode</code> (crates/uv-fs/src/link.rs L26) has exactly four variants — Clone, Copy, Hardlink, Symlink — and the default is Clone on macOS and Linux (APFS, btrfs, xfs, bcachefs support copy-on-write) and Hardlink elsewhere (L15-L17, L39-L51). Installs are therefore usually reflinks or hardlinks into cache-owned files, not byte copies.</li>
+  <li>The install planner, <code class="language-plaintext highlighter-rouge">Planner::build</code> (crates/uv-installer/src/plan.rs L291), partitions work into cached distributions, remote downloads, and reinstalls (see the pushes at L419, L453, L462), and <code class="language-plaintext highlighter-rouge">Installer::install</code> (installer.rs L102) has a synchronous twin <code class="language-plaintext highlighter-rouge">install_blocking</code> (L146).</li>
+  <li>Interpreter discovery — how uv finds the <a href="/cpython/">CPython</a> interpreters it will build environments on, including its own managed downloads — lives in <code class="language-plaintext highlighter-rouge">find_python_installations</code> (crates/uv-python-discovery/src/discovery.rs L922), with the resulting <code class="language-plaintext highlighter-rouge">Interpreter</code> value modeled in uv-python-interpreter (interpreter.rs L51).</li>
+</ul>
+
+<h2 id="installs-linkmode-and-virtualenvs">Installs, LinkMode, and Virtualenvs</h2>
+
+<p>Once the plan exists, the installer walks it. Cached distributions are materialized through <code class="language-plaintext highlighter-rouge">install_wheel</code> (crates/uv-install-wheel/src/install.rs L53), which unpacks wheel payloads into site-packages using uv-fs (declared as a workspace dependency in uv-install-wheel’s Cargo.toml, L24) — that is where <code class="language-plaintext highlighter-rouge">LinkMode</code> actually gets exercised file by file. Environment creation is <code class="language-plaintext highlighter-rouge">create_venv</code> (crates/uv-virtualenv/src/lib.rs L81), which writes <code class="language-plaintext highlighter-rouge">pyvenv.cfg</code>, records a <code class="language-plaintext highlighter-rouge">seed</code> setting (virtualenv.rs L580-L582, with the <code class="language-plaintext highlighter-rouge">Seed</code> enum at L731), and on Windows installs trampoline executables instead of Python-script launchers (L294). Workspaces — uv’s monorepo feature — are discovered by walking upward through <code class="language-plaintext highlighter-rouge">pyproject.toml</code> files, a procedure documented step by step above <code class="language-plaintext highlighter-rouge">Workspace::discover</code> (crates/uv-workspace/src/workspace.rs L447-L463), with a dedicated <code class="language-plaintext highlighter-rouge">WorkspaceCache</code> so repeated discovery does not re-read every member manifest (L152-L160).</p>
+
+<h2 id="honest-limits">Honest Limits</h2>
+
+<p>This is a static source tour, not a benchmark: we verified structures, algorithms, and constants in the tree at commit <code class="language-plaintext highlighter-rouge">7f396534d583</code>, but no end-to-end timings were measured for this post, and uv’s own performance claims live in its benchmarks documents rather than in code. Line numbers will drift as main moves — the resolver file alone is several thousand lines and changes weekly. The diagrams necessarily flatten nuance: <code class="language-plaintext highlighter-rouge">pubgrub/mod.rs</code> is a thin re-export module over Astral’s forked crate, and the fork/arena logic inside resolver/mod.rs spans thousands of lines we compressed into two nodes. Finally, uv is moving fast — the lockfile revision, the resolver’s fork machinery, and the workspace discovery rules have all changed in recent months, so treat this as a snapshot of a healthy, actively evolving codebase, not a frozen specification.</p>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "How uv Works: The Rust Architecture Behind Python's Fastest Package Manager",
+  "description": "A source-level tour of uv: the PubGrub resolver, rkyv-backed cache, hardlink installs, and virtualenv engine that make Python packaging fast.",
+  "datePublished": "2026-11-18",
+  "dateModified": "2026-11-18",
+  "author": { "@type": "Person", "name": "PyShine" },
+  "publisher": { "@type": "Organization", "name": "PyShine" },
+  "keywords": "uv, python package manager, rust, dependency resolver, pubgrub, virtualenv, cache",
+  "mainEntityOfPage": "https://pyshine.com/uv/",
+  "image": "https://pyshine.com/assets/img/diagrams/uv/astral-uv-overview-architecture.svg"
+}
+</script>
+
+
+
+          <!-- Follow.it CTA -->
+          <section class="follow-cta" aria-label="Follow for updates">
+  <div class="follow-cta-content">
+    <img src="/assets/img/formit.png" alt="Follow.it" class="follow-cta-icon">
+    <p class="follow-cta-text">
+      Enjoyed this post? <a href="https://follow.it/pyshine?leanpub" target="_blank" rel="noopener noreferrer">Never miss out on future posts by following us</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .follow-cta {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--bg-color, #f8f9fa);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .follow-cta:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .follow-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .follow-cta-icon {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  
+  .follow-cta-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
+  
+  .follow-cta-text a {
+    color: var(--link-color, #0066cc);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .follow-cta-text a:hover {
+    color: var(--link-hover-color, #004499);
+    text-decoration: none;
+  }
+  
+  @media (max-width: 480px) {
+    .follow-cta {
+      padding: 1.25rem;
+    }
+    
+    .follow-cta-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .follow-cta-icon {
+      width: 100px;
+      height: auto;
+    }
+    
+    .follow-cta-text {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Dark theme support */
+  [data-theme="dark"] .follow-cta,
+  body.dark-theme .follow-cta {
+    background: var(--bg-color, #1e1e1e);
+    border-color: var(--border-color, #333);
+  }
+  
+  [data-theme="dark"] .follow-cta-text,
+  body.dark-theme .follow-cta-text {
+    color: var(--text-color, #e0e0e0);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a,
+  body.dark-theme .follow-cta-text a {
+    color: var(--link-color, #66b3ff);
+  }
+  
+  [data-theme="dark"] .follow-cta-text a:hover,
+  body.dark-theme .follow-cta-text a:hover {
+    color: var(--link-hover-color, #99ccff);
+  }
+</style>
+
+          <!-- Syntax Highlighting -->
+          <link href="/assets/css/syntax.css" rel="stylesheet">
+          <script src="/assets/scripts/copyCode.js" async></script>
+
+          <!-- Ads -->
+          <section aria-label="Advertisements" class="ads mt-4">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+                    crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2976211678184829"
+                 data-ad-slot="7658460605"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </section>
+
+        </article>
+
+      </div>
+
+      <!-- Post Navigation -->
+      <nav class="post-navigation controls__inner mt-5" aria-label="Post navigation">
+        <div class="controls__item prev">
+          
+            <span>Previous</span>
+            <a href="/siyuan/" rel="prev">
+              How SiYuan Works: Inside the Block-Ba...
+            </a>
+          
+        </div>
+
+        <div class="controls__item next">
+          
+        </div>
+      </nav>
+
+      <!-- Related Posts -->
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        <section class="related-posts mt-5" aria-label="Related Posts">
+          <div class="container">
+            <h2 class="related-posts__title">Related Posts</h2>
+            <div class="related-posts__grid">
+              
+                <a class="related-post-card" href="/appflowy/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/appflowy/appflowy-io-appflowy-overview-architecture.svg"
+                           alt="How AppFlowy Works: Inside the Rust and Flutter Notion Alternative"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">How AppFlowy Works: Inside the Rust and Flutter Notion Al...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Your Notion workspace lives on Notion’s servers. Offline mode is limited, sync is a black...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/joplin/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/joplin/laurent22-joplin-overview-architecture.svg"
+                           alt="How Joplin Works: Inside the Open-Source Note App Architecture"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">How Joplin Works: Inside the Open-Source Note App Archite...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        If your notes live in a proprietary cloud app, two things are true at once:...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 17, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/octoprint/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/octoprint/octoprint-octoprint-overview-architecture.svg"
+                           alt="How OctoPrint Works: Inside the 3D Print Server Architecture"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">How OctoPrint Works: Inside the 3D Print Server Architecture</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        A five-hour print job used to mean five hours of pretending to watch a machine:...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 15, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/clamav/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/clamav/cisco-talos-clamav-overview-architecture.svg"
+                           alt="How ClamAV Works: Inside the Open-Source Antivirus Engine"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">How ClamAV Works: Inside the Open-Source Antivirus Engine</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Watch clamd for a minute and you get a puzzle worth solving. The daemon sits...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 14, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/suricata/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/suricata/oisf-suricata-overview-architecture.svg"
+                           alt="How Suricata Works: Inside the IDS Engine That Detects Attacks at Wire Speed"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">How Suricata Works: Inside the IDS Engine That Detects At...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Suricata sits on the tap where your 10 Gbps uplink lands, and it has to...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 14, 2026
+                    </span>
+                  </div>
+                </a>
+              
+                <a class="related-post-card" href="/bevy/">
+                  
+                  
+                  
+                  
+                  
+                    
+                    
+                    <div class="related-post-card__image">
+                      <img src="https://pyshine.com/assets/img/diagrams/bevy/bevyengine-bevy-overview-architecture.svg"
+                           alt="Inside Bevy: How the ECS Scheduler Runs Your Systems in Parallel"
+                           loading="lazy" />
+                    </div>
+                  
+                  <div class="related-post-card__content">
+                    <h3 class="related-post-card__title">Inside Bevy: How the ECS Scheduler Runs Your Systems in P...</h3>
+                    <p class="related-post-card__excerpt">
+                      
+                        Every engine built around a god-object eventually hits the same wall. A GameObject grows a...
+                      
+                    </p>
+                    <span class="related-post-card__date">
+                      Nov 12, 2026
+                    </span>
+                  </div>
+                </a>
+              
+            </div>
+          </div>
+        </section>
+      
+
+    </main>
+
+    <!-- YouTube Video Section -->
+    <section id="youtube-video" style="text-align:center; padding:30px 20px; background:var(--bg-secondary, #f8f8f8);">
+      <div class="container">
+        <div style="margin-top:10px;">
+          <a href="https://www.youtube.com/@pyshine_official/shorts"
+            target="_blank"
+            style="background:#ff0000; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 24 24">
+              <path fill="#FFF" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8z"/>
+              <path fill="#FF0000" d="M9.75 15.02v-6l6 3z"/>
+            </svg>
+            Watch PyShine on YouTube
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+  <div class="container">
+    <div class="footer__links" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+      <a href="/" style="color: #00A8E8; text-decoration: none;">Home</a>
+      <a href="/about/" style="color: #00A8E8; text-decoration: none;">About</a>
+      <a href="/contact/" style="color: #00A8E8; text-decoration: none;">Contact</a>
+      <a href="/games/" style="color: #00A8E8; text-decoration: none;">Games</a>
+      <a href="/solar-map/" style="color: #00A8E8; text-decoration: none;">Solar Map</a>
+      <a href="/Clipboard-App-for-Two-PCs/" style="color: #00A8E8; text-decoration: none;">Clipboard App</a>
+      <a href="/privacy/" style="color: #00A8E8; text-decoration: none;">Privacy</a>
+      <a href="/disclaimer/" style="color: #00A8E8; text-decoration: none;">Disclaimer</a>
+    </div>
+    <nav class="social">
+      
+        <a class="social__link" target="_blank" rel="noopener noreferrer" href="https://github.com/pyshine-labs">
+          <svg class="social__icon" viewBox="0 0 20 20" width="20px" height="20px"><path d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+        </a>
+      
+      
+      
+    </nav>
+    <span>&copy; 2026 PyShine. All rights reserved.</span>
+  </div>
+</footer>
+<script async src="/assets/js/bundle.js"></script>
+
+<script async>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function( registration ) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  }
+</script>
+
+
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Button -->
+    <button id="mobile-toc-btn" class="mobile-toc-btn" aria-label="Table of Contents">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Mobile TOC Modal -->
+    <div id="mobile-toc-modal" class="mobile-toc-modal">
+      <div class="mobile-toc-content">
+        <div class="mobile-toc-header">
+          <h3>Contents</h3>
+          <button class="mobile-toc-close" aria-label="Close">&times;</button>
+        </div>
+        <ul id="mobile-toc-list" class="mobile-toc-list"></ul>
+      </div>
+    </div>
+
+    <!-- MathJax -->
+    
+
+
+    <!-- Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2976211678184829"
+            crossorigin="anonymous"></script>
+
+    <!-- SIDEBAR TOC SCRIPT -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toc = document.getElementById("toc-list");
+      const mobileTocList = document.getElementById("mobile-toc-list");
+      const headings = document.querySelectorAll(
+        ".post-content h2:not(.no-toc), .post-content h3:not(.no-toc)"
+      );
+      if ((!toc && !mobileTocList) || headings.length === 0) return;
+
+      const ul = document.createElement("ul");
+      const mobileUl = document.createElement("ul");
+      mobileUl.className = "mobile-toc-list";
+
+      headings.forEach(h => {
+        const id = h.id || h.textContent.trim().toLowerCase().replace(/\s+/g, "-");
+        h.id = id;
+
+        const li = document.createElement("li");
+        const mobileLi = document.createElement("li");
+        
+        if (h.tagName === "H3") {
+          li.style.marginLeft = "1rem";
+          mobileLi.setAttribute("data-level", "3");
+        }
+
+        li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        mobileLi.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+        
+        ul.appendChild(li);
+        mobileUl.appendChild(mobileLi);
+      });
+      
+      if (toc) toc.appendChild(ul);
+      if (mobileTocList) mobileTocList.appendChild(mobileUl);
+
+      /* Scroll-spy: highlight active TOC link as user scrolls */
+      const tocLinks = toc ? toc.querySelectorAll("a") : [];
+      const mobileTocLinks = mobileTocList ? mobileTocList.querySelectorAll("a") : [];
+      /* The scrollable container is the aside (#post-toc), not the nav (#toc-list) */
+      const tocScrollContainer = document.getElementById("post-toc");
+
+      function setActiveLink(headingEl) {
+        const id = headingEl.id;
+        let activeDesktopLink = null;
+        tocLinks.forEach(function(link) {
+          const isActive = link.getAttribute("href") === "#" + id;
+          link.classList.toggle("active", isActive);
+          if (isActive) activeDesktopLink = link;
+        });
+        mobileTocLinks.forEach(function(link) {
+          link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+        });
+        /* Auto-scroll the TOC sidebar to keep the active link visible */
+        if (activeDesktopLink && tocScrollContainer) {
+          const linkRect = activeDesktopLink.getBoundingClientRect();
+          const containerRect = tocScrollContainer.getBoundingClientRect();
+          const margin = 40;
+          if (linkRect.top < containerRect.top + margin) {
+            /* Active link is above the visible area — scroll container up */
+            tocScrollContainer.scrollTop -= (containerRect.top + margin - linkRect.top);
+          } else if (linkRect.bottom > containerRect.bottom - margin) {
+            /* Active link is below the visible area — scroll container down */
+            tocScrollContainer.scrollTop += (linkRect.bottom - (containerRect.bottom - margin));
+          }
+        }
+      }
+
+      if (tocLinks.length > 0 && "IntersectionObserver" in window) {
+        const observerOptions = {
+          rootMargin: "-100px 0px -70% 0px",
+          threshold: 0
+        };
+        const headingObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              setActiveLink(entry.target);
+            }
+          });
+        }, observerOptions);
+        headings.forEach(function(h) {
+          headingObserver.observe(h);
+        });
+      }
+
+      /* Mobile TOC Modal */
+      const mobileTocBtn = document.getElementById("mobile-toc-btn");
+      const mobileTocModal = document.getElementById("mobile-toc-modal");
+      const mobileTocClose = mobileTocModal ? mobileTocModal.querySelector(".mobile-toc-close") : null;
+
+      if (mobileTocBtn && mobileTocModal) {
+        mobileTocBtn.addEventListener("click", function() {
+          mobileTocModal.classList.add("active");
+        });
+
+        if (mobileTocClose) {
+          mobileTocClose.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        }
+
+        mobileTocModal.addEventListener("click", function(e) {
+          if (e.target === mobileTocModal) {
+            mobileTocModal.classList.remove("active");
+          }
+        });
+
+        mobileUl.querySelectorAll("a").forEach(function(link) {
+          link.addEventListener("click", function() {
+            mobileTocModal.classList.remove("active");
+          });
+        });
+      }
+    });
+    </script>
+
+    <!-- Back to Top Button Script -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const backToTopButton = document.getElementById("back-to-top");
+      if (!backToTopButton) return;
+
+      /* Show button when scrolled down 300px */
+      window.addEventListener("scroll", function() {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("visible");
+        } else {
+          backToTopButton.classList.remove("visible");
+        }
+      });
+
+      /* Smooth scroll to top when clicked */
+      backToTopButton.addEventListener("click", function() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+    </script>
+
+    <style>
+      /* Center post navigation */
+      .post-navigation.controls__inner {
+        justify-content: center !important;
+        gap: 4rem;
+      }
+      /* Related Posts Styles */
+      .related-posts {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+      }
+      .related-posts .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      .related-posts__title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--heading-color, #000000);
+        text-align: center;
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .related-post-card {
+        display: block;
+        text-decoration: none;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .related-post-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-4px);
+      }
+      .related-post-card__image {
+        width: 100%;
+        height: 100px;
+        background: var(--bg-secondary, #f5f5f5);
+      }
+      .related-post-card__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .related-post-card__content {
+        padding: 0.75rem;
+      }
+      .related-post-card__title {
+        font-size: 0.95rem;
+        margin: 0 0 0.4rem 0;
+        color: var(--heading-color, #000000);
+        line-height: 1.3;
+        font-weight: 600;
+      }
+      .related-post-card__excerpt {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+      }
+      .related-post-card__date {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #999);
+      }
+      @media (max-width: 992px) {
+        .related-posts__grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .related-posts__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Back to Top Button Styles */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg, #000000);
+        color: var(--button-text, #ffffff);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 9999;
+      }
+      .back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .back-to-top:hover {
+        background: var(--text-color, #333333);
+        box-shadow: 0 6px 16px var(--shadow-color, rgba(0, 0, 0, 0.4));
+        transform: translateY(-2px);
+      }
+      .back-to-top:active {
+        transform: translateY(0);
+      }
+      @media (max-width: 768px) {
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
+      }
+      /* Link Preview Styles */
+      .link-preview-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, #ffffff);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .link-preview-card:hover {
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
+      }
+      .link-preview-link {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        text-decoration: none;
+        width: 100%;
+      }
+      .link-preview-image {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bg-secondary, #f5f5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .link-preview-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .link-preview-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--heading-color, #000000);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666666);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .link-preview-domain {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #999999);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .link-preview-domain::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--border-color, #e0e0e0);
+        border-radius: 50%;
+      }
+      @media (max-width: 600px) {
+        .link-preview-card {
+          flex-direction: column;
+        }
+        .link-preview-image {
+          width: 100%;
+          height: 180px;
+        }
+      }
+    </style>
+
+    <!-- Zoomable SVG Viewer JS -->
+    <script src="/assets/js/svg-viewer.js" defer></script>
+  </body>
+</html>
+
+

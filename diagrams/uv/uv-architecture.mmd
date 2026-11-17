@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_cli["CLI &amp; Dispatch"]
+  node_uv_run{{"uv run&#40;&#41;<br/>[lib.rs]"}}
+  node_uv_cli["Cli &amp; Commands<br/>[lib.rs]"]
+  node_build_dispatch["BuildDispatch<br/>[lib.rs]"]
+  node_shared_state["SharedState<br/>[lib.rs]"]
+end
+
+subgraph group_project["Project Model"]
+  node_workspace["Workspace<br/>[workspace.rs]"]
+  node_requirements_txt["requirements.txt parser<br/>[lib.rs]"]
+  node_dist_types["Dist types<br/>[lib.rs]"]
+end
+
+subgraph group_resolver["PubGrub Resolver"]
+  node_resolver["Resolver<br/>[mod.rs]"]
+  node_pubgrub["PubGrub types<br/>[mod.rs]"]
+  node_pubgrub_priority["PubGrubPriorities<br/>[priority.rs]"]
+  node_fork_map["ForkMap / ForkSet<br/>[fork_map.rs]"]
+  node_batch_prefetch["BatchPrefetcher<br/>[batch_prefetch.rs]"]
+  node_requests["MetadataRequests<br/>[requests.rs]"]
+  node_version_map["VersionMap<br/>[version_map.rs]"]
+  node_prioritized_dist["PrioritizedDist"]
+  node_yanks["AllowedYanks<br/>[yanks.rs]"]
+  node_manifest["Manifest<br/>[manifest.rs]"]
+  node_dependency_provider["UvDependencyProvider"]
+end
+
+subgraph group_network["Registry &amp; HTTP"]
+  node_base_client["BaseClient<br/>[base_client.rs]"]
+  node_registry_client["RegistryClient<br/>[registry_client.rs]"]
+  node_cached_client["CachedClient<br/>[cached_client.rs]"]
+  node_httpcache[("HTTP cache<br/>[mod.rs]")]
+  node_rkyvutil["rkyv helpers<br/>[rkyvutil.rs]"]
+  node_remote_metadata["remote zip metadata<br/>[remote_metadata.rs]"]
+  node_auth["CredentialsCache<br/>[cache.rs]"]
+end
+
+subgraph group_cache["Cache &amp; State"]
+  node_cache[("Cache<br/>[lib.rs]")]
+  node_cache_bucket[("CacheBucket<br/>[lib.rs]")]
+  node_state_store[("StateStore<br/>[lib.rs]")]
+end
+
+subgraph group_lock["Lockfile"]
+  node_lock["Lock<br/>[mod.rs]"]
+end
+
+subgraph group_install["Install &amp; Venv"]
+  node_planner["Planner<br/>[plan.rs]"]
+  node_installer["Installer<br/>[installer.rs]"]
+  node_link_mode["LinkMode<br/>[link.rs]"]
+  node_install_wheel["install_wheel<br/>[install.rs]"]
+  node_create_venv["create_venv<br/>[lib.rs]"]
+end
+
+node_uv_run -->|"parses Cli &amp; Commands"| node_uv_cli
+node_uv_cli -->|"build sdists on demand"| node_build_dispatch
+node_build_dispatch -->|"git resolver + in-memory index"| node_shared_state
+node_uv_run -->|"discover workspace &amp; project"| node_workspace
+node_workspace -->|"workspace member requirements"| node_resolver
+node_uv_run -->|"uv pip reads requirements"| node_requirements_txt
+node_requirements_txt -->|"parsed requirements"| node_resolver
+node_resolver -->|"pin Dist values"| node_dist_types
+node_workspace -->|"roots recorded"| node_lock
+node_uv_run -->|"uv lock / uv sync"| node_lock
+node_resolver -->|"PubGrub state machine"| node_pubgrub
+node_resolver -->|"priorities &amp; tiebreakers"| node_pubgrub_priority
+node_resolver -->|"branch at fork points"| node_fork_map
+node_resolver -->|"prefetch metadata"| node_batch_prefetch
+node_resolver -->|"mpsc&#40;300&#41; metadata channel"| node_requests
+node_resolver -->|"candidate selection"| node_version_map
+node_resolver -->|"rank wheels &amp; sdists"| node_prioritized_dist
+node_resolver -->|"yank policy"| node_yanks
+node_resolver -->|"per-package manifest"| node_manifest
+node_resolver -->|"provider impl"| node_dependency_provider
+node_resolver -->|"resolve sdist builds"| node_build_dispatch
+node_requests -->|"fetch from index"| node_registry_client
+node_registry_client -->|"HTTP core"| node_base_client
+node_registry_client -->|"cache-aware GETs"| node_cached_client
+node_cached_client -->|"wraps BaseClient"| node_base_client
+node_cached_client -->|"RFC 9111 revalidation"| node_httpcache
+node_cached_client -->|"zero-copy rkyv reads"| node_rkyvutil
+node_registry_client -->|"metadata from remote zips"| node_remote_metadata
+node_registry_client -->|"credentials"| node_auth
+node_cached_client -->|"store metadata"| node_cache
+node_registry_client -->|"download wheels &amp; sdists"| node_cache
+node_cache -->|"versioned buckets"| node_cache_bucket
+node_cache -->|"shared state dirs"| node_state_store
+node_resolver -->|"emit uv.lock"| node_lock
+node_lock -->|"pinned resolution"| node_planner
+node_planner -->|"execute plan"| node_installer
+node_planner -->|"reuse cached archives"| node_cache
+node_installer -->|"hardlink / clone / copy"| node_link_mode
+node_installer -->|"unpack wheels"| node_install_wheel
+node_install_wheel -->|"link into site-packages"| node_link_mode
+node_uv_run -->|"uv venv"| node_create_venv
+node_planner -->|"ensure environment"| node_create_venv
+
+click node_uv_run "https://github.com/astral-sh/uv/blob/main/crates/uv/src/lib.rs"
+click node_uv_cli "https://github.com/astral-sh/uv/blob/main/crates/uv-cli/src/lib.rs"
+click node_build_dispatch "https://github.com/astral-sh/uv/blob/main/crates/uv-dispatch/src/lib.rs"
+click node_shared_state "https://github.com/astral-sh/uv/blob/main/crates/uv-dispatch/src/lib.rs"
+click node_workspace "https://github.com/astral-sh/uv/blob/main/crates/uv-workspace/src/workspace.rs"
+click node_requirements_txt "https://github.com/astral-sh/uv/blob/main/crates/uv-requirements-txt/src/lib.rs"
+click node_dist_types "https://github.com/astral-sh/uv/blob/main/crates/uv-distribution-types/src/lib.rs"
+click node_resolver "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/mod.rs"
+click node_pubgrub "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/pubgrub/mod.rs"
+click node_pubgrub_priority "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/pubgrub/priority.rs"
+click node_fork_map "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/fork_map.rs"
+click node_batch_prefetch "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/batch_prefetch.rs"
+click node_requests "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/resolver/requests.rs"
+click node_version_map "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/version_map.rs"
+click node_prioritized_dist "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/prioritized_distribution.rs"
+click node_yanks "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/yanks.rs"
+click node_manifest "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/manifest.rs"
+click node_dependency_provider "https://github.com/astral-sh/uv/blob/main/crates/uv-resolver/src/dependency_provider.rs"
+click node_base_client "https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/base_client.rs"
+click node_registry_client "https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/registry_client.rs"
+click node_cached_client "https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/cached_client.rs"
+click node_httpcache "https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/httpcache/mod.rs"
+click node_rkyvutil "https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/rkyvutil.rs"
+click node_remote_metadata "https://github.com/astral-sh/uv/blob/main/crates/uv-client/src/remote_metadata.rs"
+click node_auth "https://github.com/astral-sh/uv/blob/main/crates/uv-auth/src/cache.rs"
+click node_cache "https://github.com/astral-sh/uv/blob/main/crates/uv-cache/src/lib.rs"
+click node_cache_bucket "https://github.com/astral-sh/uv/blob/main/crates/uv-cache/src/lib.rs"
+click node_state_store "https://github.com/astral-sh/uv/blob/main/crates/uv-state/src/lib.rs"
+click node_lock "https://github.com/astral-sh/uv/blob/main/crates/uv-lock/src/lock/mod.rs"
+click node_planner "https://github.com/astral-sh/uv/blob/main/crates/uv-installer/src/plan.rs"
+click node_installer "https://github.com/astral-sh/uv/blob/main/crates/uv-installer/src/installer.rs"
+click node_link_mode "https://github.com/astral-sh/uv/blob/main/crates/uv-fs/src/link.rs"
+click node_install_wheel "https://github.com/astral-sh/uv/blob/main/crates/uv-install-wheel/src/install.rs"
+click node_create_venv "https://github.com/astral-sh/uv/blob/main/crates/uv-virtualenv/src/lib.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_uv_run,node_uv_cli,node_build_dispatch,node_shared_state,node_planner,node_installer,node_link_mode,node_install_wheel,node_create_venv toneBlue
+class node_workspace,node_requirements_txt,node_dist_types toneAmber
+class node_resolver,node_pubgrub,node_pubgrub_priority,node_fork_map,node_batch_prefetch,node_requests,node_version_map,node_prioritized_dist,node_yanks,node_manifest,node_dependency_provider toneMint
+class node_base_client,node_registry_client,node_cached_client,node_httpcache,node_rkyvutil,node_remote_metadata,node_auth toneRose
+class node_cache,node_cache_bucket,node_state_store toneIndigo
+class node_lock toneTeal
