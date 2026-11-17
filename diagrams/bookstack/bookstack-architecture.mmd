@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_entry["HTTP Entry"]
+  node_web_routes["Web Routes<br/>[web.php]"]
+  node_page_controller["Page Controller<br/>[PageController.php]"]
+  node_export_controller["Page Export Controller"]
+end
+
+subgraph group_models["Entity Models"]
+  node_entity_base["Entity<br/>[Entity.php]"]
+  node_book_model["Book<br/>[Book.php]"]
+  node_chapter_model["Chapter<br/>[Chapter.php]"]
+  node_page_model["Page<br/>[Page.php]"]
+  node_page_revision_model[("PageRevision<br/>[PageRevision.php]")]
+  node_entity_queries["EntityQueries<br/>[EntityQueries.php]"]
+end
+
+subgraph group_repos["Repositories &amp; Tools"]
+  node_page_repo["PageRepo<br/>[PageRepo.php]"]
+  node_base_repo["BaseRepo<br/>[BaseRepo.php]"]
+  node_revision_repo["RevisionRepo<br/>[RevisionRepo.php]"]
+  node_page_content["PageContent<br/>[PageContent.php]"]
+  node_editor_type{{"PageEditorType<br/>[PageEditorType.php]"}}
+  node_markdown_converter["MarkdownToHtml<br/>[MarkdownToHtml.php]"]
+  node_slug_generator["SlugGenerator<br/>[SlugGenerator.php]"]
+end
+
+subgraph group_perms["Permission Engine"]
+  node_permission_applicator["PermissionApplicator"]
+  node_joint_builder["JointPermissionBuilder"]
+  node_perm_evaluator["EntityPermissionEvaluator"]
+  node_entity_permission[("EntityPermission")]
+  node_joint_permission[("JointPermission")]
+end
+
+subgraph group_search["Search Engine"]
+  node_search_index["SearchIndex<br/>[SearchIndex.php]"]
+  node_search_runner["SearchRunner<br/>[SearchRunner.php]"]
+  node_search_options["SearchOptions<br/>[SearchOptions.php]"]
+  node_search_term[("SearchTerm<br/>[SearchTerm.php]")]
+  node_search_terms_table[("search_terms table")]
+end
+
+subgraph group_activity["Revisions &amp; Activity"]
+  node_activity_logger["ActivityLogger<br/>[ActivityLogger.php]"]
+  node_activity_model[("Activity<br/>[Activity.php]")]
+  node_webhook_job["DispatchWebhookJob"]
+end
+
+subgraph group_output["Exports &amp; Theming"]
+  node_theme_events{{"ThemeEvents<br/>[ThemeEvents.php]"}}
+  node_theme_service["ThemeService<br/>[ThemeService.php]"]
+  node_export_formatter["ExportFormatter"]
+  node_pdf_generator["PdfGenerator<br/>[PdfGenerator.php]"]
+end
+
+node_web_routes -->|"dispatch"| node_page_controller
+node_page_controller -->|"create / update flows"| node_page_repo
+node_page_repo -->|"setNewHTML / setNewMarkdown"| node_page_content
+node_page_repo -->|"picks editor"| node_editor_type
+node_page_repo -->|"storeNewForPage"| node_revision_repo
+node_page_repo -->|"shared update"| node_base_repo
+node_page_repo -->|"Activity::add"| node_activity_logger
+node_page_content -->|"html / markdown / text"| node_page_model
+node_page_content -->|"markdown to HTML"| node_markdown_converter
+node_page_content -->|"PAGE_CONTENT_PRE_STORE"| node_theme_events
+node_markdown_converter -->|"COMMONMARK_ENVIRONMENT_CONFIGURE"| node_theme_events
+node_base_repo -->|"refreshSlug"| node_slug_generator
+node_base_repo -->|"rebuildPermissions + indexForSearch"| node_entity_base
+node_entity_base -->|"rebuildForEntity"| node_joint_builder
+node_entity_base -->|"indexEntity"| node_search_index
+node_book_model -.->|"extends"| node_entity_base
+node_chapter_model -.->|"extends"| node_entity_base
+node_page_model -.->|"extends"| node_entity_base
+node_book_model -->|"chapters&#40;&#41;"| node_chapter_model
+node_book_model -->|"pages&#40;&#41;"| node_page_model
+node_chapter_model -->|"pages&#40;&#41;"| node_page_model
+node_page_model -->|"revisions&#40;&#41;"| node_page_revision_model
+node_page_model -->|"scopeVisible"| node_permission_applicator
+node_entity_queries -->|"visibleForList"| node_permission_applicator
+node_joint_builder -->|"writes rows"| node_joint_permission
+node_joint_builder -->|"chunks books / shelves"| node_entity_queries
+node_permission_applicator -->|"hasEntityPermission"| node_perm_evaluator
+node_permission_applicator -->|"restrictEntityQuery"| node_joint_permission
+node_perm_evaluator -->|"reads rules"| node_entity_permission
+node_perm_evaluator -.->|"walks page-chapter-book chain"| node_entity_base
+node_search_index -->|"inserts scored terms"| node_search_term
+node_search_index -.->|"reads name / html / tags"| node_entity_base
+node_search_runner -->|"parses query syntax"| node_search_options
+node_search_runner -->|"joinSub on search_terms"| node_search_term
+node_search_runner -->|"visibleForList"| node_entity_queries
+node_search_runner -.->|"constructor injection"| node_permission_applicator
+node_search_term -.->|"maps to"| node_search_terms_table
+node_activity_logger -->|"forceFill + save"| node_activity_model
+node_activity_logger -->|"dispatch&#40;&#41;"| node_webhook_job
+node_activity_logger -->|"ACTIVITY_LOGGED"| node_theme_events
+node_export_controller -->|"render formats"| node_export_formatter
+node_export_formatter -->|"fromHtml"| node_pdf_generator
+node_revision_repo -->|"new PageRevision"| node_page_revision_model
+node_theme_service -->|"listen / dispatch registry"| node_theme_events
+
+click node_web_routes "https://github.com/BookStackApp/BookStack/blob/development/routes/web.php"
+click node_page_controller "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Controllers/PageController.php"
+click node_export_controller "https://github.com/BookStackApp/BookStack/blob/development/app/Exports/Controllers/PageExportController.php"
+click node_entity_base "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Models/Entity.php"
+click node_book_model "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Models/Book.php"
+click node_chapter_model "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Models/Chapter.php"
+click node_page_model "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Models/Page.php"
+click node_page_revision_model "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Models/PageRevision.php"
+click node_entity_queries "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Queries/EntityQueries.php"
+click node_page_repo "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Repos/PageRepo.php"
+click node_base_repo "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Repos/BaseRepo.php"
+click node_revision_repo "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Repos/RevisionRepo.php"
+click node_page_content "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Tools/PageContent.php"
+click node_editor_type "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Tools/PageEditorType.php"
+click node_markdown_converter "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Tools/Markdown/MarkdownToHtml.php"
+click node_slug_generator "https://github.com/BookStackApp/BookStack/blob/development/app/Entities/Tools/SlugGenerator.php"
+click node_permission_applicator "https://github.com/BookStackApp/BookStack/blob/development/app/Permissions/PermissionApplicator.php"
+click node_joint_builder "https://github.com/BookStackApp/BookStack/blob/development/app/Permissions/JointPermissionBuilder.php"
+click node_perm_evaluator "https://github.com/BookStackApp/BookStack/blob/development/app/Permissions/EntityPermissionEvaluator.php"
+click node_entity_permission "https://github.com/BookStackApp/BookStack/blob/development/app/Permissions/Models/EntityPermission.php"
+click node_joint_permission "https://github.com/BookStackApp/BookStack/blob/development/app/Permissions/Models/JointPermission.php"
+click node_search_index "https://github.com/BookStackApp/BookStack/blob/development/app/Search/SearchIndex.php"
+click node_search_runner "https://github.com/BookStackApp/BookStack/blob/development/app/Search/SearchRunner.php"
+click node_search_options "https://github.com/BookStackApp/BookStack/blob/development/app/Search/SearchOptions.php"
+click node_search_term "https://github.com/BookStackApp/BookStack/blob/development/app/Search/SearchTerm.php"
+click node_search_terms_table "https://github.com/BookStackApp/BookStack/blob/development/database/migrations/2017_03_19_091553_create_search_index_table.php"
+click node_activity_logger "https://github.com/BookStackApp/BookStack/blob/development/app/Activity/Tools/ActivityLogger.php"
+click node_activity_model "https://github.com/BookStackApp/BookStack/blob/development/app/Activity/Models/Activity.php"
+click node_webhook_job "https://github.com/BookStackApp/BookStack/blob/development/app/Activity/DispatchWebhookJob.php"
+click node_theme_events "https://github.com/BookStackApp/BookStack/blob/development/app/Theming/ThemeEvents.php"
+click node_theme_service "https://github.com/BookStackApp/BookStack/blob/development/app/Theming/ThemeService.php"
+click node_export_formatter "https://github.com/BookStackApp/BookStack/blob/development/app/Exports/ExportFormatter.php"
+click node_pdf_generator "https://github.com/BookStackApp/BookStack/blob/development/app/Exports/PdfGenerator.php"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_web_routes,node_page_controller,node_export_controller,node_theme_events,node_theme_service,node_export_formatter,node_pdf_generator toneBlue
+class node_entity_base,node_book_model,node_chapter_model,node_page_model,node_page_revision_model,node_entity_queries toneAmber
+class node_page_repo,node_base_repo,node_revision_repo,node_page_content,node_editor_type,node_markdown_converter,node_slug_generator toneMint
+class node_permission_applicator,node_joint_builder,node_perm_evaluator,node_entity_permission,node_joint_permission toneRose
+class node_search_index,node_search_runner,node_search_options,node_search_term,node_search_terms_table toneIndigo
+class node_activity_logger,node_activity_model,node_webhook_job toneTeal
