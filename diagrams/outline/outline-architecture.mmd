@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_client["React Client"]
+  node_multiplayer_editor["MultiplayerEditor"]
+  node_collab_provider["CollaborationProvider"]
+  node_multiplayer_ext["Multiplayer extension<br/>[Multiplayer.ts]"]
+end
+
+subgraph group_editor["ProseMirror Core &#40;shared/&#41;"]
+  node_shared_editor["ProseMirror editor core"]
+end
+
+subgraph group_realtime["Collaboration Service"]
+  node_hocuspocus_server["Hocuspocus server<br/>[collaboration.ts]"]
+  node_auth_ext["AuthenticationExtension"]
+  node_persistence_ext["PersistenceExtension"]
+  node_api_update_ext["APIUpdateExtension"]
+  node_views_ext["ViewsExtension<br/>[ViewsExtension.ts]"]
+end
+
+subgraph group_api["Koa API Layer"]
+  node_koa_web["Koa web service<br/>[web.ts]"]
+  node_api_router["API router<br/>[index.ts]"]
+  node_documents_route["documents routes<br/>[documents.ts]"]
+  node_searches_route["searches routes<br/>[searches.ts]"]
+  node_revisions_route["revisions routes<br/>[revisions.ts]"]
+  node_document_model["Document model<br/>[Document.ts]"]
+  node_collection_model["Collection model<br/>[Collection.ts]"]
+  node_revision_model["Revision model<br/>[Revision.ts]"]
+  node_event_model["Event model<br/>[Event.ts]"]
+  node_prosemirror_helper["ProsemirrorHelper"]
+end
+
+subgraph group_data["PostgreSQL &amp; Redis"]
+  node_database[("PostgreSQL via Sequelize<br/>[database.ts]")]
+  node_redis_store[("Redis client<br/>[redis.ts]")]
+  node_tsvector_index["tsvector GIN index"]
+end
+
+subgraph group_async["Bull Queues &amp; Processors"]
+  node_bull_queue["createQueue &#40;Bull&#41;<br/>[queue.ts]"]
+  node_event_queues["Queue definitions<br/>[index.ts]"]
+  node_worker["Worker service<br/>[worker.ts]"]
+  node_search_index_processor["SearchIndexProcessor"]
+  node_revisions_processor["RevisionsProcessor"]
+  node_backlinks_processor["BacklinksProcessor"]
+  node_imports_processor["MarkdownImportsProcessor"]
+end
+
+subgraph group_auth["SSO Auth Plugins"]
+  node_auth_routes["auth routes<br/>[index.ts]"]
+  node_oidc_plugin["OIDC plugin<br/>[oidc.ts]"]
+  node_google_plugin["Google plugin<br/>[google.ts]"]
+  node_slack_plugin["Slack plugin<br/>[slack.ts]"]
+end
+
+node_multiplayer_editor -->|"creates provider per document"| node_collab_provider
+node_multiplayer_editor -->|"registers extension"| node_multiplayer_ext
+node_multiplayer_ext -->|"ySyncPlugin over provider doc"| node_collab_provider
+node_multiplayer_ext -->|"plugin on shared schema"| node_shared_editor
+node_collab_provider -->|"WebSocket /collaboration"| node_hocuspocus_server
+node_hocuspocus_server -->|"onAuthenticate"| node_auth_ext
+node_hocuspocus_server -->|"onLoad/onStore"| node_persistence_ext
+node_hocuspocus_server -->|"live API updates"| node_api_update_ext
+node_hocuspocus_server -->|"view tracking"| node_views_ext
+node_hocuspocus_server -->|"Hocuspocus Redis pub/sub"| node_redis_store
+node_persistence_ext -->|"zaddWithSequence editors"| node_redis_store
+node_persistence_ext -->|"toYDoc / toState"| node_prosemirror_helper
+node_persistence_ext -->|"hydrate state column"| node_document_model
+node_koa_web -->|"mounts /api"| node_api_router
+node_koa_web -->|"mounts /auth"| node_auth_routes
+node_api_router -->|"documents.*"| node_documents_route
+node_api_router -->|"searches.*"| node_searches_route
+node_api_router -->|"revisions.*"| node_revisions_route
+node_documents_route -->|"info/search/import/export"| node_document_model
+node_revisions_route -->|"history queries"| node_revision_model
+node_document_model -->|"updateCollectionStructure"| node_collection_model
+node_collection_model -->|"documentStructure JSONB"| node_database
+node_document_model -->|"content + state columns"| node_database
+node_document_model -->|"trigger keeps searchVector"| node_tsvector_index
+node_document_model -->|"insertEvent hooks"| node_event_model
+node_document_model -.->|"notifyCollaborationServer"| node_api_update_ext
+node_event_model -->|"globalEventQueue&#40;&#41;.add"| node_event_queues
+node_event_queues -->|"created via createQueue"| node_bull_queue
+node_bull_queue -->|"Bull job storage"| node_redis_store
+node_worker -->|"consumes four queues"| node_event_queues
+node_worker -->|"dispatch"| node_revisions_processor
+node_worker -->|"dispatch"| node_backlinks_processor
+node_worker -->|"dispatch"| node_search_index_processor
+node_worker -->|"dispatch"| node_imports_processor
+node_revisions_processor -->|"createFromDocument"| node_revision_model
+node_revisions_processor -->|"collaborator zset cleanup"| node_redis_store
+node_backlinks_processor -->|"parseDocumentIds"| node_document_model
+node_search_index_processor -.->|"postgres path is trigger-driven"| node_tsvector_index
+
+click node_multiplayer_editor "https://github.com/outline/outline/blob/main/app/scenes/Document/components/MultiplayerEditor.tsx"
+click node_collab_provider "https://github.com/outline/outline/blob/main/app/utils/multiplayer/CollaborationProvider.ts"
+click node_multiplayer_ext "https://github.com/outline/outline/blob/main/app/editor/extensions/Multiplayer.ts"
+click node_hocuspocus_server "https://github.com/outline/outline/blob/main/server/services/collaboration.ts"
+click node_auth_ext "https://github.com/outline/outline/blob/main/server/collaboration/AuthenticationExtension.ts"
+click node_persistence_ext "https://github.com/outline/outline/blob/main/server/collaboration/PersistenceExtension.ts"
+click node_api_update_ext "https://github.com/outline/outline/blob/main/server/collaboration/APIUpdateExtension.ts"
+click node_views_ext "https://github.com/outline/outline/blob/main/server/collaboration/ViewsExtension.ts"
+click node_koa_web "https://github.com/outline/outline/blob/main/server/services/web.ts"
+click node_api_router "https://github.com/outline/outline/blob/main/server/routes/api/index.ts"
+click node_documents_route "https://github.com/outline/outline/blob/main/server/routes/api/documents/documents.ts"
+click node_searches_route "https://github.com/outline/outline/blob/main/server/routes/api/searches/searches.ts"
+click node_revisions_route "https://github.com/outline/outline/blob/main/server/routes/api/revisions/revisions.ts"
+click node_document_model "https://github.com/outline/outline/blob/main/server/models/Document.ts"
+click node_collection_model "https://github.com/outline/outline/blob/main/server/models/Collection.ts"
+click node_revision_model "https://github.com/outline/outline/blob/main/server/models/Revision.ts"
+click node_event_model "https://github.com/outline/outline/blob/main/server/models/Event.ts"
+click node_prosemirror_helper "https://github.com/outline/outline/blob/main/server/models/helpers/ProsemirrorHelper.tsx"
+click node_database "https://github.com/outline/outline/blob/main/server/storage/database.ts"
+click node_redis_store "https://github.com/outline/outline/blob/main/server/storage/redis.ts"
+click node_tsvector_index "https://github.com/outline/outline/blob/main/server/migrations/20260803143858-add-documents-team-search-vector-index.js"
+click node_bull_queue "https://github.com/outline/outline/blob/main/server/queues/queue.ts"
+click node_event_queues "https://github.com/outline/outline/blob/main/server/queues/index.ts"
+click node_worker "https://github.com/outline/outline/blob/main/server/services/worker.ts"
+click node_search_index_processor "https://github.com/outline/outline/blob/main/server/queues/processors/SearchIndexProcessor.ts"
+click node_revisions_processor "https://github.com/outline/outline/blob/main/server/queues/processors/RevisionsProcessor.ts"
+click node_backlinks_processor "https://github.com/outline/outline/blob/main/server/queues/processors/BacklinksProcessor.ts"
+click node_imports_processor "https://github.com/outline/outline/blob/main/server/queues/processors/MarkdownImportsProcessor.ts"
+click node_auth_routes "https://github.com/outline/outline/blob/main/server/routes/auth/index.ts"
+click node_oidc_plugin "https://github.com/outline/outline/blob/main/plugins/oidc/server/auth/oidc.ts"
+click node_google_plugin "https://github.com/outline/outline/blob/main/plugins/google/server/auth/google.ts"
+click node_slack_plugin "https://github.com/outline/outline/blob/main/plugins/slack/server/auth/slack.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_multiplayer_editor,node_collab_provider,node_multiplayer_ext,node_auth_routes,node_oidc_plugin,node_google_plugin,node_slack_plugin toneBlue
+class node_shared_editor toneAmber
+class node_hocuspocus_server,node_auth_ext,node_persistence_ext,node_api_update_ext,node_views_ext toneMint
+class node_koa_web,node_api_router,node_documents_route,node_searches_route,node_revisions_route,node_document_model,node_collection_model,node_revision_model,node_event_model,node_prosemirror_helper toneRose
+class node_database,node_redis_store,node_tsvector_index toneIndigo
+class node_bull_queue,node_event_queues,node_worker,node_search_index_processor,node_revisions_processor,node_backlinks_processor,node_imports_processor toneTeal

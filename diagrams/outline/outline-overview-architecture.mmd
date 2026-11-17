@@ -1,0 +1,74 @@
+flowchart TD
+
+subgraph group_client["React App &#40;app/&#41;"]
+  node_react_client["React SPA<br/>[index.tsx]"]
+  node_multiplayer_editor["MultiplayerEditor"]
+  node_collab_provider["CollaborationProvider"]
+end
+
+subgraph group_editor["ProseMirror Core &#40;shared/&#41;"]
+  node_shared_editor["ProseMirror editor core"]
+end
+
+subgraph group_realtime["Collaboration Server"]
+  node_hocuspocus_server["Hocuspocus realtime server<br/>[collaboration.ts]"]
+  node_persistence_ext["PersistenceExtension"]
+end
+
+subgraph group_api["Koa API &#40;server/&#41;"]
+  node_koa_api["Koa API router<br/>[index.ts]"]
+  node_document_model["Document model<br/>[Document.ts]"]
+end
+
+subgraph group_data["Data Stores"]
+  node_postgres[("PostgreSQL<br/>[database.ts]")]
+  node_redis[("Redis<br/>[redis.ts]")]
+end
+
+subgraph group_async["Queues &amp; Workers"]
+  node_bull_queues["Bull queues<br/>[index.ts]"]
+  node_worker["Worker service<br/>[worker.ts]"]
+end
+
+node_react_client -->|"renders document scenes"| node_multiplayer_editor
+node_multiplayer_editor -->|"hosts ProseMirror view"| node_shared_editor
+node_multiplayer_editor -->|"one provider per document"| node_collab_provider
+node_collab_provider -->|"WebSocket /collaboration"| node_hocuspocus_server
+node_hocuspocus_server -->|"extension chain"| node_persistence_ext
+node_persistence_ext -->|"Y.Doc state in/out"| node_postgres
+node_persistence_ext -->|"collaborator zsets"| node_redis
+node_hocuspocus_server -->|"multiplayer pub/sub"| node_redis
+node_react_client -->|"REST /api"| node_koa_api
+node_koa_api -->|"documents.* endpoints"| node_document_model
+node_document_model -->|"content JSONB + state BLOB"| node_postgres
+node_document_model -->|"events after commit"| node_bull_queues
+node_document_model -->|"notifyCollaborationServer"| node_hocuspocus_server
+node_bull_queues -->|"jobs"| node_worker
+node_worker -->|"revisions, backlinks, text index"| node_postgres
+node_worker -->|"websocket fan-out"| node_redis
+
+click node_react_client "https://github.com/outline/outline/blob/main/app/editor/index.tsx"
+click node_multiplayer_editor "https://github.com/outline/outline/blob/main/app/scenes/Document/components/MultiplayerEditor.tsx"
+click node_collab_provider "https://github.com/outline/outline/blob/main/app/utils/multiplayer/CollaborationProvider.ts"
+click node_hocuspocus_server "https://github.com/outline/outline/blob/main/server/services/collaboration.ts"
+click node_persistence_ext "https://github.com/outline/outline/blob/main/server/collaboration/PersistenceExtension.ts"
+click node_koa_api "https://github.com/outline/outline/blob/main/server/routes/api/index.ts"
+click node_document_model "https://github.com/outline/outline/blob/main/server/models/Document.ts"
+click node_postgres "https://github.com/outline/outline/blob/main/server/storage/database.ts"
+click node_redis "https://github.com/outline/outline/blob/main/server/storage/redis.ts"
+click node_bull_queues "https://github.com/outline/outline/blob/main/server/queues/index.ts"
+click node_worker "https://github.com/outline/outline/blob/main/server/services/worker.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_react_client,node_multiplayer_editor,node_collab_provider toneBlue
+class node_shared_editor toneAmber
+class node_hocuspocus_server,node_persistence_ext toneMint
+class node_koa_api,node_document_model toneRose
+class node_postgres,node_redis toneIndigo
+class node_bull_queues,node_worker toneTeal
