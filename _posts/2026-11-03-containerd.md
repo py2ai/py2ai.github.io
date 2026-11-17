@@ -81,7 +81,7 @@ sudo ctr images pull docker.io/tritonserver:latest
 sudo ctr run --rm -t docker.io/tritonserver:latest demo
 ```
 
-Watch the pieces from this post fire in sequence: the transfer service resolves the reference, the docker resolver ingests blobs into the content store, the unpacker commits snapshots, and a shim starts under the daemon. `ctr events` will stream the topic notifications as they happen. When you outgrow single-box serving, the same daemon becomes the kubelet's runtime through the CRI plugin, and Kubernetes scheduling decisions start flowing through the shim hop we traced above — our [Kubernetes tour](/kubernetes/) covers that side of the boundary.
+Watch the pieces from this post fire in sequence: the transfer service resolves the reference, the docker resolver ingests blobs into the content store, the unpacker commits snapshots, and a shim starts under the daemon. `ctr events` will stream the topic notifications as they happen. When you outgrow single-box serving, the same daemon becomes the kubelet's runtime through the CRI plugin, and Kubernetes scheduling decisions start flowing through the shim hop we traced above — our [CRI-O tour](/cri-o/) covers the runtime side of that boundary.
 
 ## Honest Limits
 
