@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_resolve["resolving/npm-resolver"]
+  node_resolve_npm{{"resolveNpm<br/>[resolveNpm.ts]"}}
+  node_peek_locked_updating["peekLockedPackageUnlessUpdating<br/>[resolveNpm.ts]"]
+  node_peek_locked["peekLockedPackage<br/>[resolveNpm.ts]"]
+  node_pick_from_meta["pickPackageFromMeta"]
+  node_pick_version_range["pickVersionByVersionRange"]
+  node_non_deprecated_pick["nonDeprecatedPick"]
+  node_no_matching_version["NoMatchingVersionError"]
+end
+
+subgraph group_cafs["store/cafs"]
+  node_create_cafs[("createCafs<br/>[index.ts]")]
+  node_add_buffer["addBufferToCafs<br/>[index.ts]"]
+  node_mode_is_exec["modeIsExecutable"]
+  node_content_path["contentPathFromHex"]
+  node_write_buffer_cafs["writeBufferToCafs"]
+  node_write_file_exclusive["writeFileExclusive<br/>[writeFile.ts]"]
+  node_check_or_repair["checkOrRepairExistingFile"]
+  node_overwrite_in_place["overwriteFileInPlace"]
+end
+
+subgraph group_integrity["cafs verification"]
+  node_check_pkg_integrity["checkPkgFilesIntegrity"]
+  node_verify_file_integrity["verifyFileIntegrity"]
+end
+
+subgraph group_import["fs/indexed-pkg-importer"]
+  node_pkg_importer{{"createIndexedPkgImporter<br/>[index.ts]"}}
+  node_auto_importer["createAutoImporter<br/>[index.ts]"]
+  node_clone_pkg["createClonePkg<br/>[index.ts]"]
+  node_hardlink_pkg["hardlinkPkg<br/>[index.ts]"]
+  node_pkg_linked_store["pkgLinkedToStore<br/>[index.ts]"]
+  node_link_or_copy["linkOrCopy<br/>[index.ts]"]
+  node_import_indexed_dir["importIndexedDir"]
+  node_import_with_staging["importWithStaging"]
+  node_commit_staged_dir["commitStagedDir"]
+  node_try_import_indexed_dir["tryImportIndexedDir"]
+end
+
+subgraph group_link["installing/linking"]
+  node_link_direct_deps{{"linkDirectDeps<br/>[linkDirectDeps.ts]"}}
+  node_link_project_deps["linkDirectDepsOfProject<br/>[linkDirectDeps.ts]"]
+  node_symlink_dependency["symlinkDependency<br/>[index.ts]"]
+end
+
+subgraph group_hoist["installing/linking/hoist"]
+  node_hoist{{"hoist<br/>[index.ts]"}}
+  node_graph_walker["graphWalker<br/>[graphWalker.ts]"]
+  node_hoist_graph["hoistGraph<br/>[index.ts]"]
+  node_select_hoisted_dir["selectHoistedModulesDir"]
+end
+
+node_resolve_npm -->|"try fast path"| node_peek_locked_updating
+node_peek_locked_updating -->|"locked tarball + integrity"| node_peek_locked
+node_peek_locked -->|"manifest read from store"| node_create_cafs
+node_resolve_npm -->|"registry pick"| node_pick_from_meta
+node_pick_from_meta -->|"range / tag"| node_pick_version_range
+node_pick_version_range -->|"skip deprecated"| node_non_deprecated_pick
+node_pick_from_meta -->|"nothing matched"| node_no_matching_version
+node_create_cafs -->|"addFile"| node_add_buffer
+node_add_buffer -->|"mode &amp; 0o111"| node_mode_is_exec
+node_add_buffer -->|"sha512 digest"| node_content_path
+node_create_cafs -->|"bound to storeDir"| node_write_buffer_cafs
+node_content_path -->|"blob destination"| node_write_buffer_cafs
+node_write_buffer_cafs -->|"O_CREAT&#124;O_EXCL"| node_write_file_exclusive
+node_write_buffer_cafs -->|"existing blob"| node_check_or_repair
+node_check_or_repair -->|"heal hard links"| node_overwrite_in_place
+node_write_buffer_cafs -->|"verify after EEXIST"| node_verify_file_integrity
+node_check_pkg_integrity -->|"re-hash files"| node_verify_file_integrity
+node_check_pkg_integrity -->|"locate blob by digest+mode"| node_content_path
+node_pkg_importer -->|"default 'auto'"| node_auto_importer
+node_auto_importer -->|"probe reflink"| node_clone_pkg
+node_auto_importer -->|"probe hardlink"| node_hardlink_pkg
+node_hardlink_pkg -->|"already linked?"| node_pkg_linked_store
+node_hardlink_pkg -->|"link with fallback"| node_link_or_copy
+node_pkg_importer -->|"run import"| node_import_indexed_dir
+node_import_indexed_dir -->|"stage dir"| node_import_with_staging
+node_import_with_staging -->|"atomic rename"| node_commit_staged_dir
+node_import_indexed_dir -->|"write files"| node_try_import_indexed_dir
+node_try_import_indexed_dir -->|"importFile per file"| node_link_or_copy
+node_link_direct_deps -->|"per project"| node_link_project_deps
+node_link_project_deps -->|"node_modules/&lt;alias&gt;"| node_symlink_dependency
+node_link_direct_deps -->|"then hoist"| node_hoist
+node_hoist -->|"walk dep graph"| node_graph_walker
+node_hoist -->|"depth-first hoist"| node_hoist_graph
+node_hoist -->|"choose destination"| node_select_hoisted_dir
+node_hoist_graph -->|"symlink hoisted alias"| node_select_hoisted_dir
+
+click node_resolve_npm "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/resolveNpm.ts"
+click node_peek_locked_updating "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/resolveNpm.ts"
+click node_peek_locked "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/resolveNpm.ts"
+click node_pick_from_meta "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/pickPackageFromMeta.ts"
+click node_pick_version_range "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/pickPackageFromMeta.ts"
+click node_non_deprecated_pick "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/pickPackageFromMeta.ts"
+click node_no_matching_version "https://github.com/pnpm/pnpm/blob/main/pnpm11/resolving/npm-resolver/src/NoMatchingVersionError.ts"
+click node_create_cafs "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/index.ts"
+click node_add_buffer "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/index.ts"
+click node_mode_is_exec "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/getFilePathInCafs.ts"
+click node_content_path "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/getFilePathInCafs.ts"
+click node_write_buffer_cafs "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/writeBufferToCafs.ts"
+click node_write_file_exclusive "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/writeFile.ts"
+click node_check_or_repair "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/writeBufferToCafs.ts"
+click node_overwrite_in_place "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/writeBufferToCafs.ts"
+click node_check_pkg_integrity "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/checkPkgFilesIntegrity.ts"
+click node_verify_file_integrity "https://github.com/pnpm/pnpm/blob/main/pnpm11/store/cafs/src/checkPkgFilesIntegrity.ts"
+click node_pkg_importer "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/index.ts"
+click node_auto_importer "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/index.ts"
+click node_clone_pkg "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/index.ts"
+click node_hardlink_pkg "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/index.ts"
+click node_pkg_linked_store "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/index.ts"
+click node_link_or_copy "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/index.ts"
+click node_import_indexed_dir "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/importIndexedDir.ts"
+click node_import_with_staging "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/importIndexedDir.ts"
+click node_commit_staged_dir "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/importIndexedDir.ts"
+click node_try_import_indexed_dir "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/indexed-pkg-importer/src/importIndexedDir.ts"
+click node_link_direct_deps "https://github.com/pnpm/pnpm/blob/main/pnpm11/installing/linking/direct-dep-linker/src/linkDirectDeps.ts"
+click node_link_project_deps "https://github.com/pnpm/pnpm/blob/main/pnpm11/installing/linking/direct-dep-linker/src/linkDirectDeps.ts"
+click node_symlink_dependency "https://github.com/pnpm/pnpm/blob/main/pnpm11/fs/symlink-dependency/src/index.ts"
+click node_hoist "https://github.com/pnpm/pnpm/blob/main/pnpm11/installing/linking/hoist/src/index.ts"
+click node_graph_walker "https://github.com/pnpm/pnpm/blob/main/pnpm11/installing/linking/hoist/src/graphWalker.ts"
+click node_hoist_graph "https://github.com/pnpm/pnpm/blob/main/pnpm11/installing/linking/hoist/src/index.ts"
+click node_select_hoisted_dir "https://github.com/pnpm/pnpm/blob/main/pnpm11/installing/linking/hoist/src/hoistedModulesDirs.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_resolve_npm,node_peek_locked_updating,node_peek_locked,node_pick_from_meta,node_pick_version_range,node_non_deprecated_pick,node_no_matching_version toneBlue
+class node_create_cafs,node_add_buffer,node_mode_is_exec,node_content_path,node_write_buffer_cafs,node_write_file_exclusive,node_check_or_repair,node_overwrite_in_place toneAmber
+class node_check_pkg_integrity,node_verify_file_integrity toneMint
+class node_pkg_importer,node_auto_importer,node_clone_pkg,node_hardlink_pkg,node_pkg_linked_store,node_link_or_copy,node_import_indexed_dir,node_import_with_staging,node_commit_staged_dir,node_try_import_indexed_dir toneRose
+class node_link_direct_deps,node_link_project_deps,node_symlink_dependency toneIndigo
+class node_hoist,node_graph_walker,node_hoist_graph,node_select_hoisted_dir toneTeal
