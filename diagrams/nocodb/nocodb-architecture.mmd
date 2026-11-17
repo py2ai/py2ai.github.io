@@ -1,0 +1,144 @@
+flowchart TD
+
+subgraph group_bootstrap["Server Bootstrap"]
+  node_main_bootstrap["main.ts bootstrap&#40;&#41;<br/>[main.ts]"]
+  node_noco_init["Noco.init<br/>[Noco.ts]"]
+  node_nest_factory["NestFactory.create&#40;AppModule&#41;<br/>[Noco.ts]"]
+  node_app_module["AppModule<br/>[app.module.ts]"]
+end
+
+subgraph group_rest["REST Controllers"]
+  node_dt_controller["DataTableController"]
+  node_views_controller["ViewsController"]
+  node_grids_controller["GridsController"]
+  node_kanbans_controller["KanbansController"]
+end
+
+subgraph group_services["NestJS Services"]
+  node_dt_service["DataTableService"]
+  node_datas_service["DatasService<br/>[datas.service.ts]"]
+  node_views_service["ViewsService<br/>[views.service.ts]"]
+  node_grids_service["GridsService<br/>[grids.service.ts]"]
+  node_kanbans_service["KanbansService<br/>[kanbans.service.ts]"]
+end
+
+subgraph group_models["Meta Models"]
+  node_model_meta["Model<br/>[Model.ts]"]
+  node_view_meta["View<br/>[View.ts]"]
+  node_grid_view["GridView<br/>[GridView.ts]"]
+  node_kanban_view["KanbanView<br/>[KanbanView.ts]"]
+  node_source_model["Source<br/>[Source.ts]"]
+end
+
+subgraph group_engine["SQL Engine"]
+  node_base_model_sqlv2["BaseModelSqlv2<br/>[BaseModelSqlv2.ts]"]
+  node_query_queue["PQueue &#40;concurrency=1&#41;<br/>[BaseModelSqlv2.ts]"]
+  node_custom_knex["CustomKnex<br/>[CustomKnex.ts]"]
+  node_conn_mgr["NcConnectionMgrv2"]
+end
+
+subgraph group_metastore["nc_ Meta Tables"]
+  node_meta_service["MetaService<br/>[meta.service.ts]"]
+  node_nanoid_gen["genNanoid<br/>[meta.service.ts]"]
+  node_meta_tables["MetaTable enum<br/>[globals.ts]"]
+  node_meta_migration["nc_001_init.ts<br/>[nc_001_init.ts]"]
+end
+
+subgraph group_gui["Vue GUI"]
+  node_gui_page["pages/index.vue<br/>[index.vue]"]
+  node_grid_view_ui["smartsheet/grid/index.vue<br/>[index.vue]"]
+  node_infinite_table["InfiniteTable.vue<br/>[InfiniteTable.vue]"]
+  node_use_view_data["useViewData composable<br/>[useViewData.ts]"]
+  node_kanban_ui["KanbanOptimized.vue"]
+  node_kanban_store["useKanbanViewStore"]
+end
+
+subgraph group_extdb["External Databases"]
+  node_user_db["MySQL / Postgres / SQLite"]
+end
+
+node_main_bootstrap -->|"server.use&#40;await Noco.init&#40;...&#41;&#41;"| node_noco_init
+node_noco_init -->|"NestFactory.create&#40;AppModule&#41;"| node_nest_factory
+node_nest_factory -->|"controllers + providers"| node_app_module
+node_dt_controller -->|"records CRUD -&gt; dataList"| node_dt_service
+node_dt_service -->|"dataList delegation"| node_datas_service
+node_dt_service -->|"getModelAndView"| node_model_meta
+node_views_controller -->|"view CRUD"| node_views_service
+node_grids_controller -->|"grid endpoints"| node_grids_service
+node_kanbans_controller -->|"kanban endpoints"| node_kanbans_service
+node_views_service -->|"View.insert + column sync"| node_view_meta
+node_views_service -->|"seed grid row per view"| node_grid_view
+node_views_service -->|"seed kanban row per view"| node_kanban_view
+node_grids_service -->|"grid meta ops"| node_grid_view
+node_kanbans_service -->|"kanban meta ops"| node_kanban_view
+node_model_meta -->|"ncMeta model/column reads"| node_meta_service
+node_view_meta -->|"ncMeta view reads"| node_meta_service
+node_grid_view -->|"ncMeta insert"| node_meta_service
+node_kanban_view -->|"ncMeta insert"| node_meta_service
+node_meta_service -->|"knexConnection&#40;target&#41;"| node_meta_tables
+node_meta_service -->|"id per new record"| node_nanoid_gen
+node_nanoid_gen -->|"prefix map p/m/c/vw/kv"| node_meta_tables
+node_meta_service -.->|"init&#40;&#41; runs migrate.latest"| node_meta_migration
+node_meta_tables -.->|"created by nc_001_init"| node_meta_migration
+node_model_meta -->|"new BaseModelSqlv2&#40;dbDriver, model&#41;"| node_base_model_sqlv2
+node_source_model -->|"getConnectionConfig per source"| node_conn_mgr
+node_conn_mgr -->|"XKnex&#40;knexConfig&#41;"| node_custom_knex
+node_conn_mgr -->|"LRU pool per source"| node_user_db
+node_base_model_sqlv2 -->|"qb + conditionv2 filters"| node_custom_knex
+node_base_model_sqlv2 -->|"serial relation fetches"| node_query_queue
+node_datas_service -->|"list/insert/update rows"| node_base_model_sqlv2
+node_base_model_sqlv2 -->|"view filters/sorts/hidden columns"| node_view_meta
+node_custom_knex -->|"dialect-aware SQL"| node_user_db
+node_gui_page -->|"open table -&gt; grid surface"| node_grid_view_ui
+node_grid_view_ui -->|"useViewData&#40;meta, view, xWhere&#41;"| node_use_view_data
+node_use_view_data -->|"api.dbViewRow.list"| node_dt_controller
+node_grid_view_ui -->|"loadData&#40;&#123;offset, limit&#125;&#41;"| node_infinite_table
+node_kanban_ui -->|"useKanbanViewStoreOrThrow"| node_kanban_store
+node_kanban_store -->|"api.dbViewRow.groupedDataList"| node_dt_controller
+
+click node_main_bootstrap "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/main.ts"
+click node_noco_init "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/Noco.ts"
+click node_nest_factory "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/Noco.ts"
+click node_app_module "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/app.module.ts"
+click node_dt_controller "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/controllers/data-table.controller.ts"
+click node_views_controller "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/controllers/views.controller.ts"
+click node_grids_controller "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/controllers/grids.controller.ts"
+click node_kanbans_controller "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/controllers/kanbans.controller.ts"
+click node_dt_service "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/services/data-table.service.ts"
+click node_datas_service "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/services/datas.service.ts"
+click node_views_service "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/services/views.service.ts"
+click node_grids_service "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/services/grids.service.ts"
+click node_kanbans_service "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/services/kanbans.service.ts"
+click node_model_meta "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/models/Model.ts"
+click node_view_meta "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/models/View.ts"
+click node_grid_view "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/models/GridView.ts"
+click node_kanban_view "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/models/KanbanView.ts"
+click node_base_model_sqlv2 "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/db/BaseModelSqlv2.ts"
+click node_query_queue "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/db/BaseModelSqlv2.ts"
+click node_custom_knex "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/db/CustomKnex.ts"
+click node_conn_mgr "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/utils/common/NcConnectionMgrv2.ts"
+click node_source_model "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/models/Source.ts"
+click node_meta_service "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/meta/meta.service.ts"
+click node_nanoid_gen "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/meta/meta.service.ts"
+click node_meta_tables "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/utils/globals.ts"
+click node_meta_migration "https://github.com/nocodb/nocodb/blob/develop/packages/nocodb/src/meta/migrations/v0/nc_001_init.ts"
+click node_gui_page "https://github.com/nocodb/nocodb/blob/develop/packages/nc-gui/pages/index.vue"
+click node_grid_view_ui "https://github.com/nocodb/nocodb/blob/develop/packages/nc-gui/components/smartsheet/grid/index.vue"
+click node_infinite_table "https://github.com/nocodb/nocodb/blob/develop/packages/nc-gui/components/smartsheet/grid/InfiniteTable.vue"
+click node_use_view_data "https://github.com/nocodb/nocodb/blob/develop/packages/nc-gui/composables/useViewData.ts"
+click node_kanban_ui "https://github.com/nocodb/nocodb/blob/develop/packages/nc-gui/components/smartsheet/KanbanOptimized.vue"
+click node_kanban_store "https://github.com/nocodb/nocodb/blob/develop/packages/nc-gui/composables/useKanbanViewStore.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_bootstrap,node_noco_init,node_nest_factory,node_app_module,node_gui_page,node_grid_view_ui,node_infinite_table,node_use_view_data,node_kanban_ui,node_kanban_store toneBlue
+class node_dt_controller,node_views_controller,node_grids_controller,node_kanbans_controller,node_user_db toneAmber
+class node_dt_service,node_datas_service,node_views_service,node_grids_service,node_kanbans_service toneMint
+class node_model_meta,node_view_meta,node_grid_view,node_kanban_view,node_source_model toneRose
+class node_base_model_sqlv2,node_query_queue,node_custom_knex,node_conn_mgr toneIndigo
+class node_meta_service,node_nanoid_gen,node_meta_tables,node_meta_migration toneTeal
