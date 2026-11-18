@@ -1,0 +1,138 @@
+flowchart TD
+
+subgraph group_commands["Command Layer"]
+  node_ops_mod{{"ops::* commands<br/>[mod.rs]"}}
+  node_resolve_ws["resolve_ws<br/>[resolve.rs]"]
+  node_fetch["fetch<br/>[cargo_fetch.rs]"]
+  node_update_lockfile["update_lockfile<br/>[cargo_update.rs]"]
+  node_compile["compile / create_bcx<br/>[mod.rs]"]
+  node_publish["publish<br/>[cargo_publish.rs]"]
+  node_lockfile_ops["load/write lockfile<br/>[lockfile.rs]"]
+end
+
+subgraph group_resolution["Backtracking Resolver"]
+  node_resolver["resolve &#40;DFS&#41;<br/>[mod.rs]"]
+  node_resolver_context["ResolverContext<br/>[context.rs]"]
+  node_dep_cache["RegistryQueryer<br/>[dep_cache.rs]"]
+  node_version_prefs["VersionPreferences<br/>[version_prefs.rs]"]
+  node_resolver_types["DepsFrame/ConflictReason<br/>[types.rs]"]
+  node_resolver_errors["ResolveError<br/>[errors.rs]"]
+end
+
+subgraph group_lockfile["Cargo.lock Codec"]
+  node_resolve_struct["Resolve / ResolveVersion<br/>[resolve.rs]"]
+  node_encode["encode/decode<br/>[encode.rs]"]
+end
+
+subgraph group_registry["crates.io Registry"]
+  node_source_trait["Source trait<br/>[source.rs]"]
+  node_registry_mod["RegistrySource<br/>[mod.rs]"]
+  node_http_remote["HttpRegistry<br/>[http_remote.rs]"]
+  node_git_remote["GitRegistry<br/>[git_remote.rs]"]
+  node_local_registry["LocalRegistry<br/>[local.rs]"]
+  node_index_mod["RegistryIndex<br/>[mod.rs]"]
+  node_index_cache[("CacheManager<br/>[cache.rs]")]
+  node_download["download/finish_download<br/>[download.rs]"]
+end
+
+subgraph group_alt_sources["Git / Path / Overrides"]
+  node_git_oxide["gitoxide fetch<br/>[oxide.rs]"]
+  node_path_source["PathSource<br/>[path.rs]"]
+  node_replaced["ReplacedSource<br/>[replaced.rs]"]
+  node_directory_source["DirectorySource<br/>[directory.rs]"]
+end
+
+subgraph group_cache["Cache &amp; Storage"]
+  node_cache_lock[("CacheLocker<br/>[cache_lock.rs]")]
+  node_flock[("FileLock<br/>[flock.rs]")]
+  node_sqlite[("sqlite helpers<br/>[sqlite.rs]")]
+end
+
+subgraph group_primitives["Utility Primitives"]
+  node_hasher["StableHasher<br/>[hasher.rs]"]
+end
+
+node_ops_mod -->|"dispatch"| node_resolve_ws
+node_ops_mod -->|"cargo fetch"| node_fetch
+node_ops_mod -->|"cargo update"| node_update_lockfile
+node_ops_mod -->|"cargo build/test"| node_compile
+node_ops_mod -->|"cargo publish"| node_publish
+node_ops_mod -->|"generate-lockfile"| node_lockfile_ops
+node_compile -->|"needs Resolve"| node_resolve_ws
+node_fetch -->|"reads Resolve"| node_resolve_ws
+node_update_lockfile -->|"rewrite pins"| node_lockfile_ops
+node_resolve_ws -->|"run resolution"| node_resolver
+node_resolve_ws -->|"load previous lock"| node_lockfile_ops
+node_lockfile_ops -->|"deserialize"| node_resolve_struct
+node_lockfile_ops -->|"serialize"| node_encode
+node_encode -->|"ResolveVersion"| node_resolve_struct
+node_resolver -->|"activations"| node_resolver_context
+node_resolver -->|"candidate queries"| node_dep_cache
+node_resolver -->|"ordering"| node_version_prefs
+node_resolver -->|"frames/conflicts"| node_resolver_types
+node_resolver -->|"backtrack signals"| node_resolver_errors
+node_dep_cache -->|"Registry trait"| node_source_trait
+node_source_trait -->|"implements"| node_registry_mod
+node_source_trait -->|"implements"| node_path_source
+node_source_trait -->|"implements"| node_replaced
+node_source_trait -->|"implements"| node_directory_source
+node_registry_mod -->|"sparse HTTP"| node_http_remote
+node_registry_mod -->|"legacy git index"| node_git_remote
+node_registry_mod -->|"local index"| node_local_registry
+node_http_remote -->|"index entries"| node_index_mod
+node_git_remote -->|"index entries"| node_index_mod
+node_index_mod -->|"cache lookup"| node_index_cache
+node_registry_mod -->|".crate files"| node_download
+node_registry_mod -->|"git deps fetch"| node_git_oxide
+node_download -->|"DownloadExclusive"| node_cache_lock
+node_index_cache -->|"shared lock"| node_cache_lock
+node_cache_lock -->|"file locks"| node_flock
+node_download -->|"cache bookkeeping"| node_sqlite
+node_index_cache -->|"stable cache keys"| node_hasher
+node_resolve_ws -->|"download packages"| node_source_trait
+
+click node_ops_mod "https://github.com/rust-lang/cargo/blob/master/src/ops/mod.rs"
+click node_resolve_ws "https://github.com/rust-lang/cargo/blob/master/src/ops/resolve.rs"
+click node_fetch "https://github.com/rust-lang/cargo/blob/master/src/ops/cargo_fetch.rs"
+click node_update_lockfile "https://github.com/rust-lang/cargo/blob/master/src/ops/cargo_update.rs"
+click node_compile "https://github.com/rust-lang/cargo/blob/master/src/ops/cargo_compile/mod.rs"
+click node_publish "https://github.com/rust-lang/cargo/blob/master/src/ops/registry/cargo_publish.rs"
+click node_lockfile_ops "https://github.com/rust-lang/cargo/blob/master/src/ops/lockfile.rs"
+click node_resolver "https://github.com/rust-lang/cargo/blob/master/src/resolver/mod.rs"
+click node_resolver_context "https://github.com/rust-lang/cargo/blob/master/src/resolver/context.rs"
+click node_dep_cache "https://github.com/rust-lang/cargo/blob/master/src/resolver/dep_cache.rs"
+click node_version_prefs "https://github.com/rust-lang/cargo/blob/master/src/resolver/version_prefs.rs"
+click node_resolver_types "https://github.com/rust-lang/cargo/blob/master/src/resolver/types.rs"
+click node_resolver_errors "https://github.com/rust-lang/cargo/blob/master/src/resolver/errors.rs"
+click node_resolve_struct "https://github.com/rust-lang/cargo/blob/master/src/resolver/resolve.rs"
+click node_encode "https://github.com/rust-lang/cargo/blob/master/src/resolver/encode.rs"
+click node_source_trait "https://github.com/rust-lang/cargo/blob/master/src/sources/source.rs"
+click node_registry_mod "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/mod.rs"
+click node_http_remote "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/http_remote.rs"
+click node_git_remote "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/git_remote.rs"
+click node_local_registry "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/local.rs"
+click node_index_mod "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/index/mod.rs"
+click node_index_cache "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/index/cache.rs"
+click node_download "https://github.com/rust-lang/cargo/blob/master/src/sources/registry/download.rs"
+click node_git_oxide "https://github.com/rust-lang/cargo/blob/master/src/sources/git/oxide.rs"
+click node_path_source "https://github.com/rust-lang/cargo/blob/master/src/sources/path.rs"
+click node_replaced "https://github.com/rust-lang/cargo/blob/master/src/sources/replaced.rs"
+click node_directory_source "https://github.com/rust-lang/cargo/blob/master/src/sources/directory.rs"
+click node_cache_lock "https://github.com/rust-lang/cargo/blob/master/src/util/cache_lock.rs"
+click node_flock "https://github.com/rust-lang/cargo/blob/master/src/util/flock.rs"
+click node_sqlite "https://github.com/rust-lang/cargo/blob/master/src/util/sqlite.rs"
+click node_hasher "https://github.com/rust-lang/cargo/blob/master/src/util/hasher.rs"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_ops_mod,node_resolve_ws,node_fetch,node_update_lockfile,node_compile,node_publish,node_lockfile_ops,node_hasher toneBlue
+class node_resolver,node_resolver_context,node_dep_cache,node_version_prefs,node_resolver_types,node_resolver_errors toneAmber
+class node_resolve_struct,node_encode toneMint
+class node_source_trait,node_registry_mod,node_http_remote,node_git_remote,node_local_registry,node_index_mod,node_index_cache,node_download toneRose
+class node_git_oxide,node_path_source,node_replaced,node_directory_source toneIndigo
+class node_cache_lock,node_flock,node_sqlite toneTeal
