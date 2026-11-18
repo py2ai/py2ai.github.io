@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_cli["CLI &#40;src/nix, src/libcmd&#41;"]
+  node_main["main<br/>[main.cc]"]
+  node_cmd_build["CmdBuild<br/>[build.cc]"]
+  node_cmd_daemon["CmdDaemon<br/>[daemon.cc]"]
+  node_cmd_gc["nix-collect-garbage"]
+  node_installable["Installable::build<br/>[installables.cc]"]
+end
+
+subgraph group_eval["Evaluator &#40;src/libexpr&#41;"]
+  node_eval_state["EvalState<br/>[eval.cc]"]
+  node_eval_file["EvalState::evalFile<br/>[eval.cc]"]
+  node_primops["primops<br/>[primops.cc]"]
+  node_derivation_nix["derivation builtin<br/>[derivation.nix]"]
+end
+
+subgraph group_store_api["Store API &amp; Protocols"]
+  node_store_api["Store::queryPathInfo<br/>[store-api.cc]"]
+  node_make_store_path["makeStorePath"]
+  node_store_path["StorePath<br/>[path.cc]"]
+  node_path_info["ValidPathInfo<br/>[path-info.hh]"]
+  node_worker_proto["WorkerProto::Op<br/>[worker-protocol.hh]"]
+  node_binary_cache["BinaryCacheStore"]
+end
+
+subgraph group_local["Local Store &#40;src/libstore&#41;"]
+  node_local_store["LocalStore<br/>[local-store.cc]"]
+  node_open_db["LocalStore::openDB<br/>[local-store.cc]"]
+  node_add_to_store["LocalStore::addToStore<br/>[local-store.cc]"]
+  node_register_valid_paths["registerValidPaths<br/>[local-store.cc]"]
+  node_optimise["optimisePath_<br/>[optimise-store.cc]"]
+  node_gc["collectGarbage<br/>[gc.cc]"]
+  node_find_roots["findRootsNoTemp<br/>[gc.cc]"]
+  node_profiles["createGeneration<br/>[profiles.cc]"]
+  node_switch_gen["switchGeneration<br/>[profiles.cc]"]
+end
+
+subgraph group_daemon["Daemon Protocol"]
+  node_daemon_conn["daemon::processConnection<br/>[daemon.hh]"]
+  node_perform_op["performOp<br/>[daemon.cc]"]
+end
+
+subgraph group_build["Build Engine &#40;src/libstore/build&#41;"]
+  node_entry_points["LocalBuilder::buildPaths<br/>[entry-points.cc]"]
+  node_worker["Worker::run<br/>[worker.cc]"]
+  node_derivation_goal["DerivationGoal<br/>[derivation-goal.cc]"]
+  node_substituter_goal["PathSubstitutionGoal"]
+  node_builder_impl["registerOutputs"]
+end
+
+subgraph group_sandbox["Platform Builders"]
+  node_chroot_linux["ChrootLinuxDerivationBuilder"]
+  node_chroot_unix["ChrootDerivationBuilder"]
+end
+
+node_main -->|"dispatch"| node_cmd_build
+node_main -->|"dispatch"| node_cmd_daemon
+node_main -->|"dispatch"| node_cmd_gc
+node_cmd_build -->|"Installable::build"| node_installable
+node_installable -->|"evaluate"| node_eval_state
+node_eval_state -->|"file entry"| node_eval_file
+node_eval_file -->|"builtins in scope"| node_primops
+node_primops -->|"evalFile&#40;derivationInternal&#41;"| node_derivation_nix
+node_derivation_nix -->|"derivationStrict"| node_primops
+node_primops -->|"write .drv, build"| node_store_api
+node_eval_state -->|"source paths"| node_store_api
+node_store_api -->|"compute path names"| node_make_store_path
+node_store_api -->|"returns info"| node_path_info
+node_store_api -->|"substituter"| node_binary_cache
+node_make_store_path -->|"constructs"| node_store_path
+node_store_api -->|"LocalStore implements"| node_local_store
+node_local_store -->|"sqlite WAL"| node_open_db
+node_local_store -->|"ingest"| node_add_to_store
+node_local_store -->|"register"| node_register_valid_paths
+node_local_store -->|"deduplicate"| node_optimise
+node_local_store -->|"sweep"| node_gc
+node_gc -->|"root scan"| node_find_roots
+node_cmd_gc -->|"collectGarbage"| node_gc
+node_profiles -->|"rollback"| node_switch_gen
+node_profiles -->|"gc roots"| node_local_store
+node_cmd_daemon -->|"serve client"| node_daemon_conn
+node_daemon_conn -->|"op loop"| node_perform_op
+node_perform_op -->|"op codes"| node_worker_proto
+node_worker_proto -->|"v2.39 protocol"| node_store_api
+node_perform_op -->|"store ops"| node_local_store
+node_perform_op -->|"query ops"| node_store_api
+node_perform_op -->|"BuildPaths"| node_worker
+node_installable -->|"store-&gt;buildPaths"| node_entry_points
+node_entry_points -->|"Worker::buildPaths"| node_worker
+node_worker -->|"makeGoal"| node_derivation_goal
+node_worker -->|"makeGoal"| node_substituter_goal
+node_derivation_goal -->|"run builder"| node_builder_impl
+node_builder_impl -->|"sandboxed exec"| node_chroot_linux
+node_builder_impl -->|"chroot prep"| node_chroot_unix
+node_builder_impl -->|"register outputs"| node_register_valid_paths
+node_derivation_goal -->|"validity + registration"| node_local_store
+node_substituter_goal -->|"queryPathInfo"| node_store_api
+node_substituter_goal -->|"download NAR"| node_binary_cache
+node_worker -->|"scan missing"| node_local_store
+
+click node_main "https://github.com/NixOS/nix/blob/master/src/nix/main.cc"
+click node_cmd_build "https://github.com/NixOS/nix/blob/master/src/nix/build.cc"
+click node_cmd_daemon "https://github.com/NixOS/nix/blob/master/src/nix/unix/daemon.cc"
+click node_cmd_gc "https://github.com/NixOS/nix/blob/master/src/nix/nix-collect-garbage/nix-collect-garbage.cc"
+click node_installable "https://github.com/NixOS/nix/blob/master/src/libcmd/installables.cc"
+click node_eval_state "https://github.com/NixOS/nix/blob/master/src/libexpr/eval.cc"
+click node_eval_file "https://github.com/NixOS/nix/blob/master/src/libexpr/eval.cc"
+click node_primops "https://github.com/NixOS/nix/blob/master/src/libexpr/primops.cc"
+click node_derivation_nix "https://github.com/NixOS/nix/blob/master/src/libexpr/primops/derivation.nix"
+click node_store_api "https://github.com/NixOS/nix/blob/master/src/libstore/store-api.cc"
+click node_make_store_path "https://github.com/NixOS/nix/blob/master/src/libstore/store-dir-config.cc"
+click node_store_path "https://github.com/NixOS/nix/blob/master/src/libstore/path.cc"
+click node_path_info "https://github.com/NixOS/nix/blob/master/src/libstore/include/nix/store/path-info.hh"
+click node_worker_proto "https://github.com/NixOS/nix/blob/master/src/libstore/include/nix/store/worker-protocol.hh"
+click node_binary_cache "https://github.com/NixOS/nix/blob/master/src/libstore/binary-cache-store.cc"
+click node_entry_points "https://github.com/NixOS/nix/blob/master/src/libstore/build/entry-points.cc"
+click node_local_store "https://github.com/NixOS/nix/blob/master/src/libstore/local-store.cc"
+click node_open_db "https://github.com/NixOS/nix/blob/master/src/libstore/local-store.cc"
+click node_add_to_store "https://github.com/NixOS/nix/blob/master/src/libstore/local-store.cc"
+click node_register_valid_paths "https://github.com/NixOS/nix/blob/master/src/libstore/local-store.cc"
+click node_optimise "https://github.com/NixOS/nix/blob/master/src/libstore/optimise-store.cc"
+click node_gc "https://github.com/NixOS/nix/blob/master/src/libstore/gc.cc"
+click node_find_roots "https://github.com/NixOS/nix/blob/master/src/libstore/gc.cc"
+click node_profiles "https://github.com/NixOS/nix/blob/master/src/libstore/profiles.cc"
+click node_switch_gen "https://github.com/NixOS/nix/blob/master/src/libstore/profiles.cc"
+click node_daemon_conn "https://github.com/NixOS/nix/blob/master/src/libstore/include/nix/store/daemon.hh"
+click node_perform_op "https://github.com/NixOS/nix/blob/master/src/libstore/daemon.cc"
+click node_worker "https://github.com/NixOS/nix/blob/master/src/libstore/build/worker.cc"
+click node_derivation_goal "https://github.com/NixOS/nix/blob/master/src/libstore/build/derivation-goal.cc"
+click node_substituter_goal "https://github.com/NixOS/nix/blob/master/src/libstore/build/substitution-goal.cc"
+click node_builder_impl "https://github.com/NixOS/nix/blob/master/src/libstore/build/derivation-builder-impl.cc"
+click node_chroot_linux "https://github.com/NixOS/nix/blob/master/src/libstore/linux/build/linux-derivation-builder.cc"
+click node_chroot_unix "https://github.com/NixOS/nix/blob/master/src/libstore/unix/build/chroot-derivation-builder.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_cmd_build,node_cmd_daemon,node_cmd_gc,node_installable,node_chroot_linux,node_chroot_unix toneBlue
+class node_eval_state,node_eval_file,node_primops,node_derivation_nix toneAmber
+class node_store_api,node_make_store_path,node_store_path,node_path_info,node_worker_proto,node_binary_cache toneMint
+class node_local_store,node_open_db,node_add_to_store,node_register_valid_paths,node_optimise,node_gc,node_find_roots,node_profiles,node_switch_gen toneRose
+class node_daemon_conn,node_perform_op toneIndigo
+class node_entry_points,node_worker,node_derivation_goal,node_substituter_goal,node_builder_impl toneTeal

@@ -1,0 +1,68 @@
+flowchart TD
+
+subgraph group_cli["CLI &#40;src/nix&#41;"]
+  node_main["main<br/>[main.cc]"]
+  node_cmd_build["CmdBuild<br/>[build.cc]"]
+  node_installable["Installable::build<br/>[installables.cc]"]
+end
+
+subgraph group_eval["Evaluator &#40;src/libexpr&#41;"]
+  node_eval_state["EvalState<br/>[eval.cc]"]
+  node_primops["primops<br/>[primops.cc]"]
+  node_derivation_nix["derivation builtin<br/>[derivation.nix]"]
+end
+
+subgraph group_store["Store &#40;src/libstore&#41;"]
+  node_store_api["Store API<br/>[store-api.cc]"]
+  node_local_store["LocalStore<br/>[local-store.cc]"]
+  node_daemon["daemon performOp<br/>[daemon.cc]"]
+  node_gc["collectGarbage<br/>[gc.cc]"]
+end
+
+subgraph group_build["Build Engine &#40;src/libstore/build&#41;"]
+  node_worker["Worker::run<br/>[worker.cc]"]
+  node_derivation_goal["DerivationGoal<br/>[derivation-goal.cc]"]
+end
+
+node_main -->|"dispatches nix build"| node_cmd_build
+node_main -->|"dispatches nix daemon"| node_daemon
+node_cmd_build -->|"Installable::build"| node_installable
+node_installable -->|"evaluate installables"| node_eval_state
+node_eval_state -->|"registers builtins"| node_primops
+node_primops -->|"evalFile&#40;derivationInternal&#41;"| node_derivation_nix
+node_derivation_nix -->|"derivationStrict"| node_primops
+node_primops -->|"writes .drv + builds"| node_store_api
+node_eval_state -->|"reads source paths"| node_store_api
+node_cmd_build -->|"realise outputs"| node_worker
+node_worker -->|"makeGoal"| node_derivation_goal
+node_worker -->|"scan for missing paths"| node_local_store
+node_derivation_goal -->|"register outputs"| node_local_store
+node_derivation_goal -->|"queryPathInfo"| node_store_api
+node_store_api -->|"LocalStore implements"| node_local_store
+node_daemon -->|"op handlers"| node_local_store
+node_local_store -->|"delete dead paths"| node_gc
+
+click node_main "https://github.com/NixOS/nix/blob/master/src/nix/main.cc"
+click node_cmd_build "https://github.com/NixOS/nix/blob/master/src/nix/build.cc"
+click node_installable "https://github.com/NixOS/nix/blob/master/src/libcmd/installables.cc"
+click node_eval_state "https://github.com/NixOS/nix/blob/master/src/libexpr/eval.cc"
+click node_primops "https://github.com/NixOS/nix/blob/master/src/libexpr/primops.cc"
+click node_derivation_nix "https://github.com/NixOS/nix/blob/master/src/libexpr/primops/derivation.nix"
+click node_store_api "https://github.com/NixOS/nix/blob/master/src/libstore/store-api.cc"
+click node_local_store "https://github.com/NixOS/nix/blob/master/src/libstore/local-store.cc"
+click node_daemon "https://github.com/NixOS/nix/blob/master/src/libstore/daemon.cc"
+click node_worker "https://github.com/NixOS/nix/blob/master/src/libstore/build/worker.cc"
+click node_derivation_goal "https://github.com/NixOS/nix/blob/master/src/libstore/build/derivation-goal.cc"
+click node_gc "https://github.com/NixOS/nix/blob/master/src/libstore/gc.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_cmd_build,node_installable toneBlue
+class node_eval_state,node_primops,node_derivation_nix toneAmber
+class node_store_api,node_local_store,node_daemon,node_gc toneMint
+class node_worker,node_derivation_goal toneRose
