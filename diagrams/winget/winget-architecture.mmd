@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_entry["Entry &amp; Runtime"]
+  node_core_main["Core::CoreMain<br/>[Core.cpp]"]
+  node_orchestrator["ContextOrchestrator"]
+  node_exec_ctx["Execution::Context<br/>[ExecutionContext.h]"]
+  node_checkpoint["CheckpointManager"]
+end
+
+subgraph group_commands["Command Layer"]
+  node_root_command["RootCommand::GetCommands<br/>[RootCommand.cpp]"]
+  node_search_cmd["SearchCommand::ExecuteInternal<br/>[SearchCommand.cpp]"]
+  node_install_cmd["InstallCommand::ExecuteInternal<br/>[InstallCommand.cpp]"]
+  node_upgrade_cmd["UpgradeCommand::ExecuteInternal<br/>[UpgradeCommand.cpp]"]
+  node_uninstall_cmd["UninstallCommand::ExecuteInternal"]
+  node_source_cmd["SourceCommand::ExecuteInternal<br/>[SourceCommand.cpp]"]
+end
+
+subgraph group_engine["Workflow Engine"]
+  node_workflow_task["WorkflowTask operator&lt;&lt;<br/>[WorkflowBase.cpp]"]
+  node_open_source["OpenSource<br/>[WorkflowBase.cpp]"]
+  node_search_many["SearchSourceForMany<br/>[WorkflowBase.cpp]"]
+  node_search_single["SearchSourceForSingle<br/>[WorkflowBase.cpp]"]
+  node_ensure_one_match["EnsureOneMatchFromSearchResult<br/>[WorkflowBase.cpp]"]
+end
+
+subgraph group_sources["Search &amp; Sources"]
+  node_source_list["SourceList defaults<br/>[SourceList.cpp]"]
+  node_repo_source["CreateSourceFromDetails"]
+  node_composite_source["CompositeSource::Search"]
+  node_repo_search["SearchRequest / MatchType"]
+  node_arp_correlation["ARPCorrelation<br/>[ARPCorrelation.cpp]"]
+end
+
+subgraph group_index["SQLite Index"]
+  node_sqlite_index["SQLiteIndex::Search<br/>[SQLiteIndex.cpp]"]
+  node_index_source["SQLiteIndexSource::Search"]
+  node_index_v2["SQLiteIndexSourceV2"]
+  node_schema_21["Schema 2.1 delta tables"]
+end
+
+subgraph group_manifest["Manifest &amp; Selection"]
+  node_yaml_parser["Manifest::ParseManifest<br/>[YamlParser.cpp]"]
+  node_yaml_populator["ManifestYamlPopulator"]
+  node_manifest_comparator["ManifestComparator::GetPreferredInstaller"]
+end
+
+subgraph group_install["Install &amp; Download"]
+  node_install_or_upgrade["InstallOrUpgradeSinglePackage<br/>[UpdateFlow.cpp]"]
+  node_install_single["InstallSinglePackage<br/>[InstallFlow.cpp]"]
+  node_ensure_installer["EnsureApplicableInstaller<br/>[InstallFlow.cpp]"]
+  node_execute_installer["ExecuteInstaller<br/>[InstallFlow.cpp]"]
+  node_download_flow["DownloadInstaller<br/>[DownloadFlow.cpp]"]
+  node_verify_hash["VerifyInstallerHash<br/>[DownloadFlow.cpp]"]
+  node_shell_execute["ShellExecuteInstallImpl"]
+end
+
+node_core_main -->|"dispatch"| node_root_command
+node_core_main -->|"creates per invocation"| node_exec_ctx
+node_exec_ctx -->|"captures state"| node_checkpoint
+node_root_command -->|"search"| node_search_cmd
+node_root_command -->|"install"| node_install_cmd
+node_root_command -->|"upgrade"| node_upgrade_cmd
+node_root_command -->|"uninstall"| node_uninstall_cmd
+node_root_command -->|"source"| node_source_cmd
+node_search_cmd -->|"context &lt;&lt;"| node_search_many
+node_install_cmd -->|"OpenSource&#40;&#41;"| node_open_source
+node_install_cmd -->|"InstallOrUpgradeSinglePackage"| node_install_or_upgrade
+node_upgrade_cmd -->|"shared chain"| node_install_or_upgrade
+node_uninstall_cmd -->|"context &lt;&lt;"| node_workflow_task
+node_source_cmd -->|"catalog changes"| node_source_list
+node_workflow_task -->|"reads and writes"| node_exec_ctx
+node_open_source -->|"loads"| node_source_list
+node_open_source -->|"factory"| node_repo_source
+node_search_many -->|"Search"| node_composite_source
+node_search_single -->|"Search"| node_composite_source
+node_search_single -->|"pick one"| node_ensure_one_match
+node_install_or_upgrade -->|"resolve id"| node_search_single
+node_install_or_upgrade -->|"hand off"| node_install_single
+node_install_or_upgrade -->|"version choice"| node_manifest_comparator
+node_source_list -->|"CreateSourceFromDetails"| node_repo_source
+node_repo_source -->|"Microsoft catalog"| node_index_source
+node_composite_source -->|"per-source search"| node_index_source
+node_composite_source -->|"installed match"| node_arp_correlation
+node_composite_source -->|"builds request"| node_repo_search
+node_repo_search -->|"SearchRequest"| node_sqlite_index
+node_index_source -->|"SQL queries"| node_sqlite_index
+node_index_source -->|"v2 format"| node_index_v2
+node_index_v2 -->|"delta updates"| node_schema_21
+node_yaml_parser -->|"document tree"| node_yaml_populator
+node_yaml_populator -->|"candidate installers"| node_manifest_comparator
+node_manifest_comparator -->|"chosen installer"| node_ensure_installer
+node_yaml_parser -->|"winget install -m"| node_install_single
+node_install_single -->|"check"| node_ensure_installer
+node_install_single -->|"DownloadInstaller"| node_download_flow
+node_install_single -->|"ExecuteInstaller"| node_execute_installer
+node_download_flow -->|"SHA256"| node_verify_hash
+node_verify_hash -->|"verified file"| node_execute_installer
+node_execute_installer -->|"ShellExecuteExW"| node_shell_execute
+
+click node_core_main "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Core.cpp"
+click node_orchestrator "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/ContextOrchestrator.cpp"
+click node_exec_ctx "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/ExecutionContext.h"
+click node_checkpoint "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/CheckpointManager.cpp"
+click node_root_command "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Commands/RootCommand.cpp"
+click node_search_cmd "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Commands/SearchCommand.cpp"
+click node_install_cmd "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Commands/InstallCommand.cpp"
+click node_upgrade_cmd "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Commands/UpgradeCommand.cpp"
+click node_uninstall_cmd "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Commands/UninstallCommand.cpp"
+click node_source_cmd "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Commands/SourceCommand.cpp"
+click node_workflow_task "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp"
+click node_open_source "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp"
+click node_search_many "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp"
+click node_search_single "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp"
+click node_ensure_one_match "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp"
+click node_source_list "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/SourceList.cpp"
+click node_repo_source "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/RepositorySource.cpp"
+click node_composite_source "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/CompositeSource.cpp"
+click node_repo_search "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/RepositorySearch.cpp"
+click node_arp_correlation "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/ARPCorrelation.cpp"
+click node_sqlite_index "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/Microsoft/SQLiteIndex.cpp"
+click node_index_source "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/Microsoft/SQLiteIndexSource.cpp"
+click node_index_v2 "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/Microsoft/SQLiteIndexSourceV2.cpp"
+click node_schema_21 "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerRepositoryCore/Microsoft/Schema/2_1/DeltaGeneration.cpp"
+click node_yaml_parser "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCommonCore/Manifest/YamlParser.cpp"
+click node_yaml_populator "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCommonCore/Manifest/ManifestYamlPopulator.cpp"
+click node_manifest_comparator "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCommonCore/Manifest/ManifestComparator.cpp"
+click node_install_or_upgrade "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/UpdateFlow.cpp"
+click node_install_single "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/InstallFlow.cpp"
+click node_ensure_installer "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/InstallFlow.cpp"
+click node_execute_installer "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/InstallFlow.cpp"
+click node_download_flow "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/DownloadFlow.cpp"
+click node_verify_hash "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/DownloadFlow.cpp"
+click node_shell_execute "https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCLICore/Workflows/ShellExecuteInstallerHandler.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_core_main,node_orchestrator,node_exec_ctx,node_checkpoint,node_install_or_upgrade,node_install_single,node_ensure_installer,node_execute_installer,node_download_flow,node_verify_hash,node_shell_execute toneBlue
+class node_root_command,node_search_cmd,node_install_cmd,node_upgrade_cmd,node_uninstall_cmd,node_source_cmd toneAmber
+class node_workflow_task,node_open_source,node_search_many,node_search_single,node_ensure_one_match toneMint
+class node_source_list,node_repo_source,node_composite_source,node_repo_search,node_arp_correlation toneRose
+class node_sqlite_index,node_index_source,node_index_v2,node_schema_21 toneIndigo
+class node_yaml_parser,node_yaml_populator,node_manifest_comparator toneTeal
