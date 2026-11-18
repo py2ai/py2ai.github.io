@@ -1,0 +1,149 @@
+flowchart TD
+
+subgraph group_cli["CLI &#40;micromamba&#41;"]
+  node_micromamba_main["main<br/>[main.cpp]"]
+  node_micromamba_umamba["set_umamba_command<br/>[umamba.cpp]"]
+end
+
+subgraph group_api["API layer"]
+  node_api_configuration["Configuration<br/>[configuration.cpp]"]
+  node_api_install["install_specs<br/>[install.cpp]"]
+  node_api_create["create<br/>[create.cpp]"]
+  node_api_shell["shell<br/>[shell.cpp]"]
+  node_api_repoquery["repoquery<br/>[repoquery.cpp]"]
+  node_bindings_main["PYBIND11_MODULE<br/>[bindings.cpp]"]
+  node_bindings_solver_libsolv["bind Database<br/>[solver_libsolv.cpp]"]
+end
+
+subgraph group_specs["Specs &amp; parsing"]
+  node_specs_match_spec["MatchSpec::parse<br/>[match_spec.cpp]"]
+  node_specs_package_info["PackageInfo<br/>[package_info.cpp]"]
+  node_specs_version["Version<br/>[version.cpp]"]
+end
+
+subgraph group_repodata["Channels &amp; repodata"]
+  node_channel_context["ChannelContext"]
+  node_subdir_index["SubdirIndexLoader<br/>[subdir_index.cpp]"]
+  node_shard_index_loader["ShardIndexLoader"]
+  node_shard_traversal["ShardTraversal"]
+  node_package_database_loader["load_installed_packages_in_database"]
+end
+
+subgraph group_solver["libsolv solver"]
+  node_database["Database<br/>[database.cpp]"]
+  node_solver_libsolv_solver["Solver::solve<br/>[solver.cpp]"]
+  node_solver_libsolv_helpers["request_to_decision_queue<br/>[helpers.cpp]"]
+  node_solver_libsolv_unsolvable["UnSolvable<br/>[unsolvable.cpp]"]
+  node_solver_problems_graph["ProblemsGraph<br/>[problems_graph.cpp]"]
+  node_solv_cpp_solver["ObjSolver<br/>[solver.hpp]"]
+  node_solv_cpp_transaction["ObjTransaction<br/>[transaction.hpp]"]
+end
+
+subgraph group_download["Download engine"]
+  node_downloader["Downloader::download<br/>[downloader.cpp]"]
+  node_curl_multi["CURLMultiHandle<br/>[curl.cpp]"]
+  node_mirror_map["mirror_map<br/>[mirror_map.cpp]"]
+end
+
+subgraph group_cache["Package cache"]
+  node_package_cache["MultiPackageCache<br/>[package_cache.cpp]"]
+  node_package_fetcher["PackageFetcher"]
+end
+
+subgraph group_transaction["Transaction &amp; linking"]
+  node_transaction["MTransaction<br/>[transaction.cpp]"]
+  node_link["LinkPackage<br/>[link.cpp]"]
+  node_transaction_context["TransactionContext"]
+  node_history["History<br/>[history.cpp]"]
+end
+
+node_micromamba_main -->|"CLI11 tree"| node_micromamba_umamba
+node_micromamba_umamba -->|"create subcommand"| node_api_create
+node_micromamba_umamba -->|"install subcommand"| node_api_install
+node_micromamba_main -->|"shell subcommand"| node_api_shell
+node_api_configuration -->|"options &amp; channels"| node_api_install
+node_api_create -->|"reuse install flow"| node_api_install
+node_api_repoquery -->|"query the pool"| node_database
+node_api_install -->|"parse specs"| node_specs_match_spec
+node_specs_match_spec -->|"version constraints"| node_specs_version
+node_api_install -->|"resolve channels"| node_channel_context
+node_channel_context -->|"per-subdir metadata"| node_subdir_index
+node_subdir_index -->|"sharded repodata"| node_shard_index_loader
+node_shard_index_loader -->|"shard index"| node_shard_traversal
+node_subdir_index -->|"add repos"| node_database
+node_shard_traversal -->|"matched packages"| node_database
+node_package_database_loader -->|"installed prefix repo"| node_database
+node_api_install -->|"load installed pkgs"| node_package_database_loader
+node_subdir_index -->|"fetch repodata"| node_downloader
+node_api_install -->|"solve request"| node_solver_libsolv_solver
+node_database -->|"pool of solvables"| node_solver_libsolv_solver
+node_solver_libsolv_solver -->|"build decision queue"| node_solver_libsolv_helpers
+node_solver_libsolv_helpers -->|"job specs"| node_specs_match_spec
+node_solver_libsolv_solver -->|"ObjSolver::solve"| node_solv_cpp_solver
+node_solv_cpp_solver -->|"from_solver"| node_solv_cpp_transaction
+node_solv_cpp_transaction -->|"transaction_to_solution"| node_solver_libsolv_solver
+node_solver_libsolv_solver -->|"failed solve"| node_solver_libsolv_unsolvable
+node_solver_libsolv_unsolvable -->|"conflict graph"| node_solver_problems_graph
+node_solver_libsolv_solver -->|"Outcome/Solution"| node_api_install
+node_api_install -->|"MTransaction&#40;...&#41;"| node_transaction
+node_transaction -->|"fetch_extract_packages"| node_package_fetcher
+node_package_fetcher -->|"cache hit query"| node_package_cache
+node_package_fetcher -->|"parallel fetch"| node_downloader
+node_downloader -->|"libcurl multi"| node_curl_multi
+node_downloader -->|"mirror fallback"| node_mirror_map
+node_transaction -->|"LinkPackage::execute"| node_link
+node_transaction -->|"append user request"| node_history
+node_link -->|"linking knobs"| node_transaction_context
+node_link -->|"hardlink from cache"| node_package_cache
+node_transaction -->|"execution result"| node_api_install
+node_bindings_main -->|"solver.libsolv submodule"| node_bindings_solver_libsolv
+node_bindings_solver_libsolv -->|"bind Database"| node_database
+node_bindings_solver_libsolv -->|"bind Solver"| node_solver_libsolv_solver
+
+click node_micromamba_main "https://github.com/mamba-org/mamba/blob/main/micromamba/src/main.cpp"
+click node_micromamba_umamba "https://github.com/mamba-org/mamba/blob/main/micromamba/src/umamba.cpp"
+click node_api_configuration "https://github.com/mamba-org/mamba/blob/main/libmamba/src/api/configuration.cpp"
+click node_api_install "https://github.com/mamba-org/mamba/blob/main/libmamba/src/api/install.cpp"
+click node_api_create "https://github.com/mamba-org/mamba/blob/main/libmamba/src/api/create.cpp"
+click node_api_shell "https://github.com/mamba-org/mamba/blob/main/libmamba/src/api/shell.cpp"
+click node_api_repoquery "https://github.com/mamba-org/mamba/blob/main/libmamba/src/api/repoquery.cpp"
+click node_specs_match_spec "https://github.com/mamba-org/mamba/blob/main/libmamba/src/specs/match_spec.cpp"
+click node_specs_package_info "https://github.com/mamba-org/mamba/blob/main/libmamba/src/specs/package_info.cpp"
+click node_specs_version "https://github.com/mamba-org/mamba/blob/main/libmamba/src/specs/version.cpp"
+click node_channel_context "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/channel_context.cpp"
+click node_subdir_index "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/subdir_index.cpp"
+click node_shard_index_loader "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/shard_index_loader.cpp"
+click node_shard_traversal "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/shard_traversal.cpp"
+click node_package_database_loader "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/package_database_loader.cpp"
+click node_database "https://github.com/mamba-org/mamba/blob/main/libmamba/src/solver/libsolv/database.cpp"
+click node_solver_libsolv_solver "https://github.com/mamba-org/mamba/blob/main/libmamba/src/solver/libsolv/solver.cpp"
+click node_solver_libsolv_helpers "https://github.com/mamba-org/mamba/blob/main/libmamba/src/solver/libsolv/helpers.cpp"
+click node_solver_libsolv_unsolvable "https://github.com/mamba-org/mamba/blob/main/libmamba/src/solver/libsolv/unsolvable.cpp"
+click node_solver_problems_graph "https://github.com/mamba-org/mamba/blob/main/libmamba/src/solver/problems_graph.cpp"
+click node_solv_cpp_solver "https://github.com/mamba-org/mamba/blob/main/libmamba/ext/solv-cpp/include/solv-cpp/solver.hpp"
+click node_solv_cpp_transaction "https://github.com/mamba-org/mamba/blob/main/libmamba/ext/solv-cpp/include/solv-cpp/transaction.hpp"
+click node_downloader "https://github.com/mamba-org/mamba/blob/main/libmamba/src/download/downloader.cpp"
+click node_curl_multi "https://github.com/mamba-org/mamba/blob/main/libmamba/src/download/curl.cpp"
+click node_mirror_map "https://github.com/mamba-org/mamba/blob/main/libmamba/src/download/mirror_map.cpp"
+click node_package_cache "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/package_cache.cpp"
+click node_package_fetcher "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/package_fetcher.cpp"
+click node_transaction "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/transaction.cpp"
+click node_link "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/link.cpp"
+click node_transaction_context "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/transaction_context.cpp"
+click node_history "https://github.com/mamba-org/mamba/blob/main/libmamba/src/core/history.cpp"
+click node_bindings_main "https://github.com/mamba-org/mamba/blob/main/libmambapy/bindings/bindings.cpp"
+click node_bindings_solver_libsolv "https://github.com/mamba-org/mamba/blob/main/libmambapy/bindings/solver_libsolv.cpp"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_micromamba_main,node_micromamba_umamba,node_package_cache,node_package_fetcher toneBlue
+class node_api_configuration,node_api_install,node_api_create,node_api_shell,node_api_repoquery,node_bindings_main,node_bindings_solver_libsolv,node_transaction,node_link,node_transaction_context,node_history toneAmber
+class node_specs_match_spec,node_specs_package_info,node_specs_version toneMint
+class node_channel_context,node_subdir_index,node_shard_index_loader,node_shard_traversal,node_package_database_loader toneRose
+class node_database,node_solver_libsolv_solver,node_solver_libsolv_helpers,node_solver_libsolv_unsolvable,node_solver_problems_graph,node_solv_cpp_solver,node_solv_cpp_transaction toneIndigo
+class node_downloader,node_curl_multi,node_mirror_map toneTeal
