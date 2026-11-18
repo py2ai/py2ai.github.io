@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_cli["brew CLI"]
+  node_install_cmd["InstallCmd<br/>[install.rb]"]
+end
+
+subgraph group_resolution["Formula resolution"]
+  node_formulary{{"Formulary.factory<br/>[formulary.rb]"}}
+  node_loader_from_api["FromAPILoader<br/>[formulary.rb]"]
+  node_loader_from_tap["FromTapLoader<br/>[formulary.rb]"]
+  node_loader_from_keg["FromKegLoader<br/>[formulary.rb]"]
+  node_api_formula[("API::Formula<br/>[formula.rb]")]
+  node_api_fetch["fetch_json_api_file<br/>[api.rb]"]
+end
+
+subgraph group_model["Formula model"]
+  node_formula["Formula<br/>[formula.rb]"]
+  node_formula_install["Formula&#35;install<br/>[formula.rb]"]
+  node_software_spec["SoftwareSpec<br/>[software_spec.rb]"]
+  node_resource["Resource<br/>[resource.rb]"]
+end
+
+subgraph group_deps["Dependency graph"]
+  node_dependency["Dependency<br/>[dependency.rb]"]
+  node_dep_expand{{"Dependency.expand<br/>[dependency.rb]"}}
+  node_dep_stack["@expand_stack<br/>[dependency.rb]"]
+  node_compute_deps["compute_dependencies"]
+end
+
+subgraph group_download["Download strategies"]
+  node_detector{{"DownloadStrategyDetector"}}
+  node_curl_ds["CurlDownloadStrategy"]
+  node_git_ds["GitDownloadStrategy"]
+  node_ghcr_ds["CurlGitHubPackages"]
+  node_bottle[("Bottle<br/>[bottle.rb]")]
+  node_bottle_stage["Bottle&#35;stage<br/>[bottle.rb]"]
+end
+
+subgraph group_install["Install flow"]
+  node_installer{{"FormulaInstaller&#35;install"}}
+  node_install_deps["install_dependencies"]
+  node_fetch_deps["FormulaInstaller&#35;fetch"]
+  node_enqueue_fetch["enqueue_fetch"]
+  node_attestation["verify_bottle_attestation?"]
+  node_pour["FormulaInstaller&#35;pour"]
+end
+
+subgraph group_store["Cellar storage"]
+  node_keg[("Keg<br/>[keg.rb]")]
+  node_keg_link["Keg&#35;link<br/>[keg.rb]"]
+  node_tab[("Tab<br/>[tab.rb]")]
+end
+
+node_install_cmd -->|"resolve every argument"| node_formulary
+node_install_cmd -->|"create installer"| node_installer
+node_formulary -->|"core tap name"| node_loader_from_api
+node_formulary -->|"tap path"| node_loader_from_tap
+node_formulary -->|"installed rack"| node_loader_from_keg
+node_loader_from_api -->|"read cached JSON"| node_api_formula
+node_api_formula -->|"refresh formula.json"| node_api_fetch
+node_loader_from_api -->|"class from struct"| node_formula
+node_loader_from_tap -->|"eval source"| node_formula
+node_loader_from_keg -->|"rehydrate"| node_formula
+node_formulary -->|"returns subclass"| node_formula
+node_installer -->|"plan install order"| node_compute_deps
+node_compute_deps -->|"expand declared deps"| node_dep_expand
+node_dep_expand -->|"iterate deps"| node_dependency
+node_dependency -->|"recurse via to_formula"| node_dep_expand
+node_dep_stack -.->|"block cycles"| node_dep_expand
+node_compute_deps -->|"ordered plan"| node_installer
+node_installer -->|"run install hook"| node_formula_install
+node_software_spec -->|"stable/head specs"| node_formula
+node_resource -->|"declared resources"| node_software_spec
+node_installer -->|"prefetch downloads"| node_fetch_deps
+node_fetch_deps -->|"queue first"| node_enqueue_fetch
+node_enqueue_fetch -.->|"check_attestation"| node_attestation
+node_enqueue_fetch -->|"bottle download"| node_bottle
+node_enqueue_fetch -->|"resources and patches"| node_resource
+node_formula -->|"active spec url"| node_detector
+node_detector -->|"plain URL"| node_curl_ds
+node_detector -->|"git URL"| node_git_ds
+node_detector -->|"ghcr.io URL"| node_ghcr_ds
+node_ghcr_ds -->|"GHCR tarball"| node_bottle
+node_bottle -->|"unpack"| node_bottle_stage
+node_installer -.->|"pour_bottle? true"| node_pour
+node_pour -->|"move staged keg"| node_bottle_stage
+node_pour -->|"tab.write"| node_tab
+node_installer -->|"install each dep"| node_install_deps
+node_install_deps -->|"factory per dep"| node_formulary
+node_installer -->|"link after install"| node_keg_link
+node_keg -->|"symlink into prefix"| node_keg_link
+node_keg_link -.->|"read receipt"| node_tab
+
+click node_install_cmd "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/cmd/install.rb"
+click node_formulary "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formulary.rb"
+click node_loader_from_api "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formulary.rb"
+click node_loader_from_tap "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formulary.rb"
+click node_loader_from_keg "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formulary.rb"
+click node_api_formula "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/api/formula.rb"
+click node_api_fetch "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/api.rb"
+click node_formula "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula.rb"
+click node_formula_install "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula.rb"
+click node_software_spec "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/software_spec.rb"
+click node_resource "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/resource.rb"
+click node_dependency "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/dependency.rb"
+click node_dep_expand "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/dependency.rb"
+click node_dep_stack "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/dependency.rb"
+click node_compute_deps "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_detector "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/download_strategy/download_strategy_detector.rb"
+click node_curl_ds "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/download_strategy/curl_download_strategy.rb"
+click node_git_ds "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/download_strategy/git_download_strategy.rb"
+click node_ghcr_ds "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/download_strategy/curl_github_packages_download_strategy.rb"
+click node_bottle "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/bottle.rb"
+click node_bottle_stage "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/bottle.rb"
+click node_installer "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_install_deps "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_fetch_deps "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_enqueue_fetch "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_attestation "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_pour "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/formula_installer.rb"
+click node_keg "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/keg.rb"
+click node_keg_link "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/keg.rb"
+click node_tab "https://github.com/Homebrew/brew/blob/main/Library/Homebrew/tab.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_install_cmd,node_keg,node_keg_link,node_tab toneBlue
+class node_formulary,node_loader_from_api,node_loader_from_tap,node_loader_from_keg,node_api_formula,node_api_fetch toneAmber
+class node_formula,node_formula_install,node_software_spec,node_resource toneMint
+class node_dependency,node_dep_expand,node_dep_stack,node_compute_deps toneRose
+class node_detector,node_curl_ds,node_git_ds,node_ghcr_ds,node_bottle,node_bottle_stage toneIndigo
+class node_installer,node_install_deps,node_fetch_deps,node_enqueue_fetch,node_attestation,node_pour toneTeal
