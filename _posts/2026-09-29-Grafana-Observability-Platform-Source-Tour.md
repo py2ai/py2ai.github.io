@@ -4,7 +4,7 @@ title: "Grafana: Query, Visualize, and Alert on Any Data Source - Inside grafana
 description: "A guided source tour of grafana/grafana, the open-source observability platform. We walk the Go backend, the TSDB query layer, the datasource plugin model, the React dashboard runtime, and the ngalert alerting engine with two architecture diagrams."
 date: 2026-09-29
 header-img: "img/post-bg.jpg"
-permalink: /Grafana-Observability-Platform-Source-Tour/
+permalink: /grafana/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/grafana/grafana-grafana-architecture.svg
 tags:

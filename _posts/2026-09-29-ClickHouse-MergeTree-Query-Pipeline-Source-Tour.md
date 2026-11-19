@@ -4,7 +4,7 @@ title: "ClickHouse: A Source Tour of MergeTree and the Query Pipeline - Inside C
 description: "A guided source-tour of the ClickHouse/ClickHouse repository, walking the real C++ code behind the MergeTree storage engine, the Processors query pipeline, and distributed execution across shards and replicas. Learn how the real-time OLAP database actually works by reading the directories, entry points, and data structures that power it."
 date: 2026-09-29
 header-img: "img/post-bg.jpg"
-permalink: /ClickHouse-MergeTree-Query-Pipeline-Source-Tour/
+permalink: /clickhouse/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/clickhouse/clickhouse-clickhouse-architecture.svg
 tags:

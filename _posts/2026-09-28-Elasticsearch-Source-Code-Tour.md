@@ -4,7 +4,7 @@ title: "Elasticsearch: A Source Tour of the Distributed Search Engine - Inside e
 description: "A guided tour of the elastic/elasticsearch repository: how the Java monorepo is organized, how REST requests flow through transport actions into cluster state and Lucene-backed shards, and what the libs, modules, plugins, and x-pack trees actually contain. Based on a real read of the source tree, with real file paths."
 date: 2026-09-28
 header-img: "img/post-bg.jpg"
-permalink: /Elasticsearch-Source-Code-Tour/
+permalink: /elasticsearch/
 featured-img: "ai-coding-frameworks/ai-coding-frameworks"
 image: https://pyshine.com/assets/img/diagrams/elasticsearch/elastic-elasticsearch-architecture.svg
 tags:
