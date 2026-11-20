@@ -1,0 +1,152 @@
+flowchart TD
+
+subgraph group_g_entry["Compiler Entry"]
+  node_compile{{"compile&#40;&#41;<br/>[compile.ts]"}}
+  node_config["initConfig&#40;&#41;<br/>[config.ts]"]
+  node_assemble["assembleTopLevelModel&#40;&#41;<br/>[compile.ts]"]
+end
+
+subgraph group_g_norm["Spec Normalization"]
+  node_normalize["normalize&#40;&#41;<br/>[index.ts]"]
+  node_autosize["normalizeAutoSize&#40;&#41;<br/>[index.ts]"]
+  node_selection_compat["SelectionCompatibilityNormalizer<br/>[selectioncompat.ts]"]
+  node_corenorm["CoreNormalizer<br/>[core.ts]"]
+  node_top_selection["TopLevelSelectionsNormalizer"]
+  node_specmap["SpecMapper<br/>[map.ts]"]
+  node_boxplot["boxPlotNormalizer<br/>[boxplot.ts]"]
+end
+
+subgraph group_g_spec["Spec Types"]
+  node_unit_spec["NormalizedUnitSpec<br/>[unit.ts]"]
+  node_toplevel["TopLevel<br/>[toplevel.ts]"]
+end
+
+subgraph group_g_model["Model Tree"]
+  node_buildmodel["buildModel&#40;&#41;<br/>[buildmodel.ts]"]
+  node_model_parse["Model.parse&#40;&#41;<br/>[model.ts]"]
+  node_unitmodel["UnitModel<br/>[unit.ts]"]
+  node_layer_model["LayerModel<br/>[layer.ts]"]
+  node_facet_model["FacetModel<br/>[facet.ts]"]
+  node_concat_model["ConcatModel<br/>[concat.ts]"]
+end
+
+subgraph group_g_data["Data Parsing"]
+  node_parse_data{{"parseData&#40;&#41;<br/>[parse.ts]"}}
+  node_transform_array["parseTransformArray&#40;&#41;<br/>[parse.ts]"]
+  node_source_node[("SourceNode<br/>[source.ts]")]
+  node_formatparse["ParseNode<br/>[formatparse.ts]"]
+  node_aggregate_node["AggregateNode<br/>[aggregate.ts]"]
+  node_bin_node["BinNode<br/>[bin.ts]"]
+  node_timeunit_node["TimeUnitNode<br/>[timeunit.ts]"]
+  node_stack_node["StackNode<br/>[stack.ts]"]
+  node_facet_node["FacetNode<br/>[facet.ts]"]
+  node_output_node[("OutputNode<br/>[dataflow.ts]")]
+end
+
+subgraph group_g_opt["Dataflow Optimization"]
+  node_optimize{{"optimizeDataflow&#40;&#41;<br/>[optimize.ts]"}}
+  node_optimizers["MergeAggregates &amp; friends<br/>[optimizers.ts]"]
+  node_optimizer_base["BottomUp/TopDownOptimizer<br/>[optimizer.ts]"]
+  node_dataflow_node["DataFlowNode<br/>[dataflow.ts]"]
+end
+
+subgraph group_g_out["Scale, Mark &amp; Assembly"]
+  node_scale_domain["parseScaleDomain&#40;&#41;<br/>[domain.ts]"]
+  node_mark_groups["parseMarkGroups&#40;&#41;<br/>[mark.ts]"]
+end
+
+node_compile -->|"merge options"| node_config
+node_compile -->|"phase 2"| node_normalize
+node_normalize -->|"container sizing"| node_autosize
+node_normalize -->|"compat pass first"| node_selection_compat
+node_normalize -->|"core pass"| node_corenorm
+node_normalize -->|"last pass"| node_top_selection
+node_selection_compat -.->|"extends"| node_specmap
+node_corenorm -.->|"extends"| node_specmap
+node_top_selection -.->|"extends"| node_specmap
+node_specmap -->|"composite marks become layers"| node_boxplot
+node_corenorm -->|"row and column become facets"| node_unit_spec
+node_normalize -->|"normalized spec"| node_buildmodel
+node_toplevel -->|"width, height, autosize, usermeta"| node_compile
+node_compile -->|"phase 3"| node_buildmodel
+node_buildmodel -->|"top-down defaulting"| node_model_parse
+node_buildmodel -->|"unit leaf"| node_unitmodel
+node_buildmodel -->|"layer composite"| node_layer_model
+node_buildmodel -->|"facet composite"| node_facet_model
+node_buildmodel -->|"concat composite"| node_concat_model
+node_model_parse -->|"parse order"| node_unitmodel
+node_model_parse -->|"merge children"| node_layer_model
+node_model_parse -->|"facet headers"| node_facet_model
+node_model_parse -->|"shared layout"| node_concat_model
+node_unitmodel -->|"UnitModel.parseData&#40;&#41;"| node_parse_data
+node_parse_data -->|"parseRoot dedupe"| node_source_node
+node_parse_data -->|"transform branches"| node_transform_array
+node_transform_array -->|"isAggregate"| node_aggregate_node
+node_transform_array -->|"isBin"| node_bin_node
+node_transform_array -->|"isTimeUnit"| node_timeunit_node
+node_parse_data -->|"explicit then implicit"| node_formatparse
+node_parse_data -->|"StackNode.makeFromEncoding"| node_stack_node
+node_parse_data -->|"Raw and Main datasets"| node_output_node
+node_parse_data -->|"FacetModel facetRoot"| node_facet_node
+node_parse_data -->|"data component"| node_optimize
+node_compile -->|"phase 5"| node_optimize
+node_optimize -->|"up to 5 runs"| node_optimizers
+node_optimizers -->|"traversal base"| node_optimizer_base
+node_optimizer_base -->|"walks node tree"| node_dataflow_node
+node_optimizers -->|"setEqual dimensions"| node_aggregate_node
+node_optimizers -->|"MergeOutputs"| node_output_node
+node_facet_node -->|"moveFacetDown"| node_optimize
+node_optimize -->|"optimized sources"| node_scale_domain
+node_scale_domain -->|"resolved scales"| node_mark_groups
+node_compile -->|"phase 6"| node_assemble
+node_mark_groups -->|"correctDataNames"| node_assemble
+node_model_parse -->|"components"| node_assemble
+
+click node_compile "https://github.com/vega/vega-lite/blob/main/src/compile/compile.ts"
+click node_config "https://github.com/vega/vega-lite/blob/main/src/config.ts"
+click node_assemble "https://github.com/vega/vega-lite/blob/main/src/compile/compile.ts"
+click node_normalize "https://github.com/vega/vega-lite/blob/main/src/normalize/index.ts"
+click node_autosize "https://github.com/vega/vega-lite/blob/main/src/normalize/index.ts"
+click node_selection_compat "https://github.com/vega/vega-lite/blob/main/src/normalize/selectioncompat.ts"
+click node_corenorm "https://github.com/vega/vega-lite/blob/main/src/normalize/core.ts"
+click node_top_selection "https://github.com/vega/vega-lite/blob/main/src/normalize/toplevelselection.ts"
+click node_specmap "https://github.com/vega/vega-lite/blob/main/src/spec/map.ts"
+click node_boxplot "https://github.com/vega/vega-lite/blob/main/src/compositemark/boxplot.ts"
+click node_unit_spec "https://github.com/vega/vega-lite/blob/main/src/spec/unit.ts"
+click node_toplevel "https://github.com/vega/vega-lite/blob/main/src/spec/toplevel.ts"
+click node_buildmodel "https://github.com/vega/vega-lite/blob/main/src/compile/buildmodel.ts"
+click node_model_parse "https://github.com/vega/vega-lite/blob/main/src/compile/model.ts"
+click node_unitmodel "https://github.com/vega/vega-lite/blob/main/src/compile/unit.ts"
+click node_layer_model "https://github.com/vega/vega-lite/blob/main/src/compile/layer.ts"
+click node_facet_model "https://github.com/vega/vega-lite/blob/main/src/compile/facet.ts"
+click node_concat_model "https://github.com/vega/vega-lite/blob/main/src/compile/concat.ts"
+click node_parse_data "https://github.com/vega/vega-lite/blob/main/src/compile/data/parse.ts"
+click node_transform_array "https://github.com/vega/vega-lite/blob/main/src/compile/data/parse.ts"
+click node_source_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/source.ts"
+click node_formatparse "https://github.com/vega/vega-lite/blob/main/src/compile/data/formatparse.ts"
+click node_aggregate_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/aggregate.ts"
+click node_bin_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/bin.ts"
+click node_timeunit_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/timeunit.ts"
+click node_stack_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/stack.ts"
+click node_facet_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/facet.ts"
+click node_output_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/dataflow.ts"
+click node_optimize "https://github.com/vega/vega-lite/blob/main/src/compile/data/optimize.ts"
+click node_optimizers "https://github.com/vega/vega-lite/blob/main/src/compile/data/optimizers.ts"
+click node_optimizer_base "https://github.com/vega/vega-lite/blob/main/src/compile/data/optimizer.ts"
+click node_dataflow_node "https://github.com/vega/vega-lite/blob/main/src/compile/data/dataflow.ts"
+click node_scale_domain "https://github.com/vega/vega-lite/blob/main/src/compile/scale/domain.ts"
+click node_mark_groups "https://github.com/vega/vega-lite/blob/main/src/compile/mark/mark.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_compile,node_config,node_assemble,node_scale_domain,node_mark_groups toneBlue
+class node_normalize,node_autosize,node_selection_compat,node_corenorm,node_top_selection,node_specmap,node_boxplot toneAmber
+class node_unit_spec,node_toplevel toneMint
+class node_buildmodel,node_model_parse,node_unitmodel,node_layer_model,node_facet_model,node_concat_model toneRose
+class node_parse_data,node_transform_array,node_source_node,node_formatparse,node_aggregate_node,node_bin_node,node_timeunit_node,node_stack_node,node_facet_node,node_output_node toneIndigo
+class node_optimize,node_optimizers,node_optimizer_base,node_dataflow_node toneTeal
