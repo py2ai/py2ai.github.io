@@ -1,0 +1,42 @@
+{
+  "owner": "mastodon",
+  "repo": "mastodon",
+  "branch": "main",
+  "groups": [
+    { "id": "g_api", "name": "api", "label": "REST API (Rails)" },
+    { "id": "g_rails", "name": "rails", "label": "Rails Models & Services" },
+    { "id": "g_sidekiq", "name": "sidekiq", "label": "Sidekiq Workers" },
+    { "id": "g_redis", "name": "redis", "label": "Redis Timelines" },
+    { "id": "g_stream", "name": "streaming", "label": "Node.js Streaming Server" },
+    { "id": "g_federation", "name": "federation", "label": "ActivityPub Federation" }
+  ],
+  "nodes": [
+    { "id": "statuses_controller", "label": "Api::V1::StatusesController", "file": "statuses_controller.rb", "path": "app/controllers/api/v1/statuses_controller.rb", "group": "api", "groupId": "g_api", "desc": "POST /api/v1/statuses handler; delegates to PostStatusService" },
+    { "id": "post_status_service", "label": "PostStatusService", "file": "post_status_service.rb", "path": "app/services/post_status_service.rb", "group": "rails", "groupId": "g_rails", "desc": "Validates, saves the status, then enqueues local and federation workers" },
+    { "id": "status_model", "label": "Status", "file": "status.rb", "path": "app/models/status.rb", "group": "rails", "groupId": "g_rails", "desc": "ActiveRecord model; MEDIA_ATTACHMENTS_LIMIT = 4, visibility enums" },
+    { "id": "distribution_worker", "label": "DistributionWorker", "file": "distribution_worker.rb", "path": "app/workers/distribution_worker.rb", "group": "sidekiq", "groupId": "g_sidekiq", "desc": "Local fan-out entry; wraps FanOutOnWriteService in a Redis lock" },
+    { "id": "fan_out_service", "label": "FanOutOnWriteService", "file": "fan_out_on_write_service.rb", "path": "app/services/fan_out_on_write_service.rb", "group": "rails", "groupId": "g_rails", "desc": "Splits delivery into followers, lists, mentions, and public Redis channels" },
+    { "id": "feed_insert_worker", "label": "FeedInsertWorker", "file": "feed_insert_worker.rb", "path": "app/workers/feed_insert_worker.rb", "group": "sidekiq", "groupId": "g_sidekiq", "desc": "Per-follower worker; filters then pushes home/list/tag feeds" },
+    { "id": "feed_manager", "label": "FeedManager", "file": "feed_manager.rb", "path": "app/lib/feed_manager.rb", "group": "redis", "groupId": "g_redis", "desc": "Redis sorted-set timelines; MAX_ITEMS = 800 with trim" },
+    { "id": "push_update_worker", "label": "PushUpdateWorker", "file": "push_update_worker.rb", "path": "app/workers/push_update_worker.rb", "group": "sidekiq", "groupId": "g_sidekiq", "desc": "Hydrates payload and redis.publish to a user timeline channel" },
+    { "id": "streaming_server", "label": "Streaming server", "file": "index.js", "path": "streaming/index.js", "group": "stream", "groupId": "g_stream", "desc": "Node.js WebSocket/SSE server; subscribes to Redis pub/sub channels" },
+    { "id": "ap_distribution", "label": "ActivityPub::DistributionWorker", "file": "distribution_worker.rb", "path": "app/workers/activitypub/distribution_worker.rb", "group": "federation", "groupId": "g_federation", "desc": "Builds Create/Announce payload and resolves target inboxes" },
+    { "id": "reach_finder", "label": "StatusReachFinder", "file": "status_reach_finder.rb", "path": "app/lib/status_reach_finder.rb", "group": "federation", "groupId": "g_federation", "desc": "Unions mentioned, replied, reblogged, follower and relay inboxes" },
+    { "id": "ap_delivery", "label": "ActivityPub::DeliveryWorker", "file": "delivery_worker.rb", "path": "app/workers/activitypub/delivery_worker.rb", "group": "federation", "groupId": "g_federation", "desc": "Signed HTTP POST per inbox; retry 16, stoplight circuit breaker" }
+  ],
+  "edges": [
+    { "from": "statuses_controller", "to": "post_status_service", "label": "POST /api/v1/statuses" },
+    { "from": "post_status_service", "to": "status_model", "label": "save! in transaction" },
+    { "from": "post_status_service", "to": "distribution_worker", "label": "perform_async" },
+    { "from": "post_status_service", "to": "ap_distribution", "label": "perform_async" },
+    { "from": "distribution_worker", "to": "fan_out_service", "label": "redis lock, then call" },
+    { "from": "fan_out_service", "to": "feed_insert_worker", "label": "push_bulk followers/lists" },
+    { "from": "feed_insert_worker", "to": "feed_manager", "label": "push_to_home / push_to_list" },
+    { "from": "feed_manager", "to": "push_update_worker", "label": "perform_async if subscribed" },
+    { "from": "fan_out_service", "to": "push_update_worker", "label": "push_bulk mention timelines" },
+    { "from": "push_update_worker", "to": "streaming_server", "label": "redis.publish timeline:<account>" },
+    { "from": "fan_out_service", "to": "streaming_server", "label": "redis.publish timeline:public" },
+    { "from": "ap_distribution", "to": "reach_finder", "label": "resolve target inboxes" },
+    { "from": "ap_distribution", "to": "ap_delivery", "label": "push_bulk per inbox" }
+  ]
+}

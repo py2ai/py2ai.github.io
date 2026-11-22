@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_g_api["REST API &#40;Rails&#41;"]
+  node_statuses_controller["Api::V1::StatusesController"]
+end
+
+subgraph group_g_rails["Rails Models &amp; Services"]
+  node_post_status_service["PostStatusService"]
+  node_status_model["Status<br/>[status.rb]"]
+  node_fan_out_service["FanOutOnWriteService"]
+end
+
+subgraph group_g_sidekiq["Sidekiq Workers"]
+  node_distribution_worker["DistributionWorker"]
+  node_feed_insert_worker["FeedInsertWorker"]
+  node_push_update_worker["PushUpdateWorker"]
+end
+
+subgraph group_g_redis["Redis Timelines"]
+  node_feed_manager["FeedManager<br/>[feed_manager.rb]"]
+end
+
+subgraph group_g_stream["Node.js Streaming Server"]
+  node_streaming_server["Streaming server<br/>[index.js]"]
+end
+
+subgraph group_g_federation["ActivityPub Federation"]
+  node_ap_distribution["ActivityPub::DistributionWorker"]
+  node_reach_finder["StatusReachFinder"]
+  node_ap_delivery["ActivityPub::DeliveryWorker<br/>[delivery_worker.rb]"]
+end
+
+node_statuses_controller -->|"POST /api/v1/statuses"| node_post_status_service
+node_post_status_service -->|"save! in transaction"| node_status_model
+node_post_status_service -->|"perform_async"| node_distribution_worker
+node_post_status_service -->|"perform_async"| node_ap_distribution
+node_distribution_worker -->|"redis lock, then call"| node_fan_out_service
+node_fan_out_service -->|"push_bulk followers/lists"| node_feed_insert_worker
+node_feed_insert_worker -->|"push_to_home / push_to_list"| node_feed_manager
+node_feed_manager -->|"perform_async if subscribed"| node_push_update_worker
+node_fan_out_service -->|"push_bulk mention timelines"| node_push_update_worker
+node_push_update_worker -->|"redis.publish timeline:&lt;account&gt;"| node_streaming_server
+node_fan_out_service -->|"redis.publish timeline:public"| node_streaming_server
+node_ap_distribution -->|"resolve target inboxes"| node_reach_finder
+node_ap_distribution -->|"push_bulk per inbox"| node_ap_delivery
+
+click node_statuses_controller "https://github.com/mastodon/mastodon/blob/main/app/controllers/api/v1/statuses_controller.rb"
+click node_post_status_service "https://github.com/mastodon/mastodon/blob/main/app/services/post_status_service.rb"
+click node_status_model "https://github.com/mastodon/mastodon/blob/main/app/models/status.rb"
+click node_distribution_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/distribution_worker.rb"
+click node_fan_out_service "https://github.com/mastodon/mastodon/blob/main/app/services/fan_out_on_write_service.rb"
+click node_feed_insert_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/feed_insert_worker.rb"
+click node_feed_manager "https://github.com/mastodon/mastodon/blob/main/app/lib/feed_manager.rb"
+click node_push_update_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/push_update_worker.rb"
+click node_streaming_server "https://github.com/mastodon/mastodon/blob/main/streaming/index.js"
+click node_ap_distribution "https://github.com/mastodon/mastodon/blob/main/app/workers/activitypub/distribution_worker.rb"
+click node_reach_finder "https://github.com/mastodon/mastodon/blob/main/app/lib/status_reach_finder.rb"
+click node_ap_delivery "https://github.com/mastodon/mastodon/blob/main/app/workers/activitypub/delivery_worker.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_statuses_controller toneBlue
+class node_post_status_service,node_status_model,node_fan_out_service toneAmber
+class node_distribution_worker,node_feed_insert_worker,node_push_update_worker toneMint
+class node_feed_manager toneRose
+class node_streaming_server toneIndigo
+class node_ap_distribution,node_reach_finder,node_ap_delivery toneTeal

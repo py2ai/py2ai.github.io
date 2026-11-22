@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_g_api["REST API &#40;Rails&#41;"]
+  node_statuses_controller["Api::V1::StatusesController"]
+  node_status_serializer["REST::StatusSerializer"]
+end
+
+subgraph group_g_rails["Rails Models &amp; Services"]
+  node_post_status_service["PostStatusService"]
+  node_status_model["Status<br/>[status.rb]"]
+  node_process_mentions_service["ProcessMentionsService"]
+  node_process_hashtags_service["ProcessHashtagsService"]
+  node_fan_out_service["FanOutOnWriteService"]
+  node_status_cache_hydrator["StatusCacheHydrator"]
+end
+
+subgraph group_g_sidekiq["Sidekiq Workers"]
+  node_distribution_worker["DistributionWorker"]
+  node_feed_insert_worker["FeedInsertWorker"]
+  node_push_update_worker["PushUpdateWorker"]
+  node_local_notification_worker["LocalNotificationWorker"]
+  node_link_crawl_worker["LinkCrawlWorker"]
+end
+
+subgraph group_g_redis["Redis Timelines"]
+  node_redisable[("Redisable<br/>[redisable.rb]")]
+  node_feed_manager[("FeedManager<br/>[feed_manager.rb]")]
+  node_feeds_vacuum[("Vacuum::FeedsVacuum<br/>[feeds_vacuum.rb]")]
+end
+
+subgraph group_g_stream["Node.js Streaming Server"]
+  node_streaming_server["Streaming server<br/>[index.js]"]
+  node_streaming_database[("streaming/database.js<br/>[database.js]")]
+  node_streaming_redis[("streaming/redis.js<br/>[redis.js]")]
+end
+
+subgraph group_g_federation["ActivityPub Outbound"]
+  node_ap_distribution["ActivityPub::DistributionWorker"]
+  node_raw_distribution["ActivityPub::RawDistributionWorker"]
+  node_create_note_serializer["ActivityPub::CreateNoteSerializer"]
+  node_reach_finder["StatusReachFinder"]
+  node_tag_manager["ActivityPub::TagManager<br/>[tag_manager.rb]"]
+  node_ap_delivery["ActivityPub::DeliveryWorker<br/>[delivery_worker.rb]"]
+  node_delivery_failure_tracker["DeliveryFailureTracker"]
+  node_request_pool["RequestPool<br/>[request_pool.rb]"]
+  node_request["Request<br/>[request.rb]"]
+end
+
+subgraph group_g_inbound["ActivityPub Inbound"]
+  node_inboxes_controller["ActivityPub::InboxesController"]
+  node_process_activity_service["ActivityPub::ProcessActivityService"]
+  node_activity_lib["ActivityPub::Activity<br/>[activity.rb]"]
+  node_activity_create["ActivityPub::Activity::Create<br/>[create.rb]"]
+  node_status_parser["ActivityPub::Parser::StatusParser<br/>[status_parser.rb]"]
+end
+
+node_statuses_controller -->|"PostStatusService.new.call"| node_post_status_service
+node_statuses_controller -->|"render json"| node_status_serializer
+node_post_status_service -->|"resolve mentions"| node_process_mentions_service
+node_post_status_service -->|"hashtags and trends"| node_process_hashtags_service
+node_post_status_service -->|"save! in transaction"| node_status_model
+node_post_status_service -->|"perform_async"| node_link_crawl_worker
+node_post_status_service -->|"perform_async"| node_distribution_worker
+node_post_status_service -->|"perform_async"| node_ap_distribution
+node_distribution_worker -->|"redis lock then call"| node_fan_out_service
+node_fan_out_service -->|"mentions, quotes, tags"| node_status_model
+node_fan_out_service -->|"push_bulk notifications"| node_local_notification_worker
+node_fan_out_service -->|"push_bulk home/list/tags"| node_feed_insert_worker
+node_fan_out_service -->|"push_bulk subscribed mentions"| node_push_update_worker
+node_fan_out_service -->|"redis.publish timeline:public"| node_streaming_server
+node_feed_insert_worker -->|"filter / push_to_home / push_to_list"| node_feed_manager
+node_feed_insert_worker -->|"notify on new home post"| node_local_notification_worker
+node_feed_manager -->|"include Redisable"| node_redisable
+node_feed_manager -->|"perform_async if subscribed"| node_push_update_worker
+node_push_update_worker -->|"hydrate payload"| node_status_cache_hydrator
+node_push_update_worker -->|"redis.publish timeline:&lt;account&gt;"| node_streaming_server
+node_fan_out_service -->|"include Redisable"| node_redisable
+node_feeds_vacuum -->|"clean_feeds! for inactive users"| node_feed_manager
+node_streaming_server -->|"subscribe namespaced channels"| node_streaming_redis
+node_streaming_server -->|"per-event SQL filtering"| node_streaming_database
+node_ap_distribution -->|"inherits RawDistributionWorker"| node_raw_distribution
+node_ap_distribution -->|"Create or Announce payload"| node_create_note_serializer
+node_ap_distribution -->|"inboxes"| node_reach_finder
+node_raw_distribution -->|"push_bulk limit 1_000"| node_ap_delivery
+node_ap_delivery -->|"availability and failures"| node_delivery_failure_tracker
+node_ap_delivery -->|"per-host client"| node_request_pool
+node_ap_delivery -->|"signed POST to inbox"| node_request
+node_ap_delivery -->|"followers collection URI"| node_tag_manager
+node_inboxes_controller -->|"handle inbound activity"| node_process_activity_service
+node_process_activity_service -->|"Activity.factory"| node_activity_lib
+node_activity_lib -->|"Create activity"| node_activity_create
+node_activity_create -->|"parse remote note"| node_status_parser
+node_activity_create -->|"create local Status"| node_status_model
+
+click node_statuses_controller "https://github.com/mastodon/mastodon/blob/main/app/controllers/api/v1/statuses_controller.rb"
+click node_status_serializer "https://github.com/mastodon/mastodon/blob/main/app/serializers/rest/status_serializer.rb"
+click node_post_status_service "https://github.com/mastodon/mastodon/blob/main/app/services/post_status_service.rb"
+click node_status_model "https://github.com/mastodon/mastodon/blob/main/app/models/status.rb"
+click node_process_mentions_service "https://github.com/mastodon/mastodon/blob/main/app/services/process_mentions_service.rb"
+click node_process_hashtags_service "https://github.com/mastodon/mastodon/blob/main/app/services/process_hashtags_service.rb"
+click node_fan_out_service "https://github.com/mastodon/mastodon/blob/main/app/services/fan_out_on_write_service.rb"
+click node_status_cache_hydrator "https://github.com/mastodon/mastodon/blob/main/app/lib/status_cache_hydrator.rb"
+click node_redisable "https://github.com/mastodon/mastodon/blob/main/app/models/concerns/redisable.rb"
+click node_feed_manager "https://github.com/mastodon/mastodon/blob/main/app/lib/feed_manager.rb"
+click node_feeds_vacuum "https://github.com/mastodon/mastodon/blob/main/app/lib/vacuum/feeds_vacuum.rb"
+click node_distribution_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/distribution_worker.rb"
+click node_feed_insert_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/feed_insert_worker.rb"
+click node_push_update_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/push_update_worker.rb"
+click node_local_notification_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/local_notification_worker.rb"
+click node_link_crawl_worker "https://github.com/mastodon/mastodon/blob/main/app/workers/link_crawl_worker.rb"
+click node_streaming_server "https://github.com/mastodon/mastodon/blob/main/streaming/index.js"
+click node_streaming_database "https://github.com/mastodon/mastodon/blob/main/streaming/database.js"
+click node_streaming_redis "https://github.com/mastodon/mastodon/blob/main/streaming/redis.js"
+click node_ap_distribution "https://github.com/mastodon/mastodon/blob/main/app/workers/activitypub/distribution_worker.rb"
+click node_raw_distribution "https://github.com/mastodon/mastodon/blob/main/app/workers/activitypub/raw_distribution_worker.rb"
+click node_create_note_serializer "https://github.com/mastodon/mastodon/blob/main/app/serializers/activitypub/create_note_serializer.rb"
+click node_reach_finder "https://github.com/mastodon/mastodon/blob/main/app/lib/status_reach_finder.rb"
+click node_tag_manager "https://github.com/mastodon/mastodon/blob/main/app/lib/activitypub/tag_manager.rb"
+click node_ap_delivery "https://github.com/mastodon/mastodon/blob/main/app/workers/activitypub/delivery_worker.rb"
+click node_delivery_failure_tracker "https://github.com/mastodon/mastodon/blob/main/app/lib/delivery_failure_tracker.rb"
+click node_request_pool "https://github.com/mastodon/mastodon/blob/main/app/lib/request_pool.rb"
+click node_request "https://github.com/mastodon/mastodon/blob/main/app/lib/request.rb"
+click node_inboxes_controller "https://github.com/mastodon/mastodon/blob/main/app/controllers/activitypub/inboxes_controller.rb"
+click node_process_activity_service "https://github.com/mastodon/mastodon/blob/main/app/services/activitypub/process_activity_service.rb"
+click node_activity_lib "https://github.com/mastodon/mastodon/blob/main/app/lib/activitypub/activity.rb"
+click node_activity_create "https://github.com/mastodon/mastodon/blob/main/app/lib/activitypub/activity/create.rb"
+click node_status_parser "https://github.com/mastodon/mastodon/blob/main/app/lib/activitypub/parser/status_parser.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_statuses_controller,node_status_serializer,node_inboxes_controller,node_process_activity_service,node_activity_lib,node_activity_create,node_status_parser toneBlue
+class node_post_status_service,node_status_model,node_process_mentions_service,node_process_hashtags_service,node_fan_out_service,node_status_cache_hydrator toneAmber
+class node_distribution_worker,node_feed_insert_worker,node_push_update_worker,node_local_notification_worker,node_link_crawl_worker toneMint
+class node_redisable,node_feed_manager,node_feeds_vacuum toneRose
+class node_streaming_server,node_streaming_database,node_streaming_redis toneIndigo
+class node_ap_distribution,node_raw_distribution,node_create_note_serializer,node_reach_finder,node_tag_manager,node_ap_delivery,node_delivery_failure_tracker,node_request_pool,node_request toneTeal
