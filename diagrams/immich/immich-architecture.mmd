@@ -1,0 +1,129 @@
+flowchart TD
+
+subgraph group_api["HTTP API Layer"]
+  node_upload_ctrl{{"AssetMediaController<br/>upload + bulk check"}}
+  node_asset_ctrl{{"AssetController<br/>asset queries"}}
+  node_upload_interceptor["AssetUploadInterceptor<br/>checksum short-circuit"]
+  node_file_interceptor["FileUploadInterceptor<br/>multipart storage"]
+end
+
+subgraph group_services["Domain Services"]
+  node_media_svc["AssetMediaService<br/>uploadAsset&#40;&#41;"]
+  node_metadata_svc["MetadataService"]
+  node_media_gen["MediaService<br/>sharp + ffmpeg"]
+  node_smart_svc["SmartInfoService<br/>CLIP encode"]
+  node_template_svc["StorageTemplateService<br/>handlebars render"]
+  node_storage_svc["StorageService<br/>disk checks + deletes"]
+  node_search_svc["SearchService<br/>smart + metadata search"]
+end
+
+subgraph group_repos["Repositories &amp; Job Workers"]
+  node_job_repo{{"JobRepository<br/>BullMQ workers"}}
+  node_event_repo["EventRepository<br/>in-process events"]
+  node_asset_repo["AssetRepository<br/>asset rows"]
+  node_ml_repo["MachineLearningRepository<br/>health-checked fetch"]
+  node_search_repo["SearchRepository<br/>KNN queries"]
+end
+
+subgraph group_schema["Postgres Schema"]
+  node_asset_table[("asset<br/>checksum + paths")]
+  node_exif_table[("asset_exif<br/>camera + GPS columns")]
+  node_smart_table[("smart_search<br/>vector&#40;512&#41; HNSW")]
+  node_face_table[("face_search<br/>face vectors")]
+end
+
+subgraph group_storage["File Storage &amp; Templates"]
+  node_storage_core["StorageCore<br/>nested folders"]
+  node_storage_repo["StorageRepository<br/>fs wrappers"]
+end
+
+subgraph group_mlpy["Python ML Service"]
+  node_ml_main{{"ML FastAPI app<br/>POST /predict"}}
+  node_ml_config["ML config<br/>pydantic settings"]
+  node_ml_inference["Inference slots<br/>pydantic options"]
+end
+
+subgraph group_models["Model Registry"]
+  node_clip_visual["CLIP visual<br/>OpenClipVisualEncoder"]
+  node_clip_textual["CLIP textual<br/>MClip / OpenClip"]
+  node_face_detect["Face detector<br/>FaceDetector"]
+  node_face_recognize["Face recognizer<br/>FaceRecognizer"]
+end
+
+node_upload_ctrl -->|"@UseInterceptors"| node_upload_interceptor
+node_upload_ctrl -.->|"parse multipart"| node_file_interceptor
+node_upload_interceptor -->|"getUploadAssetIdByChecksum"| node_media_svc
+node_upload_ctrl -->|"uploadAsset&#40;&#41;"| node_media_svc
+node_media_svc -->|"create asset row"| node_asset_repo
+node_asset_repo -->|"sha1 checksum column"| node_asset_table
+node_media_svc -->|"queue AssetExtractMetadata"| node_job_repo
+node_job_repo -->|"worker concurrency 1"| node_metadata_svc
+node_metadata_svc -->|"upsertExif"| node_asset_repo
+node_asset_repo -->|"audio / video / keyframes"| node_exif_table
+node_metadata_svc -->|"emit AssetMetadataExtracted"| node_event_repo
+node_event_repo -->|"@OnEvent handler"| node_template_svc
+node_job_repo -->|"thumbnail + transcode jobs"| node_media_gen
+node_job_repo -->|"SmartSearch job"| node_smart_svc
+node_job_repo -->|"FileDelete job"| node_storage_svc
+node_storage_svc -->|"unlink originals"| node_storage_repo
+node_media_gen -->|"write previews"| node_storage_repo
+node_media_svc -->|"getNestedFolder"| node_storage_core
+node_template_svc -->|"getLibraryFolder"| node_storage_core
+node_template_svc -->|"rename into template path"| node_storage_repo
+node_smart_svc -->|"encodeImage"| node_ml_repo
+node_ml_repo -->|"POST /predict + ping checks"| node_ml_main
+node_ml_main -.->|"load defaults"| node_ml_config
+node_ml_main -->|"entries&#40;&#41;"| node_ml_inference
+node_ml_inference -->|"image embedding"| node_clip_visual
+node_ml_inference -->|"text embedding"| node_clip_textual
+node_ml_inference -->|"crop faces"| node_face_detect
+node_ml_inference -->|"face vectors"| node_face_recognize
+node_smart_svc -->|"upsert embedding"| node_search_repo
+node_search_svc -->|"smart / metadata search"| node_search_repo
+node_search_svc -.->|"encode text query"| node_ml_repo
+node_search_repo -->|"embedding &lt;=&gt; query"| node_smart_table
+node_face_recognize -.->|"face embeddings"| node_face_table
+
+click node_upload_ctrl "https://github.com/immich-app/immich/blob/main/server/src/controllers/asset-media.controller.ts"
+click node_asset_ctrl "https://github.com/immich-app/immich/blob/main/server/src/controllers/asset.controller.ts"
+click node_upload_interceptor "https://github.com/immich-app/immich/blob/main/server/src/middleware/asset-upload.interceptor.ts"
+click node_file_interceptor "https://github.com/immich-app/immich/blob/main/server/src/middleware/file-upload.interceptor.ts"
+click node_media_svc "https://github.com/immich-app/immich/blob/main/server/src/services/asset-media.service.ts"
+click node_metadata_svc "https://github.com/immich-app/immich/blob/main/server/src/services/metadata.service.ts"
+click node_media_gen "https://github.com/immich-app/immich/blob/main/server/src/services/media.service.ts"
+click node_smart_svc "https://github.com/immich-app/immich/blob/main/server/src/services/smart-info.service.ts"
+click node_template_svc "https://github.com/immich-app/immich/blob/main/server/src/services/storage-template.service.ts"
+click node_storage_svc "https://github.com/immich-app/immich/blob/main/server/src/services/storage.service.ts"
+click node_search_svc "https://github.com/immich-app/immich/blob/main/server/src/services/search.service.ts"
+click node_job_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/job.repository.ts"
+click node_event_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/event.repository.ts"
+click node_asset_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/asset.repository.ts"
+click node_ml_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/machine-learning.repository.ts"
+click node_search_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/search.repository.ts"
+click node_asset_table "https://github.com/immich-app/immich/blob/main/server/src/schema/tables/asset.table.ts"
+click node_exif_table "https://github.com/immich-app/immich/blob/main/server/src/schema/tables/asset-exif.table.ts"
+click node_smart_table "https://github.com/immich-app/immich/blob/main/server/src/schema/tables/smart-search.table.ts"
+click node_face_table "https://github.com/immich-app/immich/blob/main/server/src/schema/tables/face-search.table.ts"
+click node_storage_core "https://github.com/immich-app/immich/blob/main/server/src/cores/storage.core.ts"
+click node_storage_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/storage.repository.ts"
+click node_ml_main "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/main.py"
+click node_ml_config "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/config.py"
+click node_ml_inference "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/schemas.py"
+click node_clip_visual "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/models/clip/visual.py"
+click node_clip_textual "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/models/clip/textual.py"
+click node_face_detect "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/models/facial_recognition/detection.py"
+click node_face_recognize "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/models/facial_recognition/recognition.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_upload_ctrl,node_asset_ctrl,node_upload_interceptor,node_file_interceptor,node_clip_visual,node_clip_textual,node_face_detect,node_face_recognize toneBlue
+class node_media_svc,node_metadata_svc,node_media_gen,node_smart_svc,node_template_svc,node_storage_svc,node_search_svc toneAmber
+class node_job_repo,node_event_repo,node_asset_repo,node_ml_repo,node_search_repo toneMint
+class node_asset_table,node_exif_table,node_smart_table,node_face_table toneRose
+class node_storage_core,node_storage_repo toneIndigo
+class node_ml_main,node_ml_config,node_ml_inference toneTeal

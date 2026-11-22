@@ -1,0 +1,72 @@
+flowchart TD
+
+subgraph group_clients["Clients"]
+  node_web_client{{"Web client<br/>SvelteKit"}}
+end
+
+subgraph group_api["NestJS API Layer"]
+  node_upload_ctrl{{"AssetMediaController<br/>POST /assets"}}
+  node_media_svc["AssetMediaService<br/>checksum + quota gate"]
+end
+
+subgraph group_jobs["BullMQ Job Workers"]
+  node_job_repo{{"JobRepository<br/>BullMQ queues"}}
+  node_metadata_svc["MetadataService<br/>exiftool-vendored"]
+  node_media_gen["MediaService<br/>thumbnails + transcode"]
+  node_smart_svc["SmartInfoService<br/>CLIP encoding"]
+end
+
+subgraph group_storage["File Storage"]
+  node_storage_core["StorageCore<br/>nested folder helpers"]
+  node_template_svc["StorageTemplateService<br/>handlebars file moves"]
+end
+
+subgraph group_smart["ML &amp; Vector Search"]
+  node_ml_server{{"Immich ML<br/>FastAPI /predict"}}
+  node_search_repo["SearchRepository<br/>KNN &lt;=&gt; queries"]
+end
+
+subgraph group_db["PostgreSQL"]
+  node_smart_table[("smart_search<br/>vector&#40;512&#41; HNSW")]
+end
+
+node_web_client -->|"multipart upload"| node_upload_ctrl
+node_upload_ctrl -->|"uploadAsset&#40;&#41;"| node_media_svc
+node_media_svc -->|"uuid upload folder"| node_storage_core
+node_media_svc -->|"queue AssetExtractMetadata"| node_job_repo
+node_job_repo -->|"exif extraction job"| node_metadata_svc
+node_metadata_svc -->|"AssetMetadataExtracted event"| node_template_svc
+node_job_repo -->|"thumbnail + video jobs"| node_media_gen
+node_job_repo -->|"SmartSearch job"| node_smart_svc
+node_smart_svc -->|"POST /predict &#40;CLIP&#41;"| node_ml_server
+node_smart_svc -->|"upsert embedding"| node_search_repo
+node_search_repo -->|"HNSW insert / query"| node_smart_table
+node_media_gen -->|"write previews"| node_storage_core
+node_template_svc -->|"move into library"| node_storage_core
+node_media_svc -.->|"FileDelete on failure"| node_job_repo
+
+click node_upload_ctrl "https://github.com/immich-app/immich/blob/main/server/src/controllers/asset-media.controller.ts"
+click node_media_svc "https://github.com/immich-app/immich/blob/main/server/src/services/asset-media.service.ts"
+click node_job_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/job.repository.ts"
+click node_metadata_svc "https://github.com/immich-app/immich/blob/main/server/src/services/metadata.service.ts"
+click node_media_gen "https://github.com/immich-app/immich/blob/main/server/src/services/media.service.ts"
+click node_smart_svc "https://github.com/immich-app/immich/blob/main/server/src/services/smart-info.service.ts"
+click node_storage_core "https://github.com/immich-app/immich/blob/main/server/src/cores/storage.core.ts"
+click node_template_svc "https://github.com/immich-app/immich/blob/main/server/src/services/storage-template.service.ts"
+click node_ml_server "https://github.com/immich-app/immich/blob/main/machine-learning/immich_ml/main.py"
+click node_search_repo "https://github.com/immich-app/immich/blob/main/server/src/repositories/search.repository.ts"
+click node_smart_table "https://github.com/immich-app/immich/blob/main/server/src/schema/tables/smart-search.table.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_web_client toneBlue
+class node_upload_ctrl,node_media_svc toneAmber
+class node_job_repo,node_metadata_svc,node_media_gen,node_smart_svc toneMint
+class node_storage_core,node_template_svc toneRose
+class node_ml_server,node_search_repo toneIndigo
+class node_smart_table toneTeal
