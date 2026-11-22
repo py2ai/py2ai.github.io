@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_entry["Entry points"]
+  node_htaccess[".htaccess<br/>[.htaccess]"]
+  node_cronphp["cron.php<br/>[cron.php]"]
+end
+
+subgraph group_davcore["WebDAV core &#40;apps/dav&#41;"]
+  node_remote["remote.php v2 bootstrap<br/>[remote.php]"]
+  node_davserver["OCA&#92;DAV&#92;Server<br/>[Server.php]"]
+  node_rootcoll["RootCollection<br/>[RootCollection.php]"]
+  node_davauth["Sabre Auth backend<br/>[Auth.php]"]
+  node_objecttree["ObjectTree<br/>[ObjectTree.php]"]
+  node_davfile["Sabre File node<br/>[File.php]"]
+end
+
+subgraph group_davplugins["Sabre plugins &amp; uploads"]
+  node_filesplugin["FilesPlugin<br/>[FilesPlugin.php]"]
+  node_quota_plugin["QuotaPlugin &#40;Sabre&#41;<br/>[QuotaPlugin.php]"]
+  node_chunkv2["ChunkingV2Plugin"]
+  node_bulkupload["BulkUploadPlugin"]
+end
+
+subgraph group_appfw["App framework"]
+  node_dispatcher["Dispatcher<br/>[Dispatcher.php]"]
+  node_middledisp["MiddlewareDispatcher"]
+  node_securitymw["SecurityMiddleware"]
+  node_bootcoord["Bootstrap Coordinator<br/>[Coordinator.php]"]
+  node_appmanager["AppManager<br/>[AppManager.php]"]
+  node_filesui["Files ViewController<br/>[ViewController.php]"]
+end
+
+subgraph group_fsapi["Filesystem API"]
+  node_rootnode["Node Root<br/>[Root.php]"]
+  node_userfolder["UserFolder<br/>[UserFolder.php]"]
+  node_view["View &#40;path API&#41;<br/>[View.php]"]
+  node_filesystem["Filesystem facade<br/>[Filesystem.php]"]
+end
+
+subgraph group_mounts["Mounts &amp; providers"]
+  node_setupmgr["SetupManager<br/>[SetupManager.php]"]
+  node_mpc["MountProviderCollection"]
+  node_homeprovider["LocalHomeMountProvider"]
+  node_mountpoint["MountPoint<br/>[MountPoint.php]"]
+end
+
+subgraph group_wrappers["Storage backends &amp; wrappers"]
+  node_storagefactory["StorageFactory<br/>[StorageFactory.php]"]
+  node_common["Common &#40;base storage&#41;<br/>[Common.php]"]
+  node_local["Local storage<br/>[Local.php]"]
+  node_quotawrap["Quota wrapper<br/>[Quota.php]"]
+  node_permsmask["PermissionsMask wrapper"]
+end
+
+subgraph group_jobs["Background jobs"]
+  node_joblist["JobList<br/>[JobList.php]"]
+end
+
+node_htaccess -->|"RewriteRule to /remote.php/dav/"| node_remote
+node_cronphp -->|"CronService pulls jobs"| node_joblist
+node_remote -->|"new Server&#40;$request, $baseuri&#41;"| node_davserver
+node_davserver -->|"$root = new RootCollection&#40;&#41;"| node_rootcoll
+node_davserver -->|"new CachingTree&#40;$root&#41;"| node_objecttree
+node_davserver -->|"auth backend added"| node_davauth
+node_davserver -->|"registered after auth"| node_filesplugin
+node_davserver -->|"QuotaPlugin&#40;$view&#41;"| node_quota_plugin
+node_davserver -->|"ChunkingV2Plugin PUT hooks"| node_chunkv2
+node_davserver -->|"BulkUploadPlugin&#40;$userFolder&#41;"| node_bulkupload
+node_davserver -->|"IRootFolder::getUserFolder"| node_rootnode
+node_objecttree -->|"getNodeForPath&#40;&#41;"| node_davfile
+node_objecttree -->|"fileView = OC&#92;Files&#92;View"| node_view
+node_davfile -->|"resolvePath + file_exists"| node_view
+node_davfile -->|"finds owning mount"| node_mountpoint
+node_filesui -->|"dispatch&#40;index&#41;"| node_dispatcher
+node_dispatcher -->|"before/after/exception"| node_middledisp
+node_middledisp -->|"runs SecurityMiddleware"| node_securitymw
+node_bootcoord -->|"bootApp&#40;'files'&#41;"| node_filesui
+node_filesui -->|"index&#40;&#41; reads user folder"| node_rootnode
+node_rootnode -->|"new UserFolder&#40;...&#41;"| node_userfolder
+node_rootnode -->|"setupForUser when needed"| node_setupmgr
+node_userfolder -->|"Node ops delegate to View"| node_view
+node_filesystem -->|"Filesystem::getView&#40;&#41;"| node_view
+node_view -->|"resolvePath to MountPoint"| node_mountpoint
+node_filesystem -->|"initMountManager wiring"| node_setupmgr
+node_setupmgr -->|"loadApps&#40;&#91;'filesystem'&#93;&#41;"| node_appmanager
+node_setupmgr -->|"pull providers' mounts"| node_mpc
+node_mpc -->|"homeProviders"| node_homeprovider
+node_homeprovider -->|"HomeMountPoint at /uid"| node_mountpoint
+node_mpc -->|"IMountPoint list"| node_mountpoint
+node_mountpoint -->|"loader-&gt;wrap&#40;&#41;"| node_storagefactory
+node_setupmgr -->|"addStorageWrapper stack"| node_storagefactory
+node_storagefactory -->|"priority-sorted wrappers"| node_quotawrap
+node_storagefactory -->|"readonly/sharing masks"| node_permsmask
+node_quotawrap -->|"wraps IStorage"| node_common
+node_local -->|"class Local extends Common"| node_common
+
+click node_htaccess "https://github.com/nextcloud/server/blob/master/.htaccess"
+click node_cronphp "https://github.com/nextcloud/server/blob/master/cron.php"
+click node_remote "https://github.com/nextcloud/server/blob/master/apps/dav/appinfo/v2/remote.php"
+click node_davserver "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Server.php"
+click node_rootcoll "https://github.com/nextcloud/server/blob/master/apps/dav/lib/RootCollection.php"
+click node_davauth "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Connector/Sabre/Auth.php"
+click node_objecttree "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Connector/Sabre/ObjectTree.php"
+click node_davfile "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Connector/Sabre/File.php"
+click node_filesplugin "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Connector/Sabre/FilesPlugin.php"
+click node_quota_plugin "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Connector/Sabre/QuotaPlugin.php"
+click node_chunkv2 "https://github.com/nextcloud/server/blob/master/apps/dav/lib/Upload/ChunkingV2Plugin.php"
+click node_bulkupload "https://github.com/nextcloud/server/blob/master/apps/dav/lib/BulkUpload/BulkUploadPlugin.php"
+click node_dispatcher "https://github.com/nextcloud/server/blob/master/lib/private/AppFramework/Http/Dispatcher.php"
+click node_middledisp "https://github.com/nextcloud/server/blob/master/lib/private/AppFramework/Middleware/MiddlewareDispatcher.php"
+click node_securitymw "https://github.com/nextcloud/server/blob/master/lib/private/AppFramework/Middleware/Security/SecurityMiddleware.php"
+click node_bootcoord "https://github.com/nextcloud/server/blob/master/lib/private/AppFramework/Bootstrap/Coordinator.php"
+click node_appmanager "https://github.com/nextcloud/server/blob/master/lib/private/App/AppManager.php"
+click node_filesui "https://github.com/nextcloud/server/blob/master/apps/files/lib/Controller/ViewController.php"
+click node_rootnode "https://github.com/nextcloud/server/blob/master/lib/private/Files/Node/Root.php"
+click node_userfolder "https://github.com/nextcloud/server/blob/master/lib/private/Files/Node/UserFolder.php"
+click node_view "https://github.com/nextcloud/server/blob/master/lib/private/Files/View.php"
+click node_filesystem "https://github.com/nextcloud/server/blob/master/lib/private/Files/Filesystem.php"
+click node_setupmgr "https://github.com/nextcloud/server/blob/master/lib/private/Files/SetupManager.php"
+click node_mpc "https://github.com/nextcloud/server/blob/master/lib/private/Files/Config/MountProviderCollection.php"
+click node_homeprovider "https://github.com/nextcloud/server/blob/master/lib/private/Files/Mount/LocalHomeMountProvider.php"
+click node_mountpoint "https://github.com/nextcloud/server/blob/master/lib/private/Files/Mount/MountPoint.php"
+click node_storagefactory "https://github.com/nextcloud/server/blob/master/lib/private/Files/Storage/StorageFactory.php"
+click node_common "https://github.com/nextcloud/server/blob/master/lib/private/Files/Storage/Common.php"
+click node_local "https://github.com/nextcloud/server/blob/master/lib/private/Files/Storage/Local.php"
+click node_quotawrap "https://github.com/nextcloud/server/blob/master/lib/private/Files/Storage/Wrapper/Quota.php"
+click node_permsmask "https://github.com/nextcloud/server/blob/master/lib/private/Files/Storage/Wrapper/PermissionsMask.php"
+click node_joblist "https://github.com/nextcloud/server/blob/master/lib/private/BackgroundJob/JobList.php"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_htaccess,node_cronphp,node_storagefactory,node_common,node_local,node_quotawrap,node_permsmask toneBlue
+class node_remote,node_davserver,node_rootcoll,node_davauth,node_objecttree,node_davfile,node_joblist toneAmber
+class node_filesplugin,node_quota_plugin,node_chunkv2,node_bulkupload toneMint
+class node_dispatcher,node_middledisp,node_securitymw,node_bootcoord,node_appmanager,node_filesui toneRose
+class node_rootnode,node_userfolder,node_view,node_filesystem toneIndigo
+class node_setupmgr,node_mpc,node_homeprovider,node_mountpoint toneTeal
