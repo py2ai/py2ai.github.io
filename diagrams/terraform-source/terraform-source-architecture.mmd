@@ -1,0 +1,148 @@
+flowchart TD
+
+subgraph group_lang["HCL Language Layer"]
+  node_hcl_parser["Parser<br/>[parser.go]"]
+  node_load_hcl_file["LoadHCLFile<br/>[parser.go]"]
+  node_load_config_dir["LoadConfigDir"]
+  node_is_config_dir["IsConfigDir"]
+end
+
+subgraph group_tree["Config Tree"]
+  node_module_struct["Module<br/>[module.go]"]
+  node_config_struct["Config<br/>[config.go]"]
+  node_module_walker["ModuleWalker<br/>[config_build.go]"]
+  node_finalize["FinalizeConfig<br/>[config_build.go]"]
+end
+
+subgraph group_plan_graph["Plan Graph Builders"]
+  node_plan_builder["PlanGraphBuilder"]
+  node_steps["Steps&#40;&#41;"]
+  node_basic_builder["BasicGraphBuilder<br/>[graph_builder.go]"]
+  node_cfg_transformer["ConfigTransformer"]
+  node_state_transformer["StateTransformer"]
+  node_ref_transformer["ReferenceTransformer"]
+  node_trans_reduction["TransitiveReductionTransformer"]
+  node_apply_builder["ApplyGraphBuilder"]
+end
+
+subgraph group_walk["Graph Walk &amp; Eval"]
+  node_graph_dag["Graph<br/>[graph.go]"]
+  node_walk["Graph.Walk<br/>[graph.go]"]
+  node_walker_iface["GraphWalker<br/>[graph_walk.go]"]
+  node_eval_ctx["EvalContext<br/>[eval_context.go]"]
+end
+
+subgraph group_resources["Resource Planning"]
+  node_expand_res["nodeExpandPlannableResource"]
+  node_abs_resource["NodeAbstractResource"]
+  node_orphan_node["NodePlannableResourceInstanceOrphan"]
+end
+
+subgraph group_state["State &amp; Statefile"]
+  node_state["State<br/>[state.go]"]
+  node_sync_state["SyncState<br/>[sync.go]"]
+  node_resource_instance["ResourceInstance<br/>[resource.go]"]
+  node_inst_obj_src["ResourceInstanceObjectSrc"]
+  node_statefile_read["statefile.Read<br/>[read.go]"]
+end
+
+subgraph group_proto["Provider Plugin Protocol"]
+  node_versioned_plugins["VersionedPlugins<br/>[plugin.go]"]
+  node_handshake["Handshake<br/>[serve.go]"]
+  node_serve["Serve<br/>[serve.go]"]
+  node_grpc_provider["GRPCProvider<br/>[grpc_provider.go]"]
+end
+
+subgraph group_modes["Plan Modes"]
+  node_context_plan["Context.Plan<br/>[context_plan.go]"]
+  node_plan_graph_modes["planGraph mode switch<br/>[context_plan.go]"]
+end
+
+node_hcl_parser -->|"ParseHCL / ParseJSON"| node_load_hcl_file
+node_load_hcl_file -->|"decoded blocks"| node_load_config_dir
+node_is_config_dir -->|"dir contains .tf"| node_load_config_dir
+node_load_config_dir -->|"one Module per directory"| node_module_struct
+node_module_struct -->|"root of module tree"| node_config_struct
+node_config_struct -->|"request per module call"| node_module_walker
+node_module_walker -->|"child module attached"| node_config_struct
+node_config_struct -->|"resolve provider types"| node_finalize
+node_config_struct -->|"desired-state input"| node_plan_builder
+node_state -->|"prior-state input"| node_plan_builder
+node_plan_builder -->|"operation-specific list"| node_steps
+node_steps -->|"create config nodes"| node_cfg_transformer
+node_steps -->|"add state instances"| node_state_transformer
+node_steps -->|"analyze expressions"| node_ref_transformer
+node_ref_transformer -->|"drop redundant edges"| node_trans_reduction
+node_steps -->|"run in order"| node_basic_builder
+node_basic_builder -->|"validated DAG"| node_graph_dag
+node_apply_builder -->|"same runner, plan input"| node_basic_builder
+node_graph_dag -->|"visit vertices in parallel"| node_walk
+node_walk -->|"enter/exit + Execute"| node_walker_iface
+node_walker_iface -->|"evaluation scopes"| node_eval_ctx
+node_walk -->|"per-vertex DynamicExpand"| node_expand_res
+node_expand_res -->|"shared resource logic"| node_abs_resource
+node_state -->|"current + deposed objects"| node_state_transformer
+node_state_transformer -->|"instances without config"| node_orphan_node
+node_state -->|"Modules map lookup"| node_resource_instance
+node_resource_instance -->|"current and deposed objects"| node_inst_obj_src
+node_inst_obj_src -->|"serializable attributes"| node_statefile_read
+node_state -->|"atomic operations"| node_sync_state
+node_eval_ctx -->|"read/write during walk"| node_sync_state
+node_walk -->|"configure provider + calls"| node_grpc_provider
+node_expand_res -->|"PlanResourceChange requests"| node_grpc_provider
+node_versioned_plugins -->|"protocol 5/6 plugin sets"| node_serve
+node_handshake -->|"magic cookie gate"| node_serve
+node_grpc_provider -->|"gRPC calls to plugin process"| node_serve
+node_context_plan -->|"mode-specific build"| node_plan_builder
+node_context_plan -->|"planWalk executes graph"| node_walk
+node_context_plan -->|"choose normal/refresh/destroy"| node_plan_graph_modes
+node_plan_graph_modes -->|"RefreshOnly sets skipPlanChanges"| node_plan_builder
+
+click node_hcl_parser "https://github.com/hashicorp/terraform/blob/main/internal/configs/parser.go"
+click node_load_hcl_file "https://github.com/hashicorp/terraform/blob/main/internal/configs/parser.go"
+click node_load_config_dir "https://github.com/hashicorp/terraform/blob/main/internal/configs/parser_config_dir.go"
+click node_is_config_dir "https://github.com/hashicorp/terraform/blob/main/internal/configs/parser_config_dir.go"
+click node_module_struct "https://github.com/hashicorp/terraform/blob/main/internal/configs/module.go"
+click node_config_struct "https://github.com/hashicorp/terraform/blob/main/internal/configs/config.go"
+click node_module_walker "https://github.com/hashicorp/terraform/blob/main/internal/configs/config_build.go"
+click node_finalize "https://github.com/hashicorp/terraform/blob/main/internal/configs/config_build.go"
+click node_plan_builder "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_steps "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_basic_builder "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder.go"
+click node_cfg_transformer "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_state_transformer "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_ref_transformer "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_trans_reduction "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_apply_builder "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_apply.go"
+click node_graph_dag "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph.go"
+click node_walk "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph.go"
+click node_walker_iface "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_walk.go"
+click node_eval_ctx "https://github.com/hashicorp/terraform/blob/main/internal/terraform/eval_context.go"
+click node_expand_res "https://github.com/hashicorp/terraform/blob/main/internal/terraform/node_resource_plan.go"
+click node_abs_resource "https://github.com/hashicorp/terraform/blob/main/internal/terraform/node_resource_abstract.go"
+click node_orphan_node "https://github.com/hashicorp/terraform/blob/main/internal/terraform/graph_builder_plan.go"
+click node_state "https://github.com/hashicorp/terraform/blob/main/internal/states/state.go"
+click node_sync_state "https://github.com/hashicorp/terraform/blob/main/internal/states/sync.go"
+click node_resource_instance "https://github.com/hashicorp/terraform/blob/main/internal/states/resource.go"
+click node_inst_obj_src "https://github.com/hashicorp/terraform/blob/main/internal/states/instance_object_src.go"
+click node_statefile_read "https://github.com/hashicorp/terraform/blob/main/internal/states/statefile/read.go"
+click node_versioned_plugins "https://github.com/hashicorp/terraform/blob/main/internal/plugin/plugin.go"
+click node_handshake "https://github.com/hashicorp/terraform/blob/main/internal/plugin/serve.go"
+click node_serve "https://github.com/hashicorp/terraform/blob/main/internal/plugin/serve.go"
+click node_grpc_provider "https://github.com/hashicorp/terraform/blob/main/internal/plugin/grpc_provider.go"
+click node_context_plan "https://github.com/hashicorp/terraform/blob/main/internal/terraform/context_plan.go"
+click node_plan_graph_modes "https://github.com/hashicorp/terraform/blob/main/internal/terraform/context_plan.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_hcl_parser,node_load_hcl_file,node_load_config_dir,node_is_config_dir,node_versioned_plugins,node_handshake,node_serve,node_grpc_provider toneBlue
+class node_module_struct,node_config_struct,node_module_walker,node_finalize,node_context_plan,node_plan_graph_modes toneAmber
+class node_plan_builder,node_steps,node_basic_builder,node_cfg_transformer,node_state_transformer,node_ref_transformer,node_trans_reduction,node_apply_builder toneMint
+class node_graph_dag,node_walk,node_walker_iface,node_eval_ctx toneRose
+class node_expand_res,node_abs_resource,node_orphan_node toneIndigo
+class node_state,node_sync_state,node_resource_instance,node_inst_obj_src,node_statefile_read toneTeal
