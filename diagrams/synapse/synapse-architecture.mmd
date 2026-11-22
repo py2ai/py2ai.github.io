@@ -1,0 +1,124 @@
+flowchart TD
+
+subgraph group_client_api["Client REST API"]
+  node_client_servlets["CLIENT_SERVLET_FUNCTIONS<br/>[__init__.py]"]
+  node_txn_cache["HttpTransactionCache<br/>[transactions.py]"]
+  node_client_put["RoomSendEventRestServlet<br/>[room.py]"]
+  node_sync_servlet["SyncRestServlet<br/>[sync.py]"]
+end
+
+subgraph group_event_core["Event Creation"]
+  node_event_creation["EventCreationHandler<br/>[message.py]"]
+  node_send_events_servlet["ReplicationSendEventsRestServlet"]
+end
+
+subgraph group_storage["Persistence &amp; Storage"]
+  node_persist_ctrl["EventsPersistenceStorageController<br/>[persist_events.py]"]
+  node_state_delta["Extremities &amp; state delta<br/>[persist_events.py]"]
+  node_persist_store["PersistEventsStore<br/>[events.py]"]
+  node_databases["Databases &#40;data stores&#41;<br/>[__init__.py]"]
+end
+
+subgraph group_notify_sync["Notifier &amp; Sync"]
+  node_notifier["Notifier"]
+  node_sync_handler["SyncHandler<br/>[sync.py]"]
+end
+
+subgraph group_repl["Replication Streams"]
+  node_events_stream["EventsStream"]
+  node_fed_stream["FederationStream"]
+  node_repl_handler["ReplicationCommandHandler"]
+  node_repl_redis["RedisSubscriber"]
+  node_worker_cfg["WorkerConfig"]
+end
+
+subgraph group_fedout["Federation Sending"]
+  node_send_queue["FederationRemoteSendQueue<br/>[send_queue.py]"]
+  node_fed_sender["FederationSender<br/>[__init__.py]"]
+  node_per_dest["PerDestinationQueue"]
+  node_txn_manager["TransactionManager"]
+  node_transport_client["TransportLayerClient<br/>[client.py]"]
+end
+
+subgraph group_fedin["Federation Receiving"]
+  node_fed_send_servlet["FederationSendServlet<br/>[federation.py]"]
+  node_fed_server["FederationServer"]
+  node_fed_event_handler["FederationEventHandler"]
+end
+
+subgraph group_ephem["Typing &amp; Presence EDUs"]
+  node_typing_writer["TypingWriterHandler<br/>[typing.py]"]
+  node_typing_follower["FollowerTypingHandler<br/>[typing.py]"]
+  node_presence["PresenceHandler<br/>[presence.py]"]
+  node_presence_queue["PresenceFederationQueue<br/>[presence.py]"]
+end
+
+node_client_servlets -->|"registers /rooms/*/send servlets"| node_client_put
+node_client_put -->|"txns.fetch_or_execute_request dedupe"| node_txn_cache
+node_client_put -->|"create_and_send_nonmember_event"| node_event_creation
+node_sync_servlet -->|"wait_for_sync_for_user long-poll"| node_sync_handler
+node_event_creation -->|"worker forwards to event persister"| node_send_events_servlet
+node_send_events_servlet -->|"persist on writer instance"| node_persist_ctrl
+node_event_creation -->|"persist_and_notify_client_events"| node_persist_ctrl
+node_persist_ctrl -->|"recompute extremities + delta"| node_state_delta
+node_persist_ctrl -->|"_persist_events_txn"| node_persist_store
+node_persist_store -->|"main / state / persist_events stores"| node_databases
+node_persist_ctrl -->|"notifier.on_new_room_events"| node_notifier
+node_notifier -->|"wake deferred /sync waiters"| node_sync_handler
+node_notifier -->|"notify_replication"| node_events_stream
+node_notifier -->|"notify_new_events"| node_fed_sender
+node_notifier -->|"queue rows on non-sender workers"| node_send_queue
+node_events_stream -->|"RDATA rows"| node_repl_handler
+node_repl_redis -->|"Redis pub/sub delivery"| node_repl_handler
+node_worker_cfg -->|"assigns send_federation duty"| node_fed_sender
+node_send_queue -->|"get_replication_rows"| node_fed_stream
+node_fed_stream -->|"rows consumed by sender worker"| node_fed_sender
+node_fed_sender -->|"_get_per_destination_queue"| node_per_dest
+node_per_dest -->|"attempt_new_transaction"| node_txn_manager
+node_txn_manager -->|"send_new_transaction"| node_transport_client
+node_transport_client -->|"PUT /_matrix/federation/v1/send/&#123;txn_id&#125;"| node_fed_send_servlet
+node_fed_send_servlet -->|"on_incoming_transaction"| node_fed_server
+node_fed_server -->|"on_receive_pdu"| node_fed_event_handler
+node_fed_event_handler -->|"auth + persist received PDU"| node_persist_ctrl
+node_fed_server -->|"m.typing EDU -&gt; _recv_edu"| node_typing_follower
+node_typing_follower -->|"subclass adds EDU sending"| node_typing_writer
+node_typing_writer -->|"build_and_send_edu &#40;m.typing&#41;"| node_fed_sender
+node_presence -->|"presence deltas"| node_presence_queue
+node_presence_queue -->|"m.presence EDUs"| node_fed_sender
+
+click node_client_servlets "https://github.com/element-hq/synapse/blob/develop/synapse/rest/__init__.py"
+click node_txn_cache "https://github.com/element-hq/synapse/blob/develop/synapse/rest/client/transactions.py"
+click node_client_put "https://github.com/element-hq/synapse/blob/develop/synapse/rest/client/room.py"
+click node_sync_servlet "https://github.com/element-hq/synapse/blob/develop/synapse/rest/client/sync.py"
+click node_event_creation "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/message.py"
+click node_persist_ctrl "https://github.com/element-hq/synapse/blob/develop/synapse/storage/controllers/persist_events.py"
+click node_state_delta "https://github.com/element-hq/synapse/blob/develop/synapse/storage/controllers/persist_events.py"
+click node_persist_store "https://github.com/element-hq/synapse/blob/develop/synapse/storage/databases/main/events.py"
+click node_databases "https://github.com/element-hq/synapse/blob/develop/synapse/storage/databases/__init__.py"
+click node_sync_handler "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/sync.py"
+click node_send_queue "https://github.com/element-hq/synapse/blob/develop/synapse/federation/send_queue.py"
+click node_fed_sender "https://github.com/element-hq/synapse/blob/develop/synapse/federation/sender/__init__.py"
+click node_per_dest "https://github.com/element-hq/synapse/blob/develop/synapse/federation/sender/per_destination_queue.py"
+click node_txn_manager "https://github.com/element-hq/synapse/blob/develop/synapse/federation/sender/transaction_manager.py"
+click node_transport_client "https://github.com/element-hq/synapse/blob/develop/synapse/federation/transport/client.py"
+click node_fed_send_servlet "https://github.com/element-hq/synapse/blob/develop/synapse/federation/transport/server/federation.py"
+click node_fed_server "https://github.com/element-hq/synapse/blob/develop/synapse/federation/federation_server.py"
+click node_fed_event_handler "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/federation_event.py"
+click node_typing_writer "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/typing.py"
+click node_typing_follower "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/typing.py"
+click node_presence "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/presence.py"
+click node_presence_queue "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/presence.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_client_servlets,node_txn_cache,node_client_put,node_sync_servlet,node_fed_send_servlet,node_fed_server,node_fed_event_handler toneBlue
+class node_event_creation,node_send_events_servlet,node_typing_writer,node_typing_follower,node_presence,node_presence_queue toneAmber
+class node_persist_ctrl,node_state_delta,node_persist_store,node_databases toneMint
+class node_notifier,node_sync_handler toneRose
+class node_events_stream,node_fed_stream,node_repl_handler,node_repl_redis,node_worker_cfg toneIndigo
+class node_send_queue,node_fed_sender,node_per_dest,node_txn_manager,node_transport_client toneTeal

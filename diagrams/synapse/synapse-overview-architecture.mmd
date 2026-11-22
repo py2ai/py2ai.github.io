@@ -1,0 +1,75 @@
+flowchart TD
+
+subgraph group_client_api["Client REST API"]
+  node_client_put["RoomSendEventRestServlet<br/>[room.py]"]
+  node_txn_cache["HttpTransactionCache<br/>[transactions.py]"]
+end
+
+subgraph group_event_core["Event Creation"]
+  node_event_creation["EventCreationHandler<br/>[message.py]"]
+end
+
+subgraph group_storage["Persistence &amp; Storage"]
+  node_persist_ctrl["EventsPersistenceStorageController<br/>[persist_events.py]"]
+  node_persist_store["PersistEventsStore<br/>[events.py]"]
+end
+
+subgraph group_notify_sync["Notifier &amp; Sync"]
+  node_notifier["Notifier"]
+  node_sync_handler["SyncHandler<br/>[sync.py]"]
+end
+
+subgraph group_repl["Replication Streams"]
+  node_events_stream["EventsStream"]
+  node_fed_stream["FederationStream"]
+end
+
+subgraph group_fedout["Federation Sending"]
+  node_fed_sender["FederationSender<br/>[__init__.py]"]
+end
+
+subgraph group_fedin["Federation Receiving"]
+  node_fed_server["FederationSendServlet / FederationServer"]
+end
+
+subgraph group_ephem["Typing &amp; Presence EDUs"]
+  node_ephemeral["TypingWriterHandler / PresenceHandler<br/>[typing.py]"]
+end
+
+node_client_put -->|"PUT txn_id deduplicated"| node_txn_cache
+node_client_put -->|"create_and_send_nonmember_event"| node_event_creation
+node_event_creation -->|"persistence.persist_events"| node_persist_ctrl
+node_persist_ctrl -->|"_persist_events_txn"| node_persist_store
+node_persist_ctrl -->|"on_new_room_events"| node_notifier
+node_notifier -->|"wake /sync long-polls"| node_sync_handler
+node_notifier -->|"notify_replication"| node_events_stream
+node_notifier -->|"notify_new_events"| node_fed_sender
+node_fed_stream -->|"rows feed sender worker"| node_fed_sender
+node_ephemeral -->|"m.typing / m.presence EDUs"| node_fed_sender
+node_fed_sender -->|"PUT /_matrix/federation/v1/send/&#123;txn_id&#125; to remote host"| node_fed_server
+node_fed_server -->|"on_receive_pdu: auth + persist"| node_persist_ctrl
+node_fed_server -->|"EDUs dispatch: m.typing -&gt; _recv_edu"| node_ephemeral
+
+click node_client_put "https://github.com/element-hq/synapse/blob/develop/synapse/rest/client/room.py"
+click node_txn_cache "https://github.com/element-hq/synapse/blob/develop/synapse/rest/client/transactions.py"
+click node_event_creation "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/message.py"
+click node_persist_ctrl "https://github.com/element-hq/synapse/blob/develop/synapse/storage/controllers/persist_events.py"
+click node_persist_store "https://github.com/element-hq/synapse/blob/develop/synapse/storage/databases/main/events.py"
+click node_sync_handler "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/sync.py"
+click node_fed_sender "https://github.com/element-hq/synapse/blob/develop/synapse/federation/sender/__init__.py"
+click node_fed_server "https://github.com/element-hq/synapse/blob/develop/synapse/federation/federation_server.py"
+click node_ephemeral "https://github.com/element-hq/synapse/blob/develop/synapse/handlers/typing.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_client_put,node_txn_cache,node_fed_server toneBlue
+class node_event_creation,node_ephemeral toneAmber
+class node_persist_ctrl,node_persist_store toneMint
+class node_notifier,node_sync_handler toneRose
+class node_events_stream,node_fed_stream toneIndigo
+class node_fed_sender toneTeal

@@ -1,0 +1,140 @@
+{
+  "owner": "element-hq",
+  "repo": "synapse",
+  "branch": "develop",
+  "groups": [
+    {"id": "client_api", "name": "client_api", "label": "Client REST API"},
+    {"id": "event_core", "name": "event_core", "label": "Event Creation"},
+    {"id": "storage", "name": "storage", "label": "Persistence & Storage"},
+    {"id": "notify_sync", "name": "notify_sync", "label": "Notifier & Sync"},
+    {"id": "repl", "name": "repl", "label": "Replication Streams"},
+    {"id": "fedout", "name": "fedout", "label": "Federation Sending"},
+    {"id": "fedin", "name": "fedin", "label": "Federation Receiving"},
+    {"id": "ephem", "name": "ephem", "label": "Typing & Presence EDUs"}
+  ],
+  "nodes": [
+    {
+      "id": "client_put",
+      "label": "RoomSendEventRestServlet",
+      "file": "synapse/rest/client/room.py",
+      "path": "synapse/rest/client/room.py",
+      "group": "client_api",
+      "groupId": "client_api",
+      "desc": "Handles PUT /rooms/{roomId}/send/{eventType}/{txnId} (class at L416) and hands the JSON body to EventCreationHandler.create_and_send_nonmember_event (L493)."
+    },
+    {
+      "id": "txn_cache",
+      "label": "HttpTransactionCache",
+      "file": "synapse/rest/client/transactions.py",
+      "path": "synapse/rest/client/transactions.py",
+      "group": "client_api",
+      "groupId": "client_api",
+      "desc": "Idempotency layer: a retried PUT with the same txn_id returns the first result instead of duplicating the message (L50)."
+    },
+    {
+      "id": "event_creation",
+      "label": "EventCreationHandler",
+      "file": "synapse/handlers/message.py",
+      "path": "synapse/handlers/message.py",
+      "group": "event_core",
+      "groupId": "event_core",
+      "desc": "Builds, auth-checks and persists client events; a Linearizer named room_event_creation_limit caps concurrent sends per room at 1 to avoid forking the event DAG (L488, L518)."
+    },
+    {
+      "id": "persist_ctrl",
+      "label": "EventsPersistenceStorageController",
+      "file": "synapse/storage/controllers/persist_events.py",
+      "path": "synapse/storage/controllers/persist_events.py",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "Batches events per room via a persist queue (L200) and recomputes forward extremities plus the current-state delta before writing (L342, L405)."
+    },
+    {
+      "id": "persist_store",
+      "label": "PersistEventsStore",
+      "file": "synapse/storage/databases/main/events.py",
+      "path": "synapse/storage/databases/main/events.py",
+      "group": "storage",
+      "groupId": "storage",
+      "desc": "Single SQL transaction writes event JSON, state groups and stream ordering (_persist_events_txn, L1084)."
+    },
+    {
+      "id": "notifier",
+      "label": "Notifier",
+      "file": "synapse/notifier.py",
+      "path": null,
+      "group": "notify_sync",
+      "groupId": "notify_sync",
+      "desc": "on_new_room_events (L357) wakes long-polling /sync requests on this process and pokes replication so other workers learn about the new stream token (L441)."
+    },
+    {
+      "id": "sync_handler",
+      "label": "SyncHandler",
+      "file": "synapse/handlers/sync.py",
+      "path": "synapse/handlers/sync.py",
+      "group": "notify_sync",
+      "groupId": "notify_sync",
+      "desc": "wait_for_sync_for_user (L633) parks the client request until the notifier signals fresh events, then assembles the timeline."
+    },
+    {
+      "id": "events_stream",
+      "label": "EventsStream",
+      "file": "synapse/replication/tcp/streams/events.py",
+      "path": null,
+      "group": "repl",
+      "groupId": "repl",
+      "desc": "Replication stream NAME='events' (L148-151): the row feed that carries persisted events out to worker processes."
+    },
+    {
+      "id": "fed_stream",
+      "label": "FederationStream",
+      "file": "synapse/replication/tcp/streams/federation.py",
+      "path": null,
+      "group": "repl",
+      "groupId": "repl",
+      "desc": "Replication stream NAME='federation' (L38): queued rows that drive a dedicated federation-sender worker."
+    },
+    {
+      "id": "fed_sender",
+      "label": "FederationSender",
+      "file": "synapse/federation/sender/__init__.py",
+      "path": "synapse/federation/sender/__init__.py",
+      "group": "fedout",
+      "groupId": "fedout",
+      "desc": "Wakes on notify_new_events (L529), walks new events in _process_event_queue_loop (L549) and routes each PDU/EDU to its per-destination queue; _send_pdu at L821."
+    },
+    {
+      "id": "fed_server",
+      "label": "FederationSendServlet / FederationServer",
+      "file": "synapse/federation/federation_server.py",
+      "path": "synapse/federation/federation_server.py",
+      "group": "fedin",
+      "groupId": "fedin",
+      "desc": "Receives PUT /_matrix/federation/v1/send/{txn_id}; FederationSendServlet.on_PUT (L88) reaches FederationServer.on_incoming_transaction (L317) which splits PDUs and EDUs."
+    },
+    {
+      "id": "ephemeral",
+      "label": "TypingWriterHandler / PresenceHandler",
+      "file": "synapse/handlers/typing.py",
+      "path": "synapse/handlers/typing.py",
+      "group": "ephem",
+      "groupId": "ephem",
+      "desc": "Typing updates become m.typing EDUs via build_and_send_edu (L189); presence fans out with send_presence_to_destinations (presence.py L450)."
+    }
+  ],
+  "edges": [
+    {"from": "client_put", "to": "txn_cache", "label": "PUT txn_id deduplicated"},
+    {"from": "client_put", "to": "event_creation", "label": "create_and_send_nonmember_event"},
+    {"from": "event_creation", "to": "persist_ctrl", "label": "persistence.persist_events"},
+    {"from": "persist_ctrl", "to": "persist_store", "label": "_persist_events_txn"},
+    {"from": "persist_ctrl", "to": "notifier", "label": "on_new_room_events"},
+    {"from": "notifier", "to": "sync_handler", "label": "wake /sync long-polls"},
+    {"from": "notifier", "to": "events_stream", "label": "notify_replication"},
+    {"from": "notifier", "to": "fed_sender", "label": "notify_new_events"},
+    {"from": "fed_stream", "to": "fed_sender", "label": "rows feed sender worker"},
+    {"from": "ephemeral", "to": "fed_sender", "label": "m.typing / m.presence EDUs"},
+    {"from": "fed_sender", "to": "fed_server", "label": "PUT /_matrix/federation/v1/send/{txn_id} to remote host"},
+    {"from": "fed_server", "to": "persist_ctrl", "label": "on_receive_pdu: auth + persist"},
+    {"from": "fed_server", "to": "ephemeral", "label": "EDUs dispatch: m.typing -> _recv_edu"}
+  ]
+}
