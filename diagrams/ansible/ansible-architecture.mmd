@@ -1,0 +1,137 @@
+flowchart TD
+
+subgraph group_g_cli["CLI Entry"]
+  node_playbook_cli["PlaybookCLI"]
+  node_cli_base["CLI base<br/>[__init__.py]"]
+end
+
+subgraph group_g_orch["Play Orchestration"]
+  node_playbook_model["Playbook<br/>[__init__.py]"]
+  node_play_model["Play<br/>[play.py]"]
+  node_task_model["Task<br/>[task.py]"]
+  node_play_context["PlayContext<br/>[play_context.py]"]
+  node_playbook_executor["PlaybookExecutor"]
+  node_play_iterator["PlayIterator<br/>[play_iterator.py]"]
+  node_iterating_states["IteratingStates<br/>[play_iterator.py]"]
+  node_task_queue_manager["TaskQueueManager"]
+  node_final_queue["FinalQueue"]
+  node_aggregate_stats["AggregateStats<br/>[stats.py]"]
+end
+
+subgraph group_g_strat["Strategy Plugins"]
+  node_strategy_base["StrategyBase<br/>[__init__.py]"]
+  node_linear_strategy["LinearStrategy<br/>[linear.py]"]
+  node_free_strategy["FreeStrategy<br/>[free.py]"]
+  node_host_pinned_strategy["HostPinnedStrategy<br/>[host_pinned.py]"]
+end
+
+subgraph group_g_workers["Workers &amp; Task Execution"]
+  node_worker_process["WorkerProcess<br/>[worker.py]"]
+  node_worker_queue["WorkerQueue<br/>[worker.py]"]
+  node_task_executor["TaskExecutor<br/>[task_executor.py]"]
+  node_connection_ssh["SSH Connection<br/>[ssh.py]"]
+end
+
+subgraph group_g_modules["Module Shipping"]
+  node_module_dep_finder["ModuleDepFinder<br/>[module_common.py]"]
+  node_recursive_finder["recursive_finder<br/>[module_common.py]"]
+  node_ansiballz_builder["_find_module_utils<br/>[module_common.py]"]
+end
+
+subgraph group_g_inventory["Inventory Layer"]
+  node_inventory_manager["InventoryManager<br/>[manager.py]"]
+  node_inventory_data["InventoryData<br/>[data.py]"]
+  node_ini_inventory["INI inventory<br/>[ini.py]"]
+  node_auto_inventory["auto inventory<br/>[auto.py]"]
+end
+
+subgraph group_g_plugins["Plugin &amp; Config Backbone"]
+  node_plugin_loader["PluginLoader<br/>[loader.py]"]
+  node_template_engine["TemplateEngine<br/>[_engine.py]"]
+  node_config_base["base.yml<br/>[base.yml]"]
+end
+
+node_playbook_cli -->|"subclasses"| node_cli_base
+node_playbook_cli -->|"constructs and runs"| node_playbook_executor
+node_cli_base -->|"_play_prereqs parses sources"| node_inventory_manager
+node_cli_base -->|"registers plugin paths"| node_plugin_loader
+node_playbook_executor -->|"loads"| node_playbook_model
+node_playbook_model -->|"produces plays"| node_play_model
+node_play_model -->|"compiles tasks"| node_task_model
+node_play_model -->|"strategy default comes from"| node_config_base
+node_playbook_executor -->|"runs each play"| node_task_queue_manager
+node_playbook_executor -->|"restrict_to_hosts per batch"| node_inventory_manager
+node_playbook_executor -->|"emits recap"| node_aggregate_stats
+node_task_queue_manager -->|"constructs"| node_play_iterator
+node_play_iterator -->|"advances per host"| node_iterating_states
+node_play_model -->|"compiled blocks feed"| node_play_iterator
+node_task_queue_manager -->|"strategy_loader.get"| node_linear_strategy
+node_task_queue_manager -->|"strategy_loader.get"| node_free_strategy
+node_task_queue_manager -->|"strategy_loader.get"| node_host_pinned_strategy
+node_task_queue_manager -->|"builds from play"| node_play_context
+node_linear_strategy -->|"extends"| node_strategy_base
+node_free_strategy -->|"extends"| node_strategy_base
+node_host_pinned_strategy -->|"extends"| node_free_strategy
+node_plugin_loader -->|"discovers strategies"| node_strategy_base
+node_strategy_base -->|"get_next_task_for_host"| node_play_iterator
+node_strategy_base -->|"spawns per task"| node_worker_process
+node_strategy_base -->|"drains results"| node_final_queue
+node_worker_process -->|"consumes work"| node_worker_queue
+node_worker_process -->|"delegates"| node_task_executor
+node_worker_process -->|"publishes results"| node_final_queue
+node_task_executor -->|"templates vars"| node_template_engine
+node_task_executor -->|"applies settings"| node_play_context
+node_task_executor -->|"executes remotely"| node_connection_ssh
+node_task_executor -->|"requests module payload"| node_ansiballz_builder
+node_ansiballz_builder -->|"walks imports with"| node_module_dep_finder
+node_module_dep_finder -->|"feeds dependencies"| node_recursive_finder
+node_ansiballz_builder -->|"payload ships over"| node_connection_ssh
+node_task_queue_manager -->|"updates counters"| node_aggregate_stats
+node_inventory_manager -->|"fills groups/hosts"| node_inventory_data
+node_ini_inventory -->|"parse&#40;&#41; candidate"| node_inventory_manager
+node_auto_inventory -->|"parse&#40;&#41; candidate"| node_inventory_manager
+node_plugin_loader -->|"supplies inventory plugins"| node_inventory_manager
+
+click node_cli_base "https://github.com/ansible/ansible/blob/devel/lib/ansible/cli/__init__.py"
+click node_playbook_model "https://github.com/ansible/ansible/blob/devel/lib/ansible/playbook/__init__.py"
+click node_play_model "https://github.com/ansible/ansible/blob/devel/lib/ansible/playbook/play.py"
+click node_task_model "https://github.com/ansible/ansible/blob/devel/lib/ansible/playbook/task.py"
+click node_play_context "https://github.com/ansible/ansible/blob/devel/lib/ansible/playbook/play_context.py"
+click node_playbook_executor "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/playbook_executor.py"
+click node_play_iterator "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/play_iterator.py"
+click node_iterating_states "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/play_iterator.py"
+click node_task_queue_manager "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/task_queue_manager.py"
+click node_final_queue "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/task_queue_manager.py"
+click node_aggregate_stats "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/stats.py"
+click node_strategy_base "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/strategy/__init__.py"
+click node_linear_strategy "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/strategy/linear.py"
+click node_free_strategy "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/strategy/free.py"
+click node_host_pinned_strategy "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/strategy/host_pinned.py"
+click node_worker_process "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/process/worker.py"
+click node_worker_queue "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/process/worker.py"
+click node_task_executor "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/task_executor.py"
+click node_connection_ssh "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/connection/ssh.py"
+click node_module_dep_finder "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/module_common.py"
+click node_recursive_finder "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/module_common.py"
+click node_ansiballz_builder "https://github.com/ansible/ansible/blob/devel/lib/ansible/executor/module_common.py"
+click node_inventory_manager "https://github.com/ansible/ansible/blob/devel/lib/ansible/inventory/manager.py"
+click node_inventory_data "https://github.com/ansible/ansible/blob/devel/lib/ansible/inventory/data.py"
+click node_ini_inventory "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/inventory/ini.py"
+click node_auto_inventory "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/inventory/auto.py"
+click node_plugin_loader "https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/loader.py"
+click node_template_engine "https://github.com/ansible/ansible/blob/devel/lib/ansible/_internal/_templating/_engine.py"
+click node_config_base "https://github.com/ansible/ansible/blob/devel/lib/ansible/config/base.yml"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_playbook_cli,node_cli_base,node_plugin_loader,node_template_engine,node_config_base toneBlue
+class node_playbook_model,node_play_model,node_task_model,node_play_context,node_playbook_executor,node_play_iterator,node_iterating_states,node_task_queue_manager,node_final_queue,node_aggregate_stats toneAmber
+class node_strategy_base,node_linear_strategy,node_free_strategy,node_host_pinned_strategy toneMint
+class node_worker_process,node_worker_queue,node_task_executor,node_connection_ssh toneRose
+class node_module_dep_finder,node_recursive_finder,node_ansiballz_builder toneIndigo
+class node_inventory_manager,node_inventory_data,node_ini_inventory,node_auto_inventory toneTeal
