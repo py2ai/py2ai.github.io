@@ -1,0 +1,65 @@
+﻿flowchart TD
+
+subgraph group_workhorse["Workhorse &#40;Go front door&#41;"]
+  node_w_main["workhorse main&#40;&#41;<br/>[main.go]"]
+  node_w_upstream["upstream router<br/>[upstream.go]"]
+  node_w_githttp["smart HTTP handlers<br/>[git-http.go]"]
+  node_w_apiclient["internal API client<br/>[api.go]"]
+  node_w_proxy["Rails reverse proxy<br/>[proxy.go]"]
+end
+
+subgraph group_railsweb["Rails web tier"]
+  node_r_ctl["GitHttpController"]
+  node_r_jwt["WorkhorseAuthenticatable"]
+end
+
+subgraph group_policy["Authorization policy"]
+  node_a_gate["GitAccess&#35;check<br/>[git_access.rb]"]
+end
+
+subgraph group_gitdata["Git data tier"]
+  node_w_gitaly["Gitaly smart HTTP client<br/>[smarthttp.go]"]
+  node_g_client["GitalyClient<br/>[gitaly_client.rb]"]
+  node_g_pin["pinned Gitaly build"]
+end
+
+subgraph group_jobs["Sidekiq background jobs"]
+  node_s_postrecv["PostReceiveWorker"]
+end
+
+node_w_main -->|"boots"| node_w_upstream
+node_w_upstream -->|"routes smart HTTP"| node_w_githttp
+node_w_upstream -->|"everything else"| node_w_proxy
+node_w_githttp -->|"pre-authorize"| node_w_apiclient
+node_w_apiclient -->|"auth verdict"| node_r_ctl
+node_w_proxy -->|"forwards"| node_r_ctl
+node_r_ctl -->|"verify JWT"| node_r_jwt
+node_r_ctl -->|"access check"| node_a_gate
+node_w_githttp -->|"streams packfiles"| node_w_gitaly
+node_g_client -->|"targets pinned build"| node_g_pin
+node_w_gitaly -->|"post-push hook"| node_s_postrecv
+
+click node_w_main "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/cmd/gitlab-workhorse/main.go"
+click node_w_upstream "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/upstream/upstream.go"
+click node_w_githttp "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/git/git-http.go"
+click node_w_apiclient "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/api/api.go"
+click node_w_proxy "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/proxy/proxy.go"
+click node_w_gitaly "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/gitaly/smarthttp.go"
+click node_r_ctl "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/controllers/repositories/git_http_controller.rb"
+click node_r_jwt "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/controllers/concerns/workhorse_authenticatable.rb"
+click node_a_gate "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/git_access.rb"
+click node_g_client "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/gitaly_client.rb"
+click node_s_postrecv "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/workers/repositories/post_receive_worker.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_w_main,node_w_upstream,node_w_githttp,node_w_apiclient,node_w_proxy toneBlue
+class node_r_ctl,node_r_jwt toneAmber
+class node_a_gate toneMint
+class node_w_gitaly,node_g_client,node_g_pin toneRose
+class node_s_postrecv toneIndigo

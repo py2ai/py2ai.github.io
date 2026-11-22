@@ -1,0 +1,135 @@
+{
+  "owner": "gitlab-org",
+  "repo": "gitlab",
+  "branch": "master",
+  "groups": [
+    { "id": "workhorse", "name": "workhorse", "label": "Workhorse (Go front door)" },
+    { "id": "railsweb", "name": "railsweb", "label": "Rails web tier" },
+    { "id": "policy", "name": "policy", "label": "Authorization policy" },
+    { "id": "gitdata", "name": "gitdata", "label": "Git data tier" },
+    { "id": "jobs", "name": "jobs", "label": "Sidekiq background jobs" }
+  ],
+  "nodes": [
+    {
+      "id": "w_main",
+      "label": "workhorse main()",
+      "file": "main.go",
+      "path": "workhorse/cmd/gitlab-workhorse/main.go",
+      "group": "workhorse",
+      "groupId": "workhorse",
+      "desc": "Single Go entrypoint: parse flags, then run() starts the upstream handler"
+    },
+    {
+      "id": "w_upstream",
+      "label": "upstream router",
+      "file": "upstream.go",
+      "path": "workhorse/internal/upstream/upstream.go",
+      "group": "workhorse",
+      "groupId": "workhorse",
+      "desc": "Holds the route table, round trippers and default backend http://localhost:8080"
+    },
+    {
+      "id": "w_githttp",
+      "label": "smart HTTP handlers",
+      "file": "git-http.go",
+      "path": "workhorse/internal/git/git-http.go",
+      "group": "workhorse",
+      "groupId": "workhorse",
+      "desc": "ReceivePack and UploadPack handlers for the git smart HTTP protocol"
+    },
+    {
+      "id": "w_apiclient",
+      "label": "internal API client",
+      "file": "api.go",
+      "path": "workhorse/internal/api/api.go",
+      "group": "workhorse",
+      "groupId": "workhorse",
+      "desc": "PreAuthorizeHandler asks Rails for an auth verdict, replies in vnd.gitlab-workhorse+json"
+    },
+    {
+      "id": "w_proxy",
+      "label": "Rails reverse proxy",
+      "file": "proxy.go",
+      "path": "workhorse/internal/proxy/proxy.go",
+      "group": "workhorse",
+      "groupId": "workhorse",
+      "desc": "httputil.ReverseProxy to the Puma backend, stamps the Gitlab-Workhorse header"
+    },
+    {
+      "id": "w_gitaly",
+      "label": "Gitaly smart HTTP client",
+      "file": "smarthttp.go",
+      "path": "workhorse/internal/gitaly/smarthttp.go",
+      "group": "gitdata",
+      "groupId": "gitdata",
+      "desc": "SmartHTTPClient streams InfoRefs and PostReceivePack over gRPC"
+    },
+    {
+      "id": "r_ctl",
+      "label": "GitHttpController",
+      "file": "git_http_controller.rb",
+      "path": "app/controllers/repositories/git_http_controller.rb",
+      "group": "railsweb",
+      "groupId": "railsweb",
+      "desc": "Serves info_refs, git_upload_pack, git_receive_pack and their SSH twins"
+    },
+    {
+      "id": "r_jwt",
+      "label": "WorkhorseAuthenticatable",
+      "file": "workhorse_authenticatable.rb",
+      "path": "app/controllers/concerns/workhorse_authenticatable.rb",
+      "group": "railsweb",
+      "groupId": "railsweb",
+      "desc": "verify_workhorse_api! checks the Gitlab-Workhorse-Api-Request JWT"
+    },
+    {
+      "id": "a_gate",
+      "label": "GitAccess#check",
+      "file": "git_access.rb",
+      "path": "lib/gitlab/git_access.rb",
+      "group": "policy",
+      "groupId": "policy",
+      "desc": "Gate chain: actor, protocol, commands, read-only and push rules"
+    },
+    {
+      "id": "g_client",
+      "label": "GitalyClient",
+      "file": "gitaly_client.rb",
+      "path": "lib/gitlab/gitaly_client.rb",
+      "group": "gitdata",
+      "groupId": "gitdata",
+      "desc": "gRPC stub cache plus the MAXIMUM_GITALY_CALLS = 30 n+1 guard"
+    },
+    {
+      "id": "g_pin",
+      "label": "pinned Gitaly build",
+      "file": "GITALY_SERVER_VERSION",
+      "path": "GITALY_SERVER_VERSION",
+      "group": "gitdata",
+      "groupId": "gitdata",
+      "desc": "Pins the exact external Gitaly commit that Rails and Workhorse pair with"
+    },
+    {
+      "id": "s_postrecv",
+      "label": "PostReceiveWorker",
+      "file": "post_receive_worker.rb",
+      "path": "app/workers/repositories/post_receive_worker.rb",
+      "group": "jobs",
+      "groupId": "jobs",
+      "desc": "Post-push housekeeping: routes wiki, project, snippet or design changes"
+    }
+  ],
+  "edges": [
+    { "from": "w_main", "to": "w_upstream", "label": "boots" },
+    { "from": "w_upstream", "to": "w_githttp", "label": "routes smart HTTP" },
+    { "from": "w_upstream", "to": "w_proxy", "label": "everything else" },
+    { "from": "w_githttp", "to": "w_apiclient", "label": "pre-authorize" },
+    { "from": "w_apiclient", "to": "r_ctl", "label": "auth verdict" },
+    { "from": "w_proxy", "to": "r_ctl", "label": "forwards" },
+    { "from": "r_ctl", "to": "r_jwt", "label": "verify JWT" },
+    { "from": "r_ctl", "to": "a_gate", "label": "access check" },
+    { "from": "w_githttp", "to": "w_gitaly", "label": "streams packfiles" },
+    { "from": "g_client", "to": "g_pin", "label": "targets pinned build" },
+    { "from": "w_gitaly", "to": "s_postrecv", "label": "post-push hook" }
+  ]
+}

@@ -1,0 +1,126 @@
+﻿flowchart TD
+
+subgraph group_workhorse["Workhorse &#40;Go front door&#41;"]
+  node_w_main["workhorse main&#40;&#41;<br/>[main.go]"]
+  node_w_upstream["upstream router<br/>[upstream.go]"]
+  node_w_urlprefix["URL prefix stripper<br/>[urlprefix.go]"]
+  node_w_routes["configureRoutes<br/>[routes.go]"]
+  node_w_githttp["smart HTTP handlers<br/>[git-http.go]"]
+  node_w_archive["archive sender<br/>[archive.go]"]
+  node_w_apiclient["internal API client<br/>[api.go]"]
+  node_w_proxy["Rails reverse proxy<br/>[proxy.go]"]
+  node_w_secret["signing round tripper<br/>[roundtripper.go]"]
+  node_w_sendfile["send-data honors<br/>[sendfile.go]"]
+  node_w_gitaly["Gitaly smart HTTP client<br/>[smarthttp.go]"]
+end
+
+subgraph group_railsweb["Rails web tier"]
+  node_r_ctl["GitHttpController"]
+  node_r_ctlclient["GitHttpClientController"]
+  node_r_request["WorkhorseRequest concern"]
+  node_r_jwt["WorkhorseAuthenticatable"]
+  node_r_helper["workhorse helper"]
+  node_r_shell["Gitlab::Shell<br/>[shell.rb]"]
+  node_r_project["Project model<br/>[project.rb]"]
+  node_r_repository["Repository model<br/>[repository.rb]"]
+end
+
+subgraph group_policy["Authorization policy"]
+  node_a_gate["GitAccess&#35;check<br/>[git_access.rb]"]
+  node_a_project["GitAccessProject"]
+  node_a_wiki["GitAccessWiki<br/>[git_access_wiki.rb]"]
+  node_a_design["GitAccessDesign"]
+end
+
+subgraph group_gitdata["Git data tier"]
+  node_g_client["GitalyClient<br/>[gitaly_client.rb]"]
+  node_g_call["GitalyClient::Call<br/>[call.rb]"]
+  node_g_gitrepo["Git::Repository facade<br/>[repository.rb]"]
+  node_g_blob["BlobService<br/>[blob_service.rb]"]
+  node_g_pin["pinned Gitaly build"]
+end
+
+subgraph group_jobs["Sidekiq background jobs"]
+  node_s_appworker["ApplicationWorker"]
+  node_s_postreceive["PostReceive<br/>[post_receive.rb]"]
+  node_s_postrecv["Repositories::PostReceiveWorker"]
+end
+
+node_w_main -->|"boots"| node_w_upstream
+node_w_upstream -->|"strips relative root"| node_w_urlprefix
+node_w_upstream -->|"configureRoutes"| node_w_routes
+node_w_routes -->|"registers smart HTTP"| node_w_githttp
+node_w_routes -->|"default forwarding"| node_w_proxy
+node_w_routes -->|"SendFile wrapper"| node_w_sendfile
+node_w_routes -->|"signing tripper"| node_w_secret
+node_w_routes -->|"SendArchive injecter"| node_w_archive
+node_w_githttp -->|"repoPreAuthorizeHandler"| node_w_apiclient
+node_w_githttp -->|"gRPC pack streams"| node_w_gitaly
+node_w_apiclient -->|"auth verdict JSON"| node_r_ctl
+node_w_proxy -->|"forwards to Puma"| node_r_ctl
+node_r_ctl -->|"subclass"| node_r_ctlclient
+node_r_ctl -->|"includes concern"| node_r_request
+node_r_request -->|"verify_workhorse_api!"| node_r_jwt
+node_r_ctl -->|"shell header check"| node_r_shell
+node_r_ctl -->|"before_action access_check"| node_a_gate
+node_a_gate -->|"container subclass"| node_a_project
+node_a_gate -->|"container subclass"| node_a_wiki
+node_a_gate -->|"container subclass"| node_a_design
+node_r_ctlclient -->|"repo path to project"| node_r_project
+node_r_project -->|"def repository"| node_r_repository
+node_r_repository -->|"n+1 budgeting"| node_g_client
+node_r_repository -->|"low-level facade"| node_g_gitrepo
+node_g_gitrepo -->|"service clients"| node_g_client
+node_g_gitrepo -->|"BlobService"| node_g_blob
+node_g_client -->|"Call wrapper"| node_g_call
+node_g_client -->|"targets pinned build"| node_g_pin
+node_r_helper -->|"verify before send-data"| node_r_jwt
+node_r_helper -->|"Gitlab-Workhorse-Send-Data"| node_w_sendfile
+node_w_gitaly -->|"post-push hook"| node_s_postrecv
+node_s_appworker -->|"included"| node_s_postreceive
+node_s_appworker -->|"included"| node_s_postrecv
+node_s_postreceive -->|"perform delegates"| node_s_postrecv
+
+click node_w_main "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/cmd/gitlab-workhorse/main.go"
+click node_w_upstream "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/upstream/upstream.go"
+click node_w_urlprefix "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/urlprefix/urlprefix.go"
+click node_w_routes "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/upstream/routes.go"
+click node_w_githttp "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/git/git-http.go"
+click node_w_archive "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/git/archive.go"
+click node_w_apiclient "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/api/api.go"
+click node_w_proxy "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/proxy/proxy.go"
+click node_w_secret "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/secret/roundtripper.go"
+click node_w_sendfile "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/sendfile/sendfile.go"
+click node_w_gitaly "https://gitlab.com/gitlab-org/gitlab/-/blob/master/workhorse/internal/gitaly/smarthttp.go"
+click node_r_ctl "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/controllers/repositories/git_http_controller.rb"
+click node_r_ctlclient "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/controllers/repositories/git_http_client_controller.rb"
+click node_r_request "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/controllers/concerns/workhorse_request.rb"
+click node_r_jwt "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/controllers/concerns/workhorse_authenticatable.rb"
+click node_r_helper "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/helpers/workhorse_helper.rb"
+click node_r_shell "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/shell.rb"
+click node_r_project "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/models/project.rb"
+click node_r_repository "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/models/repository.rb"
+click node_a_gate "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/git_access.rb"
+click node_a_project "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/git_access_project.rb"
+click node_a_wiki "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/git_access_wiki.rb"
+click node_a_design "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/git_access_design.rb"
+click node_g_client "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/gitaly_client.rb"
+click node_g_call "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/gitaly_client/call.rb"
+click node_g_gitrepo "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/git/repository.rb"
+click node_g_blob "https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/gitaly_client/blob_service.rb"
+click node_s_appworker "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/workers/concerns/application_worker.rb"
+click node_s_postreceive "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/workers/post_receive.rb"
+click node_s_postrecv "https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/workers/repositories/post_receive_worker.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_w_main,node_w_upstream,node_w_urlprefix,node_w_routes,node_w_githttp,node_w_archive,node_w_apiclient,node_w_proxy,node_w_secret,node_w_sendfile,node_w_gitaly toneBlue
+class node_r_ctl,node_r_ctlclient,node_r_request,node_r_jwt,node_r_helper,node_r_shell,node_r_project,node_r_repository toneAmber
+class node_a_gate,node_a_project,node_a_wiki,node_a_design toneMint
+class node_g_client,node_g_call,node_g_gitrepo,node_g_blob,node_g_pin toneRose
+class node_s_appworker,node_s_postreceive,node_s_postrecv toneIndigo
