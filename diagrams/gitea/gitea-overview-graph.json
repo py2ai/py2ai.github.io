@@ -1,0 +1,41 @@
+{
+  "owner": "go-gitea",
+  "repo": "gitea",
+  "branch": "main",
+  "groups": [
+    { "id": "http_entry", "name": "HTTP entry", "label": "Smart HTTP entry (routers/web)" },
+    { "id": "http_handlers", "name": "HTTP handlers", "label": "Smart HTTP handlers" },
+    { "id": "ssh_entry", "name": "SSH entry", "label": "SSH entry (cmd)" },
+    { "id": "internal_api", "name": "Internal API", "label": "Internal API (routers/private)" },
+    { "id": "git_exec", "name": "Git execution", "label": "Git execution (modules/git)" }
+  ],
+  "nodes": [
+    { "id": "client_http", "label": "git client (HTTPS remote)", "file": null, "path": null, "group": "HTTP entry", "groupId": "http_entry", "desc": "git clone/push over https://host/owner/repo.git" },
+    { "id": "web_router", "label": "web.go mounts git routes", "file": "web.go", "path": "routers/web/web.go", "group": "HTTP entry", "groupId": "http_entry", "desc": "addOwnerRepoGitHTTPRouters wired with auth middlewares" },
+    { "id": "githttp_router", "label": "githttp.go route table", "file": "githttp.go", "path": "routers/web/githttp.go", "group": "HTTP entry", "groupId": "http_entry", "desc": "/git-upload-pack, /git-receive-pack, /info/refs and dumb-HTTP object paths" },
+    { "id": "http_base", "label": "httpBase auth + permission gate", "file": "githttp.go", "path": "routers/web/repo/githttp.go", "group": "http_handlers", "groupId": "http_handlers", "desc": "resolves owner/repo, wiki suffix, access mode, redirects" },
+    { "id": "service_rpc", "label": "serviceRPC runs git services", "file": "githttp.go", "path": "routers/web/repo/githttp.go", "group": "http_handlers", "groupId": "http_handlers", "desc": "streams request body into git --stateless-rpc and copies stdout to the response" },
+    { "id": "info_refs", "label": "GetInfoRefs advertisement", "file": "githttp.go", "path": "routers/web/repo/githttp.go", "group": "http_handlers", "groupId": "http_handlers", "desc": "advertises refs via pkt-line for the negotiated service" },
+    { "id": "client_ssh", "label": "git client (SSH remote)", "file": null, "path": null, "group": "ssh_entry", "groupId": "ssh_entry", "desc": "git@host:owner/repo.git invokes gitea serv" },
+    { "id": "sshd", "label": "sshd AuthorizedKeysCommand", "file": null, "path": null, "group": "ssh_entry", "groupId": "ssh_entry", "desc": "OpenSSH asks the gitea keys command for a forced command per key" },
+    { "id": "serv_cmd", "label": "gitea serv", "file": "serv.go", "path": "cmd/serv.go", "group": "ssh_entry", "groupId": "ssh_entry", "desc": "parses key-<id> and SSH_ORIGINAL_COMMAND, resolves the request over the internal API" },
+    { "id": "keys_cmd", "label": "gitea keys", "file": "keys.go", "path": "cmd/keys.go", "group": "ssh_entry", "groupId": "ssh_entry", "desc": "maps an SSH key fingerprint to the authorized command line" },
+    { "id": "internal_api", "label": "internal HTTP API", "file": "internal.go", "path": "routers/private/internal.go", "group": "internal_api", "groupId": "internal_api", "desc": "token-guarded /serv and /hook endpoints shared by both transports" },
+    { "id": "git_exec", "label": "gitcmd.Command subprocess", "file": "command.go", "path": "modules/git/gitcmd/command.go", "group": "git_exec", "groupId": "git_exec", "desc": "guarded builder that spawns git upload-pack / receive-pack / hooks" }
+  ],
+  "edges": [
+    { "from": "client_http", "to": "web_router", "label": "GET /info/refs?service=..." },
+    { "from": "web_router", "to": "githttp_router", "label": "addOwnerRepoGitHTTPRouters" },
+    { "from": "githttp_router", "to": "http_base", "label": "POST /git-upload-pack | /git-receive-pack" },
+    { "from": "http_base", "to": "service_rpc", "label": "auth ok, mode resolved" },
+    { "from": "githttp_router", "to": "info_refs", "label": "GET /info/refs" },
+    { "from": "service_rpc", "to": "git_exec", "label": "--stateless-rpc" },
+    { "from": "client_ssh", "to": "sshd", "label": "git-upload-pack owner/repo.git" },
+    { "from": "sshd", "to": "keys_cmd", "label": "AuthorizedKeysCommand" },
+    { "from": "sshd", "to": "serv_cmd", "label": "gitea serv key-<id>" },
+    { "from": "serv_cmd", "to": "internal_api", "label": "GET /serv/command/..." },
+    { "from": "keys_cmd", "to": "internal_api", "label": "POST /ssh/authorized_keys" },
+    { "from": "internal_api", "to": "serv_cmd", "label": "repo path + permissions" },
+    { "from": "serv_cmd", "to": "git_exec", "label": "spawn git-upload-pack / receive-pack" }
+  ]
+}

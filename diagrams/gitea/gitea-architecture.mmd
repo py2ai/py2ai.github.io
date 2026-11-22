@@ -1,0 +1,109 @@
+flowchart TD
+
+subgraph group_cli_entry["Single binary: cmd entrypoints"]
+  node_main_entry["main.go cli app<br/>[main.go]"]
+  node_web_cmd["gitea web<br/>[web.go]"]
+  node_serv_cmd["gitea serv<br/>[serv.go]"]
+  node_serv_nocommand["ServNoCommand shell probe<br/>[serv.go]"]
+  node_lfs_auth["LFS auth + pure SSH transfer<br/>[serv.go]"]
+  node_keys_cmd["gitea keys<br/>[keys.go]"]
+end
+
+subgraph group_web_routes["Web route layer &#40;routers/web&#41;"]
+  node_web_router["web.go route mounting<br/>[web.go]"]
+  node_githttp_router["githttp.go route table<br/>[githttp.go]"]
+end
+
+subgraph group_http_handlers["Smart HTTP handlers &#40;routers/web/repo&#41;"]
+  node_http_base["httpBase gate<br/>[githttp.go]"]
+  node_service_rpc["serviceRPC stream<br/>[githttp.go]"]
+  node_info_refs["GetInfoRefs<br/>[githttp.go]"]
+  node_pkt_line["pkt-line writers<br/>[githttp.go]"]
+  node_dumb_serve["sendFile object serving<br/>[githttp.go]"]
+end
+
+subgraph group_internal_api["Internal API + hooks &#40;routers/private&#41;"]
+  node_internal_routes["internal route registry<br/>[internal.go]"]
+  node_internal_auth["X-Gitea-Internal-Auth<br/>[internal.go]"]
+  node_serv_command["ServCommand<br/>[serv.go]"]
+  node_agit_relax["AGit refs/for relaxation<br/>[serv.go]"]
+  node_pre_receive["HookPreReceive"]
+  node_force_push["force push + protected files"]
+  node_signed_commits["signed commit enforcement"]
+  node_post_receive["HookPostReceive"]
+  node_proc_receive["HookProcReceive"]
+end
+
+subgraph group_git_module["Git module &#40;modules/git&#41;"]
+  node_git_features["version + feature flags<br/>[git.go]"]
+  node_gitcmd["gitcmd.Command<br/>[command.go]"]
+  node_gitrepo["gitrepo helpers<br/>[gitrepo.go]"]
+  node_catfile["cat-file batch readers<br/>[catfile_batch.go]"]
+end
+
+node_main_entry -->|"web subcommand"| node_web_cmd
+node_main_entry -->|"serv subcommand"| node_serv_cmd
+node_main_entry -->|"keys subcommand"| node_keys_cmd
+node_web_cmd -->|"NormalRoutes"| node_web_router
+node_web_router -->|"addOwnerRepoGitHTTPRouters"| node_githttp_router
+node_githttp_router -->|"all git paths enter here"| node_http_base
+node_http_base -->|"write/read mode granted"| node_service_rpc
+node_http_base -->|"?service=..."| node_info_refs
+node_info_refs -->|"advertise refs"| node_pkt_line
+node_githttp_router -->|"GET object paths"| node_dumb_serve
+node_service_rpc -->|"upload/receive-pack --stateless-rpc"| node_gitcmd
+node_serv_cmd -->|"empty command"| node_serv_nocommand
+node_serv_cmd -->|"git-lfs-authenticate &#124; lfs-transfer"| node_lfs_auth
+node_serv_cmd -->|"GET /serv/command/&#123;keyid&#125;/&#123;owner&#125;/&#123;repo&#125;"| node_internal_routes
+node_keys_cmd -->|"POST /ssh/authorized_keys"| node_internal_routes
+node_internal_routes -->|"guarded"| node_internal_auth
+node_internal_routes -->|"resolve"| node_serv_command
+node_internal_routes -->|"POST /hook/pre-receive/..."| node_pre_receive
+node_internal_routes -->|"POST /hook/post-receive/..."| node_post_receive
+node_internal_routes -->|"POST /hook/proc-receive/..."| node_proc_receive
+node_serv_command -->|"receive-pack on refs/for"| node_agit_relax
+node_pre_receive -->|"protected branches"| node_force_push
+node_pre_receive -->|"required signatures"| node_signed_commits
+node_gitcmd -->|"open bare repo"| node_gitrepo
+node_gitrepo -->|"object reads"| node_catfile
+node_git_features -->|"capability gate"| node_gitcmd
+
+click node_main_entry "https://github.com/go-gitea/gitea/blob/main/cmd/main.go"
+click node_web_cmd "https://github.com/go-gitea/gitea/blob/main/cmd/web.go"
+click node_serv_cmd "https://github.com/go-gitea/gitea/blob/main/cmd/serv.go"
+click node_serv_nocommand "https://github.com/go-gitea/gitea/blob/main/cmd/serv.go"
+click node_lfs_auth "https://github.com/go-gitea/gitea/blob/main/cmd/serv.go"
+click node_keys_cmd "https://github.com/go-gitea/gitea/blob/main/cmd/keys.go"
+click node_web_router "https://github.com/go-gitea/gitea/blob/main/routers/web/web.go"
+click node_githttp_router "https://github.com/go-gitea/gitea/blob/main/routers/web/githttp.go"
+click node_http_base "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_service_rpc "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_info_refs "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_pkt_line "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_dumb_serve "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_internal_routes "https://github.com/go-gitea/gitea/blob/main/routers/private/internal.go"
+click node_internal_auth "https://github.com/go-gitea/gitea/blob/main/routers/private/internal.go"
+click node_serv_command "https://github.com/go-gitea/gitea/blob/main/routers/private/serv.go"
+click node_agit_relax "https://github.com/go-gitea/gitea/blob/main/routers/private/serv.go"
+click node_pre_receive "https://github.com/go-gitea/gitea/blob/main/routers/private/hook_pre_receive.go"
+click node_force_push "https://github.com/go-gitea/gitea/blob/main/routers/private/hook_pre_receive.go"
+click node_signed_commits "https://github.com/go-gitea/gitea/blob/main/routers/private/hook_pre_receive.go"
+click node_post_receive "https://github.com/go-gitea/gitea/blob/main/routers/private/hook_post_receive.go"
+click node_proc_receive "https://github.com/go-gitea/gitea/blob/main/routers/private/hook_proc_receive.go"
+click node_git_features "https://github.com/go-gitea/gitea/blob/main/modules/git/git.go"
+click node_gitcmd "https://github.com/go-gitea/gitea/blob/main/modules/git/gitcmd/command.go"
+click node_gitrepo "https://github.com/go-gitea/gitea/blob/main/modules/git/gitrepo.go"
+click node_catfile "https://github.com/go-gitea/gitea/blob/main/modules/git/catfile_batch.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_entry,node_web_cmd,node_serv_cmd,node_serv_nocommand,node_lfs_auth,node_keys_cmd toneBlue
+class node_web_router,node_githttp_router toneAmber
+class node_http_base,node_service_rpc,node_info_refs,node_pkt_line,node_dumb_serve toneMint
+class node_internal_routes,node_internal_auth,node_serv_command,node_agit_relax,node_pre_receive,node_force_push,node_signed_commits,node_post_receive,node_proc_receive toneRose
+class node_git_features,node_gitcmd,node_gitrepo,node_catfile toneIndigo

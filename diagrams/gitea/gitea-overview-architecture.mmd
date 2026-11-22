@@ -1,0 +1,65 @@
+flowchart TD
+
+subgraph group_http_entry["Smart HTTP entry &#40;routers/web&#41;"]
+  node_client_http["git client &#40;HTTPS remote&#41;"]
+  node_web_router["web.go mounts git routes<br/>[web.go]"]
+  node_githttp_router["githttp.go route table<br/>[githttp.go]"]
+end
+
+subgraph group_http_handlers["Smart HTTP handlers"]
+  node_http_base["httpBase auth + permission gate<br/>[githttp.go]"]
+  node_service_rpc["serviceRPC runs git services<br/>[githttp.go]"]
+  node_info_refs["GetInfoRefs advertisement<br/>[githttp.go]"]
+end
+
+subgraph group_ssh_entry["SSH entry &#40;cmd&#41;"]
+  node_client_ssh["git client &#40;SSH remote&#41;"]
+  node_sshd["sshd AuthorizedKeysCommand"]
+  node_serv_cmd["gitea serv<br/>[serv.go]"]
+  node_keys_cmd["gitea keys<br/>[keys.go]"]
+end
+
+subgraph group_internal_api["Internal API &#40;routers/private&#41;"]
+  node_internal_api["internal HTTP API<br/>[internal.go]"]
+end
+
+subgraph group_git_exec["Git execution &#40;modules/git&#41;"]
+  node_git_exec["gitcmd.Command subprocess<br/>[command.go]"]
+end
+
+node_client_http -->|"GET /info/refs?service=..."| node_web_router
+node_web_router -->|"addOwnerRepoGitHTTPRouters"| node_githttp_router
+node_githttp_router -->|"POST /git-upload-pack &#124; /git-receive-pack"| node_http_base
+node_http_base -->|"auth ok, mode resolved"| node_service_rpc
+node_githttp_router -->|"GET /info/refs"| node_info_refs
+node_service_rpc -->|"--stateless-rpc"| node_git_exec
+node_client_ssh -->|"git-upload-pack owner/repo.git"| node_sshd
+node_sshd -->|"AuthorizedKeysCommand"| node_keys_cmd
+node_sshd -->|"gitea serv key-&lt;id&gt;"| node_serv_cmd
+node_serv_cmd -->|"GET /serv/command/..."| node_internal_api
+node_keys_cmd -->|"POST /ssh/authorized_keys"| node_internal_api
+node_internal_api -->|"repo path + permissions"| node_serv_cmd
+node_serv_cmd -->|"spawn git-upload-pack / receive-pack"| node_git_exec
+
+click node_web_router "https://github.com/go-gitea/gitea/blob/main/routers/web/web.go"
+click node_githttp_router "https://github.com/go-gitea/gitea/blob/main/routers/web/githttp.go"
+click node_http_base "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_service_rpc "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_info_refs "https://github.com/go-gitea/gitea/blob/main/routers/web/repo/githttp.go"
+click node_serv_cmd "https://github.com/go-gitea/gitea/blob/main/cmd/serv.go"
+click node_keys_cmd "https://github.com/go-gitea/gitea/blob/main/cmd/keys.go"
+click node_internal_api "https://github.com/go-gitea/gitea/blob/main/routers/private/internal.go"
+click node_git_exec "https://github.com/go-gitea/gitea/blob/main/modules/git/gitcmd/command.go"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_client_http,node_web_router,node_githttp_router toneBlue
+class node_http_base,node_service_rpc,node_info_refs toneAmber
+class node_client_ssh,node_sshd,node_serv_cmd,node_keys_cmd toneMint
+class node_internal_api toneRose
+class node_git_exec toneIndigo
