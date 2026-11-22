@@ -1,0 +1,45 @@
+{
+  "owner": "discourse",
+  "repo": "discourse",
+  "branch": "main",
+  "groups": [
+    { "id": "http_api", "name": "HTTP surface", "label": "HTTP surface (app/controllers)" },
+    { "id": "models", "name": "Models", "label": "Topic / Post model layer (app/models)" },
+    { "id": "creation", "name": "Post creation", "label": "Post creation flow (lib)" },
+    { "id": "jobs", "name": "Jobs", "label": "Sidekiq jobs (app/jobs)" },
+    { "id": "search", "name": "Search", "label": "PostgreSQL full-text search" },
+    { "id": "plugins", "name": "Plugins", "label": "Plugin system (lib/plugin)" }
+  ],
+  "nodes": [
+    { "id": "posts_controller", "label": "PostsController#create", "file": "posts_controller.rb", "path": "app/controllers/posts_controller.rb", "group": "HTTP surface", "groupId": "http_api", "desc": "JSON endpoint accepting a new post; wraps params for NewPostManager" },
+    { "id": "topics_controller", "label": "TopicsController", "file": "topics_controller.rb", "path": "app/controllers/topics_controller.rb", "group": "HTTP surface", "groupId": "http_api", "desc": "serves topic pages, the view every forum reader hits" },
+    { "id": "topic_model", "label": "Topic", "file": "topic.rb", "path": "app/models/topic.rb", "group": "Topic / Post model layer", "groupId": "models", "desc": "has_many :posts; owns title, category, slug and topic timers" },
+    { "id": "post_model", "label": "Post", "file": "post.rb", "path": "app/models/post.rb", "group": "Topic / Post model layer", "groupId": "models", "desc": "belongs_to :topic; raw + cooked columns, post_number, after_commit :index_search" },
+    { "id": "new_post_manager", "label": "NewPostManager", "file": "new_post_manager.rb", "path": "lib/new_post_manager.rb", "group": "Post creation flow", "groupId": "creation", "desc": "decides between review-queue submission and direct creation" },
+    { "id": "post_creator", "label": "PostCreator", "file": "post_creator.rb", "path": "lib/post_creator.rb", "group": "Post creation flow", "groupId": "creation", "desc": "single service that validates, saves and announces posts and new topics" },
+    { "id": "post_jobs_enqueuer", "label": "PostJobsEnqueuer", "file": "post_jobs_enqueuer.rb", "path": "lib/post_jobs_enqueuer.rb", "group": "Sidekiq jobs", "groupId": "jobs", "desc": "enqueues follow-up work only after the transaction commits" },
+    { "id": "jobs_base", "label": "Jobs::Base", "file": "base.rb", "path": "app/jobs/base.rb", "group": "Sidekiq jobs", "groupId": "jobs", "desc": "module Jobs with enqueue/enqueue_in and the Base#execute wrapper" },
+    { "id": "process_post", "label": "Jobs::ProcessPost", "file": "process_post.rb", "path": "app/jobs/regular/process_post.rb", "group": "Sidekiq jobs", "groupId": "jobs", "desc": "recooks raw markdown, runs CookedPostProcessor, extracts links" },
+    { "id": "search_indexer", "label": "SearchIndexer", "file": "search_indexer.rb", "path": "app/services/search_indexer.rb", "group": "PostgreSQL full-text search", "groupId": "search", "desc": "builds weighted to_tsvector lexemes and upserts *_search_data tables" },
+    { "id": "search", "label": "Search", "file": "search.rb", "path": "lib/search.rb", "group": "PostgreSQL full-text search", "groupId": "search", "desc": "query side: to_tsquery, advanced filters, term execution" },
+    { "id": "plugin_instance", "label": "Plugin::Instance", "file": "instance.rb", "path": "lib/plugin/instance.rb", "group": "Plugin system", "groupId": "plugins", "desc": "per-plugin API object: find_all, activate!, modifiers, serializers" }
+  ],
+  "edges": [
+    { "from": "posts_controller", "to": "new_post_manager", "label": "create action passes params" },
+    { "from": "new_post_manager", "to": "post_creator", "label": "perform_create_post" },
+    { "from": "topics_controller", "to": "post_creator", "label": "first post opens topic" },
+    { "from": "post_creator", "to": "topic_model", "label": "sets up topic record" },
+    { "from": "post_creator", "to": "post_model", "label": "@post.save" },
+    { "from": "post_creator", "to": "post_jobs_enqueuer", "label": "enqueue_jobs" },
+    { "from": "post_jobs_enqueuer", "to": "jobs_base", "label": "Jobs.enqueue" },
+    { "from": "post_jobs_enqueuer", "to": "process_post", "label": "trigger :process_post" },
+    { "from": "jobs_base", "to": "process_post", "label": "Sidekiq runs execute" },
+    { "from": "process_post", "to": "post_model", "label": "update_column(:cooked)" },
+    { "from": "post_model", "to": "search_indexer", "label": "after_commit :index_search" },
+    { "from": "search_indexer", "to": "post_model", "label": "upserts *_search_data" },
+    { "from": "search", "to": "search_indexer", "label": "reads indexed lexemes" },
+    { "from": "search", "to": "topic_model", "label": "matches titles and tags" },
+    { "from": "plugin_instance", "to": "post_creator", "label": "DiscourseEvent :post_created hooks" },
+    { "from": "plugin_instance", "to": "search", "label": "register_search_advanced_filter" }
+  ]
+}

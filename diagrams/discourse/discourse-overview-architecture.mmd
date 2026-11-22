@@ -1,0 +1,75 @@
+flowchart TD
+
+subgraph group_http_api["HTTP surface &#40;app/controllers&#41;"]
+  node_posts_controller["PostsController&#35;create"]
+  node_topics_controller["TopicsController"]
+end
+
+subgraph group_models["Topic / Post model layer &#40;app/models&#41;"]
+  node_topic_model["Topic<br/>[topic.rb]"]
+  node_post_model["Post<br/>[post.rb]"]
+end
+
+subgraph group_creation["Post creation flow &#40;lib&#41;"]
+  node_new_post_manager["NewPostManager"]
+  node_post_creator["PostCreator<br/>[post_creator.rb]"]
+end
+
+subgraph group_jobs["Sidekiq jobs &#40;app/jobs&#41;"]
+  node_post_jobs_enqueuer["PostJobsEnqueuer"]
+  node_jobs_base["Jobs::Base<br/>[base.rb]"]
+  node_process_post["Jobs::ProcessPost<br/>[process_post.rb]"]
+end
+
+subgraph group_search["PostgreSQL full-text search"]
+  node_search_indexer["SearchIndexer<br/>[search_indexer.rb]"]
+  node_search["Search<br/>[search.rb]"]
+end
+
+subgraph group_plugins["Plugin system &#40;lib/plugin&#41;"]
+  node_plugin_instance["Plugin::Instance<br/>[instance.rb]"]
+end
+
+node_posts_controller -->|"create action passes params"| node_new_post_manager
+node_new_post_manager -->|"perform_create_post"| node_post_creator
+node_topics_controller -->|"first post opens topic"| node_post_creator
+node_post_creator -->|"sets up topic record"| node_topic_model
+node_post_creator -->|"@post.save"| node_post_model
+node_post_creator -->|"enqueue_jobs"| node_post_jobs_enqueuer
+node_post_jobs_enqueuer -->|"Jobs.enqueue"| node_jobs_base
+node_post_jobs_enqueuer -->|"trigger :process_post"| node_process_post
+node_jobs_base -->|"Sidekiq runs execute"| node_process_post
+node_process_post -->|"update_column&#40;:cooked&#41;"| node_post_model
+node_post_model -->|"after_commit :index_search"| node_search_indexer
+node_search_indexer -->|"upserts *_search_data"| node_post_model
+node_search -->|"reads indexed lexemes"| node_search_indexer
+node_search -->|"matches titles and tags"| node_topic_model
+node_plugin_instance -->|"DiscourseEvent :post_created hooks"| node_post_creator
+node_plugin_instance -->|"register_search_advanced_filter"| node_search
+
+click node_posts_controller "https://github.com/discourse/discourse/blob/main/app/controllers/posts_controller.rb"
+click node_topics_controller "https://github.com/discourse/discourse/blob/main/app/controllers/topics_controller.rb"
+click node_topic_model "https://github.com/discourse/discourse/blob/main/app/models/topic.rb"
+click node_post_model "https://github.com/discourse/discourse/blob/main/app/models/post.rb"
+click node_new_post_manager "https://github.com/discourse/discourse/blob/main/lib/new_post_manager.rb"
+click node_post_creator "https://github.com/discourse/discourse/blob/main/lib/post_creator.rb"
+click node_post_jobs_enqueuer "https://github.com/discourse/discourse/blob/main/lib/post_jobs_enqueuer.rb"
+click node_jobs_base "https://github.com/discourse/discourse/blob/main/app/jobs/base.rb"
+click node_process_post "https://github.com/discourse/discourse/blob/main/app/jobs/regular/process_post.rb"
+click node_search_indexer "https://github.com/discourse/discourse/blob/main/app/services/search_indexer.rb"
+click node_search "https://github.com/discourse/discourse/blob/main/lib/search.rb"
+click node_plugin_instance "https://github.com/discourse/discourse/blob/main/lib/plugin/instance.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_posts_controller,node_topics_controller toneBlue
+class node_topic_model,node_post_model toneAmber
+class node_new_post_manager,node_post_creator toneMint
+class node_post_jobs_enqueuer,node_jobs_base,node_process_post toneRose
+class node_search_indexer,node_search toneIndigo
+class node_plugin_instance toneTeal

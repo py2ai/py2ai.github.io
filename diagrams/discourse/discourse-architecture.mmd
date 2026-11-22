@@ -1,0 +1,131 @@
+flowchart TD
+
+subgraph group_http_api["HTTP surface &#40;app/controllers&#41;"]
+  node_browser["forum reader / poster"]
+  node_routes["routes.rb<br/>[routes.rb]"]
+  node_posts_controller["PostsController&#35;create"]
+  node_topics_controller["TopicsController"]
+end
+
+subgraph group_models["Topic / Post model layer &#40;app/models&#41;"]
+  node_topic_model["Topic<br/>[topic.rb]"]
+  node_post_model["Post<br/>[post.rb]"]
+  node_post_search_data["PostSearchData"]
+  node_topic_search_data["TopicSearchData"]
+end
+
+subgraph group_creation["Post creation flow &#40;lib&#41;"]
+  node_new_post_manager["NewPostManager"]
+  node_post_creator["PostCreator<br/>[post_creator.rb]"]
+  node_post_jobs_enqueuer["PostJobsEnqueuer"]
+  node_cooked_post_processor["CookedPostProcessor"]
+end
+
+subgraph group_jobs["Sidekiq jobs &#40;app/jobs&#41;"]
+  node_jobs_base["Jobs::Base<br/>[base.rb]"]
+  node_process_post["Jobs::ProcessPost<br/>[process_post.rb]"]
+  node_post_alert["Jobs::PostAlert<br/>[post_alert.rb]"]
+  node_feature_topic_users["Jobs::FeatureTopicUsers"]
+  node_post_update_tracking["Jobs::PostUpdateTopicTrackingState"]
+  node_about_stats["Jobs::AboutStats<br/>[about_stats.rb]"]
+  node_reindex_search["Jobs::ReindexSearch<br/>[reindex_search.rb]"]
+  node_sidekiq_config["sidekiq.yml<br/>[sidekiq.yml]"]
+  node_sidekiq_runtime["Sidekiq workers + Redis"]
+end
+
+subgraph group_search["PostgreSQL full-text search"]
+  node_search_indexer["SearchIndexer<br/>[search_indexer.rb]"]
+  node_search["Search<br/>[search.rb]"]
+end
+
+subgraph group_plugins["Plugin system &#40;lib/plugin&#41;"]
+  node_plugin_instance["Plugin::Instance<br/>[instance.rb]"]
+  node_discourse_registry["DiscoursePluginRegistry"]
+  node_discourse_activate["Discourse.activate_plugins!<br/>[discourse.rb]"]
+  node_chat_plugin["plugins/chat<br/>[plugin.rb]"]
+  node_ai_plugin["plugins/discourse-ai<br/>[plugin.rb]"]
+end
+
+subgraph group_wiring["App wiring &#40;config&#41;"]
+  node_application_rb["config/application.rb<br/>[application.rb]"]
+end
+
+node_browser -->|"GET /t/&lt;slug&gt;/&lt;topic_id&gt;"| node_routes
+node_routes -->|"topic show routes"| node_topics_controller
+node_routes -->|"POST /posts"| node_posts_controller
+node_posts_controller -->|"manager_params from create_params"| node_new_post_manager
+node_new_post_manager -->|"perform_create_post"| node_post_creator
+node_post_creator -->|"creates or updates topic"| node_topic_model
+node_post_creator -->|"@post.save"| node_post_model
+node_post_creator -->|"enqueue_jobs"| node_post_jobs_enqueuer
+node_post_creator -->|"cook via markdown-it"| node_cooked_post_processor
+node_post_jobs_enqueuer -->|"Jobs.enqueue"| node_jobs_base
+node_post_jobs_enqueuer -->|":post_alert"| node_post_alert
+node_post_jobs_enqueuer -->|":feature_topic_users"| node_feature_topic_users
+node_post_jobs_enqueuer -->|":post_update_topic_tracking_state"| node_post_update_tracking
+node_post_jobs_enqueuer -->|"trigger_post_process"| node_post_model
+node_post_model -->|"Jobs.enqueue&#40;:process_post&#41;"| node_process_post
+node_jobs_base -->|"Sidekiq performs execute"| node_process_post
+node_jobs_base -->|"perform"| node_post_alert
+node_jobs_base -->|"perform"| node_feature_topic_users
+node_jobs_base -->|"scheduled every X"| node_about_stats
+node_sidekiq_config -->|"queue weights"| node_jobs_base
+node_sidekiq_runtime -->|"dequeue and run"| node_jobs_base
+node_process_post -->|"CookedPostProcessor.new"| node_cooked_post_processor
+node_process_post -->|"update_column&#40;:cooked&#41;"| node_post_model
+node_reindex_search -->|"SearchIndexer rebuilds"| node_search_indexer
+node_post_model -->|"after_commit :index_search"| node_post_search_data
+node_post_model -->|"SearchIndexer.index&#40;self&#41;"| node_search_indexer
+node_search_indexer -->|"upsert weighted tsvector"| node_post_search_data
+node_topic_model -->|"index_search"| node_topic_search_data
+node_search -->|"query tsvector column"| node_post_search_data
+node_search -->|"topic and tag matchers"| node_topic_model
+node_plugin_instance -->|"registers contributions"| node_discourse_registry
+node_discourse_activate -->|"find_all + activate!"| node_plugin_instance
+node_application_rb -->|"requires lib/plugin"| node_plugin_instance
+node_chat_plugin -->|"one Plugin::Instance each"| node_plugin_instance
+node_ai_plugin -->|"one Plugin::Instance each"| node_plugin_instance
+node_plugin_instance -->|"DiscourseEvent :post_created"| node_post_creator
+node_plugin_instance -->|"register_search_advanced_filter"| node_search
+
+click node_routes "https://github.com/discourse/discourse/blob/main/config/routes.rb"
+click node_posts_controller "https://github.com/discourse/discourse/blob/main/app/controllers/posts_controller.rb"
+click node_topics_controller "https://github.com/discourse/discourse/blob/main/app/controllers/topics_controller.rb"
+click node_topic_model "https://github.com/discourse/discourse/blob/main/app/models/topic.rb"
+click node_post_model "https://github.com/discourse/discourse/blob/main/app/models/post.rb"
+click node_post_search_data "https://github.com/discourse/discourse/blob/main/app/models/post_search_data.rb"
+click node_topic_search_data "https://github.com/discourse/discourse/blob/main/app/models/topic_search_data.rb"
+click node_new_post_manager "https://github.com/discourse/discourse/blob/main/lib/new_post_manager.rb"
+click node_post_creator "https://github.com/discourse/discourse/blob/main/lib/post_creator.rb"
+click node_post_jobs_enqueuer "https://github.com/discourse/discourse/blob/main/lib/post_jobs_enqueuer.rb"
+click node_cooked_post_processor "https://github.com/discourse/discourse/blob/main/lib/cooked_post_processor.rb"
+click node_jobs_base "https://github.com/discourse/discourse/blob/main/app/jobs/base.rb"
+click node_process_post "https://github.com/discourse/discourse/blob/main/app/jobs/regular/process_post.rb"
+click node_post_alert "https://github.com/discourse/discourse/blob/main/app/jobs/regular/post_alert.rb"
+click node_feature_topic_users "https://github.com/discourse/discourse/blob/main/app/jobs/regular/feature_topic_users.rb"
+click node_post_update_tracking "https://github.com/discourse/discourse/blob/main/app/jobs/regular/post_update_topic_tracking_state.rb"
+click node_about_stats "https://github.com/discourse/discourse/blob/main/app/jobs/scheduled/about_stats.rb"
+click node_reindex_search "https://github.com/discourse/discourse/blob/main/app/jobs/scheduled/reindex_search.rb"
+click node_sidekiq_config "https://github.com/discourse/discourse/blob/main/config/sidekiq.yml"
+click node_search_indexer "https://github.com/discourse/discourse/blob/main/app/services/search_indexer.rb"
+click node_search "https://github.com/discourse/discourse/blob/main/lib/search.rb"
+click node_plugin_instance "https://github.com/discourse/discourse/blob/main/lib/plugin/instance.rb"
+click node_discourse_registry "https://github.com/discourse/discourse/blob/main/lib/discourse_plugin_registry.rb"
+click node_discourse_activate "https://github.com/discourse/discourse/blob/main/lib/discourse.rb"
+click node_chat_plugin "https://github.com/discourse/discourse/blob/main/plugins/chat/plugin.rb"
+click node_ai_plugin "https://github.com/discourse/discourse/blob/main/plugins/discourse-ai/plugin.rb"
+click node_application_rb "https://github.com/discourse/discourse/blob/main/config/application.rb"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_browser,node_routes,node_posts_controller,node_topics_controller,node_application_rb toneBlue
+class node_topic_model,node_post_model,node_post_search_data,node_topic_search_data toneAmber
+class node_new_post_manager,node_post_creator,node_post_jobs_enqueuer,node_cooked_post_processor toneMint
+class node_jobs_base,node_process_post,node_post_alert,node_feature_topic_users,node_post_update_tracking,node_about_stats,node_reindex_search,node_sidekiq_config,node_sidekiq_runtime toneRose
+class node_search_indexer,node_search toneIndigo
+class node_plugin_instance,node_discourse_registry,node_discourse_activate,node_chat_plugin,node_ai_plugin toneTeal
