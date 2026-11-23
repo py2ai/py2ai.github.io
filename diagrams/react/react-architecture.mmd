@@ -1,0 +1,146 @@
+flowchart TD
+
+subgraph group_dom_entry["react-dom/client entry"]
+  node_create_root["createRoot<br/>[ReactDOMRoot.js]"]
+  node_hydrate_root["hydrateRoot<br/>[ReactDOMRoot.js]"]
+  node_root_render["root.render&#40;&#41;<br/>[ReactDOMRoot.js]"]
+  node_root_unmount["root.unmount&#40;&#41;<br/>[ReactDOMRoot.js]"]
+end
+
+subgraph group_root_priority["Root state &amp; lane priority"]
+  node_fiber_root[("createFiberRoot<br/>[ReactFiberRoot.js]")]
+  node_fiber_root_node[("FiberRootNode<br/>[ReactFiberRoot.js]")]
+  node_schedule_update["scheduleUpdateOnFiber"]
+  node_request_lane["requestUpdateLane"]
+  node_root_scheduler{{"ReactFiberRootScheduler"}}
+  node_lanes_model[("Lanes bitmask<br/>[ReactFiberLane.js]")]
+end
+
+subgraph group_render_phase["Render phase"]
+  node_work_loop_sync["workLoopSync"]
+  node_work_loop_concurrent["workLoopConcurrent"]
+  node_perform_uow["performUnitOfWork"]
+  node_begin_work["beginWork"]
+  node_child_reconciler["reconcileChildFibers<br/>[ReactChildFiber.js]"]
+  node_create_wip["createWorkInProgress<br/>[ReactFiber.js]"]
+  node_complete_work["completeWork"]
+end
+
+subgraph group_hooks_state["Hook state machinery"]
+  node_render_with_hooks["renderWithHooks<br/>[ReactFiberHooks.js]"]
+  node_mount_state["mountStateImpl<br/>[ReactFiberHooks.js]"]
+  node_basic_state_reducer["basicStateReducer<br/>[ReactFiberHooks.js]"]
+  node_dispatch_set_state["dispatchSetState<br/>[ReactFiberHooks.js]"]
+  node_concurrent_updates["enqueueConcurrentHookUpdate"]
+end
+
+subgraph group_commit_phase["Commit phase"]
+  node_commit_root["commitRoot"]
+  node_mutation_effects["commitMutationEffectsOnFiber"]
+  node_layout_effects["commitLayoutEffectOnFiber"]
+  node_dom_config["ReactFiberConfigDOM"]
+end
+
+subgraph group_scheduler_pkg["Cooperative scheduler"]
+  node_schedule_callback{{"unstable_scheduleCallback<br/>[Scheduler.js]"}}
+  node_sched_work_loop["scheduler workLoop<br/>[Scheduler.js]"]
+  node_should_yield{{"shouldYieldToHost<br/>[Scheduler.js]"}}
+  node_min_heap[("MinHeap push/siftUp")]
+end
+
+subgraph group_data_model["Fiber data model"]
+  node_fiber_type["Fiber struct"]
+  node_work_tags["WorkTags<br/>[ReactWorkTags.js]"]
+  node_fiber_flags["Fiber flags<br/>[ReactFiberFlags.js]"]
+  node_config_shim["ReactFiberConfig shim"]
+end
+
+node_create_root -->|"allocates"| node_fiber_root
+node_create_root -.->|"returns root"| node_root_render
+node_hydrate_root -->|"reuses server HTML"| node_fiber_root
+node_root_render -->|"updateContainer"| node_schedule_update
+node_root_unmount -->|"flushSyncWork"| node_root_scheduler
+node_schedule_update -->|"resolves lane"| node_request_lane
+node_schedule_update -->|"marks pendingLanes"| node_fiber_root_node
+node_schedule_update -->|"flush strategy"| node_root_scheduler
+node_request_lane -->|"bitmask choice"| node_lanes_model
+node_root_scheduler -->|"performWorkOnRoot"| node_work_loop_concurrent
+node_fiber_root -->|"constructs"| node_fiber_root_node
+node_work_loop_sync -->|"drain fully"| node_perform_uow
+node_work_loop_concurrent -->|"while !shouldYield&#40;&#41;"| node_perform_uow
+node_perform_uow -->|"down phase"| node_begin_work
+node_perform_uow -->|"up phase"| node_complete_work
+node_begin_work -->|"clones current"| node_create_wip
+node_begin_work -->|"diffs children"| node_child_reconciler
+node_child_reconciler -.->|"recycles alternates"| node_create_wip
+node_begin_work -->|"FunctionComponent"| node_render_with_hooks
+node_render_with_hooks -->|"first render"| node_mount_state
+node_mount_state -.->|"bound dispatch"| node_dispatch_set_state
+node_dispatch_set_state -->|"eager compute"| node_basic_state_reducer
+node_dispatch_set_state -->|"enqueue update"| node_concurrent_updates
+node_dispatch_set_state -.->|"request re-render"| node_schedule_update
+node_concurrent_updates -.->|"ensure work scheduled"| node_schedule_update
+node_work_loop_concurrent -->|"lanes complete"| node_commit_root
+node_commit_root -->|"mutation phase"| node_mutation_effects
+node_commit_root -->|"layout phase"| node_layout_effects
+node_mutation_effects -->|"appendChild/insertBefore"| node_dom_config
+node_layout_effects -.->|"commitUpdate"| node_dom_config
+node_root_scheduler -->|"routes by priority"| node_schedule_callback
+node_schedule_callback -->|"push task"| node_min_heap
+node_schedule_callback -.->|"posts deadline"| node_sched_work_loop
+node_sched_work_loop -->|"checks host deadline"| node_should_yield
+node_should_yield -.->|"shouldYield import"| node_work_loop_concurrent
+node_create_wip -.->|"alternate pair"| node_fiber_type
+node_begin_work -->|"tag switch"| node_work_tags
+node_complete_work -->|"sets effects"| node_fiber_flags
+node_mutation_effects -->|"reads flags"| node_fiber_flags
+node_config_shim -.->|"shimmed at build"| node_dom_config
+
+click node_create_root "https://github.com/facebook/react/blob/main/packages/react-dom/src/client/ReactDOMRoot.js"
+click node_hydrate_root "https://github.com/facebook/react/blob/main/packages/react-dom/src/client/ReactDOMRoot.js"
+click node_root_render "https://github.com/facebook/react/blob/main/packages/react-dom/src/client/ReactDOMRoot.js"
+click node_root_unmount "https://github.com/facebook/react/blob/main/packages/react-dom/src/client/ReactDOMRoot.js"
+click node_fiber_root "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberRoot.js"
+click node_fiber_root_node "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberRoot.js"
+click node_schedule_update "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js"
+click node_request_lane "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js"
+click node_root_scheduler "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberRootScheduler.js"
+click node_lanes_model "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberLane.js"
+click node_work_loop_sync "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js"
+click node_work_loop_concurrent "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js"
+click node_perform_uow "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js"
+click node_begin_work "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberBeginWork.js"
+click node_child_reconciler "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactChildFiber.js"
+click node_create_wip "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiber.js"
+click node_complete_work "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberCompleteWork.js"
+click node_render_with_hooks "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js"
+click node_mount_state "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js"
+click node_basic_state_reducer "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js"
+click node_dispatch_set_state "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js"
+click node_concurrent_updates "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberConcurrentUpdates.js"
+click node_commit_root "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberWorkLoop.js"
+click node_mutation_effects "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberCommitWork.js"
+click node_layout_effects "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberCommitWork.js"
+click node_dom_config "https://github.com/facebook/react/blob/main/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js"
+click node_schedule_callback "https://github.com/facebook/react/blob/main/packages/scheduler/src/forks/Scheduler.js"
+click node_sched_work_loop "https://github.com/facebook/react/blob/main/packages/scheduler/src/forks/Scheduler.js"
+click node_should_yield "https://github.com/facebook/react/blob/main/packages/scheduler/src/forks/Scheduler.js"
+click node_min_heap "https://github.com/facebook/react/blob/main/packages/scheduler/src/SchedulerMinHeap.js"
+click node_fiber_type "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactInternalTypes.js"
+click node_work_tags "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactWorkTags.js"
+click node_fiber_flags "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberFlags.js"
+click node_config_shim "https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberConfig.js"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_create_root,node_hydrate_root,node_root_render,node_root_unmount,node_fiber_type,node_work_tags,node_fiber_flags,node_config_shim toneBlue
+class node_fiber_root,node_fiber_root_node,node_schedule_update,node_request_lane,node_root_scheduler,node_lanes_model toneAmber
+class node_work_loop_sync,node_work_loop_concurrent,node_perform_uow,node_begin_work,node_child_reconciler,node_create_wip,node_complete_work toneMint
+class node_render_with_hooks,node_mount_state,node_basic_state_reducer,node_dispatch_set_state,node_concurrent_updates toneRose
+class node_commit_root,node_mutation_effects,node_layout_effects,node_dom_config toneIndigo
+class node_schedule_callback,node_sched_work_loop,node_should_yield,node_min_heap toneTeal
