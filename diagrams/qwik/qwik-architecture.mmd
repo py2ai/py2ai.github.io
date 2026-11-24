@@ -1,0 +1,141 @@
+flowchart TD
+
+subgraph group_rust["Rust Optimizer &#40;SWC&#41;"]
+  node_transform_modules["transform_modules&#40;&#41;<br/>[lib.rs]"]
+  node_transform_code["transform_code&#40;&#41;<br/>[parse.rs]"]
+  node_qrl_pattern["has_qrl_pattern&#40;&#41;<br/>[parse.rs]"]
+  node_ident_collector["IdentCollector<br/>[collector.rs]"]
+  node_code_move["code_move<br/>[code_move.rs]"]
+  node_entry_strategy["EntryStrategy<br/>[entry_strategy.rs]"]
+end
+
+subgraph group_qrl["QRL Wire Layer"]
+  node_qrl_class["QRLClass<br/>[qrl-class.ts]"]
+  node_handler_qrls["toCoreHandlerQrl&#40;&#41;<br/>[handler-qrls.ts]"]
+  node_qrl_to_string["qrlToString&#40;&#41;<br/>[qrl-to-string.ts]"]
+  node_parse_qrl["parseQRL&#40;&#41;<br/>[qrl-to-string.ts]"]
+  node_allocate["allocate&#40;&#41;<br/>[allocate.ts]"]
+end
+
+subgraph group_reactive["Reactive Primitives"]
+  node_store_impl["StoreHandler proxy<br/>[store.ts]"]
+  node_signal_impl["SignalImpl<br/>[signal-impl.ts]"]
+  node_computed_signal["ComputedSignalImpl"]
+  node_wrapped_signal["WrappedSignalImpl"]
+  node_subscriber["Subscriber<br/>[subscriber.ts]"]
+  node_subscription_data["SubscriptionData"]
+end
+
+subgraph group_ssr["SSR Streaming"]
+  node_ssr_render["renderToStream&#40;&#41;<br/>[ssr-render.ts]"]
+  node_ssr_container["SSRContainer<br/>[ssr-container.ts]"]
+  node_ssr_stream_handler["StreamHandler"]
+  node_ssr_stream_writer["StringSSRWriter"]
+  node_ssr_node["SsrNode<br/>[ssr-node.ts]"]
+  node_vnode_data["VNodeData<br/>[vnode-data.ts]"]
+end
+
+subgraph group_serial["Serialization Engine"]
+  node_ser_context["SerializationContext"]
+  node_serializer["Serializer<br/>[serialize.ts]"]
+  node_auto_mode["getAutoSerializationMode&#40;&#41;<br/>[auto.ts]"]
+  node_type_ids["TypeIds<br/>[constants.ts]"]
+  node_inflate["inflate&#40;&#41;<br/>[inflate.ts]"]
+  node_deser_proxy["lazy deser proxy<br/>[deser-proxy.ts]"]
+end
+
+subgraph group_restore["Restore + Client"]
+  node_qwikloader["qwikloader<br/>[qwikloader.ts]"]
+  node_dom_container["DomContainer<br/>[dom-container.ts]"]
+  node_process_state["processContainerStateData&#40;&#41;"]
+  node_vnode_diff["vnode_diff&#40;&#41;<br/>[vnode-diff.ts]"]
+  node_bundle_graph["preloader bundle-graph<br/>[bundle-graph.ts]"]
+end
+
+node_transform_modules -->|"per input file"| node_transform_code
+node_transform_code -->|"find $ callsites"| node_qrl_pattern
+node_qrl_pattern -->|"closure free vars"| node_ident_collector
+node_qrl_pattern -->|"extract handlers"| node_code_move
+node_code_move -->|"choose chunking"| node_entry_strategy
+node_entry_strategy -->|"emit imports"| node_qrl_class
+node_qrl_class -->|"core dispatch"| node_handler_qrls
+node_qrl_class -->|"serialize"| node_qrl_to_string
+node_qrl_to_string -->|"inverse on client"| node_parse_qrl
+node_parse_qrl -->|"capture skeletons"| node_allocate
+node_store_impl -->|"signals bind props"| node_signal_impl
+node_store_impl -->|"wrap store props"| node_wrapped_signal
+node_signal_impl -->|"derive values"| node_computed_signal
+node_signal_impl -->|"subscriptions"| node_subscriber
+node_subscriber -->|"watch lists"| node_subscription_data
+node_store_impl -->|"reads during SSR"| node_ssr_container
+node_signal_impl -->|"backpatch entries"| node_ssr_container
+node_ssr_render -->|"create + render"| node_ssr_container
+node_ssr_render -->|"flush control"| node_ssr_stream_handler
+node_ssr_stream_handler -->|"buffered writes"| node_ssr_stream_writer
+node_ssr_container -->|"server DOM"| node_ssr_node
+node_ssr_node -->|"flag layout"| node_vnode_data
+node_ssr_container -->|"$serialize$&#40;&#41;"| node_ser_context
+node_ssr_container -->|"classify plain state"| node_auto_mode
+node_qrl_to_string -->|"capture roots"| node_ser_context
+node_ser_context -->|"walk roots"| node_serializer
+node_serializer -->|"tag each value"| node_type_ids
+node_serializer -->|"inline state scripts"| node_ssr_container
+node_type_ids -->|"switch per tag"| node_inflate
+node_allocate -->|"fill skeletons"| node_inflate
+node_inflate -->|"lazy roots"| node_deser_proxy
+node_deser_proxy -->|"materialize stores"| node_store_impl
+node_qwikloader -->|"attr QRL strings"| node_parse_qrl
+node_qwikloader -->|"resume event"| node_dom_container
+node_dom_container -->|"queued iterators"| node_process_state
+node_process_state -->|"ready reconcile"| node_vnode_diff
+node_qwikloader -->|"pre-import hints"| node_bundle_graph
+node_bundle_graph -->|"chunks to warm"| node_qrl_class
+
+click node_transform_modules "https://github.com/builderio/qwik/blob/main/packages/optimizer/core/src/lib.rs"
+click node_transform_code "https://github.com/builderio/qwik/blob/main/packages/optimizer/core/src/parse.rs"
+click node_qrl_pattern "https://github.com/builderio/qwik/blob/main/packages/optimizer/core/src/parse.rs"
+click node_ident_collector "https://github.com/builderio/qwik/blob/main/packages/optimizer/core/src/collector.rs"
+click node_code_move "https://github.com/builderio/qwik/blob/main/packages/optimizer/core/src/code_move.rs"
+click node_entry_strategy "https://github.com/builderio/qwik/blob/main/packages/optimizer/core/src/entry_strategy.rs"
+click node_qrl_class "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/qrl/qrl-class.ts"
+click node_handler_qrls "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/qrl/handler-qrls.ts"
+click node_qrl_to_string "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/serdes/qrl-to-string.ts"
+click node_parse_qrl "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/serdes/qrl-to-string.ts"
+click node_allocate "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/serdes/allocate.ts"
+click node_store_impl "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/reactive-primitives/impl/store.ts"
+click node_signal_impl "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/reactive-primitives/impl/signal-impl.ts"
+click node_computed_signal "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/reactive-primitives/impl/computed-signal-impl.ts"
+click node_wrapped_signal "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/reactive-primitives/impl/wrapped-signal-impl.ts"
+click node_subscriber "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/reactive-primitives/subscriber.ts"
+click node_subscription_data "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/reactive-primitives/subscription-data.ts"
+click node_ssr_render "https://github.com/builderio/qwik/blob/main/packages/qwik/src/server/ssr-render.ts"
+click node_ssr_container "https://github.com/builderio/qwik/blob/main/packages/qwik/src/server/ssr-container.ts"
+click node_ssr_stream_handler "https://github.com/builderio/qwik/blob/main/packages/qwik/src/server/ssr-stream-handler.ts"
+click node_ssr_stream_writer "https://github.com/builderio/qwik/blob/main/packages/qwik/src/server/ssr-stream-writer.ts"
+click node_ssr_node "https://github.com/builderio/qwik/blob/main/packages/qwik/src/server/ssr-node.ts"
+click node_vnode_data "https://github.com/builderio/qwik/blob/main/packages/qwik/src/server/vnode-data.ts"
+click node_ser_context "https://github.com/builderio/qwik/blob/main/packages/qwik/src/serializer/serialization-context.ts"
+click node_serializer "https://github.com/builderio/qwik/blob/main/packages/qwik/src/serializer/serialize.ts"
+click node_auto_mode "https://github.com/builderio/qwik/blob/main/packages/qwik/src/serializer/auto.ts"
+click node_type_ids "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/serdes/constants.ts"
+click node_inflate "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/serdes/inflate.ts"
+click node_deser_proxy "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/shared/serdes/deser-proxy.ts"
+click node_qwikloader "https://github.com/builderio/qwik/blob/main/packages/qwik/src/qwikloader.ts"
+click node_dom_container "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/client/dom-container.ts"
+click node_process_state "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/client/process-state-data.ts"
+click node_vnode_diff "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/client/vnode-diff.ts"
+click node_bundle_graph "https://github.com/builderio/qwik/blob/main/packages/qwik/src/core/preloader/bundle-graph.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_transform_modules,node_transform_code,node_qrl_pattern,node_ident_collector,node_code_move,node_entry_strategy toneBlue
+class node_qrl_class,node_handler_qrls,node_qrl_to_string,node_parse_qrl,node_allocate toneAmber
+class node_store_impl,node_signal_impl,node_computed_signal,node_wrapped_signal,node_subscriber,node_subscription_data toneMint
+class node_ssr_render,node_ssr_container,node_ssr_stream_handler,node_ssr_stream_writer,node_ssr_node,node_vnode_data toneRose
+class node_ser_context,node_serializer,node_auto_mode,node_type_ids,node_inflate,node_deser_proxy toneIndigo
+class node_qwikloader,node_dom_container,node_process_state,node_vnode_diff,node_bundle_graph toneTeal
