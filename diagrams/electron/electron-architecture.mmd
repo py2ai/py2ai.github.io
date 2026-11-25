@@ -1,0 +1,142 @@
+flowchart TD
+
+subgraph group_bootstrap["Process Bootstrap"]
+  node_main_bootstrap["Main bootstrap<br/>[init.ts]"]
+  node_renderer_bootstrap["Renderer bootstrap<br/>[init.ts]"]
+  node_common_bootstrap["Common bootstrap<br/>[init.ts]"]
+end
+
+subgraph group_main_api["Main-Process API Layer"]
+  node_module_list["Main module registry<br/>[module-list.ts]"]
+  node_app_api["app API<br/>[app.ts]"]
+  node_base_window["BaseWindow API<br/>[base-window.ts]"]
+  node_browser_window["BrowserWindow shim<br/>[browser-window.ts]"]
+  node_web_contents_api["webContents shim<br/>[web-contents.ts]"]
+  node_session_api["session API<br/>[session.ts]"]
+  node_net_api["net API<br/>[net.ts]"]
+end
+
+subgraph group_renderer_api["Renderer API Layer"]
+  node_ipc_renderer_api["ipcRenderer re-export<br/>[ipc-renderer.ts]"]
+  node_context_bridge_api["contextBridge re-export<br/>[context-bridge.ts]"]
+  node_web_frame_api["webFrame API<br/>[web-frame.ts]"]
+  node_guest_view_internal["guest-view channels"]
+end
+
+subgraph group_shared["Shared JS Internals"]
+  node_ipc_messages["Channel enum<br/>[ipc-messages.ts]"]
+  node_native_image_api["nativeImage API<br/>[native-image.ts]"]
+  node_shell_api["shell API<br/>[shell.ts]"]
+end
+
+subgraph group_ipc_js["IPC JavaScript Glue"]
+  node_ipc_dispatch_ts["IPC dispatch hookup<br/>[ipc-dispatch.ts]"]
+  node_ipc_main_impl["IpcMainImpl class<br/>[ipc-main-impl.ts]"]
+  node_ipc_main_internal["ipcMainInternal"]
+  node_ipc_renderer_internal["ipcRendererInternal"]
+  node_rpc_server["rpc-server<br/>[rpc-server.ts]"]
+  node_guest_view_manager["guest-view manager"]
+end
+
+subgraph group_ipc_native["Native IPC Core"]
+  node_api_mojom["ElectronApiIPC contract<br/>[api.mojom]"]
+  node_ipc_renderer_cc["Native ipcRenderer"]
+  node_ipc_handler_impl["Frame handler"]
+  node_ipc_dispatch_cc["Dispatch bridge"]
+  node_ipc_event_cc["IpcMainEvent"]
+  node_context_bridge_cc["context-bridge impl"]
+  node_browser_client["BrowserClient glue"]
+end
+
+subgraph group_gin_kit["gin Binding Kit"]
+  node_wrappable_cc["gin Wrappable base<br/>[wrappable.cc]"]
+  node_node_emitter_cc["Node EventEmitter kit"]
+  node_v8_util_cc["V8 serializer<br/>[v8_util.cc]"]
+end
+
+node_main_bootstrap -->|"imports common init"| node_common_bootstrap
+node_renderer_bootstrap -->|"imports common init"| node_common_bootstrap
+node_main_bootstrap -->|"wires IPC delivery"| node_ipc_dispatch_ts
+node_main_bootstrap -->|"preloads webContents"| node_web_contents_api
+node_main_bootstrap -->|"loads RPC server"| node_rpc_server
+node_main_bootstrap -->|"loads guest views"| node_guest_view_manager
+node_module_list -->|"loader entry"| node_app_api
+node_module_list -->|"loader entry"| node_browser_window
+node_module_list -->|"loader entry"| node_web_contents_api
+node_module_list -->|"loader entry"| node_session_api
+node_module_list -->|"loader entry"| node_net_api
+node_base_window -->|"prototype parent"| node_browser_window
+node_browser_window -->|"owns contents"| node_web_contents_api
+node_renderer_bootstrap -->|"pulls internal emitter"| node_ipc_renderer_internal
+node_renderer_bootstrap -->|"imports channel enum"| node_ipc_messages
+node_renderer_bootstrap -->|"reads webPreferences"| node_web_frame_api
+node_ipc_renderer_api -->|"linked binding"| node_ipc_renderer_cc
+node_ipc_renderer_internal -->|"same binding"| node_ipc_renderer_cc
+node_guest_view_manager -->|"internal channels"| node_ipc_main_internal
+node_guest_view_manager -->|"guest dispatch channel"| node_ipc_messages
+node_guest_view_manager -->|"dispatches guest events"| node_guest_view_internal
+node_guest_view_internal -->|"listens on internal emitter"| node_ipc_renderer_internal
+node_guest_view_internal -->|"uses channel enum"| node_ipc_messages
+node_ipc_dispatch_ts -->|"sets up emitters"| node_ipc_main_internal
+node_ipc_main_internal -->|"wraps IpcMainImpl"| node_ipc_main_impl
+node_ipc_handler_impl -->|"routes Message/Invoke"| node_ipc_dispatch_cc
+node_ipc_handler_impl -->|"builds IpcMainEvent"| node_ipc_event_cc
+node_ipc_handler_impl -->|"deserializes payloads"| node_v8_util_cc
+node_ipc_handler_impl -->|"targets sender"| node_web_contents_api
+node_browser_client -->|"binds per-frame receiver"| node_ipc_handler_impl
+node_ipc_renderer_cc -->|"mojo remote Message/Invoke"| node_api_mojom
+node_api_mojom -->|"receiver bound per frame"| node_ipc_handler_impl
+node_ipc_dispatch_cc -->|"emits on listeners"| node_ipc_main_impl
+node_ipc_event_cc -->|"gin::Wrappable event"| node_wrappable_cc
+node_ipc_renderer_cc -->|"IPCBase extends gin::Wrappable"| node_wrappable_cc
+node_ipc_renderer_cc -->|"NewNodeEventEmitter"| node_node_emitter_cc
+node_ipc_renderer_cc -->|"SerializeV8Value"| node_v8_util_cc
+node_context_bridge_api -->|"linked binding"| node_context_bridge_cc
+
+click node_main_bootstrap "https://github.com/electron/electron/blob/main/lib/browser/init.ts"
+click node_renderer_bootstrap "https://github.com/electron/electron/blob/main/lib/renderer/init.ts"
+click node_common_bootstrap "https://github.com/electron/electron/blob/main/lib/common/init.ts"
+click node_module_list "https://github.com/electron/electron/blob/main/lib/browser/api/module-list.ts"
+click node_app_api "https://github.com/electron/electron/blob/main/lib/browser/api/app.ts"
+click node_base_window "https://github.com/electron/electron/blob/main/lib/browser/api/base-window.ts"
+click node_browser_window "https://github.com/electron/electron/blob/main/lib/browser/api/browser-window.ts"
+click node_web_contents_api "https://github.com/electron/electron/blob/main/lib/browser/api/web-contents.ts"
+click node_session_api "https://github.com/electron/electron/blob/main/lib/browser/api/session.ts"
+click node_net_api "https://github.com/electron/electron/blob/main/lib/browser/api/net.ts"
+click node_ipc_renderer_api "https://github.com/electron/electron/blob/main/lib/renderer/api/ipc-renderer.ts"
+click node_context_bridge_api "https://github.com/electron/electron/blob/main/lib/renderer/api/context-bridge.ts"
+click node_web_frame_api "https://github.com/electron/electron/blob/main/lib/renderer/api/web-frame.ts"
+click node_guest_view_internal "https://github.com/electron/electron/blob/main/lib/renderer/web-view/guest-view-internal.ts"
+click node_ipc_messages "https://github.com/electron/electron/blob/main/lib/common/ipc-messages.ts"
+click node_native_image_api "https://github.com/electron/electron/blob/main/lib/common/api/native-image.ts"
+click node_shell_api "https://github.com/electron/electron/blob/main/lib/common/api/shell.ts"
+click node_ipc_dispatch_ts "https://github.com/electron/electron/blob/main/lib/browser/ipc-dispatch.ts"
+click node_ipc_main_impl "https://github.com/electron/electron/blob/main/lib/browser/ipc-main-impl.ts"
+click node_ipc_main_internal "https://github.com/electron/electron/blob/main/lib/browser/ipc-main-internal.ts"
+click node_ipc_renderer_internal "https://github.com/electron/electron/blob/main/lib/renderer/ipc-renderer-internal.ts"
+click node_rpc_server "https://github.com/electron/electron/blob/main/lib/browser/rpc-server.ts"
+click node_guest_view_manager "https://github.com/electron/electron/blob/main/lib/browser/guest-view-manager.ts"
+click node_api_mojom "https://github.com/electron/electron/blob/main/shell/common/api/api.mojom"
+click node_ipc_renderer_cc "https://github.com/electron/electron/blob/main/shell/renderer/api/electron_api_ipc_renderer.cc"
+click node_ipc_handler_impl "https://github.com/electron/electron/blob/main/shell/browser/electron_api_ipc_handler_impl.cc"
+click node_ipc_dispatch_cc "https://github.com/electron/electron/blob/main/shell/browser/api/electron_api_ipc_dispatch.cc"
+click node_ipc_event_cc "https://github.com/electron/electron/blob/main/shell/browser/api/electron_api_ipc_event.cc"
+click node_context_bridge_cc "https://github.com/electron/electron/blob/main/shell/renderer/api/electron_api_context_bridge.cc"
+click node_browser_client "https://github.com/electron/electron/blob/main/shell/browser/electron_browser_client.cc"
+click node_wrappable_cc "https://github.com/electron/electron/blob/main/shell/common/gin_helper/wrappable.cc"
+click node_node_emitter_cc "https://github.com/electron/electron/blob/main/shell/common/gin_helper/node_event_emitter.cc"
+click node_v8_util_cc "https://github.com/electron/electron/blob/main/shell/common/v8_util.cc"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main_bootstrap,node_renderer_bootstrap,node_common_bootstrap,node_wrappable_cc,node_node_emitter_cc,node_v8_util_cc toneBlue
+class node_module_list,node_app_api,node_base_window,node_browser_window,node_web_contents_api,node_session_api,node_net_api toneAmber
+class node_ipc_renderer_api,node_context_bridge_api,node_web_frame_api,node_guest_view_internal toneMint
+class node_ipc_messages,node_native_image_api,node_shell_api toneRose
+class node_ipc_dispatch_ts,node_ipc_main_impl,node_ipc_main_internal,node_ipc_renderer_internal,node_rpc_server,node_guest_view_manager toneIndigo
+class node_api_mojom,node_ipc_renderer_cc,node_ipc_handler_impl,node_ipc_dispatch_cc,node_ipc_event_cc,node_context_bridge_cc,node_browser_client toneTeal

@@ -1,0 +1,40 @@
+{
+  "owner": "electron",
+  "repo": "electron",
+  "branch": "main",
+  "groups": [
+    { "id": "app", "name": "Entry & Bootstrap", "label": "Entry & Bootstrap" },
+    { "id": "main", "name": "Main Process JS", "label": "Main Process JS" },
+    { "id": "render", "name": "Renderer Process JS", "label": "Renderer Process JS" },
+    { "id": "native", "name": "Native C++ Layer", "label": "Native C++ Layer" },
+    { "id": "transport", "name": "IPC Transport", "label": "IPC Transport" }
+  ],
+  "nodes": [
+    { "id": "node_main_init", "label": "Main bootstrap", "file": "init.ts", "path": "lib/browser/init.ts", "group": "app", "groupId": "app", "desc": "Entry script of the main process: wires IPC delivery, RPC server, guest views, then loads the app's package.json main script." },
+    { "id": "node_modlist", "label": "Main module registry", "file": "module-list.ts", "path": "lib/browser/api/module-list.ts", "group": "main", "groupId": "main", "desc": "Lazy-loader table of the 40 main-process modules (app, BrowserWindow, ipcMain, session, net...)." },
+    { "id": "node_ipcmain", "label": "ipcMain emitter", "file": "ipc-main.ts", "path": "lib/browser/api/ipc-main.ts", "group": "main", "groupId": "main", "desc": "Thin factory: one IpcMainImpl instance exposed as the public ipcMain module." },
+    { "id": "node_win", "label": "BrowserWindow shim", "file": "browser-window.ts", "path": "lib/browser/api/browser-window.ts", "group": "main", "groupId": "main", "desc": "Patches the native BrowserWindow class prototype with loadURL, send, DevTools helpers and app-level focus forwarding." },
+    { "id": "node_wc", "label": "webContents shim", "file": "web-contents.ts", "path": "lib/browser/api/web-contents.ts", "group": "main", "groupId": "main", "desc": "TS wrapper around the native electron_browser_web_contents binding; every renderer is reachable from here." },
+    { "id": "node_rinit", "label": "Renderer bootstrap", "file": "init.ts", "path": "lib/renderer/init.ts", "group": "render", "groupId": "render", "desc": "Preload/renderer init: Module.wrapper patch, process.getProcessMemoryInfo, webPreferences and app path setup." },
+    { "id": "node_ipcr", "label": "ipcRenderer re-export", "file": "ipc-renderer.ts", "path": "lib/renderer/api/ipc-renderer.ts", "group": "render", "groupId": "render", "desc": "Two-line module: re-exports the native ipcRenderer from the electron_renderer_ipc linked binding." },
+    { "id": "node_bridge", "label": "contextBridge re-export", "file": "context-bridge.ts", "path": "lib/renderer/api/context-bridge.ts", "group": "render", "groupId": "render", "desc": "Re-exports the native contextBridge binding used to expose APIs across isolated worlds." },
+    { "id": "node_mojom", "label": "ElectronApiIPC contract", "file": "api.mojom", "path": "shell/common/api/api.mojom", "group": "transport", "groupId": "transport", "desc": "Mojo interface shared by both processes: Message, Invoke, MessageSync, ReceivePostMessage plus SerializedValue struct." },
+    { "id": "node_nipcr", "label": "Native emitter (renderer)", "file": "electron_api_ipc_renderer.cc", "path": "shell/renderer/api/electron_api_ipc_renderer.cc", "group": "native", "groupId": "native", "desc": "C++ gin wrappable that builds the ipcRenderer/ipcRendererInternal emitter objects and holds the mojo remote." },
+    { "id": "node_handler", "label": "Frame handler (browser)", "file": "electron_api_ipc_handler_impl.cc", "path": "shell/browser/electron_api_ipc_handler_impl.cc", "group": "native", "groupId": "native", "desc": "Mojo receiver living per RenderFrameHost; turns incoming Message/Invoke into JS events on the browser side." },
+    { "id": "node_dispatchcc", "label": "Dispatch to ipcMain JS", "file": "electron_api_ipc_dispatch.cc", "path": "shell/browser/api/electron_api_ipc_dispatch.cc", "group": "native", "groupId": "native", "desc": "Bridge that delivers deserialized payloads onto the ipcMain/ipcMainInternal JS emitters." }
+  ],
+  "edges": [
+    { "from": "node_main_init", "to": "node_modlist", "label": "exposes API modules" },
+    { "from": "node_main_init", "to": "node_ipcmain", "label": "wires renderer IPC to ipcMain" },
+    { "from": "node_main_init", "to": "node_wc", "label": "preloads webContents" },
+    { "from": "node_rinit", "to": "node_ipcr", "label": "pulls internal ipc" },
+    { "from": "node_rinit", "to": "node_bridge", "label": "exposes contextBridge" },
+    { "from": "node_ipcr", "to": "node_nipcr", "label": "backed by linked binding" },
+    { "from": "node_nipcr", "to": "node_mojom", "label": "sends over mojo channel" },
+    { "from": "node_mojom", "to": "node_handler", "label": "receiver bound per frame" },
+    { "from": "node_handler", "to": "node_dispatchcc", "label": "forwards to JS dispatch" },
+    { "from": "node_dispatchcc", "to": "node_ipcmain", "label": "emits channel events" },
+    { "from": "node_dispatchcc", "to": "node_wc", "label": "answers via event.sender" },
+    { "from": "node_win", "to": "node_wc", "label": "wraps webContents" }
+  ]
+}
