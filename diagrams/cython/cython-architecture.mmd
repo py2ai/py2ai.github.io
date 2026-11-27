@@ -1,0 +1,143 @@
+flowchart TD
+
+subgraph group_g_entry["Entry Points"]
+  node_compile_entry["compile&#40;&#41;<br/>[Main.py]"]
+  node_context["Context<br/>[Main.py]"]
+end
+
+subgraph group_g_frontend["Frontend: Lexing &amp; Parsing"]
+  node_lexicon["make_lexicon&#40;&#41;<br/>[Lexicon.py]"]
+  node_scanner["PyrexScanner<br/>[Scanning.py]"]
+  node_parser["p_module&#40;&#41;<br/>[Parsing.py]"]
+  node_p_cdef["p_cdef_statement&#40;&#41;<br/>[Parsing.py]"]
+end
+
+subgraph group_g_tree["Syntax Tree &amp; Transforms"]
+  node_node_cls["Node<br/>[Nodes.py]"]
+  node_funcdef["CFuncDefNode<br/>[Nodes.py]"]
+  node_mv_node["MemoryViewSliceTypeNode<br/>[Nodes.py]"]
+  node_postparse["PostParse"]
+  node_interpret["InterpretCompilerDirectives"]
+  node_analyse["AnalyseDeclarationsTransform"]
+  node_closures["CreateClosureClasses"]
+  node_gil["GilCheck"]
+  node_exprnode["ExprNode<br/>[ExprNodes.py]"]
+  node_name_node["NameNode<br/>[ExprNodes.py]"]
+  node_call_node["SimpleCallNode<br/>[ExprNodes.py]"]
+end
+
+subgraph group_g_types["Types &amp; Symbols"]
+  node_scope["Scope<br/>[Symtab.py]"]
+  node_module_scope["ModuleScope<br/>[Symtab.py]"]
+  node_cclass_scope["CClassScope<br/>[Symtab.py]"]
+  node_entry["Entry<br/>[Symtab.py]"]
+  node_ctype["CType<br/>[PyrexTypes.py]"]
+  node_mv_type["MemoryViewSliceType<br/>[PyrexTypes.py]"]
+  node_func_type["CFuncType<br/>[PyrexTypes.py]"]
+  node_infer["SimpleAssignmentTypeInferer<br/>[TypeInference.py]"]
+end
+
+subgraph group_g_optimize["Optimizations"]
+  node_iter_transform["IterationTransform<br/>[Optimize.py]"]
+  node_switch["SwitchTransform<br/>[Optimize.py]"]
+  node_const_fold["ConstantFolding<br/>[Optimize.py]"]
+  node_final_opt["FinalOptimizePhase<br/>[Optimize.py]"]
+end
+
+subgraph group_g_codegen["C Emission"]
+  node_modulegen["generate_c_code&#40;&#41;<br/>[ModuleNode.py]"]
+  node_codewriter["CCodeWriter<br/>[Code.py]"]
+  node_utility["UtilityCode<br/>[Code.py]"]
+end
+
+subgraph group_g_utility["Utility &amp; Memory Views"]
+  node_mv_slice["MemoryViewSliceBufferEntry<br/>[MemoryView.py]"]
+  node_memview_pyx["memoryview class<br/>[MemoryView.pyx]"]
+end
+
+node_compile_entry -->|"creates per build"| node_context
+node_compile_entry -->|"feeds source"| node_parser
+node_lexicon -->|"token patterns"| node_scanner
+node_scanner -->|"PyrexScanner tokens"| node_parser
+node_parser -->|"cdef/cpdef blocks"| node_p_cdef
+node_parser -->|"builds Node tree"| node_node_cls
+node_node_cls -->|"function subclasses"| node_funcdef
+node_node_cls -->|"normalized"| node_postparse
+node_postparse -->|"applies directives"| node_interpret
+node_interpret -->|"semantics fixed"| node_analyse
+node_analyse -->|"creates tables"| node_scope
+node_analyse -->|"declares symbols"| node_entry
+node_scope -->|"specializes"| node_module_scope
+node_scope -->|"extension types"| node_cclass_scope
+node_analyse -->|"assigns types"| node_ctype
+node_funcdef -->|"signature type"| node_func_type
+node_ctype -->|"derives signatures"| node_func_type
+node_mv_node -->|"axes specs"| node_mv_type
+node_mv_type -->|"buffer entry"| node_mv_slice
+node_mv_slice -->|"acquire &amp; copy"| node_memview_pyx
+node_utility -->|"loads Tempita snippet"| node_memview_pyx
+node_postparse -->|"generators &amp; closures"| node_closures
+node_closures -->|"GIL audits"| node_gil
+node_exprnode -->|"leaf references"| node_name_node
+node_name_node -->|"resolves symbol"| node_entry
+node_name_node -->|"candidates"| node_infer
+node_infer -->|"narrows types"| node_ctype
+node_call_node -->|"loop targets"| node_iter_transform
+node_iter_transform -->|"C loop types"| node_ctype
+node_const_fold -->|"rewrites values"| node_exprnode
+node_final_opt -->|"final rewrites"| node_modulegen
+node_module_scope -->|"module C decls"| node_modulegen
+node_cclass_scope -->|"tp_ slots"| node_modulegen
+node_funcdef -->|"function bodies"| node_modulegen
+node_modulegen -->|"writes C"| node_codewriter
+node_switch -->|"emits switch C"| node_codewriter
+node_codewriter -->|"injects snippets"| node_utility
+
+click node_compile_entry "https://github.com/cython/cython/blob/master/Cython/Compiler/Main.py"
+click node_context "https://github.com/cython/cython/blob/master/Cython/Compiler/Main.py"
+click node_lexicon "https://github.com/cython/cython/blob/master/Cython/Compiler/Lexicon.py"
+click node_scanner "https://github.com/cython/cython/blob/master/Cython/Compiler/Scanning.py"
+click node_parser "https://github.com/cython/cython/blob/master/Cython/Compiler/Parsing.py"
+click node_p_cdef "https://github.com/cython/cython/blob/master/Cython/Compiler/Parsing.py"
+click node_node_cls "https://github.com/cython/cython/blob/master/Cython/Compiler/Nodes.py"
+click node_funcdef "https://github.com/cython/cython/blob/master/Cython/Compiler/Nodes.py"
+click node_mv_node "https://github.com/cython/cython/blob/master/Cython/Compiler/Nodes.py"
+click node_postparse "https://github.com/cython/cython/blob/master/Cython/Compiler/ParseTreeTransforms.py"
+click node_interpret "https://github.com/cython/cython/blob/master/Cython/Compiler/ParseTreeTransforms.py"
+click node_analyse "https://github.com/cython/cython/blob/master/Cython/Compiler/ParseTreeTransforms.py"
+click node_closures "https://github.com/cython/cython/blob/master/Cython/Compiler/ParseTreeTransforms.py"
+click node_gil "https://github.com/cython/cython/blob/master/Cython/Compiler/ParseTreeTransforms.py"
+click node_exprnode "https://github.com/cython/cython/blob/master/Cython/Compiler/ExprNodes.py"
+click node_name_node "https://github.com/cython/cython/blob/master/Cython/Compiler/ExprNodes.py"
+click node_call_node "https://github.com/cython/cython/blob/master/Cython/Compiler/ExprNodes.py"
+click node_scope "https://github.com/cython/cython/blob/master/Cython/Compiler/Symtab.py"
+click node_module_scope "https://github.com/cython/cython/blob/master/Cython/Compiler/Symtab.py"
+click node_cclass_scope "https://github.com/cython/cython/blob/master/Cython/Compiler/Symtab.py"
+click node_entry "https://github.com/cython/cython/blob/master/Cython/Compiler/Symtab.py"
+click node_ctype "https://github.com/cython/cython/blob/master/Cython/Compiler/PyrexTypes.py"
+click node_mv_type "https://github.com/cython/cython/blob/master/Cython/Compiler/PyrexTypes.py"
+click node_func_type "https://github.com/cython/cython/blob/master/Cython/Compiler/PyrexTypes.py"
+click node_infer "https://github.com/cython/cython/blob/master/Cython/Compiler/TypeInference.py"
+click node_iter_transform "https://github.com/cython/cython/blob/master/Cython/Compiler/Optimize.py"
+click node_switch "https://github.com/cython/cython/blob/master/Cython/Compiler/Optimize.py"
+click node_const_fold "https://github.com/cython/cython/blob/master/Cython/Compiler/Optimize.py"
+click node_final_opt "https://github.com/cython/cython/blob/master/Cython/Compiler/Optimize.py"
+click node_modulegen "https://github.com/cython/cython/blob/master/Cython/Compiler/ModuleNode.py"
+click node_codewriter "https://github.com/cython/cython/blob/master/Cython/Compiler/Code.py"
+click node_utility "https://github.com/cython/cython/blob/master/Cython/Compiler/Code.py"
+click node_mv_slice "https://github.com/cython/cython/blob/master/Cython/Compiler/MemoryView.py"
+click node_memview_pyx "https://github.com/cython/cython/blob/master/Cython/Utility/MemoryView.pyx"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_compile_entry,node_context,node_mv_slice,node_memview_pyx toneBlue
+class node_lexicon,node_scanner,node_parser,node_p_cdef toneAmber
+class node_node_cls,node_funcdef,node_mv_node,node_postparse,node_interpret,node_analyse,node_closures,node_gil,node_exprnode,node_name_node,node_call_node toneMint
+class node_scope,node_module_scope,node_cclass_scope,node_entry,node_ctype,node_mv_type,node_func_type,node_infer toneRose
+class node_iter_transform,node_switch,node_const_fold,node_final_opt toneIndigo
+class node_modulegen,node_codewriter,node_utility toneTeal
