@@ -1,0 +1,134 @@
+flowchart TD
+
+subgraph group_api["Python API"]
+  node_image_open["Image.open&#40;&#41;<br/>[Image.py]"]
+  node_frombytes["Image.frombytes&#40;&#41;<br/>[Image.py]"]
+  node_im_new["Image.new&#40;&#41;<br/>[Image.py]"]
+  node_bomb_check["_decompression_bomb_check<br/>[Image.py]"]
+end
+
+subgraph group_registry["Format Registry"]
+  node_registries["ID / OPEN / SAVE / EXTENSION<br/>[Image.py]"]
+  node_register_open["Image.register_open&#40;&#41;<br/>[Image.py]"]
+  node_register_decoder["Image.register_decoder&#40;&#41;<br/>[Image.py]"]
+  node_getdecoder["Image._getdecoder&#40;&#41;<br/>[Image.py]"]
+end
+
+subgraph group_plugins["Format Plugins"]
+  node_plugins_list["_plugins list<br/>[__init__.py]"]
+  node_bmp["BmpImagePlugin<br/>[BmpImagePlugin.py]"]
+  node_png["PngImagePlugin<br/>[PngImagePlugin.py]"]
+  node_jpeg["JpegImagePlugin<br/>[JpegImagePlugin.py]"]
+  node_bmp_rle["BmpRleDecoder<br/>[BmpImagePlugin.py]"]
+end
+
+subgraph group_loader["Tile Loader"]
+  node_imagefile["ImageFile.ImageFile<br/>[ImageFile.py]"]
+  node_tile["_Tile NamedTuple<br/>[ImageFile.py]"]
+  node_load_loop["ImageFile.load&#40;&#41;<br/>[ImageFile.py]"]
+  node_tile_sort["tile.sort&#40;key=_tilesort&#41;<br/>[ImageFile.py]"]
+  node_mmap_path["mmap fast path<br/>[ImageFile.py]"]
+  node_truncated["LOAD_TRUNCATED_IMAGES<br/>[ImageFile.py]"]
+  node_errors_map["ERRORS err-code map<br/>[ImageFile.py]"]
+end
+
+subgraph group_codecs["Codecs"]
+  node_pydecoder["PyDecoder<br/>[ImageFile.py]"]
+  node_pyencoder["PyEncoder<br/>[ImageFile.py]"]
+  node_jpeg_c["JpegDecode.c<br/>[JpegDecode.c]"]
+  node_zip_c["ZipDecode.c<br/>[ZipDecode.c]"]
+  node_tiff_c["TiffDecode.c<br/>[TiffDecode.c]"]
+  node_unpack["Unpack.c<br/>[Unpack.c]"]
+end
+
+subgraph group_ccore["C Core &#40;libImaging&#41;"]
+  node_storage["ImagingNew<br/>[Storage.c]"]
+  node_arena["ImagingNewInternal<br/>[Storage.c]"]
+  node_imaging_struct["Imaging handle<br/>[Imaging.h]"]
+  node_resample["precompute_coeffs<br/>[Resample.c]"]
+  node_boxblur["ImagingGaussianBlur<br/>[BoxBlur.c]"]
+end
+
+node_image_open -->|"factory, accept = OPEN&#91;i&#93;"| node_registries
+node_image_open -->|"extension plugin, else preinit&#40;&#41;/init&#40;&#41;"| node_plugins_list
+node_image_open -->|"checks im.size"| node_bomb_check
+node_plugins_list -->|"init&#40;&#41; imports"| node_bmp
+node_plugins_list -->|"init&#40;&#41; imports"| node_png
+node_plugins_list -->|"init&#40;&#41; imports"| node_jpeg
+node_bmp -->|"b'BM' accept"| node_register_open
+node_png -->|"PNG magic accept"| node_register_open
+node_jpeg -->|"SOI marker accept"| node_register_open
+node_register_open -->|"OPEN&#91;id&#93; = &#40;factory, accept&#41;"| node_registries
+node_bmp -->|"RLE4/RLE8 support"| node_bmp_rle
+node_bmp_rle -->|"register_decoder&#40;'bmp_rle'&#41;"| node_register_decoder
+node_register_decoder -->|"DECODERS entry"| node_registries
+node_registries -->|"factory&#40;fp, filename&#41; returns subclass"| node_imagefile
+node_imagefile -->|"_open fills self.tile"| node_tile
+node_imagefile -->|"load&#40;&#41; on first access"| node_load_loop
+node_load_loop -->|"file-order ordering"| node_tile_sort
+node_load_loop -->|"single raw tile"| node_mmap_path
+node_mmap_path -->|"Image.core.map_buffer"| node_storage
+node_load_loop -->|"one decoder per tile"| node_getdecoder
+node_getdecoder -->|"DECODERS hit first"| node_registries
+node_getdecoder -->|"core.jpeg_decoder"| node_jpeg_c
+node_getdecoder -->|"core.zip_decoder"| node_zip_c
+node_getdecoder -->|"core.libtiff_decoder"| node_tiff_c
+node_getdecoder -->|"core.raw_decoder"| node_unpack
+node_getdecoder -->|"Python codec fallback"| node_pydecoder
+node_load_loop -->|"truncated read handling"| node_truncated
+node_load_loop -->|"err_code -&gt; OSError"| node_errors_map
+node_frombytes -->|"same codec factory"| node_getdecoder
+node_im_new -->|"Image.core.new"| node_storage
+node_storage -->|"block then page-size retry"| node_arena
+node_arena -->|"fills ImagingMemoryInstance"| node_imaging_struct
+node_jpeg -->|"delegates to libjpeg"| node_jpeg_c
+node_png -->|"IDAT inflate"| node_zip_c
+node_bmp -->|"raw tile decoding"| node_unpack
+node_imagefile -->|"save&#40;&#41; -&gt; ImageFile._save"| node_pyencoder
+node_pydecoder -->|"decode&#40;&#41; err codes"| node_errors_map
+
+click node_image_open "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_frombytes "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_im_new "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_bomb_check "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_registries "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_register_open "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_register_decoder "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_getdecoder "https://github.com/python-pillow/Pillow/blob/main/src/PIL/Image.py"
+click node_plugins_list "https://github.com/python-pillow/Pillow/blob/main/src/PIL/__init__.py"
+click node_bmp "https://github.com/python-pillow/Pillow/blob/main/src/PIL/BmpImagePlugin.py"
+click node_png "https://github.com/python-pillow/Pillow/blob/main/src/PIL/PngImagePlugin.py"
+click node_jpeg "https://github.com/python-pillow/Pillow/blob/main/src/PIL/JpegImagePlugin.py"
+click node_bmp_rle "https://github.com/python-pillow/Pillow/blob/main/src/PIL/BmpImagePlugin.py"
+click node_imagefile "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_tile "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_load_loop "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_tile_sort "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_mmap_path "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_truncated "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_errors_map "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_pydecoder "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_pyencoder "https://github.com/python-pillow/Pillow/blob/main/src/PIL/ImageFile.py"
+click node_jpeg_c "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/JpegDecode.c"
+click node_zip_c "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/ZipDecode.c"
+click node_tiff_c "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/TiffDecode.c"
+click node_unpack "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/Unpack.c"
+click node_storage "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/Storage.c"
+click node_arena "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/Storage.c"
+click node_imaging_struct "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/Imaging.h"
+click node_resample "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/Resample.c"
+click node_boxblur "https://github.com/python-pillow/Pillow/blob/main/src/libImaging/BoxBlur.c"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_image_open,node_frombytes,node_im_new,node_bomb_check toneBlue
+class node_registries,node_register_open,node_register_decoder,node_getdecoder toneAmber
+class node_plugins_list,node_bmp,node_png,node_jpeg,node_bmp_rle toneMint
+class node_imagefile,node_tile,node_load_loop,node_tile_sort,node_mmap_path,node_truncated,node_errors_map toneRose
+class node_pydecoder,node_pyencoder,node_jpeg_c,node_zip_c,node_tiff_c,node_unpack toneIndigo
+class node_storage,node_arena,node_imaging_struct,node_resample,node_boxblur toneTeal
