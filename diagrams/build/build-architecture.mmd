@@ -1,0 +1,118 @@
+flowchart TD
+
+subgraph group_cli["CLI Orchestration"]
+  node_main["main&#40;&#41;<br/>[__main__.py]"]
+  node_select_build["_select_build&#40;&#41;<br/>[__main__.py]"]
+  node_via_sdist["build_package_via_sdist&#40;&#41;<br/>[__main__.py]"]
+  node_build_package["build_package&#40;&#41;<br/>[__main__.py]"]
+  node_extract_sdist["_extract_sdist&#40;&#41;<br/>[__main__.py]"]
+  node_write_report["_write_report&#40;&#41;<br/>[__main__.py]"]
+  node_bootstrap_env["_bootstrap_build_env&#40;&#41;<br/>[__main__.py]"]
+end
+
+subgraph group_builder["ProjectBuilder Core"]
+  node_projectbuilder["ProjectBuilder<br/>[_builder.py]"]
+  node_build_system["_parse_build_system_table&#40;&#41;<br/>[_builder.py]"]
+  node_find_typo["_find_typo&#40;&#41;<br/>[_builder.py]"]
+  node_check_deps["check_dependencies&#40;&#41;<br/>[_builder.py]"]
+  node_get_requires["get_requires_for_build&#40;&#41;<br/>[_builder.py]"]
+  node_prepare["prepare&#40;&#41;<br/>[_builder.py]"]
+  node_build_dist["build&#40;&#41;<br/>[_builder.py]"]
+  node_metadata_path["metadata_path&#40;&#41;<br/>[_builder.py]"]
+  node_call_backend["_call_backend&#40;&#41;<br/>[_builder.py]"]
+end
+
+subgraph group_hooks["Backend Hook Invocation"]
+  node_hook_caller["BuildBackendHookCaller<br/>[_builder.py]"]
+  node_wrap_runner["_wrap_subprocess_runner&#40;&#41;<br/>[_builder.py]"]
+  node_handle_backend["_handle_backend&#40;&#41;<br/>[_builder.py]"]
+end
+
+subgraph group_env["Environment Isolation"]
+  node_isolated_env["DefaultIsolatedEnv<br/>[env.py]"]
+  node_pip_backend["_PipBackend<br/>[env.py]"]
+  node_uv_backend["_UvBackend<br/>[env.py]"]
+  node_find_exec["_find_executable_and_scripts&#40;&#41;<br/>[env.py]"]
+end
+
+subgraph group_support["Support Modules"]
+  node_check_dependency["check_dependency&#40;&#41;<br/>[_util.py]"]
+  node_ctx_run["_ctx.run_subprocess&#40;&#41;<br/>[_ctx.py]"]
+  node_exceptions["exception types<br/>[_exceptions.py]"]
+  node_compat_tarfile["_compat.tarfile<br/>[tarfile.py]"]
+end
+
+node_main -->|"route flags"| node_select_build
+node_main -->|"--report"| node_write_report
+node_select_build -->|"default strategy"| node_via_sdist
+node_select_build -->|"--sdist / --wheel"| node_build_package
+node_via_sdist -->|"unpack archive"| node_extract_sdist
+node_via_sdist -->|"wheel from extracted source"| node_build_package
+node_via_sdist -->|"fresh env per build"| node_bootstrap_env
+node_build_package -->|"per distribution"| node_bootstrap_env
+node_bootstrap_env -->|"with DefaultIsolatedEnv"| node_isolated_env
+node_bootstrap_env -->|"from_isolated_env&#40;&#41;"| node_projectbuilder
+node_projectbuilder -->|"constructor"| node_build_system
+node_build_system -->|"near-miss keys"| node_find_typo
+node_build_system -->|"BuildSystemTableValidationError"| node_exceptions
+node_projectbuilder -->|"extra deps hook"| node_get_requires
+node_projectbuilder -->|"no-isolation check"| node_check_deps
+node_check_deps -->|"each requirement"| node_check_dependency
+node_projectbuilder -->|"all artifact ops"| node_call_backend
+node_get_requires -->|"get_requires_for_build_*"| node_hook_caller
+node_prepare -->|"prepare_metadata_for_build_wheel"| node_hook_caller
+node_metadata_path -->|"try prepare first"| node_prepare
+node_metadata_path -->|"fallback: build wheel"| node_build_dist
+node_build_dist -->|"build_sdist / build_wheel"| node_call_backend
+node_call_backend -->|"callback&#40;outdir&#41;"| node_hook_caller
+node_call_backend -->|"error wrapping"| node_handle_backend
+node_handle_backend -->|"BuildBackendException"| node_exceptions
+node_hook_caller -->|"runner with env"| node_wrap_runner
+node_wrap_runner -->|"make_extra_environ&#40;&#41;"| node_isolated_env
+node_isolated_env -->|"default installer"| node_pip_backend
+node_isolated_env -->|"--installer uv"| node_uv_backend
+node_pip_backend -->|"locate venv paths"| node_find_exec
+node_pip_backend -->|"pip install"| node_ctx_run
+node_uv_backend -->|"uv pip install"| node_ctx_run
+node_extract_sdist -->|"data_filter extraction"| node_compat_tarfile
+
+click node_main "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_select_build "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_via_sdist "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_build_package "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_extract_sdist "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_write_report "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_bootstrap_env "https://github.com/pypa/build/blob/main/src/build/__main__.py"
+click node_projectbuilder "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_build_system "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_find_typo "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_check_deps "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_get_requires "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_prepare "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_build_dist "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_metadata_path "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_call_backend "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_hook_caller "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_wrap_runner "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_handle_backend "https://github.com/pypa/build/blob/main/src/build/_builder.py"
+click node_isolated_env "https://github.com/pypa/build/blob/main/src/build/env.py"
+click node_pip_backend "https://github.com/pypa/build/blob/main/src/build/env.py"
+click node_uv_backend "https://github.com/pypa/build/blob/main/src/build/env.py"
+click node_find_exec "https://github.com/pypa/build/blob/main/src/build/env.py"
+click node_check_dependency "https://github.com/pypa/build/blob/main/src/build/_util.py"
+click node_ctx_run "https://github.com/pypa/build/blob/main/src/build/_ctx.py"
+click node_exceptions "https://github.com/pypa/build/blob/main/src/build/_exceptions.py"
+click node_compat_tarfile "https://github.com/pypa/build/blob/main/src/build/_compat/tarfile.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_main,node_select_build,node_via_sdist,node_build_package,node_extract_sdist,node_write_report,node_bootstrap_env toneBlue
+class node_projectbuilder,node_build_system,node_find_typo,node_check_deps,node_get_requires,node_prepare,node_build_dist,node_metadata_path,node_call_backend toneAmber
+class node_hook_caller,node_wrap_runner,node_handle_backend toneMint
+class node_isolated_env,node_pip_backend,node_uv_backend,node_find_exec toneRose
+class node_check_dependency,node_ctx_run,node_exceptions,node_compat_tarfile toneIndigo
